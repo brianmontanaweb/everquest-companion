@@ -124,6 +124,9 @@ import { buffTrustSection } from './BuffTrustSetting'
 // Same arrangement again (JOS-123): the Appearance section names itself beside the card that
 // renders its first item. See ./TextSizeSetting.tsx.
 import { appearanceSection } from './TextSizeSetting'
+// Same arrangement (nav customization): the Navigation section names itself beside the card that
+// renders it. See ./NavigationSetting.tsx.
+import { navigationSection } from './NavigationSetting'
 // Same arrangement again (JOS-139): what the X does — the app keeps running in the tray, or it
 // quits — names its own section beside the card that renders it. See ./CloseToTraySetting.tsx.
 import { windowSection } from './CloseToTraySetting'
@@ -321,6 +324,7 @@ function buildSections({ version, status, onSendFeedback, onWhatsNew }: SectionI
     // Preferences because they can barely read the app has to find this one, and the rail is
     // itself drawn at the size they are complaining about.
     appearanceSection(),
+    navigationSection(),
     combatSection(),
     overlaysSection(),
     // Right after the overlays, because the promise this switch makes is about them: closing the
