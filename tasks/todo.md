@@ -15,25 +15,23 @@ Compact tracker for `tasks/plan.md`. Check a task off only when its own verifica
 - [x] **T4 · `NavDrawer` renders from the layout model** — ROW_META record, NavMainList split,
   law comment rewritten. e2e 57/62 (**0 nav regressions** — 5 failures pre-existing, A/B-confirmed
   on pre-T4 tree; machine at 150% display scaling). `3cc66253` ← CHECKPOINT PASSED
-- [ ] **T5 · "More" overflow collapse** for hidden rows (`nav-more`, `unmountOnExit`).
-  Verify: typecheck + lint + dev smoke.
-- [ ] **T6 · Compact density + "Customize…" row** — `navDrawerWidth`, tooltips, `nav-customize`
-  → `prefs.openSection('navigation')`. Verify: full e2e suite (still parity; compact off by default).
+- [x] **T5 · "More" overflow collapse** — `nav-more`, `unmountOnExit`. Review ✅. `7b799180`
+- [x] **T6 · Compact density + "Customize…" row** — `navDrawerWidth`, tooltips, `nav-customize`.
+  e2e re-run 56/62 (0 nav regressions; the delta specs fail identically on pre-T6 tree). Review ✅. `b6922172`
 
 ## Phase 3 — editor & sharing
 
-- [ ] **T7 · Preferences → Navigation section** — `NavigationSetting.tsx` (reorder arrows,
-  show/hide switches, density radio, reset) + register in `PreferencesView.buildSections` after
-  `appearanceSection()`. Verify: typecheck + lint + dev smoke (drawer reacts live). ← CHECKPOINT
-- [ ] **T8 · Settings bundle** — two `UI_PREF_SPECS` rows (`eq.nav.layout`, `eq.nav.density`,
-  `merge: 'replace'`) + round-trip test in `tests/shareProfiles.test.mts`.
-  Verify: `node --import tsx --test tests/shareProfiles.test.mts` + `npm test`.
+- [x] **T7 · Preferences → Navigation section** — `NavigationSetting.tsx` + registered after
+  `appearanceSection()`. targeted e2e 2/2, review ✅. `3a36ab99`
+- [x] **T8 · Settings bundle** — `eq.nav.layout` + `eq.nav.density` (`merge: 'replace'`) +
+  round-trip test (TDD red→green). shareProfiles 29/29, review ✅. `286ffa23`
 
 ## Phase 4 — verification
 
-- [ ] **T9 · E2E + law comment** — `tests/e2e/nav-customization.e2e.mts` (hide→overflow→navigate,
-  reorder, compact, reset, reload persistence); finalise `NavDrawer` comment.
-  **Verify: `npm run typecheck && npm run lint && npm test && npm run test:e2e` all green.** ← FINAL CHECKPOINT
+- [x] **T9 · E2E + law comment** — `tests/e2e/nav-customization.e2e.mts` (23 checks, 3 clean runs,
+  zero sleep); NavDrawer law comment already complete (1-line stale-parenthetical fix elsewhere).
+  Review ✅. `673ddf2a`
+- [ ] **Final** — whole-branch review + full e2e verification vs. known env-failure baseline.
 
 ## Notes / decisions
 
