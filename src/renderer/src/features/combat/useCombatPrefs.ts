@@ -21,6 +21,7 @@
 // the SAME key by the SAME hook, and no copy of this preference is ever routed over IPC.
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
+import { notifyAll, subscribe, useBoolPref, useRawPref } from '../../lib/rawPref'
 // The vocabulary — defaults, guards and degrades — lives in a DOM-free module beside this one so
 // it can be node-tested (combatPrefs.ts says why). This file is the storage half and nothing else.
 import {
@@ -35,6 +36,8 @@ import {
 } from './combatPrefs'
 import type { MeterScope } from '@shared/roster'
 
+export { useBoolPref, useRawPref } from '../../lib/rawPref'
+
 /**
  * Nest the pet as ONE line item inside your damage breakdown (drillable to the pet's own
  * skills) instead of listing it as a separate source. Default ON: the game is mostly played
@@ -47,81 +50,6 @@ import type { MeterScope } from '@shared/roster'
  * RETIRED. Nothing reads that key any more; a stale one in localStorage is inert.
  */
 export const COMBINE_PET_ROW_KEY = 'eq.combat.petRow'
-
-const listeners = new Set<() => void>()
-
-function notifyAll(): void {
-  for (const l of [...listeners]) l()
-}
-
-/**
- * One 'storage' listener for the whole module, attached while anything is subscribed. That event
- * fires ONLY for writes made in ANOTHER document of this origin (the spec excludes the writer),
- * which is exactly the cross-window half: Preferences flips the switch in the main window and the
- * floating overlay re-renders without a poll, a patch or an IPC channel of its own.
- */
-function subscribe(cb: () => void): () => void {
-  listeners.add(cb)
-  if (listeners.size === 1) window.addEventListener('storage', notifyAll)
-  return () => {
-    listeners.delete(cb)
-    if (listeners.size === 0) window.removeEventListener('storage', notifyAll)
-  }
-}
-
-/** '1'/'0' rather than JSON: these are one-bit view prefs and the value should be readable in
- *  devtools at a glance. An absent key is the DEFAULT, never `false` — a user who has never
- *  touched the setting has not turned it off. */
-function read(key: string, dflt: boolean): boolean {
-  const v = localStorage.getItem(key)
-  return v === null ? dflt : v === '1'
-}
-
-/**
- * THE RAW STRING BEHIND ONE KEY, live across every reader in this window and every other window
- * of this origin — the same subscription the boolean prefs use, with no interpretation of its own.
- *
- * It exists for the prefs that are not one bit: today the persisted combat DRILL (JOS-116), whose
- * value is a small JSON blob that `drillMemory.ts` parses and validates. Keeping the storage
- * primitive here and the vocabulary there is what lets the drill's shaping be node-tested without
- * a DOM: this hook is the only part that needs one.
- *
- * `null` means absent — never the empty string, which is a value a writer could legitimately mean.
- */
-export function useRawPref(key: string): [string | null, (v: string | null) => void] {
-  const value = useSyncExternalStore<string | null>(
-    subscribe,
-    () => localStorage.getItem(key),
-    () => null
-  )
-  const set = useCallback(
-    (v: string | null) => {
-      if (v === null) localStorage.removeItem(key)
-      else localStorage.setItem(key, v)
-      notifyAll()
-    },
-    [key]
-  )
-  return [value, set]
-}
-
-function write(key: string, v: boolean): void {
-  localStorage.setItem(key, v ? '1' : '0')
-  // The writing document gets no 'storage' event of its own, so notify it directly. Other
-  // windows are served by the listener above — hence exactly one notification each, never two.
-  notifyAll()
-}
-
-/** One persisted boolean view pref, live across every mounted reader in this window. */
-export function useBoolPref(key: string, dflt: boolean): [boolean, (v: boolean) => void] {
-  const value = useSyncExternalStore(
-    subscribe,
-    () => read(key, dflt),
-    () => dflt
-  )
-  const set = useCallback((v: boolean) => write(key, v), [key])
-  return [value, set]
-}
 
 /** See COMBINE_PET_ROW_KEY. Read by the Combat dashboard, the Overview DPS card AND the floating
  *  overlay meters — all of them take their layout and their opening level from it, and only the
