@@ -122,6 +122,45 @@ async function stepHideToOverflow(page: Page): Promise<void> {
   )
 }
 
+// ── 2b. the gear AREA case (JOS-324): "More" owns the gear row, and an in-area tab move keeps
+//        the drawer agreeing with the screen — the owning-row resolution, F1. ─────────────────
+async function stepGearAreaOverflow(page: Page): Promise<void> {
+  await openNav(page)
+  await page.click(CFG('show-gear'), { timeout: 15_000 })
+  const goneMain = await settle(
+    () => mainNavOrder(page),
+    (o) => !o.includes('nav-gear'),
+    { timeoutMs: 10_000 }
+  )
+  check('switching Gear off pulls the gear row out of the main list', !goneMain.includes('nav-gear'), goneMain.join(','))
+  check('…and a "More" row is there to hold it', (await countOf(page, MORE)) === 1)
+
+  // "More" may still be expanded from step 2 (its open state is component-local); only toggle it
+  // when the gear row is not already reachable.
+  if ((await countOf(page, NAV('gear'))) === 0) await page.click(MORE, { timeout: 15_000 })
+  const back = await settle(() => countOf(page, NAV('gear')), (n) => n === 1, { timeoutMs: 10_000 })
+  check('the gear row is reachable inside the "More" collapse', back === 1)
+
+  await page.click(NAV('gear'), { timeout: 15_000 })
+  const gearView = await settle(() => viewKey(page), (v) => v === 'gear', { timeoutMs: 10_000 })
+  check('clicking the hidden gear row opens the gear area', gearView === 'gear', String(gearView))
+
+  await page.click('[data-testid="tab-planner"]', { timeout: 15_000 })
+  const planner = await settle(() => viewKey(page), (v) => v === 'planner', { timeoutMs: 10_000 })
+  check('the in-area tab bar moves sideways to Exaltations', planner === 'planner', String(planner))
+
+  check(
+    '…and "More" still wears the selected state (its owning-row is gear, JOS-324)',
+    await page.evaluate((s) => document.querySelector(s)?.classList.contains('Mui-selected') === true, MORE)
+  )
+  check('…with the gear row still mounted inside the expanded "More" collapse', (await countOf(page, NAV('gear'))) === 1)
+
+  // Leave the store as the next step wants it.
+  await openNav(page)
+  await page.click(CFG('reset'), { timeout: 15_000 })
+  await settle(() => countOf(page, MORE), (n) => n === 0, { timeoutMs: 10_000 })
+}
+
 // ── 3. reorder ───────────────────────────────────────────────────────────────────────────
 async function stepReorder(page: Page): Promise<void> {
   await openNav(page)
@@ -214,6 +253,7 @@ async function main(): Promise<void> {
     await dismissFirstRunNotice(page)
     await stepDefault(page)
     await stepHideToOverflow(page)
+    await stepGearAreaOverflow(page)
     await stepReorder(page)
     await stepCompact(page)
     await stepReset(page)

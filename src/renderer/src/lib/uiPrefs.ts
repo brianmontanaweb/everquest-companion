@@ -9,6 +9,7 @@
 // never leaves. Reading is defensive: a missing key is simply absent from the map.
 
 import { UI_PREF_SPECS } from '@shared/profiles'
+import { notifyAll } from './rawPref'
 
 /** Snapshot the whitelisted localStorage prefs. Never throws (private-mode / quota). */
 export function readUiPrefs(): Record<string, string> {
@@ -42,5 +43,8 @@ export function writeUiPrefs(values: Record<string, string>): number {
       // Ignore quota/permission failures; the rest of the import still applies.
     }
   }
+  // wake every live useSyncExternalStore reader (the nav drawer, combat meters) — a same-document
+  // setItem fires no storage event
+  if (n > 0) notifyAll()
   return n
 }

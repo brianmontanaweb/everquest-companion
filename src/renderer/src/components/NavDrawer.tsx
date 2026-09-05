@@ -1,6 +1,6 @@
 import type { JSX } from 'react'
 import { useState } from 'react'
-import { Box, Chip, Collapse, Divider, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Tooltip } from '@mui/material'
+import { Box, Chip, Collapse, Divider, Drawer, List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
 import SettingsIcon from '@mui/icons-material/Settings'
 import ShieldMoonIcon from '@mui/icons-material/ShieldMoon'
 import BarChartIcon from '@mui/icons-material/BarChart'
@@ -25,6 +25,7 @@ import RuleFolderIcon from '@mui/icons-material/RuleFolder'
 import UpdateChip from './UpdateChip'
 import { OWNER_TOOLS } from '../devFlags'
 import type { PrefsRouting } from '../appRouting'
+import { Tooltip } from '../lib/Tooltip'
 import { GEAR_AREA_VIEWS, VIEW_LABELS, loadGearTab, type View } from '../appViews'
 import { CUSTOMIZABLE_VIEWS, type NavDensity } from './navLayout'
 import { useNavDensity, useNavLayout } from './useNavPrefs'
@@ -96,6 +97,16 @@ const ROW_META: Record<Extract<View, 'overview'> | (typeof CUSTOMIZABLE_VIEWS)[n
   timers: { icon: <TimerIcon /> }
 }
 
+/** The nav row a view belongs to — the row's own id, unless the view is a tab of an AREA row
+ *  (the gear area, JOS-324), in which case it is that row. Keeps the drawer agreeing with the
+ *  screen when an in-area tab bar moves you sideways. */
+function owningRow(view: View): View {
+  for (const key of Object.keys(ROW_META) as (keyof typeof ROW_META)[]) {
+    if (ROW_META[key].area?.includes(view)) return key
+  }
+  return view
+}
+
 /** One nav row. `data-testid="nav-<view>"` is the stable handle the e2e clicks. `compact` draws
  *  the icon-only rail — an icon and a hover tooltip, no `ListItemText` — and is `true` whenever
  *  `useNavDensity()` reads `compact` (Task 6). */
@@ -154,7 +165,7 @@ function NavOverflow({
   const moreButton = (
     <ListItemButton
       data-testid="nav-more"
-      selected={views.includes(current)}
+      selected={views.includes(owningRow(current))}
       onClick={onToggleExpand}
       sx={compact ? { justifyContent: 'center', px: 1 } : undefined}
     >
@@ -206,7 +217,7 @@ function NavMainList({
 }): JSX.Element {
   const { main, overflow } = useNavLayout()
   const [moreOpen, setMoreOpen] = useState(false)
-  const showMoreExpanded = moreOpen || overflow.includes(view)
+  const showMoreExpanded = moreOpen || overflow.includes(owningRow(view))
   return (
     <List>
       <NavRowButton view="overview" meta={ROW_META.overview} current={view} compact={compact} onSelect={onSelect} />
@@ -313,6 +324,21 @@ export default function NavDrawer({
       {!compact && <ListItemText primary="Send feedback" />}
     </ListItemButton>
   )
+  // Customize… (Task 6): jumps straight to the navigation section of Preferences, where order /
+  // visibility / density live. The Tooltip wraps the whole button in compact density (like
+  // feedbackButton) so the button — not the <svg> — carries the accessible name.
+  const customizeButton = (
+    <ListItemButton
+      data-testid="nav-customize"
+      onClick={() => prefs.openSection('navigation')}
+      sx={compact ? { justifyContent: 'center', px: 1 } : undefined}
+    >
+      <ListItemIcon sx={compact ? { minWidth: 0 } : undefined}>
+        <TuneIcon />
+      </ListItemIcon>
+      {!compact && <ListItemText primary="Customize…" />}
+    </ListItemButton>
+  )
   return (
     <Drawer
       variant="permanent"
@@ -332,21 +358,14 @@ export default function NavDrawer({
 
       {/* Bottom-aligned Preferences (Task #55) — replaces the old update-channel block. */}
       <Box sx={{ mt: 'auto' }}>
-        {/* Customize… (Task 6): jumps straight to the navigation section of Preferences,
-            where order / visibility / density live. */}
         <List disablePadding>
-          <ListItemButton data-testid="nav-customize" onClick={() => prefs.openSection('navigation')}>
-            <ListItemIcon sx={compact ? { minWidth: 0 } : undefined}>
-              {compact ? (
-                <Tooltip title="Customize navigation" placement="right">
-                  <TuneIcon />
-                </Tooltip>
-              ) : (
-                <TuneIcon />
-              )}
-            </ListItemIcon>
-            {!compact && <ListItemText primary="Customize…" />}
-          </ListItemButton>
+          {compact ? (
+            <Tooltip title="Customize navigation" placement="right">
+              {customizeButton}
+            </Tooltip>
+          ) : (
+            customizeButton
+          )}
         </List>
         <Divider />
         <List disablePadding>

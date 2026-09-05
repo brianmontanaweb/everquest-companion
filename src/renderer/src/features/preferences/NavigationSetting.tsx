@@ -16,7 +16,7 @@ import {
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import ViewSidebarIcon from '@mui/icons-material/ViewSidebar'
-import { isDefaultLayout } from '../../components/navLayout'
+import { DEFAULT_NAV_DENSITY, isDefaultLayout } from '../../components/navLayout'
 import { useNavDensity, useNavLayout } from '../../components/useNavPrefs'
 import { VIEW_LABELS } from '../../appViews'
 import type { PrefSection } from './PreferencesView'
@@ -41,7 +41,7 @@ export function navigationSection(): PrefSection {
 export function NavigationSetting(): JSX.Element {
   const { order, hidden, move, toggle, reset } = useNavLayout()
   const [density, setDensity] = useNavDensity()
-  const atDefault = isDefaultLayout(order, hidden)
+  const atDefault = isDefaultLayout(order, hidden) && density === DEFAULT_NAV_DENSITY
 
   return (
     <Stack spacing={2} data-testid="pref-navigation">
@@ -116,7 +116,10 @@ export function NavigationSetting(): JSX.Element {
         size="small"
         variant="outlined"
         disabled={atDefault}
-        onClick={reset}
+        onClick={() => {
+          reset()
+          setDensity(DEFAULT_NAV_DENSITY)
+        }}
         sx={{ alignSelf: 'flex-start' }}
       >
         Reset to default
