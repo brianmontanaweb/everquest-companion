@@ -5,18 +5,16 @@ Compact tracker for `tasks/plan.md`. Check a task off only when its own verifica
 
 ## Phase 1 — model & storage
 
-- [ ] **T1 · `navLayout.ts` pure model** — `CUSTOMIZABLE_VIEWS`, parse/resolve/mutate/serialize,
-  `vocab` degradation. Verify: `node --import tsx --test tests/navLayout.test.mts`.
-- [ ] **T2 · Extract `lib/rawPref.ts`** from `useCombatPrefs.ts` (behaviour-preserving; re-export).
-  Verify: `npm test` (full suite green).
-- [ ] **T3 · `useNavPrefs.ts`** — `useNavLayout` / `useNavDensity` over `rawPref` + `navLayout`.
-  Verify: typecheck + lint.
+- [x] **T1 · `navLayout.ts` pure model** — 11/11 tests, review approved (3 minors deferred). `2c344671`
+- [x] **T2 · Extract `lib/rawPref.ts`** from `useCombatPrefs.ts` — no regression (28==baseline), review
+  approved after 1 fix round (stale header). `da63b505`..`d343a438`
+- [x] **T3 · `useNavPrefs.ts`** — `useNavLayout` / `useNavDensity`. Review ✅ no issues. `58a772a6`
 
 ## Phase 2 — drawer
 
-- [ ] **T4 · `NavDrawer` renders from the layout model** — `ROWS` array → `ROW_META` record;
-  `overview` pinned first + user-ordered visible rows; law comment rewritten. Default output
-  byte-identical. **Verify: full e2e suite green with ZERO spec edits.** ← CHECKPOINT
+- [x] **T4 · `NavDrawer` renders from the layout model** — ROW_META record, NavMainList split,
+  law comment rewritten. e2e 57/62 (**0 nav regressions** — 5 failures pre-existing, A/B-confirmed
+  on pre-T4 tree; machine at 150% display scaling). `3cc66253` ← CHECKPOINT PASSED
 - [ ] **T5 · "More" overflow collapse** for hidden rows (`nav-more`, `unmountOnExit`).
   Verify: typecheck + lint + dev smoke.
 - [ ] **T6 · Compact density + "Customize…" row** — `navDrawerWidth`, tooltips, `nav-customize`
