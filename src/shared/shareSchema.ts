@@ -134,7 +134,12 @@ export const UI_PREF_SPECS: readonly UiPrefSpec[] = [
   // last surface ever went away, this row would STAY: a bundle written by another install carries
   // whatever that install's UI knew about, and the parser's job is to accept and preserve the
   // field, never to strip it because this build has nothing to render it with.
-  { key: 'eq.favorites', label: 'Favorited items', merge: 'union' }
+  { key: 'eq.favorites', label: 'Favorited items', merge: 'union' },
+  // Side navigation LAYOUT (order + hidden rows) and DENSITY — machine-class view prefs like the
+  // combat scope above; 'replace' because a structured layout cannot be unioned, so import is
+  // opt-in. resolveNavLayout (renderer) sanitizes whatever a stranger's bundle carried.
+  { key: 'eq.nav.layout', label: 'Side navigation layout', merge: 'replace' },
+  { key: 'eq.nav.density', label: 'Side navigation density', merge: 'replace' }
 ] as const
 
 /** Max sizes — a pasted string is UNTRUSTED input, so every list and string is bounded. */

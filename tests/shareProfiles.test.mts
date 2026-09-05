@@ -382,9 +382,26 @@ test('WHITELIST: no machine path can appear in a settings export', () => {
 test('WHITELIST: the exportable UI keys are exactly the documented list', () => {
   assert.deepEqual(
     UI_PREF_SPECS.map((s) => s.key).sort(),
-    ['eq.bossDensity', 'eq.combat.scope', 'eq.countSource', 'eq.favorites', 'eq.profile', 'eq.selectedClasses']
+    ['eq.bossDensity', 'eq.combat.scope', 'eq.countSource', 'eq.favorites', 'eq.nav.density', 'eq.nav.layout', 'eq.profile', 'eq.selectedClasses']
   )
   assert.ok(!UI_PREF_SPECS.some((s) => s.key === 'eq.view'), 'the last-open tab is never exportable')
+})
+
+test('nav layout and density ride the settings bundle, values intact, as replace prefs', () => {
+  const layout = JSON.stringify({ order: ['timers', 'combat'], hidden: ['maps'], vocab: ['combat', 'maps', 'timers'] })
+  const body = buildSettingsBody({
+    alerts: [alert()],
+    alertPrefs: { globalVolume: 0.5, muted: false },
+    ui: { 'eq.nav.layout': layout, 'eq.nav.density': 'compact' }
+  })
+  assert.equal(body.ui?.['eq.nav.layout'], layout, 'the serialized layout survives into the bundle body')
+  assert.equal(body.ui?.['eq.nav.density'], 'compact', 'the density survives into the bundle body')
+  assert.equal(
+    UI_PREF_SPECS.find((s) => s.key === 'eq.nav.layout')?.merge,
+    'replace',
+    'a structured layout cannot be unioned — import is opt-in'
+  )
+  assert.equal(UI_PREF_SPECS.find((s) => s.key === 'eq.nav.density')?.merge, 'replace')
 })
 
 test('WHITELIST holds through a full encode: the wire bytes carry no path', () => {
