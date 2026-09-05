@@ -18,6 +18,7 @@ import FeedbackIcon from '@mui/icons-material/Feedback'
 import ExpandLess from '@mui/icons-material/ExpandLess'
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
+import TuneIcon from '@mui/icons-material/Tune'
 // Dev-only, and its import goes with it: MUI's icon packages declare `sideEffects: false`, so
 // an icon whose only use sits inside a `false &&` branch is tree-shaken out with the branch.
 import RuleFolderIcon from '@mui/icons-material/RuleFolder'
@@ -25,10 +26,14 @@ import UpdateChip from './UpdateChip'
 import { OWNER_TOOLS } from '../devFlags'
 import type { PrefsRouting } from '../appRouting'
 import { GEAR_AREA_VIEWS, VIEW_LABELS, loadGearTab, type View } from '../appViews'
-import { CUSTOMIZABLE_VIEWS } from './navLayout'
-import { useNavLayout } from './useNavPrefs'
+import { CUSTOMIZABLE_VIEWS, type NavDensity } from './navLayout'
+import { useNavDensity, useNavLayout } from './useNavPrefs'
 
 export const DRAWER_WIDTH = 220
+export const COMPACT_DRAWER_WIDTH = 56
+export function navDrawerWidth(density: NavDensity): number {
+  return density === 'compact' ? COMPACT_DRAWER_WIDTH : DRAWER_WIDTH
+}
 
 /** A row's fixed metadata — its icon, optional trailing chip, and (for the Gear area) the
  *  several views it stands for plus which one it opens. The row's LABEL comes from VIEW_LABELS
@@ -134,24 +139,40 @@ function NavOverflow({
   views,
   current,
   expanded,
+  compact,
   onToggleExpand,
   onSelect
 }: {
   views: readonly View[]
   current: View
   expanded: boolean
+  compact: boolean
   onToggleExpand: () => void
   onSelect: (v: View) => void
 }): JSX.Element {
+  const moreButton = (
+    <ListItemButton
+      data-testid="nav-more"
+      selected={views.includes(current)}
+      onClick={onToggleExpand}
+      sx={compact ? { justifyContent: 'center', px: 1 } : undefined}
+    >
+      <ListItemIcon sx={compact ? { minWidth: 0 } : undefined}>
+        <MoreHorizIcon />
+      </ListItemIcon>
+      {!compact && <ListItemText primary="More" />}
+      {!compact && (expanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />)}
+    </ListItemButton>
+  )
   return (
     <>
-      <ListItemButton data-testid="nav-more" selected={views.includes(current)} onClick={onToggleExpand}>
-        <ListItemIcon>
-          <MoreHorizIcon />
-        </ListItemIcon>
-        <ListItemText primary="More" />
-        {expanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
-      </ListItemButton>
+      {compact ? (
+        <Tooltip title="More" placement="right">
+          {moreButton}
+        </Tooltip>
+      ) : (
+        moreButton
+      )}
       <Collapse in={expanded} unmountOnExit>
         <List disablePadding sx={{ pl: 1 }}>
           {views.map((v) => (
@@ -160,7 +181,7 @@ function NavOverflow({
               view={v}
               meta={ROW_META[v as keyof typeof ROW_META]}
               current={current}
-              compact={false}
+              compact={compact}
               onSelect={onSelect}
             />
           ))}
@@ -175,9 +196,11 @@ function NavOverflow({
  *  to keep each function small. */
 function NavMainList({
   view,
+  compact,
   onSelect
 }: {
   view: View
+  compact: boolean
   onSelect: (v: View) => void
 }): JSX.Element {
   const { main, overflow } = useNavLayout()
@@ -185,14 +208,14 @@ function NavMainList({
   const showMoreExpanded = moreOpen || overflow.includes(view)
   return (
     <List>
-      <NavRowButton view="overview" meta={ROW_META.overview} current={view} compact={false} onSelect={onSelect} />
+      <NavRowButton view="overview" meta={ROW_META.overview} current={view} compact={compact} onSelect={onSelect} />
       {main.map((v) => (
         <NavRowButton
           key={v}
           view={v}
           meta={ROW_META[v as keyof typeof ROW_META]}
           current={view}
-          compact={false}
+          compact={compact}
           onSelect={onSelect}
         />
       ))}
@@ -230,7 +253,7 @@ function NavMainList({
             )
           }}
           current={view}
-          compact={false}
+          compact={compact}
           onSelect={onSelect}
         />
       )}
@@ -239,6 +262,7 @@ function NavMainList({
           views={overflow}
           current={view}
           expanded={showMoreExpanded}
+          compact={compact}
           onToggleExpand={() => setMoreOpen((o) => !o)}
           onSelect={onSelect}
         />
@@ -273,14 +297,29 @@ export default function NavDrawer({
    *  than taking one opaque callback per section a future row might want. */
   prefs: PrefsRouting
 }): JSX.Element {
+  const [density] = useNavDensity()
+  const compact = density === 'compact'
+  const width = navDrawerWidth(density)
+  const feedbackButton = (
+    <ListItemButton
+      data-testid="nav-feedback"
+      onClick={onSendFeedback}
+      sx={compact ? { justifyContent: 'center', px: 1 } : undefined}
+    >
+      <ListItemIcon sx={compact ? { minWidth: 0 } : undefined}>
+        <FeedbackIcon />
+      </ListItemIcon>
+      {!compact && <ListItemText primary="Send feedback" />}
+    </ListItemButton>
+  )
   return (
     <Drawer
       variant="permanent"
       sx={{
-        width: DRAWER_WIDTH,
+        width,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
-          width: DRAWER_WIDTH,
+          width,
           boxSizing: 'border-box',
           position: 'relative',
           height: '100%',
@@ -288,25 +327,42 @@ export default function NavDrawer({
         }
       }}
     >
-      <NavMainList view={view} onSelect={onSelect} />
+      <NavMainList view={view} compact={compact} onSelect={onSelect} />
 
       {/* Bottom-aligned Preferences (Task #55) — replaces the old update-channel block. */}
       <Box sx={{ mt: 'auto' }}>
+        {/* Customize… (Task 6): jumps straight to the navigation section of Preferences,
+            where order / visibility / density live. */}
+        <List disablePadding>
+          <ListItemButton data-testid="nav-customize" onClick={() => prefs.openSection('navigation')}>
+            <ListItemIcon sx={compact ? { minWidth: 0 } : undefined}>
+              {compact ? (
+                <Tooltip title="Customize navigation" placement="right">
+                  <TuneIcon />
+                </Tooltip>
+              ) : (
+                <TuneIcon />
+              )}
+            </ListItemIcon>
+            {!compact && <ListItemText primary="Customize…" />}
+          </ListItemButton>
+        </List>
         <Divider />
         <List disablePadding>
           {/* Send feedback (Task #65): a dialog, so it is a plain action row — no `selected`
               state to own, because nothing in the nav stays "on" while it is open. */}
-          <ListItemButton data-testid="nav-feedback" onClick={onSendFeedback}>
-            <ListItemIcon>
-              <FeedbackIcon />
-            </ListItemIcon>
-            <ListItemText primary="Send feedback" />
-          </ListItemButton>
+          {compact ? (
+            <Tooltip title="Send feedback" placement="right">
+              {feedbackButton}
+            </Tooltip>
+          ) : (
+            feedbackButton
+          )}
           <NavRowButton
             view="preferences"
             meta={{ icon: <SettingsIcon /> }}
             current={view}
-            compact={false}
+            compact={compact}
             onSelect={onSelect}
           />
         </List>
@@ -316,7 +372,9 @@ export default function NavDrawer({
             ignoring it just means apply-on-quit does the work silently.
             That muted line is also where the app states the version you are
             running, so it carries the patch-notes icon (JOS-254). */}
-        <UpdateChip onWhatsNew={() => prefs.openSection('whatsnew')} />
+        {/* Compact rail has no room for the chip's text/line — hidden there (Task 6);
+            apply-on-quit still runs, and the full chip returns in comfortable density. */}
+        {!compact && <UpdateChip onWhatsNew={() => prefs.openSection('whatsnew')} />}
       </Box>
     </Drawer>
   )
