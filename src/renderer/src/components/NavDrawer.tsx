@@ -1,5 +1,5 @@
 import type { JSX } from 'react'
-import { Box, Chip, Divider, Drawer, List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
+import { Box, Chip, Divider, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Tooltip } from '@mui/material'
 import SettingsIcon from '@mui/icons-material/Settings'
 import ShieldMoonIcon from '@mui/icons-material/ShieldMoon'
 import BarChartIcon from '@mui/icons-material/BarChart'
@@ -21,13 +21,15 @@ import UpdateChip from './UpdateChip'
 import { OWNER_TOOLS } from '../devFlags'
 import type { PrefsRouting } from '../appRouting'
 import { GEAR_AREA_VIEWS, VIEW_LABELS, loadGearTab, type View } from '../appViews'
+import { CUSTOMIZABLE_VIEWS } from './navLayout'
+import { useNavLayout } from './useNavPrefs'
 
 export const DRAWER_WIDTH = 220
 
-/** A row is a view + an icon. The LABEL is not a field: it comes from `VIEW_LABELS`, the one
- *  place a tab is named, because a drill's Back button now says those names too (navOrigin.ts). */
-interface NavRow {
-  view: View
+/** A row's fixed metadata — its icon, optional trailing chip, and (for the Gear area) the
+ *  several views it stands for plus which one it opens. The row's LABEL comes from VIEW_LABELS
+ *  and its ORDER / VISIBILITY are now the user's (useNavPrefs / navLayout). */
+interface NavRowMeta {
   icon: JSX.Element
   /** trailing state chip, when a row has one to state */
   badge?: JSX.Element
@@ -39,7 +41,7 @@ interface NavRow {
    */
   area?: readonly View[]
   /**
-   * Which view the row OPENS, when that is not simply `view`. The gear row opens the area at the
+   * Which view the row OPENS, when that is not simply its key. The gear row opens the area at the
    * tab you last stood on (appViews.ts `loadGearTab`) — a function rather than a value because
    * that answer is read from localStorage at CLICK time, not at module load.
    */
@@ -61,82 +63,135 @@ const BETA = (
   />
 )
 
-// Row ORDER is the nav's order. Overview leads: it is the at-a-glance landing surface.
-//
-// LOOT SITS BESIDE MOBS (owner decision, 2026-08-04) and everything else keeps its place. The
-// two tabs answer halves of one question — what drops it, and what did I get — and they link
-// into each other constantly (a mob page's drop rows open an item, the Overview's drop rows open
-// the loot detail). Loot's old home at the bottom of the list put five unrelated tabs between
-// them.
-//
-// AND ONE ROW IS NOT ONE VIEW ANY MORE (JOS-324, owner ruling 2026-08-13). The drawer's old law —
-// exactly one row per view, no exceptions — held right up until three of the rows turned out to be
-// three faces of a single question: what should I be wearing (Gear), what am I farming for
-// (Exaltations) and what am I wearing right now (the dev-only Character sheet). Two of them sat
-// consecutively here and the third hung off the bottom behind a flag, and nothing in a vertical
-// list said any of them had anything to do with the others. They are now ONE row — Gear — over an
-// in-area tab bar (components/GearAreaTabs.tsx) that also carries the fourth face the list had no
-// room to grow, a Wish list. The row reads `selected` while any of the four is on screen, and it
-// opens the one you last used. The law that survives is the one that mattered: a row is a
-// DESTINATION, and clicking it takes you somewhere real.
-const ROWS: NavRow[] = [
-  { view: 'overview', icon: <SpaceDashboardIcon /> },
-  { view: 'combat', icon: <BarChartIcon /> },
-  { view: 'mobs', icon: <PetsIcon /> },
-  { view: 'loot', icon: <ReceiptLongIcon /> },
-  // THE GEAR AREA follows Loot for the same reason Loot follows Mobs: it is the far side of one
-  // question — what drops it, what did I get, and then what should I wear, farm for and want. It
-  // reads the same committed corpus and links back into the same Loot drill-down. The row keeps
-  // Gear's icon, Gear's testid (`nav-gear`) and Gear's beta chip; the tabs behind it are named by
-  // `VIEW_LABELS`, the one place any of this app's tabs is named.
-  {
-    view: 'gear',
-    icon: <CheckroomIcon />,
-    badge: BETA,
-    area: GEAR_AREA_VIEWS,
-    opens: loadGearTab
-  },
-  { view: 'maps', icon: <MapIcon /> },
-  { view: 'bosses', icon: <EmojiEventsIcon /> },
-  { view: 'posky', icon: <ShieldMoonIcon /> },
-  { view: 'alerts', icon: <NotificationsActiveIcon /> },
-  { view: 'leveling', icon: <TrendingUpIcon /> },
-  { view: 'buffs', icon: <AutoFixHighIcon /> },
-  // Respawn clocks (JOS-194) sit beside Buffs because both tabs are the same shape of answer —
-  // a list of things counting down — and a player checking one is usually checking the other.
-  { view: 'timers', icon: <TimerIcon /> }
-]
+// THE DRAWER IS USER-ORDERED NOW (see components/navLayout.ts). Overview is still pinned first —
+// it is DEFAULT_VIEW and a launch must land on a visible row — and Preferences / "Send feedback"
+// are still pinned in the bottom block. Everything between them is `CUSTOMIZABLE_VIEWS`: the user
+// picks the order and can move any of them into the "More" collapse. The editorial defaults that
+// used to live in this array's order (Overview leads; Loot beside Mobs — JOS-324's One Coin Four
+// Faces put Gear next; Timers beside Buffs) are the DEFAULT of CUSTOMIZABLE_VIEWS, which is what
+// a fresh install and "Reset to default" both produce. The law that survives unchanged: a row is
+// a DESTINATION — one nav row per real place you can go, and the Gear row is still one row over
+// an in-area tab bar (JOS-324), moved and hidden as a unit.
+const ROW_META: Record<Extract<View, 'overview'> | (typeof CUSTOMIZABLE_VIEWS)[number], NavRowMeta> = {
+  overview: { icon: <SpaceDashboardIcon /> },
+  combat: { icon: <BarChartIcon /> },
+  mobs: { icon: <PetsIcon /> },
+  loot: { icon: <ReceiptLongIcon /> },
+  gear: { icon: <CheckroomIcon />, badge: BETA, area: GEAR_AREA_VIEWS, opens: loadGearTab },
+  maps: { icon: <MapIcon /> },
+  bosses: { icon: <EmojiEventsIcon /> },
+  posky: { icon: <ShieldMoonIcon /> },
+  alerts: { icon: <NotificationsActiveIcon /> },
+  leveling: { icon: <TrendingUpIcon /> },
+  buffs: { icon: <AutoFixHighIcon /> },
+  timers: { icon: <TimerIcon /> }
+}
 
-/** Bottom-aligned, outside ROWS — it is not a feature view and never moves. */
-const PREFERENCES: NavRow = { view: 'preferences', icon: <SettingsIcon /> }
-
-/** One nav row. `data-testid="nav-<view>"` is the stable handle the e2e clicks. */
+/** One nav row. `data-testid="nav-<view>"` is the stable handle the e2e clicks. `compact` draws
+ *  the icon-only rail (Task 6 wires it; always `false` here). */
 function NavRowButton({
-  row,
+  view,
+  meta,
+  current,
+  compact,
+  onSelect
+}: {
+  view: View
+  meta: NavRowMeta
+  current: View
+  compact: boolean
+  onSelect: (v: View) => void
+}): JSX.Element {
+  const button = (
+    <ListItemButton
+      data-testid={`nav-${view}`}
+      selected={meta.area ? meta.area.includes(current) : current === view}
+      onClick={() => onSelect(meta.opens ? meta.opens() : view)}
+      sx={compact ? { justifyContent: 'center', px: 1 } : undefined}
+    >
+      <ListItemIcon sx={compact ? { minWidth: 0 } : undefined}>{meta.icon}</ListItemIcon>
+      {!compact && <ListItemText primary={VIEW_LABELS[view]} />}
+      {!compact && meta.badge}
+    </ListItemButton>
+  )
+  return compact ? (
+    <Tooltip title={VIEW_LABELS[view]} placement="right">
+      {button}
+    </Tooltip>
+  ) : (
+    button
+  )
+}
+
+/** The customizable middle of the drawer: Overview pinned first, then the user's `main` order,
+ *  then the owner-only triage row. Split out of `NavDrawer` to keep each function small. */
+function NavMainList({
   view,
   onSelect
 }: {
-  row: NavRow
   view: View
   onSelect: (v: View) => void
 }): JSX.Element {
+  const { main } = useNavLayout()
   return (
-    <ListItemButton
-      data-testid={`nav-${row.view}`}
-      selected={row.area ? row.area.includes(view) : view === row.view}
-      onClick={() => onSelect(row.opens ? row.opens() : row.view)}
-    >
-      <ListItemIcon>{row.icon}</ListItemIcon>
-      <ListItemText primary={VIEW_LABELS[row.view]} />
-      {row.badge}
-    </ListItemButton>
+    <List>
+      <NavRowButton view="overview" meta={ROW_META.overview} current={view} compact={false} onSelect={onSelect} />
+      {main.map((v) => (
+        <NavRowButton
+          key={v}
+          view={v}
+          meta={ROW_META[v as keyof typeof ROW_META]}
+          current={view}
+          compact={false}
+          onSelect={onSelect}
+        />
+      ))}
+      {/* UNRELEASED (JOS-45) USED TO HAVE A ROW HERE, and JOS-324 moved it INTO the gear area:
+          the character sheet is now the area's last TAB, gated by the same `UNRELEASED` flag in
+          the same way (appViews.ts drops `character` from `KNOWN_VIEWS` in a build without it,
+          and `GEAR_AREA_VIEWS` is derived from that list, so the tab is absent from the bar and
+          the view is absent from the bundle). The gate itself is untouched and still measured —
+          `tests/e2e/character-sheet.e2e.mts` now asserts the TAB is absent in a production-shaped
+          build, which is a stronger reading than the old row check because the bar it looks at is
+          demonstrably mounted at the time. JOS-327 graduates it by deleting the flag. */}
+      {/* OWNER-ONLY: the feedback-triage tab. `OWNER_TOOLS` (JOS-72) is `DEV_TOOLS` AND the
+          `EQ_OWNER_TOOLS=1` opt-in, so this row is absent from a fresh checkout's `npm run
+          dev` as well as from every build — the tab reads the owner's AWS backlog, and a
+          self-compiled copy of this public repo used to show it. `DEV_TOOLS` is still the
+          left-hand term, so in `electron-vite build` this reads `false && …` and rollup
+          deletes the branch: the row, its label, its chip and its icon are not in the shipped
+          bundle at all. Built INSIDE the branch rather than hoisted to a module const on
+          purpose: a top-level `jsx()` call is not something rollup can prove is side-effect
+          free, and it would keep the strings alive. The e2e suite asserts `nav-triage` is
+          ABSENT in a production-shaped build. */}
+      {OWNER_TOOLS && (
+        <NavRowButton
+          view="triage"
+          meta={{
+            icon: <RuleFolderIcon />,
+            badge: (
+              <Chip
+                size="small"
+                label="owner only"
+                variant="outlined"
+                color="warning"
+                sx={{ height: 18, fontSize: 10, '& .MuiChip-label': { px: 0.75 } }}
+              />
+            )
+          }}
+          current={view}
+          compact={false}
+          onSelect={onSelect}
+        />
+      )}
+    </List>
   )
 }
 
 /**
  * The permanent left nav: one row per destination — usually a view, and since JOS-324 once an
- * AREA of four (see `ROWS`) — with Preferences bottom-aligned and the ambient update chip beneath
- * it.
+ * AREA of four (see `ROW_META`) — with the row ORDER and VISIBILITY now user-owned (navLayout.ts),
+ * Overview pinned first, Preferences bottom-aligned and the ambient update chip beneath it.
  *
  * Frameless: the drawer is a normal in-flow child (no fixed OS bar above it), so it fills
  * the space under the title bar — `position: relative` + `height: 100%` keeps it inside
@@ -174,48 +229,7 @@ export default function NavDrawer({
         }
       }}
     >
-      <List>
-        {ROWS.map((row) => (
-          <NavRowButton key={row.view} row={row} view={view} onSelect={onSelect} />
-        ))}
-        {/* UNRELEASED (JOS-45) USED TO HAVE A ROW HERE, and JOS-324 moved it INTO the gear area:
-            the character sheet is now the area's last TAB, gated by the same `UNRELEASED` flag in
-            the same way (appViews.ts drops `character` from `KNOWN_VIEWS` in a build without it,
-            and `GEAR_AREA_VIEWS` is derived from that list, so the tab is absent from the bar and
-            the view is absent from the bundle). The gate itself is untouched and still measured —
-            `tests/e2e/character-sheet.e2e.mts` now asserts the TAB is absent in a production-shaped
-            build, which is a stronger reading than the old row check because the bar it looks at is
-            demonstrably mounted at the time. JOS-327 graduates it by deleting the flag. */}
-        {/* OWNER-ONLY: the feedback-triage tab. `OWNER_TOOLS` (JOS-72) is `DEV_TOOLS` AND the
-            `EQ_OWNER_TOOLS=1` opt-in, so this row is absent from a fresh checkout's `npm run
-            dev` as well as from every build — the tab reads the owner's AWS backlog, and a
-            self-compiled copy of this public repo used to show it. `DEV_TOOLS` is still the
-            left-hand term, so in `electron-vite build` this reads `false && …` and rollup
-            deletes the branch: the row, its label, its chip and its icon are not in the shipped
-            bundle at all. Built INSIDE the branch rather than hoisted to a module const on
-            purpose: a top-level `jsx()` call is not something rollup can prove is side-effect
-            free, and it would keep the strings alive. The e2e suite asserts `nav-triage` is
-            ABSENT in a production-shaped build. */}
-        {OWNER_TOOLS && (
-          <NavRowButton
-            row={{
-              view: 'triage',
-              icon: <RuleFolderIcon />,
-              badge: (
-                <Chip
-                  size="small"
-                  label="owner only"
-                  variant="outlined"
-                  color="warning"
-                  sx={{ height: 18, fontSize: 10, '& .MuiChip-label': { px: 0.75 } }}
-                />
-              )
-            }}
-            view={view}
-            onSelect={onSelect}
-          />
-        )}
-      </List>
+      <NavMainList view={view} onSelect={onSelect} />
 
       {/* Bottom-aligned Preferences (Task #55) — replaces the old update-channel block. */}
       <Box sx={{ mt: 'auto' }}>
@@ -229,7 +243,13 @@ export default function NavDrawer({
             </ListItemIcon>
             <ListItemText primary="Send feedback" />
           </ListItemButton>
-          <NavRowButton row={PREFERENCES} view={view} onSelect={onSelect} />
+          <NavRowButton
+            view="preferences"
+            meta={{ icon: <SettingsIcon /> }}
+            current={view}
+            compact={false}
+            onSelect={onSelect}
+          />
         </List>
         {/* …and directly beneath it, the AMBIENT update affordance (Task #60):
             a gold "Restart to update" chip when a build is downloaded and
