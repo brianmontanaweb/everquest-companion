@@ -7,12 +7,12 @@
 // `useState` initialised from localStorage would already be correct on the next mount — but a
 // same-document `localStorage.setItem` fires no 'storage' event, so anything that IS mounted
 // alongside the writer (a preference and its own live example, today or tomorrow) would go
-// stale. The tiny subscription below closes that: one write notifies every reader in this
-// window, so "changing it applies live" is structural instead of incidental.
+// stale. The tiny subscription in `lib/rawPref.ts` closes that: one write notifies every reader in
+// this window, so "changing it applies live" is structural instead of incidental.
 //
 // AND ACROSS WINDOWS, WHICH IS WHY THE OVERLAY MAY READ IT (measured, 2026-08-04). The overlay is
-// a second renderer entry in a second BrowserWindow, so the in-window `listeners` set below can
-// never reach it. It doesn't have to: every window of this app is ONE ORIGIN, so localStorage is
+// a second renderer entry in a second BrowserWindow, so the in-window `listeners` set in
+// `lib/rawPref.ts` can never reach it. It doesn't have to: every window of this app is ONE ORIGIN, so localStorage is
 // literally the same store and the cross-document 'storage' event does the notifying. Verified in
 // this Electron rather than assumed, on the case that could plausibly have differed — two
 // `file://` documents (the packaged app's `index.html` and `overlay.html`, loaded by path, no
