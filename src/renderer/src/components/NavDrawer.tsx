@@ -1,5 +1,6 @@
 import type { JSX } from 'react'
-import { Box, Chip, Divider, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Tooltip } from '@mui/material'
+import { useState } from 'react'
+import { Box, Chip, Collapse, Divider, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Tooltip } from '@mui/material'
 import SettingsIcon from '@mui/icons-material/Settings'
 import ShieldMoonIcon from '@mui/icons-material/ShieldMoon'
 import BarChartIcon from '@mui/icons-material/BarChart'
@@ -14,6 +15,9 @@ import MapIcon from '@mui/icons-material/Map'
 import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard'
 import CheckroomIcon from '@mui/icons-material/Checkroom'
 import FeedbackIcon from '@mui/icons-material/Feedback'
+import ExpandLess from '@mui/icons-material/ExpandLess'
+import ExpandMore from '@mui/icons-material/ExpandMore'
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
 // Dev-only, and its import goes with it: MUI's icon packages declare `sideEffects: false`, so
 // an icon whose only use sits inside a `false &&` branch is tree-shaken out with the branch.
 import RuleFolderIcon from '@mui/icons-material/RuleFolder'
@@ -123,8 +127,52 @@ function NavRowButton({
   )
 }
 
+/** The "More" collapse: the rows the user moved out of the main list, still reachable. The row
+ *  itself reads `selected` while a hidden view is up, and `unmountOnExit` keeps the collapsed
+ *  rows OUT of the DOM — a spec that hides `timers` sees `nav-timers` gone until "More" opens. */
+function NavOverflow({
+  views,
+  current,
+  expanded,
+  onToggleExpand,
+  onSelect
+}: {
+  views: readonly View[]
+  current: View
+  expanded: boolean
+  onToggleExpand: () => void
+  onSelect: (v: View) => void
+}): JSX.Element {
+  return (
+    <>
+      <ListItemButton data-testid="nav-more" selected={views.includes(current)} onClick={onToggleExpand}>
+        <ListItemIcon>
+          <MoreHorizIcon />
+        </ListItemIcon>
+        <ListItemText primary="More" />
+        {expanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+      </ListItemButton>
+      <Collapse in={expanded} unmountOnExit>
+        <List disablePadding sx={{ pl: 1 }}>
+          {views.map((v) => (
+            <NavRowButton
+              key={v}
+              view={v}
+              meta={ROW_META[v as keyof typeof ROW_META]}
+              current={current}
+              compact={false}
+              onSelect={onSelect}
+            />
+          ))}
+        </List>
+      </Collapse>
+    </>
+  )
+}
+
 /** The customizable middle of the drawer: Overview pinned first, then the user's `main` order,
- *  then the owner-only triage row. Split out of `NavDrawer` to keep each function small. */
+ *  the owner-only triage row, then the "More" collapse of hidden rows. Split out of `NavDrawer`
+ *  to keep each function small. */
 function NavMainList({
   view,
   onSelect
@@ -132,7 +180,9 @@ function NavMainList({
   view: View
   onSelect: (v: View) => void
 }): JSX.Element {
-  const { main } = useNavLayout()
+  const { main, overflow } = useNavLayout()
+  const [moreOpen, setMoreOpen] = useState(false)
+  const showMoreExpanded = moreOpen || overflow.includes(view)
   return (
     <List>
       <NavRowButton view="overview" meta={ROW_META.overview} current={view} compact={false} onSelect={onSelect} />
@@ -181,6 +231,15 @@ function NavMainList({
           }}
           current={view}
           compact={false}
+          onSelect={onSelect}
+        />
+      )}
+      {overflow.length > 0 && (
+        <NavOverflow
+          views={overflow}
+          current={view}
+          expanded={showMoreExpanded}
+          onToggleExpand={() => setMoreOpen((o) => !o)}
           onSelect={onSelect}
         />
       )}
