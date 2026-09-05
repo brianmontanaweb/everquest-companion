@@ -97,7 +97,8 @@ const ROW_META: Record<Extract<View, 'overview'> | (typeof CUSTOMIZABLE_VIEWS)[n
 }
 
 /** One nav row. `data-testid="nav-<view>"` is the stable handle the e2e clicks. `compact` draws
- *  the icon-only rail (Task 6 wires it; always `false` here). */
+ *  the icon-only rail — an icon and a hover tooltip, no `ListItemText` — and is `true` whenever
+ *  `useNavDensity()` reads `compact` (Task 6). */
 function NavRowButton({
   view,
   meta,
