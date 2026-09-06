@@ -670,10 +670,11 @@ async function main(): Promise<void> {
       await stepWeekSticksAcrossTabs(page)
       await stepOverallSticksToo(page)
       await stepLoadoutSectionsAreHonest(page)
-      await stepManualClearPersists(page)
-      // Leave it on This week for launch 2.
+      // Back to This week BEFORE the manual-clear step: the d0 rung renders only in the week
+      // view, and launch 2 needs the tab left on it too. Nothing below moves the mode.
       const armed = await setMode(page, MODE_WEEK, 'week')
       check('the tab is left on This week for the restart check', armed === 'week', String(armed))
+      await stepManualClearPersists(page)
       if (failures.length) await dumpArtifacts(page, 'bosses-week-FAIL')
     } finally {
       await first.close()
