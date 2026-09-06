@@ -22,6 +22,10 @@ import { SegmentHeader } from './SegmentHeader'
 import { meterPanel, panelTotals, type MeterPanel } from './petRows'
 import { scopeSources, scopeTotals } from './meterScope'
 import { useCombinePetRow } from './useCombatPrefs'
+import { useModule } from '../../lib/useModule'
+import { selfMeterLabel, withSelfLabel } from './selfMeterLabel'
+import { useShowSelfName } from './useSelfMeterName'
+import type { CharacterSnap } from '@shared/types'
 import { formatEntityText, formatSegmentText, formatTargetText } from './copyText'
 import { formatNum as fmt } from '../../lib/formatRate'
 import type { SegmentView, SourceView, TimelineView } from '@shared/combat'
@@ -304,8 +308,12 @@ export function SegmentBody({
   // persist because they are answers a user would have to re-derive; a tab is one click.)
   const [tab, setTab] = useState<MeterTab>('damage')
   const dim = scopedDimension(seg, mode, scope, roster)
-  const scoped = dim.rows
   const [combinePetRow] = useCombinePetRow()
+  // Show the self row as the tailed character's own name — `Primitive (You)` — when the user
+  // asked for it (features/combat/selfMeterLabel.ts). Off by default: `withSelfLabel` hands back
+  // `dim.rows` by reference, so this surface is byte-identical to before the feature.
+  const selfName = useModule<CharacterSnap>('character')?.character?.name ?? null
+  const scoped = withSelfLabel(dim.rows, selfMeterLabel(selfName, useShowSelfName()))
   // THE one row builder — the same call the floating overlay makes (petRows.meterPanel). Nesting
   // is an OUTGOING idea: the Incoming direction lists enemies, and none of them owns a pet of
   // yours, so the preference is folded into the `combine` argument rather than tested downstream.
