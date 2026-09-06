@@ -133,7 +133,12 @@ export default function DifficultyLadder({
           key={rung.tier}
           rung={rung}
           size={compact ? 14 : 18}
-          canMark={rung.tier === 0 ? canMarkBase : undefined}
+          // d0 only, and only while the rung is still togglable: an OPEN rung (mark it), or one
+          // this store marked by hand (undo it). A rung greened by a REAL lock is not ours to
+          // clear — leaving it clickable is a dead no-op click (whole-branch review, Minor 6).
+          canMark={
+            rung.tier === 0 && (!rung.cleared || rung.manual === true) ? canMarkBase : undefined
+          }
           onMark={rung.tier === 0 ? onToggleBase : undefined}
         />
       ))}

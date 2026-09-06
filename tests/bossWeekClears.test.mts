@@ -9,9 +9,9 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   bossClearKey,
+  nextWeekClearsOnToggle,
   parseWeekClears,
   serializeWeekClears,
-  toggleWeekClear,
   weekClearsStorageKey
 } from '../src/renderer/src/features/bosses/weekClears'
 import {
@@ -53,16 +53,37 @@ test('serializeWeekClears round-trips', () => {
   assert.deepEqual(parseWeekClears(serializeWeekClears(w)), w)
 })
 
-test('toggleWeekClear sets an absent key to nowMs and deletes a present one', () => {
-  const set = toggleWeekClear({}, 'lord nagafen', 999)
-  assert.deepEqual(set, { 'lord nagafen': 999 })
-  assert.deepEqual(toggleWeekClear(set, 'lord nagafen', 1000), {})
+// The liveness-aware toggle (whole-branch review, Critical 2). WED and NOW are inside `week`;
+// STALE is a mark made one lockout week earlier, which renders as an open rung.
+const STALE = WED - 7 * 24 * 3600_000
+const NOW = WED + 3600_000
+
+test('nextWeekClearsOnToggle: an absent mark + click sets a fresh timestamp (rung will green)', () => {
+  const next = nextWeekClearsOnToggle({}, 'lord nagafen', week, NOW)
+  assert.deepEqual(next, { 'lord nagafen': NOW })
+  assert.equal(manualClearIsLiveThisWeek(next['lord nagafen'], week), true)
 })
 
-test('toggleWeekClear does not mutate its input', () => {
-  const before = { a: 1 }
-  toggleWeekClear(before, 'b', 2)
-  assert.deepEqual(before, { a: 1 })
+test('nextWeekClearsOnToggle: a LIVE mark (this week) + click clears it', () => {
+  assert.deepEqual(
+    nextWeekClearsOnToggle({ 'lord nagafen': WED }, 'lord nagafen', week, NOW),
+    {}
+  )
+})
+
+test('nextWeekClearsOnToggle: a STALE mark (last week) + click sets a fresh this-week timestamp in ONE step', () => {
+  const next = nextWeekClearsOnToggle({ 'lord nagafen': STALE }, 'lord nagafen', week, NOW)
+  // NOT deleted — that is the Critical 2 bug. The stale key is overwritten with `nowMs`.
+  assert.deepEqual(next, { 'lord nagafen': NOW })
+  assert.equal(manualClearIsLiveThisWeek(next['lord nagafen'], week), true)
+})
+
+test('nextWeekClearsOnToggle does not mutate its input', () => {
+  const before = { a: STALE, b: WED }
+  nextWeekClearsOnToggle(before, 'b', week, NOW)
+  assert.deepEqual(before, { a: STALE, b: WED })
+  nextWeekClearsOnToggle(before, 'c', week, NOW)
+  assert.deepEqual(before, { a: STALE, b: WED })
 })
 
 test('manualClearIsLiveThisWeek is true only for a mark made in the current lockout week', () => {

@@ -6,17 +6,24 @@
 //
 // A DIFFERENT CHARACTER IS A DIFFERENT LOCKOUT. Lockouts are per character, so the storage key is
 // namespaced by `<name>_<server>` and the store re-reads on window.eq.onCharacter — the
-// useWishlist.ts `watch()` pattern, subscribed once for the life of the window. Until the first
-// onCharacter names a character, `canToggle` is false: a write before then would land in the
-// `unknown` bucket and be invisible once the real character arrives.
+// useWishlist.ts `watch()` pattern, subscribed once for the life of the window. Until a character
+// is known, `canToggle` is false: a write before then would land in the `unknown` bucket and be
+// invisible once the real character arrives.
+//
+// COLD START. `window.eq.onCharacter` is a ONE-SHOT push per character resolution, and BossView is
+// only conditionally mounted — so `watch()` can register its listener AFTER that push already
+// fired and never learn the character (the whole-branch review's Critical 1). So `watch()`
+// bootstraps with `window.eq.getCharacter()` first, then subscribes — the useProgress.ts precedent
+// (`void window.eq.getCharacter().then(...)` then `window.eq.onCharacter(...)`). If a real push has
+// already named a character by the time the bootstrap promise resolves, the push wins.
 
 import { useMemo, useSyncExternalStore } from 'react'
 import type { LockoutWindow } from './lockout'
 import { manualClearIsLiveThisWeek } from './lockout'
 import {
+  nextWeekClearsOnToggle,
   parseWeekClears,
   serializeWeekClears,
-  toggleWeekClear,
   weekClearsStorageKey,
   type WeekClears
 } from './weekClears'
@@ -26,8 +33,12 @@ export interface WeekClearsApi {
   liveBaseTs: (bossKey: string, w: LockoutWindow) => number | undefined
   /** false until a character is known — the affordance stays disabled. */
   canToggle: boolean
-  /** flip this boss's d0 mark (stamps Date.now()). No-op while `canToggle` is false. */
-  toggle: (bossKey: string) => void
+  /**
+   * Flip this boss's d0 mark for lockout week `w`: clears a mark that is live this week, otherwise
+   * stamps `Date.now()` (which also garbage-collects a stale mark from a previous week — see
+   * weekClears.ts). No-op while `canToggle` is false.
+   */
+  toggle: (bossKey: string, w: LockoutWindow) => void
 }
 
 interface Snapshot {
@@ -52,11 +63,22 @@ function emit(next: Snapshot): void {
   for (const l of [...listeners]) l()
 }
 
+function keyOf(c: { name: string; server: string } | null): string | null {
+  return c ? `${c.name}_${c.server}` : null
+}
+
 function watch(): void {
   if (watching) return
   watching = true
+  // Bootstrap for the cold start, then subscribe. A real onCharacter push that lands first wins:
+  // the promise resolution bows out once `snapshot.character` is already set.
+  void window.eq.getCharacter().then((c) => {
+    if (snapshot.character !== null) return
+    const character = keyOf(c)
+    emit({ character, clears: read(character) })
+  })
   window.eq.onCharacter((c) => {
-    const character = c ? `${c.name}_${c.server}` : null
+    const character = keyOf(c)
     emit({ character, clears: read(character) })
   })
 }
@@ -74,13 +96,12 @@ function getSnapshot(): Snapshot {
 }
 
 function write(next: WeekClears): void {
-  snapshot = { ...snapshot, clears: next }
   try {
     localStorage.setItem(weekClearsStorageKey(snapshot.character), serializeWeekClears(next))
   } catch {
     /* a storage that won't take the write still updates the screen for this session */
   }
-  for (const l of [...listeners]) l()
+  emit({ ...snapshot, clears: next })
 }
 
 export function useWeekClears(): WeekClearsApi {
@@ -92,9 +113,12 @@ export function useWeekClears(): WeekClearsApi {
         const ts = snap.clears[bossKey]
         return manualClearIsLiveThisWeek(ts, w) ? ts : undefined
       },
-      toggle: (bossKey) => {
-        if (snap.character === null) return
-        write(toggleWeekClear(snap.clears, bossKey, Date.now()))
+      toggle: (bossKey, w) => {
+        // Read `snapshot.clears` FRESH, not the memoized `snap.clears` closure: two toggles in one
+        // frame must fold over each other, and a character switch mid-frame must not be clobbered
+        // (the whole-branch review's Important 3).
+        if (snapshot.character === null) return
+        write(nextWeekClearsOnToggle(snapshot.clears, bossKey, w, Date.now()))
       }
     }),
     [snap]

@@ -31,6 +31,9 @@ function weekClearsKeys(page: Page): Promise<string[]> {
 export async function stepManualClearPersists(page: Page): Promise<void> {
   const markable = page.locator(`${RUNG_D0}[data-can-mark="1"]`).first()
   if ((await markable.count()) === 0) {
+    // TODO(follow-up): this skip path (no eligible target this week) is indistinguishable from a
+    // BROKEN GATE producing the same empty DOM — needs a card-level `hasCreditedAmbiguousKill`
+    // signal to tell "nothing to mark" from "the affordance is dead".
     console.log('  (no target has a credited open-world kill this week — manual-clear step skipped)')
     return
   }

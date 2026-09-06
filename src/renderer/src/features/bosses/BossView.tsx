@@ -174,7 +174,7 @@ function weekManualClear(
   return {
     baseTs: (s) => weekClears.liveBaseTs(bossClearKey(s.target.name), week),
     canMarkBase: (s) => weekClears.canToggle && hasCreditedAmbiguousKill(s.tiers, week),
-    onToggleBase: (s) => weekClears.toggle(bossClearKey(s.target.name))
+    onToggleBase: (s) => weekClears.toggle(bossClearKey(s.target.name), week)
   }
 }
 
