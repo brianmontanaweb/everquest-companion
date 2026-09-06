@@ -72,8 +72,8 @@ function PetNestingSetting(): JSX.Element {
  * Show YOUR name instead of "You" on the damage meters (owner ask). OFF by default: the engine
  * folds every self reference to "You" and that is what the meters have always shown; this only
  * swaps the DISPLAY of the self row — `Primitive (You)` — on the Combat tab, the Overview Damage
- * card and the floating overlay meter. The " (You)" tag stays because a group-mate could share
- * the name. Everything else (timeline, heals, alerts, copied text) is unchanged.
+ * card and the floating overlay meter, and "Copy this view" matches that. The " (You)" tag stays
+ * because a group-mate could share the name. Everything else (timeline, heals, alerts) is unchanged.
  */
 function SelfNameSetting(): JSX.Element {
   const [on, setOn] = useSelfMeterNameToggle()
@@ -92,7 +92,7 @@ function SelfNameSetting(): JSX.Element {
       />
       <Typography variant="caption" color="text.secondary">
         {on
-          ? 'Your row on the damage meters reads “your character’s name (You)”. Timeline, healing and copied text still say “You”.'
+          ? 'Your row on the damage meters reads “your character’s name (You)”. Timeline, healing and alerts still say “You”.'
           : 'Your row on the damage meters reads “You”.'}
       </Typography>
     </Stack>

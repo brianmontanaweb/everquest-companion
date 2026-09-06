@@ -316,7 +316,8 @@ export function SegmentBody({
   // on the Incoming (attackers) list is nearly impossible, and if one ever appears the
   // `<Char> (You)` label is still the correct thing to show for it.
   const selfName = useModule<CharacterSnap>('character')?.character?.name ?? null
-  const scoped = withSelfLabel(dim.rows, selfMeterLabel(selfName, useShowSelfName()))
+  const selfLabel = selfMeterLabel(selfName, useShowSelfName())
+  const scoped = withSelfLabel(dim.rows, selfLabel)
   // THE one row builder — the same call the floating overlay makes (petRows.meterPanel). Nesting
   // is an OUTGOING idea: the Incoming direction lists enemies, and none of them owns a pet of
   // yours, so the preference is folded into the `combine` argument rather than tested downstream.
@@ -344,18 +345,16 @@ export function SegmentBody({
   // shareable. The tab decides what is on SCREEN; the clipboard still gets the whole direction.
   const copyView = (): string => {
     if (panel.level !== 1) {
-      // Copy is relabel-free by design at every level: the meter shows `<Char> (You)`, the
-      // clipboard stays `You` (the out-of-scope ruling + the Preferences caption). `panel.subject`
-      // is drawn from the relabeled `scoped` list, so resolve it back to its original identity in
-      // `dim.rows` — which `withSelfLabel` never mutates, it `.map`s — before it is serialized.
-      const rawSubject = dim.rows.find((e) => e.id === panel.subject.id) ?? panel.subject
+      // Copy carries the SAME self-label the meter shows (`<Char> (You)` when the pref is on,
+      // `You` when off) at every drill level — `sourceName` applies it to the `kind === 'you'`
+      // row regardless of the subject's `.name`, keeping `copyText` a pure function of its args.
       // The SAME pets the body nests into this list — `MeterPanel.pets` IS what was nested, so the
       // clipboard can no longer drop a row the reader can see on screen.
-      return formatEntityText(seg, rawSubject, panel.pets)
+      return formatEntityText(seg, panel.subject, panel.pets, selfLabel)
     }
     return d.targetDetail && d.targetName
       ? formatTargetText(seg, d.targetName, d.targetDetail)
-      : formatSegmentText(seg, mode === 'in' ? 'in' : 'out')
+      : formatSegmentText(seg, mode === 'in' ? 'in' : 'out', selfLabel)
   }
 
   return (
