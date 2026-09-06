@@ -16,7 +16,7 @@
 // @mui/* into this bundle. petRows/dashboardData/landEvidence are pure TS and import legally.
 
 import { type JSX, useMemo } from 'react'
-import type { OverlayDrill } from '@shared/types'
+import type { OverlayDrill, CharacterSnap } from '@shared/types'
 import { type DamageCategory, type SegmentView, type SourceView } from '@shared/combat'
 import { formatNum as fmt, formatRate } from '../lib/formatRate'
 import { type FlatSkill, type SkillRow } from '../features/combat/dashboardData'
@@ -25,7 +25,6 @@ import { useCombinePetRow } from '../features/combat/useCombatPrefs'
 import { useOverlayModule } from './useOverlayModule'
 import { selfMeterLabel, withSelfLabel } from '../features/combat/selfMeterLabel'
 import { useShowSelfName } from '../features/combat/useSelfMeterName'
-import type { CharacterSnap } from '@shared/types'
 import { scopeSources } from '../features/combat/meterScope'
 import { landEvidence } from '../features/combat/landEvidence'
 import { MeterCrumb, type CrumbTotal } from './meterCrumb'
