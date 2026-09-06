@@ -239,11 +239,16 @@ function TargetKillDate({ s, compact }: { s: TargetStatus; compact: boolean }): 
 function TargetCardCaption({
   s,
   compact,
-  ladder
+  ladder,
+  canMarkBase,
+  onToggleBase
 }: {
   s: TargetStatus
   compact: boolean
   ladder?: LadderRung[]
+  /** the d0 hand-mark affordance (week view only), forwarded straight to DifficultyLadder. */
+  canMarkBase?: boolean
+  onToggleBase?: () => void
 }): JSX.Element {
   return (
     <Box sx={{ p: compact ? 0.75 : 1 }}>
@@ -265,7 +270,7 @@ function TargetCardCaption({
           exactly when the week's lock function is (see `Section`), so it is the discriminator the
           removed `lock` prop used to be. */}
       {ladder ? (
-        <DifficultyLadder rungs={ladder} compact={compact} />
+        <DifficultyLadder rungs={ladder} compact={compact} canMarkBase={canMarkBase} onToggleBase={onToggleBase} />
       ) : s.killed ? (
         <TargetKillDate s={s} compact={compact} />
       ) : (
@@ -295,14 +300,7 @@ function mobTargetForStatus(t: TargetStatus): MobTarget {
   }
 }
 
-function TargetCard({
-  s,
-  compact,
-  flash,
-  lock,
-  ladder,
-  onOpen
-}: {
+function TargetCard({ s, compact, flash, lock, ladder, canMarkBase, onToggleBase, onOpen }: {
   s: TargetStatus
   compact: boolean
   flash?: boolean
@@ -313,6 +311,9 @@ function TargetCard({
    * this card's slice — see `Section`, which is where the two inputs part company.
    */
   ladder?: LadderRung[]
+  /** the d0 hand-mark affordance (week view only): the gate, and the toggle. Forwarded to the ladder. */
+  canMarkBase?: boolean
+  onToggleBase?: () => void
   onOpen: () => void
 }): JSX.Element {
   const imgH = compact ? 70 : 120
@@ -344,7 +345,7 @@ function TargetCard({
     >
       {chip.on && <TargetKilledBadge tier={tier} />}
       <TargetCardMedia s={s} chip={chip} height={imgH} />
-      <TargetCardCaption s={s} compact={compact} ladder={ladder} />
+      <TargetCardCaption s={s} compact={compact} ladder={ladder} canMarkBase={canMarkBase} onToggleBase={onToggleBase} />
     </Paper>
   )
 }
@@ -363,6 +364,12 @@ interface GridProps {
    * record.
    */
   lockOf?: (s: TargetStatus) => TierLock[]
+  /**
+   * WEEK VIEW ONLY, absent on OVERALL. `baseTs(s)` is the live manual d0-clear timestamp (or
+   * undefined) and goes straight into `tierLadder`; `canMarkBase(s)` is the gate (a credited
+   * open-world/unknown kill this week); `onToggleBase(s)` flips the mark.
+   */
+  manualClear?: { baseTs: (s: TargetStatus) => number | undefined; canMarkBase: (s: TargetStatus) => boolean; onToggleBase: (s: TargetStatus) => void }
 }
 
 /** Everything a section needs to draw its grid — identical for both groupings. */
@@ -384,7 +391,7 @@ function wholeRows(list: TargetStatus[]): CardRow[] {
 }
 
 /** A header plus the grid under it. The ONE grid in this feature; both groupings use it. */
-function Section({ header, rows, compact, minCol, flashing, onOpenMob, lockOf }: GridProps & { header: JSX.Element; rows: CardRow[] }): JSX.Element {
+function Section({ header, rows, compact, minCol, flashing, onOpenMob, lockOf, manualClear }: GridProps & { header: JSX.Element; rows: CardRow[] }): JSX.Element {
   return (
     <Box sx={{ mb: compact ? 1.5 : 2.5 }}>
       {header}
@@ -402,13 +409,13 @@ function Section({ header, rows, compact, minCol, flashing, onOpenMob, lockOf }:
             compact={compact}
             flash={flashing.has(row.s.target.name)}
             lock={lockOf?.(row.s)}
-            // THE LADDER READS `whole`, NOT `s` (JOS-152). The chip and the date line are claims
-            // about THIS CARD's kills, which under the loadout grouping is one tier run — right
-            // for them, wrong for a ladder. "Which of this boss's difficulties has my week taken"
-            // is a question about the BOSS, and answering it from a d4-only slice would grey out
-            // four rungs a d0 card two sections down is showing green. Under the category
-            // grouping (the default) `whole` IS `s`, so nothing moves there.
-            ladder={lockOf && tierLadder(lockOf(row.whole))}
+            // THE LADDER READS `whole`, NOT `s` (JOS-152). "Which of this boss's difficulties has
+            // my week taken" is a question about the BOSS: the chip and date line describe one
+            // tier run under the loadout grouping, but a ladder built from a d4-only slice would
+            // grey out four rungs a d0 card two sections down is showing green. `manualClear`'s
+            // hand-mark rides the same `whole`. Under the category grouping `whole` IS `s`.
+            ladder={lockOf && tierLadder(lockOf(row.whole), manualClear?.baseTs(row.whole))}
+            canMarkBase={manualClear?.canMarkBase(row.whole) ?? false} onToggleBase={manualClear ? () => manualClear.onToggleBase(row.whole) : undefined}
             onOpen={() => onOpenMob(mobTargetForStatus(row.whole))}
           />
         ))}
