@@ -15,11 +15,6 @@ import type { SourceView } from '@shared/combat'
  *  Same class as `eq.combat.petRow` and `eq.combat.scope` — never crosses IPC. */
 export const SELF_METER_NAME_KEY = 'eq.combat.selfMeterName'
 
-/** A stored value degrades, it never errors (JOS-105): anything but the exact `'1'` is "off". */
-export function readShowSelfName(raw: string | null): boolean {
-  return raw === '1'
-}
-
 /**
  * The self row's display name, or `null` to leave it exactly as the engine sent it (`"You"`).
  *

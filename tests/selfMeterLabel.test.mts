@@ -3,7 +3,6 @@ import assert from 'node:assert/strict'
 import type { SourceView } from '../src/shared/combat'
 import {
   SELF_METER_NAME_KEY,
-  readShowSelfName,
   selfMeterLabel,
   withSelfLabel
 } from '../src/renderer/src/features/combat/selfMeterLabel'
@@ -13,14 +12,6 @@ const row = (kind: string, name: string): SourceView => ({ kind, name } as unkno
 
 test('the key is the documented localStorage key', () => {
   assert.equal(SELF_METER_NAME_KEY, 'eq.combat.selfMeterName')
-})
-
-test("readShowSelfName: only '1' is on; absent / '0' / junk are off", () => {
-  assert.equal(readShowSelfName('1'), true)
-  assert.equal(readShowSelfName('0'), false)
-  assert.equal(readShowSelfName(null), false)
-  assert.equal(readShowSelfName(''), false)
-  assert.equal(readShowSelfName('true'), false)
 })
 
 test('selfMeterLabel: name + on ⇒ "<name> (You)"; every other combination ⇒ null', () => {

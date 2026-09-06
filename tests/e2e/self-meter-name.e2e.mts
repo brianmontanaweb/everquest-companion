@@ -105,7 +105,11 @@ async function main(): Promise<void> {
       check('the fixture ranked at least one source', rows > 0, `${rows} rows`)
 
       const beforeText = await firstRowText(page)
-      check('a fresh install shows the bare "You" on the self row', /(^|\W)You(\W|$)/.test(beforeText), beforeText || 'empty')
+      check(
+        'a fresh install shows the bare "You" on the self row (not the name)',
+        !beforeText.includes('(You)') && /\bYou\b/.test(beforeText),
+        beforeText || 'empty'
+      )
       check('…and the pref key is absent (never touched)', (await stored(page)) === null)
 
       check(`the Combat → name toggle stores '1'`, await turnOnTheNamePref(page))
@@ -134,7 +138,7 @@ async function main(): Promise<void> {
       check('the stored pref crossed the process boundary', (await stored(page)) === '1')
 
       check('the Combat tab opens after a restart', await openCombat(page))
-      await settleCount(page, ROW)
+      check('the restart still ranks a source', (await settleCount(page, ROW)) > 0)
       const stillNamed = await settle(() => firstRowText(page), (t) => t.includes(NAMED), { timeoutMs: 15_000 })
       check(`THE NAMED SELF ROW SURVIVES A FULL RESTART — "${NAMED}"`, stillNamed.includes(NAMED), stillNamed || 'empty')
 

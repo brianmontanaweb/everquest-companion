@@ -92,7 +92,7 @@ function SelfNameSetting(): JSX.Element {
       />
       <Typography variant="caption" color="text.secondary">
         {on
-          ? 'Your row on the damage meters reads “<name> (You)”. Timeline, healing and copied text still say “You”.'
+          ? 'Your row on the damage meters reads “your character’s name (You)”. Timeline, healing and copied text still say “You”.'
           : 'Your row on the damage meters reads “You”.'}
       </Typography>
     </Stack>
