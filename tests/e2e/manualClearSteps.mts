@@ -29,11 +29,16 @@ function weekClearsKeys(page: Page): Promise<string[]> {
 
 /** LAUNCH 1: click an eligible d0 rung and prove the mark writes through to localStorage. */
 export async function stepManualClearPersists(page: Page): Promise<void> {
+  // The store must have learned the character (Critical 1). Without this a "no markable rung"
+  // result below would be indistinguishable from the store never bootstrapping — with it, a skip
+  // means only "no target has a credited open-world kill this reset week", which is legitimate and
+  // clock-dependent. What stays uncoverable here is the click path itself when the real log has no
+  // eligible target; the pure toggle logic is pinned in tests/bossWeekClears.test.mts instead.
+  const ready = await page.locator('[data-testid="boss-view"]').getAttribute('data-week-clears-ready')
+  check('the weekClears store learned the character', ready === 'true', String(ready))
+
   const markable = page.locator(`${RUNG_D0}[data-can-mark="1"]`).first()
   if ((await markable.count()) === 0) {
-    // TODO(follow-up): this skip path (no eligible target this week) is indistinguishable from a
-    // BROKEN GATE producing the same empty DOM — needs a card-level `hasCreditedAmbiguousKill`
-    // signal to tell "nothing to mark" from "the affordance is dead".
     console.log('  (no target has a credited open-world kill this week — manual-clear step skipped)')
     return
   }

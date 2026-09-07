@@ -276,8 +276,12 @@ export default function BossView({ onOpenMob }: { onOpenMob: (t: MobTarget) => v
     ...(mode === 'week' ? { lockOf, manualClear } : {})
   }
 
+  // `data-week-clears-ready` (week view only): whether useWeekClears has learned the character. A
+  // rung is markable only when it is `true`, so an e2e that finds no markable rung can tell
+  // "nothing eligible this week" (fine) from "the store never bootstrapped" (Critical 1 regressed).
+  const weekClearsReady = mode === 'week' ? String(weekClears.canToggle) : undefined
   return (
-    <Stack spacing={1.5} sx={{ height: '100%', position: 'relative' }}>
+    <Stack data-testid="boss-view" data-week-clears-ready={weekClearsReady} spacing={1.5} sx={{ height: '100%', position: 'relative' }}>
       {burst != null && <Confetti key={burst} onDone={() => setBurst(null)} />}
       <BossToolbar
         mode={mode}
