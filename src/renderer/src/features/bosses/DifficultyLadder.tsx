@@ -68,6 +68,18 @@ function rungSx(rung: LadderRung, size: number, clickable: boolean): SxProps<The
   }
 }
 
+/**
+ * The d0 hand-mark affordance for the week view (section 2a). Absent ⇒ the base rung is inert.
+ * One object rather than a `canMark`/`onToggle` pair so the three components between here and
+ * `BossView` forward one prop, not two.
+ */
+export interface BaseRungMark {
+  /** the gate: a credited open-world/unknown kill of this target landed this lockout week. */
+  canMark: boolean
+  /** flip the mark (BossView's toggle, already bound to this target and the week). */
+  onToggle: () => void
+}
+
 function Rung({
   rung,
   size,
@@ -112,14 +124,12 @@ function Rung({
 export default function DifficultyLadder({
   rungs,
   compact,
-  canMarkBase,
-  onToggleBase
+  baseMark
 }: {
   rungs: LadderRung[]
   compact: boolean
-  /** week view only: the d0 rung may be hand-marked (BossView's gate). */
-  canMarkBase?: boolean
-  onToggleBase?: () => void
+  /** week view only: the d0 rung may be hand-marked (see BaseRungMark). */
+  baseMark?: BaseRungMark
 }): JSX.Element {
   return (
     <Stack
@@ -137,9 +147,9 @@ export default function DifficultyLadder({
           // this store marked by hand (undo it). A rung greened by a REAL lock is not ours to
           // clear — leaving it clickable is a dead no-op click (whole-branch review, Minor 6).
           canMark={
-            rung.tier === 0 && (!rung.cleared || rung.manual === true) ? canMarkBase : undefined
+            rung.tier === 0 && (!rung.cleared || rung.manual === true) ? baseMark?.canMark : undefined
           }
-          onMark={rung.tier === 0 ? onToggleBase : undefined}
+          onMark={rung.tier === 0 ? baseMark?.onToggle : undefined}
         />
       ))}
     </Stack>

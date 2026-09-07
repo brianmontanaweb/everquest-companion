@@ -44,7 +44,7 @@ import CheckIcon from '@mui/icons-material/Check'
 import type { RaidTarget } from '@shared/types'
 import type { TargetStatus } from './bossStatus'
 import { tierLadder, type LadderRung, type TierLock } from './lockout'
-import DifficultyLadder from './DifficultyLadder'
+import DifficultyLadder, { type BaseRungMark } from './DifficultyLadder'
 import { loadoutGroups, type LoadoutCard, type LoadoutGrouping } from './loadoutGroups'
 import type { MobTarget } from '../mobs/mobTarget'
 import { tierStyle, type TierStyle } from '../../lib/tierChip'
@@ -240,15 +240,13 @@ function TargetCardCaption({
   s,
   compact,
   ladder,
-  canMarkBase,
-  onToggleBase
+  baseMark
 }: {
   s: TargetStatus
   compact: boolean
   ladder?: LadderRung[]
   /** the d0 hand-mark affordance (week view only), forwarded straight to DifficultyLadder. */
-  canMarkBase?: boolean
-  onToggleBase?: () => void
+  baseMark?: BaseRungMark
 }): JSX.Element {
   return (
     <Box sx={{ p: compact ? 0.75 : 1 }}>
@@ -270,7 +268,7 @@ function TargetCardCaption({
           exactly when the week's lock function is (see `Section`), so it is the discriminator the
           removed `lock` prop used to be. */}
       {ladder ? (
-        <DifficultyLadder rungs={ladder} compact={compact} canMarkBase={canMarkBase} onToggleBase={onToggleBase} />
+        <DifficultyLadder rungs={ladder} compact={compact} baseMark={baseMark} />
       ) : s.killed ? (
         <TargetKillDate s={s} compact={compact} />
       ) : (
@@ -300,7 +298,7 @@ function mobTargetForStatus(t: TargetStatus): MobTarget {
   }
 }
 
-function TargetCard({ s, compact, flash, lock, ladder, canMarkBase, onToggleBase, onOpen }: {
+function TargetCard({ s, compact, flash, lock, ladder, baseMark, onOpen }: {
   s: TargetStatus
   compact: boolean
   flash?: boolean
@@ -311,9 +309,8 @@ function TargetCard({ s, compact, flash, lock, ladder, canMarkBase, onToggleBase
    * this card's slice — see `Section`, which is where the two inputs part company.
    */
   ladder?: LadderRung[]
-  /** the d0 hand-mark affordance (week view only): the gate, and the toggle. Forwarded to the ladder. */
-  canMarkBase?: boolean
-  onToggleBase?: () => void
+  /** the d0 hand-mark affordance (week view only), forwarded to the ladder. */
+  baseMark?: BaseRungMark
   onOpen: () => void
 }): JSX.Element {
   const imgH = compact ? 70 : 120
@@ -345,7 +342,7 @@ function TargetCard({ s, compact, flash, lock, ladder, canMarkBase, onToggleBase
     >
       {chip.on && <TargetKilledBadge tier={tier} />}
       <TargetCardMedia s={s} chip={chip} height={imgH} />
-      <TargetCardCaption s={s} compact={compact} ladder={ladder} canMarkBase={canMarkBase} onToggleBase={onToggleBase} />
+      <TargetCardCaption s={s} compact={compact} ladder={ladder} baseMark={baseMark} />
     </Paper>
   )
 }
@@ -415,7 +412,7 @@ function Section({ header, rows, compact, minCol, flashing, onOpenMob, lockOf, m
             // grey out four rungs a d0 card two sections down is showing green. `manualClear`'s
             // hand-mark rides the same `whole`. Under the category grouping `whole` IS `s`.
             ladder={lockOf && tierLadder(lockOf(row.whole), manualClear?.baseTs(row.whole))}
-            canMarkBase={manualClear?.canMarkBase(row.whole) ?? false} onToggleBase={manualClear ? () => manualClear.onToggleBase(row.whole) : undefined}
+            baseMark={manualClear && { canMark: manualClear.canMarkBase(row.whole), onToggle: () => manualClear.onToggleBase(row.whole) }}
             onOpen={() => onOpenMob(mobTargetForStatus(row.whole))}
           />
         ))}
