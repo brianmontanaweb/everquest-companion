@@ -11,15 +11,6 @@
  * "You" after a restart. Two launches on ONE shared `userData` dir, so the second proves
  * persistence through a real process exit (the combat-drill / telemetry / overlay-sync pattern).
  *
- * ─────────────────────────────────────────────────────────────────────────────────────────────
- * AUTHORED BUT NOT EXECUTED IN THIS SESSION. Electron will not launch in the authoring
- * environment ("Process failed to launch!" — environmental, A/B-confirmed on a clean `main`), so
- * `npm run test:e2e -- self-meter-name` was NOT run here. This spec MUST be executed and shown
- * green before the branch merges. Every import and helper below was reconciled by hand against
- * combat-drill.e2e.mts / combat-dashboard.e2e.mts and the real appHarness / appWindow / logFixture
- * exports; the typecheck + lint pass is the only automated signal it has had.
- * ─────────────────────────────────────────────────────────────────────────────────────────────
- *
  * Run: `npm run test:e2e -- self-meter-name`
  */
 import type { Page } from 'playwright-core'
@@ -105,9 +96,11 @@ async function main(): Promise<void> {
       check('the fixture ranked at least one source', rows > 0, `${rows} rows`)
 
       const beforeText = await firstRowText(page)
+      // The row's innerText glues the name to the first stat badge ("You62% hit …"), so `\bYou\b`
+      // would miss — assert on the label's presence and the ABSENCE of the "(You)" tag the pref adds.
       check(
         'a fresh install shows the bare "You" on the self row (not the name)',
-        !beforeText.includes('(You)') && /\bYou\b/.test(beforeText),
+        beforeText.includes('You') && !beforeText.includes('(You)'),
         beforeText || 'empty'
       )
       check('…and the pref key is absent (never touched)', (await stored(page)) === null)
