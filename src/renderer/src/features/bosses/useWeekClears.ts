@@ -49,6 +49,9 @@ interface Snapshot {
 let snapshot: Snapshot = { clears: {}, character: null }
 const listeners = new Set<() => void>()
 let watching = false
+/** Set once the first `onCharacter` push arrives — the bootstrap defers to it even when it
+ *  cleared the character (a `null` push the `snapshot.character !== null` guard would miss). */
+let sawPush = false
 
 function read(character: string | null): WeekClears {
   try {
@@ -70,14 +73,16 @@ function keyOf(c: { name: string; server: string } | null): string | null {
 function watch(): void {
   if (watching) return
   watching = true
-  // Bootstrap for the cold start, then subscribe. A real onCharacter push that lands first wins:
-  // the promise resolution bows out once `snapshot.character` is already set.
+  // Bootstrap for the cold start, then subscribe. A real onCharacter push always wins: if one has
+  // already fired by the time this promise resolves, its answer stands (even a `null` clear) and
+  // the possibly-stale bootstrap value is dropped.
   void window.eq.getCharacter().then((c) => {
-    if (snapshot.character !== null) return
+    if (sawPush) return
     const character = keyOf(c)
     emit({ character, clears: read(character) })
   })
   window.eq.onCharacter((c) => {
+    sawPush = true
     const character = keyOf(c)
     emit({ character, clears: read(character) })
   })
