@@ -146,6 +146,43 @@ jobs:
       - name: Test
         run: npm test
 
+      # THE SUPPLY-CHAIN GATE. `npm audit` re-reads the SAME committed lockfile this
+      # job installed and FAILS on a high or critical advisory.
+      #
+      # WHY A STEP AND NOT A HABIT. `.npmrc` sets audit-level=moderate, but that only
+      # makes `npm install` PRINT a summary — nothing has ever failed on it, so a
+      # finding could sit in the tree until a human happened to run `npm audit` by
+      # hand. Two sets landed within a day of each other (fast-uri + nanoid + fflate +
+      # xmldom, then js-yaml GHSA-2883-xcg3-v3hh), and the second was found only
+      # because somebody thought to ask. A clean audit is a TIMESTAMP, NOT A PROPERTY.
+      # This is the thing that re-checks it on every push.
+      #
+      # WHY IT RUNS AFTER THE TESTS AND NOT AFTER `npm ci`. A job stops at its first
+      # failed step, and this gate can go red with NO CODE CHANGE — an advisory
+      # published overnight against a transitive dependency does exactly that. Put it
+      # before typecheck/lint/test and one such publication swallows every code signal
+      # for that push. Last means the code always reports first; it is still ahead of
+      # the engine build and packaging, which are the expensive steps.
+      #
+      # WHY THE WHOLE TREE AND NOT `--omit=dev`. Much of this tree's devDependencies
+      # BUILD THE SHIPPED INSTALLER (vite, esbuild, electron-builder), so a compromise
+      # there reaches users exactly as a runtime one would. `--omit=dev` would have
+      # missed four of the six advisories cleared on the branch that added this step.
+      #
+      # WHY high AND NOT moderate. It has to be a level nobody is tempted to route
+      # around; a gate that cries on every moderate transitive finding gets deleted in
+      # its first week. Moderates still PRINT here and on every install (.npmrc), so
+      # they stay visible without holding the branch.
+      #
+      # WHEN IT BLOCKS YOU AND NO FIX IS PUBLISHED YET: raise the threshold HERE, in a
+      # commit (`--audit-level=critical`). npm has no ignore-list and that is a feature
+      # — the exemption should be a diff somebody reviews and later reverts, never a
+      # file that quietly accretes forever.
+      #
+      # This step talks to the registry, so a network blip fails it. Re-run the job.
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
       # THE ENGINE THE INSTALLER CARRIES (JOS-473). The `engine` job below builds
       # DEBUG and tests it; a packaged app ships RELEASE, so the packaging jobs
       # build their own. It runs HERE as well as in `release` for one reason: the
@@ -379,6 +416,13 @@ jobs:
 
       - name: Test
         run: npm test
+
+      # See the build job for what this gate is, why it sits after the tests rather
+      # than after `npm ci`, and how to raise the threshold when no fix exists yet.
+      # It is duplicated here on purpose: a TAG is the one path that reaches users, so
+      # it is the last place that should be allowed to publish a known-high advisory.
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
 
       # A tag may not ship without release notes: the app's What's new panel reads committed
       # source, so a missing entry is silence rather than a crash. See the script's header.
