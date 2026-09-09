@@ -6,6 +6,9 @@
   "main": "./out/main/index.js",
   "author": "jmoyers",
   "private": true,
+  "engines": {
+    "node": ">=21"
+  },
   "scripts": {
     "deps:electron": "node node_modules/electron/install.js",
     "dev": "electron-vite dev --watch",

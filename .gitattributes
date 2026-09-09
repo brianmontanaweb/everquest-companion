@@ -1,4 +1,4 @@
-# JOS-251 — LINE ENDINGS FOR THE FILES A SCRAPER WRITES, and only those.
+# JOS-251 — LINE ENDINGS FOR THE FILES THAT CANNOT TAKE A CRLF CHECKOUT.
 #
 # This machine runs `core.autocrlf=true`, so git checks a text file out with CRLF and normalises it
 # back to LF on the way in. That works for hand-edited source. It does NOT work for a file a script
@@ -13,3 +13,10 @@
 # change (they were already LF); only the checkout does.
 scripts/sources/cache/** text eol=lf
 src/main/data/spells.json text eol=lf
+
+# .nvmrc joins them for a DIFFERENT reason. Nothing rewrites it; the problem is
+# that nvm reads it as a bare version string, so a trailing carriage return
+# becomes part of the version it looks for and matches nothing installed. The
+# stored blob is already LF — this pin is about the CHECKOUT, which on a box
+# running autocrlf=true would otherwise hand nvm a CR it cannot use.
+.nvmrc text eol=lf
