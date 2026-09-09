@@ -10,11 +10,11 @@
     "node": ">=21"
   },
   "scripts": {
-    "deps:electron": "node node_modules/electron/install.js",
-    "dev": "electron-vite dev --watch",
+    "deps:electron": "node scripts/ensure-electron.mjs",
+    "dev": "node scripts/ensure-electron.mjs && electron-vite dev --watch",
     "build": "electron-vite build",
-    "preview": "electron-vite preview",
-    "start": "electron-vite dev",
+    "preview": "node scripts/ensure-electron.mjs && electron-vite preview",
+    "start": "node scripts/ensure-electron.mjs && electron-vite dev",
     "scrape:posky": "tsx scripts/scrape-posky.ts",
     "scrape:bosses": "tsx scripts/scrape-bosses.ts",
     "scrape:classes": "tsx scripts/scrape-classes.ts",
