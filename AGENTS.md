@@ -133,6 +133,15 @@ docs/agents-archive.md.
     START while closure is judged on the wall clock (`FALLBACK_IDLE_MS` 60 s),
     so a runner that takes over a minute to go live has already idled the
     fight · chip filed: anchor live stamps to go-live.
+  - **SIGHTING 2 (2026-09-10, run 34553815027, `workflow_dispatch` on main — the
+    FIRST run this fork ever executed):** all four at once, the full signature —
+    `"fight"` vs `"current"` ×2, the `DropOp` where an edit was expected, and the
+    os-error-10060 connect timeout. The suite took **69.80 s** against a 60 s
+    `FALLBACK_IDLE_MS`, so the stated mechanism is not merely consistent with this
+    red, it PREDICTS it. Not re-run to green: per the rule above that would be a
+    report line, not a resolution. **Consequence for CI: `engine` is not safe to
+    make a REQUIRED check until the chip lands** — a required check carrying a
+    reproducible load-sensitive flake blocks merges on runner weather.
   - `combat-dashboard.e2e` · narrow-window resize never lands, settleStable
     settles on stale geometry · 6 sightings 2026-08-10→26, including
     STANDALONE (the full-sweep-only pattern is broken) · fix shape diagnosed
