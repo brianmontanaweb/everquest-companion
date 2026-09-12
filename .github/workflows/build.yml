@@ -66,7 +66,22 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+  # PRs GET GATED. Without this, build.yml fired only AFTER a merge, so a PR showed
+  # "no checks reported" and every gate below was a post-mortem rather than a gate --
+  # PRs #2, #3 and #4 all merged that way. `branches:` keeps it to PRs aimed at main.
+  pull_request:
+    branches: [main]
   workflow_dispatch:
+
+# ONE RUN PER REF. A PR pushed three times in a minute should cost one run, not three.
+#
+# cancel-in-progress is TRUE FOR PULL REQUESTS ONLY, and that asymmetry is the point: a
+# push to main or a tag is a RECORD -- the evidence that this commit's gates passed --
+# and a cancelled run leaves no such evidence behind. A superseded PR run has nothing to
+# record, because the branch it described no longer exists.
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Least privilege at the top: no job gets a token scope it does not name.
 # The repo default is already "read", but stating it here means a newly added
@@ -94,11 +109,15 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 (v4.4.0)
         with:
-          # 24 = the dev machine's major. NOT 20: `node --test tests/*.test.mts`
-          # relies on the runner's own glob expansion (pwsh/cmd don't expand), which
-          # Node's test runner only does from v21 — on 20 the literal pattern is
-          # "not found" and CI fails before it ever runs a test.
-          node-version: 24
+          # THE VERSION LIVES IN .nvmrc, not here. c75ead83 added that file precisely so
+          # the pin would stop living only in CI YAML, where it was duplicated four
+          # times and no contributor could find it; reading it here is what makes the
+          # file the single source rather than a second one.
+          # Why the floor matters: `node --test tests/*.test.mts` relies on the runner's
+          # own glob expansion (pwsh/cmd don't expand), which Node's test runner only
+          # does from v21 — on 20 the literal pattern is "not found" and CI fails before
+          # it runs a single test. `engines.node` states that floor; .nvmrc pins 24.
+          node-version-file: .nvmrc
           cache: npm
 
       # `.npmrc` sets ignore-scripts=true, so this installs 600+ packages
@@ -245,7 +264,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 (v4.4.0)
         with:
-          node-version: 24
+          node-version-file: .nvmrc # see the build job: .nvmrc is the one source
           cache: npm
 
       - name: Install dependencies
@@ -342,7 +361,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 (v4.4.0)
         with:
-          node-version: 24 # see the build job for why not 20
+          node-version-file: .nvmrc # see the build job: .nvmrc is the one source
           cache: npm
 
       - name: Install dependencies
