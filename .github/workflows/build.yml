@@ -66,7 +66,22 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+  # PRs GET GATED. Without this, build.yml fired only AFTER a merge, so a PR showed
+  # "no checks reported" and every gate below was a post-mortem rather than a gate --
+  # PRs #2, #3 and #4 all merged that way. `branches:` keeps it to PRs aimed at main.
+  pull_request:
+    branches: [main]
   workflow_dispatch:
+
+# ONE RUN PER REF. A PR pushed three times in a minute should cost one run, not three.
+#
+# cancel-in-progress is TRUE FOR PULL REQUESTS ONLY, and that asymmetry is the point: a
+# push to main or a tag is a RECORD -- the evidence that this commit's gates passed --
+# and a cancelled run leaves no such evidence behind. A superseded PR run has nothing to
+# record, because the branch it described no longer exists.
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Least privilege at the top: no job gets a token scope it does not name.
 # The repo default is already "read", but stating it here means a newly added
@@ -90,15 +105,26 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 (v4.4.0)
         with:
           persist-credentials: false
+          # FULL HISTORY, for the ratchet step below and nothing else: it diffs
+          # eslint.ratchet.mjs against the BASE REF, and the default depth-1 clone
+          # does not contain that commit -- `git show <base>:file` would fail. The
+          # cost is 35 MiB / ~1900 commits, noise beside the ~190 MB Electron binary
+          # this job already downloads. The engine and release checkouts stay
+          # shallow; neither runs that step.
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 (v4.4.0)
         with:
-          # 24 = the dev machine's major. NOT 20: `node --test tests/*.test.mts`
-          # relies on the runner's own glob expansion (pwsh/cmd don't expand), which
-          # Node's test runner only does from v21 — on 20 the literal pattern is
-          # "not found" and CI fails before it ever runs a test.
-          node-version: 24
+          # THE VERSION LIVES IN .nvmrc, not here. c75ead83 added that file precisely so
+          # the pin would stop living only in CI YAML, where it was duplicated four
+          # times and no contributor could find it; reading it here is what makes the
+          # file the single source rather than a second one.
+          # Why the floor matters: `node --test tests/*.test.mts` relies on the runner's
+          # own glob expansion (pwsh/cmd don't expand), which Node's test runner only
+          # does from v21 — on 20 the literal pattern is "not found" and CI fails before
+          # it runs a single test. `engines.node` states that floor; .nvmrc pins 24.
+          node-version-file: .nvmrc
           cache: npm
 
       # `.npmrc` sets ignore-scripts=true, so this installs 600+ packages
@@ -121,11 +147,78 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # THE RATCHET ONLY SHRINKS -- enforced rather than trusted. The step above
+      # already reds on NEW debt, because eslint.ratchet.mjs suppresses only the exact
+      # file x rule pairs it lists. What lint cannot see is somebody ADDING an entry to
+      # that register to hide the debt instead of fixing it, and that is what this
+      # catches: it diffs the committed file against the base ref and fails on any new
+      # pair, naming each one.
+      #
+      # NOT `npm run lint:ratchet`. That script is the GENERATOR -- running it here
+      # would regenerate the register against the current tree and WIDEN it, which is
+      # precisely the failure the ratchet design exists to prevent. See its header.
+      #
+      # Widening is the integrator's deliberate call. This does not forbid it; it makes
+      # it an argued diff rather than a quiet one.
+      #
+      # The base ref differs by event: a PR compares against the branch it targets, a
+      # push against what main was before it. A first push of a new branch carries an
+      # all-zero SHA, which the script reports as "no comparable base" and SKIPS rather
+      # than reporting every entry as new.
+      #
+      # The ref comes in through env rather than being interpolated straight into the
+      # command line: a `${{ }}` spanning several indented lines does NOT fold into one
+      # line (YAML keeps the newlines of more-indented continuations), and an expression
+      # expanded into a shell string is a shape worth not establishing even when the
+      # value is only ever a SHA.
+      - name: Lint ratchet only shrinks
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: npm run check:lint-ratchet -- $env:BASE_SHA
+        shell: pwsh
+
       # Unit + golden-window tests. tests/fixtures/*.log are committed (scrubbed),
       # so the fixture-backed golden windows run here too; only the full-log tests
       # (which need the real, growing game log) skip in CI.
       - name: Test
         run: npm test
+
+      # THE SUPPLY-CHAIN GATE. `npm audit` re-reads the SAME committed lockfile this
+      # job installed and FAILS on a high or critical advisory.
+      #
+      # WHY A STEP AND NOT A HABIT. `.npmrc` sets audit-level=moderate, but that only
+      # makes `npm install` PRINT a summary — nothing has ever failed on it, so a
+      # finding could sit in the tree until a human happened to run `npm audit` by
+      # hand. Two sets landed within a day of each other (fast-uri + nanoid + fflate +
+      # xmldom, then js-yaml GHSA-2883-xcg3-v3hh), and the second was found only
+      # because somebody thought to ask. A clean audit is a TIMESTAMP, NOT A PROPERTY.
+      # This is the thing that re-checks it on every push.
+      #
+      # WHY IT RUNS AFTER THE TESTS AND NOT AFTER `npm ci`. A job stops at its first
+      # failed step, and this gate can go red with NO CODE CHANGE — an advisory
+      # published overnight against a transitive dependency does exactly that. Put it
+      # before typecheck/lint/test and one such publication swallows every code signal
+      # for that push. Last means the code always reports first; it is still ahead of
+      # the engine build and packaging, which are the expensive steps.
+      #
+      # WHY THE WHOLE TREE AND NOT `--omit=dev`. Much of this tree's devDependencies
+      # BUILD THE SHIPPED INSTALLER (vite, esbuild, electron-builder), so a compromise
+      # there reaches users exactly as a runtime one would. `--omit=dev` would have
+      # missed four of the six advisories cleared on the branch that added this step.
+      #
+      # WHY high AND NOT moderate. It has to be a level nobody is tempted to route
+      # around; a gate that cries on every moderate transitive finding gets deleted in
+      # its first week. Moderates still PRINT here and on every install (.npmrc), so
+      # they stay visible without holding the branch.
+      #
+      # WHEN IT BLOCKS YOU AND NO FIX IS PUBLISHED YET: raise the threshold HERE, in a
+      # commit (`--audit-level=critical`). npm has no ignore-list and that is a feature
+      # — the exemption should be a diff somebody reviews and later reverts, never a
+      # file that quietly accretes forever.
+      #
+      # This step talks to the registry, so a network blip fails it. Re-run the job.
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
 
       # THE ENGINE THE INSTALLER CARRIES (JOS-473). The `engine` job below builds
       # DEBUG and tests it; a packaged app ships RELEASE, so the packaging jobs
@@ -245,7 +338,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 (v4.4.0)
         with:
-          node-version: 24
+          node-version-file: .nvmrc # see the build job: .nvmrc is the one source
           cache: npm
 
       - name: Install dependencies
@@ -342,7 +435,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 (v4.4.0)
         with:
-          node-version: 24 # see the build job for why not 20
+          node-version-file: .nvmrc # see the build job: .nvmrc is the one source
           cache: npm
 
       - name: Install dependencies
@@ -360,6 +453,13 @@ jobs:
 
       - name: Test
         run: npm test
+
+      # See the build job for what this gate is, why it sits after the tests rather
+      # than after `npm ci`, and how to raise the threshold when no fix exists yet.
+      # It is duplicated here on purpose: a TAG is the one path that reaches users, so
+      # it is the last place that should be allowed to publish a known-high advisory.
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
 
       # A tag may not ship without release notes: the app's What's new panel reads committed
       # source, so a missing entry is silence rather than a crash. See the script's header.

@@ -80,7 +80,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 (v4.4.0)
         with:
-          node-version: 24
+          # .nvmrc is the one source for this, same as build.yml.
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: package-lock.json
 
