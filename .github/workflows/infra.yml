@@ -24,27 +24,80 @@
 # ACTION PINNING follows build.yml — full 40-char commit SHAs with the floating
 # tag in a trailing comment, because a `@v4` tag is a MUTABLE pointer. Re-resolve
 # with: gh api repos/<owner>/<action>/git/ref/tags/<tag> --jq .object.sha
+#
+# WHY THE PATH FILTER IS ON THE JOB, NOT ON THE TRIGGER (JOS report, 2026-09).
+# `verify` is a REQUIRED status check on `main` (branch protection names it
+# unconditionally, the same as `build`/`engine`/`release`). A `paths:` filter on
+# `on:` controls whether the WORKFLOW RUN EXISTS at all — for a PR that touches
+# none of the paths below, no run is ever created, so no check is ever posted for
+# that context, and GitHub has nothing to reconcile against the required-checks
+# list. The PR sits "Expected — waiting for status to be reported" forever: not
+# pending in the sense of running, structurally unable to ever resolve. (PR #6
+# is the case that surfaced this — an app-only change, zero infra/feedback files
+# touched, blocked on a check that was never going to run.)
+#
+# The fix is the inverse: the workflow ALWAYS triggers, so the required context
+# always gets a check run. `changes` (below) is the only job that always executes
+# real steps — a `git diff` against the base ref, cheap and dependency-free — and
+# `verify` is gated on ITS OWN `if:`, computed from that diff. A job skipped by
+# `if:` reports conclusion SKIPPED, and GitHub treats a skipped required check as
+# PASSING for merge purposes (unlike case one above, the check run exists — it
+# just had nothing to do). An unresolvable base ref (a brand-new branch's first
+# push, `event.before` all-zero) is treated as RELEVANT rather than skipped: the failure
+# mode of guessing wrong here is a Terraform break sneaking through unverified,
+# which is worse than an occasional needless real run.
 
 name: infra
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'infra/**'
-      - 'src/shared/feedback.ts'
-      - '.github/workflows/infra.yml'
   pull_request:
-    paths:
-      - 'infra/**'
-      - 'src/shared/feedback.ts'
-      - '.github/workflows/infra.yml'
+    branches: [main]
   workflow_dispatch:
 
 permissions: {}
 
 jobs:
+  # Always runs (see the header above for why the path filter lives here and not
+  # on `on:`). Answers one question — did this push/PR touch infra's inputs —
+  # and exposes it as `changes.outputs.relevant` for `verify` to gate on.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      relevant: ${{ steps.diff.outputs.relevant }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 (v4.4.0)
+        with:
+          persist-credentials: false
+          # The base commit has to be reachable to diff against — the default
+          # depth-1 clone only has HEAD. Same reasoning as build.yml's ratchet
+          # checkout.
+          fetch-depth: 0
+
+      - name: Did infra's inputs change
+        id: diff
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            echo "no comparable base (new branch, or the first push) -- assuming relevant"
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git diff --name-only "$BASE_SHA" HEAD -- infra/ src/shared/feedback.ts .github/workflows/infra.yml | grep -q .; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+          fi
+
   verify:
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
