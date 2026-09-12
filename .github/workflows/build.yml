@@ -105,6 +105,13 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 (v4.4.0)
         with:
           persist-credentials: false
+          # FULL HISTORY, for the ratchet step below and nothing else: it diffs
+          # eslint.ratchet.mjs against the BASE REF, and the default depth-1 clone
+          # does not contain that commit -- `git show <base>:file` would fail. The
+          # cost is 35 MiB / ~1900 commits, noise beside the ~190 MB Electron binary
+          # this job already downloads. The engine and release checkouts stay
+          # shallow; neither runs that step.
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 (v4.4.0)
@@ -139,6 +146,36 @@ jobs:
       # See eslint.config.mjs and lint-worklist.md.
       - name: Lint
         run: npm run lint
+
+      # THE RATCHET ONLY SHRINKS -- enforced rather than trusted. The step above
+      # already reds on NEW debt, because eslint.ratchet.mjs suppresses only the exact
+      # file x rule pairs it lists. What lint cannot see is somebody ADDING an entry to
+      # that register to hide the debt instead of fixing it, and that is what this
+      # catches: it diffs the committed file against the base ref and fails on any new
+      # pair, naming each one.
+      #
+      # NOT `npm run lint:ratchet`. That script is the GENERATOR -- running it here
+      # would regenerate the register against the current tree and WIDEN it, which is
+      # precisely the failure the ratchet design exists to prevent. See its header.
+      #
+      # Widening is the integrator's deliberate call. This does not forbid it; it makes
+      # it an argued diff rather than a quiet one.
+      #
+      # The base ref differs by event: a PR compares against the branch it targets, a
+      # push against what main was before it. A first push of a new branch carries an
+      # all-zero SHA, which the script reports as "no comparable base" and SKIPS rather
+      # than reporting every entry as new.
+      #
+      # The ref comes in through env rather than being interpolated straight into the
+      # command line: a `${{ }}` spanning several indented lines does NOT fold into one
+      # line (YAML keeps the newlines of more-indented continuations), and an expression
+      # expanded into a shell string is a shape worth not establishing even when the
+      # value is only ever a SHA.
+      - name: Lint ratchet only shrinks
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: npm run check:lint-ratchet -- $env:BASE_SHA
+        shell: pwsh
 
       # Unit + golden-window tests. tests/fixtures/*.log are committed (scrubbed),
       # so the fixture-backed golden windows run here too; only the full-log tests
