@@ -22,7 +22,10 @@ export const IPC = {
   getProgress: 'progress:get',
   reloadInventory: 'inventory:reload',
   // renderer -> main: this quest's turn-ins, as the instants they happened at (JOS-131). It
-  // replaced `progress:setQuestComplete` when completion became a COUNT rather than a flag.
+  // replaced `progress:setQuestComplete` when completion became a COUNT rather than a flag. Its
+  // optional 3rd argument (the Sky over-hand-in fix) is what a DETECTED trade actually offered,
+  // per required item — the SAME write, not a second IPC round trip, because a log the game later
+  // truncates or rotates must not un-teach the app what an already-recorded trade offered.
   setQuestTurnIns: 'progress:setQuestTurnIns',
   // renderer -> main: state (count) or take back (null) ONE item's held count by hand — the
   // correction for an item the log and the dump cannot see the truth about (JOS-186).

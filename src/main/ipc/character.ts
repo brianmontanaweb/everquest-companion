@@ -138,13 +138,18 @@ export function registerCharacterIpc(): void {
     sendToMain(IPC.onProgress, progress)
     return { ok: true as const, path: res.path, loadedAt: res.loadedAt, progress }
   })
-  ipcMain.handle(IPC.setQuestTurnIns, (_e, questKey: string, instants: number[]) => {
-    const progress = setQuestTurnIns(activeCharId(), questKey, instants)
-    // Push so a turn-in recorded in one view (or detected from the log) reaches every other
-    // view without a refetch race.
-    sendToMain(IPC.onProgress, progress)
-    return progress
-  })
+  ipcMain.handle(
+    IPC.setQuestTurnIns,
+    (_e, questKey: string, instants: number[], offered?: Record<number, Record<string, number>>) => {
+      // `offered` (the Sky over-hand-in fix) rides the SAME write as the instants that were
+      // detected alongside it — one getProgress/setProgress/broadcast, not two.
+      const progress = setQuestTurnIns(activeCharId(), questKey, instants, offered)
+      // Push so a turn-in recorded in one view (or detected from the log) reaches every other
+      // view without a refetch race.
+      sendToMain(IPC.onProgress, progress)
+      return progress
+    }
+  )
   // ONE item's held count, stated (or taken back) by hand — JOS-186. Pushed like every other
   // progress write, because the Loot ledger and the Sky tab read the same corrected number.
   ipcMain.handle(

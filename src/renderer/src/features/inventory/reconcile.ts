@@ -1,5 +1,5 @@
 import type { CountSource, ItemCountOverride, PoskyQuest } from '@shared/types'
-import type { TurnInInstants } from '@shared/questTurnIns'
+import type { TurnInInstants, TurnInOffered } from '@shared/questTurnIns'
 import { itemCountKey } from '../../lib/itemName'
 import { questKey } from '../posky/keys'
 
@@ -111,6 +111,17 @@ export interface ReconcileInput {
    * always did, and the additivity proof in tests/skyItemOverrides.test.mts stays literal.
    */
   detectedTurnInInstants?: TurnInInstants
+  /**
+   * WHAT A DETECTED TRADE ACTUALLY OFFERED, per required item (the Sky over-hand-in fix) — quest
+   * key → one of its own turn-in instants → item key → the quantity that trade held for it. Read
+   * by every consumption pass below (`all`, the per-statement window, and both dump windows) as an
+   * ADDITIVE correction on top of the ordinary `need`-per-turn-in subtraction: two Wind Runes
+   * dropped into one slot instead of the one a Test required now cost the model two, not one.
+   * Absent for a hand-recorded turn-in (a click states no "how many did you place" answer) and for
+   * any turn-in this app detected before the fix shipped — both read as "nothing extra to add",
+   * which is exactly the `need`-only arithmetic this app has always used.
+   */
+  turnInOffered?: TurnInOffered
   /**
    * JOS-401 — what the log says you DESTROYED after the dump was generated
    * (`computeDestroyedAfter`), by counting key. Read under EVERY source that consults the dump,
@@ -353,18 +364,96 @@ function questConsumption(quests: PoskyQuest[], times: (key: string) => number):
     if (count <= 0) continue
     for (const it of q.items) {
       const k = itemCountKey(it.name)
-      const need = it.count > 0 ? it.count : 1
-      consumed[k] = (consumed[k] ?? 0) + need * count
+      consumed[k] = (consumed[k] ?? 0) + questItemNeed(it) * count
       ;(consumedBy[k] ??= []).push(count > 1 ? `${q.name} x${String(count)}` : q.name)
     }
   }
   return { consumed, consumedBy }
 }
 
-/** What one pass of `questConsumption` produces: the counts, and who to blame for each. */
+/** A quest item's required count, floored at 1 — a zero/negative requirement in the scraped data
+ *  still means "one copy", the one rule `questConsumption` and `excessConsumption` both apply. */
+function questItemNeed(it: PoskyQuest['items'][number]): number {
+  return it.count > 0 ? it.count : 1
+}
+
+/** What one pass of `questConsumption` (or `excessConsumption`) produces: the counts, and who to
+ *  blame for each. */
 interface Consumption {
   consumed: Record<string, number>
   consumedBy: Record<string, string[]>
+}
+
+/** Fold two Consumption passes into one: sum the counts, union-and-dedupe the blame lists. This is
+ *  how the over-hand-in EXCESS (below) rides on top of the ordinary `need`-based subtraction —
+ *  neither pass has to know the other exists. */
+function mergeConsumption(a: Consumption, b: Consumption): Consumption {
+  const consumed: Record<string, number> = { ...a.consumed }
+  for (const [k, n] of Object.entries(b.consumed)) consumed[k] = (consumed[k] ?? 0) + n
+  const consumedBy: Record<string, string[]> = {}
+  for (const k of new Set([...Object.keys(a.consumedBy), ...Object.keys(b.consumedBy)])) {
+    consumedBy[k] = [...new Set([...(a.consumedBy[k] ?? []), ...(b.consumedBy[k] ?? [])])]
+  }
+  return { consumed, consumedBy }
+}
+
+/**
+ * ============================================================================
+ * THE OVER-HAND-IN EXCESS (the Sky report this ticket fixes).
+ * ============================================================================
+ *
+ * `questConsumption` above subtracts what a quest NEEDED — `need * count`, the arithmetic every
+ * turn-in has used since JOS-131 — which is correct for a trade that put exactly what was required
+ * into the window. It has no way to know a trade put MORE than that in: two Wind Runes dropped into
+ * one slot instead of the one Test of Harmony needed, say. The trade window does not care and takes
+ * both; the ledger, until now, only ever charged the quest for one.
+ *
+ * `turnInOffered` (shared/questTurnIns.ts) is where a DETECTED turn-in's actual quantity survives —
+ * only a log-derived trade ever has an entry, since a hand-recorded one is a click with no "how
+ * many did you place in the window" answer. This pass reads it and charges the DIFFERENCE, so the
+ * ordinary `need`-based subtraction stays untouched and an over-hand-in is an ADDITIVE correction on
+ * top of it. `inScope` is the same instant filter the base pass used for the same witness — a dump
+ * owes only the excess from trades made after it, exactly as it owes only their ordinary `need`.
+ *
+ * Every Sky item requires exactly 1 copy today (tests/skyTurnInOverHandIn.test.mts pins this as a
+ * canary against posky.json), so `offeredQty - need` is never negative for a MATCHED trade —
+ * matching is presence, which already implies at least `need` was offered. The `Math.max(0, …)` is
+ * defense-in-depth for the day a Sky requirement above 1 ships, not a case reachable today.
+ */
+/** How much MORE than `need` one item's IN-SCOPE trades offered, summed across every instant. */
+function extraOffered(
+  byTs: Record<number, Record<string, number>>,
+  k: string,
+  need: number,
+  inScope: (ts: number) => boolean
+): number {
+  let extra = 0
+  for (const [tsKey, byItem] of Object.entries(byTs)) {
+    if (inScope(Number(tsKey)) && byItem[k] !== undefined) extra += Math.max(0, byItem[k] - need)
+  }
+  return extra
+}
+
+function excessConsumption(
+  quests: PoskyQuest[],
+  offered: TurnInOffered,
+  inScope: (ts: number) => boolean
+): Consumption {
+  const consumed: Record<string, number> = {}
+  const consumedBy: Record<string, string[]> = {}
+  for (const q of quests) {
+    const byTs = offered[questKey(q)]
+    if (!byTs) continue
+    for (const it of q.items) {
+      const k = itemCountKey(it.name)
+      const extra = extraOffered(byTs, k, questItemNeed(it), inScope)
+      if (extra > 0) {
+        consumed[k] = (consumed[k] ?? 0) + extra
+        ;(consumedBy[k] ??= []).push(q.name)
+      }
+    }
+  }
+  return { consumed, consumedBy }
 }
 
 /** How many of a quest's turn-ins happened strictly after an instant (JOS-186's window). An
@@ -376,17 +465,20 @@ function timesAfter(instants: TurnInInstants, at: number): (key: string) => numb
 /**
  * Consumption windowed to an instant, MEMOIZED per instant — every hand-stated count carries its
  * own `setAt`, and a rebaseline carries the dump's, so the distinct instants are few and each one
- * costs a single pass over the quest set.
+ * costs a single pass over the quest set. `offered` folds in the same window's over-hand-in excess
+ * (above) so a caller reads one combined number rather than remembering to merge two.
  */
 function windowedConsumption(
   quests: PoskyQuest[],
-  instants: TurnInInstants
+  instants: TurnInInstants,
+  offered: TurnInOffered
 ): (at: number) => Consumption {
   const cache = new Map<number, Consumption>()
   return (at: number): Consumption => {
     let hit = cache.get(at)
     if (!hit) {
-      hit = questConsumption(quests, timesAfter(instants, at))
+      const base = questConsumption(quests, timesAfter(instants, at))
+      hit = mergeConsumption(base, excessConsumption(quests, offered, (ts) => ts > at))
       cache.set(at, hit)
     }
     return hit
@@ -789,8 +881,11 @@ interface DumpAnchored {
 function dumpAnchored(input: ReconcileInput, quests: PoskyQuest[], windowed: (at: number) => Consumption): DumpAnchored {
   const detected = input.detectedTurnInInstants
   // The same object as `windowed` whenever the caller states no provenance, so the ordinary case
-  // still pays for one pass per instant rather than two.
-  const windowedDetected = detected === undefined ? windowed : windowedConsumption(quests, detected)
+  // still pays for one pass per instant rather than two. `turnInOffered` is passed through either
+  // way — it only ever carries DETECTED entries regardless of which instant list is windowing.
+  const offered = input.turnInOffered ?? {}
+  const windowedDetected =
+    detected === undefined ? windowed : windowedConsumption(quests, detected, offered)
   const { at: dumpAt, window: dumpWindow } = dumpTurnInWindow(input, windowedDetected)
   const since = input.lootSinceRebaseline ?? {}
   // The baseline is anchored only where the user asked for it AND something can date the dump.
@@ -833,8 +928,14 @@ export function reconcile(input: ReconcileInput): ReconcileResult {
   // The ALL-INSTANTS memoizer. It answers the per-STATEMENT windows: a hand statement's `setAt` is
   // a click time, and a hand-recorded turn-in's is too, so comparing those two is comparing like
   // with like. The dump's windows are the ones that need a provenance (`dumpAnchored`).
-  const windowed = windowedConsumption(quests, input.turnInInstants ?? {})
-  const all = questConsumption(quests, (k) => input.turnIns[k] ?? 0)
+  const turnInOffered = input.turnInOffered ?? {}
+  const windowed = windowedConsumption(quests, input.turnInInstants ?? {}, turnInOffered)
+  const all = mergeConsumption(
+    questConsumption(quests, (k) => input.turnIns[k] ?? 0),
+    // ALL-TIME owes the over-hand-in excess too, unwindowed — every detected trade, regardless of
+    // when it happened.
+    excessConsumption(quests, turnInOffered, () => true)
+  )
   const dump = dumpAnchored(input, quests, windowed)
 
   return buildRows({

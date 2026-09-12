@@ -83,9 +83,9 @@ export function sanitizeTurnInInstants(value: unknown): number[] {
 
 /** Clean a whole ledger, dropping keys left with nothing. */
 export function sanitizeTurnInLedger(value: unknown): TurnInInstants {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return {}
+  if (!isPlainRecord(value)) return {}
   const out: TurnInInstants = {}
-  for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+  for (const [key, v] of Object.entries(value)) {
     const instants = sanitizeTurnInInstants(v)
     if (instants.length > 0) out[key] = instants
   }
@@ -100,6 +100,118 @@ export function mergeTurnInInstants(a: readonly number[], b: readonly number[]):
 /** The ledger a persisted progress state holds, cleaned. Empty for a null/pre-JOS-131 store. */
 export function storedTurnIns(progress: Pick<ProgressState, 'questTurnIns'> | null): TurnInInstants {
   return sanitizeTurnInLedger(progress?.questTurnIns)
+}
+
+// ============================================================================
+// THE OFFERED-QUANTITY LEDGER (the Sky over-hand-in fix) — a PARALLEL ledger to the instants
+// above, not a new field bolted onto them. It answers a different question: not "was this quest
+// turned in and when" but "what did that one trade actually put in the window", for whichever
+// items the quest's items list requires. Only a DETECTED (log) turn-in ever has an entry — a
+// hand-recorded one is a click with no such answer — so `reconcile.ts`'s excess pass treats an
+// absent instant as "nothing extra to add", which is exactly today's `need`-only arithmetic.
+// ============================================================================
+
+/** Quest key → one of that quest's turn-in instants → item key → the quantity actually offered. */
+export type TurnInOffered = Record<string, Record<number, Record<string, number>>>
+
+/** A plain, non-null, non-array object — the one shape check every sanitizer below needs. */
+function isPlainRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v)
+}
+
+/** Clean one instant's item map: whole positive quantities keyed by item. */
+function sanitizeOfferedItems(byItem: unknown): Record<string, number> {
+  if (!isPlainRecord(byItem)) return {}
+  const items: Record<string, number> = {}
+  for (const [k, qty] of Object.entries(byItem)) {
+    if (typeof qty === 'number' && Number.isFinite(qty) && qty > 0) items[k] = Math.floor(qty)
+  }
+  return items
+}
+
+/**
+ * Clean one quest's offered-quantity map: whole non-negative-instant keys, each holding whole
+ * positive quantities keyed by item. Anything else in the slot is dropped rather than throwing the
+ * character's whole progress away — the same boundary rule as `sanitizeTurnInInstants`, and capped
+ * at the SAME `MAX_TURN_INS_PER_QUEST` in the SAME direction (ascending, keeping the oldest): this
+ * ledger and `sanitizeTurnInInstants` are keyed by the identical instants for the identical quest,
+ * so a mismatched cap policy would let one ledger drop a timestamp the other still carries the
+ * moment a quest key ever crossed the cap — decoupling the base subtraction from the excess
+ * correction for exactly the entries the cap exists to bound.
+ */
+function sanitizeOfferedForQuest(value: unknown): Record<number, Record<string, number>> {
+  if (!isPlainRecord(value)) return {}
+  const out: Record<number, Record<string, number>> = {}
+  for (const [tsKey, byItem] of Object.entries(value)) {
+    const ts = Number(tsKey)
+    if (!Number.isInteger(ts) || ts < 0) continue
+    const items = sanitizeOfferedItems(byItem)
+    if (Object.keys(items).length > 0) out[ts] = items
+  }
+  const capped = Object.entries(out)
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .slice(0, MAX_TURN_INS_PER_QUEST)
+  return Object.fromEntries(capped)
+}
+
+/** Clean a whole offered-quantity ledger, dropping quests left with nothing. */
+export function sanitizeTurnInOffered(value: unknown): TurnInOffered {
+  if (!isPlainRecord(value)) return {}
+  const out: TurnInOffered = {}
+  for (const [key, v] of Object.entries(value)) {
+    const cleaned = sanitizeOfferedForQuest(v)
+    if (Object.keys(cleaned).length > 0) out[key] = cleaned
+  }
+  return out
+}
+
+/** The offered-quantity ledger a persisted progress state holds, cleaned. */
+export function storedTurnInOffered(
+  progress: Pick<ProgressState, 'questTurnInOffered'> | null
+): TurnInOffered {
+  return sanitizeTurnInOffered(progress?.questTurnInOffered)
+}
+
+/**
+ * Merge the persisted offered-quantity ledger with a freshly-detected one, keyed by instant so
+ * re-detecting the same trade is one reading and not a conflict. Detected wins on a shared
+ * instant: it is derived fresh from the log's own event every launch, where the stored copy could
+ * only ever be a prior launch's reading of that same event.
+ */
+export function resolveTurnInOffered(
+  progress: Pick<ProgressState, 'questTurnInOffered'> | null,
+  detected: TurnInOffered
+): TurnInOffered {
+  const stored = storedTurnInOffered(progress)
+  const out: TurnInOffered = {}
+  for (const key of new Set([...Object.keys(stored), ...Object.keys(detected)])) {
+    out[key] = { ...stored[key], ...detected[key] }
+  }
+  return out
+}
+
+/**
+ * What the auto-detect effect has to persist: quests whose merged offered-quantity data carries an
+ * instant the store does not yet have. Mirrors `turnInsToPersist`'s settle-when-equal contract —
+ * once every instant is stored, this returns nothing and the write effect stops firing.
+ *
+ * HONEST LIMIT: this checks INSTANT MEMBERSHIP, not VALUE — an already-stored timestamp never
+ * gets rewritten even if a later parse of the same log line somehow disagreed with the stored
+ * quantity. Today's parser is deterministic (the same line always yields the same count), so this
+ * can't happen yet; it would need reopening if that ever stops being true.
+ */
+export function turnInOfferedToPersist(
+  progress: Pick<ProgressState, 'questTurnInOffered'> | null,
+  merged: TurnInOffered
+): { key: string; offered: Record<number, Record<string, number>> }[] {
+  const stored = storedTurnInOffered(progress)
+  const out: { key: string; offered: Record<number, Record<string, number>> }[] = []
+  for (const [key, byTs] of Object.entries(merged)) {
+    const have = stored[key] ?? {}
+    const hasNewInstant = Object.keys(byTs).some((ts) => !(ts in have))
+    if (hasNewInstant) out.push({ key, offered: byTs })
+  }
+  return out
 }
 
 /** What one quest key's turn-ins are, once the log and the store agree. */
@@ -151,6 +263,29 @@ export function turnInsToPersist(
     if (instants.length > have.length) out.push({ key, instants })
   }
   return out
+}
+
+/**
+ * State one quest's offered-quantity data, as the persisted key (the Sky over-hand-in fix).
+ *
+ * NO DOWNGRADE MIRROR TO KEEP IN STEP — unlike a turn-in's INSTANT, an older build that has never
+ * heard of this key still behaves correctly: it reads every detected trade as consuming exactly
+ * what the quest required, which is that build's whole behavior already (and was this build's,
+ * before this ticket). `sanitizeTurnInOffered` is reused rather than a bespoke per-quest cleaner,
+ * so the boundary rule is stated once.
+ */
+export function applyTurnInOffered(
+  progress: Pick<ProgressState, 'questTurnInOffered'>,
+  key: string,
+  offered: Record<number, Record<string, number>>
+): Pick<ProgressState, 'questTurnInOffered'> {
+  const clean = sanitizeTurnInOffered({ [key]: offered })[key] ?? {}
+  const ledger: TurnInOffered = {}
+  for (const [k, v] of Object.entries(sanitizeTurnInOffered(progress.questTurnInOffered))) {
+    if (k !== key) ledger[k] = v
+  }
+  if (Object.keys(clean).length > 0) ledger[key] = clean
+  return { questTurnInOffered: ledger }
 }
 
 /**

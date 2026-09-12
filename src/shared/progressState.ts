@@ -91,6 +91,25 @@ export interface ProgressState {
    * any reader needs now that consumption is windowed by SOURCE rather than by instant (JOS-141).
    */
   questTurnIns?: Record<string, number[]>
+  /**
+   * WHAT A DETECTED TURN-IN ACTUALLY OFFERED, per required item (the Sky over-hand-in fix). Quest
+   * key → one of `questTurnIns`'s own instants → item key → the quantity the trade window held for
+   * that item, when it differs from a bare presence check — two Wind Runes dropped into one trade
+   * instead of the one Test of Harmony needed, say. `reconcile.ts`'s excess pass reads this to
+   * subtract the copies a hand-in actually consumed rather than assuming every trade took exactly
+   * what the quest required.
+   *
+   * ONLY A DETECTED TURN-IN EVER HAS AN ENTRY HERE. A hand-recorded one is `Date.now()` at a
+   * click, which states no "how many did you place in the window" answer at all — the same reason
+   * `detectedTurnInInstants` exists beside `turnInInstants` in reconcile.ts. Keyed by the SAME
+   * instant `questTurnIns` carries for that trade, so a reader that already has the instant looks
+   * this up rather than re-deriving it.
+   *
+   * ADDITIVE and OPTIONAL, on the `questTurnIns` precedent right above: a store without this key
+   * reads every detected turn-in as consuming exactly what the quest required, which is the whole
+   * app's behavior before this ticket.
+   */
+  questTurnInOffered?: Record<string, Record<number, Record<string, number>>>
   /** metadata about the last inventory load */
   inventorySource?: InventorySource
   /**

@@ -1241,6 +1241,10 @@ mod tests {
     }
 
     /// A trade only closes the offer group that names the same NPC, but it always drops it.
+    ///
+    /// `items` carries `{name, count}` pairs rather than bare names since the over-hand-in fix: a
+    /// fixture with no `count` field (this one, and every offer line before the fix shipped) reads
+    /// as ONE COPY, matching what the line always states.
     #[test]
     fn a_turn_in_pairs_offers_with_the_trade_that_names_the_same_npc() {
         let snaps = fold_lines(&[
@@ -1252,8 +1256,41 @@ mod tests {
         ]);
         let rows = state_of(&snaps, "turnins");
         assert_eq!(rows.as_array().expect("rows").len(), 1);
-        assert_eq!(rows[0]["items"], json!(["Wind Rune"]));
+        assert_eq!(rows[0]["items"], json!([{"name": "Wind Rune", "count": 1}]));
         assert_eq!(rows[0]["ts"], 5);
+    }
+
+    /// THE OVER-HAND-IN (the Sky report this ticket fixes): two runes dropped into one trade slot
+    /// print ONE `offered` line carrying `count:2`, and the row must carry that 2 rather than
+    /// silently reading it as one copy. `turnins.rs` does no need-vs-offered arithmetic itself —
+    /// it is a transcript of what the trade window held, and reconcile.ts is where "how many did
+    /// the quest actually need" gets asked.
+    #[test]
+    fn an_offer_with_a_stacked_count_carries_it_onto_the_row() {
+        let snaps = fold_lines(&[
+            r#"{"kind":"offer","seq":0,"ts":1,"raw":"o","item":"Wind Rune Heda","npc":"Cilin Spellsinger","count":2}"#,
+            r#"{"kind":"trade","seq":1,"ts":2,"raw":"t","npc":"Cilin Spellsinger"}"#,
+        ]);
+        let rows = state_of(&snaps, "turnins");
+        assert_eq!(
+            rows[0]["items"],
+            json!([{"name": "Wind Rune Heda", "count": 2}])
+        );
+        // …and the two-separate-lines shape (each its own count:1) is carried as two entries
+        // rather than merged — the real multi-slot transcript this ticket also has to cover.
+        let snaps = fold_lines(&[
+            r#"{"kind":"offer","seq":0,"ts":1,"raw":"o","item":"Wind Rune Heda","npc":"Cilin Spellsinger","count":1}"#,
+            r#"{"kind":"offer","seq":1,"ts":2,"raw":"o","item":"Wind Rune Heda","npc":"Cilin Spellsinger","count":1}"#,
+            r#"{"kind":"trade","seq":2,"ts":3,"raw":"t","npc":"Cilin Spellsinger"}"#,
+        ]);
+        let rows = state_of(&snaps, "turnins");
+        assert_eq!(
+            rows[0]["items"],
+            json!([
+                {"name": "Wind Rune Heda", "count": 1},
+                {"name": "Wind Rune Heda", "count": 1}
+            ])
+        );
     }
 
     /// First sighting wins, case-folded — and the newest export wins for a dump.

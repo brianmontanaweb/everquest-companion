@@ -89,7 +89,7 @@ impl WorldRes {
             slain_by: Regex::new(r"^(.+?) has been slain by (.+?)!$").unwrap(),
             player_death: Regex::new(r"^You have been slain by (.+?)!$").unwrap(),
             mob_died: Regex::new(r"^(.+?) died\.$").unwrap(),
-            offer: Regex::new(r"^You offered [0-9,]+ (.+?) to (.+?)\.$").unwrap(),
+            offer: Regex::new(r"^You offered ([0-9,]+) (.+?) to (.+?)\.$").unwrap(),
             trade_done: Regex::new(r"^You complete the trade with (.+?)\.$").unwrap(),
             level: Regex::new(r"^You have gained a level! Welcome to level ([0-9]+)!$").unwrap(),
             exp: Regex::new(r"^You gain (party )?experience(?: \(with a bonus\))?!(?: \(([0-9.]+)%\))?$").unwrap(),
@@ -383,8 +383,12 @@ pub fn classify_turn_in(r: &WorldRes, c: &Ctx, out: &mut Ev) -> bool {
         if let Some(m) = r.offer.captures(c.text) {
             out.begin(Kind::Offer);
             out.envelope(c.seq, c.ts, c.raw);
-            out.s(Key::Item, js_trim(&m[1]));
-            out.s(Key::Npc, js_trim(&m[2]));
+            out.s(Key::Item, js_trim(&m[2]));
+            // The line always states a count -- unlike loot, which can print "a Bone Chip" with
+            // none at all, a trade-window slot has no bare-singular phrasing. Comma-stripped so a
+            // four-figure stack (the regex's own `[0-9,]+`) parses.
+            out.i(Key::Count, m[1].replace(',', "").parse().unwrap_or(1));
+            out.s(Key::Npc, js_trim(&m[3]));
             return true;
         }
     }

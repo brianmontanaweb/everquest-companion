@@ -333,8 +333,7 @@ const api = {
 
   getCharacter: (): Promise<CharacterRef | null> => ipcRenderer.invoke(IPC.getCharacter),
   listCharacters: (): Promise<CharacterRef[]> => ipcRenderer.invoke(IPC.listCharacters),
-  setCharacter: (logPath: string): Promise<SetCharacterResult> =>
-    ipcRenderer.invoke(IPC.setCharacter, logPath),
+  setCharacter: (logPath: string): Promise<SetCharacterResult> => ipcRenderer.invoke(IPC.setCharacter, logPath),
 
   // ---- EQ install-dir discovery + override (Settings gear) ----
   /** Read the effective EQ config: install root, how it resolved, log count. */
@@ -371,8 +370,10 @@ const api = {
    * An empty list means "never turned in" and clears a pre-JOS-131 completion too. Main
    * sanitizes the list before it is persisted.
    */
-  setQuestTurnIns: (questKey: string, instants: number[]): Promise<ProgressState> =>
-    ipcRenderer.invoke(IPC.setQuestTurnIns, questKey, instants),
+  // The 3rd argument (the Sky over-hand-in fix) is what a detected trade actually offered, per
+  // required item — the same write as the instants, not a second round trip.
+  setQuestTurnIns: (questKey: string, instants: number[], offered?: Record<number, Record<string, number>>): Promise<ProgressState> =>
+    ipcRenderer.invoke(IPC.setQuestTurnIns, questKey, instants, offered),
   /**
    * State ONE item's held count by hand, or take the statement back with `count: null` (JOS-186).
    * `key` is the normalized counting key; `name` is only ever a spelling. Main dates the statement
@@ -634,8 +635,7 @@ const api = {
   setCursorRing: (patch: Partial<CursorRingPrefs>): Promise<CursorRingPrefs> =>
     ipcRenderer.invoke(IPC.cursorRingSet, patch),
   /** The overlay auto-hide prefs: hide when EQ isn't running / isn't focused. */
-  getOverlayAutoHide: (): Promise<OverlayAutoHidePrefs> =>
-    ipcRenderer.invoke(IPC.overlayAutoHideGet),
+  getOverlayAutoHide: (): Promise<OverlayAutoHidePrefs> => ipcRenderer.invoke(IPC.overlayAutoHideGet),
   /** Merge-patch the overlay auto-hide prefs; applies to the live overlays immediately. */
   setOverlayAutoHide: (patch: Partial<OverlayAutoHidePrefs>): Promise<OverlayAutoHidePrefs> =>
     ipcRenderer.invoke(IPC.overlayAutoHideSet, patch),
