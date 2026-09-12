@@ -241,7 +241,9 @@ test('the 16 MB tail cap bounds the read — the head of a huge log is never see
   // A marker at the very TOP of an over-cap file, inside the time window. If it appears in the
   // slice, we read the whole file — which is the memory failure this cap exists to prevent.
   const marker = 'MARKER-THE-TAIL-CAP-MUST-EXCLUDE-THIS'
-  const filler = 'You slash a gnoll for 137 points of damage. Fillerfillerfiller.'
+  // The trailing parenthetical is a real combat-line modifier slot (e.g. "(Critical)"), so the
+  // padding rides along as a recognized, kept line rather than being scrubbed as unclassified.
+  const filler = 'You slash a gnoll for 137 points of damage. (Fillerfillerfiller)'
   const lines = [at(ANCHOR - 59 * MIN, marker)]
   const per = at(ANCHOR, filler).length + 1
   for (let i = 0; i < Math.ceil((TAIL_READ_CAP * 1.1) / per); i++) {
@@ -275,7 +277,11 @@ test('an oversize slice halves its window until the 2 MB gz cap fits', async () 
   }
   const lines: string[] = []
   for (let i = 0; i < 24_000; i++) {
-    lines.push(at(ANCHOR - 60 * MIN + i * 150, `You slash a gnoll. ${noise(120)}`))
+    // Same reasoning as the tail-cap test above: the noise rides in the real modifier slot so
+    // the scrub keeps every line instead of treating the noise as unclassified free text.
+    lines.push(
+      at(ANCHOR - 60 * MIN + i * 150, `You slash a gnoll for 100 points of damage. (${noise(120)})`)
+    )
   }
   const fx = writeLog(lines)
   try {

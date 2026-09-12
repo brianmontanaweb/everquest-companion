@@ -398,10 +398,14 @@ test('a clean row is returned completely unchanged — the sanitizer is not a re
 // =========================================================================================
 
 const COMBAT = '[Sun Aug 03 21:14:02 2026] You hit a giant rat for 42 points of damage.'
-const HEAL = '[Sun Aug 03 21:14:03 2026] You have been healed for 120 points of damage.'
+const HEAL = '[Sun Aug 03 21:14:03 2026] You healed Primitive for 120 hit points.'
 
 test('an already-scrubbed slice has a delta of ZERO — that is what makes non-zero mean something', () => {
-  const honest = [COMBAT, HEAL, '[Sun Aug 03 21:14:04 2026] You have gained a level!'].join('\n')
+  const honest = [
+    COMBAT,
+    HEAL,
+    '[Sun Aug 03 21:14:04 2026] You have gained a level! Welcome to level 10!'
+  ].join('\n')
   const res = rescrubSlice(honest)
   assert.equal(res.dropped, 0)
   assert.equal(res.cleaned, 0)
@@ -428,12 +432,19 @@ test('third-party chat a client failed to scrub is dropped HERE, and counted', (
 test('control characters in a slice line are cleaned, and counted separately', () => {
   // A cached slice is a file the operator will eventually `cat`. An ESC in a log line is an
   // escape sequence in their shell, so it never reaches the disk.
-  const nasty = [COMBAT, `${ESC}]0;pwned${BEL}[Sun] You hit a rat.`, `${ESC}[2J${HEAL}`].join('\n')
+  const nasty = [
+    COMBAT,
+    `${ESC}]0;pwned${BEL}[Sun] You hit a rat for 12 points of damage.`,
+    `${ESC}[2J${HEAL}`
+  ].join('\n')
   const res = rescrubSlice(nasty)
   assert.equal(res.dropped, 0, 'these are combat lines — the scrubber keeps them')
   assert.equal(res.cleaned, 2)
   for (const line of res.text.split('\n')) assert.equal(hasWireControls(line), false)
-  assert.ok(res.text.includes('You hit a rat.'), 'the line SURVIVES; only the escape goes')
+  assert.ok(
+    res.text.includes('You hit a rat for 12 points of damage.'),
+    'the line SURVIVES; only the escape goes'
+  )
 })
 
 test('the two counts are independent — a bypassed slice can need both', () => {

@@ -119,8 +119,32 @@
 //     user's feedback report self is THEIR active character. Absent ⇒ no self carve-out at
 //     all, which is the safe default — every /who row then falls to the drop list.
 //
-// This module is PURE: zero imports, no `node:`, no Electron, no DOM. It compiles under both
-// tsconfigs and is safe to call 50,000 times in a row on a slice.
+// SIXTH: as of 2026-09-12, a line that matches neither a carve-out nor `DROP` no longer survives
+// by default. EverQuest's `/emote <free text>` command broadcasts arbitrary player-typed text
+// with no shape `DROP` could ever enumerate, so the old "keep unless proven bad" default let a
+// bystander's own words ride through uncaught. The fix flips the DEFAULT for the unmatched case,
+// not the existing rules: `KNOWN_SAFE` (`logLineTemplates.ts`) is every line shape the live parser
+// already recognizes as a structural fact about the fight (combat, casts, loot, zone, death,
+// system messages, group membership) — ported from the real parser, not guessed, per this file's
+// own law — plus `isKnownSpellMessage`, the ~2,000-entry corpus of the app's own scraped per-spell
+// cast/wear-off text (`src/main/data/spells.json`). A line that matches none of
+// DROP/KNOWN_SAFE/isKnownSpellMessage/the carve-outs is now DROPPED. The one residual this leaves:
+// the live parser's own LAST-RESORT heuristic for unrecognized spell-landing flavor text
+// (`emote_self`/`emote_pet` in `casts.rs`, a coarse verb-based guess, not a verified match against
+// known game text) is deliberately NOT ported — it can't be told apart from player-typed `/emote`
+// text, so porting it would reopen a narrowed version of the exact hole this fix closes. A line
+// only that heuristic would have recognized now falls to DROP — a completeness loss for a
+// feedback slice, never a privacy regression. See `logLineTemplates.ts`'s header for the full
+// accounting. EXEMPT from the new default: a CONTINUATION line (no `[timestamp] ` prefix at
+// all) — a wrapped/malformed fragment of whatever line preceded it, which
+// `src/main/feedback/slice.ts`'s window logic already treats as tied to that line, never a
+// freshly-typed command of its own. It keeps the old "drop only if DROP matches" rule.
+//
+// This module is PURE: its one import is `./logLineTemplates` (equally pure, see its header), and
+// otherwise zero imports — no `node:`, no Electron, no DOM. It compiles under both tsconfigs and
+// is safe to call 50,000 times in a row on a slice.
+
+import { KNOWN_SAFE, isKnownSpellMessage } from './logLineTemplates'
 
 /** The owner-only pet-claim tell — an NPC pet's binding signal, NOT a person's words. */
 export const PET_CLAIM_RE =
@@ -172,8 +196,9 @@ export const PET_SAY_RE = new RegExp(
  * The two captures are deliberately PERMISSIVE — a charmed pet answers with a mob's name
  * (`a large heart spider`), and the leader is whatever the game printed. Nothing rides on the
  * captures being tight, because in BOTH readers the whole guard is an equality test against a
- * name supplied from outside: the owner's `selfName` here, `ParserConfig.characterName` in
- * src/main/log/parseCasts.ts. That is precisely how the self-`/who` rule is built (a permissive
+ * name supplied from outside: the owner's `selfName` here, the `character` argument in
+ * engine/crates/eqlog/src/parse/casts.rs's `classify_pet_leader`. That is precisely how the
+ * self-`/who` rule is built (a permissive
  * row regex, the name is the guard), and for the same reason — a `/who` row and a leader say are
  * both a common grammar in which only the name distinguishes you from a stranger.
  *
@@ -227,7 +252,8 @@ function escapeRe(s: string): string {
  * The self `/who` row matcher for one character name.
  *
  * The optional `* RIP *` / ` AFK ` prefixes mirror what the RUNTIME rule accepts
- * (src/main/log/parseWho.ts): this character has printed neither yet, but a scrub that drops a
+ * (engine/crates/eqlog/src/parse/who.rs's `who_row`): this character has printed neither yet,
+ * but a scrub that drops a
  * row the parser would have claimed silently deletes evidence from a future fixture. The
  * trailing `\b` already covers the corpse row's `<Name>'s corpse`. The NAME is the whole
  * guard — every stranger's row falls through to the /who DROP rule.
@@ -269,7 +295,21 @@ export function isThirdPartyChat(line: string, opts?: ScrubOpts): boolean {
     // the owner's own /who row (`[50 PAL/MNK/ENC] Primitive (Dark Elf) ...`) is their identity
     if (cachedSelfWhoRe(selfName).test(b)) return false
   }
-  return DROP.some((re) => re.test(b))
+  if (DROP.some((re) => re.test(b))) return true
+  if (KNOWN_SAFE.some((re) => re.test(b))) return false
+  if (isKnownSpellMessage(b)) return false
+  // A CONTINUATION line — no `[timestamp] ` prefix at all (`body` found nothing to strip) — is a
+  // wrapped or malformed fragment of whatever line came before it, never a freshly-typed command
+  // of its own; the feedback slice's own window logic (src/main/feedback/slice.ts) already treats
+  // it that way, buffering it and keeping it only between two in-window stamped lines. `/emote`
+  // and every other player command always produces its OWN stamped line, so the new default-deny
+  // below (which exists to catch exactly that) does not apply here — a continuation keeps the old
+  // "drop only if DROP matches" rule.
+  if (b === line) return false
+  // Anything not explicitly known-safe is now DROPPED by default (see the header's "SIXTH").
+  // This is what closes `/emote`: free text has no shape `DROP` could enumerate, so the fix is a
+  // default flip on the unmatched case, not a new blocklist entry.
+  return true
 }
 
 /** Convenience inverse — `lines.filter((l) => scrubKeep(l, opts))`. */
