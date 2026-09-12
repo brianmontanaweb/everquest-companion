@@ -2586,6 +2586,41 @@ a round number.
     `tests/e2e/viewRemount.mts` HOLDS the precondition instead (mark the keyed
     subtree, read before you `check`, discard an attempt that lost its mount).
 
+## Flake ledger — the engined combat live-meter row, sighting 2, full detail
+
+<!-- Written here rather than in AGENTS.md: the row's home is the ledger in
+     AGENTS.md, but that file sat 10 words under its 20,000-word ceiling when
+     this sighting landed, and the protocol is to move the long-form history
+     here with a pointer back rather than nibble words to sneak under. -->
+
+  - `engined tests/combat.rs` live-meter tests · **SIGHTING 2 — 2026-09-10, run
+    34553815027, `workflow_dispatch` on `main`.** The FIRST workflow run this
+    fork ever executed (it had 0 runs across all three workflows while PRs #2,
+    #3 and #4 merged with "no checks reported"), and it reproduced the
+    2026-09-04 row IN FULL — four failures where the first sighting saw three:
+    `a_host_that_can_only_name_an_offset_still_keeps_a_live_fight_open` and
+    `a_live_meter_is_stamped_with_the_engines_own_clock_and_agrees_with_a_second_fold`
+    both `left: "fight"` / `right: "current"`;
+    `a_live_meter_window_updates_the_cells_that_moved_and_no_others` on
+    `a hit into an open fight is an edit, not DropOp(... op: Drop)`; and
+    `a_new_row_enters_the_meter_as_an_insert_anchored_on_one_the_client_holds`
+    on `transport io: ... (os error 10060)` at `harness/mod.rs:359` — the
+    connect timeout. · **THE MECHANISM DOES NOT MERELY FIT, IT PREDICTS:** the
+    suite took **69.80 s** against a 60 s `FALLBACK_IDLE_MS`, so the fight had
+    idled before the test's hit landed, exactly as `Staged::line` stamping
+    relative to TEST START rather than to go-live implies. · **NOT re-run to
+    green** — the ledger's own rule makes that a report line, never a
+    resolution, and a re-run would have destroyed the timing measurement that
+    makes this row predictive rather than anecdotal. · **SIGHTING 3, THE OTHER
+    DIRECTION (2026-09-12, run 34697111589, `pull_request` on PR #5): GREEN.**
+    Same code, same runner image, no change to the engine — which is the
+    load-sensitivity claim confirmed from both sides within two days. ·
+    **CONSEQUENCE FOR CI, acted on:** the CI plan had named `engine` a REQUIRED
+    status check; on this evidence the owner revised it to `build` only
+    (2026-09-12). `engine` still runs on every PR and still reports red, it
+    simply cannot block a merge while it carries a flake that reproduces on
+    `windows-latest`. Promote it when the chip lands.
+
 ## Flake ledger — the respawn-timers row, resolved, full history
 
 <!-- Moved verbatim from AGENTS.md (lines 127-136 at the 2026-08-13 collapse). -->
