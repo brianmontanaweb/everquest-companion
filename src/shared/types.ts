@@ -367,11 +367,22 @@ export interface LootEvent {
   created?: string
 }
 
+/**
+ * One item slot inside a trade window, as the line stated it (JOS report — the Sky over-hand-in
+ * bug: two Wind Runes dropped into one slot instead of the one the quest needed). `count` is the
+ * number the game itself printed (`You offered <N> <Item> to <Npc>.`), never inferred — the line
+ * always states one explicitly, so `1` here means the line said `1`, not that nothing was heard.
+ */
+export interface TurnInItemOffer {
+  name: string
+  count: number
+}
+
 /** A completed NPC trade / quest turn-in ("You offered … / complete the trade"). */
 export interface TurnInEvent {
   ts: number
   npc: string
-  items: string[]
+  items: TurnInItemOffer[]
 }
 
 /** A level-up ("You have gained a level! Welcome to level N!"). */

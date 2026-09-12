@@ -15,10 +15,42 @@
 // celebrating", owner 2026-08-04). Exactly-once is still guaranteed per turn-in, because the
 // baseline advances to the count that just fired.
 
-import type { PoskyQuest, TurnInEvent } from '@shared/types'
-import type { TurnInInstants } from '@shared/questTurnIns'
+import type { PoskyQuest, TurnInEvent, TurnInItemOffer } from '@shared/types'
+import type { TurnInInstants, TurnInOffered } from '@shared/questTurnIns'
 import { itemCountKey } from '../../lib/itemName'
 import { questKey } from './keys'
+
+/** Total quantity offered per item key in ONE trade, summed across every slot/line that named it —
+ *  two `offered 1 X` lines and one `offered 2 X` line read the same. */
+function tallyOffered(items: readonly TurnInItemOffer[]): Map<string, number> {
+  const qtyByKey = new Map<string, number>()
+  for (const slot of items) {
+    const k = itemCountKey(slot.name)
+    // Defensive: this crosses the engine/renderer boundary as an `unknown` cast (useModule.ts), so
+    // a malformed count floors at 1 rather than corrupting held-item math.
+    const n = Number.isFinite(slot.count) && slot.count > 0 ? Math.floor(slot.count) : 1
+    qtyByKey.set(k, (qtyByKey.get(k) ?? 0) + n)
+  }
+  return qtyByKey
+}
+
+/** What one matched quest's required items actually got in this trade, keyed by counting key. */
+function offeredForQuest(quest: PoskyQuest, qtyByKey: Map<string, number>): Record<string, number> {
+  const byItem: Record<string, number> = {}
+  for (const it of quest.items) {
+    const k = itemCountKey(it.name)
+    byItem[k] = qtyByKey.get(k) ?? 0
+  }
+  return byItem
+}
+
+/** What matching the log's turn-ins against the quest set produces: the dating/counting ledger
+ *  every reader has always gotten, plus what each detected trade actually offered (the Sky
+ *  over-hand-in fix) — see `TurnInOffered`'s own doc for why that is a separate map. */
+export interface DetectedTurnIns {
+  instants: TurnInInstants
+  offered: TurnInOffered
+}
 
 /**
  * Match logged turn-ins to quests: a quest is turned in when its giver received
@@ -26,24 +58,30 @@ import { questKey } from './keys'
  * matching boundary (a `Sphinx Claw +1` offer satisfies a `Sphinx Claw` requirement,
  * Task #42), so the user's `Brass Knuckles +2` loot satisfies the base requirement.
  *
- * Returns the INSTANTS, quest key → every `TurnInEvent.ts` that satisfied it (JOS-131). The
- * count is the list's length; the instants are what let a turn-in be placed relative to an
- * inventory dump, and what let the log's turn-ins merge with the persisted ones without
- * double-counting (shared/questTurnIns.ts owns that merge).
+ * Returns the INSTANTS, quest key → every `TurnInEvent.ts` that satisfied it (JOS-131), alongside
+ * the OFFERED map: quest key → that same instant → item key → how many the trade actually held for
+ * it, summed across every slot/line that named the item (two `offered 1 X` lines and one
+ * `offered 2 X` line read the same). The count is the instants list's length; the instants are what
+ * let a turn-in be placed relative to an inventory dump, and what let the log's turn-ins merge with
+ * the persisted ones without double-counting (shared/questTurnIns.ts owns both merges).
  */
-export function countTurnIns(turnIns: readonly TurnInEvent[], quests: PoskyQuest[]): TurnInInstants {
-  const out: TurnInInstants = {}
+export function countTurnIns(turnIns: readonly TurnInEvent[], quests: PoskyQuest[]): DetectedTurnIns {
+  const instants: TurnInInstants = {}
+  const offered: TurnInOffered = {}
   for (const t of turnIns) {
     const npc = t.npc.toLowerCase()
-    const offered = new Set(t.items.map((i) => itemCountKey(i)))
+    const qtyByKey = tallyOffered(t.items)
     for (const q of quests) {
       if (q.giver?.toLowerCase() !== npc) continue
-      if (q.items.length > 0 && q.items.every((it) => offered.has(itemCountKey(it.name)))) {
-        ;(out[questKey(q)] ??= []).push(t.ts)
+      if (q.items.length === 0 || !q.items.every((it) => qtyByKey.has(itemCountKey(it.name)))) {
+        continue
       }
+      const qKey = questKey(q)
+      ;(instants[qKey] ??= []).push(t.ts)
+      ;(offered[qKey] ??= {})[t.ts] = offeredForQuest(q, qtyByKey)
     }
   }
-  return out
+  return { instants, offered }
 }
 
 /** A turn-in that just happened, and which number it was for that quest. */

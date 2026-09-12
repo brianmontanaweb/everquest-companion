@@ -19,7 +19,7 @@ import { clampBgAlpha, clampTextScale } from '../shared/types'
 import type { InventorySource } from '../shared/outputs/baseline'
 // The turn-in ledger's write rule (JOS-131). Shared with the renderer so "what a stored turn-in
 // list may contain" has ONE definition on both sides of the IPC.
-import { applyTurnIns } from '../shared/questTurnIns'
+import { applyTurnIns, applyTurnInOffered } from '../shared/questTurnIns'
 import { normalizeVoicePrefs } from '../shared/speechText'
 import {
   normalizeCursorRing,
@@ -202,10 +202,17 @@ export function setInventory(
  * The renderer states the whole list (the `setQuestComplete` shape this replaces did the same),
  * so the list is sanitized and the downgrade mirror is written — both in `applyTurnIns`, shared
  * with the renderer so the rule has one definition on either side of the IPC.
+ *
+ * `offered` IS THE SAME WRITE, NOT A SECOND ONE (the Sky over-hand-in fix). A detected turn-in's
+ * instant and what its trade actually offered are learned in the same renderer pass
+ * (useTurnInLedger.ts) and used to arrive as two independent IPC calls — two `getProgress`, two
+ * `setProgress` (each a synchronous whole-file write), two `onProgress` broadcasts, for one logical
+ * event, on every ordinary turn-in rather than only the rare over-hand-in. Folding it into this
+ * call's own read-modify-write halves all of that back to one.
  */
-export function setQuestTurnIns(charId: string, questKey: string, instants: number[]): ProgressState {
+export function setQuestTurnIns(charId: string, questKey: string, instants: number[], offered?: Record<number, Record<string, number>>): ProgressState {
   const p = getProgress(charId)
-  return setProgress(charId, { ...p, ...applyTurnIns(p, questKey, instants) })
+  return setProgress(charId, { ...p, ...applyTurnIns(p, questKey, instants), ...(offered && applyTurnInOffered(p, questKey, offered)) })
 }
 
 // ----- Class-combo user corrections (docs/plans/class-combo-inference.md § 7) -----
