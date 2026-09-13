@@ -465,6 +465,27 @@ threshold. The short version:
   `npm test` after each wave; the engine waves additionally need the
   byte-identical regression gate (law 8's tripwire). Keep the tree buildable
   throughout. Wave map: docs/agents-archive.md.
+
+## Formatting (Prettier)
+
+`npm run format:check` gates CI in BOTH build.yml jobs, right after lint.
+Config lives in `prettier.config.mjs` — chosen to match the tree's existing
+de-facto style (no semicolons, single quotes) rather than Prettier's
+defaults, so the one-time mass-reformat (2026-09-13) was a pure
+whitespace/quote/semicolon diff. `.git-blame-ignore-revs` keeps `git blame`
+(and GitHub's web blame) pointing past that commit.
+
+- **Scope matches ESLint's exactly.** Same extensions
+  (`.ts/.tsx/.mts/.cts/.js/.jsx/.mjs/.cjs`), same excluded generated files
+  (`protocol.generated.ts`, `eslint.ratchet.mjs`) — see `.prettierignore`.
+  `*.json`/`*.yml`/`*.md` are deliberately NOT formatted.
+- **Local pre-commit hook auto-formats staged files** (husky + lint-staged,
+  `.husky/pre-commit`) — needs a one-time manual step after cloning; see
+  Toolchain gotchas.
+- **`eslint-config-prettier` is defensive, not a fix for an active
+  conflict** — typescript-eslint's presets carry no raw formatting rules by
+  design. It just stops one from being silently reintroduced later.
+
 ## Architecture
 
 **THE FOLD IS IN THE RUST ENGINE (JOS-459, deleted from TypeScript by JOS-499).** One child process
