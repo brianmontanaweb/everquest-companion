@@ -87,18 +87,25 @@ inspection pending a decision.
 **Executing the rulings surfaced one more real thing:** of the 12 regex
 fixes, 10 were genuinely the anticipated line-wrap issue. The other 2
 (`healthCounters.test.mts`, `imageCacheHeal.test.mts`) were not — they
-uncovered a **genuine pre-existing bug** in `src/main/imageCache.ts`: an
-unbounded `indexOf('return null\n  }')` call that matched an earlier,
-unrelated occurrence of that same text, producing an inverted/empty slice.
-This was previously masked because the search used a literal LF and the file
-was CRLF before this plan's `endOfLine: 'lf'` setting normalized it —
-confirmed via `git show HEAD:src/main/imageCache.ts` that the bug predates
-this plan and had nothing to do with Prettier. Fixed by bounding both
-`indexOf` calls with a start index (a 1-line change in 2 test-adjacent
-source locations, reviewed and approved).
+uncovered a **genuine pre-existing bug in those two test files' own
+extraction logic**, not in `src/main/imageCache.ts` itself (which has no
+defect — it was never touched by this fix). Each test slices a region of
+`imageCache.ts`'s source text between two `indexOf()` calls to build its
+structural pin, and the second call
+(`indexOf('return null\n  }')`) had no start bound, so it could match an
+earlier, unrelated occurrence of that same closing text elsewhere in the
+file, producing an inverted/empty slice. This was previously masked because
+the search used a literal LF and the file was CRLF before this plan's
+`endOfLine: 'lf'` setting normalized it — confirmed via
+`git show HEAD:src/main/imageCache.ts` that this predates the plan and had
+nothing to do with Prettier. Fixed by bounding both `indexOf` calls with a
+start index, in the two test files themselves (a 1-line change each,
+reviewed and approved).
 
-Ratchet re-baseline landed 100 files / 105 entries. `npm run lint` came back
-fully clean; commit `d518b711`.
+Ratchet re-baseline landed 100 files / 105 entries total (the 104 new,
+reflow-driven file×rule entries above plus the 1 pre-existing
+`src/main/windows.ts` entry that predates this plan). `npm run lint` came
+back fully clean; commit `d518b711`.
 
 **Fix round (commits `d518b711`..`e4e22bc7`):** review of `d518b711`
 mechanically reconstructed `prettier(base)` for all 1338 changed files and
@@ -213,14 +220,17 @@ Tasks 1-5's actual landed state. No findings.
   Windows/Git-for-Windows (this repo's only currently supported platform),
   where `core.fileMode` is commonly unenforced. Only matters if non-Windows
   contributors are ever added.
-- **A `.tsbuildinfo`-adjacent AGENTS.md forward reference:** the Task 4
-  bullet said "CI runs `npm run format:check`" before Task 5 (which actually
-  wires that) had landed — a forward reference within the same plan, true by
-  the time the branch was reviewed as a whole, not a real gap.
-- **`indexOf` fix robustness:** the 2-file `imageCache.ts`-adjacent fix could
-  additionally assert `readEnd > readStart` to close the failure class more
-  robustly rather than just relying on the bounded start index. Real
-  improvement, not required; left for a future pass.
+- **An AGENTS.md forward reference (Task 4's own bullet, unrelated to
+  `.tsbuildinfo`):** the Task 4 bullet said "CI runs `npm run format:check`"
+  before Task 5 (which actually wires that) had landed — a forward reference
+  within the same plan, true by the time the branch was reviewed as a whole,
+  not a real gap.
+- **`indexOf` fix robustness:** the 2-file test-extraction fix
+  (`healthCounters.test.mts`, `imageCacheHeal.test.mts` — both slice
+  `imageCache.ts`'s source text, neither is a change to `imageCache.ts`
+  itself) could additionally assert `readEnd > readStart` to close the
+  failure class more robustly rather than just relying on the bounded start
+  index. Real improvement, not required; left for a future pass.
 - **`format`/`format:check` script placement** (Task 1) landed near
   `lint:ratchet` rather than immediately adjacent to `lint`/`lint:fix` in
   `package.json`. Same logical script group, zero functional impact, not
