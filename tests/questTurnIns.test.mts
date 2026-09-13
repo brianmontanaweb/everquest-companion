@@ -44,9 +44,12 @@ import {
   MAX_TURN_INS_PER_QUEST,
   mergeTurnInInstants,
   resolveTurnIns,
+  resolveTurnInOffered,
   sanitizeTurnInInstants,
   sanitizeTurnInLedger,
+  sanitizeTurnInOffered,
   turnInBadgeLabel,
+  turnInOfferedToPersist,
   turnInsToPersist
 } from '../src/shared/questTurnIns'
 import {
@@ -146,6 +149,75 @@ test('only the turn-ins the store is missing are written back', () => {
   assert.deepEqual(turnInsToPersist(stored, { [CLAW_KEY]: [1000, 2000] }), [
     { key: CLAW_KEY, instants: [1000, 2000] }
   ])
+})
+
+// =============================================================================
+// 1b. THE OFFERED-QUANTITY LEDGER (the Sky over-hand-in fix) — a PARALLEL, independently-mergeable
+// ledger, deliberately not a new parameter on resolveTurnIns/turnInsToPersist above: those merge
+// INSTANTS (dating and counting, which every turn-in has), and this merges the QUANTITY a detected
+// trade actually offered, which only a log-detected turn-in ever carries at all. Persisted the same
+// way instants are (ProgressState.questTurnInOffered), for the same reason: a log the game later
+// truncates or rotates must not un-teach the app what an already-recorded trade offered.
+// =============================================================================
+
+test('sanitize keeps whole positive instants keying whole positive quantities, and drops the rest', () => {
+  assert.deepEqual(
+    sanitizeTurnInOffered({
+      [CLAW_KEY]: {
+        1000: { 'wind rune geza': 2 },
+        // dropped: negative ts, a non-integer ts, a non-object item map, a zero/negative/NaN qty,
+        // and a non-numeric qty -- the same boundary rule as sanitizeTurnInInstants.
+        '-5': { 'wind rune geza': 1 },
+        1000.5: { 'wind rune geza': 1 },
+        2000: 'junk',
+        3000: { 'wind rune geza': 0, 'sphinx claw': -1, junk: Number.NaN, ok: 'nope' }
+      },
+      empty: { 1000: { junk: 0 } }
+    }),
+    { [CLAW_KEY]: { 1000: { 'wind rune geza': 2 } } }
+  )
+  for (const bad of ['not an object', undefined]) assert.deepEqual(sanitizeTurnInOffered(bad), {})
+})
+
+test('the offered ledger caps in the SAME direction as sanitizeTurnInInstants — oldest survive', () => {
+  // Both ledgers are keyed by the identical instants for the identical quest, so a mismatched cap
+  // direction would let one ledger drop a timestamp the other still carries the moment a quest key
+  // ever crossed the cap. sanitizeTurnInInstants keeps the smallest (oldest) MAX_TURN_INS_PER_QUEST
+  // values (ascending sort, slice from the front) — this sibling has to agree.
+  const many: Record<number, Record<string, number>> = {}
+  for (let i = 0; i < 500; i++) many[i] = { 'wind rune geza': 2 }
+  const cleaned = sanitizeTurnInOffered({ [CLAW_KEY]: many })[CLAW_KEY]
+  assert.equal(Object.keys(cleaned ?? {}).length, MAX_TURN_INS_PER_QUEST)
+  assert.ok(0 in (cleaned ?? {}), 'the oldest instants survive the cap, matching the sibling ledger')
+  assert.ok(!(499 in (cleaned ?? {})), 'the newest are the ones dropped')
+})
+
+test('THE MERGE: a re-detected trade keeps ONE reading of what it offered, by instant', () => {
+  const stored = progress({ questTurnInOffered: { [CLAW_KEY]: { 1000: { 'wind rune geza': 2 } } } })
+  const resolved = resolveTurnInOffered(stored, { [CLAW_KEY]: { 1000: { 'wind rune geza': 2 } } })
+  assert.deepEqual(resolved, { [CLAW_KEY]: { 1000: { 'wind rune geza': 2 } } })
+})
+
+test('a hand-recorded turn-in is simply absent here — a click states no quantity', () => {
+  // Mirrors `a pre-JOS-131 store floors at one turn-in` above: absence is the honest answer, not a
+  // guessed 1, and reconcile.ts's excess pass treats an absent key as "nothing extra to add".
+  const stored = progress({ questTurnIns: { [CLAW_KEY]: [1000] }, completedQuests: [CLAW_KEY] })
+  assert.deepEqual(resolveTurnInOffered(stored, {}), {})
+})
+
+test('only the offered data the store is missing is written back', () => {
+  const stored = progress({ questTurnInOffered: { [CLAW_KEY]: { 1000: { 'wind rune geza': 2 } } } })
+  assert.deepEqual(
+    turnInOfferedToPersist(stored, { [CLAW_KEY]: { 1000: { 'wind rune geza': 2 } } }),
+    [],
+    'settles, so no write loop'
+  )
+  assert.deepEqual(
+    turnInOfferedToPersist(stored, {
+      [CLAW_KEY]: { 1000: { 'wind rune geza': 2 }, 2000: { 'sphinx claw': 3 } }
+    }),
+    [{ key: CLAW_KEY, offered: { 1000: { 'wind rune geza': 2 }, 2000: { 'sphinx claw': 3 } } }]
+  )
 })
 
 // =============================================================================

@@ -118,6 +118,31 @@ mod tests {
         );
     }
 
+    /// The Sky over-hand-in bug (JOS report, 2026-09): the trade window's own line states how many
+    /// copies were offered, and the parser must carry that number rather than discard it. Two
+    /// wind runes dropped into one slot print `You offered 2 Wind Rune Heda to ...`, and the
+    /// ordinary one-copy case still states `1` explicitly -- the line never omits the count the
+    /// way a loot line can say `a Bone Chip` with no number at all.
+    #[test]
+    fn an_offer_carries_the_count_the_line_states() {
+        let p = bare();
+        let raw = "[Wed Aug 19 16:21:47 2026] You offered 2 Wind Rune Heda to Cilin Spellsinger.";
+        assert_eq!(
+            parse_one(&p, raw),
+            format!(
+                r#"{{"kind":"offer","seq":0,"ts":1787181707000,"raw":{},"item":"Wind Rune Heda","count":2,"npc":"Cilin Spellsinger"}}"#,
+                serde_json::to_string(raw).unwrap()
+            )
+        );
+        // the ordinary case reads 1 explicitly -- never omitted, and never confused with the loot
+        // line's "an?" shape, which this line never prints.
+        let ordinary = parse_one(
+            &p,
+            "[Wed Aug 19 16:21:47 2026] You offered 1 Sphinx Claw to Dason Goldblade.",
+        );
+        assert!(ordinary.contains(r#""count":1"#), "{ordinary}");
+    }
+
     #[test]
     fn a_line_with_no_timestamp_is_no_event_at_all() {
         let p = bare();
