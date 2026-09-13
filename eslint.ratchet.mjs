@@ -27,11 +27,13 @@
 // ============================================================================
 
 // Batch added 2026-09-13 after the Prettier mass-reformat (see
-// docs/plans/2026-09-13-prettier-setup.md) — reflow-induced max-lines/max-lines-per-function
-// growth across 99 files, a deliberate one-time re-baseline per this file's own regeneration
-// policy above ("re-baseline after a deliberate rule-set change"), not new code debt. The
-// existing src/main/windows.ts entry below predates this batch, carries its own JOS-427 note,
-// and is unrelated to it. Owner-approved (see the Prettier-setup plan's ledger).
+// docs/plans/2026-09-13-prettier-setup.md). No FACTORING_RULES threshold changed — Prettier's
+// reflow (line wraps and collapses) moved measured line counts across the SAME existing
+// thresholds, growing max-lines/max-lines-per-function violations across 99 files. Regenerated
+// wholesale as a deliberate, one-time re-baseline for that tree-wide reflow event, not as
+// routine "make lint green" widening and not new code debt. The existing src/main/windows.ts
+// entry below predates this batch, carries its own JOS-427 note, and is unrelated to it.
+// Owner-approved (see the Prettier-setup plan's ledger).
 
 /** @type {import('eslint').Linter.Config[]} */
 export const ratchet = [

@@ -96,10 +96,7 @@ test('THE ITEM-KNOWLEDGE CACHE writes atomically and off the thread, on its exis
   assert.equal(/\bwriteFileSync\s*\(/.test(src), false, 'no bare truncating write on a live path')
   // Prettier may wrap this call's args onto their own lines; collapse whitespace runs to a
   // single space before pinning the shape, so the wrap is invisible to the assertion.
-  assert.match(
-    src.replace(/\s+/g, ' '),
-    /void writeFileDurableAsync\(\s*dirname\(path\), path,/,
-  )
+  assert.match(src.replace(/\s+/g, ' '), /void writeFileDurableAsync\(\s*dirname\(path\), path,/)
   assert.match(src, /let saving = false/)
   assert.match(
     src,
@@ -124,10 +121,7 @@ test('THE MOB-KNOWLEDGE CACHE writes atomically and off the thread, on its exist
   assert.equal(/\bwriteFileSync\s*\(/.test(src), false, 'no bare truncating write on a live path')
   // Prettier may wrap this call's args onto their own lines; collapse whitespace runs to a
   // single space before pinning the shape, so the wrap is invisible to the assertion.
-  assert.match(
-    src.replace(/\s+/g, ' '),
-    /void writeFileDurableAsync\(\s*dirname\(path\), path,/,
-  )
+  assert.match(src.replace(/\s+/g, ' '), /void writeFileDurableAsync\(\s*dirname\(path\), path,/)
   assert.match(src, /let saving = false/)
   assert.match(
     src,
