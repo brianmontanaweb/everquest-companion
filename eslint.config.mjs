@@ -158,6 +158,7 @@ import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import reactHooks from 'eslint-plugin-react-hooks'
 import globals from 'globals'
+import eslintConfigPrettier from 'eslint-config-prettier'
 import { ratchet } from './eslint.ratchet.mjs'
 import { domainMungingPlugin } from './eslint.domainMunging.mjs'
 
@@ -277,6 +278,14 @@ export default tseslint.config(
       'no-empty': ['error', { allowEmptyCatch: false }],
     },
   },
+
+  // ---- 1b. prettier compatibility ----------------------------------------
+  // No active conflict today — typescript-eslint's strictTypeChecked/
+  // stylisticTypeChecked carry no raw formatting rules (quotes/semi/commas),
+  // by design, so projects pair typescript-eslint with a real formatter.
+  // This turns off the small number of core ESLint rules that WOULD conflict
+  // if one were ever added by accident later.
+  eslintConfigPrettier,
 
   // ---- 2. factoring -------------------------------------------------------
   {
