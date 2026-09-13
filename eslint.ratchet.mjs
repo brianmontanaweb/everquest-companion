@@ -33,7 +33,7 @@
 // wholesale as a deliberate, one-time re-baseline for that tree-wide reflow event, not as
 // routine "make lint green" widening and not new code debt. The existing src/main/windows.ts
 // entry below predates this batch, carries its own JOS-427 note, and is unrelated to it.
-// Owner-approved (see the Prettier-setup plan's ledger).
+// Owner-approved (see docs/plans/2026-09-13-prettier-setup-todo.md, Task 2).
 
 /** @type {import('eslint').Linter.Config[]} */
 export const ratchet = [
