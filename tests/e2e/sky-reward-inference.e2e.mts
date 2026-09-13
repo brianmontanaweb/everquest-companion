@@ -115,7 +115,14 @@ async function openSky(page: Page): Promise<boolean> {
     () => false
   )
   if (!check('the Sky tab opens on its filter bar', bar)) return false
-  return check('…with the counts line under it', (await filteredCount(page)) !== null)
+  // The search box and the counts line are not the same render: the box needs no quest data and
+  // the counts line does, so a single un-retried read here raced the quest list's first paint
+  // (measured: sandboxed preloads add enough latency to this specific launch — an achievements
+  // dump staged beside the log — to flip this from "always wins the race" to "usually does").
+  // settle() is what every OTHER counts-line read in this file already uses; this is the one that
+  // was missing it.
+  const counts = await settle(() => filteredCount(page), (n) => n !== null, { timeoutMs: 30_000 })
+  return check('…with the counts line under it', counts !== null)
 }
 
 /**

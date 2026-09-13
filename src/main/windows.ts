@@ -175,30 +175,33 @@ export function isOverlayOpen(kind: OverlayKind): boolean {
 // Electron default — a default is a decision someone else can change in a major bump, and
 // `npm audit`-style reviews read this object, not Electron's changelog.
 //
-// WHY `sandbox: false` — MEASURED, not assumed. The two preloads are built by electron-vite
-// from a two-entry rollup input (src/preload/{index,overlay}.ts) and both import the shared
-// `src/shared/ipc.ts` channel registry, so rollup hoists it into
-// `out/preload/chunks/ipc-<hash>.js` and each preload begins `require("./chunks/ipc-….js")`.
-// A SANDBOXED preload's `require` is NOT Node's: it resolves `electron` plus a small
-// polyfilled set (events/timers/url) and nothing else. Flipping this to `true` and running
-// `npm run test:e2e` fails exactly there — the harness times out with no UI, and the e2e
-// errors.log carries:
+// `sandbox: true` SINCE 2026-09-12 — MEASURED, not assumed, same as the flag it replaced.
+// Four preloads (src/preload/{index,overlay,cursor,tray}.ts, all four — a prior version of this
+// comment said "the two preloads", written before the tray preload existed, and was never
+// updated) all import the shared `src/shared/ipc.ts` channel registry. A normal multi-entry
+// rollup build hoists that shared module into `out/preload/chunks/ipc-<hash>.js`, and each
+// preload begins `require("./chunks/ipc-….js")` — but a SANDBOXED preload's `require` is not
+// Node's: it resolves `electron` plus a small polyfilled set (events/timers/url) and nothing
+// else, so that `require` failed and `window.eq`/`eqOverlay`/`eqCursor`/`eqTray` were never
+// installed. The fix is `electron.vite.config.ts`'s `preload.build.isolatedEntries: true` (a
+// real, typed, electron-vite-5 option built for exactly this — each entry is rebuilt through its
+// own isolated Rollup pass with nothing hoisted out — `@experimental` in that version's own
+// types) plus `externalizeDeps: false`, electron-vite's own stated pairing for sandbox
+// correctness. Verified two ways: `out/preload/*.js` carry no `chunks/` reference after a build,
+// and `npm run test:e2e` passes with every window sandboxed (the one e2e spec that loads a real
+// preload, `cursor-ring-zoom.e2e.mts`, used to hardcode `sandbox: false` on its own probe window
+// independent of this file — flipped alongside this change, since until then no e2e spec
+// exercised a sandboxed preload at all).
 //
-//   [main:preload-error] module not found: ./chunks/ipc-D4DrnWdv.js
-//       at preloadRequire (node:electron/js2c/sandbox_bundle)
+// `isolatedEntries`'s progress reporter has its own bug, unrelated to sandboxing: it calls
+// TTY-only `process.stdout` methods with no guard, which crashes on any non-interactive build
+// (CI included). `scripts/electron-vite.mjs` polyfills the missing methods and is what `npm run
+// build`/`dev`/`preview` and the e2e build step now invoke instead of the raw `electron-vite`
+// CLI — see that script's header for the full account and the upstream issue this works around.
 //
-// i.e. `window.eq` is never installed and the app is silently dead. Nothing in the preloads
-// themselves needs Node (they use exactly `contextBridge` + `ipcRenderer` — zero `process`,
-// zero `fs`; `grep -c 'process\.' out/preload/index.js` is 0), so this is a PACKAGING blocker,
-// not a design one: `sandbox: true` becomes available the moment each preload is emitted as
-// ONE self-contained file. That is an electron.vite.config.ts change (a per-entry preload
-// build, since rollup will always hoist a module shared by two entries into a chunk), owned
-// outside this pass and written up as the top recommendation of the security report.
-// `app.enableSandbox()` is blocked by the same finding, for the same reason.
-//
-// Until then the mitigations that actually matter without the OS sandbox are all on:
-// contextIsolation (the preload's Node-capable context is unreachable from page JS), no
-// nodeIntegration in any form, a deny-by-default navigation/window-open/webview policy
+// The mitigations that mattered without the OS sandbox are all still on, layered rather than
+// superseded: contextIsolation (the preload's Node-capable context is unreachable from page JS),
+// no nodeIntegration in any form, a deny-by-default navigation/window-open/webview policy
 // (hardenWebContents), permissions denied wholesale (hardenSession), and a CSP with no
 // script-src escape hatch in either page.
 //
@@ -215,8 +218,8 @@ export function WEB_PREFERENCES(preload: string): Electron.WebPreferences {
     preload,
     // The preload runs with Node available; page JS cannot see it or its globals.
     contextIsolation: true,
-    // See the note above — the only reason this isn't `true`.
-    sandbox: false,
+    // See the note above for what made this safe to flip and how it was verified.
+    sandbox: true,
     // No Node in the page, in workers, or in any sub-frame. All three are Electron defaults
     // today; all three are stated because flipping any one of them silently un-does
     // contextIsolation's value.
