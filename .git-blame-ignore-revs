@@ -1,0 +1,5 @@
+# Prettier mass reformat — pure whitespace/quote/semicolon changes, no logic.
+# git blame --ignore-revs-file .git-blame-ignore-revs
+# or: git config blame.ignoreRevsFile .git-blame-ignore-revs   (one-time, per clone)
+d518b71161b60c5ac09d0be5a15d8b6a99c58877
+e4e22bc725e9d36e7c6828d0b81f646d3d072134
