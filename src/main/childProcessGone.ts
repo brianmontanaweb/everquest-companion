@@ -146,7 +146,11 @@ function shaped(value: unknown, re: RegExp): string | undefined {
  * The child's name is parenthesised when Chromium supplied one, because for the GPU process it
  * usually does not and a trailing `child=` with nothing after it is worse than silence.
  */
-export function describeChildLoss(child: string | undefined, reason: string, exitCode: number): string {
+export function describeChildLoss(
+  child: string | undefined,
+  reason: string,
+  exitCode: number,
+): string {
   const who = child === undefined ? 'GPU process' : `GPU process (${child})`
   return `${who} gone: reason=${reason}, exitCode=${String(exitCode)}`
 }
@@ -162,7 +166,7 @@ export function describeChildLoss(child: string | undefined, reason: string, exi
  */
 export function noteChildProcessGone(
   details: ChildProcessGoneDetails,
-  report?: ChildLossReporter
+  report?: ChildLossReporter,
 ): void {
   // THE CLEAN-EXIT FILTER READS THE RAW STRING, not the shaped one: `clean-exit` is a specific
   // word and a payload carrying it must be dropped whether or not anything else about it parses.
@@ -181,7 +185,7 @@ export function noteChildProcessGone(
       message: describeChildLoss(child, reason, exitCode),
       code: exitCode,
       reason,
-      exitCode
+      exitCode,
     }
     if (child !== undefined) info.child = child
     report?.(info)
@@ -195,7 +199,7 @@ export function noteChildProcessGone(
 export interface ChildProcessGoneEmitter {
   on(
     event: 'child-process-gone',
-    listener: (e: unknown, details: ChildProcessGoneDetails | undefined) => void
+    listener: (e: unknown, details: ChildProcessGoneDetails | undefined) => void,
   ): unknown
 }
 
@@ -205,7 +209,7 @@ export interface ChildProcessGoneEmitter {
  */
 export function watchChildProcessGone(
   app: ChildProcessGoneEmitter,
-  report?: ChildLossReporter
+  report?: ChildLossReporter,
 ): void {
   app.on('child-process-gone', (_e, details) => {
     // `?? {}` because the payload arrives from outside our types: a details-less event must cost

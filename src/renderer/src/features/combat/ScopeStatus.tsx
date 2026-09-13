@@ -39,7 +39,7 @@ import {
   Popper,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import GroupIcon from '@mui/icons-material/Group'
@@ -51,11 +51,17 @@ import {
   chipLabel,
   type MeterScope,
   type RosterMember,
-  type RosterSnap
+  type RosterSnap,
 } from '@shared/roster'
 
 /** One member row: name, provenance, and the remove that hides it. */
-function MemberRow({ m, onRemove }: { m: RosterMember; onRemove: (name: string) => void }): React.JSX.Element {
+function MemberRow({
+  m,
+  onRemove,
+}: {
+  m: RosterMember
+  onRemove: (name: string) => void
+}): React.JSX.Element {
   return (
     <Stack direction="row" spacing={1} alignItems="center" sx={{ py: 0.25 }}>
       <Typography
@@ -80,7 +86,12 @@ function MemberRow({ m, onRemove }: { m: RosterMember; onRemove: (name: string) 
         </Typography>
       </Tooltip>
       <Tooltip title="Hide this row from the Group scope. Their damage stays recorded, and stays visible under Everyone.">
-        <IconButton size="small" aria-label={`Remove ${m.name}`} onClick={() => onRemove(m.name)} sx={{ p: 0.25 }}>
+        <IconButton
+          size="small"
+          aria-label={`Remove ${m.name}`}
+          onClick={() => onRemove(m.name)}
+          sx={{ p: 0.25 }}
+        >
           <CloseIcon sx={{ fontSize: 13 }} />
         </IconButton>
       </Tooltip>
@@ -109,7 +120,10 @@ function AddMember({ onAdd }: { onAdd: (name: string) => void }): React.JSX.Elem
           if (e.key === 'Enter') submit()
         }}
         slotProps={{
-          htmlInput: { 'aria-label': 'Add a group member by name', style: { fontSize: 12, padding: '4px 8px' } }
+          htmlInput: {
+            'aria-label': 'Add a group member by name',
+            style: { fontSize: 12, padding: '4px 8px' },
+          },
         }}
         sx={{ flexGrow: 1 }}
       />
@@ -124,7 +138,7 @@ function AddMember({ onAdd }: { onAdd: (name: string) => void }): React.JSX.Elem
 function RosterPanel({
   roster,
   onAdd,
-  onRemove
+  onRemove,
 }: {
   roster: RosterSnap
   onAdd: (name: string) => void
@@ -169,7 +183,7 @@ function RosterPanel({
  */
 export function ScopeStatus({
   scope,
-  roster
+  roster,
 }: {
   scope: MeterScope
   roster: RosterSnap

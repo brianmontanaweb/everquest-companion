@@ -68,8 +68,8 @@ export const SKY_MOB_ISLANDS: readonly SkyMobIsland[] = [
       'writes its Gem of Invigoration as "(Protector of Sky - Island 2 Boss)"; posky\'s own two ' +
       'PoS rows (Azarack Skin, Azarack Blood) say Island 2; bosses.json says "Plane of Sky - ' +
       'Island 2". The derived Island 7 comes from Gem of Invigoration, which its item page calls ' +
-      'a drop off "any trash on island 7 (SotS)" - true about the item, not about this mob.'
-  }
+      'a drop off "any trash on island 7 (SotS)" - true about the item, not about this mob.',
+  },
 ]
 
 const BY_PAGE: ReadonlyMap<string, SkyMobIsland> = new Map(SKY_MOB_ISLANDS.map((e) => [e.page, e]))

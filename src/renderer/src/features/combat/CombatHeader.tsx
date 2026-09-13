@@ -10,7 +10,15 @@
 // click. Nothing was dropped — these strings are the only statement of the coat list, the
 // modifier groups and why Timeline is disabled.
 
-import { Box, Divider, Paper, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
+import {
+  Box,
+  Divider,
+  Paper,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from '@mui/material'
 import CircleIcon from '@mui/icons-material/Circle'
 import { FightPicker } from './FightPicker'
 // The pill-track chrome for all three switches below. It moved to its own module when the meter
@@ -41,7 +49,7 @@ function ModifierSlot({
   slot,
   value,
   color,
-  tip
+  tip,
 }: {
   slot: 1 | 2 | 3
   value: string
@@ -68,7 +76,7 @@ function ModifierSlot({
         px: 0.5,
         py: '1px',
         borderRadius: 999,
-        bgcolor: 'rgba(255,255,255,0.04)'
+        bgcolor: 'rgba(255,255,255,0.04)',
       }}
     >
       <Typography variant="caption" sx={{ fontSize: 10, color: 'text.disabled', flexShrink: 0 }}>
@@ -78,7 +86,11 @@ function ModifierSlot({
           row has `min-width: auto`, so without this it refuses to shrink and pushes the lens
           line wide no matter how much room the Stack gives up — latent until slot 3 started
           carrying up to four coat names. The title has every full value either way. */}
-      <Typography variant="caption" noWrap sx={{ minWidth: 0, color, fontWeight: 600, textTransform: 'capitalize' }}>
+      <Typography
+        variant="caption"
+        noWrap
+        sx={{ minWidth: 0, color, fontWeight: 600, textTransform: 'capitalize' }}
+      >
         {value}
       </Typography>
     </Stack>
@@ -110,7 +122,7 @@ function coatShortName(poison: string): string {
 function coatList(coat: BladeCoatState): { slot: CoatSlot; group: string }[] {
   return [
     ...(coat.utility ? [{ slot: coat.utility, group: 'utility' }] : []),
-    ...coat.combat.map((c) => ({ slot: c, group: 'combat' }))
+    ...coat.combat.map((c) => ({ slot: c, group: 'combat' })),
   ]
 }
 
@@ -133,7 +145,7 @@ function CoatSlotPill({ coat }: { coat: BladeCoatState }): React.JSX.Element | n
 
 function StanceReadout({
   stance,
-  poison
+  poison,
 }: {
   stance: StanceState
   poison: PoisonState
@@ -163,7 +175,13 @@ function hasCoat(coat: BladeCoatState | undefined): boolean {
 function HeadlineStat({ seg }: { seg: SegmentView | null }): React.JSX.Element | null {
   if (!seg) return null
   return (
-    <Stack data-testid="headline-stat" direction="row" spacing={0.75} alignItems="baseline" sx={{ flexShrink: 0 }}>
+    <Stack
+      data-testid="headline-stat"
+      direction="row"
+      spacing={0.75}
+      alignItems="baseline"
+      sx={{ flexShrink: 0 }}
+    >
       <Typography
         noWrap
         sx={{
@@ -171,12 +189,16 @@ function HeadlineStat({ seg }: { seg: SegmentView | null }): React.JSX.Element |
           fontWeight: 700,
           lineHeight: 1.2,
           color: 'primary.main',
-          fontVariantNumeric: 'tabular-nums'
+          fontVariantNumeric: 'tabular-nums',
         }}
       >
         {formatRate(seg.outDps)}
       </Typography>
-      <Typography variant="caption" noWrap sx={{ color: 'text.disabled', fontVariantNumeric: 'tabular-nums' }}>
+      <Typography
+        variant="caption"
+        noWrap
+        sx={{ color: 'text.disabled', fontVariantNumeric: 'tabular-nums' }}
+      >
         {fmt(seg.outTotal)} · {fmtDur(seg.durationSec)}
       </Typography>
     </Stack>
@@ -205,7 +227,7 @@ function SubjectLine({
   loadMore,
   capped,
   hydrating,
-  now
+  now,
 }: {
   seg: SegmentView | null
   scope: CombatScope
@@ -234,7 +256,7 @@ function SubjectLine({
           borderColor: 'divider',
           borderRadius: 1,
           px: 0.5,
-          py: '2px'
+          py: '2px',
         }}
       >
         {/* SCOPE: an explicit choice — Fight never becomes Overall on its own. */}
@@ -280,7 +302,7 @@ function SubjectLine({
 function ViewSwitch({
   view,
   setView,
-  noTimeline
+  noTimeline,
 }: {
   view: 'dash' | 'timeline'
   setView: (v: 'dash' | 'timeline') => void
@@ -325,7 +347,7 @@ function ViewSwitch({
  */
 function DirectionFilter({
   mode,
-  setMode
+  setMode,
 }: {
   mode: MeterMode
   setMode: (m: MeterMode) => void
@@ -360,9 +382,19 @@ function DirectionFilter({
  */
 function InCombatDot(): React.JSX.Element {
   return (
-    <Stack direction="row" spacing={0.5} alignItems="center" title="In combat" sx={{ flexShrink: 0 }}>
+    <Stack
+      direction="row"
+      spacing={0.5}
+      alignItems="center"
+      title="In combat"
+      sx={{ flexShrink: 0 }}
+    >
       <CircleIcon sx={{ fontSize: 8, color: 'success.main' }} />
-      <Typography variant="caption" noWrap sx={{ color: 'text.secondary', display: { xs: 'none', lg: 'block' } }}>
+      <Typography
+        variant="caption"
+        noWrap
+        sx={{ color: 'text.secondary', display: { xs: 'none', lg: 'block' } }}
+      >
         in combat
       </Typography>
     </Stack>
@@ -372,7 +404,10 @@ function InCombatDot(): React.JSX.Element {
 /** Is there any passive state at all? Decides whether the lens line grows its divider. */
 function hasPassiveStatus(snap: CombatSnapshot | null): boolean {
   return (
-    !!snap?.stance?.stance || !!snap?.stance?.invocation || hasCoat(snap?.poison.coat) || !!snap?.inCombat
+    !!snap?.stance?.stance ||
+    !!snap?.stance?.invocation ||
+    hasCoat(snap?.poison.coat) ||
+    !!snap?.inCombat
   )
 }
 
@@ -389,7 +424,12 @@ function PassiveStatus({ snap }: { snap: CombatSnapshot | null }): React.JSX.Ele
   return (
     <>
       <Divider orientation="vertical" flexItem sx={{ my: 0.25 }} />
-      <Stack direction="row" spacing={0.5} alignItems="center" sx={{ minWidth: 0, overflow: 'hidden' }}>
+      <Stack
+        direction="row"
+        spacing={0.5}
+        alignItems="center"
+        sx={{ minWidth: 0, overflow: 'hidden' }}
+      >
         {snap?.stance && <StanceReadout stance={snap.stance} poison={snap.poison} />}
         {snap?.inCombat && <InCombatDot />}
       </Stack>
@@ -463,7 +503,14 @@ export function CombatHeader(p: CombatHeaderProps): React.JSX.Element {
           wrapping turns content growth into HEIGHT, and this bar's whole contract is that it
           stays two ranks (the headless harness measures it). Overflow is absorbed by the passive
           readout instead, which shrinks and ellipsizes with its hover text intact. */}
-      <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="nowrap" useFlexGap sx={{ mt: 0.5, minWidth: 0 }}>
+      <Stack
+        direction="row"
+        spacing={0.5}
+        alignItems="center"
+        flexWrap="nowrap"
+        useFlexGap
+        sx={{ mt: 0.5, minWidth: 0 }}
+      >
         <ViewSwitch view={p.view} setView={p.setView} noTimeline={p.noTimeline} />
 
         {p.view === 'dash' && <DirectionFilter mode={p.mode} setMode={p.setMode} />}
@@ -475,7 +522,9 @@ export function CombatHeader(p: CombatHeaderProps): React.JSX.Element {
             mis-inferred group is corrected where its rows are missing. The readout stays
             compact because this line never wraps — its two-rank height is a contract the
             headless harness measures. */}
-        {p.view === 'dash' && p.mode !== 'in' && <ScopeStatus scope={p.meterScope} roster={p.roster} />}
+        {p.view === 'dash' && p.mode !== 'in' && (
+          <ScopeStatus scope={p.meterScope} roster={p.roster} />
+        )}
 
         <Box sx={{ flexGrow: 1, minWidth: 8 }} />
 

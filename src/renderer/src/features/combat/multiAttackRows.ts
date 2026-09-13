@@ -79,7 +79,7 @@ export function multiAttackRows(r: SourceRoundsView): MultiAttackRow[] {
       tripledPct: bucketPct(l, 2),
       quadPct: bucketPct(l, 3),
       estimated: l.confidence === 'aggregate',
-      pct: (l.rounds / max) * 100
+      pct: (l.rounds / max) * 100,
     }
     return { ...base, text: multiText(base) }
   })

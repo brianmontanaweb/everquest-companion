@@ -24,7 +24,7 @@ import {
   type SettingsBundleBody,
   type ShareApplyResult,
   type SharePreview,
-  type ScalarContext
+  type ScalarContext,
 } from '../shared/profiles'
 import { decodeShareString, encodeShareString } from './shareCodec'
 import {
@@ -33,7 +33,7 @@ import {
   getOverlayConfig,
   saveAlerts,
   setAlertPrefs,
-  setOverlayConfig
+  setOverlayConfig,
 } from './store'
 import { listPacks } from './sounds'
 import { getOverlayBgAlpha, setOverlayBgAlpha } from './storeOverlayBgAlpha'
@@ -73,7 +73,7 @@ export function exportSettingsString(appVersion: string, ui: UiPrefMap): string 
     // JOS-407: the shared transparency rides ALONGSIDE the per-kind values above, never instead of
     // them, so a machine on an older build reads this bundle and applies everything it knows.
     overlayBgAlpha: getOverlayBgAlpha(),
-    ui
+    ui,
   })
   return encodeShareString(makeEnvelope('settings', body, appVersion))
 }
@@ -116,7 +116,7 @@ export function previewShare(text: string, ui: UiPrefMap): SharePreview {
       alertPrefs: getAlertPrefs(),
       overlays: currentOverlays(),
       overlayBgAlpha: getOverlayBgAlpha(),
-      ui
+      ui,
     })
   }
 
@@ -125,14 +125,17 @@ export function previewShare(text: string, ui: UiPrefMap): SharePreview {
     // pretending there is nothing in the string.
     return emptyPreview(
       text,
-      'That share string carries a character profile. This version can share settings and alerts only.'
+      'That share string carries a character profile. This version can share settings and alerts only.',
     )
   }
 
-  if (!alerts.length && !scalars.length) return emptyPreview(text, SHARE_ERROR_TEXT['empty-payload'])
+  if (!alerts.length && !scalars.length)
+    return emptyPreview(text, SHARE_ERROR_TEXT['empty-payload'])
 
   const missingPacks = [
-    ...new Set(alerts.flatMap((a) => (a.action !== 'skip' && a.missingPackId ? [a.missingPackId] : [])))
+    ...new Set(
+      alerts.flatMap((a) => (a.action !== 'skip' && a.missingPackId ? [a.missingPackId] : [])),
+    ),
   ]
 
   return {
@@ -143,7 +146,7 @@ export function previewShare(text: string, ui: UiPrefMap): SharePreview {
     alerts,
     scalars,
     missingPacks,
-    text
+    text,
   }
 }
 
@@ -197,7 +200,7 @@ function applyUiScalar(
   changeId: string,
   body: SettingsBundleBody,
   ui: UiPrefMap,
-  uiWrites: Record<string, string>
+  uiWrites: Record<string, string>,
 ): boolean {
   const key = changeId.slice(3)
   const spec = UI_PREF_SPECS.find((s) => s.key === key)
@@ -215,7 +218,7 @@ function applyScalarChange(
   change: ScalarChange,
   body: SettingsBundleBody,
   ui: UiPrefMap,
-  uiWrites: Record<string, string>
+  uiWrites: Record<string, string>,
 ): boolean {
   if (change.id === 'alertPrefs.globalVolume' && body.alertPrefs) {
     setAlertPrefs({ ...getAlertPrefs(), globalVolume: body.alertPrefs.globalVolume })
@@ -244,7 +247,7 @@ function applySelectedScalars(
   preview: SharePreview,
   chosen: Set<string>,
   body: SettingsBundleBody,
-  ui: UiPrefMap
+  ui: UiPrefMap,
 ): { scalarsApplied: number; ui: Record<string, string> } {
   const uiWrites: Record<string, string> = {}
   let scalarsApplied = 0
@@ -260,10 +263,22 @@ function applySelectedScalars(
  * planAlertMerge's conflict rules); scalar settings are written only when explicitly
  * selected. Returns the localStorage writes for the renderer to perform.
  */
-export function applyShare(text: string, ui: UiPrefMap, selection?: ShareSelection): ShareApplyResult {
+export function applyShare(
+  text: string,
+  ui: UiPrefMap,
+  selection?: ShareSelection,
+): ShareApplyResult {
   const preview = previewShare(text, ui)
   if (!preview.ok) {
-    return { ok: false, error: preview.error, added: 0, skipped: 0, rekeyed: 0, scalarsApplied: 0, ui: {} }
+    return {
+      ok: false,
+      error: preview.error,
+      added: 0,
+      skipped: 0,
+      rekeyed: 0,
+      scalarsApplied: 0,
+      ui: {},
+    }
   }
 
   const selectedAlerts = selection?.alertIds ? new Set(selection.alertIds) : undefined
@@ -273,9 +288,12 @@ export function applyShare(text: string, ui: UiPrefMap, selection?: ShareSelecti
   const chosen = new Set(selection?.scalarIds ?? defaultSelectedScalars(preview.scalars))
   // previewShare already proved this decodes; re-read the body to source the values.
   const decoded = decodeShareString(text)
-  const body = decoded.ok && preview.kind === 'settings' ? (decoded.envelope.body as SettingsBundleBody) : null
+  const body =
+    decoded.ok && preview.kind === 'settings' ? (decoded.envelope.body as SettingsBundleBody) : null
 
-  const applied = body ? applySelectedScalars(preview, chosen, body, ui) : { scalarsApplied: 0, ui: {} }
+  const applied = body
+    ? applySelectedScalars(preview, chosen, body, ui)
+    : { scalarsApplied: 0, ui: {} }
 
   return {
     ok: true,
@@ -283,6 +301,6 @@ export function applyShare(text: string, ui: UiPrefMap, selection?: ShareSelecti
     skipped: merged.skipped,
     rekeyed: merged.rekeyed,
     scalarsApplied: applied.scalarsApplied,
-    ui: applied.ui
+    ui: applied.ui,
   }
 }

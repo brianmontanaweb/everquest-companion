@@ -48,7 +48,7 @@ test('UNLOADABLE blames US, not the player, and points at the error log', () => 
 test('the two states are DIFFERENT sentences, which is the entire ticket item', () => {
   assert.notEqual(
     spellDataNote({ state: 'missing', path: PATH }),
-    spellDataNote({ state: 'unloadable', path: PATH })
+    spellDataNote({ state: 'unloadable', path: PATH }),
   )
 })
 
@@ -64,6 +64,10 @@ test('every sentence obeys the copy rules', () => {
   for (const state of ['missing', 'unloadable', 'loading'] as const) {
     const note = spellDataNote({ state, path: PATH }) ?? ''
     assert.ok(!note.includes('—'), 'no em dashes in copy')
-    assert.doesNotMatch(note, /\bIPC\b|worker|cache|null/, 'no bookkeeping of ours in a player’s sentence')
+    assert.doesNotMatch(
+      note,
+      /\bIPC\b|worker|cache|null/,
+      'no bookkeeping of ours in a player’s sentence',
+    )
   }
 })

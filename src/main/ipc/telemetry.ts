@@ -27,7 +27,7 @@ import {
   observeFirstRun,
   recordEvent,
   rotateAnalyticsId,
-  telemetryPayload
+  telemetryPayload,
 } from '../telemetry'
 
 export function registerTelemetryIpc(): void {
@@ -50,13 +50,13 @@ export function registerTelemetryIpc(): void {
 
   // The master switch. A non-boolean is not a guess — it leaves the pref exactly as it was.
   ipcMain.handle(IPC.telemetrySetEnabled, (_e, enabled: unknown) =>
-    typeof enabled === 'boolean' ? applyTelemetryEnabled(enabled) : getTelemetryPrefs()
+    typeof enabled === 'boolean' ? applyTelemetryEnabled(enabled) : getTelemetryPrefs(),
   )
 
   // The first-run notice was answered or dismissed. Dismissal keeps it ON (T1: that is what
   // opt-out means), so a non-boolean reads as "keep on" rather than as a silent opt-out.
   ipcMain.handle(IPC.telemetryNoticeShown, (_e, keepEnabled: unknown) =>
-    answerNotice(typeof keepEnabled === 'boolean' ? keepEnabled : true)
+    answerNotice(typeof keepEnabled === 'boolean' ? keepEnabled : true),
   )
 
   ipcMain.handle(IPC.telemetryRotate, () => rotateAnalyticsId())

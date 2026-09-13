@@ -29,7 +29,7 @@ import {
   ENGINE_RESTART_BACKOFF_MS,
   ENGINE_SERVED_CYCLE_ERROR_NAME,
   ENGINE_SERVED_CYCLE_STREAK,
-  type EngineExitLog
+  type EngineExitLog,
 } from '../src/main/dataServer/engineProtocol'
 import { harness, launched, settle, type Harness } from './dataServerSupervisorHarness.mts'
 
@@ -60,10 +60,14 @@ test('THREE MID-SESSION DEATHS ARE ONE ENTRY - and the exit trail next door stil
   // three ordinary exemplars and would never reach its own diagnosis, however long this ran.
   assert.deepEqual(
     h.reports.filter((r) => r.name !== ENGINE_SERVED_CYCLE_ERROR_NAME).map((r) => r.name),
-    ['EngineExited', 'EngineExited', 'EngineExited']
+    ['EngineExited', 'EngineExited', 'EngineExited'],
   )
   assert.equal(h.faults.filter((f) => f !== null).length, 0, 'no card: the engine keeps working')
-  assert.equal(h.servedExits.length, 3, 'a breadcrumb per respawn-after-serving, not one per session')
+  assert.equal(
+    h.servedExits.length,
+    3,
+    'a breadcrumb per respawn-after-serving, not one per session',
+  )
 })
 
 test('THE ENTRY CARRIES THE LAST EXIT’S OWN DETAIL - the fold’s, never a second vocabulary', async () => {

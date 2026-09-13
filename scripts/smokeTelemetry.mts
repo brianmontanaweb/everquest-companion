@@ -39,7 +39,7 @@ export const SESSION_METRICS = [
   'sessionMsTotal',
   'sessionLenBucket',
   'heartbeats',
-  'activeInstalls'
+  'activeInstalls',
 ] as const
 
 /** A `usage_daily` row as the triage store hands it back (day/metric/dim/n, loosely typed). */

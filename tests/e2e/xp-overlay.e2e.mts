@@ -39,7 +39,7 @@ import {
   note,
   reportRun,
   settle,
-  settleStable
+  settleStable,
 } from './appHarness.mjs'
 import { mainWindow, overlayWindow } from './appWindow.mjs'
 import { launchOnFixture, type FixtureLog } from './logFixture.mjs'
@@ -55,9 +55,13 @@ function bridge(page: Page): {
   toggle: (k: string) => Promise<boolean>
 } {
   return {
-    state: () => page.evaluate(() => (window as unknown as { eq: OverlayBridge }).eq.getOverlayState()),
+    state: () =>
+      page.evaluate(() => (window as unknown as { eq: OverlayBridge }).eq.getOverlayState()),
     toggle: (k: string) =>
-      page.evaluate((kind) => (window as unknown as { eq: OverlayBridge }).eq.toggleOverlay(kind), k)
+      page.evaluate(
+        (kind) => (window as unknown as { eq: OverlayBridge }).eq.toggleOverlay(kind),
+        k,
+      ),
   }
 }
 
@@ -85,15 +89,17 @@ function rows(page: Page): Promise<Row[]> {
       id: (e.getAttribute('data-testid') ?? '').replace('xp-row-', ''),
       row: e.getAttribute('data-row') ?? '',
       label: (e.querySelector('span')?.textContent ?? '').trim(),
-      value: (e.querySelector('[data-testid="xp-value"]')?.textContent ?? '').trim()
-    }))
+      value: (e.querySelector('[data-testid="xp-value"]')?.textContent ?? '').trim(),
+    })),
   )
 }
 
 /** The caption line under the rows: which stretch, and how much active play it is over. */
 function span(page: Page): Promise<string> {
   return page.evaluate(
-    () => (document.querySelector('[data-testid="xp-span"]') as HTMLElement | null)?.innerText.trim() ?? ''
+    () =>
+      (document.querySelector('[data-testid="xp-span"]') as HTMLElement | null)?.innerText.trim() ??
+      '',
   )
 }
 
@@ -103,14 +109,18 @@ function span(page: Page): Promise<string> {
 function setConfig(page: Page, patch: Record<string, unknown>): Promise<unknown> {
   return page.evaluate(
     (p) =>
-      (window as unknown as { eqOverlay: { setConfig: (x: unknown) => Promise<unknown> } }).eqOverlay.setConfig(p),
-    patch
+      (
+        window as unknown as { eqOverlay: { setConfig: (x: unknown) => Promise<unknown> } }
+      ).eqOverlay.setConfig(p),
+    patch,
   )
 }
 
 function getConfig(page: Page): Promise<Record<string, unknown>> {
   return page.evaluate(() =>
-    (window as unknown as { eqOverlay: { getConfig: () => Promise<Record<string, unknown>> } }).eqOverlay.getConfig()
+    (
+      window as unknown as { eqOverlay: { getConfig: () => Promise<Record<string, unknown>> } }
+    ).eqOverlay.getConfig(),
   )
 }
 
@@ -130,7 +140,7 @@ async function stepDefaultOff(page: Page, app: ElectronApplication): Promise<voi
   check(
     '…and no XP window was spawned at startup',
     (await windowsOfKind(app, 'xp')) === 0,
-    `${app.windows().length} window(s) open`
+    `${app.windows().length} window(s) open`,
   )
 }
 
@@ -142,14 +152,24 @@ async function stepOpenAndChrome(page: Page, app: ElectronApplication): Promise<
   if (!check('…and a window for kind=xp really exists', overlay !== null)) return null
   const o = overlay
 
-  const mounted = await settle(() => countOf(o, '[data-testid="xp-overlay"]'), (n) => n === 1, { timeoutMs: 20_000 })
+  const mounted = await settle(
+    () => countOf(o, '[data-testid="xp-overlay"]'),
+    (n) => n === 1,
+    { timeoutMs: 20_000 },
+  )
   check('the XP surface mounts', mounted === 1)
   const text = await o.evaluate(() => document.body.innerText)
   check('…with the labelled XP chrome', text.includes('XP'), text.slice(0, 160))
   // Unlocked (the default), so the header's controls are real and reachable. Both are selected by
   // the aria-label the shared IconButton already carries.
-  check('…and a visible close control', (await countOf(o, 'button[aria-label="Close overlay"]')) === 1)
-  check('…and the lock (click-through) control beside it', (await countOf(o, 'button[aria-label^="Lock"]')) === 1)
+  check(
+    '…and a visible close control',
+    (await countOf(o, 'button[aria-label="Close overlay"]')) === 1,
+  )
+  check(
+    '…and the lock (click-through) control beside it',
+    (await countOf(o, 'button[aria-label^="Lock"]')) === 1,
+  )
   return o
 }
 
@@ -170,17 +190,21 @@ async function stepOpenAndChrome(page: Page, app: ElectronApplication): Promise<
 async function stepHydratesFromTheFold(overlay: Page): Promise<void> {
   // FOUR rows exactly, and the count is an assertion in its own right: the query below selects rows
   // and nothing else (see `rows`), so a fifth would mean something is being drawn twice.
-  const seen = await settle(() => rows(overlay), (r) => r.length >= 4, { timeoutMs: 30_000 })
+  const seen = await settle(
+    () => rows(overlay),
+    (r) => r.length >= 4,
+    { timeoutMs: 30_000 },
+  )
   check(
     'the window draws both paces, the projection and the motes line',
     JSON.stringify(seen.map((r) => r.id)) === '["xp","aa","eta","motes-none"]',
-    JSON.stringify(seen)
+    JSON.stringify(seen),
   )
   const xp = seen.find((r) => r.id === 'xp')
   check(
     'the pace row carries a number folded out of the log, not an em-dash',
     xp !== undefined && /^\d/.test(xp.value),
-    JSON.stringify(xp)
+    JSON.stringify(xp),
   )
   // JOS-202: the AA read is not reserved for the cap. This character is levelling — the levels row
   // above proves the log is still stating a bar — and the AA row is beside it, on the same
@@ -189,15 +213,23 @@ async function stepHydratesFromTheFold(overlay: Page): Promise<void> {
   check(
     'AA per hour is drawn WHILE LEVELING, beside the levels pace',
     aa !== undefined && aa.row === 'xp' && aa.label === 'AA' && /^\d/.test(aa.value),
-    JSON.stringify(aa)
+    JSON.stringify(aa),
   )
   const header = await overlay.evaluate(() => document.body.innerText)
-  check('…and the header states the level the log last reported', /lvl \d+/.test(header), header.slice(0, 160))
+  check(
+    '…and the header states the level the log last reported',
+    /lvl \d+/.test(header),
+    header.slice(0, 160),
+  )
   const caption = await span(overlay)
   // The span NAMES its hour, whichever one is in force (JOS-288 — it was `active` unconditionally
   // before the elapsed default). What this step is about is that a wired window states a
   // denominator at all; which one it opens on is `stepRateBasis`'s claim, below.
-  check('…under one span that says what every rate on it divides by', /elapsed|active/.test(caption), caption)
+  check(
+    '…under one span that says what every rate on it divides by',
+    /elapsed|active/.test(caption),
+    caption,
+  )
 }
 
 /**
@@ -213,18 +245,31 @@ async function stepLiveMote(overlay: Page, log: FixtureLog): Promise<void> {
   check(
     'a slice with no mote says so rather than leaving a blank section',
     before.length === 1 && before[0].id === 'motes-none',
-    JSON.stringify(before)
+    JSON.stringify(before),
   )
 
-  log.append("--You have looted a Mote of Infinitesimal Potential from a zol ghoul knight's corpse.--")
+  log.append(
+    "--You have looted a Mote of Infinitesimal Potential from a zol ghoul knight's corpse.--",
+  )
   const after = await settle(
     () => rows(overlay),
     (r) => r.some((x) => x.row === 'motes' && x.id !== 'motes-none'),
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
   const motes = after.filter((r) => r.row === 'motes')
-  if (!check('a mote looted in the LIVE log reaches this window', motes.length === 1, JSON.stringify(after))) return
-  check('…named by its TIER, not by the whole item name', motes[0].label === 'Infinitesimal', JSON.stringify(motes[0]))
+  if (
+    !check(
+      'a mote looted in the LIVE log reaches this window',
+      motes.length === 1,
+      JSON.stringify(after),
+    )
+  )
+    return
+  check(
+    '…named by its TIER, not by the whole item name',
+    motes[0].label === 'Infinitesimal',
+    JSON.stringify(motes[0]),
+  )
   check('…with a rate beside it', /^\d/.test(motes[0].value), JSON.stringify(motes[0]))
 }
 
@@ -239,31 +284,69 @@ async function stepRowChecklist(overlay: Page): Promise<void> {
   // 'motes' covers however many tiers dropped (shared/xpOverlay.ts states the rule). The
   // denominator toggle beside them is `xp-basis` and deliberately does NOT share this prefix — it
   // switches an hour, not a row, and a selector that swept it up would be counting two things.
-  check('the checklist offers one toggle per entry', (await countOf(overlay, '[data-testid^="xp-toggle-"]')) === 3)
-  check('…and the denominator toggle sits beside them, outside the row prefix', (await countOf(overlay, '[data-testid="xp-basis"]')) === 1)
+  check(
+    'the checklist offers one toggle per entry',
+    (await countOf(overlay, '[data-testid^="xp-toggle-"]')) === 3,
+  )
+  check(
+    '…and the denominator toggle sits beside them, outside the row prefix',
+    (await countOf(overlay, '[data-testid="xp-basis"]')) === 1,
+  )
 
   await setConfig(overlay, { xpRows: ['xp', 'eta'] })
-  const hidden = await settle(() => rows(overlay), (r) => !r.some((x) => x.row === 'motes'), { timeoutMs: 15_000 })
-  check('switching the motes row off takes it out of the window', !hidden.some((r) => r.row === 'motes'), JSON.stringify(hidden))
+  const hidden = await settle(
+    () => rows(overlay),
+    (r) => !r.some((x) => x.row === 'motes'),
+    { timeoutMs: 15_000 },
+  )
+  check(
+    'switching the motes row off takes it out of the window',
+    !hidden.some((r) => r.row === 'motes'),
+    JSON.stringify(hidden),
+  )
   check(
     '…and leaves the other two exactly where they were',
     hidden.some((r) => r.row === 'xp') && hidden.some((r) => r.row === 'eta'),
-    JSON.stringify(hidden)
+    JSON.stringify(hidden),
   )
-  const stored = await settle(() => getConfig(overlay), (c) => Array.isArray(c.xpRows), { timeoutMs: 10_000 })
-  check('…written to this window’s own persisted config', JSON.stringify(stored.xpRows) === '["xp","eta"]', JSON.stringify(stored.xpRows))
+  const stored = await settle(
+    () => getConfig(overlay),
+    (c) => Array.isArray(c.xpRows),
+    { timeoutMs: 10_000 },
+  )
+  check(
+    '…written to this window’s own persisted config',
+    JSON.stringify(stored.xpRows) === '["xp","eta"]',
+    JSON.stringify(stored.xpRows),
+  )
 
   // A store cannot switch on a row this build does not have — the closed union, through the real
   // IPC and the real normalizer in main.
   await setConfig(overlay, { xpRows: ['xp', 'money'] })
-  const rejected = await settle(() => getConfig(overlay), (c) => JSON.stringify(c.xpRows) === '["xp"]', {
-    timeoutMs: 10_000
-  })
-  check('an unknown row id is dropped by main rather than stored', JSON.stringify(rejected.xpRows) === '["xp"]', JSON.stringify(rejected.xpRows))
+  const rejected = await settle(
+    () => getConfig(overlay),
+    (c) => JSON.stringify(c.xpRows) === '["xp"]',
+    {
+      timeoutMs: 10_000,
+    },
+  )
+  check(
+    'an unknown row id is dropped by main rather than stored',
+    JSON.stringify(rejected.xpRows) === '["xp"]',
+    JSON.stringify(rejected.xpRows),
+  )
 
   await setConfig(overlay, { xpRows: ['xp', 'eta', 'motes'] })
-  const restored = await settle(() => rows(overlay), (r) => r.some((x) => x.row === 'motes'), { timeoutMs: 15_000 })
-  check('…and switching it back on brings the row back', restored.some((r) => r.row === 'motes'), JSON.stringify(restored))
+  const restored = await settle(
+    () => rows(overlay),
+    (r) => r.some((x) => x.row === 'motes'),
+    { timeoutMs: 15_000 },
+  )
+  check(
+    '…and switching it back on brings the row back',
+    restored.some((r) => r.row === 'motes'),
+    JSON.stringify(restored),
+  )
 }
 
 /**
@@ -284,41 +367,61 @@ async function stepSlice(overlay: Page): Promise<void> {
   check(
     'a log that states no logout can define neither half of Zone + Session, so the window opens on the whole log',
     opened.includes('the whole log'),
-    opened
+    opened,
   )
   const stored = await getConfig(overlay)
   check(
     '…and the default is ABSENT in the store rather than written out',
     stored.xpSlice === undefined,
-    JSON.stringify(stored.xpSlice)
+    JSON.stringify(stored.xpSlice),
   )
 
   await setConfig(overlay, { xpSlice: 'h1' })
-  const narrowed = await settle(() => span(overlay), (t) => t !== opened, { timeoutMs: 15_000 })
+  const narrowed = await settle(
+    () => span(overlay),
+    (t) => t !== opened,
+    { timeoutMs: 15_000 },
+  )
   check('picking a narrower slice re-words the caption', narrowed.includes('1h'), narrowed)
-  check('…and re-measures the span every rate divides by', narrowed !== opened, `${opened} → ${narrowed}`)
+  check(
+    '…and re-measures the span every rate divides by',
+    narrowed !== opened,
+    `${opened} → ${narrowed}`,
+  )
 
   await setConfig(overlay, { xpSlice: 'all' })
-  const back = await settle(() => span(overlay), (t) => t === opened, { timeoutMs: 15_000 })
-  check('…and going back to the whole log restores it exactly', back === opened, `${narrowed} → ${back}`)
+  const back = await settle(
+    () => span(overlay),
+    (t) => t === opened,
+    { timeoutMs: 15_000 },
+  )
+  check(
+    '…and going back to the whole log restores it exactly',
+    back === opened,
+    `${narrowed} → ${back}`,
+  )
 }
 
 /** The footer's denominator toggle, as the DOM carries it. */
 function basisButton(page: Page): Promise<string> {
   return page.evaluate(
-    () => document.querySelector('[data-testid="xp-basis"]')?.getAttribute('data-basis') ?? ''
+    () => document.querySelector('[data-testid="xp-basis"]')?.getAttribute('data-basis') ?? '',
   )
 }
 
 /** Write through a window's SCOPE bridge — the app-wide pair (JOS-332). Both preloads carry the
  *  same member under the same name, which is what makes this one helper serve both windows. */
-function setScope(page: Page, patch: Record<string, unknown>, bridge: 'eq' | 'eqOverlay'): Promise<void> {
+function setScope(
+  page: Page,
+  patch: Record<string, unknown>,
+  bridge: 'eq' | 'eqOverlay',
+): Promise<void> {
   return page.evaluate(
     ([b, p]) =>
       (window as unknown as Record<string, { setScopeSelection: (x: unknown) => void }>)[
         b as string
       ].setScopeSelection(p),
-    [bridge, patch] as const
+    [bridge, patch] as const,
   )
 }
 
@@ -326,10 +429,13 @@ function setScope(page: Page, patch: Record<string, unknown>, bridge: 'eq' | 'eq
 function getScope(page: Page, bridge: 'eq' | 'eqOverlay'): Promise<Record<string, string>> {
   return page.evaluate(
     (b) =>
-      (window as unknown as Record<string, { getScopeSelection: () => Promise<Record<string, string>> }>)[
-        b
-      ].getScopeSelection(),
-    bridge
+      (
+        window as unknown as Record<
+          string,
+          { getScopeSelection: () => Promise<Record<string, string>> }
+        >
+      )[b].getScopeSelection(),
+    bridge,
   )
 }
 
@@ -350,38 +456,67 @@ function getScope(page: Page, bridge: 'eq' | 'eqOverlay'): Promise<Record<string
 async function stepRateBasis(overlay: Page): Promise<void> {
   check('the window opens on the elapsed hour', (await basisButton(overlay)) === 'elapsed')
   const opened = await settleStable(() => span(overlay), { timeoutMs: 15_000 })
-  check('…and the span line names that hour, once, for every row', opened.includes('elapsed'), opened)
+  check(
+    '…and the span line names that hour, once, for every row',
+    opened.includes('elapsed'),
+    opened,
+  )
   const fresh = await getConfig(overlay)
   check(
     '…and the retired per-window key is gone from the store, not merely unset',
     fresh.xpBasis === undefined,
-    JSON.stringify(fresh.xpBasis)
+    JSON.stringify(fresh.xpBasis),
   )
 
   await setScope(overlay, { basis: 'active' }, 'eqOverlay')
-  const flipped = await settle(() => span(overlay), (t) => t.includes('active'), { timeoutMs: 15_000 })
-  check('flipping to active time re-words the span', flipped.includes('active'), `${opened} → ${flipped}`)
+  const flipped = await settle(
+    () => span(overlay),
+    (t) => t.includes('active'),
+    { timeoutMs: 15_000 },
+  )
+  check(
+    'flipping to active time re-words the span',
+    flipped.includes('active'),
+    `${opened} → ${flipped}`,
+  )
   check('…and the footer button follows it', (await basisButton(overlay)) === 'active')
   check(
     '…and it never lands in this window’s persisted config',
-    (await getConfig(overlay)).xpBasis === undefined
+    (await getConfig(overlay)).xpBasis === undefined,
   )
 
   // Nothing can name an hour this build does not have — the closed union, through the real IPC and
   // the real normalizer in main (the `xpRows` rule, applied to a knob that now crosses a channel).
   await setScope(overlay, { basis: 'wall' }, 'eqOverlay')
   const held = await getScope(overlay, 'eqOverlay')
-  check('an unknown denominator is dropped by main rather than applied', held.basis === 'active', JSON.stringify(held))
-  check('…and a rejected patch is a NO-OP, not a reset to the opening', (await basisButton(overlay)) === 'active')
+  check(
+    'an unknown denominator is dropped by main rather than applied',
+    held.basis === 'active',
+    JSON.stringify(held),
+  )
+  check(
+    '…and a rejected patch is a NO-OP, not a reset to the opening',
+    (await basisButton(overlay)) === 'active',
+  )
 
   await setScope(overlay, { basis: 'elapsed' }, 'eqOverlay')
-  const restored = await settle(() => span(overlay), (t) => t === opened, { timeoutMs: 15_000 })
-  check('…and going back to the elapsed hour restores the line exactly', restored === opened, restored)
+  const restored = await settle(
+    () => span(overlay),
+    (t) => t === opened,
+    { timeoutMs: 15_000 },
+  )
+  check(
+    '…and going back to the elapsed hour restores the line exactly',
+    restored === opened,
+    restored,
+  )
 }
 
 /** The footer's membership toggle, as the DOM carries it. '' when it is not mounted at all. */
 function tierButton(page: Page): Promise<string> {
-  return page.evaluate(() => document.querySelector('[data-testid="xp-tier"]')?.getAttribute('data-scope') ?? '')
+  return page.evaluate(
+    () => document.querySelector('[data-testid="xp-tier"]')?.getAttribute('data-scope') ?? '',
+  )
 }
 
 /**
@@ -401,54 +536,92 @@ function tierButton(page: Page): Promise<string> {
  * memberships have genuinely different answers here.
  */
 async function stepZoneScope(overlay: Page): Promise<void> {
-  check('a slice that names no zone offers no membership toggle', (await tierButton(overlay)) === '')
+  check(
+    'a slice that names no zone offers no membership toggle',
+    (await tierButton(overlay)) === '',
+  )
 
   await setConfig(overlay, { xpSlice: 'zone' })
-  const exact = await settle(() => span(overlay), (t) => t.includes('tier'), { timeoutMs: 15_000 })
+  const exact = await settle(
+    () => span(overlay),
+    (t) => t.includes('tier'),
+    { timeoutMs: 15_000 },
+  )
   // THE OPENING IS THIS TIER (owner ruling, JOS-332) — it was `allTiers` here until today.
-  check('picking Zone brings the membership toggle out, on THIS TIER', (await tierButton(overlay)) === 'exactTier')
+  check(
+    'picking Zone brings the membership toggle out, on THIS TIER',
+    (await tierButton(overlay)) === 'exactTier',
+  )
   check(
     '…and the span line NAMES what that membership admitted, rather than only the current tier',
     /this tier only/.test(exact),
-    exact
+    exact,
   )
   check(
     '…while the checklist prefix still selects rows only',
     (await countOf(overlay, '[data-testid^="xp-toggle-"]')) === 3,
-    'the tier toggle is `xp-tier`, deliberately outside the row prefix'
+    'the tier toggle is `xp-tier`, deliberately outside the row prefix',
   )
 
   await setScope(overlay, { zoneScope: 'allTiers' }, 'eqOverlay')
-  const every = await settle(() => span(overlay), (t) => t.includes('every tier'), { timeoutMs: 15_000 })
-  check('flipping to every tier re-words the caption', every.includes('every tier'), `${exact} → ${every}`)
+  const every = await settle(
+    () => span(overlay),
+    (t) => t.includes('every tier'),
+    { timeoutMs: 15_000 },
+  )
+  check(
+    'flipping to every tier re-words the caption',
+    every.includes('every tier'),
+    `${exact} → ${every}`,
+  )
   check('…and the footer button follows it', (await tierButton(overlay)) === 'allTiers')
   check(
     '…and the span itself is re-measured, because the other tiers of the camp are back in',
     every !== exact,
-    `${exact} → ${every}`
+    `${exact} → ${every}`,
   )
   check(
     '…and none of it lands in this window’s persisted config any more',
-    (await getConfig(overlay)).xpZoneScope === undefined
+    (await getConfig(overlay)).xpZoneScope === undefined,
   )
 
   // Nothing can name a membership this build cannot apply — the closed union, through the real IPC
   // and the real normalizer in main (the `xpRows` rule, applied to a knob that crosses a channel).
   await setScope(overlay, { zoneScope: 'everyTier' }, 'eqOverlay')
   const held = await getScope(overlay, 'eqOverlay')
-  check('an unknown membership is dropped by main rather than applied', held.zoneScope === 'allTiers', JSON.stringify(held))
-  const restored = await settle(() => span(overlay), (t) => t === every, { timeoutMs: 15_000 })
-  check('…so the window holds the read it had, rather than degrading to a blank', restored === every, restored)
+  check(
+    'an unknown membership is dropped by main rather than applied',
+    held.zoneScope === 'allTiers',
+    JSON.stringify(held),
+  )
+  const restored = await settle(
+    () => span(overlay),
+    (t) => t === every,
+    { timeoutMs: 15_000 },
+  )
+  check(
+    '…so the window holds the read it had, rather than degrading to a blank',
+    restored === every,
+    restored,
+  )
 
   // Back to the OPENING before leaving: the selection is app-wide now, so a step that walks away
   // from it having moved it hands the next step a state it did not ask for (this one did exactly
   // that to `stepScopeParity` on the first run of this file).
   await setScope(overlay, { zoneScope: 'exactTier' }, 'eqOverlay')
-  await settle(() => tierButton(overlay), (s) => s === 'exactTier', { timeoutMs: 15_000 })
+  await settle(
+    () => tierButton(overlay),
+    (s) => s === 'exactTier',
+    { timeoutMs: 15_000 },
+  )
 
   // Back to the whole log for the steps below, and the toggle goes away with the zone it was about.
   await setConfig(overlay, { xpSlice: 'all' })
-  const back = await settle(() => tierButton(overlay), (s) => s === '', { timeoutMs: 15_000 })
+  const back = await settle(
+    () => tierButton(overlay),
+    (s) => s === '',
+    { timeoutMs: 15_000 },
+  )
   check('…and it leaves again with the zone half it was about', back === '')
 }
 
@@ -483,65 +656,133 @@ async function stepScopeParity(page: Page, overlay: Page): Promise<void> {
   // steps left behind is not this step's subject — it puts both windows on a known membership and
   // then measures the round trip. (Inheriting it is the mistake this comment is paying for.)
   await setScope(overlay, { zoneScope: 'exactTier' }, 'eqOverlay')
-  const opened = await settle(() => tierButton(overlay), (s) => s === 'exactTier', { timeoutMs: 15_000 })
-  check('the floating window is on this tier, with a zone to apply it to', opened === 'exactTier', opened)
+  const opened = await settle(
+    () => tierButton(overlay),
+    (s) => s === 'exactTier',
+    { timeoutMs: 15_000 },
+  )
+  check(
+    'the floating window is on this tier, with a zone to apply it to',
+    opened === 'exactTier',
+    opened,
+  )
   const mainOpen = await getScope(page, 'eq')
   check(
     'and the MAIN window already agrees — there is one value, and main is holding it',
     mainOpen.zoneScope === 'exactTier',
-    JSON.stringify(mainOpen)
+    JSON.stringify(mainOpen),
   )
 
   // ── MAIN → OVERLAY, on the far window's pixels ──
   const before = await settleStable(() => span(overlay), { timeoutMs: 15_000 })
   await setScope(page, { zoneScope: 'allTiers' }, 'eq')
-  const moved = await settle(() => tierButton(overlay), (s) => s === 'allTiers', { timeoutMs: 15_000 })
-  check('a flip in the MAIN window moves the floating window’s own button', moved === 'allTiers', moved)
-  const widened = await settle(() => span(overlay), (t) => t.includes('every tier'), { timeoutMs: 15_000 })
+  const moved = await settle(
+    () => tierButton(overlay),
+    (s) => s === 'allTiers',
+    { timeoutMs: 15_000 },
+  )
+  check(
+    'a flip in the MAIN window moves the floating window’s own button',
+    moved === 'allTiers',
+    moved,
+  )
+  const widened = await settle(
+    () => span(overlay),
+    (t) => t.includes('every tier'),
+    { timeoutMs: 15_000 },
+  )
   check(
     '…and its span line, which is the number the report was about',
     widened !== before && widened.includes('every tier'),
-    `${before} → ${widened}`
+    `${before} → ${widened}`,
   )
 
   // ── OVERLAY → MAIN, on the far window's state ──
   await setScope(overlay, { zoneScope: 'exactTier' }, 'eqOverlay')
-  const heard = await settle(() => getScope(page, 'eq'), (s) => s.zoneScope === 'exactTier', { timeoutMs: 15_000 })
-  check('and a flip in the FLOATING window is heard by the main one', heard.zoneScope === 'exactTier')
-  const narrowed = await settle(() => span(overlay), (t) => t === before, { timeoutMs: 15_000 })
-  check('…restoring the narrowed span byte for byte', narrowed === before, `${widened} → ${narrowed}`)
+  const heard = await settle(
+    () => getScope(page, 'eq'),
+    (s) => s.zoneScope === 'exactTier',
+    { timeoutMs: 15_000 },
+  )
+  check(
+    'and a flip in the FLOATING window is heard by the main one',
+    heard.zoneScope === 'exactTier',
+  )
+  const narrowed = await settle(
+    () => span(overlay),
+    (t) => t === before,
+    { timeoutMs: 15_000 },
+  )
+  check(
+    '…restoring the narrowed span byte for byte',
+    narrowed === before,
+    `${widened} → ${narrowed}`,
+  )
 
   // THE HOUR TRAVELS THE SAME WIRE, and the halves are independent: moving one must not move the
   // other, or a reader flipping the tier would silently re-divide every rate on both surfaces.
   await setScope(page, { basis: 'active' }, 'eq')
-  const hour = await settle(() => basisButton(overlay), (b) => b === 'active', { timeoutMs: 15_000 })
+  const hour = await settle(
+    () => basisButton(overlay),
+    (b) => b === 'active',
+    { timeoutMs: 15_000 },
+  )
   check('the DENOMINATOR travels the same wire', hour === 'active')
-  check('…and moving one half leaves the other exactly where it was', (await tierButton(overlay)) === 'exactTier')
+  check(
+    '…and moving one half leaves the other exactly where it was',
+    (await tierButton(overlay)) === 'exactTier',
+  )
   await setScope(page, { basis: 'elapsed' }, 'eq')
-  await settle(() => basisButton(overlay), (b) => b === 'elapsed', { timeoutMs: 15_000 })
+  await settle(
+    () => basisButton(overlay),
+    (b) => b === 'elapsed',
+    { timeoutMs: 15_000 },
+  )
 
   // Back to the whole log, so the steps after this see the state they expect.
   await setConfig(overlay, { xpSlice: 'all' })
-  await settle(() => tierButton(overlay), (s) => s === '', { timeoutMs: 15_000 })
+  await settle(
+    () => tierButton(overlay),
+    (s) => s === '',
+    { timeoutMs: 15_000 },
+  )
 }
 
 /** Close it the way a user would — its own ✕ — and prove main recorded it. */
-async function stepClose(page: Page, app: ElectronApplication, overlay: Page | null): Promise<void> {
+async function stepClose(
+  page: Page,
+  app: ElectronApplication,
+  overlay: Page | null,
+): Promise<void> {
   if (overlay) {
     // The click destroys the page it is evaluated in, so this evaluate is allowed to lose its
     // context; whether the close happened is the settle below's answer to give, not this call's.
     await overlay
       .evaluate(() => {
-        ;(document.querySelector('button[aria-label="Close overlay"]') as HTMLElement | null)?.click()
+        ;(
+          document.querySelector('button[aria-label="Close overlay"]') as HTMLElement | null
+        )?.click()
       })
       .catch(() => undefined)
   } else {
     await bridge(page).toggle('xp')
   }
-  const gone = await settle(() => windowsOfKind(app, 'xp'), (n) => n === 0, { timeoutMs: 20_000 })
+  const gone = await settle(
+    () => windowsOfKind(app, 'xp'),
+    (n) => n === 0,
+    { timeoutMs: 20_000 },
+  )
   check('the close affordance actually closes the window', gone === 0, `${gone} still open`)
-  const state = await settle(() => bridge(page).state(), (s) => s.xp === false, { timeoutMs: 10_000 })
-  check('…and the app records it as closed, so the next launch does not bring it back', state.xp === false, JSON.stringify(state))
+  const state = await settle(
+    () => bridge(page).state(),
+    (s) => s.xp === false,
+    { timeoutMs: 10_000 },
+  )
+  check(
+    '…and the app records it as closed, so the next launch does not bring it back',
+    state.xp === false,
+    JSON.stringify(state),
+  )
 }
 
 async function main(): Promise<void> {
@@ -581,7 +822,7 @@ async function main(): Promise<void> {
     check(
       'no renderer console errors in either window during the run',
       consoleErrors.length === 0,
-      consoleErrors.slice(0, 3).join(' | ')
+      consoleErrors.slice(0, 3).join(' | '),
     )
   } catch (err) {
     check('the spec ran to completion', false, String(err))

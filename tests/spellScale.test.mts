@@ -48,7 +48,7 @@ import {
   effectiveSpellRank,
   normalizeSpellRank,
   scaleSpellDamage,
-  scaleSpellHeal
+  scaleSpellHeal,
 } from '../src/shared/spellScale'
 
 // ---- the mined table -------------------------------------------------------------------------
@@ -75,13 +75,76 @@ const RANK_PAIRS: readonly {
   high: number
   highN: number
 }[] = [
-  { spell: "Garrison's Mighty Mana Shock", level: 19, lowRank: 0, low: 337, lowN: 31, highRank: 8, high: 498, highN: 55 },
-  { spell: "Garrison's Mighty Mana Shock", level: 20, lowRank: 0, low: 342, lowN: 50, highRank: 8, high: 506, highN: 50 },
-  { spell: "Garrison's Mighty Mana Shock", level: 21, lowRank: 0, low: 346, lowN: 34, highRank: 8, high: 512, highN: 66 },
-  { spell: "Garrison's Mighty Mana Shock", level: 22, lowRank: 0, low: 351, lowN: 54, highRank: 8, high: 519, highN: 71 },
-  { spell: "Garrison's Mighty Mana Shock", level: 23, lowRank: 0, low: 356, lowN: 31, highRank: 8, high: 526, highN: 72 },
-  { spell: "Garrison's Mighty Mana Shock", level: 24, lowRank: 0, low: 361, lowN: 75, highRank: 8, high: 534, highN: 57 },
-  { spell: 'Discordant Mind', level: 43, lowRank: 0, low: 472, lowN: 47, highRank: 2, high: 528, highN: 272 }
+  {
+    spell: "Garrison's Mighty Mana Shock",
+    level: 19,
+    lowRank: 0,
+    low: 337,
+    lowN: 31,
+    highRank: 8,
+    high: 498,
+    highN: 55,
+  },
+  {
+    spell: "Garrison's Mighty Mana Shock",
+    level: 20,
+    lowRank: 0,
+    low: 342,
+    lowN: 50,
+    highRank: 8,
+    high: 506,
+    highN: 50,
+  },
+  {
+    spell: "Garrison's Mighty Mana Shock",
+    level: 21,
+    lowRank: 0,
+    low: 346,
+    lowN: 34,
+    highRank: 8,
+    high: 512,
+    highN: 66,
+  },
+  {
+    spell: "Garrison's Mighty Mana Shock",
+    level: 22,
+    lowRank: 0,
+    low: 351,
+    lowN: 54,
+    highRank: 8,
+    high: 519,
+    highN: 71,
+  },
+  {
+    spell: "Garrison's Mighty Mana Shock",
+    level: 23,
+    lowRank: 0,
+    low: 356,
+    lowN: 31,
+    highRank: 8,
+    high: 526,
+    highN: 72,
+  },
+  {
+    spell: "Garrison's Mighty Mana Shock",
+    level: 24,
+    lowRank: 0,
+    low: 361,
+    lowN: 75,
+    highRank: 8,
+    high: 534,
+    highN: 57,
+  },
+  {
+    spell: 'Discordant Mind',
+    level: 43,
+    lowRank: 0,
+    low: 472,
+    lowN: 47,
+    highRank: 2,
+    high: 528,
+    highN: 272,
+  },
 ]
 
 /**
@@ -91,7 +154,7 @@ const RANK_PAIRS: readonly {
 const ROUNDINGS: readonly { name: string; f: (x: number) => number }[] = [
   { name: 'floor', f: Math.floor },
   { name: 'ceil', f: Math.ceil },
-  { name: 'round', f: Math.round }
+  { name: 'round', f: Math.round },
 ]
 
 /** `amount + f(amount * pct * rank / 100)` for an arbitrary rate and rounding — the shape under test. */
@@ -108,17 +171,22 @@ test('the fitted rate is SIX percent a rank, and the log rejects every other who
   for (let pct = 1; pct <= 15; pct++) {
     const best = Math.max(
       ...ROUNDINGS.map(
-        (r) => RANK_PAIRS.filter((p) => candidate(p.low, p.highRank, pct, r.f) === p.high).length
-      )
+        (r) => RANK_PAIRS.filter((p) => candidate(p.low, p.highRank, pct, r.f) === p.high).length,
+      ),
     )
     if (best === RANK_PAIRS.length) winners.push(pct)
   }
-  assert.deepEqual(winners, [SPELL_DAMAGE_RANK_PERCENT], `whole rates that fit all seven pairs: ${winners.join(',')}`)
+  assert.deepEqual(
+    winners,
+    [SPELL_DAMAGE_RANK_PERCENT],
+    `whole rates that fit all seven pairs: ${winners.join(',')}`,
+  )
 })
 
 test('the rounding is a FLOOR, and it is six for six against the ceiling`s zero', () => {
   const score = (f: (x: number) => number): number =>
-    RANK_PAIRS.filter((p) => candidate(p.low, p.highRank, SPELL_DAMAGE_RANK_PERCENT, f) === p.high).length
+    RANK_PAIRS.filter((p) => candidate(p.low, p.highRank, SPELL_DAMAGE_RANK_PERCENT, f) === p.high)
+      .length
   assert.equal(score(Math.floor), RANK_PAIRS.length, 'floor reproduces every mined pair')
   assert.equal(score(Math.ceil), 0, 'the ceiling reproduces none of them')
   // Not a tie broken by taste: the ceiling is one point high on every pair whose product is
@@ -135,7 +203,7 @@ test('scaleSpellDamage reproduces the mined table', () => {
     assert.equal(
       scaleSpellDamage(p.low, p.highRank),
       p.high,
-      `${p.spell} L${String(p.level)} +${String(p.highRank)}: ${String(p.highN)} hits`
+      `${p.spell} L${String(p.level)} +${String(p.highRank)}: ${String(p.highN)} hits`,
     )
   }
 })
@@ -188,15 +256,27 @@ const HEAL_ROWS: readonly { spell: string; rank: number; observed: number; base:
   { spell: 'Slugs Healing', rank: 4, observed: 228, base: 204 },
   { spell: 'Superior Healing', rank: 2, observed: 892, base: 842 },
   { spell: 'Superior Healing', rank: 4, observed: 943, base: 842 },
-  { spell: 'Superior Healing', rank: 5, observed: 968, base: 842 }
+  { spell: 'Superior Healing', rank: 5, observed: 968, base: 842 },
 ]
 
 test('the measured HEALING rate is three percent a rank, and scaleSpellHeal applies exactly it', () => {
   for (const r of HEAL_ROWS) {
-    assert.equal(candidate(r.base, r.rank, 3, Math.floor), r.observed, `${r.spell} +${String(r.rank)}`)
-    assert.equal(scaleSpellHeal(r.base, r.rank), r.observed, `${r.spell} +${String(r.rank)} via the engine`)
+    assert.equal(
+      candidate(r.base, r.rank, 3, Math.floor),
+      r.observed,
+      `${r.spell} +${String(r.rank)}`,
+    )
+    assert.equal(
+      scaleSpellHeal(r.base, r.rank),
+      r.observed,
+      `${r.spell} +${String(r.rank)} via the engine`,
+    )
     // The damage rate would be twice as far out, which is why one rule for both would be wrong.
-    assert.notEqual(candidate(r.base, r.rank, SPELL_DAMAGE_RANK_PERCENT, Math.floor), r.observed, r.spell)
+    assert.notEqual(
+      candidate(r.base, r.rank, SPELL_DAMAGE_RANK_PERCENT, Math.floor),
+      r.observed,
+      r.spell,
+    )
   }
   // The same guards the damage rule carries: base at rank nothing, nothing out of nothing.
   assert.equal(scaleSpellHeal(842, 1), 842)

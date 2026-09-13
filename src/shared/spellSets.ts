@@ -59,7 +59,11 @@ export interface SpellSetsSnap {
  */
 export type SpellSetsDelta = SpellSetsSnap
 
-export const EMPTY_SPELL_SETS: SpellSetsSnap = { v: SPELL_SETS_SHAPE_VERSION, memorized: [], sets: {} }
+export const EMPTY_SPELL_SETS: SpellSetsSnap = {
+  v: SPELL_SETS_SHAPE_VERSION,
+  memorized: [],
+  sets: {},
+}
 
 /** Case- and whitespace-stable key for "the same spell", matching spellLineLookup.ts's fold. */
 export function memoKey(spell: string): string {

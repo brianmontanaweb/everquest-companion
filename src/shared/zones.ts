@@ -195,7 +195,7 @@ export const ZONES: readonly ZoneEntry[] = [
     name: 'Permafrost Keep',
     aliases: ['The Permafrost Caverns'],
     mobCatalogNames: ['Permafrost'],
-    era: 'classic'
+    era: 'classic',
   },
   { short: 'qeytoqrg', name: 'Qeynos Hills', era: 'classic' },
   // The other half of the JOS-415 swap — evidence beside `North Kaladim` above.
@@ -211,7 +211,7 @@ export const ZONES: readonly ZoneEntry[] = [
     name: 'The City of Guk',
     aliases: ['Upper Guk'],
     mobCatalogNames: ['Upper Guk'],
-    era: 'classic'
+    era: 'classic',
   },
   {
     short: 'eastkarana',
@@ -219,7 +219,7 @@ export const ZONES: readonly ZoneEntry[] = [
     aliases: ['East Karana', 'Eastern Karana'],
     // Catalog uses all three; only `Eastern Plains of Karana` (79 rows) folds onto the log name.
     mobCatalogNames: ['East Karana', 'Eastern Karana', 'Eastern Karana (37)'],
-    era: 'classic'
+    era: 'classic',
   },
   { short: 'feerrott', name: 'The Feerrott', era: 'classic' },
   // eqlwiki's zone table: `Infected Paw | paw`. The log's Splitpaw kills (a Tesch Mas / Rosch Mas /
@@ -229,7 +229,7 @@ export const ZONES: readonly ZoneEntry[] = [
     name: 'The Lair of the Splitpaw',
     aliases: ['Splitpaw Lair', 'Infected Paw'],
     mobCatalogNames: ['Splitpaw Lair', 'Infected Paw'],
-    era: 'classic'
+    era: 'classic',
   },
   { short: 'lavastorm', name: 'The Lavastorm Mountains', era: 'classic' },
   {
@@ -237,7 +237,7 @@ export const ZONES: readonly ZoneEntry[] = [
     name: 'The Northern Desert of Ro',
     aliases: ['North Ro'],
     mobCatalogNames: ['North Ro'],
-    era: 'classic'
+    era: 'classic',
   },
   {
     short: 'northkarana',
@@ -245,20 +245,25 @@ export const ZONES: readonly ZoneEntry[] = [
     aliases: ['North Karana', 'Northern Karana'],
     // `Northern Plains of Karana` is 4 rows; `Northern Karana` alone is 54 more of the same zone.
     mobCatalogNames: ['North Karana', 'Northern Karana', 'Northern Karana (35)'],
-    era: 'classic'
+    era: 'classic',
   },
   { short: 'oasis', name: 'The Oasis of Marr', era: 'classic' },
   { short: 'oot', name: 'The Ocean of Tears', era: 'classic' },
   { short: 'fearplane', name: 'The Plane of Fear', era: 'classic' },
   { short: 'hateplane', name: 'The Plane of Hate', era: 'classic' }, // brewall only (hateplaneb is the revamp)
   { short: 'airplane', name: 'The Plane of Sky', era: 'classic' },
-  { short: 'rathemtn', name: 'The Rathe Mountains', aliases: ['Mountains of Rathe'], era: 'classic' },
+  {
+    short: 'rathemtn',
+    name: 'The Rathe Mountains',
+    aliases: ['Mountains of Rathe'],
+    era: 'classic',
+  },
   {
     short: 'gukbottom',
     name: 'The Ruins of Old Guk',
     aliases: ['Lower Guk'],
     mobCatalogNames: ['Lower Guk'],
-    era: 'classic'
+    era: 'classic',
   },
   // The log's Old Paineel kills (a rock golem, an elemental warrior, a ratman warrior, Slizik the
   // Mighty) are catalog `The Hole` rows verbatim; brewall hole_1 labels Elemental_Striker + a
@@ -268,14 +273,14 @@ export const ZONES: readonly ZoneEntry[] = [
     name: 'The Ruins of Old Paineel',
     aliases: ['The Hole'],
     mobCatalogNames: ['The Hole'],
-    era: 'classic'
+    era: 'classic',
   }, // brewall only
   {
     short: 'sro',
     name: 'The Southern Desert of Ro',
     aliases: ['South Ro'],
     mobCatalogNames: ['South Ro', 'Southern Ro'],
-    era: 'classic'
+    era: 'classic',
   },
   {
     short: 'southkarana',
@@ -283,7 +288,7 @@ export const ZONES: readonly ZoneEntry[] = [
     aliases: ['South Karana', 'Southern Karana'],
     // `Southern Plains of Karana` is ONE row; `Southern Karana` is 53 more of the same zone.
     mobCatalogNames: ['South Karana', 'Southern Karana'],
-    era: 'classic'
+    era: 'classic',
   },
   { short: 'soltemple', name: 'The Temple of Solusek Ro', era: 'classic' },
   { short: 'tox', name: 'Toxxulia Forest', era: 'classic' }, // classic stem; `toxxulia` is the Live revamp
@@ -319,7 +324,7 @@ export const ZONES: readonly ZoneEntry[] = [
     short: 'mistmoore',
     name: 'Castle Mistmoore',
     aliases: ['Mistmoore Castle', 'The Castle of Mistmoore'],
-    era: 'classic'
+    era: 'classic',
   },
   { short: 'neriakc', name: 'Neriak - Third Gate', era: 'classic' },
   { short: 'neriakd', name: 'Neriak Palace', era: 'classic' }, // brewall only
@@ -336,7 +341,7 @@ export const ZONES: readonly ZoneEntry[] = [
     name: 'Clan RunnyEye',
     aliases: ['Runnyeye Citadel'],
     mobCatalogNames: ['Runnyeye'],
-    era: 'classic'
+    era: 'classic',
   }, // brewall only
   { short: 'soldunga', name: "Solusek's Eye", era: 'classic' }, // brewall only
   { short: 'steamfont', name: 'Steamfont Mountains', era: 'classic' }, // classic stem; `steamfontmts` is the revamp
@@ -351,7 +356,7 @@ export const ZONES: readonly ZoneEntry[] = [
     short: 'qey2hh1',
     name: 'The Western Plains of Karana',
     aliases: ['West Karana', 'Western Karana'],
-    era: 'classic'
+    era: 'classic',
   },
 
   // --- 3. KUNARK. Stems are brewall-only except where marked; names corroborated by the catalog. ---
@@ -416,7 +421,7 @@ export const ZONES: readonly ZoneEntry[] = [
   { short: 'thurgadinb', name: 'Icewell Keep', era: 'velious' }, // in default set
   { short: 'velketor', name: "Velketor's Labyrinth", era: 'velious' },
   { short: 'wakening', name: 'The Wakening Land', aliases: ['Wakening Lands'], era: 'velious' },
-  { short: 'westwastes', name: 'Western Wastes', era: 'velious' }
+  { short: 'westwastes', name: 'Western Wastes', era: 'velious' },
 ]
 
 // TODO(zone table) — candidates deliberately LEFT OUT because they could not be verified:

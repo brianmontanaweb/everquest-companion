@@ -80,8 +80,8 @@ const HARMONY: PoskyQuest = {
   items: [
     { name: 'Nebulous Diamond', count: 1, who: [], where: 'Island 4' },
     { name: 'Efreeti War Spear', count: 1, who: [], where: 'Island 4' },
-    { name: 'Wind Rune Heda', count: 1, who: [], where: 'Island 2' }
-  ]
+    { name: 'Wind Rune Heda', count: 1, who: [], where: 'Island 2' },
+  ],
 }
 const AZARACK: PoskyQuest = {
   className: 'Beastlord',
@@ -89,8 +89,8 @@ const AZARACK: PoskyQuest = {
   giver: 'Animist Kratho',
   items: [
     { name: 'Azarack Skin', count: 1, who: [], where: 'Island 6' },
-    { name: 'Wind Rune Heda', count: 1, who: [], where: 'Island 2' }
-  ]
+    { name: 'Wind Rune Heda', count: 1, who: [], where: 'Island 2' },
+  ],
 }
 const QUESTS = [HARMONY, AZARACK]
 const heda = itemCountKey('Wind Rune Heda')
@@ -105,7 +105,7 @@ const LOOTED: LootEvent[] = [
   { ts: TRADE_AT - 11 * MINUTE, item: 'Wind Rune Heda', disposition: 'currency' },
   { ts: TRADE_AT - 10 * MINUTE, item: 'Nebulous Diamond' },
   { ts: TRADE_AT - 9 * MINUTE, item: 'Efreeti War Spear' },
-  { ts: TRADE_AT - 8 * MINUTE, item: 'Azarack Skin' }
+  { ts: TRADE_AT - 8 * MINUTE, item: 'Azarack Skin' },
 ]
 
 /**
@@ -122,9 +122,9 @@ function trade(runes: number): TurnInEvent[] {
       items: [
         { name: 'Nebulous Diamond', count: 1 },
         { name: 'Efreeti War Spear', count: 1 },
-        ...Array.from({ length: runes }, () => ({ name: 'Wind Rune Heda', count: 1 }))
-      ]
-    }
+        ...Array.from({ length: runes }, () => ({ name: 'Wind Rune Heda', count: 1 })),
+      ],
+    },
   ]
 }
 
@@ -136,7 +136,7 @@ function trade(runes: number): TurnInEvent[] {
  */
 function afterTrade(
   runes: number,
-  over: Partial<ReconcileInput> = {}
+  over: Partial<ReconcileInput> = {},
 ): ReturnType<typeof reconcile> {
   const { instants, offered } = countTurnIns(trade(runes), QUESTS)
   const times: Record<string, number> = {}
@@ -150,7 +150,7 @@ function afterTrade(
     turnIns: times,
     turnInInstants: instants,
     quests: QUESTS,
-    ...over
+    ...over,
   })
 }
 
@@ -169,7 +169,7 @@ test('a one-rune trade and a two-rune trade cannot leave the same count behind',
   assert.notEqual(
     afterTrade(1).net[heda],
     afterTrade(2).net[heda],
-    'the second rune left the bags and left no trace in the model'
+    'the second rune left the bags and left no trace in the model',
   )
 })
 
@@ -205,7 +205,7 @@ test('THE CURRENCY CONSEQUENCE: the phantom rune must not arm the Beastlord Test
 /** A fresh `/outputfile inventory` taken after the trade: no runes left, the skin still banked. */
 const AFTER_DUMP: Partial<ReconcileInput> = {
   inv: { 'azarack skin': 1 },
-  rebaselineAt: TRADE_AT + 5 * MINUTE
+  rebaselineAt: TRADE_AT + 5 * MINUTE,
 }
 
 test('THE WORKAROUND: under `inventory` and `rebaseline`, a fresh dump does heal the phantom', () => {
@@ -245,7 +245,7 @@ test('the premise, against the real Sky data: runes are count-1 and heavily cont
   assert.equal(
     rows.filter(({ it }) => it.count > 1).length,
     0,
-    'every Sky requirement is one copy, so no count check can catch a second copy going out'
+    'every Sky requirement is one copy, so no count check can catch a second copy going out',
   )
   const wantHeda = rows.filter(({ it }) => itemCountKey(it.name) === heda)
   assert.ok(wantHeda.length > 1, 'and the rune is contended — a phantom copy misleads every one')

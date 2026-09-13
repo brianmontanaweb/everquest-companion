@@ -17,7 +17,6 @@ import { useModule } from './useModule'
 import { itemTierKey } from '@shared/itemStats'
 import type { ItemTiersSnap } from '@shared/types'
 
-
 /** The whole observed-tier map for the current character, or null before hydration. */
 export function useItemTiers(): ItemTiersSnap | null {
   return useModule<ItemTiersSnap>('itemTiers')
@@ -34,5 +33,7 @@ export function observedTierOf(tiers: ItemTiersSnap | null, name: string): numbe
 /** ItemWindow + the observed item level for the item it is describing. */
 export function ObservedItemWindow(props: ItemWindowProps): JSX.Element {
   const tiers = useItemTiers()
-  return <ItemWindow {...props} observedTier={props.observedTier ?? observedTierOf(tiers, props.name)} />
+  return (
+    <ItemWindow {...props} observedTier={props.observedTier ?? observedTierOf(tiers, props.name)} />
+  )
 }

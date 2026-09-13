@@ -35,7 +35,7 @@ import {
   startPointerWatch,
   stopPointerWatch,
   type PointerWatchPort,
-  type WatchRect
+  type WatchRect,
 } from '../src/main/pointerWatch'
 
 const SRC = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'src')
@@ -62,7 +62,7 @@ const RECT: WatchRect = { x: 100, y: 100, width: 200, height: 100 }
  */
 function fakePort(
   cursor: { x: number; y: number } | null,
-  confirmWith: WatchRect | null = RECT
+  confirmWith: WatchRect | null = RECT,
 ): PointerWatchPort & { confirms: number; exits: number; reads: number } {
   return {
     rect: { ...RECT },
@@ -79,7 +79,7 @@ function fakePort(
     },
     exit(): void {
       this.exits++
-    }
+    },
   }
 }
 
@@ -240,7 +240,11 @@ test('the renderer treats main’s push as an ordinary leave, and clears every r
   const release = /const releaseAllReasons = [\s\S]*?\n {2}\}/.exec(chrome)?.[0] ?? ''
   assert.match(release, /reasonsRef\.current\.clear\(\)/, 'every named reason goes, not just one')
   assert.match(release, /applyCapture\(\)/, 'and the mouse is handed back in one call')
-  assert.match(release, /if \(reasonsRef\.current\.size === 0\) return/, 're-entrancy: nothing to do')
+  assert.match(
+    release,
+    /if \(reasonsRef\.current\.size === 0\) return/,
+    're-entrancy: nothing to do',
+  )
   assert.match(chrome, /onOverlayPointerExit\(\(\) => releaseRef\.current\(\)\)/)
 
   // The preload's door is receive-only: the signal can never become a request.
@@ -253,7 +257,10 @@ test('the STRIPS ride the same signal — a pinned card is a capture that never 
   // they can reach the same stuck state through (cardQueue.ts's argument).
   const queue = src('renderer', 'src', 'overlay', 'cardQueue.ts')
   assert.match(queue, /export function useUnpinOnPointerExit/)
-  assert.match(queue, /if \(c\.pinned\) dispatch\(\{ type: 'hover', id: c\.payload\.id, over: false \}\)/)
+  assert.match(
+    queue,
+    /if \(c\.pinned\) dispatch\(\{ type: 'hover', id: c\.payload\.id, over: false \}\)/,
+  )
   // Nothing is dismissed early: the pointer having left is not the user having read it.
   const hook = /export function useUnpinOnPointerExit[\s\S]*?\n\}/.exec(queue)?.[0] ?? ''
   assert.doesNotMatch(hook, /'dismiss'/)

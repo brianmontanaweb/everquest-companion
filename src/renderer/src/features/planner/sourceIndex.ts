@@ -15,7 +15,7 @@ export {
   sourceIndex,
   sourceItemKey,
   sourcesFor,
-  type SourceIndex
+  type SourceIndex,
 } from '../../lib/itemSources'
 
 /** The planner's name for one known drop source — `lib/itemSources.ItemSource`, unchanged. */

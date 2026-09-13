@@ -37,13 +37,14 @@ import {
   sniffImageMime,
   upstreamUrlFor,
   urlCacheHash,
-  wikiItemIconUrl
+  wikiItemIconUrl,
 } from '../src/main/imageCache'
 
 const USER_DATA = join('C:', 'Users', 'someone', 'AppData', 'Roaming', 'everquest-companion')
 
 /** A real boss portrait from bosses.json — the exact shape BossView now wraps. */
-const BOSS = 'https://wiki.project1999.com/images/thumb/Npc_lord_nagafen.png/300px-Npc_lord_nagafen.png'
+const BOSS =
+  'https://wiki.project1999.com/images/thumb/Npc_lord_nagafen.png/300px-Npc_lord_nagafen.png'
 
 /** What `lib/imageUrl.ts cachedImageUrl` emits. Spelled out here (rather than imported from
  *  the renderer) so this suite proves the two halves agree on the wire format by CONTENT —
@@ -84,7 +85,7 @@ test('parseEqImgUrl rejects every traversal / escape shape', () => {
     'https://eqlwiki.com/index.php?title=Special:Redirect/file/Item_7.png', // wrong scheme
     'file:///C:/Windows/System32/config/SAM',
     'eqimgx://item/7',
-    ''
+    '',
   ]
   for (const url of hostile) {
     assert.equal(parseEqImgUrl(url), null, `should reject: ${url}`)
@@ -104,7 +105,7 @@ test('cache paths are derived from the validated id, inside the cache dir', () =
   assert.equal(imageCacheDir(USER_DATA), join(USER_DATA, IMAGE_CACHE_DIR_NAME))
   assert.equal(
     cachePathFor(USER_DATA, req, 'image/png'),
-    join(USER_DATA, IMAGE_CACHE_DIR_NAME, 'item-1234.png')
+    join(USER_DATA, IMAGE_CACHE_DIR_NAME, 'item-1234.png'),
   )
   // The item route's name is fully determined by the id — the sniff gates WHETHER we write,
   // not what we call it — so one `existsSync` resolves a read.
@@ -124,7 +125,7 @@ test('cache paths are derived from the validated id, inside the cache dir', () =
 test('the upstream URL is built from the id and nowhere else', () => {
   assert.equal(
     wikiItemIconUrl('1234'),
-    'https://eqlwiki.com/index.php?title=Special:Redirect/file/Item_1234.png'
+    'https://eqlwiki.com/index.php?title=Special:Redirect/file/Item_1234.png',
   )
   assert.equal(upstreamUrlFor(parseEqImgUrl('eqimg://item/1234')!), wikiItemIconUrl('1234'))
   assert.equal(EQIMG_SCHEME, 'eqimg')
@@ -150,7 +151,7 @@ test('the url route accepts exactly the wrapped boss portraits bosses.json holds
     'https://wiki.project1999.com/images/Npc_coercer_t%60vala.png',
     'https://wiki.project1999.com/images/Innoruuk.PNG',
     'https://wiki.project1999.com/images/Npc_dracoliche.jpg',
-    'https://eqlwiki.com/index.php?title=Special:Redirect/file/Item_7.png'
+    'https://eqlwiki.com/index.php?title=Special:Redirect/file/Item_7.png',
   ]
   for (const u of accepted) {
     const r = parseEqImgUrl(wrap(u))
@@ -201,7 +202,7 @@ test('the url route fetches ONLY allowlisted hosts — exact hostname, https, no
     // IDN homoglyph (Cyrillic і) — new URL() punycodes it to xn--wki-jhd.project1999.com, so
     // it can never compare equal to the ASCII entry.
     'https://wіki.project1999.com/x.png',
-    ''
+    '',
   ]
   for (const u of hostile) {
     assert.equal(normalizeUpstreamImageUrl(u), null, `must not be fetchable: ${u}`)
@@ -215,22 +216,28 @@ test('the url route fetches ONLY allowlisted hosts — exact hostname, https, no
 test('url normalization is canonical: default port folded, fragment dropped, query kept', () => {
   // An explicit :443 IS the default port — WHATWG strips it, so this is the same resource and
   // must land on the same cache entry, not a second permanent copy.
-  assert.equal(normalizeUpstreamImageUrl('https://eqlwiki.com:443/a.png'), 'https://eqlwiki.com/a.png')
+  assert.equal(
+    normalizeUpstreamImageUrl('https://eqlwiki.com:443/a.png'),
+    'https://eqlwiki.com/a.png',
+  )
   // Host case is not significant; path case is.
   assert.equal(normalizeUpstreamImageUrl('https://EQLWIKI.COM/a.PNG'), 'https://eqlwiki.com/a.PNG')
   // The fragment never reaches the server, so keeping it would split one set of bytes across
   // two entries.
-  assert.equal(normalizeUpstreamImageUrl('https://eqlwiki.com/a.png#frag'), 'https://eqlwiki.com/a.png')
+  assert.equal(
+    normalizeUpstreamImageUrl('https://eqlwiki.com/a.png#frag'),
+    'https://eqlwiki.com/a.png',
+  )
   // The query IS part of what we ask for (the item route's own URL is query-only).
   assert.equal(
     normalizeUpstreamImageUrl('https://eqlwiki.com/index.php?title=X'),
-    'https://eqlwiki.com/index.php?title=X'
+    'https://eqlwiki.com/index.php?title=X',
   )
   // Same normalized URL ⇒ same cache identity, from any of its spellings.
   const stems = [
     'https://eqlwiki.com:443/a.png#one',
     'https://EQLwiki.com/a.png',
-    'https://eqlwiki.com/a.png#two'
+    'https://eqlwiki.com/a.png#two',
   ].map((u) => cacheStem(parseEqImgUrl(wrap(u))!))
   assert.equal(new Set(stems).size, 1, stems.join(' / '))
 })
@@ -254,7 +261,7 @@ test('url cache paths are hash-derived, stable, and stay inside the cache dir', 
   // which would orphan every entry on every user's disk and re-download the whole set.
   assert.equal(
     urlCacheHash('https://wiki.project1999.com/images/Npc_master_yael.png'),
-    '4fddb18e081439c8f015e708'
+    '4fddb18e081439c8f015e708',
   )
 
   // NAMING: the extension states what the bytes sniffed as; the stem never does.
@@ -264,7 +271,10 @@ test('url cache paths are hash-derived, stable, and stay inside the cache dir', 
   assert.equal(cacheFileName(req, 'image/webp'), `url-${hash}.webp`)
   // …and a read probes exactly those four, in a fixed order — a bounded constant, never a
   // directory scan, so lookup stays O(1).
-  assert.deepEqual(cacheCandidateNames(req), CACHE_EXTENSIONS.map((e) => `url-${hash}.${e}`))
+  assert.deepEqual(
+    cacheCandidateNames(req),
+    CACHE_EXTENSIONS.map((e) => `url-${hash}.${e}`),
+  )
   assert.equal(cacheCandidateNames(req).length, 4)
   // Every name the sniffer can produce is one the reader probes (the invariant that keeps a
   // written entry findable).
@@ -275,7 +285,11 @@ test('url cache paths are hash-derived, stable, and stay inside the cache dir', 
 
   // CONTAINMENT: every candidate path is a direct child of the cache dir, for every accepted
   // URL — no traversal, no separators, whatever the URL contained.
-  for (const u of [BOSS, 'https://eqlwiki.com/a/b/c/../../x.png', 'https://eqlwiki.com/%2e%2e%2fx.png']) {
+  for (const u of [
+    BOSS,
+    'https://eqlwiki.com/a/b/c/../../x.png',
+    'https://eqlwiki.com/%2e%2e%2fx.png',
+  ]) {
     const r = parseEqImgUrl(wrap(u))
     if (!r) continue
     for (const p of cacheCandidatePaths(USER_DATA, r)) {
@@ -304,7 +318,7 @@ test('the url route decodes totally — junk in the segment is a 404, never a th
     'eqimg://url', // no payload at all
     'eqimg://url/https%3A%2F%2Feqlwiki.com%2Fa.png/extra', // too many segments
     `eqimg://url/${'%41'.repeat(2000)}`, // absurd payload, length-capped before decoding
-    `eqimg://url/${encodeURIComponent(`https://eqlwiki.com/${'a'.repeat(1000)}.png`)}` // long URL
+    `eqimg://url/${encodeURIComponent(`https://eqlwiki.com/${'a'.repeat(1000)}.png`)}`, // long URL
   ]
   for (const u of junk) {
     assert.doesNotThrow(() => parseEqImgUrl(u), u)

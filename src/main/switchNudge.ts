@@ -15,7 +15,13 @@ import type { CharacterRef, LogSwitchNudge } from '../shared/types'
 import { E2E } from './e2e'
 import { logInfo } from './errorLog'
 import { listCharacters, parseLogName } from './log/config'
-import { POLL_MS, QUIET_MS, QuietSwitchWatcher, logIsQuiet, type SiblingSample } from './log/quietSwitch'
+import {
+  POLL_MS,
+  QUIET_MS,
+  QuietSwitchWatcher,
+  logIsQuiet,
+  type SiblingSample,
+} from './log/quietSwitch'
 import { sendToMain } from './windows'
 
 /**
@@ -73,12 +79,12 @@ function offerSwitch(logPath: string, quietFor: number): void {
   const payload: LogSwitchNudge = {
     candidate,
     attached,
-    quietMs: Math.round(quietFor)
+    quietMs: Math.round(quietFor),
   }
   logInfo(
     `[everquest-companion] ${attached.name}'s log has been quiet for ${String(
-      Math.round(quietFor / 1000)
-    )}s while ${candidate.name}'s is growing — offering a switch (asked at most once per log per session).`
+      Math.round(quietFor / 1000),
+    )}s while ${candidate.name}'s is growing — offering a switch (asked at most once per log per session).`,
   )
   sendToMain(IPC.onLogSwitchNudge, payload)
 }

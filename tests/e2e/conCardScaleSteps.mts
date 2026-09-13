@@ -33,7 +33,7 @@ import {
   setOverlayTextScale,
   shootOverlay,
   storedBounds,
-  type Bounds
+  type Bounds,
 } from './stripScaleSteps.mjs'
 
 const GRID = '[data-testid="con-card-chip-grid"]'
@@ -57,7 +57,13 @@ const AXES = ['magic', 'fire', 'cold', 'poison', 'disease']
 /** One benchmark, shaped exactly as the wire carries it: two probabilities, a band and a sentence. */
 function bench(pPlain: number, pOver: number): unknown {
   const at = { level: 51, mobLevel: 51, atMobLevel: false, pPlain, pOver }
-  return { ...at, tag: 'very resistant', guidance: 'may not land even with overchannel', atLo: at, atHi: at }
+  return {
+    ...at,
+    tag: 'very resistant',
+    guidance: 'may not land even with overchannel',
+    atLo: at,
+    atHi: at,
+  }
 }
 
 /**
@@ -90,7 +96,7 @@ function payload(id: string, count: number): unknown {
             npcOnly: false,
             n: 43,
             nTotal: 43,
-            fit: { R: 106, lo: 92, hi: 126 }
+            fit: { R: 106, lo: 92, hi: 126 },
           }
         : {
             axis,
@@ -101,9 +107,9 @@ function payload(id: string, count: number): unknown {
             npcOnly: false,
             n: 0,
             nTotal: 0,
-            fit: null
-          }
-    )
+            fit: null,
+          },
+    ),
   }
 }
 
@@ -130,7 +136,11 @@ function gridTracks(page: Page): Promise<number[]> {
 
 /** …once the card that produces them has arrived and settled. */
 function settleTracks(page: Page, want: number): Promise<number[]> {
-  return settle(() => gridTracks(page), (t) => t.length === want, { timeoutMs: 15_000 })
+  return settle(
+    () => gridTracks(page),
+    (t) => t.length === want,
+    { timeoutMs: 15_000 },
+  )
 }
 
 /**
@@ -148,12 +158,12 @@ export async function stepChipGridWraps(app: ElectronApplication, card: Page): P
   check(
     'five chips at the default width lay out in THREE columns, wrapped into rows',
     five.length === 3,
-    `${String(five.length)} column(s): ${five.map((n) => n.toFixed(1)).join(' ')}`
+    `${String(five.length)} column(s): ${five.map((n) => n.toFixed(1)).join(' ')}`,
   )
   check(
     '…and no column was squeezed below the width a chip was measured to need',
     five.every((w) => w >= CHIP_MIN_PX - PX_EPS),
-    `tracks ${five.map((n) => n.toFixed(1)).join(' ')} against a ${String(CHIP_MIN_PX)}px minimum`
+    `tracks ${five.map((n) => n.toFixed(1)).join(' ')} against a ${String(CHIP_MIN_PX)}px minimum`,
   )
   note(`chip tracks at 100%: ${five.map((n) => n.toFixed(1)).join(' / ')}`)
 
@@ -162,7 +172,7 @@ export async function stepChipGridWraps(app: ElectronApplication, card: Page): P
   check(
     'ONE chip is one column of the same row — auto-FILL keeps the empty tracks, so it is never a banner',
     one.length === 3 && Math.abs(one[0] - five[0]) <= SLACK,
-    `${String(one.length)} column(s), first track ${String(one[0])} vs ${String(five[0])}`
+    `${String(one.length)} column(s), first track ${String(one[0])} vs ${String(five[0])}`,
   )
   return five.length
 }
@@ -180,7 +190,7 @@ export async function stepChipGridWraps(app: ElectronApplication, card: Page): P
 export async function stepWindowScalesWithText(
   app: ElectronApplication,
   card: Page,
-  columns: number
+  columns: number,
 ): Promise<void> {
   const start = await overlayBounds(app, KIND)
   if (!check('the con card window has bounds to scale from', start !== null)) return
@@ -192,14 +202,14 @@ export async function stepWindowScalesWithText(
     const b = await settle(
       () => overlayBounds(app, KIND),
       (r) => r !== null && Math.abs(r.width - want) <= SLACK,
-      { timeoutMs: 15_000 }
+      { timeoutMs: 15_000 },
     )
     const pct = String(Math.round(scale * 100))
     if (
       !check(
         `at ${pct}% the con card WINDOW is ${String(want)}px — the layout box times the text scale`,
         b !== null && Math.abs((b as Bounds).width - want) <= SLACK,
-        `${String((b as Bounds | null)?.width)} (was ${String(base.width)} at 100%)`
+        `${String((b as Bounds | null)?.width)} (was ${String(base.width)} at 100%)`,
       )
     ) {
       continue
@@ -208,35 +218,39 @@ export async function stepWindowScalesWithText(
     check(
       `…grown about its own middle, with the top edge where the user left it`,
       Math.abs(big.x + big.width / 2 - (base.x + base.width / 2)) <= SLACK && big.y === base.y,
-      `${JSON.stringify(base)} -> ${JSON.stringify(big)}`
+      `${JSON.stringify(base)} -> ${JSON.stringify(big)}`,
     )
     for (const [count, tag] of [
       [5, 'five'],
-      [1, 'one']
+      [1, 'one'],
     ] as const) {
       await showCard(app, payload(`scale-${tag}-${pct}`, count))
       const tracks = await settleTracks(card, columns)
       check(
         `…and at ${pct}% the ${tag}-chip card still lays out in ${String(columns)} columns — the same card, bigger`,
         tracks.length === columns,
-        `${String(tracks.length)} column(s) at ${pct}%`
+        `${String(tracks.length)} column(s) at ${pct}%`,
       )
       const clip = await card.evaluate(() => ({
         scroll: (document.querySelector('[data-testid="con-card"]') ?? document.body).scrollWidth,
-        client: document.documentElement.clientWidth
+        client: document.documentElement.clientWidth,
       }))
       check(
         `…with nothing clipped off the edge at ${pct}%`,
         clip.scroll <= clip.client + 1,
-        `card ${String(clip.scroll)}px in a ${String(clip.client)}px window`
+        `card ${String(clip.scroll)}px in a ${String(clip.client)}px window`,
       )
       await shootOverlay(app, card, KIND, `con-card-${pct}-${tag}.png`)
     }
   }
   await setOverlayTextScale(card, 1)
-  await settle(() => overlayBounds(app, KIND), (r) => r !== null && Math.abs(r.width - base.width) <= SLACK, {
-    timeoutMs: 15_000
-  })
+  await settle(
+    () => overlayBounds(app, KIND),
+    (r) => r !== null && Math.abs(r.width - base.width) <= SLACK,
+    {
+      timeoutMs: 15_000,
+    },
+  )
 }
 
 /**
@@ -253,35 +267,39 @@ export async function stepWindowScalesWithText(
  * window's own bounds rather than anything the event carries. Emitting it explicitly makes the step
  * independent of whether a given Electron build reports a programmatic resize as one.
  */
-export async function stepResizeRecordsLayoutBox(app: ElectronApplication, card: Page): Promise<void> {
+export async function stepResizeRecordsLayoutBox(
+  app: ElectronApplication,
+  card: Page,
+): Promise<void> {
   const SCALE = 1.5
   await setOverlayTextScale(card, SCALE)
-  const at150 = await settle(() => overlayBounds(app, KIND), (b) => b !== null, { timeoutMs: 15_000 })
+  const at150 = await settle(
+    () => overlayBounds(app, KIND),
+    (b) => b !== null,
+    { timeoutMs: 15_000 },
+  )
   if (!check('the con card window is up at 150% to be dragged', at150 !== null)) return
   const dragged = Math.round((at150 as Bounds).width) + 120
 
-  await app.evaluate(
-    ({ BrowserWindow }, width) => {
-      for (const w of BrowserWindow.getAllWindows()) {
-        if (!w.webContents.getURL().includes('kind=conCard')) continue
-        const b = w.getBounds()
-        w.setBounds({ ...b, width })
-        w.emit('resized')
-      }
-    },
-    dragged
-  )
+  await app.evaluate(({ BrowserWindow }, width) => {
+    for (const w of BrowserWindow.getAllWindows()) {
+      if (!w.webContents.getURL().includes('kind=conCard')) continue
+      const b = w.getBounds()
+      w.setBounds({ ...b, width })
+      w.emit('resized')
+    }
+  }, dragged)
 
   const want = Math.round(dragged / SCALE)
   const stored = await settle(
     () => storedBounds(card),
     (b) => b !== undefined && Math.abs(b.width - want) <= SLACK,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   check(
     'a strip dragged wider at 150% is REMEMBERED as the box it would be at 100%',
     stored !== undefined && Math.abs((stored as Bounds).width - want) <= SLACK,
-    `stored ${String(stored?.width)} for a ${String(dragged)}px window at ${String(SCALE)}x (want ${String(want)})`
+    `stored ${String(stored?.width)} for a ${String(dragged)}px window at ${String(SCALE)}x (want ${String(want)})`,
   )
 
   // …and the other direction: back at 100%, the window IS that remembered box.
@@ -289,12 +307,12 @@ export async function stepResizeRecordsLayoutBox(app: ElectronApplication, card:
   const back = await settle(
     () => overlayBounds(app, KIND),
     (b) => b !== null && Math.abs(b.width - want) <= SLACK,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   check(
     '…and turning the text back to 100% gives exactly that box as the window',
     back !== null && Math.abs((back as Bounds).width - want) <= SLACK,
-    `${String((back as Bounds | null)?.width)} vs ${String(want)}`
+    `${String((back as Bounds | null)?.width)} vs ${String(want)}`,
   )
 
   // Put the width back where this spec found it, so the steps after this one measure an ordinary
@@ -307,6 +325,6 @@ export async function stepResizeRecordsLayoutBox(app: ElectronApplication, card:
         w.emit('resized')
       }
     },
-    Math.round((at150 as Bounds).width / SCALE)
+    Math.round((at150 as Bounds).width / SCALE),
   )
 }

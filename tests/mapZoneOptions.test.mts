@@ -27,7 +27,7 @@ import {
   zoneLabel,
   zoneMatches,
   zoneOptions,
-  zoneScore
+  zoneScore,
 } from '../src/renderer/src/features/maps/zoneOptions'
 
 /** A stand-in corpus in the shape `listMapZones` returns: stems, ascending. */
@@ -68,7 +68,11 @@ test('the filter is the app’s ONE scorer: a typo reaches the zone, and the bes
   const query = tokenize('guk')
   const scores = filterZones(CORPUS, 'guk').map((z) => zoneScore(z, query) ?? 0)
   assert.ok(scores.length > 1, 'several zones answer to it')
-  assert.deepEqual(scores, [...scores].sort((a, b) => b - a), 'the list is ranked, best first')
+  assert.deepEqual(
+    scores,
+    [...scores].sort((a, b) => b - a),
+    'the list is ranked, best first',
+  )
   assert.equal(scores[0], 1, 'and an exact word match leads it')
   // Coverage still bites: EVERY typed word has to land somewhere, so one shared word is not a hit.
   assert.deepEqual(filterZones(CORPUS, 'plane of nowhere'), [])
@@ -91,7 +95,7 @@ test('zoning auto-switches only to a stem the selector can offer, and never gues
     // Uncapped on purpose: reachability is the claim, not where the row lands in a long list.
     assert.ok(
       stem != null && filterZones(CORPUS, zoneLabel(stem), CORPUS.length).includes(stem),
-      entry.name
+      entry.name,
     )
   }
   // Ambiguous and unseen names resolve to nothing at all. `null` is what makes an unmatched zone

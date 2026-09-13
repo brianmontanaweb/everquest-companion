@@ -46,17 +46,21 @@ import {
   resetImageFailures,
   resetImageFetchWarnings,
   resetImageReadWarnings,
-  takeImageReadWarning
+  takeImageReadWarning,
 } from '../src/main/imageCache'
 import { resetHealth, takeHealth } from '../src/main/telemetry/health'
 
 const TEST_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 /** Sixteen bytes that sniff as a PNG — `sniffImageMime` refuses anything under twelve. */
-const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(8, 7)])
+const PNG = Buffer.concat([
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  Buffer.alloc(8, 7),
+])
 
 /** A real boss portrait URL, wrapped the way `lib/imageUrl.ts cachedImageUrl` wraps one. */
-const BOSS = 'https://wiki.project1999.com/images/thumb/Npc_lord_nagafen.png/300px-Npc_lord_nagafen.png'
+const BOSS =
+  'https://wiki.project1999.com/images/thumb/Npc_lord_nagafen.png/300px-Npc_lord_nagafen.png'
 const BOSS_REQ = `eqimg://url/${encodeURIComponent(BOSS)}`
 
 interface Harness {
@@ -87,7 +91,7 @@ function harness(): Harness {
     registerSchemesAsPrivileged: () => undefined,
     handle: (_scheme, h) => {
       handler = h
-    }
+    },
   }
   installImageCacheProtocol(protocol, {
     userData: root,
@@ -98,7 +102,7 @@ function harness(): Harness {
     },
     log: () => undefined,
     onError: (msg) => errors.push(msg),
-    warn: (msg) => warns.push(msg)
+    warn: (msg) => warns.push(msg),
   })
   assert.ok(handler, 'the installer registers its handler synchronously')
   const registered = handler as (request: GlobalRequest) => GlobalResponse | Promise<GlobalResponse>
@@ -109,7 +113,7 @@ function harness(): Harness {
     warns,
     errors,
     ask: (url) => Promise.resolve(registered(new Request(url))),
-    dispose: () => rmSync(root, { recursive: true, force: true })
+    dispose: () => rmSync(root, { recursive: true, force: true }),
   }
 }
 
@@ -142,7 +146,9 @@ test('an entry that will not read back is served by RE-FETCHING it, not by a gap
     assert.equal(res.status, 200)
     assert.equal(res.headers.get('content-type'), 'image/png')
     assert.deepEqual(new Uint8Array(await res.arrayBuffer()), new Uint8Array(PNG))
-    assert.deepEqual(h.fetches, ['https://eqlwiki.com/index.php?title=Special:Redirect/file/Item_1234.png'])
+    assert.deepEqual(h.fetches, [
+      'https://eqlwiki.com/index.php?title=Special:Redirect/file/Item_1234.png',
+    ])
     // …and it is kept, so the next launch pays nothing.
     assert.deepEqual(readFileSync(join(h.cacheDir, 'item-1234.png')), PNG)
 
@@ -150,7 +156,10 @@ test('an entry that will not read back is served by RE-FETCHING it, not by a gap
     // errors.log. Before JOS-266 this request filed `image cache: could not read <path>`.
     assert.deepEqual(h.errors, [])
     assert.equal(h.warns.length, 1)
-    assert.match(h.warns[0], /^\[everquest-companion\] image cache: could not read item-1234\.png \(EISDIR\)/)
+    assert.match(
+      h.warns[0],
+      /^\[everquest-companion\] image cache: could not read item-1234\.png \(EISDIR\)/,
+    )
     assert.match(h.warns[0], /re-fetching it/)
     assert.match(h.warns[0], /counted, not logged/)
     assert.equal(takeHealth().imageCacheReadFailures, 1)
@@ -204,7 +213,11 @@ test('a runtime-cache entry is EVICTED and replaced — the bad name does not su
 
     assert.equal(res.status, 200)
     assert.equal(existsSync(bad), false, 'the entry that could not serve is gone')
-    assert.deepEqual(readFileSync(join(h.cacheDir, `${stem}.png`)), PNG, 'and real bytes replaced it')
+    assert.deepEqual(
+      readFileSync(join(h.cacheDir, `${stem}.png`)),
+      PNG,
+      'and real bytes replaced it',
+    )
     assert.deepEqual(h.fetches, [BOSS])
   } finally {
     h.dispose()
@@ -284,16 +297,17 @@ test('a re-fetch that also fails falls through to the fetch failure path, unchan
       registerSchemesAsPrivileged: () => undefined,
       handle: (_s, h) => {
         handler = h
-      }
+      },
     },
     {
       userData: root,
       bundledDir: null,
-      fetchImpl: () => Promise.resolve(new Response(null, { status: 404, statusText: 'Not Found' })),
+      fetchImpl: () =>
+        Promise.resolve(new Response(null, { status: 404, statusText: 'Not Found' })),
       log: () => undefined,
       onError: (msg) => errors.push(msg),
-      warn: (msg) => warns.push(msg)
-    }
+      warn: (msg) => warns.push(msg),
+    },
   )
   const ask = handler as unknown as (request: GlobalRequest) => Promise<GlobalResponse>
   try {
@@ -333,9 +347,15 @@ test('the failure description is TOTAL, and nothing can put free text into the l
   // It runs inside a catch, so it must never become the throw it is describing — and it is the one
   // place a value from the filesystem reaches a printed line.
   assert.equal(describeReadFailure(Object.assign(new Error('x'), { code: 'ENOENT' })), 'ENOENT')
-  assert.equal(describeReadFailure(Object.assign(new Error('x'), { code: 'ERR_FS_FILE_TOO_LARGE' })), 'ERR_FS_FILE_TOO_LARGE')
+  assert.equal(
+    describeReadFailure(Object.assign(new Error('x'), { code: 'ERR_FS_FILE_TOO_LARGE' })),
+    'ERR_FS_FILE_TOO_LARGE',
+  )
   // Not an errno spelling ⇒ the NAME, which is the same bound the fetch side keeps.
-  assert.equal(describeReadFailure(Object.assign(new TypeError('x'), { code: 'C:\\Users\\someone' })), 'TypeError')
+  assert.equal(
+    describeReadFailure(Object.assign(new TypeError('x'), { code: 'C:\\Users\\someone' })),
+    'TypeError',
+  )
   assert.equal(describeReadFailure(Object.assign(new Error('x'), { code: 42 })), 'Error')
   assert.equal(describeReadFailure(new Error('boom')), 'Error')
   for (const junk of [undefined, null, 'a string', 42, {}] as unknown[]) {
@@ -349,15 +369,21 @@ test('THE WIRING: the read failure evicts, counts, and never reaches the error s
   // order is the pin: evict, then count, then decide whether to say anything.
   const src = readFileSync(join(TEST_ROOT, 'src/main/imageCache.ts'), 'utf8')
   // The catch does one thing and files nothing.
-  const readCatch = src.slice(src.indexOf('const bytes = await readFile(path)'), src.indexOf('return null\n  }'))
+  const readStart = src.indexOf('const bytes = await readFile(path)')
+  // Bounded from readStart: an unbounded indexOf('return null\n  }') matches an unrelated,
+  // earlier catch block (normalizeUpstreamImageUrl's) first, before ever reaching this one.
+  const readCatch = src.slice(readStart, src.indexOf('return null\n  }', readStart))
   assert.match(readCatch, /await healUnreadableEntry\(path, err, repair, warn\)/)
   assert.doesNotMatch(readCatch, /onError\(/, 'a self-healed read never files an error')
   // …and that one thing is: evict (userData only), count, then decide whether to say anything.
   const heal = src.slice(
     src.indexOf('async function healUnreadableEntry'),
-    src.indexOf('export function installImageCacheProtocol')
+    src.indexOf('export function installImageCacheProtocol'),
   )
-  assert.match(heal, /if \(repair\) await unlink\(path\)\.catch\(ignoreCleanupFailure\)\s*\n\s*noteImageCacheReadFailure\(\)/)
+  assert.match(
+    heal,
+    /if \(repair\) await unlink\(path\)\.catch\(ignoreCleanupFailure\)\s*\n\s*noteImageCacheReadFailure\(\)/,
+  )
   assert.match(heal, /const code = describeReadFailure\(err\)/)
   assert.match(heal, /if \(takeImageReadWarning\(code\)\) \{/)
   // The counter has ONE call site, and it is that one.

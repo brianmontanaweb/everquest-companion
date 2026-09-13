@@ -38,13 +38,13 @@ import {
   withDefaultPack,
   withTombstone,
   type SoundFallback,
-  type SoundPackPrefs
+  type SoundPackPrefs,
 } from '../src/shared/soundPacks'
 import { packsToProvision } from '../src/main/provisionPacks'
 import {
   DEFAULT_ALERT_PACK_ID,
   DEFAULT_ALERT_SOUNDS,
-  DEFAULT_PACK_IDS
+  DEFAULT_PACK_IDS,
 } from '../src/main/data/defaultPacks'
 import type { SoundPack } from '../src/shared/types'
 
@@ -62,22 +62,22 @@ const RICKMAN = pack(
     DEFAULT_ALERT_SOUNDS.charmBreak,
     DEFAULT_ALERT_SOUNDS.bossDefeat,
     DEFAULT_ALERT_SOUNDS.questComplete,
-    DEFAULT_ALERT_SOUNDS.buffWearsOff
+    DEFAULT_ALERT_SOUNDS.buffWearsOff,
   ],
-  'Alan Rickman'
+  'Alan Rickman',
 )
 
 /** A third-party pack with its own derived ids in the same CESP categories. */
 const TURRET = pack(
   'portal-turret',
   ['task-complete-turret-hello', 'input-required-turret-huh', 'task-error-turret-ow'],
-  'Portal Turret'
+  'Portal Turret',
 )
 
 /** What every resolution in this app is given: where to land, and the line of last resort. */
 const FALLBACK: SoundFallback = {
   defaultPackId: DEFAULT_ALERT_PACK_ID,
-  fallbackSoundId: DEFAULT_ALERT_SOUNDS.buffWearsOff
+  fallbackSoundId: DEFAULT_ALERT_SOUNDS.buffWearsOff,
 }
 
 // ─── 1. the preference ────────────────────────────────────────────────────────
@@ -99,12 +99,12 @@ test('the stored blob is validated on the way out, never trusted', () => {
     assert.deepEqual(
       normalizeSoundPackPrefs({ defaultPackId: junk }),
       {},
-      `'${String(junk)}' must not survive as a pack id`
+      `'${String(junk)}' must not survive as a pack id`,
     )
   }
   // A removed-list of junk is dropped entry by entry, not wholesale.
   assert.deepEqual(normalizeSoundPackPrefs({ removedPackIds: ['../x', 'peon'] }), {
-    removedPackIds: ['peon']
+    removedPackIds: ['peon'],
   })
   assert.deepEqual(normalizeSoundPackPrefs({ removedPackIds: 'peon' }), {})
 })
@@ -137,7 +137,7 @@ test('provisioning skips a shipped pack the user deleted — and only that pack'
   assert.deepEqual(
     packsToProvision(none).map((p) => p.name),
     DEFAULT_PACK_IDS,
-    'a fresh install still provisions everything it ships'
+    'a fresh install still provisions everything it ships',
   )
   // Installed ⇒ nothing to do (the ADDITIVE law, untouched).
   assert.equal(packsToProvision(new Set(DEFAULT_PACK_IDS)).length, 0)
@@ -147,7 +147,7 @@ test('provisioning skips a shipped pack the user deleted — and only that pack'
   // A tombstone for something the app does not ship changes nothing at all.
   assert.deepEqual(
     packsToProvision(none, new Set(['portal-turret'])).map((p) => p.name),
-    DEFAULT_PACK_IDS
+    DEFAULT_PACK_IDS,
   )
 })
 
@@ -162,7 +162,7 @@ test('installing the pack again is how the deletion is taken back', () => {
   // …and a later launch that finds it missing provisions it again, exactly as it always did.
   assert.deepEqual(
     packsToProvision(new Set(), new Set(reinstalled.removedPackIds)).map((p) => p.name),
-    DEFAULT_PACK_IDS
+    DEFAULT_PACK_IDS,
   )
 })
 
@@ -199,7 +199,7 @@ test('a ref into a DELETED pack plays the default pack, keeping what the sound M
   const r = resolveSoundRef(
     { packId: RICKMAN.id, soundId: DEFAULT_ALERT_SOUNDS.bossDefeat }, // a task-complete line
     [TURRET],
-    fallback
+    fallback,
   )
   assert.equal(r.status, 'substituted')
   assert.equal(r.packId, TURRET.id)
@@ -210,7 +210,11 @@ test('a ref into a DELETED pack plays the default pack, keeping what the sound M
 test('the same pack, a missing sound: stay in the pack the user chose', () => {
   // A re-cut pack, or a custom sound the user removed. Jumping to another pack would be a bigger
   // change than the one that actually happened.
-  const r = resolveSoundRef({ packId: TURRET.id, soundId: 'task-error-gone' }, [TURRET, RICKMAN], FALLBACK)
+  const r = resolveSoundRef(
+    { packId: TURRET.id, soundId: 'task-error-gone' },
+    [TURRET, RICKMAN],
+    FALLBACK,
+  )
   assert.equal(r.status, 'substituted')
   assert.equal(r.packId, TURRET.id)
   assert.equal(r.soundId, 'task-error-turret-ow')
@@ -223,7 +227,7 @@ test('no category to keep ⇒ the stated fallback line, never silence', () => {
   assert.equal(r.status, 'substituted')
   assert.deepEqual(
     { packId: r.packId, soundId: r.soundId },
-    { packId: RICKMAN.id, soundId: DEFAULT_ALERT_SOUNDS.buffWearsOff }
+    { packId: RICKMAN.id, soundId: DEFAULT_ALERT_SOUNDS.buffWearsOff },
   )
 })
 
@@ -232,7 +236,10 @@ test('nothing installed at all is REPORTED, not papered over', () => {
   // like a working alert that happens never to fire.
   const r = resolveSoundRef({ packId: RICKMAN.id, soundId: 'anything' }, [], FALLBACK)
   assert.equal(r.status, 'missing')
-  assert.deepEqual({ packId: r.packId, soundId: r.soundId }, { packId: RICKMAN.id, soundId: 'anything' })
+  assert.deepEqual(
+    { packId: r.packId, soundId: r.soundId },
+    { packId: RICKMAN.id, soundId: 'anything' },
+  )
 })
 
 // ─── the two surfaces the ruling names ────────────────────────────────────────
@@ -262,7 +269,7 @@ test('seeded alerts are written with the default pack — and a fresh install is
   const mine: SoundFallback = { ...FALLBACK, defaultPackId: TURRET.id }
   assert.deepEqual(seedSoundRef(shipped, [TURRET], mine), {
     packId: TURRET.id,
-    soundId: 'input-required-turret-huh'
+    soundId: 'input-required-turret-huh',
   })
   // …and it does that even while the shipped pack is still installed, which is the bug: a seed
   // that resolved in the shipped pack used to be left there.

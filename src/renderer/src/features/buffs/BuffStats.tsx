@@ -31,7 +31,7 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import type { BuffClass, BuffStat } from '@shared/types'
@@ -57,7 +57,8 @@ const CLASS_LABEL: Record<BuffClass, string> = { buff: 'Buffs', debuff: 'Debuffs
 function rowEstimate(s: BuffStat): { ms?: number | null; src?: string } {
   const ms = s.estimateMs ?? s.dbDurationMs ?? s.medianMs
   const src =
-    s.estimatorSource ?? (s.dbDurationMs != null ? 'db' : s.medianMs != null ? 'observed' : undefined)
+    s.estimatorSource ??
+    (s.dbDurationMs != null ? 'db' : s.medianMs != null ? 'observed' : undefined)
   return { ms, src }
 }
 
@@ -116,7 +117,9 @@ function StatsRow({ s, withBoxes }: { s: BuffStat; withBoxes: boolean }): JSX.El
         {s.p25 != null && s.p75 != null ? `${fmtDuration(s.p25)} - ${fmtDuration(s.p75)}` : '-'}
       </TableCell>
       <TableCell align="right" style={{ opacity: 0.65 }}>
-        {s.minMs != null && s.maxMs != null ? `${fmtDuration(s.minMs)} - ${fmtDuration(s.maxMs)}` : '-'}
+        {s.minMs != null && s.maxMs != null
+          ? `${fmtDuration(s.minMs)} - ${fmtDuration(s.maxMs)}`
+          : '-'}
       </TableCell>
     </TableRow>
   )
@@ -147,7 +150,15 @@ function StatsTable({ rows, withBoxes }: { rows: BuffStat[]; withBoxes: boolean 
 }
 
 /** One class's durations table, under its accent swatch. */
-function StatsSection({ cls, rows, withBoxes }: { cls: BuffClass; rows: BuffStat[]; withBoxes: boolean }): JSX.Element {
+function StatsSection({
+  cls,
+  rows,
+  withBoxes,
+}: {
+  cls: BuffClass
+  rows: BuffStat[]
+  withBoxes: boolean
+}): JSX.Element {
   return (
     <Box>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
@@ -156,7 +167,10 @@ function StatsSection({ cls, rows, withBoxes }: { cls: BuffClass; rows: BuffStat
           {CLASS_LABEL[cls]}
         </Typography>
       </Stack>
-      <Paper variant="outlined" sx={{ p: 1, borderLeft: '3px solid', borderLeftColor: classAccent(cls) }}>
+      <Paper
+        variant="outlined"
+        sx={{ p: 1, borderLeft: '3px solid', borderLeftColor: classAccent(cls) }}
+      >
         <StatsTable rows={rows} withBoxes={withBoxes} />
       </Paper>
     </Box>
@@ -165,11 +179,13 @@ function StatsSection({ cls, rows, withBoxes }: { cls: BuffClass; rows: BuffStat
 
 /** The rows of one class that match the query, sorted by sample count then name. */
 function matching(stats: Record<string, BuffStat>, cls: BuffClass, needle: string): BuffStat[] {
-  return Object.values(stats)
-    // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives BuffStat. Becomes a view descriptor when the source lands.
-    .filter((s) => s.cls === cls && (needle === '' || s.spell.toLowerCase().includes(needle)))
-    // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives BuffStat. Becomes a view descriptor when the source lands.
-    .sort((a, b) => b.n - a.n || a.spell.localeCompare(b.spell))
+  return (
+    Object.values(stats)
+      // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives BuffStat. Becomes a view descriptor when the source lands.
+      .filter((s) => s.cls === cls && (needle === '' || s.spell.toLowerCase().includes(needle)))
+      // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives BuffStat. Becomes a view descriptor when the source lands.
+      .sort((a, b) => b.n - a.n || a.spell.localeCompare(b.spell))
+  )
 }
 
 /**
@@ -184,8 +200,11 @@ export function BuffStats({ stats }: { stats: Record<string, BuffStat> }): JSX.E
   // The input echoes instantly; the FILTER is deferred (AGENTS.md's search rule).
   const needle = useDeferredValue(query).trim().toLowerCase()
   const sections = useMemo(
-    () => CLASS_ORDER.map((cls) => ({ cls, rows: matching(stats, cls, needle) })).filter((s) => s.rows.length > 0),
-    [stats, needle]
+    () =>
+      CLASS_ORDER.map((cls) => ({ cls, rows: matching(stats, cls, needle) })).filter(
+        (s) => s.rows.length > 0,
+      ),
+    [stats, needle],
   )
   const mined = useMemo(() => Object.keys(stats).length > 0, [stats])
   // The boxes and their column exist only in opt-in mode; the search stays in both, because the
@@ -214,8 +233,8 @@ export function BuffStats({ stats }: { stats: Record<string, BuffStat> }): JSX.E
                 <InputAdornment position="start">
                   <SearchIcon fontSize="small" />
                 </InputAdornment>
-              )
-            }
+              ),
+            },
           }}
           sx={{ width: 240 }}
         />

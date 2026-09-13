@@ -115,7 +115,7 @@ export interface PlayOutcome {
 export async function playSound(
   packId: string,
   soundId: string,
-  volume: number
+  volume: number,
 ): Promise<PlayOutcome> {
   const k = key(packId, soundId)
   const url = await getSoundUrl(packId, soundId)
@@ -177,7 +177,7 @@ function getPreviewUrl(packName: string, file: string): Promise<string | null> {
 export async function playPreviewSound(
   packName: string,
   file: string,
-  volume: number
+  volume: number,
 ): Promise<boolean> {
   const url = await getPreviewUrl(packName, file)
   if (!url) return false

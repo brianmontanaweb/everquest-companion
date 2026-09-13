@@ -37,8 +37,8 @@ function RescrubNotice({ slice }: { slice: TriageSlice }): JSX.Element | null {
   if (slice.rescrubUnknown) {
     return (
       <Alert severity="info" data-testid="triage-slice-rescrub-unknown">
-        This copy was cached before re-scrub-on-read existed, so what it removed was never
-        measured. Delete <code>{slice.path}</code> and re-open to get a real answer.
+        This copy was cached before re-scrub-on-read existed, so what it removed was never measured.
+        Delete <code>{slice.path}</code> and re-open to get a real answer.
       </Alert>
     )
   }
@@ -48,18 +48,17 @@ function RescrubNotice({ slice }: { slice: TriageSlice }): JSX.Element | null {
       {slice.rescrubDropped > 0 && (
         <>
           Re-scrub removed <strong>{slice.rescrubDropped.toLocaleString()}</strong> line(s) of
-          third-party chat that our own client would have removed before uploading - this slice
-          was not scrubbed by our client.{' '}
+          third-party chat that our own client would have removed before uploading - this slice was
+          not scrubbed by our client.{' '}
         </>
       )}
       {slice.rescrubCleaned > 0 && (
         <>
-          {slice.rescrubCleaned.toLocaleString()} line(s) carried control characters or ANSI
-          escapes and were sanitized.{' '}
+          {slice.rescrubCleaned.toLocaleString()} line(s) carried control characters or ANSI escapes
+          and were sanitized.{' '}
         </>
       )}
-      The object in the bucket is untouched - it is the evidence; only this local copy was
-      cleaned.
+      The object in the bucket is untouched - it is the evidence; only this local copy was cleaned.
     </Alert>
   )
 }
@@ -94,8 +93,8 @@ export default function SliceBox({ slice }: { slice: TriageSlice }): JSX.Element
                 <InputAdornment position="start">
                   <SearchIcon fontSize="small" />
                 </InputAdornment>
-              )
-            }
+              ),
+            },
           }}
           sx={{ minWidth: 260 }}
           data-testid="triage-slice-search"
@@ -127,7 +126,7 @@ export default function SliceBox({ slice }: { slice: TriageSlice }): JSX.Element
           lineHeight: `${String(LINE_HEIGHT)}px`,
           px: 1,
           py: 0.5,
-          whiteSpace: 'pre'
+          whiteSpace: 'pre',
         }}
       >
         <div style={{ height: win.topPad }} />

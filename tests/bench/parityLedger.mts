@@ -93,7 +93,12 @@ function walkArray(a: unknown[], b: unknown[], path: string, w: Walk): void {
  * let a single absent `selected` object contribute thousands of entries and drown every other class
  * in the ledger, which would make the instrument useless exactly when the gap is largest.
  */
-function walkObject(a: Record<string, unknown>, b: Record<string, unknown>, path: string, w: Walk): void {
+function walkObject(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+  path: string,
+  w: Walk,
+): void {
   const rest = new Set(Object.keys(b))
   for (const k of Object.keys(a)) {
     if (!rest.has(k)) {
@@ -140,6 +145,8 @@ function walkDiffs(a: unknown, b: unknown, path: string, w: Walk): void {
 export function buildLedger(want: unknown, got: unknown): Ledger {
   const w: Walk = { into: new Map(), leaves: 0, agreed: 0 }
   walkDiffs(want, got, '', w)
-  const classes = [...w.into.values()].sort((x, y) => y.count - x.count || x.path.localeCompare(y.path))
+  const classes = [...w.into.values()].sort(
+    (x, y) => y.count - x.count || x.path.localeCompare(y.path),
+  )
   return { leaves: w.leaves, agreed: w.agreed, classes }
 }

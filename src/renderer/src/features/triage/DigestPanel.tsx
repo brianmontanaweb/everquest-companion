@@ -21,14 +21,14 @@ import {
   MenuItem,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import {
   TRIAGE_DEFAULT_QUERY,
   TRIAGE_SINCE_CHOICES,
   type TriageClusterView,
   type TriageDigest,
-  type TriageListQuery
+  type TriageListQuery,
 } from '@shared/triage'
 import { useTriageCall } from './useTriage'
 
@@ -45,12 +45,16 @@ function ClusterRow({ cluster }: { cluster: TriageClusterView }): JSX.Element {
         variant="outlined"
       />
       <Typography variant="caption" color="text.secondary">
-        {cluster.reportIds.length.toLocaleString()} reports · {cluster.withLogs.toLocaleString()} with logs
+        {cluster.reportIds.length.toLocaleString()} reports · {cluster.withLogs.toLocaleString()}{' '}
+        with logs
       </Typography>
       {cluster.regression && (
         <Chip size="small" color="warning" label={`regression on ${cluster.versions[0]}`} />
       )}
-      <Typography variant="body2" sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <Typography
+        variant="body2"
+        sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
+      >
         {cluster.label}
       </Typography>
       {cluster.signature !== undefined && (
@@ -89,7 +93,9 @@ export default function DigestPanel(): JSX.Element {
           size="small"
           label="Channel"
           value={query.channel}
-          onChange={(e) => setQuery({ ...query, channel: e.target.value as TriageListQuery['channel'] })}
+          onChange={(e) =>
+            setQuery({ ...query, channel: e.target.value as TriageListQuery['channel'] })
+          }
           sx={{ minWidth: 110 }}
         >
           {(['all', 'prod', 'dev'] as const).map((c) => (
@@ -131,7 +137,7 @@ export default function DigestPanel(): JSX.Element {
               fontFamily: 'monospace',
               fontSize: 12,
               whiteSpace: 'pre-wrap',
-              p: 1
+              p: 1,
             }}
           >
             {digest.data.markdown}

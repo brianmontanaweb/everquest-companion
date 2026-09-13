@@ -46,7 +46,7 @@ async function press(overlay: Page, target: string): Promise<void> {
 async function armState(overlay: Page, target: string): Promise<string> {
   return overlay.evaluate(
     (sel) => document.querySelector(sel)?.getAttribute('data-armed') ?? 'gone',
-    dismissSel(target)
+    dismissSel(target),
   )
 }
 
@@ -61,10 +61,12 @@ async function armState(overlay: Page, target: string): Promise<string> {
 async function setLocked(overlay: Page, locked: boolean): Promise<void> {
   await overlay.evaluate(
     (v) =>
-      (window as unknown as { eqOverlay: { setConfig: (p: unknown) => Promise<unknown> } }).eqOverlay.setConfig({
-        locked: v
+      (
+        window as unknown as { eqOverlay: { setConfig: (p: unknown) => Promise<unknown> } }
+      ).eqOverlay.setConfig({
+        locked: v,
       }),
-    locked
+    locked,
   )
 }
 
@@ -74,12 +76,14 @@ async function heldTargets(overlay: Page): Promise<string[]> {
     (
       window as unknown as {
         eqOverlay: {
-          getModuleSnapshot: (id: string) => Promise<{ state: { holds: { target: string }[] } } | null>
+          getModuleSnapshot: (
+            id: string,
+          ) => Promise<{ state: { holds: { target: string }[] } } | null>
         }
       }
     ).eqOverlay
       .getModuleSnapshot('buffTimers')
-      .then((s) => (s ? s.state.holds.map((h) => h.target) : []))
+      .then((s) => (s ? s.state.holds.map((h) => h.target) : [])),
   )
 }
 
@@ -93,31 +97,60 @@ function castMez(log: FixtureLog, target: string): void {
 /** THE GUARD, in three claims: no control when locked, one press arms, and an arm expires. */
 async function stepGuard(overlay: Page): Promise<boolean> {
   await setLocked(overlay, true)
-  const whenLocked = await settle(() => armState(overlay, KEPT), (a) => a === 'gone', { timeoutMs: 15_000 })
+  const whenLocked = await settle(
+    () => armState(overlay, KEPT),
+    (a) => a === 'gone',
+    { timeoutMs: 15_000 },
+  )
   check(
     'a LOCKED timer window offers no dismiss control at all — it is click-through, so drawing one would be a lie',
     whenLocked === 'gone',
-    whenLocked
+    whenLocked,
   )
   await setLocked(overlay, false)
-  const whenUnlocked = await settle(() => armState(overlay, KEPT), (a) => a === 'false', { timeoutMs: 15_000 })
-  if (!check('…and unlocking brings it back, idle', whenUnlocked === 'false', whenUnlocked)) return false
+  const whenUnlocked = await settle(
+    () => armState(overlay, KEPT),
+    (a) => a === 'false',
+    { timeoutMs: 15_000 },
+  )
+  if (!check('…and unlocking brings it back, idle', whenUnlocked === 'false', whenUnlocked))
+    return false
 
   await press(overlay, KEPT)
-  const armed = await settle(() => armState(overlay, KEPT), (a) => a === 'true', { timeoutMs: 10_000 })
-  check('ONE press only ARMS it — a bar over a game you are playing does not clear on a single click', armed === 'true', armed)
+  const armed = await settle(
+    () => armState(overlay, KEPT),
+    (a) => a === 'true',
+    { timeoutMs: 10_000 },
+  )
+  check(
+    'ONE press only ARMS it — a bar over a game you are playing does not clear on a single click',
+    armed === 'true',
+    armed,
+  )
   const still = await timerRows(overlay)
-  check('…and the bar is still there while it is armed', still.some((r) => r.target === KEPT), JSON.stringify(still.map((r) => r.target)))
+  check(
+    '…and the bar is still there while it is armed',
+    still.some((r) => r.target === KEPT),
+    JSON.stringify(still.map((r) => r.target)),
+  )
 
   // The control disarms itself, so a press that was a mis-click can never be completed by an
   // unrelated one minutes later. Waiting for the ATTRIBUTE, not for the timeout.
-  const disarmed = await settle(() => armState(overlay, KEPT), (a) => a === 'false', { timeoutMs: 15_000 })
-  check('…and it disarms itself when the second press does not come', disarmed === 'false', disarmed)
+  const disarmed = await settle(
+    () => armState(overlay, KEPT),
+    (a) => a === 'false',
+    { timeoutMs: 15_000 },
+  )
+  check(
+    '…and it disarms itself when the second press does not come',
+    disarmed === 'false',
+    disarmed,
+  )
   const survived = await timerRows(overlay)
   check(
     '…leaving the bar untouched: one press, however long you leave it, clears nothing',
     survived.some((r) => r.target === KEPT),
-    JSON.stringify(survived.map((r) => r.target))
+    JSON.stringify(survived.map((r) => r.target)),
   )
   return true
 }
@@ -126,10 +159,19 @@ async function stepGuard(overlay: Page): Promise<boolean> {
  * Clear the mez the break line spared, prove the model never heard, and prove it stays cleared.
  */
 export async function stepDismissBar(overlay: Page, log: FixtureLog): Promise<void> {
-  const before = await settle(() => timerRows(overlay), (r) => r.some((x) => x.target === KEPT), {
-    timeoutMs: 20_000
-  })
-  if (!check('the mez the break line spared is on screen to be cleared', before.some((r) => r.target === KEPT))) {
+  const before = await settle(
+    () => timerRows(overlay),
+    (r) => r.some((x) => x.target === KEPT),
+    {
+      timeoutMs: 20_000,
+    },
+  )
+  if (
+    !check(
+      'the mez the break line spared is on screen to be cleared',
+      before.some((r) => r.target === KEPT),
+    )
+  ) {
     note('nothing to dismiss — the dismiss assertions could not run')
     return
   }
@@ -139,10 +181,20 @@ export async function stepDismissBar(overlay: Page, log: FixtureLog): Promise<vo
   // confirm arrives — and both land far inside the arming window.
   await press(overlay, KEPT)
   await press(overlay, KEPT)
-  const cleared = await settle(() => timerRows(overlay), (r) => !r.some((x) => x.target === KEPT), {
-    timeoutMs: 15_000
-  })
-  if (!check('two presses clear the bar', !cleared.some((r) => r.target === KEPT), JSON.stringify(cleared.map((r) => r.target)))) {
+  const cleared = await settle(
+    () => timerRows(overlay),
+    (r) => !r.some((x) => x.target === KEPT),
+    {
+      timeoutMs: 15_000,
+    },
+  )
+  if (
+    !check(
+      'two presses clear the bar',
+      !cleared.some((r) => r.target === KEPT),
+      JSON.stringify(cleared.map((r) => r.target)),
+    )
+  ) {
     return
   }
 
@@ -152,19 +204,27 @@ export async function stepDismissBar(overlay: Page, log: FixtureLog): Promise<vo
   check(
     '…and the model still holds it — a dismissal is a display verdict main is never told about',
     held.includes(KEPT),
-    JSON.stringify(held)
+    JSON.stringify(held),
   )
 
   // …AND IT STAYS CLEARED. Every delta replaces the whole row set, so a window that merely filtered
   // once would have the bar back the moment anything else happened.
   castMez(log, LATER)
-  const after = await settle(() => timerRows(overlay), (r) => r.some((x) => x.target === LATER), {
-    timeoutMs: 30_000
-  })
-  check('a mez on another enemy still raises its own row', after.some((r) => r.target === LATER), JSON.stringify(after.map((r) => r.target)))
+  const after = await settle(
+    () => timerRows(overlay),
+    (r) => r.some((x) => x.target === LATER),
+    {
+      timeoutMs: 30_000,
+    },
+  )
+  check(
+    'a mez on another enemy still raises its own row',
+    after.some((r) => r.target === LATER),
+    JSON.stringify(after.map((r) => r.target)),
+  )
   check(
     '…and the bar you cleared does not come back with it',
     !after.some((r) => r.target === KEPT),
-    JSON.stringify(after.map((r) => r.target))
+    JSON.stringify(after.map((r) => r.target)),
   )
 }

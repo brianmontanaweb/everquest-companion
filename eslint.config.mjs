@@ -219,10 +219,7 @@ export const FACTORING_RULES = {
   complexity: ['error', { max: 12 }],
   'max-depth': ['error', { max: 3 }],
   'max-lines': ['error', { max: 400, skipBlankLines: true, skipComments: true }],
-  'max-lines-per-function': [
-    'error',
-    { max: 100, skipBlankLines: true, skipComments: true },
-  ],
+  'max-lines-per-function': ['error', { max: 100, skipBlankLines: true, skipComments: true }],
   'max-params': ['error', { max: 4 }],
 }
 
@@ -248,14 +245,8 @@ export default tseslint.config(
     rules: {
       // See "RULES DELIBERATELY OFF" above.
       '@typescript-eslint/no-unnecessary-condition': 'off',
-      '@typescript-eslint/restrict-template-expressions': [
-        'error',
-        { allowNumber: true },
-      ],
-      '@typescript-eslint/no-confusing-void-expression': [
-        'error',
-        { ignoreArrowShorthand: true },
-      ],
+      '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+      '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
       'no-new': 'error',
       'no-console': 'error',
       // `_`-prefixed = intentionally unused. Everything else is dead weight.
@@ -296,13 +287,7 @@ export default tseslint.config(
   // ---- environments -------------------------------------------------------
   // Node: main process, preload, scrapers, tests, tooling.
   {
-    files: [
-      'src/main/**',
-      'src/preload/**',
-      'scripts/**',
-      'tests/**',
-      '*.{ts,mts,mjs,cjs,js}',
-    ],
+    files: ['src/main/**', 'src/preload/**', 'scripts/**', 'tests/**', '*.{ts,mts,mjs,cjs,js}'],
     languageOptions: { globals: globals.node },
   },
   // Browser: both renderer entries (app + overlay).

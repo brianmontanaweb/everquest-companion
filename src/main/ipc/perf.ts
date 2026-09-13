@@ -22,7 +22,7 @@ import {
   startPerfSampler,
   startupPhaseMarked,
   startupProfile,
-  stopPerfSampler
+  stopPerfSampler,
 } from '../perf'
 import { startEnginePerfWatch, stopEnginePerfWatch } from '../enginePerfWatch'
 import { getPerfHudPrefs, setPerfHudPrefs } from '../store'
@@ -62,11 +62,11 @@ export function registerPerfIpc(): void {
   // VALIDATED AT THE HANDLER, never trusted because today's only caller is the app's own UI: a
   // non-boolean is not a guess, it leaves the pref exactly as it was.
   ipcMain.handle(IPC.processPrioritySet, (_e, yieldToGame: unknown) =>
-    typeof yieldToGame === 'boolean' ? applyYieldToGame(yieldToGame) : getProcessPriorityPrefs()
+    typeof yieldToGame === 'boolean' ? applyYieldToGame(yieldToGame) : getProcessPriorityPrefs(),
   )
 
   ipcMain.handle(IPC.perfSetEnabled, (_e, enabled: unknown) =>
-    typeof enabled === 'boolean' ? applyPerfHudEnabled(enabled) : getPerfHudPrefs()
+    typeof enabled === 'boolean' ? applyPerfHudEnabled(enabled) : getPerfHudPrefs(),
   )
 
   ipcMain.handle(IPC.perfGetStartup, () => startupProfile())

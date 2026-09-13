@@ -6,7 +6,7 @@ import type {
   ProcLaneView,
   ProcRateView,
   ProcSkillTag,
-  StateSpan
+  StateSpan,
 } from './procAnalytics'
 import type { RosterSnap } from './roster'
 
@@ -49,7 +49,7 @@ export const CATEGORY_LABEL: Record<DamageCategory, string> = {
   slay: 'Slay Undead',
   spell: 'Direct spells',
   dot: 'DoTs',
-  ds: 'Damage shield'
+  ds: 'Damage shield',
 }
 export const CATEGORY_ORDER: DamageCategory[] = ['melee', 'slay', 'spell', 'dot', 'ds']
 

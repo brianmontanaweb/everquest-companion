@@ -63,7 +63,7 @@ test('the spell-overlay sidecar is what the TypeScript lists render today', () =
     renderSidecar(),
     'engine/crates/eqlog/data/spell-overlay.json is stale — run `npm run gen:engine-spell-overlay`, ' +
       'rebuild the crate, re-run `npm run oracle:rust-parser`, and commit the result. ' +
-      'Until then the Rust parser and the TS parser are reading two different spell databases.'
+      'Until then the Rust parser and the TS parser are reading two different spell databases.',
   )
 })
 
@@ -79,7 +79,7 @@ test('every poison coat line the roster states is a literal the crate can match'
   assert.deepEqual(
     coatLines.sort(),
     POISONS.map((p) => p.coatMsg).sort(),
-    'parse/data.rs and shared/poisons.ts disagree about the coat vocabulary'
+    'parse/data.rs and shared/poisons.ts disagree about the coat vocabulary',
   )
 })
 
@@ -92,7 +92,7 @@ test('the two dry lines and every proc emote suffix are transcribed exactly', ()
   assert.equal(
     suffixes.length,
     POISON_PROCS.length,
-    'parse/data.rs is missing a poison-proc emote suffix — its `strike` would go unnamed'
+    'parse/data.rs is missing a poison-proc emote suffix — its `strike` would go unnamed',
   )
   for (const p of POISON_PROCS) {
     for (const strike of p.strikes) {
@@ -110,7 +110,7 @@ test('the consider ladder is transcribed IN LADDER ORDER, which the alternation 
   assert.deepEqual(
     pairs,
     CONSIDER_FACTION_RUNGS.map((r) => [r.phrase, r.faction]),
-    'the crate and shared/considerFaction.ts disagree about the con ladder or its order'
+    'the crate and shared/considerFaction.ts disagree about the con ladder or its order',
   )
 })
 
@@ -126,6 +126,6 @@ test('the six pet-voiced says are transcribed exactly, kind and sentence', () =>
   assert.equal(
     said.size,
     PET_SAY_LINES.length * 2,
-    'parse/casts.rs carries a pet say shared/logScrub.ts does not — a loose /Master/ leaks mob flavor'
+    'parse/casts.rs carries a pet say shared/logScrub.ts does not — a loose /Master/ leaks mob flavor',
   )
 })

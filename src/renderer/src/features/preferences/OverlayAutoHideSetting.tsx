@@ -41,7 +41,10 @@ import { recordPref, usePrefsSeed } from './prefsHydration'
  * authoritative from main's reply, which is what was actually stored — and that reply is what goes
  * back into the snapshot, so the next mount of this card seeds from the same truth.
  */
-function useOverlayAutoHide(): [OverlayAutoHidePrefs, (patch: Partial<OverlayAutoHidePrefs>) => void] {
+function useOverlayAutoHide(): [
+  OverlayAutoHidePrefs,
+  (patch: Partial<OverlayAutoHidePrefs>) => void,
+] {
   const [prefs, setPrefs] = useState<OverlayAutoHidePrefs>(usePrefsSeed().overlayAutoHide)
 
   const update = useCallback((patch: Partial<OverlayAutoHidePrefs>) => {
@@ -69,7 +72,9 @@ export function OverlayAutoHideSetting(): JSX.Element {
               onChange={(e) => update({ hideWhenNotRunning: e.target.checked })}
             />
           }
-          label={<Typography variant="body2">Hide overlays when EverQuest isn’t running</Typography>}
+          label={
+            <Typography variant="body2">Hide overlays when EverQuest isn’t running</Typography>
+          }
         />
         <Typography variant="caption" color="text.secondary">
           {prefs.hideWhenNotRunning
@@ -88,7 +93,9 @@ export function OverlayAutoHideSetting(): JSX.Element {
               onChange={(e) => update({ hideWhenUnfocused: e.target.checked })}
             />
           }
-          label={<Typography variant="body2">Hide overlays when you’re not in EverQuest</Typography>}
+          label={
+            <Typography variant="body2">Hide overlays when you’re not in EverQuest</Typography>
+          }
         />
         <Typography variant="caption" color="text.secondary">
           {prefs.hideWhenUnfocused

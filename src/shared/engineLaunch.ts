@@ -74,12 +74,7 @@ export type EngineLaunchPhase =
  * where there is no window left to tell and nothing anybody could do about it.
  */
 export type EngineFaultKind =
-  | 'no-binary'
-  | 'spawn-failed'
-  | 'announce-timeout'
-  | 'bad-announce'
-  | 'unhealthy'
-  | 'exited'
+  'no-binary' | 'spawn-failed' | 'announce-timeout' | 'bad-announce' | 'unhealthy' | 'exited'
 
 /** Why the engine is not going to start, as much of it as can be said safely. */
 export interface EngineFaultSay {
@@ -133,7 +128,11 @@ export interface EngineLaunchSay {
 }
 
 /** What a window is told before anything has happened: a launch on its way, nothing to draw. */
-export const ENGINE_LAUNCH_STARTING: EngineLaunchSay = { phase: 'starting', fold: null, fault: null }
+export const ENGINE_LAUNCH_STARTING: EngineLaunchSay = {
+  phase: 'starting',
+  fold: null,
+  fault: null,
+}
 
 /**
  * DOES THIS PROGRESS FRAME BELONG ON THE BANNER? (JOS-518.)
@@ -258,7 +257,7 @@ export function foldReadout(ring: FoldRing): FoldReadout | null {
     pctText: `${String(Math.floor(pct))}%`,
     bytesText: `${humanBytes(last.offset)} of ${humanBytes(Math.max(last.offset, last.logSize))}`,
     etaText: etaText(ring, last),
-    eventsText: `${last.events.toLocaleString('en-US')} events`
+    eventsText: `${last.events.toLocaleString('en-US')} events`,
   }
 }
 
@@ -359,37 +358,37 @@ export function failureWords(fault: EngineFaultSay): FailureWords {
       body:
         'The program that reads your log file is missing from this installation. It was not at any ' +
         'of the places EQ Companion knows to look.',
-      remedy: QUARANTINE_REMEDY
+      remedy: QUARANTINE_REMEDY,
     },
     'spawn-failed': {
       headline: 'EQ Companion could not start its data engine',
       body: `Windows refused to launch the program that reads your log file.${tries}`,
-      remedy: QUARANTINE_REMEDY
+      remedy: QUARANTINE_REMEDY,
     },
     'announce-timeout': {
       headline: 'The data engine started but never answered',
       body:
         `The program that reads your log file starts and then never reports itself ready.${tries} ` +
         'A security product holding it at launch will do this.',
-      remedy: QUARANTINE_REMEDY
+      remedy: QUARANTINE_REMEDY,
     },
     'bad-announce': {
       headline: 'The data engine is not the one this version expects',
       body:
         'The program that reads your log file answered with something EQ Companion does not ' +
         'recognise, which usually means a partial or damaged installation.',
-      remedy: 'Reinstalling EQ Companion replaces it.'
+      remedy: 'Reinstalling EQ Companion replaces it.',
     },
     unhealthy: {
       headline: 'The data engine stopped responding',
       body: `It starts, and then stops answering.${tries}`,
-      remedy: null
+      remedy: null,
     },
     exited: {
       headline: 'The data engine keeps shutting down',
       body: `It starts and then exits immediately.${tries}`,
-      remedy: null
-    }
+      remedy: null,
+    },
   }
   return words[fault.kind]
 }

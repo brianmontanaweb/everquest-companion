@@ -71,7 +71,7 @@ const CHECK_COOLDOWN_MS = 10_000
 function ReadyChip({
   version,
   glow,
-  onInstall
+  onInstall,
 }: {
   version?: string
   glow: boolean
@@ -108,9 +108,9 @@ function ReadyChip({
             animation: 'eqUpdateGlow 3s ease-in-out 2',
             '@keyframes eqUpdateGlow': {
               '0%, 100%': { boxShadow: '0 0 0 0 rgba(217,178,95,0)' },
-              '50%': { boxShadow: '0 0 12px 1px rgba(217,178,95,0.45)' }
-            }
-          })
+              '50%': { boxShadow: '0 0 12px 1px rgba(217,178,95,0.45)' },
+            },
+          }),
         }}
       >
         <RestartAltIcon fontSize="small" />
@@ -161,7 +161,7 @@ function NotesButton({ onOpen }: { onOpen: () => void }): JSX.Element {
         color: 'text.disabled',
         cursor: 'pointer',
         transition: 'color 140ms ease',
-        '&:hover': { color: 'text.secondary' }
+        '&:hover': { color: 'text.secondary' },
       }}
     >
       <NewReleasesIcon sx={{ fontSize: 14 }} />
@@ -176,7 +176,13 @@ function NotesButton({ onOpen }: { onOpen: () => void }): JSX.Element {
  * apart on padding — the chip's bottom-left footprint is a fixed thing and the
  * icon must land in the same spot whichever line is showing.
  */
-function VersionRow({ line, notes }: { line: JSX.Element; notes: JSX.Element | null }): JSX.Element {
+function VersionRow({
+  line,
+  notes,
+}: {
+  line: JSX.Element
+  notes: JSX.Element | null
+}): JSX.Element {
   return (
     <Box sx={{ px: 2, pt: 0.75, pb: 1, display: 'flex', alignItems: 'center', gap: 0.75 }}>
       <Box sx={{ minWidth: 0, flexGrow: 1 }}>{line}</Box>
@@ -189,7 +195,11 @@ function VersionRow({ line, notes }: { line: JSX.Element; notes: JSX.Element | n
 function DownloadingChip({ percent }: { percent: number }): JSX.Element {
   return (
     <Box sx={{ px: 2, pt: 0.75, pb: 1 }} data-testid="update-chip-downloading">
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', lineHeight: 1.4 }}
+      >
         Downloading update · {percent}%
       </Typography>
       <LinearProgress
@@ -200,7 +210,7 @@ function DownloadingChip({ percent }: { percent: number }): JSX.Element {
           height: 2,
           borderRadius: 1,
           bgcolor: 'rgba(255,255,255,0.08)',
-          '& .MuiLinearProgress-bar': { bgcolor: 'rgba(217,178,95,0.7)' }
+          '& .MuiLinearProgress-bar': { bgcolor: 'rgba(217,178,95,0.7)' },
         }}
       />
     </Box>
@@ -212,7 +222,13 @@ function DownloadingChip({ percent }: { percent: number }): JSX.Element {
  * "not checked yet" forever — a truthful but misleading state that reads as a broken
  * production updater. Static text, not a button: clicking would no-op.
  */
-function DisabledChip({ version, notes }: { version: string; notes: JSX.Element | null }): JSX.Element {
+function DisabledChip({
+  version,
+  notes,
+}: {
+  version: string
+  notes: JSX.Element | null
+}): JSX.Element {
   return (
     <VersionRow
       notes={notes}
@@ -237,7 +253,7 @@ function QuietChip({
   failed,
   disabled,
   onCheck,
-  notes
+  notes,
 }: {
   label: string
   tip: string
@@ -279,7 +295,7 @@ function QuietChip({
             cursor: 'pointer',
             transition: 'color 140ms ease',
             '&:hover': { color: 'text.secondary' },
-            '&:disabled': { cursor: 'default' }
+            '&:disabled': { cursor: 'default' },
           }}
         >
           {label}
@@ -309,7 +325,7 @@ export function UpdateChip({ onWhatsNew }: { onWhatsNew: () => void }): JSX.Elem
     () => () => {
       if (cooldownTimer.current) clearTimeout(cooldownTimer.current)
     },
-    []
+    [],
   )
 
   useEffect(() => {
@@ -346,7 +362,13 @@ export function UpdateChip({ onWhatsNew }: { onWhatsNew: () => void }): JSX.Elem
   }, [ready])
 
   if (ui.kind === 'ready') {
-    return <ReadyChip version={ui.version} glow={glow} onInstall={() => void window.eq.installUpdate()} />
+    return (
+      <ReadyChip
+        version={ui.version}
+        glow={glow}
+        onInstall={() => void window.eq.installUpdate()}
+      />
+    )
   }
 
   if (ui.kind === 'downloading') return <DownloadingChip percent={ui.percent} />
@@ -368,7 +390,7 @@ export function UpdateChip({ onWhatsNew }: { onWhatsNew: () => void }): JSX.Elem
     version,
     age: ui.checkedAt === undefined ? null : formatAge(ui.checkedAt, now),
     busy,
-    cooldown
+    cooldown,
   })
   return (
     <QuietChip

@@ -328,7 +328,7 @@ export const RESPAWN_SEEN_VIA_LABEL: Record<RespawnSeenVia, string> = {
   combat: 'a combat line',
   consider: 'a consider',
   hold: 'a mez/root/charm line',
-  spell: 'a spell line'
+  spell: 'a spell line',
 }
 
 /** What the clock's `baseTs` IS — a death the log printed, or a sighting the user confirmed. */
@@ -439,7 +439,8 @@ function normalizeWatch(raw: unknown): RespawnWatchPref | null {
   const key = typeof w.key === 'string' ? w.key.trim().toLowerCase().slice(0, 64) : ''
   if (key.length === 0) return null
   const out: RespawnWatchPref = { key, display: display.length > 0 ? display : key }
-  const sec = typeof w.customSec === 'number' && Number.isFinite(w.customSec) ? Math.round(w.customSec) : 0
+  const sec =
+    typeof w.customSec === 'number' && Number.isFinite(w.customSec) ? Math.round(w.customSec) : 0
   if (sec >= RESPAWN_CUSTOM_MIN_SEC && sec <= RESPAWN_CUSTOM_MAX_SEC) out.customSec = sec
   return out
 }
@@ -516,7 +517,8 @@ export interface RespawnEstimate {
  * describing a different server).
  */
 export function resolveRespawn(ev: RespawnEvidence): RespawnEstimate {
-  if (ev.customMs !== undefined && ev.customMs > 0) return { estimateMs: ev.customMs, source: 'custom' }
+  if (ev.customMs !== undefined && ev.customMs > 0)
+    return { estimateMs: ev.customMs, source: 'custom' }
   if (ev.observedMs !== undefined && ev.observedMs > 0 && ev.samples > 0) {
     const floored = ev.wikiMs !== undefined ? Math.max(ev.observedMs, ev.wikiMs) : ev.observedMs
     return { estimateMs: floored, source: 'observed' }
@@ -628,7 +630,7 @@ export const EMPTY_RESPAWN_SNAP: RespawnSnap = {
   zone: '',
   rows: [],
   recent: [],
-  prefs: DEFAULT_RESPAWN_PREFS
+  prefs: DEFAULT_RESPAWN_PREFS,
 }
 
 export function respawnBaselineStale(state: RespawnSnap, delta: RespawnDelta): boolean {
@@ -707,7 +709,7 @@ export function respawnCandidateMatches(c: RespawnCandidate, needle: string): bo
  */
 export function filterRespawnCandidates<T extends RespawnCandidate>(
   items: readonly T[],
-  query: string
+  query: string,
 ): readonly T[] {
   const needle = query.trim().toLowerCase()
   if (!needle) return items
@@ -787,7 +789,7 @@ export function respawnReading(row: RespawnRow, nowMs: number): RespawnReading {
     overdueMs: left < 0 ? -left : 0,
     seen,
     seenAgoMs,
-    stale: !seen && -left > RESPAWN_LINGER_MS
+    stale: !seen && -left > RESPAWN_LINGER_MS,
   }
 }
 
@@ -856,7 +858,7 @@ export function respawnSourceLabel(row: RespawnRow): string {
  */
 export function respawnDurationText(
   est: { estimateMs?: number; source: RespawnSource },
-  fmt: (ms: number | null | undefined) => string
+  fmt: (ms: number | null | undefined) => string,
 ): string {
   if (est.estimateMs === undefined) return 'no estimate'
   return est.source === 'observed' ? `<= ${fmt(est.estimateMs)}` : fmt(est.estimateMs)
@@ -911,14 +913,19 @@ const RESPAWN_RUNG_TITLE: Record<RespawnSource, string> = {
   custom: 'Your number.',
   observed: '',
   wiki: 'Wiki default - no gap of your own yet.',
-  none: 'No respawn known yet. Kill it twice in one visit, or type a number.'
+  none: 'No respawn known yet. Kill it twice in one visit, or type a number.',
 }
 
-export function respawnProvenance(row: RespawnRow, fmt: (ms: number | null | undefined) => string): string {
+export function respawnProvenance(
+  row: RespawnRow,
+  fmt: (ms: number | null | undefined) => string,
+): string {
   const parts: string[] = []
   if (row.source === 'observed') {
     const gaps = `${String(row.samples)} gap${row.samples === 1 ? '' : 's'}`
-    parts.push(`Your shortest gap in one visit: ${fmt(row.observedMs)} over ${gaps}. A gap is an upper bound.`)
+    parts.push(
+      `Your shortest gap in one visit: ${fmt(row.observedMs)} over ${gaps}. A gap is an upper bound.`,
+    )
   } else if (RESPAWN_RUNG_TITLE[row.source].length > 0) {
     parts.push(RESPAWN_RUNG_TITLE[row.source])
   }
@@ -947,7 +954,7 @@ export const RESPAWN_CARD_LABEL = 'Respawn:'
  */
 export function respawnCardNote(
   row: RespawnRow,
-  fmt: (ms: number | null | undefined) => string
+  fmt: (ms: number | null | undefined) => string,
 ): { label: string; text: string; lines: string[] } {
   return {
     label: RESPAWN_CARD_LABEL,
@@ -956,7 +963,9 @@ export function respawnCardNote(
     // their own rather than more clauses of the sentence, because the round-5 cap on that sentence
     // is what keeps a hover from growing back into a paragraph — and because a list of durations
     // read as a list is a different thing from the same durations recited inside prose.
-    lines: [respawnGapsLabel(row, fmt), respawnWikiDefaultLine(row, fmt)].filter((s) => s.length > 0)
+    lines: [respawnGapsLabel(row, fmt), respawnWikiDefaultLine(row, fmt)].filter(
+      (s) => s.length > 0,
+    ),
   }
 }
 
@@ -974,7 +983,7 @@ export function respawnCardNote(
  */
 export function respawnWikiDefaultLine(
   row: RespawnRow,
-  fmt: (ms: number | null | undefined) => string
+  fmt: (ms: number | null | undefined) => string,
 ): string {
   if (row.wikiText === undefined) return ''
   if (row.wikiMs === undefined) return `wiki: "${row.wikiText}" - not a duration`
@@ -994,7 +1003,9 @@ export function respawnWikiDefaultLine(
  */
 export function respawnCandidateNote(cand: RespawnCandidate): { label: string; text: string } {
   const parts: string[] = []
-  parts.push(cand.watched ? 'Watched - its clock is under Running.' : 'Not watched, so nothing is clocked.')
+  parts.push(
+    cand.watched ? 'Watched - its clock is under Running.' : 'Not watched, so nothing is clocked.',
+  )
   if (cand.wikiText !== undefined) parts.push(`Wiki: "${cand.wikiText}".`)
   parts.push(`Killed ${String(cand.kills)} time${cand.kills === 1 ? '' : 's'} here.`)
   return { label: RESPAWN_CARD_LABEL, text: parts.join(' ') }
@@ -1011,7 +1022,10 @@ export function respawnCandidateNote(cand: RespawnCandidate): { label: string; t
  * printed with `<=`, and the hover still spells out what a gap proves. Naming these "respawns seen"
  * would be the single sentence that undoes the whole ticket's honesty.
  */
-export function respawnGapsLabel(row: RespawnRow, fmt: (ms: number | null | undefined) => string): string {
+export function respawnGapsLabel(
+  row: RespawnRow,
+  fmt: (ms: number | null | undefined) => string,
+): string {
   if (row.gapsMs === undefined || row.gapsMs.length === 0) return ''
   return `gaps: ${row.gapsMs.map((g) => fmt(g)).join(' · ')}`
 }
@@ -1045,7 +1059,7 @@ export const RESPAWN_AWAITING_LABEL = 'awaiting next death'
 export function respawnClockLabel(
   row: RespawnRow,
   nowMs: number,
-  fmt: (ms: number | null | undefined) => string
+  fmt: (ms: number | null | undefined) => string,
 ): string {
   const r = respawnReading(row, nowMs)
   if (r.seen) return 'UP'
@@ -1065,7 +1079,7 @@ export function respawnClockLabel(
 export function respawnSeenLabel(
   row: RespawnRow,
   nowMs: number,
-  fmt: (ms: number | null | undefined) => string
+  fmt: (ms: number | null | undefined) => string,
 ): string {
   const r = respawnReading(row, nowMs)
   if (!r.seen) return ''
@@ -1101,8 +1115,7 @@ export function respawnBasisLabel(row: RespawnRow): string {
  *   range      it read as a duration and that duration is not one this app will store.
  */
 export type RespawnDurationParse =
-  | { ok: true; sec: number }
-  | { ok: false; reason: 'empty' | 'unreadable' | 'range' }
+  { ok: true; sec: number } | { ok: false; reason: 'empty' | 'unreadable' | 'range' }
 
 /**
  * Unit tokens, LONGEST FIRST inside each alternation so `minutes` is never read as `m` with
@@ -1117,7 +1130,7 @@ const INPUT_UNITS: readonly (readonly [RegExp, number])[] = [
   [/^(?:days?|d)/i, 86400],
   [/^(?:hours?|hrs?|h)/i, 3600],
   [/^(?:minutes?|mins?|m)/i, 60],
-  [/^(?:seconds?|secs?|s)/i, 1]
+  [/^(?:seconds?|secs?|s)/i, 1],
 ]
 
 /** A bare, unsigned number — the whole field. Seconds, which is what the retired box took. */
@@ -1134,7 +1147,7 @@ const FORMAT_UNITS: readonly (readonly [string, number])[] = [
   ['d', 86400],
   ['h', 3600],
   ['m', 60],
-  ['s', 1]
+  ['s', 1],
 ]
 
 /**
@@ -1170,7 +1183,8 @@ export function parseRespawnDuration(text: string): RespawnDurationParse {
   const seconds = BARE_NUMBER_RE.test(s) ? Number(s) : readTermSequence(s)
   if (seconds === null || !Number.isFinite(seconds)) return { ok: false, reason: 'unreadable' }
   const sec = Math.round(seconds)
-  if (sec < RESPAWN_CUSTOM_MIN_SEC || sec > RESPAWN_CUSTOM_MAX_SEC) return { ok: false, reason: 'range' }
+  if (sec < RESPAWN_CUSTOM_MIN_SEC || sec > RESPAWN_CUSTOM_MAX_SEC)
+    return { ok: false, reason: 'range' }
   return { ok: true, sec }
 }
 
@@ -1230,7 +1244,7 @@ export function formatRespawnDuration(sec: number): string {
  * cannot leave the sentence lying.
  */
 export const RESPAWN_INPUT_HELP = `Plain seconds, or 44m / 44m 30s / 1h 10m. ${String(
-  RESPAWN_CUSTOM_MIN_SEC
+  RESPAWN_CUSTOM_MIN_SEC,
 )}s to ${String(RESPAWN_CUSTOM_MAX_SEC / 86400)}d. Empty uses the calculated value.`
 
 /** What the modal says when the grammar refused what was typed. One spelling, pinned by test. */
@@ -1238,5 +1252,5 @@ export const RESPAWN_INPUT_UNREADABLE = 'Not a duration. Try 2640, 44m, or 44m 3
 
 /** …and when it read fine and is simply not a duration this app will hold. */
 export const RESPAWN_INPUT_RANGE = `Out of range - ${String(RESPAWN_CUSTOM_MIN_SEC)}s to ${String(
-  RESPAWN_CUSTOM_MAX_SEC / 86400
+  RESPAWN_CUSTOM_MAX_SEC / 86400,
 )}d.`

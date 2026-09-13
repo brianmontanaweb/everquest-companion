@@ -30,7 +30,13 @@ import type { CharacterRef, OverlayKind } from '../shared/types'
 // the mote rates — and needs the rebuild signal below at least as much as the timer windows do:
 // its whole subject is a fold over months of log, and a window open at launch hydrates part-way
 // through one.
-export const MODULE_READING_OVERLAYS: OverlayKind[] = ['events', 'buffs', 'debuffs', 'xp', 'respawn']
+export const MODULE_READING_OVERLAYS: OverlayKind[] = [
+  'events',
+  'buffs',
+  'debuffs',
+  'xp',
+  'respawn',
+]
 
 /**
  * Overlays that need the "character switched — re-hydrate" signal but NOT the ~10x/s module delta
@@ -43,7 +49,11 @@ export const MODULE_READING_OVERLAYS: OverlayKind[] = ['events', 'buffs', 'debuf
  * nothing else. Kept a superset of `MODULE_READING_OVERLAYS` so "who is told the world was
  * rebuilt" stays one list.
  */
-export const CHARACTER_AWARE_OVERLAYS: OverlayKind[] = [...MODULE_READING_OVERLAYS, 'fight', 'overall']
+export const CHARACTER_AWARE_OVERLAYS: OverlayKind[] = [
+  ...MODULE_READING_OVERLAYS,
+  'fight',
+  'overall',
+]
 
 /**
  * Push to every overlay window that reads modules.
@@ -134,6 +144,8 @@ export function sendWorldRebuilt(character: CharacterRef | null): void {
  */
 let worldRebuiltObserver: ((character: CharacterRef | null) => void) | null = null
 
-export function setWorldRebuiltObserver(fn: ((character: CharacterRef | null) => void) | null): void {
+export function setWorldRebuiltObserver(
+  fn: ((character: CharacterRef | null) => void) | null,
+): void {
   worldRebuiltObserver = fn
 }

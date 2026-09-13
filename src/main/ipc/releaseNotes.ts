@@ -23,6 +23,6 @@ export function registerReleaseNotesIpc(): void {
   // as a silent no-op, so the renderer's `null` and an accidental `undefined` mean the same
   // thing and neither leaves a stale stamp behind.
   ipcMain.handle(IPC.releaseNotesSeenSet, (_e, version: unknown) =>
-    setLastSeenNotesVersion(typeof version === 'string' ? version : null)
+    setLastSeenNotesVersion(typeof version === 'string' ? version : null),
   )
 }

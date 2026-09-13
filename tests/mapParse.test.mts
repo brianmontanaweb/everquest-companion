@@ -27,7 +27,7 @@ import {
   LEGEND_LAYER,
   buildMapData,
   parseMapText,
-  type MapParseResult
+  type MapParseResult,
 } from '../src/main/maps/parseMap'
 import type { MapData, MapLayer } from '../src/shared/maps'
 
@@ -46,8 +46,8 @@ function synthetic(): MapData {
     sources: parts.map((p) => ({
       layer: p.layer,
       packId: 'test',
-      file: p.layer === 0 ? 'map-synthetic.txt' : `map-synthetic_${String(p.layer)}.txt`
-    }))
+      file: p.layer === 0 ? 'map-synthetic.txt' : `map-synthetic_${String(p.layer)}.txt`,
+    })),
   })
 }
 
@@ -108,7 +108,7 @@ test('§2.2 #4/#5 parsing is filename-agnostic — the layer is an argument, not
   const asThree = parseMapText(text, 3)
   assert.deepEqual(
     { ...asOne, layer: 0, points: asOne.points.map((p) => ({ ...p, layer: 0 })) },
-    { ...asThree, layer: 0, points: asThree.points.map((p) => ({ ...p, layer: 0 })) }
+    { ...asThree, layer: 0, points: asThree.points.map((p) => ({ ...p, layer: 0 })) },
   )
   assert.equal(asOne.points[0].layer, 1)
   assert.equal(asThree.points[0].layer, 3)
@@ -121,7 +121,7 @@ test('§2.2 #6 a zero-byte layer file is a valid empty layer, not an error', () 
     layer: 3,
     lines: { coords: [], rgb: [], count: 0 },
     points: [],
-    skipped: 0
+    skipped: 0,
   })
   // And it folds in without disturbing anything.
   assert.equal(synthetic().skipped, 1)
@@ -161,9 +161,9 @@ test('a malformed line is COUNTED and dropped — never thrown on', () => {
       'P 1, 2, 3, 0, 0, 0, 2', // 7 fields, no label
       '# a comment nobody writes', // unknown record type
       'X 1, 2, 3', // unknown record type
-      'P 1, 2, 3, 0, 0, 0, 2, Fine' // good
+      'P 1, 2, 3, 0, 0, 0, 2, Fine', // good
     ].join('\r\n'),
-    0
+    0,
   )
   assert.equal(messy.lines.count, 1)
   assert.equal(messy.points.length, 1)
@@ -184,7 +184,7 @@ test('fields carry arbitrary surrounding whitespace and every one is trimmed', (
   const [p] = parseMapText('P   10 ,  20 ,  30 ,   255 ,  210 ,   0 ,   1 ,   Banker_Ex', 1).points
   assert.deepEqual(
     { x: p.x, y: p.y, z: p.z, r: p.r, g: p.g, b: p.b, size: p.size, label: p.label },
-    { x: 10, y: 20, z: 30, r: 255, g: 210, b: 0, size: 1, label: 'Banker_Ex' }
+    { x: 10, y: 20, z: 30, r: 255, g: 210, b: 0, size: 1, label: 'Banker_Ex' },
   )
 })
 
@@ -201,7 +201,7 @@ test('bounds EXCLUDE layer 2 — the legend is drawn far outside the map', () =>
     minY: -50,
     maxY: 50,
     minZ: 0,
-    maxZ: 10
+    maxZ: 10,
   })
 
   // Proof the legend really is out of bounds: it reaches y = 2600, x = 400.
@@ -212,10 +212,10 @@ test('bounds EXCLUDE layer 2 — the legend is drawn far outside the map', () =>
   // And that including it WOULD have wrecked the extent.
   const wrong = buildMapData([fixture(0), fixture(1), fixture(2)], { zone: 'x', sources: [] })
   assert.equal(wrong.bounds.maxY, 50)
-  const naive = buildMapData(
-    [fixture(0), fixture(1), { ...fixture(2), layer: 1 }],
-    { zone: 'x', sources: [] }
-  )
+  const naive = buildMapData([fixture(0), fixture(1), { ...fixture(2), layer: 1 }], {
+    zone: 'x',
+    sources: [],
+  })
   assert.equal(naive.bounds.maxY, 2600)
 })
 
@@ -230,7 +230,7 @@ test('bounds include POINTS, not just line endpoints', () => {
     minY: 900,
     maxY: 900,
     minZ: 3,
-    maxZ: 3
+    maxZ: 3,
   })
 })
 
@@ -258,21 +258,21 @@ test('heightHint is mined from layer 2 and only from layer 2', () => {
   // The same label in a drawn layer is a POI, not a hint — the convention is legend-only.
   const misplaced = buildMapData([parseMapText('P 0,0,0,0,0,0,2,Height_Filter:_50/50', 1)], {
     zone: 'x',
-    sources: []
+    sources: [],
   })
   assert.equal(misplaced.heightHint, undefined)
 
   // A trailing parenthetical qualifier is real and must not defeat the match.
   const qualified = buildMapData(
     [parseMapText('P 0,0,0,0,0,0,2,Height_Filter:_10/10_(in_Dwarf_Keep)', 2)],
-    { zone: 'x', sources: [] }
+    { zone: 'x', sources: [] },
   )
   assert.deepEqual(qualified.heightHint, { low: 10, high: 10 })
 
   // Asymmetric bands exist (one file: 50/25 in tunnels); first number is `low`.
   const asym = buildMapData([parseMapText('P 0,0,0,0,0,0,2,Height_Filter:_50/25', 2)], {
     zone: 'x',
-    sources: []
+    sources: [],
   })
   assert.deepEqual(asym.heightHint, { low: 50, high: 25 })
 })
@@ -282,7 +282,7 @@ test('credits are mined from layer 2 label points, deduped, in reader-facing for
   // Revised_Map: (343), http://www.eqmaps.info (568), Return_of_the_Exiled_(www...) (568).
   assert.deepEqual(synthetic().credits, [
     'Original Map: Synthetic Fixture',
-    'http://example.invalid/maps'
+    'http://example.invalid/maps',
   ])
 
   const shapes = buildMapData(
@@ -294,19 +294,19 @@ test('credits are mined from layer 2 label points, deduped, in reader-facing for
           'P 0,0,0,0,0,0,2,Revised_Map:_Someone_(Server)',
           'P 0,0,0,0,0,0,2,Some_Guild_(www.example.invalid)',
           'P 0,0,0,0,0,0,2,Original_Map:_Caudyr,_Beimeith,_&_Rorce',
-          'P 0,0,0,0,0,0,2,a_regular_legend_swatch'
+          'P 0,0,0,0,0,0,2,a_regular_legend_swatch',
         ].join('\n'),
-        2
-      )
+        2,
+      ),
     ],
-    { zone: 'x', sources: [] }
+    { zone: 'x', sources: [] },
   )
   assert.deepEqual(shapes.credits, [
     // A comma-bearing credit — the join-the-tail rule is what makes this one whole.
     'Original Map: Caudyr, Beimeith, & Rorce',
     'Original  Map: Typo In The Real Corpus',
     'Revised Map: Someone (Server)',
-    'Some Guild (www.example.invalid)'
+    'Some Guild (www.example.invalid)',
   ])
 })
 
@@ -324,19 +324,19 @@ test('zLevels are the distinct min(z1,z2) per segment, ascending, excluding laye
     [
       parseMapText(
         ['L 0,0,40, 1,1,10, 0,0,0', 'L 0,0,30, 1,1,30, 0,0,0', 'L 0,0,10, 1,1,90, 0,0,0'].join(
-          '\n'
+          '\n',
         ),
-        0
-      )
+        0,
+      ),
     ],
-    { zone: 'x', sources: [] }
+    { zone: 'x', sources: [] },
   )
   assert.deepEqual(sloped.zLevels, [10, 30])
 
   // Points do not create floors — only geometry does.
   const pointy = buildMapData([parseMapText('P 0,0,777,0,0,0,2,High_Up', 1)], {
     zone: 'x',
-    sources: []
+    sources: [],
   })
   assert.deepEqual(pointy.zLevels, [])
 })
@@ -364,7 +364,7 @@ test('colour channels are clamped to 0-255 and size to the 1..3 text class', () 
   assert.deepEqual({ r: p.r, g: p.g, b: p.b, size: p.size }, { r: 0, g: 255, b: 128, size: 3 })
   const data = buildMapData([parseMapText('L 0,0,0, 1,1,1, -5, 999, 12', 0)], {
     zone: 'x',
-    sources: []
+    sources: [],
   })
   assert.deepEqual([...data.lines.palette], [0, 255, 12])
 })
@@ -399,7 +399,7 @@ test('sources travel through untouched — the UI must be able to state each lay
   assert.equal(data.zone, 'synthetic')
   assert.deepEqual(
     data.sources.map((s) => s.layer),
-    [0, 1, 2, 3]
+    [0, 1, 2, 3],
   )
   assert.equal(data.sources[1].file, 'map-synthetic_1.txt')
 })

@@ -35,7 +35,7 @@ import { getProgress, setProgress } from './store'
 export function setAchievements(
   charId: string,
   unlocks: ClassUnlockClaim[],
-  source: AchievementsSource
+  source: AchievementsSource,
 ): ProgressState {
   const p = getProgress(charId)
   return setProgress(charId, { ...p, achievementUnlocks: unlocks, achievementsSource: source })

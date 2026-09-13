@@ -50,7 +50,7 @@ import {
   clearBestSpellsSearch,
   fillOutsideClassQuery,
   stepBestSpellsSearch,
-  stepBestSpellsTypeSearch
+  stepBestSpellsTypeSearch,
 } from './bestSpellsSearchSteps.mjs'
 
 const PANEL = '[data-testid="best-spells"]'
@@ -71,7 +71,13 @@ const RANK_LABEL = '[data-testid="best-spells-rank-label"]'
 const TABS = ['dd', 'dot', 'aoe', 'heal', 'hot'] as const
 
 /** The rank column each tab must open on: the damage three on dps, the healing pair on hps. */
-const TAB_RANK: Record<string, string> = { dd: 'dps', dot: 'dps', aoe: 'dps', heal: 'hps', hot: 'hps' }
+const TAB_RANK: Record<string, string> = {
+  dd: 'dps',
+  dot: 'dps',
+  aoe: 'dps',
+  heal: 'hps',
+  hot: 'hps',
+}
 
 /** JOS-449's visible assumption, drawn on the AOE tab and nowhere else. */
 const AOE_MARK = '[data-testid="best-spells-aoe-assumption"]'
@@ -91,7 +97,7 @@ interface TabInfo {
 function panelLevel(page: Page): Promise<string> {
   return page.evaluate(
     (s) => (document.querySelector(s) as HTMLElement | null)?.dataset.level ?? '',
-    PANEL
+    PANEL,
   )
 }
 
@@ -104,21 +110,23 @@ function tabsOf(page: Page): Promise<TabInfo[]> {
         tab: node.dataset.tab ?? '',
         label: (node.innerText || '').trim(),
         count: Number(node.dataset.count ?? '-1'),
-        selected: node.getAttribute('aria-selected') === 'true'
+        selected: node.getAttribute('aria-selected') === 'true',
       }
     })
   }, TAB)
 }
 
 /** The one table on screen: which tab it belongs to, its declared sort, and the count it carries. */
-function tableOf(page: Page): Promise<{ tab: string; column: string; desc: string; count: number }> {
+function tableOf(
+  page: Page,
+): Promise<{ tab: string; column: string; desc: string; count: number }> {
   return page.evaluate((sel) => {
     const el = document.querySelector(sel) as HTMLElement | null
     return {
       tab: el?.dataset.tab ?? '',
       column: el?.dataset.sort ?? '',
       desc: el?.dataset.desc ?? '',
-      count: Number(el?.dataset.count ?? '-1')
+      count: Number(el?.dataset.count ?? '-1'),
     }
   }, SECTION)
 }
@@ -172,20 +180,29 @@ function descendingNullsLast(values: readonly (number | null)[]): boolean {
 
 /** Press a column header and wait for the table to say it took. */
 async function sortBy(page: Page, column: string): Promise<void> {
-  await page.click(`${SECTION} [data-testid="best-spells-sort"][data-column="${column}"]`, { timeout: 10_000 })
-  await settle(() => tableOf(page).then((s) => s.column), (c) => c === column, { timeoutMs: 8_000 })
+  await page.click(`${SECTION} [data-testid="best-spells-sort"][data-column="${column}"]`, {
+    timeout: 10_000,
+  })
+  await settle(
+    () => tableOf(page).then((s) => s.column),
+    (c) => c === column,
+    { timeoutMs: 8_000 },
+  )
 }
 
 /** The panel's own claim about the rank it is simulating, and the words it says about it. */
 function simulationOf(page: Page): Promise<{ rank: string; label: string }> {
-  return page.evaluate((sels) => {
-    const panel = document.querySelector(sels[0]) as HTMLElement | null
-    const label = document.querySelector(sels[1]) as HTMLElement | null
-    return {
-      rank: panel?.dataset.simulate ?? '',
-      label: (label?.innerText || '').trim()
-    }
-  }, [PANEL, RANK_LABEL])
+  return page.evaluate(
+    (sels) => {
+      const panel = document.querySelector(sels[0]) as HTMLElement | null
+      const label = document.querySelector(sels[1]) as HTMLElement | null
+      return {
+        rank: panel?.dataset.simulate ?? '',
+        label: (label?.innerText || '').trim(),
+      }
+    },
+    [PANEL, RANK_LABEL],
+  )
 }
 
 /** Focus the slider and drive it with the keyboard - the same path the control gives a user. */
@@ -197,7 +214,11 @@ async function driveRank(page: Page, keys: readonly string[]): Promise<void> {
 /** Press a tab and wait for the ONE table on screen to be that tab's. */
 async function selectTab(page: Page, tab: string): Promise<void> {
   await page.click(`${TAB}[data-tab="${tab}"]`, { timeout: 10_000 })
-  await settle(() => tableOf(page).then((t) => t.tab), (t) => t === tab, { timeoutMs: 8_000 })
+  await settle(
+    () => tableOf(page).then((t) => t.tab),
+    (t) => t === tab,
+    { timeoutMs: 8_000 },
+  )
 }
 
 /**
@@ -210,26 +231,34 @@ async function checkTab(page: Page, tab: string): Promise<number> {
   await selectTab(page, tab)
   const table = await tableOf(page)
   const sections = await countOf(page, SECTION)
-  check(`the ${tab} tab draws ONE table and it is its own`, sections === 1 && table.tab === tab, `${String(sections)} sections, ${table.tab}`)
+  check(
+    `the ${tab} tab draws ONE table and it is its own`,
+    sections === 1 && table.tab === tab,
+    `${String(sections)} sections, ${table.tab}`,
+  )
   const rank = TAB_RANK[tab]
   check(
     `…opened ranked by ${rank}, best first`,
     table.column === rank && table.desc === 'true',
-    `${table.column}/${table.desc}`
+    `${table.column}/${table.desc}`,
   )
   const drawn = await rowNames(page)
   const more = await moreCount(page)
   check(
     `…and the ${String(table.count)} on the tab is the whole table: ${String(drawn.length)} drawn plus ${String(more)} behind the disclosure`,
     drawn.length + more === table.count,
-    `${String(drawn.length)} + ${String(more)} vs ${String(table.count)}`
+    `${String(drawn.length)} + ${String(more)} vs ${String(table.count)}`,
   )
   if (drawn.length === 0) {
     note(`this loadout owns no ${tab} spells at this level, which is an honest empty table`)
     return 0
   }
   const values = await columnValues(page, rank)
-  check(`…and the drawn ${rank} column really descends, with any blank last`, descendingNullsLast(values), values.join(' '))
+  check(
+    `…and the drawn ${rank} column really descends, with any blank last`,
+    descendingNullsLast(values),
+    values.join(' '),
+  )
   return drawn.length
 }
 
@@ -266,25 +295,33 @@ async function stepWornFocus(page: Page): Promise<void> {
   let found: string | null = null
   for (const tab of TABS) {
     await selectTab(page, tab)
-    if ((await settle(() => countOf(page, FOCUS_MARK), (n) => n === 1, { timeoutMs: 4_000 })) === 1) {
+    if (
+      (await settle(
+        () => countOf(page, FOCUS_MARK),
+        (n) => n === 1,
+        { timeoutMs: 4_000 },
+      )) === 1
+    ) {
       found = tab
       break
     }
   }
   if (found === null) {
-    note('nothing this loadout owns is inside a worn focus effect range here, so no marker is drawn')
+    note(
+      'nothing this loadout owns is inside a worn focus effect range here, so no marker is drawn',
+    )
     await selectTab(page, opened)
     return
   }
   check(`the worn-focus marker is drawn on the ${found} tab, exactly once`, true)
   const text = await page.evaluate(
     (s) => ((document.querySelector(s) as HTMLElement | null)?.innerText ?? '').trim(),
-    FOCUS_MARK
+    FOCUS_MARK,
   )
   check(
     '…stating the percentage the figures were multiplied by, in words a player can read',
     /^worn \+\d+%( to \+\d+%)?$/.test(text),
-    text
+    text,
   )
   // AND IT IS A CLAIM ABOUT THE NUMBERS BESIDE IT. Every row on this tab that the focus touched
   // reads above the base figure the same table draws with no dump behind it - which cannot be
@@ -295,7 +332,7 @@ async function stepWornFocus(page: Page): Promise<void> {
   check(
     `…over a ${found} table that really has focused figures in it`,
     values.length > 0 && values.every((v) => v > 0),
-    `${String(values.length)} rows`
+    `${String(values.length)} rows`,
   )
   await selectTab(page, opened)
 }
@@ -305,19 +342,26 @@ async function stepAoeAssumption(page: Page): Promise<void> {
   // Whichever tab the steps before this left the panel on, the absence is asserted from a tab that
   // is NOT the AOE one - the panel is handed back to `opened` at the end either way.
   if (opened === 'aoe') await selectTab(page, 'dd')
-  check('the assumption marker is NOT drawn on a tab it does not govern', (await countOf(page, AOE_MARK)) === 0)
+  check(
+    'the assumption marker is NOT drawn on a tab it does not govern',
+    (await countOf(page, AOE_MARK)) === 0,
+  )
 
   await selectTab(page, 'aoe')
-  const drawn = await settle(() => countOf(page, AOE_MARK), (n) => n === 1, { timeoutMs: 8_000 })
+  const drawn = await settle(
+    () => countOf(page, AOE_MARK),
+    (n) => n === 1,
+    { timeoutMs: 8_000 },
+  )
   if (!check('…and IS drawn, exactly once, on the AOE tab', drawn === 1, String(drawn))) return
   const text = await page.evaluate(
     (s) => ((document.querySelector(s) as HTMLElement | null)?.innerText ?? '').trim(),
-    AOE_MARK
+    AOE_MARK,
   )
   check(
     '…stating the target count the figures assume, in words a player can read',
     /^x\d+( to x\d+)? targets$/.test(text),
-    text
+    text,
   )
 
   // THE TAB REALLY ANSWERS A DIFFERENT QUESTION. Whichever spell is in both tables must read HIGHER
@@ -341,7 +385,7 @@ async function stepAoeAssumption(page: Page): Promise<void> {
       check(
         `a spell in both tables reads HIGHER on AOE than on DD (${String(shared.length)} pairs)`,
         bad.length === 0,
-        bad.map((r) => `${r.name} ${String(r.aoe)} < ${String(r.dd)}`).join(' | ')
+        bad.map((r) => `${r.name} ${String(r.aoe)} < ${String(r.dd)}`).join(' | '),
       )
     }
   }
@@ -363,47 +407,62 @@ async function stepAoeAssumption(page: Page): Promise<void> {
  * AND IT HANDS THE PANEL BACK AT BASE, like every other step here.
  */
 async function stepSimulate(page: Page): Promise<void> {
-  if (!check('the readout offers a mote-rank simulator', (await countOf(page, RANK_SLIDER)) === 1)) return
+  if (!check('the readout offers a mote-rank simulator', (await countOf(page, RANK_SLIDER)) === 1))
+    return
   const atBase = await simulationOf(page)
   check(
     '…which opens at base and says so PERMANENTLY, not only once it is dragged',
     atBase.rank === '0' && atBase.label === 'base ranks',
-    `${atBase.rank} / ${atBase.label}`
+    `${atBase.rank} / ${atBase.label}`,
   )
 
   const damage = (await tabsOf(page)).find((t) => TAB_RANK[t.tab] === 'dps' && t.count > 0)
   if (!damage) {
-    note('this loadout owns no damage spells; the healing lift shares the same slider and code path')
+    note(
+      'this loadout owns no damage spells; the healing lift shares the same slider and code path',
+    )
     return
   }
   await selectTab(page, damage.tab)
   const before = (await columnValues(page, 'damage')).join(',')
 
   await driveRank(page, ['Home', 'End'])
-  const lifted = await settle(() => simulationOf(page).then((s) => s.rank), (r) => r === '10', { timeoutMs: 8_000 })
+  const lifted = await settle(
+    () => simulationOf(page).then((s) => s.rank),
+    (r) => r === '10',
+    { timeoutMs: 8_000 },
+  )
   check('driving it to the top of the ladder takes', lifted === '10', lifted)
   const announced = await simulationOf(page)
   check(
     '…and the label ANNOUNCES the simulation: the rank every row is lifted to',
     announced.label === 'all at X+',
-    announced.label
+    announced.label,
   )
 
   const after = await settle(
     () => columnValues(page, 'damage').then((v) => v.join(',')),
     (v) => v !== before,
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
-  check(`simulating a rank RESTATES the ${damage.tab} table's damage column`, after !== before, `${before} -> ${after}`)
+  check(
+    `simulating a rank RESTATES the ${damage.tab} table's damage column`,
+    after !== before,
+    `${before} -> ${after}`,
+  )
   // The rows are the same rows: a rank changes figures, never membership. `+N more` is unmoved too.
   check(
     '…the same rows, re-read - a rank is not a filter',
     (await rowNames(page)).length > 0 && (await tableOf(page)).count === damage.count,
-    `${String((await tableOf(page)).count)} vs ${String(damage.count)}`
+    `${String((await tableOf(page)).count)} vs ${String(damage.count)}`,
   )
 
   await driveRank(page, ['Home'])
-  const back = await settle(() => simulationOf(page).then((s) => s.rank), (r) => r === '0', { timeoutMs: 8_000 })
+  const back = await settle(
+    () => simulationOf(page).then((s) => s.rank),
+    (r) => r === '0',
+    { timeoutMs: 8_000 },
+  )
   check('and sliding back to base restores the readout it was found in', back === '0', back)
 }
 
@@ -415,16 +474,21 @@ async function stepSimulate(page: Page): Promise<void> {
 export async function stepBestSpells(page: Page): Promise<void> {
   const mounted = (await countOf(page, PANEL)) > 0
   if (!mounted) {
-    note('no loadout resolved from this log, so there is no best-spells readout to draw - by design')
+    note(
+      'no loadout resolved from this log, so there is no best-spells readout to draw - by design',
+    )
     return
   }
   check('the best-spells readout is mounted', true)
   const placed = await page.evaluate(
     (sels) => document.querySelector(sels[0])?.closest(sels[1]) !== null,
-    [PANEL, RIGHT_COLUMN]
+    [PANEL, RIGHT_COLUMN],
   )
   check('…on the RIGHT side of the tab, which is where the owner asked for it', placed)
-  check('…and it says `directional` exactly once, like the panel opposite it', (await countOf(page, DIRECTIONAL)) === 1)
+  check(
+    '…and it says `directional` exactly once, like the panel opposite it',
+    (await countOf(page, DIRECTIONAL)) === 1,
+  )
 
   // FOUR TABS, AND ONLY ONE TABLE (JOS-448). The labels are the model's words and each carries its
   // own count, which is what makes the three tabs you are not looking at still say something.
@@ -432,15 +496,22 @@ export async function stepBestSpells(page: Page): Promise<void> {
   check(
     'it offers the five answers the owner asked for, in his order',
     tabs.map((t) => t.tab).join(',') === TABS.join(','),
-    tabs.map((t) => t.tab).join(',')
+    tabs.map((t) => t.tab).join(','),
   )
   check(
     '…each label naming its table and counting it',
     tabs.every((t) => /^(DD|DoT|AOE|Heal|HoT) \(\d+\)$/.test(t.label) && t.count >= 0),
-    tabs.map((t) => t.label).join(' | ')
+    tabs.map((t) => t.label).join(' | '),
   )
-  check('…with exactly one selected', tabs.filter((t) => t.selected).length === 1, tabs.map((t) => `${t.tab}:${String(t.selected)}`).join(' '))
-  check('…and exactly one table in the document, not four with three hidden', (await countOf(page, SECTION)) === 1)
+  check(
+    '…with exactly one selected',
+    tabs.filter((t) => t.selected).length === 1,
+    tabs.map((t) => `${t.tab}:${String(t.selected)}`).join(' '),
+  )
+  check(
+    '…and exactly one table in the document, not four with three hidden',
+    (await countOf(page, SECTION)) === 1,
+  )
   // The panel OPENS on a tab that has something in it: `dd` is the default, but a healer's DD table
   // is empty and opening him on it would be the readout failing to answer a question it can answer.
   const opened = await tableOf(page)
@@ -449,17 +520,21 @@ export async function stepBestSpells(page: Page): Promise<void> {
   check(
     'it opens on a tab with rows in it whenever any tab has rows',
     !anyRows || openCount > 0,
-    `${opened.tab} has ${String(openCount)}`
+    `${opened.tab} has ${String(openCount)}`,
   )
 
   // THE LEVEL IS THE TAB'S. The unlock stepper lives in the OTHER column; this is the claim that
   // there is one viewed level rather than two.
   const stepper = await page.evaluate(
     (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
-    LEVEL_VALUE
+    LEVEL_VALUE,
   )
   const shown = await panelLevel(page)
-  check('the readout ranks the level the stepper is showing', stepper === `Level ${shown}`, `${stepper} vs ${shown}`)
+  check(
+    'the readout ranks the level the stepper is showing',
+    stepper === `Level ${shown}`,
+    `${stepper} vs ${shown}`,
+  )
 
   // EVERY TAB, CLICKED. Each swaps the table under the same headers and brings its own sort with it.
   let widest = { tab: TABS[0] as string, rows: 0 }
@@ -480,11 +555,12 @@ export async function stepBestSpells(page: Page): Promise<void> {
     check(
       `clicking the per-mana header re-ranks the ${widest.tab} table on that column`,
       descendingNullsLast(await columnValues(page, perMana)),
-      byEff.slice(0, 3).join(' | ')
+      byEff.slice(0, 3).join(' | '),
     )
     // The two answers are allowed to agree (a small loadout really can have one best spell by both
     // measures), so a difference is a NOTE and the monotone above is the assertion.
-    if (byRank.join() === byEff.join()) note('the fastest and the most mana-efficient spell are the same here')
+    if (byRank.join() === byEff.join())
+      note('the fastest and the most mana-efficient spell are the same here')
     // A SORT IS THE TAB'S OWN. Flipping this one must not disturb another, which is the state the
     // panel keeps per tab rather than per side.
     const other = TABS.find((t) => t !== widest.tab && TAB_RANK[t] !== TAB_RANK[widest.tab])
@@ -546,12 +622,23 @@ export async function stepBestSpells(page: Page): Promise<void> {
     return
   }
   await page.click(LEVEL_NEXT, { timeout: 10_000 })
-  const moved = await settle(() => panelLevel(page), (l) => l !== shown, { timeoutMs: 8_000 })
-  check('stepping the level moves the readout with it - one level, two columns', moved !== shown, `${shown} -> ${moved}`)
+  const moved = await settle(
+    () => panelLevel(page),
+    (l) => l !== shown,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    'stepping the level moves the readout with it - one level, two columns',
+    moved !== shown,
+    `${shown} -> ${moved}`,
+  )
   await page.click(LEVEL_PREV, { timeout: 10_000 })
-  await settle(() => panelLevel(page), (l) => l === shown, { timeoutMs: 8_000 })
+  await settle(
+    () => panelLevel(page),
+    (l) => l === shown,
+    { timeoutMs: 8_000 },
+  )
 }
-
 
 /**
  * ONE PNG OF THE READOUT, for an owner who has to rule on whether a four-column table reads in a

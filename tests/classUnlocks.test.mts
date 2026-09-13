@@ -27,8 +27,22 @@ const discUnlocks: Record<string, Unlock[]> = classes.discUnlocks
 const skills: Record<string, string[]> = classes.skills
 
 const ALL: string[] = [
-  'BER', 'BRD', 'BST', 'CLR', 'DRU', 'ENC', 'MAG', 'MNK',
-  'NEC', 'PAL', 'RNG', 'ROG', 'SHD', 'SHM', 'WAR', 'WIZ'
+  'BER',
+  'BRD',
+  'BST',
+  'CLR',
+  'DRU',
+  'ENC',
+  'MAG',
+  'MNK',
+  'NEC',
+  'PAL',
+  'RNG',
+  'ROG',
+  'SHD',
+  'SHM',
+  'WAR',
+  'WIZ',
 ]
 
 const everyRow = (t: Record<string, Unlock[]>): Unlock[] => Object.values(t).flat()
@@ -40,17 +54,27 @@ test('every class states its skill unlocks; the discipline table is sparse and s
   // Only four class pages carry a discipline table with levels — BER, MNK, RNG and ROG.
   // The other twelve are ABSENT rather than empty: the wiki does not state them, so we do
   // not carry a key that would read as "this class has none" (law 1).
-  for (const abbr of Object.keys(discUnlocks)) assert.ok(ALL.includes(abbr), `unknown class ${abbr}`)
+  for (const abbr of Object.keys(discUnlocks))
+    assert.ok(ALL.includes(abbr), `unknown class ${abbr}`)
   assert.ok(Object.keys(discUnlocks).length >= 4, 'the discipline tables vanished')
-  assert.ok(Object.keys(discUnlocks).length < 16, 'every class suddenly has disciplines — verify the wiki')
+  assert.ok(
+    Object.keys(discUnlocks).length < 16,
+    'every class suddenly has disciplines — verify the wiki',
+  )
 })
 
 test('every unlock row is a real statement: a name, an integer level in 1..65, a known kind', () => {
   for (const [abbr, rows] of Object.entries({ ...skillUnlocks, ...discUnlocks })) {
     assert.ok(rows.length > 0, `${abbr} carries an empty list`)
     for (const r of rows) {
-      assert.ok(r.name.length > 0 && r.name.length <= 40, `${abbr}: bad name ${JSON.stringify(r.name)}`)
-      assert.ok(Number.isInteger(r.level), `${abbr} ${r.name}: level ${String(r.level)} is not an integer`)
+      assert.ok(
+        r.name.length > 0 && r.name.length <= 40,
+        `${abbr}: bad name ${JSON.stringify(r.name)}`,
+      )
+      assert.ok(
+        Number.isInteger(r.level),
+        `${abbr} ${r.name}: level ${String(r.level)} is not an integer`,
+      )
       assert.ok(r.level >= 1 && r.level <= 65, `${abbr} ${r.name}: level ${r.level} out of range`)
       assert.ok(['skill', 'disc', 'innate'].includes(r.kind), `${abbr} ${r.name}: kind ${r.kind}`)
     }
@@ -58,8 +82,10 @@ test('every unlock row is a real statement: a name, an integer level in 1..65, a
 })
 
 test('the two sections are disjoint by kind — a disc never lands in skillUnlocks', () => {
-  for (const r of everyRow(skillUnlocks)) assert.notEqual(r.kind, 'disc', `${r.name} is a disc in skillUnlocks`)
-  for (const r of everyRow(discUnlocks)) assert.equal(r.kind, 'disc', `${r.name} is ${r.kind} in discUnlocks`)
+  for (const r of everyRow(skillUnlocks))
+    assert.notEqual(r.kind, 'disc', `${r.name} is a disc in skillUnlocks`)
+  for (const r of everyRow(discUnlocks))
+    assert.equal(r.kind, 'disc', `${r.name} is ${r.kind} in discUnlocks`)
 })
 
 test('each class lists a name once, in level order, so a panel can slice by level', () => {
@@ -67,7 +93,10 @@ test('each class lists a name once, in level order, so a panel can slice by leve
     const names = rows.map((r) => r.name.toLowerCase())
     assert.deepEqual(names.length, new Set(names).size, `${abbr} lists a name twice`)
     for (let i = 1; i < rows.length; i++) {
-      assert.ok(rows[i - 1].level <= rows[i].level, `${abbr} is not level-ordered at ${rows[i].name}`)
+      assert.ok(
+        rows[i - 1].level <= rows[i].level,
+        `${abbr} is not level-ordered at ${rows[i].name}`,
+      )
     }
   }
 })
@@ -114,7 +143,7 @@ test('the discipline anchors match, Rogue poisons included', () => {
   assert.deepEqual(at('MNK', 'Stonestance Discipline'), {
     name: 'Stonestance Discipline',
     level: 51,
-    kind: 'disc'
+    kind: 'disc',
   })
   assert.deepEqual(at('BER', 'Tendon Slice'), { name: 'Tendon Slice', level: 14, kind: 'disc' })
   assert.deepEqual(at('ROG', 'Asp Venom'), { name: 'Asp Venom', level: 2, kind: 'disc' })
@@ -138,12 +167,18 @@ test('the "only Rogue poison disciplines are on Legends" statement is carried, n
   assert.ok(lines.length >= 3, `only ${lines.length} discipline disputes`)
   for (const abbr of ['BER', 'MNK', 'RNG']) {
     assert.ok(
-      lines.some((l) => l.includes(`'${abbr}'`) && l.includes('only Rogue poison disciplines are on Legends')),
-      `${abbr}'s discipline rows ship unlabeled`
+      lines.some(
+        (l) =>
+          l.includes(`'${abbr}'`) && l.includes('only Rogue poison disciplines are on Legends'),
+      ),
+      `${abbr}'s discipline rows ship unlabeled`,
     )
   }
   // ROG is the one class the Disciplines page does NOT strike through — no dispute for it.
-  assert.equal(lines.some((l) => l.includes("'ROG'")), false)
+  assert.equal(
+    lines.some((l) => l.includes("'ROG'")),
+    false,
+  )
 })
 
 test('every table the scrape could not read is enumerated, not silently dropped', () => {
@@ -159,7 +194,7 @@ test('every table the scrape could not read is enumerated, not silently dropped'
 
 test('the unlock names line up with the skills table the combo inference already uses', () => {
   const rows = Object.entries(skillUnlocks).flatMap(([abbr, rs]) =>
-    rs.filter((r) => r.kind === 'skill').map((r) => ({ abbr, name: r.name }))
+    rs.filter((r) => r.kind === 'skill').map((r) => ({ abbr, name: r.name })),
   )
   const matched = rows.filter((r) => (skills[r.name] ?? []).includes(r.abbr))
   // measured 433 of 447. The shortfall is ONE class: the Shadow Knight page writes its
@@ -167,6 +202,12 @@ test('the unlock names line up with the skills table the combo inference already
   // `skills` parser keys on the first linked cell, so those 15 rows never reached `skills`.
   // The unlock table reads them from the header instead and is strictly more complete —
   // this floor pins that it stays a small, one-class gap rather than a drift.
-  assert.ok(matched.length >= 420, `only ${matched.length} of ${rows.length} unlock names are in skills[]`)
-  assert.ok(rows.length - matched.length <= 25, `${rows.length - matched.length} unlock names are unknown to skills[]`)
+  assert.ok(
+    matched.length >= 420,
+    `only ${matched.length} of ${rows.length} unlock names are in skills[]`,
+  )
+  assert.ok(
+    rows.length - matched.length <= 25,
+    `${rows.length - matched.length} unlock names are unknown to skills[]`,
+  )
 })

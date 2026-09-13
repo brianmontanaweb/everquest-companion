@@ -111,7 +111,7 @@ function toAbilityRow(name: string, byRank: Map<number, AaRankRow>): AaAbilityRo
     autoRanks: 0,
     rebuys: 0,
     lastTs: 0,
-    unlogged: []
+    unlogged: [],
   }
   for (const r of ranks) {
     if (r.cost > 0) {
@@ -150,7 +150,7 @@ export function aaLedger(spends: readonly AASpendLike[]): AaAbilityRow[] {
       b.invested - a.invested ||
       b.topRank - a.topRank ||
       b.lastTs - a.lastTs ||
-      a.name.localeCompare(b.name)
+      a.name.localeCompare(b.name),
   )
   return rows
 }
@@ -163,7 +163,7 @@ export function aaLedgerSummary(rows: readonly AaAbilityRow[]): AaLedgerSummary 
     paidRanks: 0,
     autoRanks: 0,
     rebought: 0,
-    partial: 0
+    partial: 0,
   }
   for (const r of rows) {
     sum.invested += r.invested

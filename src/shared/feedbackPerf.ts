@@ -42,7 +42,7 @@ import {
   type FeedbackPerfGc,
   type FeedbackPerfSeam,
   type PerfGcSample,
-  type PerfSeamSample
+  type PerfSeamSample,
 } from './feedbackPerfSeams'
 // …AND THE ENGINE'S HALF (JOS-502), its own file for the same factoring reason, and carrying the
 // argument for why nothing on its shape is a string.
@@ -51,14 +51,14 @@ import {
   formatPerfEngine,
   validatePerfEngineField,
   type EngineFoldInput,
-  type FeedbackPerfEngine
+  type FeedbackPerfEngine,
 } from './feedbackPerfEngine'
 import {
   LIVE_PROBE_REPORT_MS,
   LIVE_STALL_FREEZE_MS,
   LIVE_TIMELINE_MS,
   coincidentWindows,
-  type LiveLateSample
+  type LiveLateSample,
 } from './perfLive'
 import {
   TELEMETRY_EQ_WINDOW_MODES,
@@ -66,7 +66,7 @@ import {
   TELEMETRY_GPU_VENDORS,
   type TelemetryEqWindowMode,
   type TelemetryGpuCompositing,
-  type TelemetryGpuVendor
+  type TelemetryGpuVendor,
 } from './telemetry'
 
 /** One row's width. Ten seconds is the coarsest grid a ~1 s freeze still stands out on, and the
@@ -239,7 +239,7 @@ const zeroRow = (t: number): FeedbackPerfRow => ({
   workerMaxLateMs: 0,
   tailMaxMs: 0,
   tailReads: 0,
-  tailReopens: 0
+  tailReopens: 0,
 })
 
 /** Whole, finite, non-negative, bounded. Every number that reaches the wire goes through here. */
@@ -297,7 +297,7 @@ export function foldFeedbackPerf(input: PerfFoldInput, now: number): FeedbackPer
   // block computed a millisecond later.
   const owner = foldPerfOwner(
     { seams: input.seams ?? [], gc: input.gc ?? [] },
-    { start: windowStart, spanMs: PERF_ROWS * PERF_INTERVAL_MS, rowMs: PERF_INTERVAL_MS }
+    { start: windowStart, spanMs: PERF_ROWS * PERF_INTERVAL_MS, rowMs: PERF_INTERVAL_MS },
   )
   const engine = foldPerfEngineField(input.engine)
   return {
@@ -307,7 +307,7 @@ export function foldFeedbackPerf(input: PerfFoldInput, now: number): FeedbackPer
       p95MainMs: round(percentile(late, 95), 0),
       maxMainMs: late.length === 0 ? 0 : Math.max(...late),
       coincident: coincidentWindows(main, worker),
-      over500: late.filter((ms) => ms >= LIVE_STALL_FREEZE_MS).length
+      over500: late.filter((ms) => ms >= LIVE_STALL_FREEZE_MS).length,
     },
     state: input.state,
     ...owner,
@@ -316,7 +316,7 @@ export function foldFeedbackPerf(input: PerfFoldInput, now: number): FeedbackPer
     // the three op answers arrive already asked. The field arrives as a spreadable bundle for the
     // reason `owner` above it does: this function is at the complexity ceiling, and the omission
     // rule belongs beside the fold that decides it (`foldPerfEngineField`).
-    ...engine
+    ...engine,
   }
 }
 
@@ -343,7 +343,7 @@ export function formatPerfSummary(perf: FeedbackPerf): string {
     `max ${s.maxMainMs}ms`,
     `${s.over500} freeze${s.over500 === 1 ? '' : 's'} (>=${LIVE_STALL_FREEZE_MS}ms)`,
     `${s.coincident} coincident`,
-    `tail ${reads} reads / ${reopens} reopens / max ${tailMax}ms`
+    `tail ${reads} reads / ${reopens} reopens / max ${tailMax}ms`,
   ].join(' · ')
 }
 
@@ -358,7 +358,7 @@ export function formatPerfState(perf: FeedbackPerf): string {
     `overlays ${st.overlaysOpen} (${st.overlaysLocked} locked)`,
     `presence ${st.presenceOn ? 'on' : 'off'}`,
     `ring ${st.ringOn ? 'on' : 'off'}`,
-    `us ${st.workingSetMb} MB`
+    `us ${st.workingSetMb} MB`,
   ].join(' · ')
 }
 
@@ -403,7 +403,7 @@ export function formatPerfBlock(perf: FeedbackPerf): string {
     `  machine: ${formatPerfState(perf)}`,
     `  main late |${perfSparkline(perf)}| oldest→newest, peak ${perf.summary.maxMainMs}ms`,
     `  owner: ${formatPerfOwner(perf.seams ?? [], perf.gc ?? null)}`,
-    `  engine: ${formatPerfEngine(perf.engine)}`
+    `  engine: ${formatPerfEngine(perf.engine)}`,
   ].join('\n')
 }
 
@@ -426,14 +426,13 @@ export type { TelemetryEqWindowMode, TelemetryGpuCompositing, TelemetryGpuVendor
 /** Structurally `shared/feedback.ts`'s `Validated<T>`. See the note above for why it is spelled
  *  again rather than imported — importing it would make the contract file and this one a cycle. */
 export type PerfValidated<T> =
-  | { ok: true; value: T }
-  | { ok: false; error: 'invalid_payload'; message: string; field: string }
+  { ok: true; value: T } | { ok: false; error: 'invalid_payload'; message: string; field: string }
 
 const bad = (field: string, message: string): PerfValidated<never> => ({
   ok: false,
   error: 'invalid_payload',
   message,
-  field
+  field,
 })
 
 const isRec = (v: unknown): v is Record<string, unknown> =>
@@ -451,7 +450,7 @@ function count(raw: unknown, field: string, max: number): PerfValidated<number> 
 function member<T extends string>(
   raw: unknown,
   field: string,
-  allowed: readonly T[]
+  allowed: readonly T[],
 ): PerfValidated<T> {
   if (typeof raw === 'string' && (allowed as readonly string[]).includes(raw))
     return { ok: true, value: raw as T }
@@ -468,7 +467,7 @@ function flag(raw: unknown, field: string): PerfValidated<boolean> {
 function counts<K extends string>(
   raw: Record<string, unknown>,
   prefix: string,
-  spec: readonly (readonly [K, number])[]
+  spec: readonly (readonly [K, number])[],
 ): PerfValidated<Record<K, number>> {
   const out = {} as Record<K, number>
   for (const [key, max] of spec) {
@@ -484,7 +483,7 @@ const ROW_FIELDS = [
   ['workerMaxLateMs', MAX_PERF_MS],
   ['tailMaxMs', MAX_PERF_MS],
   ['tailReads', MAX_PERF_COUNT],
-  ['tailReopens', MAX_PERF_COUNT]
+  ['tailReopens', MAX_PERF_COUNT],
 ] as const
 
 /** The sixty rows, on the FIXED grid. `t` is checked against its index rather than merely
@@ -511,7 +510,7 @@ const SUMMARY_FIELDS = [
   ['p95MainMs', MAX_PERF_MS],
   ['maxMainMs', MAX_PERF_MS],
   ['coincident', MAX_PERF_COUNT],
-  ['over500', MAX_PERF_COUNT]
+  ['over500', MAX_PERF_COUNT],
 ] as const
 
 const STATE_COUNTS = [
@@ -520,7 +519,7 @@ const STATE_COUNTS = [
   ['freeMemMb', MAX_PERF_COUNT],
   ['workingSetMb', MAX_PERF_COUNT],
   ['cpuCount', MAX_PERF_COUNT],
-  ['totalMemGb', MAX_PERF_COUNT]
+  ['totalMemGb', MAX_PERF_COUNT],
 ] as const
 
 function validateState(raw: unknown): PerfValidated<FeedbackPerfState> {
@@ -536,13 +535,13 @@ function validateState(raw: unknown): PerfValidated<FeedbackPerfState> {
   const gpuCompositing = member(
     raw.gpuCompositing,
     'env.perf.state.gpuCompositing',
-    TELEMETRY_GPU_COMPOSITING
+    TELEMETRY_GPU_COMPOSITING,
   )
   if (!gpuCompositing.ok) return gpuCompositing
   const eqWindowMode = member(
     raw.eqWindowMode,
     'env.perf.state.eqWindowMode',
-    TELEMETRY_EQ_WINDOW_MODES
+    TELEMETRY_EQ_WINDOW_MODES,
   )
   if (!eqWindowMode.ok) return eqWindowMode
   return {
@@ -553,8 +552,8 @@ function validateState(raw: unknown): PerfValidated<FeedbackPerfState> {
       ringOn: ringOn.value,
       gpuVendor: gpuVendor.value,
       gpuCompositing: gpuCompositing.value,
-      eqWindowMode: eqWindowMode.value
-    }
+      eqWindowMode: eqWindowMode.value,
+    },
   }
 }
 
@@ -596,7 +595,7 @@ export function validatePerf(raw: unknown): PerfValidated<FeedbackPerf | null> {
     summary: summary.value,
     state: state.value,
     ...owner.value,
-    ...engine.value
+    ...engine.value,
   }
   const bytes = perfBytes(value)
   if (bytes > MAX_PERF_BYTES)

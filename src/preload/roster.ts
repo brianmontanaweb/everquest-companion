@@ -27,5 +27,5 @@ export const rosterApi = {
     ipcRenderer.invoke(IPC.rosterSetEdit, edit),
   /** "Let the log decide again" — forget the hand-made statement about this name. */
   clearRosterEdit: (name: string): Promise<ComboWriteResult> =>
-    ipcRenderer.invoke(IPC.rosterClearEdit, { name })
+    ipcRenderer.invoke(IPC.rosterClearEdit, { name }),
 }

@@ -29,7 +29,7 @@ import { resolvedClasses, type ClassAbbr, type ComboSnap } from '../../shared/cl
 import {
   OBSERVED_SPELL_RANKS_MODULE_ID,
   observedRankRow,
-  type ObservedSpellRanksSnap
+  type ObservedSpellRanksSnap,
 } from '../../shared/spellRanks'
 import type { BuffsSnap } from '../../shared/types'
 
@@ -154,7 +154,7 @@ export function registerKnowledgeIpc(): void {
       // Awaited for the unlocks handler's reason, one hover earlier: a card opened in the first
       // seconds of a launch would otherwise state clientless facts for that one open.
       spellTable(),
-      currentCombo()
+      currentCombo(),
     ])
     return buildSpellDetail(appSpellDb(), wanted, Object.keys(snap?.spellLastCast ?? {}), {
       client,
@@ -162,7 +162,7 @@ export function registerKnowledgeIpc(): void {
       // JOS-452 — the same worn-focus answer the planner's inventory payload carries, from the same
       // memoized resolution, so the card and the leveling table can never credit a different item.
       focus: currentWornFocus(),
-      combo
+      combo,
     })
   })
 

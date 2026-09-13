@@ -92,7 +92,7 @@ import {
   respawnSeenLabel,
   respawnSourceLabel,
   type RespawnReading,
-  type RespawnRow
+  type RespawnRow,
 } from '@shared/respawn'
 import Tooltip from '../../lib/Tooltip'
 import { MOB_CARD_SLOT_PROPS, MobCard } from '../../lib/hoverCards'
@@ -126,7 +126,7 @@ const CLOCK_COLOR: Record<RowTone, string> = {
   error: 'error.main',
   success: 'success.main',
   info: 'text.primary',
-  stale: 'text.disabled'
+  stale: 'text.disabled',
 }
 
 /** The stripe down the left edge, which is the row's accent at a glance. */
@@ -134,7 +134,7 @@ const EDGE_COLOR: Record<RowTone, string> = {
   error: 'error.main',
   success: 'success.main',
   info: 'info.main',
-  stale: 'divider'
+  stale: 'divider',
 }
 
 /** The bar's palette colour. No entry for `stale`: a stale row draws no bar (see the render). */
@@ -149,7 +149,7 @@ const BAR_COLOR = { error: 'error', success: 'success', info: 'info' } as const
 function SeenRow({
   row,
   nowMs,
-  onConfirmSighting
+  onConfirmSighting,
 }: {
   row: RespawnRow
   nowMs: number
@@ -157,7 +157,11 @@ function SeenRow({
 }): JSX.Element {
   return (
     <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5, minWidth: 0 }}>
-      <Typography variant="caption" data-testid="respawn-seen" sx={{ flex: 1, minWidth: 0, color: 'error.main' }}>
+      <Typography
+        variant="caption"
+        data-testid="respawn-seen"
+        sx={{ flex: 1, minWidth: 0, color: 'error.main' }}
+      >
         {respawnSeenLabel(row, nowMs, fmtDuration)}
       </Typography>
       {onConfirmSighting !== undefined && (
@@ -206,7 +210,7 @@ function WorkingLine({ row }: { row: RespawnRow }): JSX.Element | null {
         fontVariantNumeric: 'tabular-nums',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
       }}
     >
       {gaps}
@@ -245,7 +249,7 @@ function DurationUnit({ row, onEdit }: { row: RespawnRow; onEdit?: () => void })
         borderRadius: 1,
         borderColor: over ? 'primary.main' : 'divider',
         bgcolor: over ? 'action.selected' : 'transparent',
-        color: over ? 'primary.main' : 'text.secondary'
+        color: over ? 'primary.main' : 'text.secondary',
       }}
     >
       <Typography variant="caption" sx={{ color: 'inherit', fontVariantNumeric: 'tabular-nums' }}>
@@ -282,7 +286,15 @@ function DurationUnit({ row, onEdit }: { row: RespawnRow; onEdit?: () => void })
  * Its own component because `RespawnRowBar` is at the repo's factoring ceiling, the same reason
  * `SeenRow` and `WorkingLine` above are.
  */
-function ClockBar({ hasEstimate, r, t }: { hasEstimate: boolean; r: RespawnReading; t: RowTone }): JSX.Element | null {
+function ClockBar({
+  hasEstimate,
+  r,
+  t,
+}: {
+  hasEstimate: boolean
+  r: RespawnReading
+  t: RowTone
+}): JSX.Element | null {
   if (!hasEstimate || t === 'stale') return null
   return (
     <LinearProgress
@@ -306,7 +318,7 @@ function NameAndClock({
   nowMs,
   r,
   t,
-  onUnwatch
+  onUnwatch,
 }: {
   row: RespawnRow
   nowMs: number
@@ -318,7 +330,13 @@ function NameAndClock({
     <Stack direction="row" spacing={1} alignItems="baseline" sx={{ minWidth: 0 }}>
       <Typography
         variant="body2"
-        sx={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
       >
         {row.display}
       </Typography>
@@ -330,7 +348,7 @@ function NameAndClock({
           fontWeight: r.seen ? 700 : 400,
           // Blue is the resting state and would read as an alert on a number that is simply
           // counting; the facts worth colouring are UP, due, and long gone.
-          color: CLOCK_COLOR[t]
+          color: CLOCK_COLOR[t],
         }}
       >
         {respawnClockLabel(row, nowMs, fmtDuration)}
@@ -338,7 +356,12 @@ function NameAndClock({
       {/* Last, so the countdown keeps its place on every row and the control never sits between the
           name and the number the eye is looking for. */}
       {onUnwatch !== undefined && (
-        <UnwatchButton mobKey={row.key} display={row.display} testId="respawn-row-unwatch" onUnwatch={onUnwatch} />
+        <UnwatchButton
+          mobKey={row.key}
+          display={row.display}
+          testId="respawn-row-unwatch"
+          onUnwatch={onUnwatch}
+        />
       )}
     </Stack>
   )
@@ -349,7 +372,7 @@ export function RespawnRowBar({
   nowMs,
   onConfirmSighting,
   onUnwatch,
-  onSetCustom
+  onSetCustom,
 }: {
   row: RespawnRow
   nowMs: number
@@ -387,7 +410,11 @@ export function RespawnRowBar({
           editing ? (
             ''
           ) : (
-            <MobCard mob={row.display} note={respawnCardNote(row, fmtDuration)} lookup={mainMobLookup} />
+            <MobCard
+              mob={row.display}
+              note={respawnCardNote(row, fmtDuration)}
+              lookup={mainMobLookup}
+            />
           )
         }
         slotProps={MOB_CARD_SLOT_PROPS}
@@ -420,10 +447,10 @@ export function RespawnRowBar({
             borderLeft: 3,
             borderColor: EDGE_COLOR[t],
             bgcolor: 'action.hover',
-            borderRadius: 0.5
+            borderRadius: 0.5,
           }}
         >
-            <NameAndClock row={row} nowMs={nowMs} r={r} t={t} onUnwatch={onUnwatch} />
+          <NameAndClock row={row} nowMs={nowMs} r={r} t={t} onUnwatch={onUnwatch} />
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.25 }}>
             {/* Where it died, and (only when it is not the norm) what the clock counts from. The RUNG
                 is no longer here: round 9 moved it into the duration unit it describes. */}
@@ -435,7 +462,7 @@ export function RespawnRowBar({
                 color: 'text.secondary',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
               }}
             >
               {row.zone.length > 0 ? row.zone : 'unknown zone'}
@@ -448,7 +475,7 @@ export function RespawnRowBar({
                 : {
                     onEdit: () => {
                       setEditing(true)
-                    }
+                    },
                   })}
             />
           </Stack>

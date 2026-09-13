@@ -10,7 +10,12 @@
 // column, key a Map, walk a date. It is separate because the two together are past the repo's
 // 400-code-line ceiling and a split is the answer to that, not a widened threshold.
 
-import { cohortForChannel, cohortOf, DIM_NONE, type UsageCohort } from '../../shared/telemetryRollup'
+import {
+  cohortForChannel,
+  cohortOf,
+  DIM_NONE,
+  type UsageCohort,
+} from '../../shared/telemetryRollup'
 import type { UsageDayPoint } from '../../shared/triage'
 
 /** A DSQL row as node-postgres hands it over: every column is `unknown` until proven. */
@@ -94,7 +99,7 @@ export function toUsageRows(rows: readonly Row[]): UsageRow[] {
     cohort: cohortOf(r.cohort),
     metric: str(r.metric),
     dim: str(r.dim, DIM_NONE),
-    n: num(r.n)
+    n: num(r.n),
   }))
 }
 
@@ -106,7 +111,7 @@ export function toFunnelRows(rows: readonly Row[]): FunnelRow[] {
     step: str(r.step),
     outcome: str(r.outcome, DIM_NONE),
     appVersion: str(r.app_version, '?'),
-    n: num(r.n)
+    n: num(r.n),
   }))
 }
 
@@ -132,7 +137,7 @@ export function toBugReportRows(rows: readonly Row[]): BugReportRow[] {
     .map((r) => ({
       appVersion: str(r.app_version, '?'),
       cohort: cohortForChannel(str(r.channel, 'prod')),
-      n: num(r.n)
+      n: num(r.n),
     }))
 }
 
@@ -162,7 +167,7 @@ export function toErrorIssueRows(rows: readonly Row[]): ErrorIssueRow[] {
     version: str(r.version, '?'),
     fingerprint: str(r.fingerprint),
     n: num(r.count),
-    exemplar: str(r.exemplar, '')
+    exemplar: str(r.exemplar, ''),
   }))
 }
 
@@ -203,7 +208,7 @@ export function toPerfRows(rows: readonly Row[]): PerfRow[] {
     locked: str(r.locked, DIM_NONE),
     stallBucket: idx(r.stall_bucket),
     tailBucket: str(r.tail_bucket, DIM_NONE),
-    n: num(r.n)
+    n: num(r.n),
   }))
 }
 
@@ -214,7 +219,7 @@ export function toInstallRows(rows: readonly Row[]): InstallRow[] {
     daysSeen: num(r.days_seen),
     appVersion: str(r.app_version, '?'),
     channel: str(r.channel, '?'),
-    cohort: cohortOf(r.cohort)
+    cohort: cohortOf(r.cohort),
   }))
 }
 
@@ -228,7 +233,7 @@ export function toInstallRows(rows: readonly Row[]): InstallRow[] {
 /** One cohort's rows. The other cohort is not summed in — it is rendered beside, or not shown. */
 export function ofCohort<T extends { cohort: UsageCohort }>(
   rows: readonly T[],
-  cohort: UsageCohort
+  cohort: UsageCohort,
 ): T[] {
   return rows.filter((r) => r.cohort === cohort)
 }
@@ -293,7 +298,7 @@ export function dimsOf(rows: readonly UsageRow[], metric: string): Map<string, n
 export function seriesOf(
   rows: readonly UsageRow[],
   metric: string,
-  days: readonly string[]
+  days: readonly string[],
 ): UsageDayPoint[] {
   const byDay = new Map<string, number>()
   for (const r of rows) {

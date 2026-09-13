@@ -33,7 +33,7 @@ import {
   type MapPaneRow,
   type MobPaneRow,
   type PaneCounts,
-  type PlacedPin
+  type PlacedPin,
 } from './mobPins'
 
 export interface MapPaneArgs {
@@ -66,7 +66,13 @@ export interface MapPaneState {
   select: (row: MapPaneRow) => void
 }
 
-export function useMapPane({ zoneName, points, catalog, mapId, onCenter }: MapPaneArgs): MapPaneState {
+export function useMapPane({
+  zoneName,
+  points,
+  catalog,
+  mapId,
+  onCenter,
+}: MapPaneArgs): MapPaneState {
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<{ id: string; x: number; y: number } | null>(null)
   // The box echoes every keystroke; only the filtering waits for the paint to settle.
@@ -74,7 +80,7 @@ export function useMapPane({ zoneName, points, catalog, mapId, onCenter }: MapPa
 
   const allMobs = useMemo<MobPaneRow[]>(
     () => (zoneName == null ? [] : mobRows(zoneName, catalog)),
-    [zoneName, catalog]
+    [zoneName, catalog],
   )
   const allLabels = useMemo<LabelPaneRow[]>(() => labelRows(points), [points])
   const mobs = useMemo(() => filterPaneRows(allMobs, q), [allMobs, q])
@@ -96,7 +102,7 @@ export function useMapPane({ zoneName, points, catalog, mapId, onCenter }: MapPa
       setSelected({ id: row.id, x: at.x, y: at.y })
       onCenter(at.x, at.y)
     },
-    [onCenter]
+    [onCenter],
   )
 
   return {
@@ -109,7 +115,7 @@ export function useMapPane({ zoneName, points, catalog, mapId, onCenter }: MapPa
     pinsCapped: drawn.capped,
     selectedId: selected?.id ?? null,
     selectedAt: selected ? { x: selected.x, y: selected.y } : null,
-    select
+    select,
   }
 }
 
@@ -154,8 +160,8 @@ export function useCorpusHits(args: { query: string; prefs: MapPackPrefs }): Map
         limit: CROSS_ZONE_LIMIT,
         prefs: {
           ...(geometry == null ? {} : { geometry }),
-          ...(labels == null ? {} : { labels })
-        }
+          ...(labels == null ? {} : { labels }),
+        },
       })
       .then((res) => {
         if (!cancelled) setHits(res)
@@ -243,7 +249,7 @@ export function useZonePane(args: {
       // an already-zoomed view keeps the scale the user chose.
       centerOn(x, y, zoomedIn ? undefined : view.scale * JUMP_ZOOM)
     },
-    [centerOn, zoomedIn, view.scale]
+    [centerOn, zoomedIn, view.scale],
   )
 
   const pane = useMapPane({
@@ -251,7 +257,7 @@ export function useZonePane(args: {
     points: data?.points ?? NO_POINTS,
     catalog: MOB_CATALOG,
     mapId: data?.zone ?? '',
-    onCenter
+    onCenter,
   })
   // The box echoes every keystroke; only what reaches the IPC and the catalog scan waits for the
   // paint to settle.
@@ -260,7 +266,7 @@ export function useZonePane(args: {
     query,
     hits: useCorpusHits({ query, prefs }),
     here: data?.zone ?? null,
-    zones
+    zones,
   })
   return { ...pane, open, setOpen, hits }
 }

@@ -228,7 +228,7 @@ export function sanitizeCapture(raw: unknown): string | null {
  * keeps the delta byte-identical for the overwhelming majority of alerts, which capture nothing.
  */
 export function harvestCaptures(
-  groups: Record<string, string | undefined> | undefined
+  groups: Record<string, string | undefined> | undefined,
 ): Record<string, string> | undefined {
   if (!groups) return undefined
   const out: Record<string, string> = {}
@@ -270,7 +270,10 @@ export function harvestCaptures(
  */
 export function applyCaptures(template: string, captures?: Record<string, string>): string {
   if (!captures || !template.includes('{')) return template
-  return template.replace(TOKEN_RE, (whole, name: string) => sanitizeCapture(captures[name]) ?? whole)
+  return template.replace(
+    TOKEN_RE,
+    (whole, name: string) => sanitizeCapture(captures[name]) ?? whole,
+  )
 }
 
 /** Every `{token}` a phrase writes, in order, de-duplicated. The editor lints against this. */

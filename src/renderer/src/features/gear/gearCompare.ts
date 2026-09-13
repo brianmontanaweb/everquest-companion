@@ -57,7 +57,12 @@
 
 import { GEAR_STAT_KEYS, type GearStatKey, type GearStats } from '../../../../shared/planner/gear'
 import type { PlannerInventoryHost } from '../../../../shared/planner/inventorySlots'
-import { cellsForSlot, planSlotLabel, type EquipSlot, type PlanSlotId } from '../../../../shared/planner/types'
+import {
+  cellsForSlot,
+  planSlotLabel,
+  type EquipSlot,
+  type PlanSlotId,
+} from '../../../../shared/planner/types'
 import { upgradeStateForTier, type ItemUpgradeState } from '../../../../shared/itemUpgrade'
 import { outputAgeLabel } from '../../lib/outputFreshness'
 import { statText } from './gearColumns'

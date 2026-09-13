@@ -131,7 +131,7 @@ export const WINE_SYSTEM_BINARIES: readonly string[] = [
   'wineboot.exe',
   'winecfg.exe',
   'winedbg.exe',
-  'winemenubuilder.exe'
+  'winemenubuilder.exe',
 ]
 
 /**
@@ -160,7 +160,7 @@ export const WINE_ENV_VARS: readonly string[] = [
   'WINEDLLDIR0',
   'WINEUSERNAME',
   'WINESYSTEMDLLPATH',
-  'WINE_HOST_PATH'
+  'WINE_HOST_PATH',
 ]
 
 /** Where Windows lives, per the environment, defaulted. Wine answers this too — the same
@@ -252,7 +252,10 @@ export const WINE_GRAPHICS_AUTO: GraphicsAuto = { safeMode: false, opaqueOverlay
  *
  * `--no-sandbox` was tried by the reporter and turned out NOT to be required; it is not here.
  */
-export const WINE_CHROMIUM_FLAGS: readonly string[] = ['disable-direct-composition', 'in-process-gpu']
+export const WINE_CHROMIUM_FLAGS: readonly string[] = [
+  'disable-direct-composition',
+  'in-process-gpu',
+]
 
 /**
  * The Chromium flags this machine needs, given the detection — empty on anything that is not a
@@ -281,13 +284,13 @@ export interface GraphicsEnvironment extends WineDetection {
 export const NO_GRAPHICS_ENVIRONMENT: GraphicsEnvironment = {
   wine: false,
   signals: [],
-  auto: { safeMode: false, opaqueOverlays: false }
+  auto: { safeMode: false, opaqueOverlays: false },
 }
 
 /** Fold a detection into the environment payload. */
 export function graphicsEnvironmentOf(detection: WineDetection): GraphicsEnvironment {
   return {
     ...detection,
-    auto: detection.wine ? WINE_GRAPHICS_AUTO : NO_GRAPHICS_ENVIRONMENT.auto
+    auto: detection.wine ? WINE_GRAPHICS_AUTO : NO_GRAPHICS_ENVIRONMENT.auto,
   }
 }

@@ -31,7 +31,7 @@ import {
   buildQuestIndex,
   deriveEra,
   eraEdges,
-  type EraDeriveCatalogs
+  type EraDeriveCatalogs,
 } from '../src/main/planner/eraDerive'
 import { itemKey, type ItemDbEntry, type ItemDbFile } from '../src/main/itemsDb'
 import type { PageEraFile } from '../src/main/pageEraDb'
@@ -48,17 +48,23 @@ function corpusOf(...entries: ItemDbEntry[]): Map<string, ItemDbEntry> {
 }
 
 function recipe(ingredients: ItemCraftIngredient[], yieldItem?: string): ItemDbEntry['craftedBy'] {
-  return [{ tradeskill: 'Blacksmithing', ingredients, ...(yieldItem === undefined ? {} : { yieldItem }) }]
+  return [
+    { tradeskill: 'Blacksmithing', ingredients, ...(yieldItem === undefined ? {} : { yieldItem }) },
+  ]
 }
 
 const QUESTS: QuestData = {
   scrapedAt: '2026-01-01T00:00:00.000Z',
   source: 'test',
   quests: [
-    { name: 'Scaled Mystic Breastplate', page: 'Scaled Mystic Armor Quests', startZone: 'East Cabilis' },
+    {
+      name: 'Scaled Mystic Breastplate',
+      page: 'Scaled Mystic Armor Quests',
+      startZone: 'East Cabilis',
+    },
     { name: 'A Classic Errand', page: 'A Classic Errand', startZone: 'Plane of Hate' },
-    { name: 'A Quest With No Zone', page: 'A Quest With No Zone' }
-  ]
+    { name: 'A Quest With No Zone', page: 'A Quest With No Zone' },
+  ],
 }
 
 const NO_MOBS: MobData = { scrapedAt: '2026-01-01T00:00:00.000Z', source: 'test', mobs: [] }
@@ -69,22 +75,34 @@ const MOBS: MobData = {
   scrapedAt: '2026-01-01T00:00:00.000Z',
   source: 'test',
   mobs: [
-    { page: 'a brute', name: 'a brute', zones: ['Warsliks Woods', 'Dreadlands'], drops: ['Brute Hide'] },
+    {
+      page: 'a brute',
+      name: 'a brute',
+      zones: ['Warsliks Woods', 'Dreadlands'],
+      drops: ['Brute Hide'],
+    },
     { page: 'a bat', name: 'a bat', zones: ['Plane of Hate'], drops: ['Common Hide'] },
-    { page: 'a tiger', name: 'a tiger', zones: ['Lake of Ill Omen'], drops: ['Common Hide'] }
-  ]
+    { page: 'a tiger', name: 'a tiger', zones: ['Lake of Ill Omen'], drops: ['Common Hide'] },
+  ],
 }
 
 /** An EMPTY sidecar: no page verdicts, no mob verdicts. The JOS-333 world, so the four original
  *  edges are tested exactly as they were and neither new edge can fire by accident. */
-const NO_PAGES: PageEraFile = { scrapedAt: '', source: 'test', count: 0, pages: {}, refs: {}, mobs: {} }
+const NO_PAGES: PageEraFile = {
+  scrapedAt: '',
+  source: 'test',
+  count: 0,
+  pages: {},
+  refs: {},
+  mobs: {},
+}
 
 function catalogs(mobs: MobData = MOBS, pageEra: PageEraFile = NO_PAGES): EraDeriveCatalogs {
   return {
     questByName: buildQuestIndex(QUESTS),
     catalogZones: buildCatalogZones(mobs),
     catalogDroppers: buildCatalogDroppers(mobs),
-    pageEra
+    pageEra,
   }
 }
 
@@ -99,13 +117,15 @@ test('a recipe component the wiki badges out of era marks the product out, bough
   // on. So the badge edge takes no notice of `sources` — which is the opposite of edge 4 below, and
   // the asymmetry is the whole design.
   const mold = item('Small Breastplate Mold', { eraTag: 'Epics' })
-  const product = item('Dwarven Plate Breastplate', { craftedBy: recipe([bought('Small Breastplate Mold')]) })
+  const product = item('Dwarven Plate Breastplate', {
+    craftedBy: recipe([bought('Small Breastplate Mold')]),
+  })
   const derived = deriveEra(product, corpusOf(mold, product), catalogs())
   assert.deepEqual(derived, {
     basis: 'component',
     verdict: 'out-of-era',
     target: 'Small Breastplate Mold',
-    detail: 'Epics'
+    detail: 'Epics',
   })
 })
 
@@ -113,7 +133,11 @@ test('an IN-era component states nothing, and an unknown component states nothin
   const inEra = item('Ordinary Mold', { eraTag: 'Classic' })
   const silent = item('Silent Mold')
   const product = item('A Breastplate', {
-    craftedBy: recipe([bought('Ordinary Mold'), bought('Silent Mold'), bought('A Mold Nobody Wrote Up')])
+    craftedBy: recipe([
+      bought('Ordinary Mold'),
+      bought('Silent Mold'),
+      bought('A Mold Nobody Wrote Up'),
+    ]),
   })
   assert.equal(deriveEra(product, corpusOf(inEra, silent, product), catalogs()), null)
 })
@@ -123,9 +147,13 @@ test('ONE out-of-era component is enough, even beside components that are fine',
   // definitive. The first cut of this ticket asked for every-path-must-be-out; this test is the
   // difference between the two rules.
   const product = item('A Breastplate', {
-    craftedBy: recipe([bought('Ordinary Mold'), bought('Small Breastplate Mold')])
+    craftedBy: recipe([bought('Ordinary Mold'), bought('Small Breastplate Mold')]),
   })
-  const corpus = corpusOf(item('Ordinary Mold', { eraTag: 'Classic' }), item('Small Breastplate Mold', { eraTag: 'Epics' }), product)
+  const corpus = corpusOf(
+    item('Ordinary Mold', { eraTag: 'Classic' }),
+    item('Small Breastplate Mold', { eraTag: 'Epics' }),
+    product,
+  )
   assert.equal(deriveEra(product, corpus, catalogs())?.basis, 'component')
 })
 
@@ -133,16 +161,21 @@ test('ONE out-of-era component is enough, even beside components that are fine',
 
 test('a recipe whose YIELD is a different, badged page counts; yielding ITSELF does not', () => {
   const other = item('Velium Thing', { eraTag: 'Velious' })
-  const product = item('A Combine', { craftedBy: recipe([bought('Ordinary Mold')], 'Velium Thing') })
+  const product = item('A Combine', {
+    craftedBy: recipe([bought('Ordinary Mold')], 'Velium Thing'),
+  })
   assert.deepEqual(deriveEra(product, corpusOf(other, product), catalogs()), {
     basis: 'yield',
     verdict: 'out-of-era',
     target: 'Velium Thing',
-    detail: 'Velious'
+    detail: 'Velious',
   })
 
   // The normal case: `|yieldItem` names the page it is on. That is not an edge to anywhere.
-  const selfYield = item('Velium Thing', { eraTag: 'Velious', craftedBy: recipe([bought('Ordinary Mold')], 'Velium Thing') })
+  const selfYield = item('Velium Thing', {
+    eraTag: 'Velious',
+    craftedBy: recipe([bought('Ordinary Mold')], 'Velium Thing'),
+  })
   assert.deepEqual(eraEdges(selfYield, corpusOf(selfYield), catalogs()), [])
 })
 
@@ -152,24 +185,32 @@ test('a related quest that starts in an unopened expansion marks the item out', 
   // Scaled Mystic Breastplate's own shape: the use names the ITEM as the quest and the ARMOUR-SET
   // page as the page, so the quest index has to answer to both spellings or this family is missed.
   const bp = item('Scaled Mystic Breastplate', {
-    questUses: [{ quest: 'Scaled Mystic Breastplate', page: 'Scaled Mystic Armor Quests', source: 'wiki' }]
+    questUses: [
+      { quest: 'Scaled Mystic Breastplate', page: 'Scaled Mystic Armor Quests', source: 'wiki' },
+    ],
   })
   assert.deepEqual(deriveEra(bp, corpusOf(bp), catalogs()), {
     basis: 'quest',
     verdict: 'out-of-era',
     target: 'Scaled Mystic Breastplate',
-    detail: 'East Cabilis'
+    detail: 'East Cabilis',
   })
 })
 
 test('a quest we cannot resolve, or that states no start zone, states NOTHING (law 1)', () => {
-  const unlisted = item('A Reward', { questUses: [{ quest: 'A Quest Nobody Scraped', source: 'wiki' }] })
+  const unlisted = item('A Reward', {
+    questUses: [{ quest: 'A Quest Nobody Scraped', source: 'wiki' }],
+  })
   assert.equal(deriveEra(unlisted, corpusOf(unlisted), catalogs()), null)
 
-  const zoneless = item('Another Reward', { questUses: [{ quest: 'A Quest With No Zone', source: 'wiki' }] })
+  const zoneless = item('Another Reward', {
+    questUses: [{ quest: 'A Quest With No Zone', source: 'wiki' }],
+  })
   assert.equal(deriveEra(zoneless, corpusOf(zoneless), catalogs()), null)
 
-  const classic = item('A Third Reward', { questUses: [{ quest: 'A Classic Errand', source: 'wiki' }] })
+  const classic = item('A Third Reward', {
+    questUses: [{ quest: 'A Classic Errand', source: 'wiki' }],
+  })
   assert.equal(deriveEra(classic, corpusOf(classic), catalogs()), null)
 })
 
@@ -177,7 +218,14 @@ test('every related quest counts, not only the ones the catalog calls a reward',
   // `role` is present ONLY on quest-catalog uses, so a rule that read it would silently drop the
   // whole `|relatedquests` family — the exact family the owner's screenshot shows badged.
   const turnIn = item('A Turn-in', {
-    questUses: [{ quest: 'Scaled Mystic Breastplate', page: 'Scaled Mystic Armor Quests', source: 'quests', role: 'required' }]
+    questUses: [
+      {
+        quest: 'Scaled Mystic Breastplate',
+        page: 'Scaled Mystic Armor Quests',
+        source: 'quests',
+        role: 'required',
+      },
+    ],
   })
   assert.equal(deriveEra(turnIn, corpusOf(turnIn), catalogs())?.basis, 'quest')
 })
@@ -191,7 +239,7 @@ test('a DROPPED-only component whose every zone is a later expansion marks the i
     basis: 'component-zone',
     verdict: 'out-of-era',
     target: 'Brute Hide',
-    detail: 'Warsliks Woods, Dreadlands'
+    detail: 'Warsliks Woods, Dreadlands',
   })
 })
 
@@ -235,21 +283,26 @@ const SIDECAR: PageEraFile = {
       title: 'Cultural Tradeskills: Human',
       outOfEra: true,
       eraTag: 'Epics',
-      by: 'eqlmetadata'
+      by: 'eqlmetadata',
     },
     // a set page the wiki files as classic content — a CLAIM, and the in-era direction
-    'large banded armor set': { title: 'Large Banded Armor Set', outOfEra: false, eraTag: 'Classic', by: 'eqlmetadata' },
+    'large banded armor set': {
+      title: 'Large Banded Armor Set',
+      outOfEra: false,
+      eraTag: 'Classic',
+      by: 'eqlmetadata',
+    },
     // asked, answered "not out", and states no era at all: SILENCE, not evidence
-    blacksmithing: { title: 'Blacksmithing', outOfEra: false, by: 'eqlmetadata' }
+    blacksmithing: { title: 'Blacksmithing', outOfEra: false, by: 'eqlmetadata' },
   },
   refs: {
     'silver full plate': ['Cultural Tradeskills: Human'],
     'banded belt': ['Large Banded Armor Set'],
     'plain hammer': ['Blacksmithing'],
     'unfetched thing': ['A Page Nobody Asked About'],
-    'both ways': ['Large Banded Armor Set', 'Cultural Tradeskills: Human']
+    'both ways': ['Large Banded Armor Set', 'Cultural Tradeskills: Human'],
   },
-  mobs: { 'agent of innoruuk': true, 'a froglok gaz squire': false }
+  mobs: { 'agent of innoruuk': true, 'a froglok gaz squire': false },
 }
 
 test('a |notes link target the wiki badges out marks the item out, naming the page', () => {
@@ -261,7 +314,7 @@ test('a |notes link target the wiki badges out marks the item out, naming the pa
     basis: 'page',
     verdict: 'out-of-era',
     target: 'Cultural Tradeskills: Human',
-    detail: 'Epics'
+    detail: 'Epics',
   })
 })
 
@@ -274,7 +327,7 @@ test('a link target the wiki files as IN-era is evidence FOR the item, and says 
     basis: 'page',
     verdict: 'in-era',
     target: 'Large Banded Armor Set',
-    detail: 'Classic'
+    detail: 'Classic',
   })
 })
 
@@ -304,14 +357,14 @@ test("LIFE'S GUARD: every dropper badged out beats the zone that names the revam
   // replaces a zone's CONTENTS without adding a zone, so the mob is the witness and the zone is not.
   const guard = item("Life's Guard", {
     eraTag: 'Classic',
-    dropsFrom: [{ mob: 'Agent of Innoruuk', zone: 'Plane of Hate' }]
+    dropsFrom: [{ mob: 'Agent of Innoruuk', zone: 'Plane of Hate' }],
   })
   assert.deepEqual(deriveEra(guard, corpusOf(guard), catalogs(NO_MOBS, SIDECAR)), {
     basis: 'drop-mob',
     verdict: 'out-of-era',
     definitive: true,
     target: 'Agent of Innoruuk',
-    detail: 'Agent of Innoruuk'
+    detail: 'Agent of Innoruuk',
   })
 
   // DEFINITIVE is what lets the build keep it on a row layers 1-2 already decided. Every other edge
@@ -320,9 +373,12 @@ test("LIFE'S GUARD: every dropper badged out beats the zone that names the revam
     scrapedAt: '2026-01-01T00:00:00.000Z',
     source: 'test',
     count: 1,
-    items: { [itemKey(guard.page)]: guard }
+    items: { [itemKey(guard.page)]: guard },
   }
-  assert.equal(buildEraDerivations(file, catalogs(NO_MOBS, SIDECAR)).get("life's guard")?.basis, 'drop-mob')
+  assert.equal(
+    buildEraDerivations(file, catalogs(NO_MOBS, SIDECAR)).get("life's guard")?.basis,
+    'drop-mob',
+  )
 })
 
 test('EVERY dropper, not any: one reachable dropper keeps the item farmable', () => {
@@ -330,12 +386,14 @@ test('EVERY dropper, not any: one reachable dropper keeps the item farmable', ()
   // that spawns in both Lower Guk and Kael Drakkel is still a Lower Guk camp. Measured over the
   // corpus, any-dropper would flip 518 in-era rows and every-dropper flips 33.
   const mixed = item('Mixed Drop', {
-    dropsFrom: [{ mob: 'Agent of Innoruuk' }, { mob: 'a froglok gaz squire' }]
+    dropsFrom: [{ mob: 'Agent of Innoruuk' }, { mob: 'a froglok gaz squire' }],
   })
   assert.equal(deriveEra(mixed, corpusOf(mixed), catalogs(NO_MOBS, SIDECAR)), null)
 
   // A dropper the fetch never asked about blocks it too — silence is not `false`.
-  const unasked = item('Unasked Drop', { dropsFrom: [{ mob: 'Agent of Innoruuk' }, { mob: 'a mob nobody fetched' }] })
+  const unasked = item('Unasked Drop', {
+    dropsFrom: [{ mob: 'Agent of Innoruuk' }, { mob: 'a mob nobody fetched' }],
+  })
   assert.equal(deriveEra(unasked, corpusOf(unasked), catalogs(NO_MOBS, SIDECAR)), null)
 
   // And an item nobody drops has no dropper edge at all, however badged the world is.
@@ -350,7 +408,14 @@ test('the CATALOG counts as a dropper witness beside the page (both, or neither 
   const catalog: MobData = {
     scrapedAt: '2026-01-01T00:00:00.000Z',
     source: 'test',
-    mobs: [{ page: 'a froglok gaz squire', name: 'a froglok gaz squire', zones: ['Lower Guk'], drops: ['Contested Loot'] }]
+    mobs: [
+      {
+        page: 'a froglok gaz squire',
+        name: 'a froglok gaz squire',
+        zones: ['Lower Guk'],
+        drops: ['Contested Loot'],
+      },
+    ],
   }
   const loot = item('Contested Loot', { dropsFrom: [{ mob: 'Agent of Innoruuk' }] })
   assert.equal(deriveEra(loot, corpusOf(loot), catalogs(catalog, SIDECAR)), null)
@@ -361,10 +426,18 @@ test('the CATALOG counts as a dropper witness beside the page (both, or neither 
 test('the strongest edge is reported, and it is the wiki badge over our zone reading', () => {
   const product = item('A Mixed Thing', {
     craftedBy: recipe([dropped('Brute Hide'), bought('Small Breastplate Mold')]),
-    questUses: [{ quest: 'Scaled Mystic Breastplate', page: 'Scaled Mystic Armor Quests', source: 'wiki' }]
+    questUses: [
+      { quest: 'Scaled Mystic Breastplate', page: 'Scaled Mystic Armor Quests', source: 'wiki' },
+    ],
   })
-  const corpus = corpusOf(item('Brute Hide'), item('Small Breastplate Mold', { eraTag: 'Epics' }), product)
-  const edges = eraEdges(product, corpus, catalogs()).map((e) => e.basis).sort()
+  const corpus = corpusOf(
+    item('Brute Hide'),
+    item('Small Breastplate Mold', { eraTag: 'Epics' }),
+    product,
+  )
+  const edges = eraEdges(product, corpus, catalogs())
+    .map((e) => e.basis)
+    .sort()
   assert.deepEqual(edges, ['component', 'component-zone', 'quest'])
   assert.equal(deriveEra(product, corpus, catalogs())?.basis, 'component')
 })
@@ -374,8 +447,13 @@ test('the strongest edge is reported, and it is the wiki badge over our zone rea
 test('`recipes` (what this item is FOR) is never walked, and neither is a second hop', () => {
   // A bone chip usable in a Velious combine is still a bone chip. Walking `|recipes` would invert
   // the question the derivation is asking.
-  const usedIn = item('Bone Chip', { recipes: [{ recipe: 'Velium Thing', tradeskill: 'Blacksmithing' }] })
-  assert.deepEqual(eraEdges(usedIn, corpusOf(usedIn, item('Velium Thing', { eraTag: 'Velious' })), catalogs()), [])
+  const usedIn = item('Bone Chip', {
+    recipes: [{ recipe: 'Velium Thing', tradeskill: 'Blacksmithing' }],
+  })
+  assert.deepEqual(
+    eraEdges(usedIn, corpusOf(usedIn, item('Velium Thing', { eraTag: 'Velious' })), catalogs()),
+    [],
+  )
 
   // ONE HOP. `Middle` is crafted from a badged mold, so `Middle` itself derives out — but `Outer`,
   // which is crafted from `Middle`, does not inherit that. `Middle` states no era of its OWN, and a
@@ -401,13 +479,16 @@ test('the build skips any page whose OWN page or drop zones already answered', (
       // states no era, nothing places it: layer 3's business
       silent: item('Silent Plate', { craftedBy: recipe([bought('Small Breastplate Mold')]) }),
       // its own page states an era: layers 1-2 already spoke, layer 3 stays out of it
-      tagged: item('Tagged Plate', { eraTag: 'Classic', craftedBy: recipe([bought('Small Breastplate Mold')]) }),
+      tagged: item('Tagged Plate', {
+        eraTag: 'Classic',
+        craftedBy: recipe([bought('Small Breastplate Mold')]),
+      }),
       // a drop zone places it: same
       placed: item('Placed Plate', {
         dropsFrom: [{ mob: 'a bat', zone: 'Plane of Hate' }],
-        craftedBy: recipe([bought('Small Breastplate Mold')])
-      })
-    }
+        craftedBy: recipe([bought('Small Breastplate Mold')]),
+      }),
+    },
   }
   const built = buildEraDerivations(file, catalogs())
   assert.deepEqual([...built.keys()], ['silent plate'])
@@ -416,7 +497,10 @@ test('the build skips any page whose OWN page or drop zones already answered', (
 
 test('the build walks PAGES, so an |itemname alias key cannot produce a second answer', () => {
   const mold = item('Small Breastplate Mold', { eraTag: 'Epics' })
-  const plate = item('Silent Plate', { name: 'Silent Plate (in game)', craftedBy: recipe([bought('Small Breastplate Mold')]) })
+  const plate = item('Silent Plate', {
+    name: 'Silent Plate (in game)',
+    craftedBy: recipe([bought('Small Breastplate Mold')]),
+  })
   const file: ItemDbFile = {
     scrapedAt: '2026-01-01T00:00:00.000Z',
     source: 'test',
@@ -425,8 +509,8 @@ test('the build walks PAGES, so an |itemname alias key cannot produce a second a
       [itemKey(mold.page)]: mold,
       'silent plate': plate,
       // the alias key: the SAME record, filed under the in-game name
-      'silent plate (in game)': plate
-    }
+      'silent plate (in game)': plate,
+    },
   }
   const built = buildEraDerivations(file, catalogs())
   assert.deepEqual([...built.keys()], ['silent plate'], 'the alias key produced its own entry')

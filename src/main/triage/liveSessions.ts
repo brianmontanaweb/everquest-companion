@@ -105,7 +105,7 @@ export function denseBuckets(
   points: readonly { at: number; sum: number }[],
   endMs: number,
   lookbackMs = LOOKBACK_MS,
-  bucketMs = BUCKET_MS
+  bucketMs = BUCKET_MS,
 ): number[] {
   const count = Math.max(1, Math.floor(lookbackMs / bucketMs))
   const first = endMs - count * bucketMs
@@ -142,7 +142,7 @@ export function denseBuckets(
 export function deriveLiveSessions(
   buckets: readonly number[],
   asOfMs: number,
-  bucketMs = BUCKET_MS
+  bucketMs = BUCKET_MS,
 ): TriageLiveSessions {
   const lookbackMs = buckets.length * bucketMs
   const activeNow = buckets.length > 0 ? Math.max(0, Math.round(buckets[buckets.length - 1])) : 0
@@ -171,7 +171,7 @@ export function deriveLiveSessions(
     // rather than finished, so the mean is a floor: these sessions may have started before
     // anything this read can see.
     ageIsFloor: buckets.length > 1 && reach > 0,
-    lookbackMs
+    lookbackMs,
   }
 }
 
@@ -201,14 +201,15 @@ export function lastCompleteBucketEnd(nowMs: number, bucketMs = BUCKET_MS): numb
 
 /** The one call. Never throws: every outcome is an `available` union member. */
 export async function fetchLiveSessions(
-  options: LiveSessionsOptions = {}
+  options: LiveSessionsOptions = {},
 ): Promise<TriageLiveSessions> {
   const nowMs = options.nowMs ?? Date.now()
   const region = options.region ?? cachedRegion()
   if (region === null || region === undefined) {
     return {
       available: false,
-      reason: 'no cached terraform outputs - run any triage command once to write .triage/stack.json'
+      reason:
+        'no cached terraform outputs - run any triage command once to write .triage/stack.json',
     }
   }
   const endMs = lastCompleteBucketEnd(nowMs)
@@ -216,7 +217,7 @@ export async function fetchLiveSessions(
     region,
     maxAttempts: 2,
     requestHandler: { requestTimeout: TIMEOUT_MS },
-    ...(options.profile ? { credentials: fromIni({ profile: options.profile }) } : {})
+    ...(options.profile ? { credentials: fromIni({ profile: options.profile }) } : {}),
   })
   try {
     const res = await client.send(
@@ -227,12 +228,12 @@ export async function fetchLiveSessions(
         StartTime: new Date(endMs - LOOKBACK_MS),
         EndTime: new Date(endMs),
         Period: BUCKET_MS / 1000,
-        Statistics: ['Sum']
-      })
+        Statistics: ['Sum'],
+      }),
     )
     const points = (res.Datapoints ?? []).map((d) => ({
       at: d.Timestamp?.getTime() ?? 0,
-      sum: d.Sum ?? 0
+      sum: d.Sum ?? 0,
     }))
     return deriveLiveSessions(denseBuckets(points, endMs), endMs)
   } catch (err) {

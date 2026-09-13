@@ -34,7 +34,7 @@ import {
   INSTRUMENT_FAMILIES,
   ITEMS_RESEARCH,
   isUnfarmable,
-  type InstrumentFamily
+  type InstrumentFamily,
 } from '../src/main/itemsResearch'
 import { buildPlannerIndex } from '../src/main/planner/effectIndex'
 import type { EquipSlot } from '../src/shared/planner/types'
@@ -58,7 +58,7 @@ const GM_PROSE = [
   /(^|\s)GM Event Item\.($|\s)/i,
   /Obtained during a GM event\./i,
   /Given out in a GM event\./i,
-  /(^|\s)GM Event item for /i
+  /(^|\s)GM Event item for /i,
 ]
 
 /**
@@ -69,7 +69,7 @@ const GM_PROSE = [
 const GM_ONLY_PROSE = [
   /This item is a GM item\./i,
   /GM item occasionally handed out\./i,
-  /(^|\s)GM Only item\./i
+  /(^|\s)GM Only item\./i,
 ]
 
 /**
@@ -78,8 +78,9 @@ const GM_ONLY_PROSE = [
  * every entry that was refused over PHRASING; what is left is refused over facts.
  */
 const AMBIGUOUS: Record<string, string> = {
-  "dabner's staff of recall": 'carries |gmitem AND a real |dropsfrom mob — a hand-out beside a live drop is not unfarmable, so it stays a donor',
-  'shield of hatred': 'hedged: "Possibly a GM Event item?" — the layer files no guesses'
+  "dabner's staff of recall":
+    'carries |gmitem AND a real |dropsfrom mob — a hand-out beside a live drop is not unfarmable, so it stays a donor',
+  'shield of hatred': 'hedged: "Possibly a GM Event item?" — the layer files no guesses',
 }
 
 /**
@@ -124,7 +125,7 @@ const filedWith = (pick: (r: (typeof ITEMS_RESEARCH)[string]) => boolean): Set<s
   new Set(
     Object.entries(ITEMS_RESEARCH)
       .filter(([, r]) => pick(r))
-      .map(([k]) => k)
+      .map(([k]) => k),
   )
 
 // ---- the slot-repair half (JOS-67) ----------------------------------------------------
@@ -159,7 +160,7 @@ const SLOT_WORD: Record<string, EquipSlot> = {
   fingers: 'FINGER',
   waist: 'WAIST',
   legs: 'LEGS',
-  feet: 'FEET'
+  feet: 'FEET',
 }
 
 /**
@@ -192,7 +193,7 @@ const FAMILY_OF: [RegExp, InstrumentFamily][] = [
   [/^(string|stringed)\b/i, 'string'],
   [/^brass\b/i, 'brass'],
   [/^percussion\b/i, 'percussion'],
-  [/^all instrument types$/i, 'all']
+  [/^all instrument types$/i, 'all'],
 ]
 const INSTRUMENT_LINE = /resonance|instruments?\b|instrument types/i
 
@@ -212,7 +213,11 @@ function derivedInstruments(): Map<string, InstrumentFamily> {
     const lines = instrumentLines(e)
     if (lines.length === 0) continue
     const fams = new Set(lines.map((l) => FAMILY_OF.find(([re]) => re.test(l.trim()))?.[1]))
-    assert.equal(fams.size, 1, `${keyOf(e)} states more than one instrument family: ${lines.join(' | ')}`)
+    assert.equal(
+      fams.size,
+      1,
+      `${keyOf(e)} states more than one instrument family: ${lines.join(' | ')}`,
+    )
     const fam = [...fams][0]
     assert.ok(fam !== undefined, `${keyOf(e)}: unreadable instrument line ${lines.join(' | ')}`)
     out.set(keyOf(e), fam)
@@ -227,7 +232,10 @@ test('every curated entry names a real item and states its provenance', () => {
   assert.ok(all.length > 0, 'the curated layer is empty')
   for (const [key, entry] of all) {
     assert.ok(pages.has(key), `${key}: the layer keys an item the corpus has no page for`)
-    assert.ok(entry.source.trim().length > 0, `${key}: a curated entry with no source reads as scraped fact`)
+    assert.ok(
+      entry.source.trim().length > 0,
+      `${key}: a curated entry with no source reads as scraped fact`,
+    )
     assert.match(entry.checkedAt, /^\d{4}-\d{2}-\d{2}$/, `${key}: no checkedAt date`)
   }
 })
@@ -264,15 +272,27 @@ test('the GM-only table is exactly the three the ruling admitted, and each is un
   // a rescrape that rewrites one of these three pages turns this red instead of leaving a curated
   // answer winning a merge it can no longer support.
   assert.deepEqual([...flagged].sort(), [...derived].sort())
-  assert.deepEqual([...flagged].sort(), [...RULED_UNFARMABLE].sort(), 'the JOS-64 ruling is no longer what the data says')
+  assert.deepEqual(
+    [...flagged].sort(),
+    [...RULED_UNFARMABLE].sort(),
+    'the JOS-64 ruling is no longer what the data says',
+  )
 
   for (const key of flagged) {
     const page = pages.get(key)
     assert.ok(page, key)
     assert.equal(farmable(page), false, `${key}: flagged GM-only but the page names a farm route`)
     // The ruling is about DONATION, so a filed entry that no consumer would act on is a dead one.
-    assert.equal(isUnfarmable(ITEMS_RESEARCH[key]), true, `${key}: filed but not read as unfarmable`)
-    assert.equal(ITEMS_RESEARCH[key]?.gmEvent, undefined, `${key}: claims a GM EVENT its page never states`)
+    assert.equal(
+      isUnfarmable(ITEMS_RESEARCH[key]),
+      true,
+      `${key}: filed but not read as unfarmable`,
+    )
+    assert.equal(
+      ITEMS_RESEARCH[key]?.gmEvent,
+      undefined,
+      `${key}: claims a GM EVENT its page never states`,
+    )
   }
 
   // The exclusion has to BITE for at least some of them — Da Oogly Stick and Stone of Gnoming both
@@ -288,10 +308,17 @@ test('one verdict reads BOTH provenances, and the two tables never overlap', () 
   const gmEvent = filedWith((r) => r.gmEvent === true)
   const gmOnly = filedWith((r) => r.gmOnly === true)
   assert.deepEqual([...unfarmable].sort(), [...new Set([...gmEvent, ...gmOnly])].sort())
-  assert.equal(gmEvent.size + gmOnly.size, unfarmable.size, 'a page states one GM provenance, not two')
+  assert.equal(
+    gmEvent.size + gmOnly.size,
+    unfarmable.size,
+    'a page states one GM provenance, not two',
+  )
   for (const [key, entry] of Object.entries(ITEMS_RESEARCH)) {
     if (!isUnfarmable(entry)) continue
-    assert.ok(entry.note !== undefined && entry.note.length > 0, `${key}: an unfarmable claim with no note`)
+    assert.ok(
+      entry.note !== undefined && entry.note.length > 0,
+      `${key}: an unfarmable claim with no note`,
+    )
   }
 })
 
@@ -299,23 +326,44 @@ test('the two remaining GM pages stay OUT, and each is named with its reason', (
   for (const [key, why] of Object.entries(AMBIGUOUS)) {
     assert.ok(pages.has(key), `${key}: the reject list names a page the corpus does not have`)
     assert.ok(why.length > 0)
-    assert.equal(isUnfarmable(ITEMS_RESEARCH[key]), false, `${key} was admitted without review: ${why}`)
+    assert.equal(
+      isUnfarmable(ITEMS_RESEARCH[key]),
+      false,
+      `${key} was admitted without review: ${why}`,
+    )
   }
   // Shield of Hatred is pinned by its PROSE, not just by its absence: it is the one page whose
   // wording sits between the two lists, so neither derivation may ever pick it up.
   const hatred = pages.get('shield of hatred')
   assert.ok(hatred)
   const hatredProse = hatred.summary ?? ''
-  assert.ok(/GM Event item\?/i.test(hatredProse), 'the hedge this refusal rests on is gone from the corpus')
-  assert.ok(!GM_PROSE.some((re) => re.test(hatredProse)), 'a hedged page matched the GM-event prose list')
-  assert.ok(!GM_ONLY_PROSE.some((re) => re.test(hatredProse)), 'a hedged page matched the GM-only prose list')
-  assert.equal(ITEMS_RESEARCH['shield of hatred'], undefined, 'Shield of Hatred is filed at all — the layer files no guesses')
+  assert.ok(
+    /GM Event item\?/i.test(hatredProse),
+    'the hedge this refusal rests on is gone from the corpus',
+  )
+  assert.ok(
+    !GM_PROSE.some((re) => re.test(hatredProse)),
+    'a hedged page matched the GM-event prose list',
+  )
+  assert.ok(
+    !GM_ONLY_PROSE.some((re) => re.test(hatredProse)),
+    'a hedged page matched the GM-only prose list',
+  )
+  assert.equal(
+    ITEMS_RESEARCH['shield of hatred'],
+    undefined,
+    'Shield of Hatred is filed at all — the layer files no guesses',
+  )
 
   // Dabner's is the one that would have cost a real donor, so it is pinned by its own facts
   // rather than by its absence alone.
   const dabner = pages.get("dabner's staff of recall")
   assert.ok(dabner)
-  assert.equal(farmable(dabner), true, "Dabner's Staff of Recall lost the drop source that keeps it farmable")
+  assert.equal(
+    farmable(dabner),
+    true,
+    "Dabner's Staff of Recall lost the drop source that keeps it farmable",
+  )
 })
 
 test('the instrument table is exactly what the committed corpus states, both ways', () => {
@@ -328,14 +376,22 @@ test('the instrument table is exactly what the committed corpus states, both way
   for (const fam of derived.values()) tally[fam] = (tally[fam] ?? 0) + 1
   console.log('instrument layer', { filed: filed.size, derived: derived.size, ...tally })
 
-  assert.deepEqual([...filed.keys()].sort(), [...derived.keys()].sort(), 'the filed table and the corpus disagree about WHICH items are instruments')
-  for (const [key, fam] of derived) assert.equal(filed.get(key), fam, `${key}: filed family disagrees with the page`)
+  assert.deepEqual(
+    [...filed.keys()].sort(),
+    [...derived.keys()].sort(),
+    'the filed table and the corpus disagree about WHICH items are instruments',
+  )
+  for (const [key, fam] of derived)
+    assert.equal(filed.get(key), fam, `${key}: filed family disagrees with the page`)
   assert.ok(filed.size >= 47, `only ${filed.size} instrument entries`)
 
   // Every value is one of the five families, and every family the game has is represented —
   // a mapping bug that folded everything into one bucket would still pass a size floor.
   for (const [key, fam] of filed) {
-    assert.ok((INSTRUMENT_FAMILIES as readonly string[]).includes(fam), `${key}: ${fam} is not a family`)
+    assert.ok(
+      (INSTRUMENT_FAMILIES as readonly string[]).includes(fam),
+      `${key}: ${fam} is not a family`,
+    )
   }
   assert.deepEqual([...new Set(filed.values())].sort(), [...INSTRUMENT_FAMILIES].sort())
 })
@@ -379,7 +435,10 @@ test('the curated slots reach the planner index — the wand can be socketed aga
   const shield = index.items.find((i) => i.key === 'shield of rainbow hues')
   assert.ok(shield, 'Shield of Rainbow Hues is missing from the item index')
   assert.deepEqual(shield.slots, ['SECONDARY'])
-  assert.ok(shield.classes.some((c) => wand[0].classes.includes(c)), 'no class overlap')
+  assert.ok(
+    shield.classes.some((c) => wand[0].classes.includes(c)),
+    'no class overlap',
+  )
 
   // The wristwraps are the same repair on a donor with a REQUIRED LEVEL and one class — filed at
   // the same time so the table is not a one-item special case.
@@ -394,7 +453,11 @@ test('an instrument entry never excludes a donor', () => {
   // list — and a bard's horn is exactly the kind of page a widened GM sweep could swallow.
   for (const [key, entry] of Object.entries(ITEMS_RESEARCH)) {
     if (entry.instrument === undefined) continue
-    assert.equal(isUnfarmable(entry), false, `${key}: an instrument entry also claims a GM provenance`)
+    assert.equal(
+      isUnfarmable(entry),
+      false,
+      `${key}: an instrument entry also claims a GM provenance`,
+    )
     assert.equal(entry.summoned, undefined, `${key}: an instrument entry also claims summoned`)
   }
 })

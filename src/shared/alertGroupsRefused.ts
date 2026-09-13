@@ -35,7 +35,7 @@ export const REFUSED_ALERT_GROUPS: AlertGroup[] = [
       'There is no failure line at all - no "ruse", no "fooled", no "not successful". A failed ' +
       'feign is invisible in the log (world-model law 6: say what the log cannot say), so any ' +
       'regex here would be a guess that never fires.',
-    defs: []
+    defs: [],
   },
   {
     id: 'petDeath',
@@ -49,7 +49,7 @@ export const REFUSED_ALERT_GROUPS: AlertGroup[] = [
       "to OTHER owners' pets, never to yours. Only the world model knows which name is your " +
       'pet (bound by the owner-only "…Master." tell), and an AlertDef cannot express that ' +
       'binding - it matches text, not entities. Needs a derived event before it can ship.',
-    defs: []
+    defs: [],
   },
   {
     // JOS-69. Half of a bundle the owner accepted on condition that it ship ONLY if a real log
@@ -62,7 +62,7 @@ export const REFUSED_ALERT_GROUPS: AlertGroup[] = [
       'Full-log sweep (eqlog_Primitive_freeport.txt, 1,406,311 lines, 2026-08-06) for every ' +
       'shape an arrival could take - "online", "has come online", "logged in/on/out", "has ' +
       'entered the game", "friend": the friend system prints exactly TWO things and neither is ' +
-      'an event. `Friends currently on EverQuest Legends:` (43×) is the /friends command\'s own ' +
+      "an event. `Friends currently on EverQuest Legends:` (43×) is the /friends command's own " +
       'output - a header, a dashed rule and a /who-style roster row per friend, printed only ' +
       'when you ask, describing the moment you asked. `<name> is now your friend.` (3×) is the ' +
       'confirmation of /friend add. There is no line for a friend logging IN, none for logging ' +
@@ -70,6 +70,6 @@ export const REFUSED_ALERT_GROUPS: AlertGroup[] = [
       'the only way to know a friend arrived is to poll /friends and diff the rosters, which is ' +
       'a thing the app would be doing, not a thing the log says - and an alert cannot fire on ' +
       'the absence of a line (the feign-death rule above). Ships when a real arrival line does.',
-    defs: []
-  }
+    defs: [],
+  },
 ]

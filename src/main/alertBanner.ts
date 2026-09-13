@@ -27,7 +27,7 @@ import { getOverlayWindow } from './windows'
 import {
   DEFAULT_ALERT_BANNER_CONFIG,
   validateAlertBannerPayload,
-  type AlertBannerPayload
+  type AlertBannerPayload,
 } from '../shared/alertBanner'
 
 /**

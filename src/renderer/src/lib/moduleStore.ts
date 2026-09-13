@@ -178,7 +178,7 @@ function entryFor(entries: Map<string, Entry>, id: string): Entry {
     hydrated: false,
     fetching: false,
     stale: false,
-    subs: new Set()
+    subs: new Set(),
   }
   entries.set(id, fresh)
   return fresh
@@ -354,6 +354,6 @@ export function createModuleStore(deps: {
     },
     getSnapshot(moduleId) {
       return entries.get(moduleId)?.snapshot ?? null
-    }
+    },
   }
 }

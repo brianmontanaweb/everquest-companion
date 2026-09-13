@@ -35,7 +35,7 @@ import {
   MAX_SLICE_LINES,
   MAX_UPLOAD_BYTES,
   PREVIEW_MAX_LINES,
-  type LogSliceMeta
+  type LogSliceMeta,
 } from '../../shared/feedback'
 import { scrubLines } from '../../shared/logScrub'
 // REUSE, never a second timestamp parser. The log's `[Sat Aug 01 13:00:28 2026]` prefix is
@@ -97,7 +97,7 @@ export function lineTs(line: string): number {
  */
 async function readTail(
   path: string,
-  cap: number
+  cap: number,
 ): Promise<{ text: string; truncated: boolean } | null> {
   // 'r' — READ-ONLY. See the module header. This is the only fs call this module makes.
   const fh = await open(path, 'r')
@@ -184,7 +184,7 @@ function gzipOf(lines: readonly string[]): { text: string; gz: Buffer } {
 function assemble(
   lines: readonly TsLine[],
   window: { fromMs: number; toMs: number },
-  selfName: string | undefined
+  selfName: string | undefined,
 ): { kept: string[]; dropped: number } {
   const { kept, dropped } = scrubLines(windowLines(lines, window.fromMs, window.toMs), { selfName })
   return { kept: kept.length > MAX_SLICE_LINES ? kept.slice(-MAX_SLICE_LINES) : kept, dropped }
@@ -217,16 +217,17 @@ export function previewOf(lines: readonly string[]): {
   previewLines: string[]
   truncatedPreview: boolean
 } {
-  if (lines.length <= PREVIEW_MAX_LINES) return { previewLines: lines.slice(), truncatedPreview: false }
+  if (lines.length <= PREVIEW_MAX_LINES)
+    return { previewLines: lines.slice(), truncatedPreview: false }
   const tail = PREVIEW_MAX_LINES - PREVIEW_HEAD_LINES
   const omitted = lines.length - PREVIEW_MAX_LINES
   return {
     previewLines: [
       ...lines.slice(0, PREVIEW_HEAD_LINES),
       `… ${omitted.toLocaleString()} lines omitted from this preview - use “Save a copy…” to read all ${lines.length.toLocaleString()} …`,
-      ...lines.slice(-tail)
+      ...lines.slice(-tail),
     ],
-    truncatedPreview: true
+    truncatedPreview: true,
   }
 }
 
@@ -281,7 +282,7 @@ export async function buildSlice(req: SliceRequest): Promise<FeedbackSlice | nul
     gz: out.gz,
     text: out.text,
     windowMinutes: windowMs / 60_000,
-    ...previewOf(kept)
+    ...previewOf(kept),
   }
 }
 

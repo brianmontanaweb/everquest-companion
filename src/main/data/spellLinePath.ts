@@ -99,7 +99,10 @@ function rungLevel(c: Candidate): number {
  *
  * Returns null when no class files the name at all, which is most of the catalog.
  */
-function chooseLadder(name: string, combo: readonly ClassAbbr[]): { pick: Candidate; mine: boolean } | null {
+function chooseLadder(
+  name: string,
+  combo: readonly ClassAbbr[],
+): { pick: Candidate; mine: boolean } | null {
   const all = candidates(name)
   if (all.length === 0) return null
   const mine = all.filter((c) => combo.includes(c.cls))
@@ -150,7 +153,7 @@ function sameName(a: string, b: string): boolean {
 export function buildSpellLinePath(
   db: SpellDb,
   name: string,
-  combo: readonly ClassAbbr[]
+  combo: readonly ClassAbbr[],
 ): SpellLinePath | null {
   const chosen = chooseLadder(name, combo)
   if (!chosen) return null
@@ -160,7 +163,7 @@ export function buildSpellLinePath(
     name: m.name,
     level: m.level,
     queried: sameName(m.name, name),
-    yoursAt: comboLevelFor(db, m.name, combo)
+    yoursAt: comboLevelFor(db, m.name, combo),
   }))
   return {
     line: line.name,
@@ -169,6 +172,6 @@ export function buildSpellLinePath(
     ladder: line.ladder,
     steps,
     prior: place.replaces,
-    next: place.replacedBy
+    next: place.replacedBy,
   }
 }

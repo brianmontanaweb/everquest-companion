@@ -47,7 +47,7 @@ const BUTTON: React.CSSProperties = {
   border: '1px solid rgba(255, 255, 255, 0.18)',
   background: '#171a21',
   color: '#e6e8ee',
-  cursor: 'pointer'
+  cursor: 'pointer',
 }
 
 /** The one button that ends the card without ending anything else, so it carries the app's accent
@@ -55,7 +55,7 @@ const BUTTON: React.CSSProperties = {
 const PRIMARY: React.CSSProperties = {
   ...BUTTON,
   borderColor: 'rgba(217, 178, 95, 0.55)',
-  color: '#d9b25f'
+  color: '#d9b25f',
 }
 
 function TrayNotice(): React.JSX.Element {
@@ -72,7 +72,7 @@ function TrayNotice(): React.JSX.Element {
         flexDirection: 'column',
         gap: 10,
         border: '1px solid rgba(255, 255, 255, 0.12)',
-        borderRadius: 8
+        borderRadius: 8,
       }}
     >
       <div style={{ fontSize: 14, fontWeight: 700 }}>Still running in the tray</div>
@@ -81,7 +81,12 @@ function TrayNotice(): React.JSX.Element {
         the tray icon to bring the window back.
       </div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-        <button type="button" style={BUTTON} data-testid="tray-notice-quit" onClick={() => tray?.quitNow()}>
+        <button
+          type="button"
+          style={BUTTON}
+          data-testid="tray-notice-quit"
+          onClick={() => tray?.quitNow()}
+        >
           Quit now
         </button>
         <button
@@ -92,7 +97,12 @@ function TrayNotice(): React.JSX.Element {
         >
           Always quit instead
         </button>
-        <button type="button" style={PRIMARY} data-testid="tray-notice-ack" onClick={() => tray?.acknowledge()}>
+        <button
+          type="button"
+          style={PRIMARY}
+          data-testid="tray-notice-ack"
+          onClick={() => tray?.acknowledge()}
+        >
           Got it
         </button>
       </div>
@@ -107,5 +117,5 @@ if (!root) throw new Error('tray.html is missing #tray-root')
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <TrayNotice />
-  </React.StrictMode>
+  </React.StrictMode>,
 )

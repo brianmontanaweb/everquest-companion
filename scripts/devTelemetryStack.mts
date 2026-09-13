@@ -25,10 +25,7 @@
  * deployed stack — the app cannot even send yet (`TELEMETRY_API_URL` is '').
  */
 
-import {
-  MAX_TELEMETRY_BODY_BYTES,
-  type TelemetryBatch
-} from '../src/shared/telemetry'
+import { MAX_TELEMETRY_BODY_BYTES, type TelemetryBatch } from '../src/shared/telemetry'
 import { validateTelemetryBatch } from '../src/shared/telemetryValidate'
 import { hasNulByte } from '../src/shared/sanitizeText'
 import {
@@ -37,12 +34,12 @@ import {
   rollupBatch,
   utcDay,
   type ErrorReportRow,
-  type UsageCohort
+  type UsageCohort,
 } from '../src/shared/telemetryRollup'
 import {
   perfDimsFromEvents,
   perfDimsOf,
-  type PerfInstallDims
+  type PerfInstallDims,
 } from '../src/shared/telemetryPerfCube'
 
 /** One in-memory `analytics_install` row. Exactly the columns the real table has. */
@@ -100,7 +97,7 @@ export function emptyTelemetryState(maxEventsPerDay = 20_000): TelemetryState {
     funnels: new Map(),
     installs: new Map(),
     errors: new Map(),
-    perf: new Map()
+    perf: new Map(),
   }
 }
 
@@ -111,10 +108,15 @@ export interface TelemetryRes {
   note?: string
 }
 
-const fail = (status: number, error: string, message: string, extra: Record<string, unknown> = {}): TelemetryRes => ({
+const fail = (
+  status: number,
+  error: string,
+  message: string,
+  extra: Record<string, unknown> = {},
+): TelemetryRes => ({
   status,
   json: { ok: false, error, message, ...extra },
-  note: error
+  note: error,
 })
 
 /** What the install UPSERT reports back, cohort included — the twin of the Lambda's own. */
@@ -136,7 +138,7 @@ function firstEverBatch(
   state: TelemetryState,
   batch: TelemetryBatch,
   day: string,
-  stated: PerfInstallDims | null
+  stated: PerfInstallDims | null,
 ): InstallFacts {
   const cohort = cohortForChannel(batch.env.channel)
   state.installs.set(batch.env.analyticsId, {
@@ -148,14 +150,16 @@ function firstEverBatch(
     cohort,
     quotaDay: day,
     quotaN: batch.events.length,
-    ...(stated === null ? {} : { machineClass: stated.machineClass, windowMode: stated.windowMode })
+    ...(stated === null
+      ? {}
+      : { machineClass: stated.machineClass, windowMode: stated.windowMode }),
   })
   return {
     firstOfDay: true,
     newInstall: true,
     upgraded: false,
     cohort,
-    perf: perfDimsOf(stated?.machineClass, stated?.windowMode)
+    perf: perfDimsOf(stated?.machineClass, stated?.windowMode),
   }
 }
 
@@ -167,7 +171,11 @@ function firstEverBatch(
  * and otherwise whatever is already on the row wins, which is what makes a hand-placed
  * `owner-add` mark survive every later batch.
  */
-function touchInstall(state: TelemetryState, batch: TelemetryBatch, day: string): InstallFacts | null {
+function touchInstall(
+  state: TelemetryState,
+  batch: TelemetryBatch,
+  day: string,
+): InstallFacts | null {
   const events = batch.events.length
   const byChannel = cohortForChannel(batch.env.channel)
   // NULL when this batch carried no `setupSnapshot` — the two fallbacks below are the local twin
@@ -198,7 +206,7 @@ function touchInstall(state: TelemetryState, batch: TelemetryBatch, day: string)
     newInstall: false,
     upgraded,
     cohort: held.cohort,
-    perf: perfDimsOf(held.machineClass, held.windowMode)
+    perf: perfDimsOf(held.machineClass, held.windowMode),
   }
 }
 
@@ -220,7 +228,7 @@ function writeErrors(
   state: TelemetryState,
   errors: readonly ErrorReportRow[],
   day: string,
-  cohort: UsageCohort
+  cohort: UsageCohort,
 ): void {
   for (const e of errors) {
     const key = `${day}|${cohort}|${e.appVersion}|${e.fingerprint}`
@@ -231,7 +239,11 @@ function writeErrors(
 }
 
 /** The route. `now` is injectable so a test can drive two days without waiting for one. */
-export function telemetryRoute(state: TelemetryState, body: Buffer, now = Date.now()): TelemetryRes {
+export function telemetryRoute(
+  state: TelemetryState,
+  body: Buffer,
+  now = Date.now(),
+): TelemetryRes {
   if (body.byteLength > MAX_TELEMETRY_BODY_BYTES) {
     return fail(413, 'too_large', 'Telemetry batch is too large.')
   }
@@ -246,7 +258,8 @@ export function telemetryRoute(state: TelemetryState, body: Buffer, now = Date.n
   }
   const v = validateTelemetryBatch(parsed)
   if (!v.ok) return fail(400, 'invalid_event', v.message, { field: v.field })
-  if (v.value.events.length === 0) return { status: 202, json: { ok: true, accepted: 0 }, note: 'empty' }
+  if (v.value.events.length === 0)
+    return { status: 202, json: { ok: true, accepted: 0 }, note: 'empty' }
   if (state.mode.closed) {
     return fail(503, 'closed', 'Usage analytics is not being collected right now.')
   }
@@ -264,13 +277,15 @@ export function telemetryRoute(state: TelemetryState, body: Buffer, now = Date.n
   }
   writeErrors(state, roll.errors, day, co)
   for (const p of roll.perf) {
-    const key = [day, co, p.windowMode, p.machineClass, p.locked, p.stallBucket, p.tailBucket].join('|')
+    const key = [day, co, p.windowMode, p.machineClass, p.locked, p.stallBucket, p.tailBucket].join(
+      '|',
+    )
     bump(state.perf, key, p.n)
   }
   return {
     status: 202,
     json: { ok: true, accepted: v.value.events.length },
-    note: `${String(v.value.events.length)} events → ${String(roll.counters.length)} counters`
+    note: `${String(v.value.events.length)} events → ${String(roll.counters.length)} counters`,
   }
 }
 
@@ -298,7 +313,7 @@ export function telemetryTables(state: TelemetryState): TelemetryRes {
         channel: i.channel,
         cohort: i.cohort,
         machine_class: i.machineClass ?? null,
-        window_mode: i.windowMode ?? null
+        window_mode: i.windowMode ?? null,
       })),
       // The cube, in the column names `toPerfRows` reads — so a dev-stack dump can be fed
       // straight into the same readout the panel uses.
@@ -312,14 +327,14 @@ export function telemetryTables(state: TelemetryState): TelemetryRes {
           locked,
           stall_bucket: stall,
           tail_bucket: tail,
-          n
+          n,
         }
       }),
       errorReport: [...state.errors.entries()].map(([key, row]) => {
         const [day, cohort, version, fingerprint] = split(key)
         return { day, cohort, version, fingerprint, count: row.count, exemplar: row.exemplar }
-      })
+      }),
     },
-    note: `${String(state.usage.size)} counters`
+    note: `${String(state.usage.size)} counters`,
   }
 }

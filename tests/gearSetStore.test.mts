@@ -49,10 +49,10 @@ const preGearStore = {
     primitive_freeport: {
       inventory: { 'rusty short sword': 2 },
       completedQuests: ['ROG::Test of Stealth'],
-      combo: { corrections: [] }
-    }
+      combo: { corrections: [] },
+    },
   },
-  activeLogPath: 'C:/eq/Logs/eqlog_Primitive_freeport.txt'
+  activeLogPath: 'C:/eq/Logs/eqlog_Primitive_freeport.txt',
 }
 
 /**
@@ -66,10 +66,18 @@ const goodSet: GearSet = {
   createdAt: 1_754_200_000_000,
   updatedAt: 1_754_300_000_000,
   slots: {
-    PRIMARY: { key: 'thelvorn, blade of light', name: 'Thelvorn, Blade of Light', state: { full: 5, fraction: 17 } },
-    FINGER2: { key: 'ring of pureblood', name: 'Ring of Pureblood', state: { full: 0, fraction: 0 } },
-    ANY1: { key: 'brigandine tunic', name: 'Brigandine Tunic', state: { full: 10, fraction: 0 } }
-  }
+    PRIMARY: {
+      key: 'thelvorn, blade of light',
+      name: 'Thelvorn, Blade of Light',
+      state: { full: 5, fraction: 17 },
+    },
+    FINGER2: {
+      key: 'ring of pureblood',
+      name: 'Ring of Pureblood',
+      state: { full: 0, fraction: 0 },
+    },
+    ANY1: { key: 'brigandine tunic', name: 'Brigandine Tunic', state: { full: 10, fraction: 0 } },
+  },
 }
 
 // ------------------------------------------------------------------ additive key
@@ -89,8 +97,8 @@ test('a store WITH gear sets survives a build that has never heard of them', () 
   const withSets = {
     ...preGearStore,
     byCharacter: {
-      primitive_freeport: { ...preGearStore.byCharacter.primitive_freeport, gearSets: [goodSet] }
-    }
+      primitive_freeport: { ...preGearStore.byCharacter.primitive_freeport, gearSets: [goodSet] },
+    },
   }
   withStore(withSets, (path, before) => {
     const result = migrateStoreFile(path)
@@ -100,7 +108,7 @@ test('a store WITH gear sets survives a build that has never heard of them', () 
     assert.deepEqual(
       sanitizeGearSets(reread.byCharacter.primitive_freeport.gearSets),
       [goodSet],
-      'the stored set must read back exactly as written'
+      'the stored set must read back exactly as written',
     )
   })
 })
@@ -132,11 +140,11 @@ test('malformed input is STRIPPED cell by cell, never thrown and never wholesale
           HEAD2: { key: 'nope', name: 'Nope', state: {} }, // JOS-67: only EAR/WRIST/FINGER pair
           ANY3: { key: 'nope', name: 'Nope', state: {} }, // JOS-104: the game gives exactly two
           FEET: { name: 'A name and nothing to join it by' }, // no key → nothing to look up
-          BACK: 'not an assignment'
-        }
-      }
+          BACK: 'not an assignment',
+        },
+      },
     ],
-    now
+    now,
   )
 
   assert.equal(cleaned.length, 1, 'only the entry with an id survives')
@@ -162,9 +170,9 @@ test('a plus-state is CLAMPED to one the game can be in — phase 0`s normalizer
         CHEST: { key: 'b', name: 'B', state: { full: -4, fraction: 3 } }, // tier 0 banks nothing either
         LEGS: { key: 'c', name: 'C', state: { full: 3, fraction: 99 } }, // 2^3 - 1 = 7
         FEET: { key: 'd', name: 'D', state: 'nonsense' }, // unreadable ⇒ base
-        HANDS: { key: 'e', name: 'E' } // absent ⇒ base
-      }
-    }
+        HANDS: { key: 'e', name: 'E' }, // absent ⇒ base
+      },
+    },
   ])[0].slots
 
   assert.deepEqual(states.HEAD?.state, { full: 10, fraction: 0 })
@@ -175,14 +183,15 @@ test('a plus-state is CLAMPED to one the game can be in — phase 0`s normalizer
 })
 
 test('an assignment with no name falls back to its key rather than rendering blank', () => {
-  const slots = sanitizeGearSets([{ id: 'set-4', slots: { HEAD: { key: 'cloak of flames' } } }])[0].slots
+  const slots = sanitizeGearSets([{ id: 'set-4', slots: { HEAD: { key: 'cloak of flames' } } }])[0]
+    .slots
   assert.equal(slots.HEAD?.name, 'cloak of flames')
 })
 
 test('duplicate set ids keep the first, and the batch is bounded', () => {
   const dupes = sanitizeGearSets([
     { ...goodSet, name: 'first' },
-    { ...goodSet, name: 'second' }
+    { ...goodSet, name: 'second' },
   ])
   assert.equal(dupes.length, 1)
   assert.equal(dupes[0].name, 'first')

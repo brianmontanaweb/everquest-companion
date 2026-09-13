@@ -57,7 +57,14 @@ export interface ScopeBarProps {
   testId: string
 }
 
-export function ScopeBar({ available, slice, onPick, onCustom, custom, testId }: ScopeBarProps): JSX.Element {
+export function ScopeBar({
+  available,
+  slice,
+  onPick,
+  onCustom,
+  custom,
+  testId,
+}: ScopeBarProps): JSX.Element {
   return (
     <Stack spacing={0.75} sx={{ minWidth: 0 }}>
       {/* THE ROW. One `columnGap` and one `rowGap` for all three, so a wrapped row is spaced like

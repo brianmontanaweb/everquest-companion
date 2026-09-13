@@ -20,9 +20,14 @@ import {
   DialogContent,
   DialogTitle,
   Stack,
-  Typography
+  Typography,
 } from '@mui/material'
-import { MAX_COMBO_SLOTS, resolvedClasses, type ClassAbbr, type ComboInterval } from '@shared/classCombo'
+import {
+  MAX_COMBO_SLOTS,
+  resolvedClasses,
+  type ClassAbbr,
+  type ComboInterval,
+} from '@shared/classCombo'
 import { classDisplayName } from '@shared/spellLevels'
 import { spanText } from './ClassComboLabels'
 import ClassPicker, { togglePicked } from './ClassPicker'
@@ -38,7 +43,13 @@ export interface ClassComboEditorProps {
  * carrying the previous row's picks into a different time range is exactly the kind of quiet
  * mis-attribution this feature exists to avoid.
  */
-function EditorBody({ interval, onClose }: { interval: ComboInterval; onClose: () => void }): JSX.Element {
+function EditorBody({
+  interval,
+  onClose,
+}: {
+  interval: ComboInterval
+  onClose: () => void
+}): JSX.Element {
   // Seeded from what we currently believe, so "the middle slot is wrong" is two clicks. An
   // ambiguous or unknown slot seeds NOTHING — it would be a guess wearing the user's name.
   const [picked, setPicked] = useState<ClassAbbr[]>(() => resolvedClasses(interval))
@@ -96,7 +107,9 @@ function EditorBody({ interval, onClose }: { interval: ComboInterval; onClose: (
           variant="contained"
           disabled={busy || picked.length === 0}
           data-testid="combo-editor-save"
-          onClick={() => void write(() => window.eq.setComboCorrection({ ...range, classes: picked }))}
+          onClick={() =>
+            void write(() => window.eq.setComboCorrection({ ...range, classes: picked }))
+          }
         >
           Save - applies to this time range
         </Button>
@@ -105,7 +118,10 @@ function EditorBody({ interval, onClose }: { interval: ComboInterval; onClose: (
   )
 }
 
-export default function ClassComboEditor({ interval, onClose }: ClassComboEditorProps): JSX.Element {
+export default function ClassComboEditor({
+  interval,
+  onClose,
+}: ClassComboEditorProps): JSX.Element {
   return (
     <Dialog open={interval !== null} onClose={onClose} maxWidth="sm" fullWidth>
       {interval && <EditorBody key={interval.id} interval={interval} onClose={onClose} />}

@@ -23,7 +23,14 @@ import { spawnSync } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { renderTypeScript } from './protocolCodegen.mjs'
-import { ROOT, RUST_OUT, TS_OUT, protocolVersion, readSchemaFiles, schemaDigest } from './protocolSchema.mjs'
+import {
+  ROOT,
+  RUST_OUT,
+  TS_OUT,
+  protocolVersion,
+  readSchemaFiles,
+  schemaDigest,
+} from './protocolSchema.mjs'
 
 /**
  * Write only if the CONTENT moved, comparing LF-normalized.
@@ -53,14 +60,14 @@ const files = readSchemaFiles()
 const version = protocolVersion(files)
 const digest = schemaDigest(files)
 
-console.log(`gen:protocol: ${String(files.length)} schema files, protocol version ${String(version)}`)
+console.log(
+  `gen:protocol: ${String(files.length)} schema files, protocol version ${String(version)}`,
+)
 console.log(`gen:protocol: schema-digest sha256:${digest}`)
 
 const ts = await renderTypeScript()
 const tsChanged = writeIfChanged(TS_OUT, ts)
-console.log(
-  `gen:protocol: ${relative(ROOT, TS_OUT)} ${tsChanged ? 'written' : 'already current'}`
-)
+console.log(`gen:protocol: ${relative(ROOT, TS_OUT)} ${tsChanged ? 'written' : 'already current'}`)
 
 // --- the Rust half ------------------------------------------------------------------------------
 // `cargo run -p protocol-codegen` writes engine/crates/protocol/src/generated.rs. It is a separate
@@ -69,7 +76,7 @@ console.log(
 const cargo = spawnSync('cargo', ['run', '--quiet', '-p', 'protocol-codegen'], {
   cwd: join(ROOT, 'engine'),
   stdio: 'inherit',
-  shell: false
+  shell: false,
 })
 
 if (cargo.error !== undefined) {
@@ -77,7 +84,7 @@ if (cargo.error !== undefined) {
     `gen:protocol: could not run cargo (${cargo.error.message}).\n` +
       '  The Rust half of the contract was NOT regenerated. Install the toolchain\n' +
       '  (rustup, then let engine/rust-toolchain.toml pin the version) and run this again —\n' +
-      '  a tree where only one language regenerated is exactly what the staleness tests catch.'
+      '  a tree where only one language regenerated is exactly what the staleness tests catch.',
   )
   process.exit(1)
 }

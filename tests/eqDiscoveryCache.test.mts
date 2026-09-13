@@ -18,7 +18,7 @@ import assert from 'node:assert/strict'
 import {
   discoverEqRoot,
   resolveDiscoveredRoot,
-  type CachedRootDeps
+  type CachedRootDeps,
 } from '../src/main/log/discovery'
 
 const lc = (s: string): string => s.replace(/[\\/]+$/, '').toLowerCase()
@@ -30,9 +30,10 @@ const lc = (s: string): string => s.replace(/[\\/]+$/, '').toLowerCase()
 // (a fresh user who has not run `/log on` keeps getting the cheap idle rescan, not a sticky no).
 
 /** A deps builder with spies: records whether the (expensive) sweep ran and what got persisted. */
-function cachedDeps(
-  over: Partial<CachedRootDeps> & { sweepResult?: string | null }
-): { deps: CachedRootDeps; log: { swept: number; persisted: string[]; dropped: number } } {
+function cachedDeps(over: Partial<CachedRootDeps> & { sweepResult?: string | null }): {
+  deps: CachedRootDeps
+  log: { swept: number; persisted: string[]; dropped: number }
+} {
   const log = { swept: 0, persisted: [] as string[], dropped: 0 }
   const deps: CachedRootDeps = {
     persisted: over.persisted ?? null,
@@ -44,7 +45,7 @@ function cachedDeps(
         return over.sweepResult ?? null
       }),
     persist: over.persist ?? ((r): void => void log.persisted.push(r)),
-    dropPersisted: over.dropPersisted ?? ((): void => void log.dropped++)
+    dropPersisted: over.dropPersisted ?? ((): void => void log.dropped++),
   }
   return { deps, log }
 }
@@ -105,7 +106,7 @@ test('discoverEqRoot: the ceiling stops probing once the budget is spent, and re
     extraCandidates: () => ['A', 'B', 'C', 'D'],
     fixedDrives: () => [],
     budgetMs: 100,
-    now: () => clock
+    now: () => clock,
   })
   assert.equal(root, null, 'a bounded miss, not an unbounded hang')
   // deadline = 1000 + 100. Probes at clock 1000, 1040, 1080 run; at 1120 we are over budget.
@@ -123,7 +124,7 @@ test('discoverEqRoot: a candidate found BEFORE the deadline is still returned', 
     extraCandidates: () => ['slow', target, 'never'],
     fixedDrives: () => [],
     budgetMs: 100,
-    now: () => clock
+    now: () => clock,
   })
   assert.equal(root, target, 'the ceiling never denies a hit that lands within budget')
 })
@@ -146,7 +147,7 @@ test('discoverEqRoot: a single blocking (offline-share) probe caps the whole cal
     extraCandidates: () => ['Z:\\offline', realInstall],
     fixedDrives: () => [],
     budgetMs: 6_000,
-    now: () => clock
+    now: () => clock,
   })
   assert.equal(root, null, 'the one blocking probe exhausts the budget; we do not hang on the rest')
   assert.deepEqual(probed, ['Z:\\offline'], 'the real install behind it is never reached')
@@ -164,7 +165,7 @@ test('discoverEqRoot: a filtered (non-fixed) drive is never probed at all', () =
       return lc(c) === lc(target)
     },
     extraCandidates: () => [],
-    fixedDrives: () => ['C:'] // Z: was filtered out by drive type before we got here
+    fixedDrives: () => ['C:'], // Z: was filtered out by drive type before we got here
   })
   assert.equal(root, target)
   assert.ok(!probed.some((p) => /^z:/i.test(p)), 'no Z: candidate is ever probed')

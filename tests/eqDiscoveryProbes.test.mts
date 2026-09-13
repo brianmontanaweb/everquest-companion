@@ -26,7 +26,7 @@ import {
   eqInstallPathValue,
   fixedDrives,
   networkDriveLetters,
-  registryInstallCandidates
+  registryInstallCandidates,
 } from '../src/main/log/discovery'
 
 // --- the registry decoder ---------------------------------------------------
@@ -41,13 +41,13 @@ test('eqInstallPathValue: keeps a path that names the game, in the same cases re
   // line regex could only ever fire on a DATA match. That is exactly this function.
   assert.equal(
     eqInstallPathValue('C:\\Program Files (x86)\\Steam\\steamapps\\common\\Everquest F2P'),
-    'C:\\Program Files (x86)\\Steam\\steamapps\\common\\Everquest F2P'
+    'C:\\Program Files (x86)\\Steam\\steamapps\\common\\Everquest F2P',
   )
   assert.equal(
     eqInstallPathValue(
-      'C:\\Users\\Public\\Daybreak Game Company\\Installed Games\\EverQuest Legends'
+      'C:\\Users\\Public\\Daybreak Game Company\\Installed Games\\EverQuest Legends',
     ),
-    'C:\\Users\\Public\\Daybreak Game Company\\Installed Games\\EverQuest Legends'
+    'C:\\Users\\Public\\Daybreak Game Company\\Installed Games\\EverQuest Legends',
   )
   // Trimmed, exactly as the old line regex's trailing `\s*$` did.
   assert.equal(eqInstallPathValue('  D:\\EverQuest  '), 'D:\\EverQuest')
@@ -86,7 +86,7 @@ test('driveLettersFromMountedDevices: DosDevices entries become drive roots, vol
     '\\??\\Volume{f3d6e5ba-2f77-11f0-a7fc-70d823972a5b}',
     '\\DosDevices\\D:',
     '\\??\\Volume{fe0be83d-4960-11f0-a7fe-70d823972a5b}',
-    '\\DosDevices\\E:'
+    '\\DosDevices\\E:',
   ])
   assert.deepEqual(roots, ['C:', 'D:', 'E:'])
 })
@@ -94,13 +94,13 @@ test('driveLettersFromMountedDevices: DosDevices entries become drive roots, vol
 test('driveLettersFromMountedDevices: sorted, de-duplicated, case-folded, empty when nothing matches', () => {
   assert.deepEqual(driveLettersFromMountedDevices(['\\DosDevices\\d:', '\\DosDevices\\C:']), [
     'C:',
-    'D:'
+    'D:',
   ])
   assert.deepEqual(driveLettersFromMountedDevices(['\\DosDevices\\C:', '\\DosDevices\\c:']), ['C:'])
   assert.deepEqual(driveLettersFromMountedDevices([]), [])
   assert.deepEqual(
     driveLettersFromMountedDevices(['\\DosDevices\\CD:', '#{GUID}', '\\DosDevices\\']),
-    []
+    [],
   )
 })
 

@@ -45,7 +45,7 @@ export function slot(page: Page, sel: string): Promise<Slot> {
     return {
       text: (el as HTMLElement).innerText.trim(),
       title: el.getAttribute('title') ?? '',
-      color: getComputedStyle(el).color
+      color: getComputedStyle(el).color,
     }
   }, sel)
 }
@@ -76,7 +76,7 @@ async function restamp(path: string, differsFrom: number): Promise<number> {
       return Promise.resolve(statSync(path).mtimeMs)
     },
     (ms) => second(ms) !== second(differsFrom),
-    { timeoutMs: 8_000, pollMs: 250 }
+    { timeoutMs: 8_000, pollMs: 250 },
   )
 }
 
@@ -95,25 +95,29 @@ export async function stepReplacedNotOverwritten(page: Page, installDir: string)
   const distinct = check(
     'the replacement carries a write clock of its own',
     second(stamped) !== second(replaced),
-    `replaced ${new Date(replaced).toISOString()} · wrote ${new Date(stamped).toISOString()}`
+    `replaced ${new Date(replaced).toISOString()} · wrote ${new Date(stamped).toISOString()}`,
   )
   if (!distinct) return
 
   const age = await settle(
     () => slot(page, AGE),
     (s) => s.title !== '' && s.title !== before.title,
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
   const seen = check(
     'a dump DELETED and written again under the running app is picked up, with no restart',
     age.title !== '' && age.title !== before.title,
-    `the tab dated the old file ${before.title} and now dates ${age.title}`
+    `the tab dated the old file ${before.title} and now dates ${age.title}`,
   )
   if (!seen) return
   check('…as a file the player has only just written', age.text === 'updated just now', age.text)
   const loaded = await slot(page, LOADED)
   check('…read the moment the replacement settled', loaded.text === 'loaded just now', loaded.text)
-  check('…and nothing on the line is flagged stale', loaded.color === age.color, `${loaded.color} vs ${age.color}`)
+  check(
+    '…and nothing on the line is flagged stale',
+    loaded.color === age.color,
+    `${loaded.color} vs ${age.color}`,
+  )
 }
 
 /**
@@ -129,17 +133,22 @@ export async function stepReplacedNotOverwritten(page: Page, installDir: string)
  * been up for a tab open, a dropdown pick and two settles, and the gap is seconds.
  */
 export async function stepRefreshRereads(page: Page, before: Slot): Promise<void> {
-  if (!check('the line carries the re-read affordance', (await countOf(page, REFRESH)) === 1)) return
+  if (!check('the line carries the re-read affordance', (await countOf(page, REFRESH)) === 1))
+    return
   await page.click(REFRESH, { timeout: 15_000 })
   const loaded = await settle(
     () => slot(page, LOADED),
     (s) => s.title.length > 0 && s.title !== before.title,
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   )
   check(
     'pressing Refresh reads the dump again, and the line says when',
     loaded.title !== '' && loaded.title !== before.title,
-    `was read at ${before.title} · now ${loaded.title}`
+    `was read at ${before.title} · now ${loaded.title}`,
   )
-  check('…in the same quiet words, not a control that grew', loaded.text === 'loaded just now', loaded.text)
+  check(
+    '…in the same quiet words, not a control that grew',
+    loaded.text === 'loaded just now',
+    loaded.text,
+  )
 }

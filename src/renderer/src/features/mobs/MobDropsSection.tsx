@@ -44,7 +44,7 @@ export function Quiet({ children }: { children: React.ReactNode }): JSX.Element 
  */
 function DropsEmptyState({
   data,
-  loading
+  loading,
 }: {
   data: MobKnowledge | null
   loading: boolean
@@ -71,7 +71,7 @@ function DropRows({
   drops,
   seenByKey,
   kills,
-  onOpenItem
+  onOpenItem,
 }: {
   drops: MobDrop[]
   seenByKey: Map<string, SeenVariantGroup>
@@ -107,7 +107,7 @@ function OutOfEraDrops({
   drops,
   seenByKey,
   kills,
-  onOpenItem
+  onOpenItem,
 }: {
   drops: MobDrop[]
   seenByKey: Map<string, SeenVariantGroup>
@@ -133,7 +133,7 @@ function OutOfEraDrops({
           display: 'inline-flex',
           cursor: 'pointer',
           color: 'text.secondary',
-          '&:hover': { color: 'primary.main' }
+          '&:hover': { color: 'primary.main' },
         }}
       >
         <Typography variant="caption">{outOfEraLabel(drops.length)}</Typography>
@@ -157,7 +157,7 @@ export function DropsSection({
   kills,
   data,
   loading,
-  onOpenItem
+  onOpenItem,
 }: {
   /** in-era and unknown, in page order — what the page answers with. */
   wiki: MobDrop[]
@@ -200,7 +200,7 @@ export function DropsSection({
 export function AlsoLootedSection({
   extraSeen,
   kills,
-  onOpenItem
+  onOpenItem,
 }: {
   extraSeen: SeenVariantGroup[]
   kills?: number
@@ -253,6 +253,6 @@ export function dropSections(data: MobKnowledge | null): {
     outOfEra: out,
     lines,
     byKey: new Map(lines.map((g) => [g.key, g])),
-    extra: lines.filter((g) => !wikiKeys.has(g.key))
+    extra: lines.filter((g) => !wikiKeys.has(g.key)),
   }
 }

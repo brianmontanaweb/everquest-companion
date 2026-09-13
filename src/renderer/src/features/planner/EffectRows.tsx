@@ -85,7 +85,10 @@ function sourceText(donor: DonorRow): SourceText {
   const first = sources[0]
   if (first) {
     const zone = first.zones[0] ?? 'zone unstated'
-    return { text: `${first.mob} - ${zone}`, more: sources.length > 1 ? `+${String(sources.length - 1)} more` : '' }
+    return {
+      text: `${first.mob} - ${zone}`,
+      more: sources.length > 1 ? `+${String(sources.length - 1)} more` : '',
+    }
   }
   if (donor.quest) return { text: 'quest reward', more: '' }
   if (donor.playerCrafted) return { text: 'player crafted', more: '' }
@@ -94,10 +97,23 @@ function sourceText(donor: DonorRow): SourceText {
 
 // ---- one donor row -------------------------------------------------------------------
 
-function ClassChips({ donor, planClasses }: { donor: DonorRow; planClasses: readonly ClassAbbr[] }): JSX.Element {
+function ClassChips({
+  donor,
+  planClasses,
+}: {
+  donor: DonorRow
+  planClasses: readonly ClassAbbr[]
+}): JSX.Element {
   const fit = classFit(donor, planClasses)
   if (fit === 'unknown') {
-    return <Chip size="small" variant="outlined" label="class unknown" sx={{ height: 18, fontSize: 10 }} />
+    return (
+      <Chip
+        size="small"
+        variant="outlined"
+        label="class unknown"
+        sx={{ height: 18, fontSize: 10 }}
+      />
+    )
   }
   const lit = donor.classes.filter((c) => planClasses.includes(c))
   const rest = donor.classes.filter((c) => !planClasses.includes(c))
@@ -188,7 +204,7 @@ export interface DonorLineProps {
 function AddButton({
   donor,
   wished,
-  onToggleWish
+  onToggleWish,
 }: Pick<DonorLineProps, 'donor' | 'wished'> & {
   onToggleWish: (donor: DonorRow, wished: boolean) => void
 }): JSX.Element {
@@ -257,7 +273,7 @@ function SourceLine({ src }: { src: SourceText }): JSX.Element {
 function DonorNameCell({
   donor,
   compare,
-  onOpenLoot
+  onOpenLoot,
 }: Pick<DonorLineProps, 'donor' | 'compare' | 'onOpenLoot'>): JSX.Element {
   const name = <DonorName name={donor.name} bold onOpen={onOpenLoot} />
   const row = compare?.byKey.get(donor.key)
@@ -278,7 +294,7 @@ export function DonorLine({
   namesSays,
   onToggleWish,
   onOpenLoot,
-  compare
+  compare,
 }: DonorLineProps): JSX.Element {
   const src = sourceText(donor)
   // V6 — "Beneficial · Single Friendly · 27 minutes", or '' when the spell DB never named this
@@ -296,8 +312,16 @@ export function DonorLine({
       // JOS-344 — the corpus join key rides the row now, so a spec can point at ONE donor and say
       // which. Same key the gear table's rows carry (`itemKey`), which is what makes the compare
       // pair's own `data-item-key` checkable against the row it was opened from.
-      data-testid="planner-donor-row" data-item-key={donor.key}
-      sx={{ height: ROW_HEIGHT, pl: 5, pr: 1, flexWrap: 'nowrap', borderBottom: 1, borderColor: 'divider' }}
+      data-testid="planner-donor-row"
+      data-item-key={donor.key}
+      sx={{
+        height: ROW_HEIGHT,
+        pl: 5,
+        pr: 1,
+        flexWrap: 'nowrap',
+        borderBottom: 1,
+        borderColor: 'divider',
+      }}
     >
       {donor.iconId !== undefined && (
         <Box
@@ -310,7 +334,12 @@ export function DonorLine({
           sx={{ width: 22, height: 22, imageRendering: 'pixelated', flexShrink: 0 }}
         />
       )}
-      <Typography variant="body2" component="div" noWrap sx={{ minWidth: 0, flexShrink: SHRINK.name }}>
+      <Typography
+        variant="body2"
+        component="div"
+        noWrap
+        sx={{ minWidth: 0, flexShrink: SHRINK.name }}
+      >
         <DonorNameCell donor={donor} compare={compare} onOpenLoot={onOpenLoot} />
       </Typography>
       {namesEffect && (
@@ -339,15 +368,36 @@ export function DonorLine({
       {best && <BestChip />}
       <Stack direction="row" spacing={0.25} sx={{ flexShrink: 0 }}>
         {donor.slots.map((s) => (
-          <Chip key={s} size="small" variant="outlined" label={s} sx={{ height: 18, fontSize: 10, '& .MuiChip-label': { px: 0.5 } }} />
+          <Chip
+            key={s}
+            size="small"
+            variant="outlined"
+            label={s}
+            sx={{ height: 18, fontSize: 10, '& .MuiChip-label': { px: 0.5 } }}
+          />
         ))}
       </Stack>
       {isNonEquippable(donor) && <NoSlotChip />}
       <ClassChips donor={donor} planClasses={planClasses} />
-      <Tooltip title={`This effect only extracts once the donor is merged to +${String(donor.tierRequired)}.`}>
-        <Chip size="small" color="secondary" variant="outlined" label={`+${String(donor.tierRequired)} to extract`} sx={{ height: 18, fontSize: 10 }} />
+      <Tooltip
+        title={`This effect only extracts once the donor is merged to +${String(donor.tierRequired)}.`}
+      >
+        <Chip
+          size="small"
+          color="secondary"
+          variant="outlined"
+          label={`+${String(donor.tierRequired)} to extract`}
+          sx={{ height: 18, fontSize: 10 }}
+        />
       </Tooltip>
-      {donor.hasteLocked && <Chip size="small" color="warning" label="haste - can't move" sx={{ height: 18, fontSize: 10 }} />}
+      {donor.hasteLocked && (
+        <Chip
+          size="small"
+          color="warning"
+          label="haste - can't move"
+          sx={{ height: 18, fontSize: 10 }}
+        />
+      )}
       <EraChip subject={donor} />
       <Box sx={{ flexGrow: 1, minWidth: 8 }} />
       <SourceLine src={src} />
@@ -362,7 +412,9 @@ export function DonorLine({
         />
       )}
       {/* Nothing at all until the host can answer "is this already wished" — see the prop. */}
-      {onToggleWish !== undefined && <AddButton donor={donor} wished={wished} onToggleWish={onToggleWish} />}
+      {onToggleWish !== undefined && (
+        <AddButton donor={donor} wished={wished} onToggleWish={onToggleWish} />
+      )}
     </Stack>
   )
 }
@@ -372,7 +424,7 @@ export function DonorLine({
 export function GroupLine({
   group,
   expanded,
-  onToggle
+  onToggle,
 }: {
   group: DonorGroup
   expanded: boolean
@@ -393,7 +445,7 @@ export function GroupLine({
         cursor: 'pointer',
         borderBottom: 1,
         borderColor: 'divider',
-        bgcolor: 'action.hover'
+        bgcolor: 'action.hover',
       }}
     >
       <IconButton size="small" sx={{ flexShrink: 0 }}>
@@ -401,11 +453,20 @@ export function GroupLine({
       </IconButton>
       {/* The family's own name gets the header's equivalent of the row rule: it does not shrink,
           because it is the thing you are reading the header for. */}
-      <Typography variant="body2" noWrap sx={{ minWidth: 0, flexShrink: 0, maxWidth: EFFECT_MAX_WIDTH, fontWeight: 600 }}>
+      <Typography
+        variant="body2"
+        noWrap
+        sx={{ minWidth: 0, flexShrink: 0, maxWidth: EFFECT_MAX_WIDTH, fontWeight: 600 }}
+      >
         {group.label}
       </Typography>
       {group.note !== '' && (
-        <Typography variant="caption" color="text.secondary" noWrap sx={{ minWidth: 0, flexShrink: SHRINK.name }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          noWrap
+          sx={{ minWidth: 0, flexShrink: SHRINK.name }}
+        >
           best: {group.note}
         </Typography>
       )}
@@ -424,7 +485,12 @@ export function GroupLine({
           {group.says}
         </Typography>
       )}
-      <Chip size="small" variant="outlined" label={SOCKET_LABEL[group.socket]} sx={{ height: 18, fontSize: 10, flexShrink: 0 }} />
+      <Chip
+        size="small"
+        variant="outlined"
+        label={SOCKET_LABEL[group.socket]}
+        sx={{ height: 18, fontSize: 10, flexShrink: 0 }}
+      />
       <Chip
         size="small"
         color="secondary"
@@ -432,7 +498,14 @@ export function GroupLine({
         label={`+${String(extractionTier(group.socket))} to extract`}
         sx={{ height: 18, fontSize: 10, flexShrink: 0 }}
       />
-      {group.hasteLocked && <Chip size="small" color="warning" label="haste - can't move" sx={{ height: 18, fontSize: 10, flexShrink: 0 }} />}
+      {group.hasteLocked && (
+        <Chip
+          size="small"
+          color="warning"
+          label="haste - can't move"
+          sx={{ height: 18, fontSize: 10, flexShrink: 0 }}
+        />
+      )}
       <Box sx={{ flexGrow: 1 }} />
       <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
         {group.donors.length} {group.donors.length === 1 ? 'donor' : 'donors'}

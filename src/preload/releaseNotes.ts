@@ -24,5 +24,5 @@ export const releaseNotesBridge = {
    * stored — main validates the shape and answers with the file's own value.
    */
   setReleaseNotesSeen: (version: string | null): Promise<string | null> =>
-    ipcRenderer.invoke(IPC.releaseNotesSeenSet, version)
+    ipcRenderer.invoke(IPC.releaseNotesSeenSet, version),
 }

@@ -127,7 +127,7 @@ export function overlayHotZones(kind: OverlayKind, bounds: ZoneRect, zoom = 1): 
       x: bounds.x + bounds.width - gripW,
       y: bounds.y + stripH,
       width: gripW,
-      height: gripH
+      height: gripH,
     })
   }
   return zones

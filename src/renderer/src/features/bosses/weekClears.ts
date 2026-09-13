@@ -68,7 +68,7 @@ export function nextWeekClearsOnToggle(
   w: WeekClears,
   key: string,
   week: LockoutWindow,
-  nowMs: number
+  nowMs: number,
 ): WeekClears {
   if (manualClearIsLiveThisWeek(w[key], week)) {
     const { [key]: _drop, ...rest } = w

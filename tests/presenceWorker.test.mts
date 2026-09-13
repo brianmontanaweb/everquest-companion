@@ -31,7 +31,7 @@ import {
   encodeHoverZones,
   parsePresenceLine,
   watcherCadence,
-  type PresenceWorkerInit
+  type PresenceWorkerInit,
 } from '../src/main/presenceProtocol'
 
 const NOT_WINDOWS = process.platform !== 'win32' && 'the presence surface is user32/kernel32/psapi'
@@ -48,7 +48,7 @@ const INIT: PresenceWorkerInit = {
   foregroundEveryTicks: 10,
   // The RING-ON posture. Everything below except the JOS-193 test runs it, because it is the
   // watcher at its busiest — every call family, on the fast cadence.
-  watchCursor: true
+  watchCursor: true,
 }
 
 interface Run {
@@ -85,13 +85,13 @@ async function runWorker(
     /** Post something back in REACTION to a line. The only way to drive a sequence whose second
      *  step must land after the loop has sampled once — see the retraction test. */
     onLine?: (line: string, post: (l: string) => void) => void
-  } = {}
+  } = {},
 ): Promise<Run> {
   const { send = [], onLine } = drive
   const worker = new Worker(WORKER_TS, {
     workerData: init,
     // The worker entry is TypeScript, so the thread needs the same loader the suite runs under.
-    execArgv: ['--import', 'tsx']
+    execArgv: ['--import', 'tsx'],
   })
   for (const line of send) worker.postMessage(line)
   const lines: string[] = []
@@ -134,74 +134,94 @@ async function withTimeout<T>(p: Promise<T>, ms: number, why: string): Promise<T
         timer = setTimeout(() => {
           reject(new Error(why))
         }, ms)
-      })
+      }),
     ])
   } finally {
     if (timer) clearTimeout(timer)
   }
 }
 
-test('THE WATCHER LOOKS AT THE WORLD ON ITS FIRST TICK, then keeps beating', {
-  skip: NOT_WINDOWS
-}, async () => {
-  // Two beats is the proof that the loop is TURNING rather than that it started: everything except
-  // the heartbeat is change-driven, so a watcher that emitted its first three observations and then
-  // wedged would look identical on the channel without them.
-  const { lines } = await runWorker(INIT, (l) => l.filter((x) => x === 'H').length >= 2)
+test(
+  'THE WATCHER LOOKS AT THE WORLD ON ITS FIRST TICK, then keeps beating',
+  {
+    skip: NOT_WINDOWS,
+  },
+  async () => {
+    // Two beats is the proof that the loop is TURNING rather than that it started: everything except
+    // the heartbeat is change-driven, so a watcher that emitted its first three observations and then
+    // wedged would look identical on the channel without them.
+    const { lines } = await runWorker(INIT, (l) => l.filter((x) => x === 'H').length >= 2)
 
-  const records = lines.map(parsePresenceLine)
-  assert.equal(records.includes(null), false, `every line decodes; got:\n${lines.join('\n')}`)
+    const records = lines.map(parsePresenceLine)
+    assert.equal(records.includes(null), false, `every line decodes; got:\n${lines.join('\n')}`)
 
-  // The first tick emits a cursor reading, a foreground reading and a running reading, IN THAT
-  // ORDER — the cursor check leads because it is the one that runs on every tick (JOS-120), and
-  // `presence.ts` relies on any of the three to set `observed` and let auto-hide start acting.
-  const kinds = records.map((r) => r?.t)
-  assert.equal(kinds[0], 'cursor', `the cursor check leads; got ${lines[0]}`)
-  assert.ok(kinds.includes('fg'), 'the foreground window was reported')
-  assert.ok(kinds.includes('run'), 'the running scan reported')
-  assert.ok(kinds.includes('beat'), 'and the heartbeat is beating')
+    // The first tick emits a cursor reading, a foreground reading and a running reading, IN THAT
+    // ORDER — the cursor check leads because it is the one that runs on every tick (JOS-120), and
+    // `presence.ts` relies on any of the three to set `observed` and let auto-hide start acting.
+    const kinds = records.map((r) => r?.t)
+    assert.equal(kinds[0], 'cursor', `the cursor check leads; got ${lines[0]}`)
+    assert.ok(kinds.includes('fg'), 'the foreground window was reported')
+    assert.ok(kinds.includes('run'), 'the running scan reported')
+    assert.ok(kinds.includes('beat'), 'and the heartbeat is beating')
 
-  // NOTHING IS SAID TWICE. The steady state of a healthy watcher is silence plus a heartbeat, and
-  // that is the entire reason this design can poll at 69 Hz without costing anything downstream.
-  const changes = lines.filter((l) => l !== 'H')
-  assert.equal(
-    new Set(changes).size,
-    changes.length,
-    `a record was repeated rather than suppressed:\n${changes.join('\n')}`
-  )
-  assert.equal(lines.some((l) => l.startsWith('X|')), false, 'no exit line from a healthy watcher')
-})
+    // NOTHING IS SAID TWICE. The steady state of a healthy watcher is silence plus a heartbeat, and
+    // that is the entire reason this design can poll at 69 Hz without costing anything downstream.
+    const changes = lines.filter((l) => l !== 'H')
+    assert.equal(
+      new Set(changes).size,
+      changes.length,
+      `a record was repeated rather than suppressed:\n${changes.join('\n')}`,
+    )
+    assert.equal(
+      lines.some((l) => l.startsWith('X|')),
+      false,
+      'no exit line from a healthy watcher',
+    )
+  },
+)
 
-test('STOPPING A RUNNING WATCHER ENDS IT CLEANLY, and does not take this process with it', {
-  skip: NOT_WINDOWS
-}, async () => {
-  // THE CRASH, AS A TEST. `worker.terminate()` on a thread that happens to be inside a koffi call
-  // aborts the entire process — reproduced 2/2 rounds at this cadence, while an idle worker
-  // survived 40/40, which is what makes it a rare and unattributable crash rather than an obvious
-  // one. Every session ends by stopping this watcher, so "rare" would still have meant a steady
-  // trickle of crash reports at quit.
-  //
-  // So `presence.ts` asks, and this is the ask, against a watcher deliberately caught mid-stride:
-  // the run below is stopped immediately after its first records, while the loop is turning at
-  // ~69 Hz and the 300 ms scan is in flight.
-  const { stopCode } = await runWorker({ ...INIT, runningPollMs: 1 }, (l) => l.length >= 3)
-  assert.equal(stopCode, 0, 'the thread ended on its own, cleanly, having been asked')
-})
+test(
+  'STOPPING A RUNNING WATCHER ENDS IT CLEANLY, and does not take this process with it',
+  {
+    skip: NOT_WINDOWS,
+  },
+  async () => {
+    // THE CRASH, AS A TEST. `worker.terminate()` on a thread that happens to be inside a koffi call
+    // aborts the entire process — reproduced 2/2 rounds at this cadence, while an idle worker
+    // survived 40/40, which is what makes it a rare and unattributable crash rather than an obvious
+    // one. Every session ends by stopping this watcher, so "rare" would still have meant a steady
+    // trickle of crash reports at quit.
+    //
+    // So `presence.ts` asks, and this is the ask, against a watcher deliberately caught mid-stride:
+    // the run below is stopped immediately after its first records, while the loop is turning at
+    // ~69 Hz and the 300 ms scan is in flight.
+    const { stopCode } = await runWorker({ ...INIT, runningPollMs: 1 }, (l) => l.length >= 3)
+    assert.equal(stopCode, 0, 'the thread ended on its own, cleanly, having been asked')
+  },
+)
 
-test('the FOREGROUND line carries a pid, a rectangle, an image path and a title', {
-  skip: NOT_WINDOWS
-}, async () => {
-  const { lines } = await runWorker(INIT, (l) => l.some((x) => x.startsWith('F|')))
-  const raw = lines.find((l) => l.startsWith('F|'))
-  assert.ok(raw !== undefined)
-  const rec = parsePresenceLine(raw)
-  assert.equal(rec?.t, 'fg', `the emitted line decodes: ${raw}`)
-  if (rec?.t !== 'fg') return
-  assert.ok(Number.isInteger(rec.pid))
-  // The title is the last field precisely because it may contain anything — but it may NOT contain
-  // a newline, or one record would arrive as two. The worker flattens them for that reason.
-  assert.equal(/[\r\n]/.test(rec.title), false, `a title carried a line break: ${JSON.stringify(rec.title)}`)
-})
+test(
+  'the FOREGROUND line carries a pid, a rectangle, an image path and a title',
+  {
+    skip: NOT_WINDOWS,
+  },
+  async () => {
+    const { lines } = await runWorker(INIT, (l) => l.some((x) => x.startsWith('F|')))
+    const raw = lines.find((l) => l.startsWith('F|'))
+    assert.ok(raw !== undefined)
+    const rec = parsePresenceLine(raw)
+    assert.equal(rec?.t, 'fg', `the emitted line decodes: ${raw}`)
+    if (rec?.t !== 'fg') return
+    assert.ok(Number.isInteger(rec.pid))
+    // The title is the last field precisely because it may contain anything — but it may NOT contain
+    // a newline, or one record would arrive as two. The worker flattens them for that reason.
+    assert.equal(
+      /[\r\n]/.test(rec.title),
+      false,
+      `a title carried a line break: ${JSON.stringify(rec.title)}`,
+    )
+  },
+)
 
 test('A LAST WORD POSTED AS THE PORT CLOSES IS STILL DELIVERED — the exit path’s one assumption', async () => {
   // `presenceWorker.ts`'s `stop()` is two statements: post the reason, close the port. Everything
@@ -218,7 +238,7 @@ test('A LAST WORD POSTED AS THE PORT CLOSES IS STILL DELIVERED — the exit path
     "const { parentPort } = require('node:worker_threads');" +
       "parentPort.postMessage('X|native-unavailable');" +
       'parentPort.close();',
-    { eval: true }
+    { eval: true },
   )
   const seen: string[] = []
   const exitCode = await new Promise<number>((resolve, reject) => {
@@ -233,40 +253,54 @@ test('A LAST WORD POSTED AS THE PORT CLOSES IS STILL DELIVERED — the exit path
   assert.equal(exitCode, 0, 'a closed port ends the thread cleanly, which is what the fold reads')
 })
 
-test('WITH THE RING OFF THE WATCHER NEVER LOOKS AT THE CURSOR — and still does everything else', {
-  skip: NOT_WINDOWS
-}, async () => {
-  // JOS-193, and this is the assertion the ticket is actually about. `C` is emitted from the same
-  // three lines that call `cursorShowing()`, which is the ONLY `GetCursorInfo` in the application
-  // (presenceNative.ts declares it once) — so a run that produces no `C` is a run in which the app
-  // never asked Windows about the cursor. It is a strong observation rather than a weak one
-  // precisely because the record is CHANGE-DRIVEN and the very first reading always differs from
-  // the `-1` the loop starts on: the ring-on test above pins `C` as literally the FIRST line the
-  // watcher ever says, so its absence here cannot be "the cursor happened not to change".
-  //
-  // The rest of the watcher is asserted in the same breath, because "no cursor" must not have cost
-  // auto-hide anything: the foreground window, the running scan and the heartbeat are all still
-  // there, on the coarse cadence `watcherCadence(false)` asks for.
-  const init: PresenceWorkerInit = {
-    ...INIT,
-    watchCursor: false,
-    ...watcherCadence(false),
-    // The coarse tick is ~160 ms, so a 300 ms running poll would take a while to beat twice.
-    runningPollMs: 1
-  }
-  const { lines } = await runWorker(init, (l) => l.filter((x) => x === 'H').length >= 2)
+test(
+  'WITH THE RING OFF THE WATCHER NEVER LOOKS AT THE CURSOR — and still does everything else',
+  {
+    skip: NOT_WINDOWS,
+  },
+  async () => {
+    // JOS-193, and this is the assertion the ticket is actually about. `C` is emitted from the same
+    // three lines that call `cursorShowing()`, which is the ONLY `GetCursorInfo` in the application
+    // (presenceNative.ts declares it once) — so a run that produces no `C` is a run in which the app
+    // never asked Windows about the cursor. It is a strong observation rather than a weak one
+    // precisely because the record is CHANGE-DRIVEN and the very first reading always differs from
+    // the `-1` the loop starts on: the ring-on test above pins `C` as literally the FIRST line the
+    // watcher ever says, so its absence here cannot be "the cursor happened not to change".
+    //
+    // The rest of the watcher is asserted in the same breath, because "no cursor" must not have cost
+    // auto-hide anything: the foreground window, the running scan and the heartbeat are all still
+    // there, on the coarse cadence `watcherCadence(false)` asks for.
+    const init: PresenceWorkerInit = {
+      ...INIT,
+      watchCursor: false,
+      ...watcherCadence(false),
+      // The coarse tick is ~160 ms, so a 300 ms running poll would take a while to beat twice.
+      runningPollMs: 1,
+    }
+    const { lines } = await runWorker(init, (l) => l.filter((x) => x === 'H').length >= 2)
 
-  assert.deepEqual(
-    lines.filter((l) => l.startsWith('C')),
-    [],
-    `the cursor was never read; got:\n${lines.join('\n')}`
-  )
-  assert.ok(lines.some((l) => l.startsWith('F|')), 'the foreground window is still reported')
-  assert.ok(lines.some((l) => l.startsWith('R|')), 'the running scan still runs')
-  assert.equal(lines.some((l) => l.startsWith('X|')), false, 'and nothing decided to stop')
-  const records = lines.map(parsePresenceLine)
-  assert.equal(records.includes(null), false, `every line still decodes:\n${lines.join('\n')}`)
-})
+    assert.deepEqual(
+      lines.filter((l) => l.startsWith('C')),
+      [],
+      `the cursor was never read; got:\n${lines.join('\n')}`,
+    )
+    assert.ok(
+      lines.some((l) => l.startsWith('F|')),
+      'the foreground window is still reported',
+    )
+    assert.ok(
+      lines.some((l) => l.startsWith('R|')),
+      'the running scan still runs',
+    )
+    assert.equal(
+      lines.some((l) => l.startsWith('X|')),
+      false,
+      'and nothing decided to stop',
+    )
+    const records = lines.map(parsePresenceLine)
+    assert.equal(records.includes(null), false, `every line still decodes:\n${lines.join('\n')}`)
+  },
+)
 
 // ------------------------------------------------- the hot-zone hit test, RUN (JOS-370)
 //
@@ -296,13 +330,13 @@ test('A HOT ZONE IS ANSWERED, AND ONLY ON AN EDGE', { skip: NOT_WINDOWS }, async
     ...INIT,
     watchCursor: false,
     ...watcherCadence(false),
-    runningPollMs: 1
+    runningPollMs: 1,
   }
   const { lines } = await runWorker(
     init,
     (l) => l.some((x) => x.startsWith('V|fight|')) && l.includes('V|overall|0'),
     60_000,
-    { send: [encodeHoverZones('fight', EVERYWHERE), encodeHoverZones('overall', NOWHERE)] }
+    { send: [encodeHoverZones('fight', EVERYWHERE), encodeHoverZones('overall', NOWHERE)] },
   )
 
   // The definite half: a rectangle off the edge of every desktop contains no cursor, so the answer
@@ -312,7 +346,10 @@ test('A HOT ZONE IS ANSWERED, AND ONLY ON AN EDGE', { skip: NOT_WINDOWS }, async
   // The any-cursor half: the all-covering rectangle gets an answer too. It is `1` for a visible
   // pointer and `0` for one EverQuest has hidden for mouselook, and BOTH are correct — a hidden
   // cursor is not a cursor over anything, which is what releases the capture during a camera turn.
-  assert.ok(lines.some((l) => /^V\|fight\|[01]$/.test(l)), 'the hit test never ran')
+  assert.ok(
+    lines.some((l) => /^V\|fight\|[01]$/.test(l)),
+    'the hit test never ran',
+  )
 
   // ONLY ON AN EDGE. The loop samples ~31 times a second; a second copy of an unchanged answer
   // would mean main being told to re-open a door it is already holding open, every tick, forever.
@@ -320,11 +357,21 @@ test('A HOT ZONE IS ANSWERED, AND ONLY ON AN EDGE', { skip: NOT_WINDOWS }, async
   assert.equal(fight.length, 1, `the answer was repeated:\n${fight.join('\n')}`)
   // And it did not cost the rest of the loop anything: auto-hide's foreground/running/heartbeat
   // lanes are all still there on the same ~160 ms they always had.
-  assert.ok(lines.some((l) => l.startsWith('F|')), 'the foreground window is still reported')
-  assert.ok(lines.some((l) => l.startsWith('R|')), 'the running scan still runs')
+  assert.ok(
+    lines.some((l) => l.startsWith('F|')),
+    'the foreground window is still reported',
+  )
+  assert.ok(
+    lines.some((l) => l.startsWith('R|')),
+    'the running scan still runs',
+  )
   // …and the JOS-193 promise survives: the ring is off, so no `C` line was ever emitted, even
   // though the hit test read the cursor for its own reason.
-  assert.deepEqual(lines.filter((l) => l.startsWith('C')), [], 'a cursor line leaked')
+  assert.deepEqual(
+    lines.filter((l) => l.startsWith('C')),
+    [],
+    'a cursor line leaked',
+  )
 })
 
 test('A WATCHER WITH NO ZONES SAYS NOTHING ABOUT ANY OF THEM', { skip: NOT_WINDOWS }, async () => {
@@ -335,10 +382,14 @@ test('A WATCHER WITH NO ZONES SAYS NOTHING ABOUT ANY OF THEM', { skip: NOT_WINDO
     ...INIT,
     watchCursor: false,
     ...watcherCadence(false),
-    runningPollMs: 1
+    runningPollMs: 1,
   }
   const { lines } = await runWorker(init, (l) => l.filter((x) => x === 'H').length >= 3)
-  assert.deepEqual(lines.filter((l) => l.startsWith('V')), [], `a hit test ran:\n${lines.join('\n')}`)
+  assert.deepEqual(
+    lines.filter((l) => l.startsWith('V')),
+    [],
+    `a hit test ran:\n${lines.join('\n')}`,
+  )
 })
 
 test('A RETRACTED ZONE TAKES ITS ANSWER WITH IT', { skip: NOT_WINDOWS }, async () => {
@@ -348,7 +399,7 @@ test('A RETRACTED ZONE TAKES ITS ANSWER WITH IT', { skip: NOT_WINDOWS }, async (
     ...INIT,
     watchCursor: false,
     ...watcherCadence(false),
-    runningPollMs: 1
+    runningPollMs: 1,
   }
   let retracted = false
   const { lines } = await runWorker(
@@ -367,23 +418,38 @@ test('A RETRACTED ZONE TAKES ITS ANSWER WITH IT', { skip: NOT_WINDOWS }, async (
           retracted = true
           post(encodeHoverZones('fight', []))
         }
-      }
-    }
+      },
+    },
   )
   const fight = lines.filter((l) => l.startsWith('V|fight|'))
   // Either way the LAST word about this key is `0`: a visible pointer was inside and the retraction
   // withdrew it, a hidden one was never inside and said so. Main is never left holding a capture.
-  assert.equal(fight.at(-1), 'V|fight|0', `the retraction left an answer standing:\n${fight.join('\n')}`)
+  assert.equal(
+    fight.at(-1),
+    'V|fight|0',
+    `the retraction left an answer standing:\n${fight.join('\n')}`,
+  )
 })
 
-test('AN UNREADABLE INSTALL ROOT CHANGES NOTHING — the watcher still reports', {
-  skip: NOT_WINDOWS
-}, async () => {
-  // `eqRootPrefix('')` is what an app whose EverQuest directory could not be resolved passes, and
-  // it is the posture a fresh install has before onboarding. The running scan then falls back to
-  // the client's image NAME alone. It must still answer — an unresolvable root is a narrower
-  // question, not a broken watcher.
-  const { lines } = await runWorker({ ...INIT, eqRootWithSep: '' }, (l) => l.includes('H'))
-  assert.ok(lines.some((l) => l.startsWith('R|')), `the running scan reported; got:\n${lines.join('\n')}`)
-  assert.equal(lines.some((l) => l.startsWith('X|')), false, 'and nothing decided to stop')
-})
+test(
+  'AN UNREADABLE INSTALL ROOT CHANGES NOTHING — the watcher still reports',
+  {
+    skip: NOT_WINDOWS,
+  },
+  async () => {
+    // `eqRootPrefix('')` is what an app whose EverQuest directory could not be resolved passes, and
+    // it is the posture a fresh install has before onboarding. The running scan then falls back to
+    // the client's image NAME alone. It must still answer — an unresolvable root is a narrower
+    // question, not a broken watcher.
+    const { lines } = await runWorker({ ...INIT, eqRootWithSep: '' }, (l) => l.includes('H'))
+    assert.ok(
+      lines.some((l) => l.startsWith('R|')),
+      `the running scan reported; got:\n${lines.join('\n')}`,
+    )
+    assert.equal(
+      lines.some((l) => l.startsWith('X|')),
+      false,
+      'and nothing decided to stop',
+    )
+  },
+)

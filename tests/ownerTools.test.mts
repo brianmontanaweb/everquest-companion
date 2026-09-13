@@ -21,7 +21,7 @@ import {
   OWNER_TOOLS_ENV,
   ownerToolsEnabled,
   ownerToolsGranted,
-  ownerToolsOptIn
+  ownerToolsOptIn,
 } from '../src/shared/ownerTools'
 
 /** A dev run of a fresh checkout: not packaged, not the harness, nothing in the environment. */
@@ -49,7 +49,10 @@ test('the opt-in is exactly "1" — every other spelling is a NO', () => {
 })
 
 test('a near-miss variable name grants nothing', () => {
-  assert.equal(ownerToolsOptIn({ EQ_OWNER_TOOL: '1', EQ_OWNERTOOLS: '1', EQ_DEV_TOOLS: '1' }), false)
+  assert.equal(
+    ownerToolsOptIn({ EQ_OWNER_TOOL: '1', EQ_OWNERTOOLS: '1', EQ_DEV_TOOLS: '1' }),
+    false,
+  )
 })
 
 // ---- the two terms the opt-in can never override -------------------------------------------
@@ -84,7 +87,8 @@ test('DEV is still required — the renderer gate is DEV_TOOLS AND the bridge', 
   // devFlags.ts writes this as `DEV_TOOLS && ownerToolsGranted(…)`, with DEV_TOOLS on the LEFT
   // so a build folds the whole expression to `false` and rollup strips the branch. The
   // composition is what is pinned here; the folding is measured on the built bundle.
-  const gate = (devTools: boolean, bridge: unknown): boolean => devTools && ownerToolsGranted(bridge)
+  const gate = (devTools: boolean, bridge: unknown): boolean =>
+    devTools && ownerToolsGranted(bridge)
   assert.equal(gate(true, true), true)
   assert.equal(gate(true, undefined), false)
   assert.equal(gate(false, true), false)

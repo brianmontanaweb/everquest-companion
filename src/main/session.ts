@@ -20,7 +20,7 @@ import {
   refreshEqDiscoveryCheaply,
   resolveActiveCharacter,
   resolveEqDir,
-  tailSurvivesRootChange
+  tailSurvivesRootChange,
 } from './log/config'
 // THE SERVED ARM (JOS-496): `mirroredModuleState` answers the `/outputfile` baseline seam from the
 // engine when it is the world answering this app's reads, and `null` — no engine, not yet live, a
@@ -42,7 +42,7 @@ import {
   getEqInstallDir,
   getProgress,
   setActiveLogPath,
-  setInventory
+  setInventory,
 } from './store'
 // The achievements dump's write pair (JOS-429) — a split-out store accessor, same reason the tail
 // mark below is one: store.ts is at the factoring ceiling.
@@ -142,7 +142,7 @@ export function buildEqConfig(): EqConfig {
     characterCount: r.characterCount,
     readable: r.readable,
     readError: r.readError,
-    overridden: getEqInstallDir() !== undefined
+    overridden: getEqInstallDir() !== undefined,
   }
 }
 
@@ -263,7 +263,7 @@ function watchForFirstLog(): void {
       (err: unknown) => {
         logConsoleError('[everquest-companion] attach after rescan failed', err)
         watchForFirstLog() // it appeared and we fumbled it; keep looking
-      }
+      },
     )
   }, LOG_RESCAN_MS)
   rescanTimer.unref?.()
@@ -344,7 +344,7 @@ function watchForFirstLog(): void {
  */
 function preempted(ref: CharacterRef, turn: SwitchTurn): null {
   logInfo(
-    `[everquest-companion] Switch to ${ref.name}@${ref.server} (gen ${String(turn.gen)}) was preempted by a newer pick; its replay is discarded.`
+    `[everquest-companion] Switch to ${ref.name}@${ref.server} (gen ${String(turn.gen)}) was preempted by a newer pick; its replay is discarded.`,
   )
   return null
 }
@@ -463,8 +463,8 @@ function startInventoryWatch(ref: CharacterRef): void {
       onError: (err) => {
         logConsoleError('[everquest-companion] inventory watch error', err)
       },
-      active: () => character?.logPath === ref.logPath
-    }
+      active: () => character?.logPath === ref.logPath,
+    },
   )
 }
 
@@ -536,7 +536,7 @@ function loadInventoryNow(ref: CharacterRef, why: 'startup' | 'watch'): void {
     // does not re-arm the clicky classification until the engine next re-folds, where it used to
     // take effect on the tail's next line. Closing it needs a `clickies.define` command.
     logInfo(
-      `[everquest-companion] Inventory ${why === 'startup' ? 'loaded at startup' : 'auto-reloaded'}: ${res.path}`
+      `[everquest-companion] Inventory ${why === 'startup' ? 'loaded at startup' : 'auto-reloaded'}: ${res.path}`,
     )
     sendToMain(IPC.onInventoryReload, { path: res.path, loadedAt: res.loadedAt })
     sendToMain(IPC.onProgress, getProgress(activeCharId()))
@@ -566,7 +566,7 @@ function loadAchievementsNow(ref: CharacterRef, why: 'startup' | 'watch'): void 
     logInfo(
       `[everquest-companion] Achievements ${
         why === 'startup' ? 'loaded at startup' : 'auto-reloaded'
-      }: ${res.path} (${String(res.unlocks.length)} class-unlock rewards earned)`
+      }: ${res.path} (${String(res.unlocks.length)} class-unlock rewards earned)`,
     )
     sendToMain(IPC.onProgress, getProgress(activeCharId()))
   })
@@ -585,8 +585,8 @@ function startAchievementsWatch(ref: CharacterRef): void {
       onError: (err) => {
         logConsoleError('[everquest-companion] achievements watch error', err)
       },
-      active: () => character?.logPath === ref.logPath
-    }
+      active: () => character?.logPath === ref.logPath,
+    },
   )
 }
 
@@ -617,7 +617,6 @@ export async function startTailing(): Promise<boolean> {
 // offset at both orderly exits so the next launch could say how many of the bytes it read were
 // new since the last clean shutdown (JOS-57). The engine owns the tail and its own mark; an app
 // that wrote one would be stating a position it never held.
-
 
 /**
  * Release the session's OS resources (tail, watcher, heartbeat, rescan) on the way out — and leave

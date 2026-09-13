@@ -50,7 +50,9 @@ export function annotateDrop(drop: MobDrop): MobDrop {
   if (entry === undefined) return drop
   // `dropsFrom` is the page's `|dropsfrom` list; only the zone half is era evidence, and a zone
   // named by three of its mobs is one zone. Order is the page's, which no fold depends on.
-  const zones = [...new Set((entry.dropsFrom ?? []).flatMap((s) => (s.zone === undefined ? [] : [s.zone])))]
+  const zones = [
+    ...new Set((entry.dropsFrom ?? []).flatMap((s) => (s.zone === undefined ? [] : [s.zone]))),
+  ]
   if (entry.eraTag === undefined && zones.length === 0) return drop
   const out: MobDrop = { ...drop }
   if (entry.eraTag !== undefined) out.eraTag = entry.eraTag

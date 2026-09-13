@@ -46,7 +46,7 @@ import {
   isRateLimitedPackInstall,
   parseRetryAfterMs,
   planPackInstallRetry,
-  type PackInstallRetryPlan
+  type PackInstallRetryPlan,
 } from '../../shared/packInstall'
 import { scanVoiceIds } from './voicePack'
 import type { FileHandle } from 'node:fs/promises'
@@ -208,7 +208,7 @@ function refusedResponse(run: RunState, asset: PinnedAsset, res: Response): Erro
   const now = (run.opts.now ?? Date.now)()
   return Object.assign(new Error(`HTTP ${String(res.status)} for ${asset.name}`), {
     statusCode: res.status,
-    retryAfterMs: parseRetryAfterMs(res.headers.get('retry-after'), now)
+    retryAfterMs: parseRetryAfterMs(res.headers.get('retry-after'), now),
   })
 }
 
@@ -224,7 +224,7 @@ async function streamAsset(
   run: RunState,
   asset: PinnedAsset,
   from: number,
-  hash: ReturnType<typeof createHash>
+  hash: ReturnType<typeof createHash>,
 ): Promise<{ bytes: number; restarted: boolean }> {
   const doFetch = run.opts.fetchImpl ?? fetch
   const headers: Record<string, string> = { 'User-Agent': UA, Accept: 'application/octet-stream' }
@@ -249,7 +249,7 @@ async function streamAsset(
           phase: 'downloading',
           asset: asset.name,
           received: run.base + written,
-          total: run.total
+          total: run.total,
         })
       }
     }
@@ -294,7 +294,7 @@ async function finishAsset(
   run: RunState,
   asset: PinnedAsset,
   bytes: number,
-  digest: string
+  digest: string,
 ): Promise<void> {
   const dir = run.dir
   const partPath = join(dir, `${asset.name}.part`)
@@ -303,7 +303,7 @@ async function finishAsset(
     phase: 'verifying',
     asset: asset.name,
     received: run.base + bytes,
-    total: run.total
+    total: run.total,
   })
   if (bytes < asset.bytes) {
     // SHORT is the resumable case, and the `.part` is deliberately KEPT: a dropped connection
@@ -332,7 +332,9 @@ async function alreadyVerified(dir: string, asset: PinnedAsset): Promise<boolean
   const path = join(dir, asset.name)
   try {
     if ((await stat(path)).size !== asset.bytes) return false
-    const digest = createHash('sha256').update(await readFile(path)).digest('hex')
+    const digest = createHash('sha256')
+      .update(await readFile(path))
+      .digest('hex')
     return digest === asset.sha256
   } catch {
     return false
@@ -407,7 +409,7 @@ export function provisionKokoro(opts: ProvisionOptions): Promise<SpeechInstallRe
 async function downloadWithRetries(
   run: RunState,
   asset: PinnedAsset,
-  sleep: (ms: number) => Promise<void>
+  sleep: (ms: number) => Promise<void>,
 ): Promise<string | null> {
   let attempts = MAX_ATTEMPTS
   let waitedMs = 0
@@ -424,7 +426,7 @@ async function downloadWithRetries(
         asset: asset.name,
         received: run.base,
         total: run.total,
-        message: `the download host is busy; retrying in ${String(Math.round(plan.delayMs / 1_000))}s`
+        message: `the download host is busy; retrying in ${String(Math.round(plan.delayMs / 1_000))}s`,
       })
     }
     waitedMs += plan.delayMs
@@ -435,7 +437,7 @@ async function downloadWithRetries(
 /** One attempt: null when the asset landed, the failure boxed when it did not. */
 async function attemptOnce(
   run: RunState,
-  asset: PinnedAsset
+  asset: PinnedAsset,
 ): Promise<{ readonly err: unknown } | null> {
   try {
     await attemptAsset(run, asset)
@@ -451,15 +453,16 @@ function nextAssetAttempt(
   err: unknown,
   attempt: number,
   attempts: number,
-  waitedMs: number
+  waitedMs: number,
 ): PackInstallRetryPlan {
-  if (isRateLimitedPackInstall(err)) return planPackInstallRetry({ err, attempt, waitedMs, attempts })
+  if (isRateLimitedPackInstall(err))
+    return planPackInstallRetry({ err, attempt, waitedMs, attempts })
   const retry = attempt < attempts
   return {
     retry,
     delayMs: retry ? RETRY_BASE_MS * 2 ** (attempt - 1) : 0,
     attempts,
-    rateLimited: false
+    rateLimited: false,
   }
 }
 
@@ -476,7 +479,7 @@ function failed(run: RunState, message: string): SpeechInstallResult {
     phase: 'failed',
     received: run.base,
     total: run.total,
-    message
+    message,
   })
   return { ok: false, reason: 'engine-not-installed', message }
 }

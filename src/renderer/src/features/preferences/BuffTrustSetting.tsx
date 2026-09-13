@@ -23,7 +23,7 @@ import {
   MAX_CASTER_NAME_CHARS,
   MAX_EXTERNAL_CASTERS,
   removeExternalCaster,
-  type BuffTrustPrefs
+  type BuffTrustPrefs,
 } from '@shared/buffTrust'
 import { recordPref, usePrefsSeed } from './prefsHydration'
 import type { PrefSection } from './PreferencesView'
@@ -76,7 +76,9 @@ export function BuffTrustSetting(): JSX.Element {
           label="Character name"
           value={draft}
           disabled={full}
-          slotProps={{ htmlInput: { maxLength: MAX_CASTER_NAME_CHARS, 'data-testid': 'pref-buff-trust-input' } }}
+          slotProps={{
+            htmlInput: { maxLength: MAX_CASTER_NAME_CHARS, 'data-testid': 'pref-buff-trust-input' },
+          }}
           onChange={(e) => {
             setDraft(e.target.value)
           }}
@@ -84,13 +86,25 @@ export function BuffTrustSetting(): JSX.Element {
             if (e.key === 'Enter') add()
           }}
         />
-        <Button size="small" variant="outlined" disabled={full || !draft.trim()} onClick={add} data-testid="pref-buff-trust-add">
+        <Button
+          size="small"
+          variant="outlined"
+          disabled={full || !draft.trim()}
+          onClick={add}
+          data-testid="pref-buff-trust-add"
+        >
           Add
         </Button>
       </Stack>
 
       {prefs.externals.length > 0 && (
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap data-testid="pref-buff-trust-list">
+        <Stack
+          direction="row"
+          spacing={1}
+          flexWrap="wrap"
+          useFlexGap
+          data-testid="pref-buff-trust-list"
+        >
           {prefs.externals.map((name) => (
             <Chip
               key={name.toLowerCase()}
@@ -131,8 +145,8 @@ export function buffTrustSection(): PrefSection {
         label: 'Track other casters',
         keywords:
           'buff buffs debuff debuffs timer timers bar bars mez mesmerize charm slow snare root overlay other caster casters group party friend enchanter cleric shaman missing not showing hidden allow allowlist trust duration durations',
-        content: <BuffTrustSetting />
-      }
-    ]
+        content: <BuffTrustSetting />,
+      },
+    ],
   }
 }

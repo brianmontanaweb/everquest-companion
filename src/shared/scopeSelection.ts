@@ -80,7 +80,7 @@ export interface ScopeSelection {
  */
 export const SCOPE_SELECTION_OPENING: ScopeSelection = {
   zoneScope: ZONE_SCOPE_OPENING,
-  basis: RATE_BASIS_OPENING
+  basis: RATE_BASIS_OPENING,
 }
 
 /** The two selections agree, field for field. A no-op write must broadcast nothing (main) and

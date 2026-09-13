@@ -54,7 +54,7 @@ import {
   type FeedbackEnv,
   type InventoryDumpMeta,
   type LogSliceMeta,
-  type SubmitRequest
+  type SubmitRequest,
 } from '../src/shared/feedback'
 
 // ---------------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ import {
 const draft = (over: Partial<FeedbackDraft> = {}): unknown => ({
   type: 'bug',
   description: 'the meter shows zero dps after zoning',
-  ...over
+  ...over,
 })
 
 /** `n` characters of prose-shaped text (never whitespace — trim would eat it). */
@@ -75,7 +75,7 @@ test('validateDraft accepts the shape the dialog produces', () => {
   assert.equal(res.ok, true)
   assert.deepEqual(res.ok && res.value, {
     type: 'bug',
-    description: 'the meter shows zero dps after zoning'
+    description: 'the meter shows zero dps after zoning',
   })
 })
 
@@ -94,7 +94,10 @@ test('description length is bounded at both ends, measured AFTER trim', () => {
 
   // Padding is not content: a min-length description drowned in whitespace still fails, and
   // surrounding whitespace on a valid one is normalized away.
-  assert.equal(validateDraft(draft({ description: `   ${chars(MIN_DESCRIPTION - 1)}   ` })).ok, false)
+  assert.equal(
+    validateDraft(draft({ description: `   ${chars(MIN_DESCRIPTION - 1)}   ` })).ok,
+    false,
+  )
   const padded = validateDraft(draft({ description: `\n  ${chars(MIN_DESCRIPTION)}  \n` }))
   assert.equal(padded.ok && padded.value.description, chars(MIN_DESCRIPTION))
 })
@@ -152,7 +155,7 @@ test('description STRIPS control characters — normalization, exactly as trim i
     // what SURVIVES, because it is content
     { name: 'tab and newline', sent: `line one\n\tline two`, kept: 'line one\n\tline two' },
     { name: 'CRLF', sent: `line one\r\nline two`, kept: 'line one\nline two' },
-    { name: 'lone CR', sent: `line one\rline two`, kept: 'line one\nline two' }
+    { name: 'lone CR', sent: `line one\rline two`, kept: 'line one\nline two' },
   ]
   for (const { name, sent, kept } of table) {
     const res = validateDraft(draft({ description: sent }))
@@ -180,7 +183,10 @@ test('the length bound is measured on the text that will be STORED', () => {
   const ok = validateDraft(draft({ description: padded }))
   assert.equal(ok.ok, true)
   assert.equal(ok.ok && ok.value.description, chars(MAX_DESCRIPTION))
-  assert.equal(validateDraft(draft({ description: `${ESC}[31m${chars(MAX_DESCRIPTION + 1)}` })).ok, false)
+  assert.equal(
+    validateDraft(draft({ description: `${ESC}[31m${chars(MAX_DESCRIPTION + 1)}` })).ok,
+    false,
+  )
 })
 
 test('validateDraft rejects everything that is not one of the two types', () => {
@@ -209,7 +215,7 @@ const meta = (over: Partial<LogSliceMeta> = {}): unknown => ({
   fromMs: 1_754_000_000_000,
   toMs: 1_754_001_800_000,
   sha256: 'a'.repeat(64),
-  ...over
+  ...over,
 })
 
 test('log metadata is bounded exactly where the presign policy is', () => {
@@ -255,7 +261,7 @@ const invMeta = (over: Partial<InventoryDumpMeta> = {}): unknown => ({
   lines: 295,
   updatedAt: 1_754_000_000_000,
   sha256: 'b'.repeat(64),
-  ...over
+  ...over,
 })
 
 test('inventory metadata is bounded exactly where the presign policy is', () => {
@@ -286,7 +292,10 @@ test('the dump freshness stamp is a timestamp, and its digest is 64 hex', () => 
   assert.equal(negative.ok, false)
   assert.equal(!negative.ok && negative.field, 'inventory.updatedAt')
   assert.equal(validateInventoryMeta(invMeta({ updatedAt: 1.5 })).ok, false)
-  assert.equal(validateInventoryMeta(invMeta({ updatedAt: '2026-08-13' as unknown as number })).ok, false)
+  assert.equal(
+    validateInventoryMeta(invMeta({ updatedAt: '2026-08-13' as unknown as number })).ok,
+    false,
+  )
 
   for (const bad of ['b'.repeat(63), 'b'.repeat(65), `${'b'.repeat(63)}z`, '', 12]) {
     const res = validateInventoryMeta(invMeta({ sha256: bad as string }))
@@ -315,7 +324,7 @@ const env = (over: Partial<FeedbackEnv> = {}): unknown => ({
   electron: '33.2.0',
   chrome: '130.0.6723.44',
   node: '20.18.0',
-  ...over
+  ...over,
 })
 
 const UUID_A = '3f2504e0-4f89-41d3-9a0c-0305e82c3301'
@@ -330,7 +339,7 @@ const submit = (over: Record<string, unknown> = {}): unknown => ({
   clientTs: 1_754_000_000_000,
   log: meta(),
   inventory: invMeta(),
-  ...over
+  ...over,
 })
 
 test('validateSubmit accepts a real request, with and without an attachment', () => {
@@ -398,8 +407,8 @@ test('unknown fields are STILL dropped, dump or no dump — the validator constr
       contact: 'me@example.com',
       inventoryText: 'Location\tName\tID\tCount\tSlots',
       attachments: ['log', 'inventory'],
-      v: FEEDBACK_API_VERSION
-    })
+      v: FEEDBACK_API_VERSION,
+    }),
   )
   assert.equal(res.ok, true)
   const value = res.ok ? (res.value as unknown as Record<string, unknown>) : {}
@@ -415,7 +424,7 @@ test('unknown fields are STILL dropped, dump or no dump — the validator constr
     'installId',
     'inventory',
     'log',
-    'v'
+    'v',
   ])
 })
 
@@ -435,7 +444,7 @@ test('ids must be v4 uuids — they key the quota and the idempotency item', () 
       '3f2504e0-4f89-11d3-9a0c-0305e82c3301', // v1, not v4
       '3f2504e04f8941d39a0c0305e82c3301', // unhyphenated
       `${UUID_A} `,
-      42
+      42,
     ]) {
       const res = validateSubmit(submit({ [field]: bad }))
       assert.equal(res.ok, false, `${field}=${String(bad)} must be rejected`)
@@ -461,10 +470,7 @@ test('env is pinned to what the client can actually report', () => {
   assert.equal(!e2e.ok && e2e.field, 'env.channel')
   // updateChannel: exactly the store's two values
   assert.equal(validateSubmit(submit({ env: env({ updateChannel: 'stable' }) })).ok, true)
-  assert.equal(
-    validateSubmit(submit({ env: env({ updateChannel: 'beta' as 'main' }) })).ok,
-    false
-  )
+  assert.equal(validateSubmit(submit({ env: env({ updateChannel: 'beta' as 'main' }) })).ok, false)
   // free-form runtime strings: present and bounded
   const empty = validateSubmit(submit({ env: env({ arch: '' }) }))
   assert.equal(empty.ok, false)
@@ -472,7 +478,7 @@ test('env is pinned to what the client can actually report', () => {
   assert.equal(validateSubmit(submit({ env: env({ osRelease: chars(MAX_ENV_FIELD) }) })).ok, true)
   assert.equal(
     validateSubmit(submit({ env: env({ osRelease: chars(MAX_ENV_FIELD + 1) }) })).ok,
-    false
+    false,
   )
   assert.equal(validateSubmit(submit({ env: null })).ok, false)
 })
@@ -531,7 +537,7 @@ test('env.* REJECTS control characters — a runtime string cannot legitimately 
     `x6${ch(0x200b)}4`,
     `${ch(0x202e)}x64`,
     'multi\nline',
-    'tab\tseparated'
+    'tab\tseparated',
   ]
   for (const field of fields) {
     for (const bad of attacks) {
@@ -565,4 +571,3 @@ test('the regex-pinned fields need no separate rule — the shape already refuse
   assert.equal(validateSubmit(submit({ installId: `${UUID_A}\n` })).ok, false)
   assert.equal(validateLogMeta(meta({ sha256: `${'a'.repeat(64)}\n` })).ok, false)
 })
-

@@ -31,7 +31,7 @@
 import {
   PET_CLAIM_RE,
   isThirdPartyChat as sharedIsThirdPartyChat,
-  scrubKeep as sharedScrubKeep
+  scrubKeep as sharedScrubKeep,
 } from '../src/shared/logScrub.ts'
 
 export { PET_CLAIM_RE }
@@ -41,8 +41,7 @@ export { PET_CLAIM_RE }
 export const SELF_NAME = 'Primitive'
 
 /** True when the line is third-party chat/social and must be dropped from a committed fixture. */
-export const isThirdPartyChat = (line) =>
-  sharedIsThirdPartyChat(line, { selfName: SELF_NAME })
+export const isThirdPartyChat = (line) => sharedIsThirdPartyChat(line, { selfName: SELF_NAME })
 
 /** Convenience inverse — `lines.filter(scrubKeep)`. */
 export const scrubKeep = (line) => sharedScrubKeep(line, { selfName: SELF_NAME })

@@ -31,7 +31,7 @@ import {
   type BestSpellRow,
   type BestSpellSort,
   type BestSpellTab,
-  type BestSpellsView
+  type BestSpellsView,
 } from '../src/shared/bestSpells'
 import { comboClassesOf, type LevelUnlockData } from '../src/shared/levelUnlocks'
 import { buildLevelUnlocks } from '../src/main/data/levelUnlocks'
@@ -42,7 +42,7 @@ const slot = (candidates: ClassAbbr[]): ComboSlot => ({
   candidates,
   confidence: candidates.length === 1 ? 1 : 0.4,
   provenance: 'inferred',
-  because: []
+  because: [],
 })
 
 function interval(slots: ComboSlot[]): ComboInterval {
@@ -60,7 +60,7 @@ function interval(slots: ComboSlot[]): ComboInterval {
     levelLo: null,
     levelHi: null,
     evidenceCount: slots.length,
-    userLocked: false
+    userLocked: false,
   }
 }
 
@@ -90,7 +90,7 @@ const DATA: LevelUnlockData = {
       mana: 60,
       castTimeMs: 2000,
       durationMs: 30_000,
-      hpLines: ['Decrease Hitpoints by 20 per tick']
+      hpLines: ['Decrease Hitpoints by 20 per tick'],
     },
     {
       name: 'Slow Mend',
@@ -98,7 +98,7 @@ const DATA: LevelUnlockData = {
       mana: 30,
       castTimeMs: 2000,
       durationMs: 30_000,
-      hpLines: ['Increase Hitpoints by 15 per tick']
+      hpLines: ['Increase Hitpoints by 15 per tick'],
     },
     {
       // ONE SPELL, TWO SIDES THAT TICK DIFFERENTLY: an instant hit plus a heal over the duration.
@@ -108,28 +108,28 @@ const DATA: LevelUnlockData = {
       mana: 80,
       castTimeMs: 2000,
       durationMs: 30_000,
-      hpLines: ['Decrease Hitpoints by 60', 'Increase Hitpoints by 15 per tick']
+      hpLines: ['Decrease Hitpoints by 60', 'Increase Hitpoints by 15 per tick'],
     },
     {
       name: 'Ramp Bolt',
       at: [{ cls: 'WIZ', level: 18 }],
       mana: 100,
       castTimeMs: 3000,
-      hpLines: ['Decrease Hitpoints by 100 (L18) to 300 (L34)']
+      hpLines: ['Decrease Hitpoints by 100 (L18) to 300 (L34)'],
     },
     {
       name: 'Flat Bolt',
       at: [{ cls: 'WIZ', level: 20 }],
       mana: 50,
       castTimeMs: 1000,
-      hpLines: ['Decrease Hitpoints by 150']
+      hpLines: ['Decrease Hitpoints by 150'],
     },
     {
       name: 'Mend',
       at: [{ cls: 'CLR', level: 10 }],
       mana: 40,
       castTimeMs: 2000,
-      hpLines: ['Increase Hitpoints by 200']
+      hpLines: ['Increase Hitpoints by 200'],
     },
     {
       name: 'Kunark Mend',
@@ -137,7 +137,7 @@ const DATA: LevelUnlockData = {
       mana: 40,
       castTimeMs: 2000,
       outOfEra: true,
-      hpLines: ['Increase Hitpoints by 999']
+      hpLines: ['Increase Hitpoints by 999'],
     },
     { name: 'Gate', at: [{ cls: 'WIZ', level: 12 }], mana: 30 },
     {
@@ -145,10 +145,10 @@ const DATA: LevelUnlockData = {
       at: [{ cls: 'WIZ', level: 40 }],
       mana: 10,
       castTimeMs: 1000,
-      hpLines: ['Decrease Hitpoints by 900']
-    }
+      hpLines: ['Decrease Hitpoints by 900'],
+    },
   ],
-  skills: {}
+  skills: {},
 }
 
 /** The named row, which MUST be there — so an assertion reads about the row, not about a null. */
@@ -173,7 +173,11 @@ test('a RAMPED spell is read at the level being viewed, not at the level it was 
 test('the corpus is what the loadout OWNS: gained at or below the level, nothing later', () => {
   const wiz = comboOf(['WIZ'])
   const at35 = bestSpellsAt(DATA, wiz, 35, BOTH).tabs.dd.shown.map((r) => r.name)
-  assert.deepEqual(at35.includes('Later Bolt'), false, `L40 spell must not be owned at 35: ${at35.join(', ')}`)
+  assert.deepEqual(
+    at35.includes('Later Bolt'),
+    false,
+    `L40 spell must not be owned at 35: ${at35.join(', ')}`,
+  )
   const best40 = bestSpellsAt(DATA, wiz, 40, BOTH)
   assert.ok(best40.tabs.dd.shown.map((r) => r.name).includes('Later Bolt'))
   // A spell with no hitpoint line has no figures and therefore no row in any of the four.
@@ -187,21 +191,44 @@ test('the four tabs answer separately, and a class contributes only its own spel
   assert.deepEqual(wiz.tabs.hot.shown, [])
   const clr = bestSpellsAt(DATA, comboOf(['CLR']), 35, BOTH)
   assert.deepEqual(clr.tabs.dot.shown, [], 'this cleric owns no damage over time')
-  assert.deepEqual(clr.tabs.heal.shown.map((r) => r.name), ['Mend'])
+  assert.deepEqual(
+    clr.tabs.heal.shown.map((r) => r.name),
+    ['Mend'],
+  )
   // Both classes at once is the union, still one row per spell per tab.
   const both = bestSpellsAt(DATA, comboOf(['WIZ', 'CLR']), 35, BOTH)
-  assert.deepEqual(both.tabs.dd.shown.map((r) => r.name), ['Flat Bolt', 'Ramp Bolt', 'Splitting Word'])
-  assert.deepEqual(both.tabs.dot.shown.map((r) => r.name), ['Creeping Bolt'])
-  assert.deepEqual(both.tabs.heal.shown.map((r) => r.name), ['Mend'])
-  assert.deepEqual(both.tabs.hot.shown.map((r) => r.name), ['Slow Mend', 'Splitting Word'])
+  assert.deepEqual(
+    both.tabs.dd.shown.map((r) => r.name),
+    ['Flat Bolt', 'Ramp Bolt', 'Splitting Word'],
+  )
+  assert.deepEqual(
+    both.tabs.dot.shown.map((r) => r.name),
+    ['Creeping Bolt'],
+  )
+  assert.deepEqual(
+    both.tabs.heal.shown.map((r) => r.name),
+    ['Mend'],
+  )
+  assert.deepEqual(
+    both.tabs.hot.shown.map((r) => r.name),
+    ['Slow Mend', 'Splitting Word'],
+  )
 })
 
 test('the era verdict FOLDS the row, it never drops it - and silence is not a verdict', () => {
   const clr = bestSpellsAt(DATA, comboOf(['CLR']), 35, BOTH)
-  assert.deepEqual(clr.tabs.heal.shown.map((r) => r.name), ['Mend'])
-  assert.deepEqual(clr.tabs.heal.outOfEra.map((r) => r.name), ['Kunark Mend'])
+  assert.deepEqual(
+    clr.tabs.heal.shown.map((r) => r.name),
+    ['Mend'],
+  )
+  assert.deepEqual(
+    clr.tabs.heal.outOfEra.map((r) => r.name),
+    ['Kunark Mend'],
+  )
   // The folded row is the STRONGER one — proof the split is by verdict and not by ranking.
-  assert.ok((clr.tabs.heal.outOfEra[0].metrics.heal ?? 0) > (clr.tabs.heal.shown[0].metrics.heal ?? 0))
+  assert.ok(
+    (clr.tabs.heal.outOfEra[0].metrics.heal ?? 0) > (clr.tabs.heal.shown[0].metrics.heal ?? 0),
+  )
   // A spell the sidecar never answered for carries `false`, and stays shown.
   assert.equal(clr.tabs.heal.shown[0].outOfEra, false)
 })
@@ -227,8 +254,14 @@ test('a spell is placed by the OVER-TIME FLAG OF THE SIDE, not of the spell', ()
   assert.equal(dd.metrics.dot, undefined, 'the damage arrives at once')
   assert.equal(dd.metrics.hot, true)
   // …and it is in neither of the tabs those two flags rule out.
-  assert.equal(clr.tabs.dot.shown.some((r) => r.name === 'Splitting Word'), false)
-  assert.equal(clr.tabs.heal.shown.some((r) => r.name === 'Splitting Word'), false)
+  assert.equal(
+    clr.tabs.dot.shown.some((r) => r.name === 'Splitting Word'),
+    false,
+  )
+  assert.equal(
+    clr.tabs.heal.shown.some((r) => r.name === 'Splitting Word'),
+    false,
+  )
 })
 
 test('the four tabs PARTITION each side: a DoT is never in DD, a HoT never in Heal', () => {
@@ -236,9 +269,10 @@ test('the four tabs PARTITION each side: a DoT is never in DD, a HoT never in He
   const names = (tab: BestSpellTab): Set<string> => new Set(best.tabs[tab].shown.map((r) => r.name))
   for (const [a, b] of [
     ['dd', 'dot'],
-    ['heal', 'hot']
+    ['heal', 'hot'],
   ] as [BestSpellTab, BestSpellTab][]) {
-    for (const name of names(a)) assert.equal(names(b).has(name), false, `${name} is in ${a} and ${b}`)
+    for (const name of names(a))
+      assert.equal(names(b).has(name), false, `${name} is in ${a} and ${b}`)
   }
   // Every row on a side is in exactly one of that side's two tabs - nothing falls between them.
   const damageRows = best.tabs.dd.shown.length + best.tabs.dot.shown.length
@@ -252,11 +286,20 @@ test('the three damage tabs open on dps and the two healing tabs on hps', () => 
   // AOE (JOS-449) sits with the other damage tabs and last of the three, so the two single-target
   // answers stay adjacent. `tests/bestSpellsAoe.test.mts` is where the tab's own rules are pinned.
   assert.deepEqual([...TAB_ORDER], ['dd', 'dot', 'aoe', 'heal', 'hot'])
-  assert.deepEqual(TAB_ORDER.map((t) => TAB_LABEL[t]), ['DD', 'DoT', 'AOE', 'Heal', 'HoT'])
-  assert.deepEqual(TAB_ORDER.map((t) => defaultSort(t).column), ['dps', 'dps', 'dps', 'hps', 'hps'])
+  assert.deepEqual(
+    TAB_ORDER.map((t) => TAB_LABEL[t]),
+    ['DD', 'DoT', 'AOE', 'Heal', 'HoT'],
+  )
+  assert.deepEqual(
+    TAB_ORDER.map((t) => defaultSort(t).column),
+    ['dps', 'dps', 'dps', 'hps', 'hps'],
+  )
   for (const tab of TAB_ORDER) assert.equal(defaultSort(tab).desc, true)
   const sorts = defaultSorts()
-  assert.deepEqual(TAB_ORDER.map((t) => sorts[t]), TAB_ORDER.map((t) => defaultSort(t)))
+  assert.deepEqual(
+    TAB_ORDER.map((t) => sorts[t]),
+    TAB_ORDER.map((t) => defaultSort(t)),
+  )
 })
 
 test('a DoT ranks by its SUSTAINED dps, which is the whole reason it gets its own tab', () => {
@@ -268,7 +311,10 @@ test('a DoT ranks by its SUSTAINED dps, which is the whole reason it gets its ow
   assert.equal(rot.metrics.dot, true)
   assert.equal(rot.metrics.overSec, 30)
   assert.equal(rot.metrics.dps, 3.1)
-  assert.deepEqual(wiz.tabs.dd.shown.map((r) => r.name), ['Flat Bolt', 'Ramp Bolt'])
+  assert.deepEqual(
+    wiz.tabs.dd.shown.map((r) => r.name),
+    ['Flat Bolt', 'Ramp Bolt'],
+  )
 })
 
 // ---- the sort ------------------------------------------------------------------------------
@@ -276,7 +322,9 @@ test('a DoT ranks by its SUSTAINED dps, which is the whole reason it gets its ow
 test('every column ranks, and flipping the direction reverses it', () => {
   const wiz = comboOf(['WIZ'])
   const by = (sort: BestSpellSort): string[] =>
-    bestSpellsAt(DATA, wiz, 35, { sorts: { ...BOTH.sorts, dd: sort } }).tabs.dd.shown.map((r) => r.name)
+    bestSpellsAt(DATA, wiz, 35, { sorts: { ...BOTH.sorts, dd: sort } }).tabs.dd.shown.map(
+      (r) => r.name,
+    )
   // At 35 Ramp Bolt is 300 over a 3s cast (100 dps) and Flat Bolt 150 over 1s (150 dps), so the
   // headline and the total disagree — which is exactly what a sortable table is for.
   assert.deepEqual(by({ column: 'dps', desc: true }), ['Flat Bolt', 'Ramp Bolt'])
@@ -288,12 +336,32 @@ test('every column ranks, and flipping the direction reverses it', () => {
 
 test('an ABSENT figure sorts last in BOTH directions, and is never read as a zero', () => {
   const rows: BestSpellRow[] = [
-    { name: 'Has none', gainedAt: 1, classes: ['WIZ'], mana: null, metrics: { damage: 10 }, outOfEra: false },
-    { name: 'Has some', gainedAt: 1, classes: ['WIZ'], mana: 40, metrics: { damage: 10 }, outOfEra: false }
+    {
+      name: 'Has none',
+      gainedAt: 1,
+      classes: ['WIZ'],
+      mana: null,
+      metrics: { damage: 10 },
+      outOfEra: false,
+    },
+    {
+      name: 'Has some',
+      gainedAt: 1,
+      classes: ['WIZ'],
+      mana: 40,
+      metrics: { damage: 10 },
+      outOfEra: false,
+    },
   ]
   assert.equal(columnValue(rows[0], 'mana'), null)
-  assert.deepEqual(sortBestSpells(rows, { column: 'mana', desc: true }).map((r) => r.name), ['Has some', 'Has none'])
-  assert.deepEqual(sortBestSpells(rows, { column: 'mana', desc: false }).map((r) => r.name), ['Has some', 'Has none'])
+  assert.deepEqual(
+    sortBestSpells(rows, { column: 'mana', desc: true }).map((r) => r.name),
+    ['Has some', 'Has none'],
+  )
+  assert.deepEqual(
+    sortBestSpells(rows, { column: 'mana', desc: false }).map((r) => r.name),
+    ['Has some', 'Has none'],
+  )
 })
 
 test('the sort is TOTAL - a tie falls back to the name, so a re-rank cannot shuffle', () => {
@@ -303,12 +371,15 @@ test('the sort is TOTAL - a tie falls back to the name, so a re-rank cannot shuf
     classes: ['WIZ'],
     mana: 10,
     metrics: { damage: 10, dps: 5 },
-    outOfEra: false
+    outOfEra: false,
   })
   const rows = [tie('Zap'), tie('Arc'), tie('Mote')]
   const sorted = sortBestSpells(rows, { column: 'dps', desc: true }).map((r) => r.name)
   assert.deepEqual(sorted, ['Arc', 'Mote', 'Zap'])
-  assert.deepEqual(sortBestSpells(sorted.map(tie), { column: 'dps', desc: false }).map((r) => r.name), sorted)
+  assert.deepEqual(
+    sortBestSpells(sorted.map(tie), { column: 'dps', desc: false }).map((r) => r.name),
+    sorted,
+  )
 })
 
 test('each side offers the four columns that mean something for it, and mana in both', () => {
@@ -344,10 +415,23 @@ test('JOS-445 acceptance, now in the DD tab: a wizard at 35 finds Garrisons in t
   const wiz = comboOf(['WIZ'])
   const best = bestSpellsAt(REAL, wiz, 35, BOTH)
   const rows = best.tabs.dd.shown
-  assert.ok(rows.length >= 20, `a level-35 wizard should own plenty of damage spells: ${String(rows.length)}`)
-  assert.deepEqual(best.tabs.dot.shown, [], 'no wizard DoTs in this era, so the DD tab IS the damage side')
+  assert.ok(
+    rows.length >= 20,
+    `a level-35 wizard should own plenty of damage spells: ${String(rows.length)}`,
+  )
+  assert.deepEqual(
+    best.tabs.dot.shown,
+    [],
+    'no wizard DoTs in this era, so the DD tab IS the damage side',
+  )
   const rank = rows.findIndex((r) => r.name === "Garrison's Mighty Mana Shock") + 1
-  assert.ok(rank >= 1 && rank <= 3, `Garrisons ranks ${String(rank)}: ${rows.slice(0, 5).map((r) => r.name).join(' | ')}`)
+  assert.ok(
+    rank >= 1 && rank <= 3,
+    `Garrisons ranks ${String(rank)}: ${rows
+      .slice(0, 5)
+      .map((r) => r.name)
+      .join(' | ')}`,
+  )
   // And it is there BECAUSE the ramp was read at 35: the gain-level snapshot main computed is 272.
   const row = rowOf(rows, "Garrison's Mighty Mana Shock")
   assert.equal(row.gainedAt, 18)
@@ -382,7 +466,10 @@ test('a real cleric at 35 gets a healing table led by a real heal, ranked by hps
   for (let i = 1; i < rows.length; i++) {
     const prev = rows[i - 1].metrics.hps
     const cur = rows[i].metrics.hps
-    assert.ok(prev !== undefined && cur !== undefined && prev >= cur, `${rows[i - 1].name} then ${rows[i].name}`)
+    assert.ok(
+      prev !== undefined && cur !== undefined && prev >= cur,
+      `${rows[i - 1].name} then ${rows[i].name}`,
+    )
   }
 })
 
@@ -390,10 +477,14 @@ test('re-ranking on damage per mana answers a different question, and both answe
   const wiz = comboOf(['WIZ'])
   const byDps = bestSpellsAt(REAL, wiz, 35, BOTH).tabs.dd.shown
   const byEff = bestSpellsAt(REAL, wiz, 35, {
-    sorts: { ...BOTH.sorts, dd: { column: 'damagePerMana', desc: true } }
+    sorts: { ...BOTH.sorts, dd: { column: 'damagePerMana', desc: true } },
   }).tabs.dd.shown
   assert.equal(byDps.length, byEff.length)
-  assert.notEqual(byDps[0].name, byEff[0].name, 'the fastest nuke and the most mana-efficient one differ')
+  assert.notEqual(
+    byDps[0].name,
+    byEff[0].name,
+    'the fastest nuke and the most mana-efficient one differ',
+  )
   for (const row of byEff) assert.ok(row.metrics.damagePerMana !== undefined || row.mana === null)
 })
 

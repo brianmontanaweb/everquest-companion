@@ -32,7 +32,7 @@ import {
   hasDrawnLine,
   placeMarkers,
   type DpsChart,
-  type PlacedMarker
+  type PlacedMarker,
 } from './dpsChart'
 import { DpsCurveHoverLayer, type CurveHoverHandle } from './DpsCurveHoverLayer'
 import { MARKER_COLOR, MARKER_WORD } from './markerStyle'
@@ -60,7 +60,7 @@ const NOTHING_HIDDEN: readonly ChartLineKey[] = []
 function ChartHeaderStats({
   tl,
   series,
-  chart
+  chart,
 }: {
   tl: TimelineView | null
   series: DpsSeries | null
@@ -72,7 +72,9 @@ function ChartHeaderStats({
     <Stack direction="row" spacing={0.75} alignItems="baseline" sx={{ minWidth: 0 }}>
       {note && <ApproxChip shown={note.shown} raw={note.of} truncated={note.truncated} />}
       {chart.outLine !== null && (
-        <Tooltip title={`Peak ${Math.round(series.smoothMs / 1000)}s rolling outgoing rate in the visible window.`}>
+        <Tooltip
+          title={`Peak ${Math.round(series.smoothMs / 1000)}s rolling outgoing rate in the visible window.`}
+        >
           <Typography variant="caption" sx={{ color: OUT_COLOR, whiteSpace: 'nowrap' }}>
             {series.estimated ? '~' : ''}
             {formatRate(chart.peakVis)} peak
@@ -102,7 +104,7 @@ const LINE_STYLE: { key: DpsLineKey; color: string; width: number; opacity?: num
   // The group's own contribution is drawn like the pet's, for the same reason: the headline curve
   // is the sum, and this says how much of it was somebody else's.
   { key: 'group', color: GROUP_COLOR, width: 1.2, opacity: 0.85 },
-  { key: 'out', color: OUT_COLOR, width: 1.8 }
+  { key: 'out', color: OUT_COLOR, width: 1.8 },
 ]
 
 function CurveLines({ chart }: { chart: DpsChart }): React.JSX.Element {
@@ -110,7 +112,7 @@ function CurveLines({ chart }: { chart: DpsChart }): React.JSX.Element {
     out: chart.outLine,
     pet: chart.petLine,
     group: chart.groupLine,
-    inc: chart.incLine
+    inc: chart.incLine,
   }
   return (
     <>
@@ -129,7 +131,7 @@ function CurveLines({ chart }: { chart: DpsChart }): React.JSX.Element {
             vectorEffect="non-scaling-stroke"
             data-testid={`dps-line-${key}`}
           />
-        )
+        ),
       )}
     </>
   )
@@ -142,7 +144,7 @@ function DpsCurve({
   markers,
   startTs,
   a,
-  hidden
+  hidden,
 }: {
   chart: DpsChart
   series: DpsSeries
@@ -169,7 +171,11 @@ function DpsCurve({
   return (
     // flexShrink 0 on every strip: in a short grid cell the card body scrolls, it never
     // squashes the curve into an unreadable sliver.
-    <Box sx={{ position: 'relative', flexShrink: 0 }} onPointerMove={onHoverMove} onPointerLeave={onHoverLeave}>
+    <Box
+      sx={{ position: 'relative', flexShrink: 0 }}
+      onPointerMove={onHoverMove}
+      onPointerLeave={onHoverLeave}
+    >
       <svg
         viewBox={`0 0 ${CHART_W} ${CHART_H}`}
         width="100%"
@@ -184,7 +190,13 @@ function DpsCurve({
       </svg>
       <Typography
         variant="caption"
-        sx={{ position: 'absolute', top: 0, left: 2, color: 'text.disabled', pointerEvents: 'none' }}
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 2,
+          color: 'text.disabled',
+          pointerEvents: 'none',
+        }}
       >
         {a}
         {formatRate(chart.yMax)}
@@ -262,7 +274,7 @@ function ChartLegend({
   chart,
   markers,
   hidden,
-  onToggle
+  onToggle,
 }: {
   series: DpsSeries
   chart: DpsChart
@@ -272,7 +284,16 @@ function ChartLegend({
   onToggle: (k: ChartLineKey) => void
 }): React.JSX.Element {
   const entry = (k: ChartLineKey, color: string, label: string): React.JSX.Element => (
-    <Legend key={k} id={k} color={color} label={label} hidden={hidden.includes(k)} onToggle={() => { onToggle(k) }} />
+    <Legend
+      key={k}
+      id={k}
+      color={color}
+      label={label}
+      hidden={hidden.includes(k)}
+      onToggle={() => {
+        onToggle(k)
+      }}
+    />
   )
   return (
     <Stack
@@ -315,7 +336,7 @@ function Legend({
   color,
   label,
   hidden,
-  onToggle
+  onToggle,
 }: {
   /** the stored key, which is also the testid — the LABEL is copy and changes with the fight
    *  (`you + pet` gains `+ group`), so a testid built from it would name a moving target. */
@@ -347,7 +368,7 @@ function Legend({
               borderRadius: 1,
               bgcolor: hidden ? 'transparent' : color,
               border: hidden ? `1px solid ${color}` : undefined,
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
             }}
           />
           <Typography
@@ -402,7 +423,7 @@ export function DpsOverTime({
   compact,
   title = 'DPS over time',
   testId,
-  fill
+  fill,
 }: DpsOverTimeProps): React.JSX.Element {
   const [stored, toggle] = useHiddenChartLines()
   // The glance card has no legend, so it obeys no hidden set — see `compact`. NOTHING is a stable
@@ -415,7 +436,12 @@ export function DpsOverTime({
   const a = series?.estimated ? '~' : ''
 
   return (
-    <DashCard title={title} right={<ChartHeaderStats tl={tl} series={series} chart={chart} />} fill={fill} testId={testId}>
+    <DashCard
+      title={title}
+      right={<ChartHeaderStats tl={tl} series={series} chart={chart} />}
+      fill={fill}
+      testId={testId}
+    >
       {!tl ? (
         <QuietNote>{noRing}</QuietNote>
       ) : !chart || !series ? (
@@ -424,7 +450,14 @@ export function DpsOverTime({
         <>
           {hasDrawnLine(chart) ? (
             <>
-              <DpsCurve chart={chart} series={series} markers={drawn} startTs={tl.startTs} a={a} hidden={hidden} />
+              <DpsCurve
+                chart={chart}
+                series={series}
+                markers={drawn}
+                startTs={tl.startTs}
+                a={a}
+                hidden={hidden}
+              />
               <ChartAxis chart={chart} />
             </>
           ) : (
@@ -434,7 +467,13 @@ export function DpsOverTime({
             <QuietNote>Every line is hidden - pick one in the legend to draw it again.</QuietNote>
           )}
           {!compact && (
-            <ChartLegend series={series} chart={chart} markers={placed} hidden={hidden} onToggle={toggle} />
+            <ChartLegend
+              series={series}
+              chart={chart}
+              markers={placed}
+              hidden={hidden}
+              onToggle={toggle}
+            />
           )}
         </>
       )}

@@ -42,13 +42,13 @@ import {
   groupTargetsByIsland,
   skyTargets,
   type TargetsQuest,
-  type TargetsQuestItem
+  type TargetsQuestItem,
 } from '../src/renderer/src/features/posky/skyTargets'
 import {
   isSkyMob,
   islandNumber,
   skyDroppersFor,
-  type DropperMob
+  type DropperMob,
 } from '../src/renderer/src/features/posky/poskyDroppers'
 import type { MobEntry, PoskyQuest } from '../src/shared/types'
 import poskyRaw from '../src/renderer/src/data/eqlegends/posky.json' with { type: 'json' }
@@ -82,7 +82,7 @@ function item(p: {
     held: p.held ?? 0,
     droppers: p.droppers ?? [],
     where: p.where ?? 'Island 1',
-    who: p.who ?? []
+    who: p.who ?? [],
   }
 }
 
@@ -97,7 +97,7 @@ function quest(p: {
     className: p.className ?? 'Warrior',
     name: p.name,
     turnIns: p.turnIns ?? 0,
-    items: p.items
+    items: p.items,
   }
 }
 
@@ -113,8 +113,8 @@ function realQuest(q: PoskyQuest, turnIns = 0): TargetsQuest {
       held: 0,
       droppers: skyDroppersFor(it.name, it.who),
       where: it.where,
-      who: it.who
-    }))
+      who: it.who,
+    })),
   }
 }
 
@@ -123,7 +123,11 @@ function realQuest(q: PoskyQuest, turnIns = 0): TargetsQuest {
 // ---------------------------------------------------------------------------
 
 test('a quest turned in once contributes nothing (AE1)', () => {
-  const q = quest({ name: 'Test of Done', turnIns: 1, items: [item({ name: 'Sky Pearl', droppers: [mob('Gorgalosk')] })] })
+  const q = quest({
+    name: 'Test of Done',
+    turnIns: 1,
+    items: [item({ name: 'Sky Pearl', droppers: [mob('Gorgalosk')] })],
+  })
   const model = skyTargets([q])
   assert.equal(model.mobs.length, 0)
   assert.equal(model.randomDrop.length, 0)
@@ -133,7 +137,11 @@ test('a quest turned in once contributes nothing (AE1)', () => {
 test('a reward-inferred completion is excluded by the same predicate (AE2)', () => {
   // A completion inferred from a held reward would floor turnIns to 1; the fold reads the floored
   // count through `everTurnedIn` and needs no separate "inferred" input to know about.
-  const q = quest({ name: 'Test of Inferred', turnIns: 1, items: [item({ name: 'Sky Pearl', droppers: [mob('Gorgalosk')] })] })
+  const q = quest({
+    name: 'Test of Inferred',
+    turnIns: 1,
+    items: [item({ name: 'Sky Pearl', droppers: [mob('Gorgalosk')] })],
+  })
   assert.equal(skyTargets([q]).mobs.length, 0)
 })
 
@@ -142,24 +150,44 @@ test('a reward-inferred completion is excluded by the same predicate (AE2)', () 
 // ---------------------------------------------------------------------------
 
 test('firstTimeOnly OFF readmits a turned-in quest that still wants items', () => {
-  const q = quest({ name: 'Test of Refarm', turnIns: 2, items: [item({ name: 'Sky Pearl', droppers: [mob('Gorgalosk')] })] })
+  const q = quest({
+    name: 'Test of Refarm',
+    turnIns: 2,
+    items: [item({ name: 'Sky Pearl', droppers: [mob('Gorgalosk')] })],
+  })
   assert.equal(skyTargets([q]).mobs.length, 0, 'default ON is the never-turned-in reading')
   const wide = skyTargets([q], false)
   assert.equal(wide.mobs.length, 1)
   assert.equal(wide.mobs[0].items[0].shortfall, 1)
-  assert.deepEqual(wide.mobs[0].items[0].quests.map((x) => x.questName), ['Test of Refarm'])
+  assert.deepEqual(
+    wide.mobs[0].items[0].quests.map((x) => x.questName),
+    ['Test of Refarm'],
+  )
 })
 
 test('the toggle reaches MEMBERSHIP only - a refarm holding its items is still absent', () => {
   // The arithmetic under the wider need set is the identical fold: a quest whose holdings already
   // cover it contributes nothing whether or not it has ever been run.
-  const held = quest({ name: 'Test of Stocked', turnIns: 1, items: [item({ name: 'Sky Pearl', need: 2, held: 2, droppers: [mob('Gorgalosk')] })] })
+  const held = quest({
+    name: 'Test of Stocked',
+    turnIns: 1,
+    items: [item({ name: 'Sky Pearl', need: 2, held: 2, droppers: [mob('Gorgalosk')] })],
+  })
   assert.equal(skyTargets([held], false).mobs.length, 0)
 })
 
 test('with the box off, a run quest and a fresh one share one aggregate shortfall', () => {
-  const ran = quest({ className: 'Cleric', name: 'Test Ran', turnIns: 1, items: [item({ name: 'Sphinx Claw', held: 1, droppers: [mob('Sphinx')] })] })
-  const fresh = quest({ className: 'Rogue', name: 'Test Fresh', items: [item({ name: 'Sphinx Claw', held: 1, droppers: [mob('Sphinx')] })] })
+  const ran = quest({
+    className: 'Cleric',
+    name: 'Test Ran',
+    turnIns: 1,
+    items: [item({ name: 'Sphinx Claw', held: 1, droppers: [mob('Sphinx')] })],
+  })
+  const fresh = quest({
+    className: 'Rogue',
+    name: 'Test Fresh',
+    items: [item({ name: 'Sphinx Claw', held: 1, droppers: [mob('Sphinx')] })],
+  })
   const entry = skyTargets([ran, fresh], false).mobs[0].items[0]
   // Two quests want one each, one copy is held: one short, and both quests are named.
   assert.equal(entry.shortfall, 1)
@@ -167,7 +195,10 @@ test('with the box off, a run quest and a fresh one share one aggregate shortfal
 })
 
 test('a quest holding everything contributes nothing; an empty input is an empty model', () => {
-  const full = quest({ name: 'Test of Full', items: [item({ name: 'Sky Pearl', need: 2, held: 2, droppers: [mob('Gorgalosk')] })] })
+  const full = quest({
+    name: 'Test of Full',
+    items: [item({ name: 'Sky Pearl', need: 2, held: 2, droppers: [mob('Gorgalosk')] })],
+  })
   assert.equal(skyTargets([full]).mobs.length, 0)
   const empty = skyTargets([])
   assert.deepEqual([empty.mobs, empty.randomDrop, empty.unsourced], [[], [], []])
@@ -178,8 +209,16 @@ test('a quest holding everything contributes nothing; an empty input is an empty
 // ---------------------------------------------------------------------------
 
 test('two quests sharing one held copy still need one more — never vanishing (the R2 rule)', () => {
-  const a = quest({ className: 'Cleric', name: 'Test A', items: [item({ name: 'Sphinx Claw', held: 1, droppers: [mob('Sphinx')] })] })
-  const b = quest({ className: 'Rogue', name: 'Test B', items: [item({ name: 'Sphinx Claw', held: 1, droppers: [mob('Sphinx')] })] })
+  const a = quest({
+    className: 'Cleric',
+    name: 'Test A',
+    items: [item({ name: 'Sphinx Claw', held: 1, droppers: [mob('Sphinx')] })],
+  })
+  const b = quest({
+    className: 'Rogue',
+    name: 'Test B',
+    items: [item({ name: 'Sphinx Claw', held: 1, droppers: [mob('Sphinx')] })],
+  })
   const model = skyTargets([a, b])
   assert.equal(model.mobs.length, 1)
   const entry = model.mobs[0].items[0]
@@ -189,8 +228,16 @@ test('two quests sharing one held copy still need one more — never vanishing (
 })
 
 test('one item wanted by two quests is one mob entry naming both, with combined shortfall (AE4)', () => {
-  const a = quest({ className: 'Cleric', name: 'Test A', items: [item({ name: 'Sphinx Claw', droppers: [mob('Sphinx')] })] })
-  const b = quest({ className: 'Rogue', name: 'Test B', items: [item({ name: 'Sphinx Claw', droppers: [mob('Sphinx')] })] })
+  const a = quest({
+    className: 'Cleric',
+    name: 'Test A',
+    items: [item({ name: 'Sphinx Claw', droppers: [mob('Sphinx')] })],
+  })
+  const b = quest({
+    className: 'Rogue',
+    name: 'Test B',
+    items: [item({ name: 'Sphinx Claw', droppers: [mob('Sphinx')] })],
+  })
   const model = skyTargets([a, b])
   assert.equal(model.mobs.length, 1)
   assert.equal(model.mobs[0].mob.name, 'Sphinx')
@@ -200,8 +247,16 @@ test('one item wanted by two quests is one mob entry naming both, with combined 
 })
 
 test('a +N variant folds onto its base item by counting key', () => {
-  const a = quest({ className: 'Cleric', name: 'Test A', items: [item({ name: 'Sphinx Claw', droppers: [mob('Sphinx')] })] })
-  const b = quest({ className: 'Rogue', name: 'Test B', items: [item({ name: 'Sphinx Claw +1', droppers: [mob('Sphinx')] })] })
+  const a = quest({
+    className: 'Cleric',
+    name: 'Test A',
+    items: [item({ name: 'Sphinx Claw', droppers: [mob('Sphinx')] })],
+  })
+  const b = quest({
+    className: 'Rogue',
+    name: 'Test B',
+    items: [item({ name: 'Sphinx Claw +1', droppers: [mob('Sphinx')] })],
+  })
   const model = skyTargets([a, b])
   assert.equal(model.mobs.length, 1)
   assert.equal(model.mobs[0].items.length, 1)
@@ -209,17 +264,32 @@ test('a +N variant folds onto its base item by counting key', () => {
 })
 
 test('need > 1 with partial holdings reports the exact shortfall', () => {
-  const q = quest({ name: 'Test of Two', items: [item({ name: 'Sky Pearl', need: 2, held: 1, droppers: [mob('Gorgalosk')] })] })
+  const q = quest({
+    name: 'Test of Two',
+    items: [item({ name: 'Sky Pearl', need: 2, held: 1, droppers: [mob('Gorgalosk')] })],
+  })
   assert.equal(skyTargets([q]).mobs[0].items[0].shortfall, 1)
 })
 
 test('an item shared by a turned-in and a never-turned-in quest annotates only the latter', () => {
-  const done = quest({ className: 'Cleric', name: 'Test Done', turnIns: 1, items: [item({ name: 'Sphinx Claw', droppers: [mob('Sphinx')] })] })
-  const open = quest({ className: 'Rogue', name: 'Test Open', items: [item({ name: 'Sphinx Claw', droppers: [mob('Sphinx')] })] })
+  const done = quest({
+    className: 'Cleric',
+    name: 'Test Done',
+    turnIns: 1,
+    items: [item({ name: 'Sphinx Claw', droppers: [mob('Sphinx')] })],
+  })
+  const open = quest({
+    className: 'Rogue',
+    name: 'Test Open',
+    items: [item({ name: 'Sphinx Claw', droppers: [mob('Sphinx')] })],
+  })
   const model = skyTargets([done, open])
   const entry = model.mobs[0].items[0]
   assert.equal(entry.shortfall, 1)
-  assert.deepEqual(entry.quests.map((x) => x.questName), ['Test Open'])
+  assert.deepEqual(
+    entry.quests.map((x) => x.questName),
+    ['Test Open'],
+  )
 })
 
 // ---------------------------------------------------------------------------
@@ -228,10 +298,20 @@ test('an item shared by a turned-in and a never-turned-in quest annotates only t
 
 test('a missing Wind Rune lands in the collective entry and never on a mob (AE5, real data)', () => {
   const rune = QUESTS.flatMap((q) => q.items).find((it) =>
-    it.who.some((w) => w.toLowerCase().startsWith('random drop'))
+    it.who.some((w) => w.toLowerCase().startsWith('random drop')),
   )
   assert.ok(rune, 'the committed data states random-drop rows')
-  const q = quest({ name: 'Test of Wind', items: [item({ name: rune.name, where: rune.where, who: rune.who, droppers: skyDroppersFor(rune.name, rune.who) })] })
+  const q = quest({
+    name: 'Test of Wind',
+    items: [
+      item({
+        name: rune.name,
+        where: rune.where,
+        who: rune.who,
+        droppers: skyDroppersFor(rune.name, rune.who),
+      }),
+    ],
+  })
   const model = skyTargets([q])
   assert.equal(model.mobs.length, 0)
   assert.equal(model.randomDrop.length, 1)
@@ -246,7 +326,10 @@ test('a missing item with no known dropper lands in the no-known-source list (AE
   assert.ok(row, 'Large Sky Lapis is in the committed data')
   const droppers = skyDroppersFor(row.name, row.who)
   assert.equal(droppers.length, 0, 'still unresolved in the committed catalog')
-  const q = quest({ name: 'Test of Azarack', items: [item({ name: row.name, where: row.where, who: row.who, droppers })] })
+  const q = quest({
+    name: 'Test of Azarack',
+    items: [item({ name: row.name, where: row.where, who: row.who, droppers })],
+  })
   const model = skyTargets([q])
   assert.equal(model.mobs.length, 0)
   assert.equal(model.unsourced.length, 1)
@@ -254,7 +337,9 @@ test('a missing item with no known dropper lands in the no-known-source list (AE
 })
 
 test('a real never-turned-in quest yields real kill targets from the committed catalog', () => {
-  const source = QUESTS.find((q) => q.items.some((it) => skyDroppersFor(it.name, it.who).length > 0))
+  const source = QUESTS.find((q) =>
+    q.items.some((it) => skyDroppersFor(it.name, it.who).length > 0),
+  )
   assert.ok(source, 'the committed data resolves droppers for some quest')
   const model = skyTargets([realQuest(source)])
   assert.ok(model.mobs.length > 0)
@@ -276,21 +361,30 @@ test('mobs sort by distinct items covered desc, then name; the order is stable',
     items: [
       item({ name: 'Sky Pearl', droppers: [mob('Gorgalosk')] }),
       item({ name: 'Sky Sapphire', droppers: [mob('Gorgalosk')] }),
-      item({ name: 'Azarack Feather', droppers: [mob('Azarack')] })
-    ]
+      item({ name: 'Azarack Feather', droppers: [mob('Azarack')] }),
+    ],
   })
   const first = skyTargets([twoItems])
-  assert.deepEqual(first.mobs.map((t) => t.mob.name), ['Gorgalosk', 'Azarack'])
-  assert.deepEqual(first.mobs.map((t) => t.covers), [2, 1])
+  assert.deepEqual(
+    first.mobs.map((t) => t.mob.name),
+    ['Gorgalosk', 'Azarack'],
+  )
+  assert.deepEqual(
+    first.mobs.map((t) => t.covers),
+    [2, 1],
+  )
   // Ties break on name: two mobs each covering one item.
   const tied = quest({
     name: 'Test of Ties',
     items: [
       item({ name: 'Sky Pearl', droppers: [mob('Gorgalosk')] }),
-      item({ name: 'Azarack Feather', droppers: [mob('Azarack')] })
-    ]
+      item({ name: 'Azarack Feather', droppers: [mob('Azarack')] }),
+    ],
   })
-  assert.deepEqual(skyTargets([tied]).mobs.map((t) => t.mob.name), ['Azarack', 'Gorgalosk'])
+  assert.deepEqual(
+    skyTargets([tied]).mobs.map((t) => t.mob.name),
+    ['Azarack', 'Gorgalosk'],
+  )
 })
 
 test('items inside a card, and both special lists, read alphabetically', () => {
@@ -298,32 +392,45 @@ test('items inside a card, and both special lists, read alphabetically', () => {
     name: 'Test of Order',
     items: [
       item({ name: 'Sky Sapphire', droppers: [mob('Gorgalosk')] }),
-      item({ name: 'Azarack Feather', droppers: [mob('Gorgalosk')] })
-    ]
+      item({ name: 'Azarack Feather', droppers: [mob('Gorgalosk')] }),
+    ],
   })
-  assert.deepEqual(skyTargets([q]).mobs[0].items.map((i) => i.name), ['Azarack Feather', 'Sky Sapphire'])
+  assert.deepEqual(
+    skyTargets([q]).mobs[0].items.map((i) => i.name),
+    ['Azarack Feather', 'Sky Sapphire'],
+  )
 })
 
 test('a random-drop statement from ANY quest classifies the item - never fold-order-dependent', () => {
   // Quest A states nothing for the item; quest B states the random-drop sentinel. The section
   // assignment must be the same whichever quest folds first: one quest saying "random drop" is
   // the scrape speaking, and first-seen-wins would make the pane depend on iteration order.
-  const silent = quest({ className: 'Cleric', name: 'Test Silent', items: [item({ name: 'Wind Rune Ozah', who: [] })] })
+  const silent = quest({
+    className: 'Cleric',
+    name: 'Test Silent',
+    items: [item({ name: 'Wind Rune Ozah', who: [] })],
+  })
   const stated = quest({
     className: 'Rogue',
     name: 'Test Stated',
-    items: [item({ name: 'Wind Rune Ozah', who: ['random drop — any Plane of Sky mob'] })]
+    items: [item({ name: 'Wind Rune Ozah', who: ['random drop — any Plane of Sky mob'] })],
   })
-  for (const order of [[silent, stated], [stated, silent]]) {
+  for (const order of [
+    [silent, stated],
+    [stated, silent],
+  ]) {
     const model = skyTargets(order)
     assert.equal(model.randomDrop.length, 1, 'collective entry regardless of fold order')
     assert.equal(model.unsourced.length, 0)
   }
 })
 
-test('a mob listed on two of one item\'s droppers counts that item once', () => {
+test("a mob listed on two of one item's droppers counts that item once", () => {
   const dup = mob('Gorgalosk')
-  const q = quest({ name: 'Test of Dupes', items: [item({ name: 'Sky Pearl', droppers: [dup, dup] })] })
+  const q = quest({
+    name: 'Test of Dupes',
+    items: [item({ name: 'Sky Pearl', droppers: [dup, dup] })],
+  })
   assert.equal(skyTargets([q]).mobs[0].covers, 1)
 })
 
@@ -332,8 +439,8 @@ test('islands ride per mob from the items it is the target for', () => {
     name: 'Test of Where',
     items: [
       item({ name: 'Sky Pearl', where: 'Island 3', droppers: [mob('Gorgalosk')] }),
-      item({ name: 'Sky Sapphire', where: 'Island 5', droppers: [mob('Gorgalosk')] })
-    ]
+      item({ name: 'Sky Sapphire', where: 'Island 5', droppers: [mob('Gorgalosk')] }),
+    ],
   })
   assert.deepEqual(skyTargets([q]).mobs[0].islands, ['Island 3', 'Island 5'])
 })
@@ -347,9 +454,7 @@ test('islands ride per mob from the items it is the target for', () => {
 function walk(rows: [name: string, where: string, mobName: string][]): TargetsQuest {
   return quest({
     name: 'Test of Walk',
-    items: rows.map(([name, where, mobName]) =>
-      item({ name, where, droppers: [mob(mobName)] })
-    )
+    items: rows.map(([name, where, mobName]) => item({ name, where, droppers: [mob(mobName)] })),
   })
 }
 
@@ -362,22 +467,35 @@ test('ISLAND ASCENDING IS THE PRIMARY ORDER - it outranks how much a mob covers'
     items: [
       item({ name: 'Sky Pearl', where: 'Island 5', droppers: [mob('Sirran')] }),
       item({ name: 'Sky Sapphire', where: 'Island 5', droppers: [mob('Sirran')] }),
-      item({ name: 'Azarack Feather', where: 'Island 2', droppers: [mob('Azarack')] })
-    ]
+      item({ name: 'Azarack Feather', where: 'Island 2', droppers: [mob('Azarack')] }),
+    ],
   })
   const mobs = skyTargets([q]).mobs
-  assert.deepEqual(mobs.map((t) => t.mob.name), ['Azarack', 'Sirran'])
-  assert.deepEqual(mobs.map((t) => t.island), ['Island 2', 'Island 5'])
-  assert.deepEqual(mobs.map((t) => t.covers), [1, 2], 'the counted order lost, on purpose')
+  assert.deepEqual(
+    mobs.map((t) => t.mob.name),
+    ['Azarack', 'Sirran'],
+  )
+  assert.deepEqual(
+    mobs.map((t) => t.island),
+    ['Island 2', 'Island 5'],
+  )
+  assert.deepEqual(
+    mobs.map((t) => t.covers),
+    [1, 2],
+    'the counted order lost, on purpose',
+  )
 })
 
 test('islands order by NUMBER, never as strings - 9 comes before 10', () => {
   const q = walk([
     ['Sky Pearl', 'Island 10', 'Tenner'],
     ['Sky Sapphire', 'Island 9', 'Niner'],
-    ['Sky Ruby', 'Island 2', 'Twoser']
+    ['Sky Ruby', 'Island 2', 'Twoser'],
   ])
-  assert.deepEqual(skyTargets([q]).mobs.map((t) => t.mob.name), ['Twoser', 'Niner', 'Tenner'])
+  assert.deepEqual(
+    skyTargets([q]).mobs.map((t) => t.mob.name),
+    ['Twoser', 'Niner', 'Tenner'],
+  )
 })
 
 test('inside ONE island the counted order is exactly what it was - covers desc, then name', () => {
@@ -388,12 +506,18 @@ test('inside ONE island the counted order is exactly what it was - covers desc, 
       item({ name: 'Sky Sapphire', where: 'Island 3', droppers: [mob('Gorgalosk')] }),
       // Two one-item mobs: the tie breaks on name, not on fold order (Zephyr folds first).
       item({ name: 'Sky Ruby', where: 'Island 3', droppers: [mob('Zephyr')] }),
-      item({ name: 'Sky Topaz', where: 'Island 3', droppers: [mob('Azarack')] })
-    ]
+      item({ name: 'Sky Topaz', where: 'Island 3', droppers: [mob('Azarack')] }),
+    ],
   })
   const mobs = skyTargets([q]).mobs
-  assert.deepEqual(mobs.map((t) => t.mob.name), ['Gorgalosk', 'Azarack', 'Zephyr'])
-  assert.deepEqual(mobs.map((t) => t.island), ['Island 3', 'Island 3', 'Island 3'])
+  assert.deepEqual(
+    mobs.map((t) => t.mob.name),
+    ['Gorgalosk', 'Azarack', 'Zephyr'],
+  )
+  assert.deepEqual(
+    mobs.map((t) => t.island),
+    ['Island 3', 'Island 3', 'Island 3'],
+  )
 })
 
 test('A MOB THE DATA PLACES NOWHERE SORTS LAST, whatever it covers - never a guessed island', () => {
@@ -405,12 +529,18 @@ test('A MOB THE DATA PLACES NOWHERE SORTS LAST, whatever it covers - never a gue
       item({ name: 'Sky Pearl', where: '', droppers: [mob('Noble Dojorn')] }),
       item({ name: 'Sky Sapphire', where: '', droppers: [mob('Noble Dojorn')] }),
       item({ name: 'Sky Ruby', where: '', droppers: [mob('Noble Dojorn')] }),
-      item({ name: 'Azarack Feather', where: 'Island 8', droppers: [mob('Azarack')] })
-    ]
+      item({ name: 'Azarack Feather', where: 'Island 8', droppers: [mob('Azarack')] }),
+    ],
   })
   const mobs = skyTargets([q]).mobs
-  assert.deepEqual(mobs.map((t) => t.mob.name), ['Azarack', 'Noble Dojorn'])
-  assert.deepEqual(mobs.map((t) => t.island), ['Island 8', null])
+  assert.deepEqual(
+    mobs.map((t) => t.mob.name),
+    ['Azarack', 'Noble Dojorn'],
+  )
+  assert.deepEqual(
+    mobs.map((t) => t.island),
+    ['Island 8', null],
+  )
   assert.deepEqual(mobs.at(-1)?.islands, [], 'nothing invented to fill the gap')
 })
 
@@ -419,10 +549,13 @@ test('"Plane of Sky" is not an island - a wind-rune `where` leaves the mob unpla
   // unplaced, exactly like an empty `where`, rather than being dressed up as some island.
   const q = walk([
     ['Sky Pearl', 'Plane of Sky', 'Anywhere Mob'],
-    ['Azarack Feather', 'Island 4', 'Azarack']
+    ['Azarack Feather', 'Island 4', 'Azarack'],
   ])
   const mobs = skyTargets([q]).mobs
-  assert.deepEqual(mobs.map((t) => t.mob.name), ['Azarack', 'Anywhere Mob'])
+  assert.deepEqual(
+    mobs.map((t) => t.mob.name),
+    ['Azarack', 'Anywhere Mob'],
+  )
   assert.equal(mobs.at(-1)?.island, null)
 })
 
@@ -434,11 +567,14 @@ test('a mob spanning two islands sorts by the LOWEST - where the walk meets it f
       item({ name: 'Sky Sapphire', where: 'Island 7', droppers: [mob('Wanderer')] }),
       // On island 5: after the wanderer's 3, before its 7 - so the lowest, not the highest, and
       // not the average, is what the sort reads.
-      item({ name: 'Azarack Feather', where: 'Island 5', droppers: [mob('Azarack')] })
-    ]
+      item({ name: 'Azarack Feather', where: 'Island 5', droppers: [mob('Azarack')] }),
+    ],
   })
   const mobs = skyTargets([q]).mobs
-  assert.deepEqual(mobs.map((t) => t.mob.name), ['Wanderer', 'Azarack'])
+  assert.deepEqual(
+    mobs.map((t) => t.mob.name),
+    ['Wanderer', 'Azarack'],
+  )
   assert.deepEqual(mobs[0].islands, ['Island 3', 'Island 7'], 'the card still states both')
   assert.equal(mobs[0].island, 'Island 3')
 })
@@ -446,10 +582,22 @@ test('a mob spanning two islands sorts by the LOWEST - where the walk meets it f
 test('THE ISLAND IS DERIVED FROM `where`, so a correction to the data moves the card', () => {
   // The JOS-415 shape, as a fold: nothing in the module knows this mob's island, so restating the
   // scrape's `where` is the whole change. A hard-coded mob->island table could not pass this.
-  const before = walk([['Sky Pearl', 'Island 7', 'Protector'], ['Azarack Feather', 'Island 4', 'Azarack']])
-  assert.deepEqual(skyTargets([before]).mobs.map((t) => t.mob.name), ['Azarack', 'Protector'])
-  const after = walk([['Sky Pearl', 'Island 2', 'Protector'], ['Azarack Feather', 'Island 4', 'Azarack']])
-  assert.deepEqual(skyTargets([after]).mobs.map((t) => t.mob.name), ['Protector', 'Azarack'])
+  const before = walk([
+    ['Sky Pearl', 'Island 7', 'Protector'],
+    ['Azarack Feather', 'Island 4', 'Azarack'],
+  ])
+  assert.deepEqual(
+    skyTargets([before]).mobs.map((t) => t.mob.name),
+    ['Azarack', 'Protector'],
+  )
+  const after = walk([
+    ['Sky Pearl', 'Island 2', 'Protector'],
+    ['Azarack Feather', 'Island 4', 'Azarack'],
+  ])
+  assert.deepEqual(
+    skyTargets([after]).mobs.map((t) => t.mob.name),
+    ['Protector', 'Azarack'],
+  )
 })
 
 // ---------------------------------------------------------------------------
@@ -463,19 +611,24 @@ test('grouping cuts the sorted list into one group per island, unstated last', (
       item({ name: 'Sky Pearl', where: 'Island 5', droppers: [mob('Spiroc')] }),
       item({ name: 'Sky Sapphire', where: 'Island 3', droppers: [mob('Gorgalosk')] }),
       item({ name: 'Sky Ruby', where: 'Island 3', droppers: [mob('Azarack')] }),
-      item({ name: 'Sky Topaz', where: '', droppers: [mob('Dojorn')] })
-    ]
+      item({ name: 'Sky Topaz', where: '', droppers: [mob('Dojorn')] }),
+    ],
   })
   const model = skyTargets([q])
   const groups = groupTargetsByIsland(model.mobs)
-  assert.deepEqual(groups.map((g) => g.island), ['Island 3', 'Island 5', null])
-  assert.deepEqual(groups.map((g) => g.mobs.map((t) => t.mob.name)), [
-    ['Azarack', 'Gorgalosk'],
-    ['Spiroc'],
-    ['Dojorn']
-  ])
+  assert.deepEqual(
+    groups.map((g) => g.island),
+    ['Island 3', 'Island 5', null],
+  )
+  assert.deepEqual(
+    groups.map((g) => g.mobs.map((t) => t.mob.name)),
+    [['Azarack', 'Gorgalosk'], ['Spiroc'], ['Dojorn']],
+  )
   // The grouping is a re-cut of the SAME array, never a second opinion about order.
-  assert.deepEqual(groups.flatMap((g) => g.mobs), model.mobs)
+  assert.deepEqual(
+    groups.flatMap((g) => g.mobs),
+    model.mobs,
+  )
   assert.deepEqual(groupTargetsByIsland([]), [])
 })
 
@@ -486,16 +639,24 @@ test('grouping cuts the sorted list into one group per island, unstated last', (
 test('over every committed quest, the cards read island-ascending with the unplaced last', () => {
   const model = skyTargets(QUESTS.map((q) => realQuest(q)))
   assert.ok(model.mobs.length > 0, 'the committed data yields kill targets')
-  const ranks = model.mobs.map((t) => (t.island === null ? Number.POSITIVE_INFINITY : islandNumber(t.island)))
+  const ranks = model.mobs.map((t) =>
+    t.island === null ? Number.POSITIVE_INFINITY : islandNumber(t.island),
+  )
   for (let i = 1; i < ranks.length; i += 1) {
-    assert.ok(ranks[i - 1] <= ranks[i], `card ${String(i)} walks backwards: ${JSON.stringify(model.mobs.map((t) => t.island))}`)
+    assert.ok(
+      ranks[i - 1] <= ranks[i],
+      `card ${String(i)} walks backwards: ${JSON.stringify(model.mobs.map((t) => t.island))}`,
+    )
   }
   // Both halves of the rule are actually exercised by today's data - a suite where every card had
   // an island would pin the unstated rule vacuously. Stated as floors, so the data can grow.
   const placed = model.mobs.filter((t) => t.island !== null)
   const unplaced = model.mobs.filter((t) => t.island === null)
   assert.ok(placed.length > 0, 'the committed data places some kill targets on islands')
-  assert.ok(unplaced.length > 0, 'and states no island for others - the honest-heading case is real')
+  assert.ok(
+    unplaced.length > 0,
+    'and states no island for others - the honest-heading case is real',
+  )
   // Every stated island is one posky actually wrote, and every card's own list agrees with its key.
   for (const t of model.mobs) {
     assert.equal(t.island, t.islands[0] ?? null)
@@ -511,21 +672,38 @@ test('two quests resolving DIFFERENT droppers for one item yield both cards, eit
   // `skyDroppersFor` reads each row's own `who` as its layer 1, so two quests wanting the same
   // counting key are not guaranteed to hand back the same list. First-wins would make the card
   // set depend on which quest folded first; the union does not.
-  const a = quest({ className: 'Cleric', name: 'Test A', items: [item({ name: 'Sphinx Claw', droppers: [mob('Sphinx')] })] })
-  const b = quest({ className: 'Rogue', name: 'Test B', items: [item({ name: 'Sphinx Claw', droppers: [mob('Gorgalosk')] })] })
-  for (const order of [[a, b], [b, a]]) {
+  const a = quest({
+    className: 'Cleric',
+    name: 'Test A',
+    items: [item({ name: 'Sphinx Claw', droppers: [mob('Sphinx')] })],
+  })
+  const b = quest({
+    className: 'Rogue',
+    name: 'Test B',
+    items: [item({ name: 'Sphinx Claw', droppers: [mob('Gorgalosk')] })],
+  })
+  for (const order of [
+    [a, b],
+    [b, a],
+  ]) {
     const model = skyTargets(order)
     assert.deepEqual(
       model.mobs.map((t) => t.mob.name).sort(),
       ['Gorgalosk', 'Sphinx'],
-      'both stated droppers survive the fold'
+      'both stated droppers survive the fold',
     )
     // ONE aggregate, two cards pointing at it: two quests wanting one each is a shortfall of 2,
     // and both cards report that same number rather than a per-mob slice of it.
-    assert.deepEqual(model.mobs.map((t) => t.items[0].shortfall), [2, 2])
+    assert.deepEqual(
+      model.mobs.map((t) => t.items[0].shortfall),
+      [2, 2],
+    )
     assert.deepEqual(
       model.mobs.map((t) => t.items[0].quests.map((x) => x.questName).sort()),
-      [['Test A', 'Test B'], ['Test A', 'Test B']]
+      [
+        ['Test A', 'Test B'],
+        ['Test A', 'Test B'],
+      ],
     )
   }
 })
@@ -544,9 +722,17 @@ test('THE ERA/VARIANT MEASUREMENT: page identity is name identity in the Sky cat
     byName.set(m.name.toLowerCase(), set)
   }
   const shared = [...byName.entries()].filter(([, pages]) => pages.size > 1)
-  assert.deepEqual(shared.map(([n]) => n), [], 'no Sky mob name spans two catalog pages')
+  assert.deepEqual(
+    shared.map(([n]) => n),
+    [],
+    'no Sky mob name spans two catalog pages',
+  )
   // And there is no era annotation on a mob row at all to key a variant off (the `eraTag` the item
   // DB carries has no counterpart in MobEntry) — so nothing is being dropped by not reading one.
   const withEra = sky.filter((m) => 'eraTag' in m)
-  assert.deepEqual(withEra.map((m) => m.page), [], 'MobEntry carries no era tag to honour')
+  assert.deepEqual(
+    withEra.map((m) => m.page),
+    [],
+    'MobEntry carries no era tag to honour',
+  )
 })

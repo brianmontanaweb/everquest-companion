@@ -9,7 +9,12 @@
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { laneAt, pickEventInLane, pickMarker, pickSpanAt } from '../src/renderer/src/features/combat/timelineHitTest'
+import {
+  laneAt,
+  pickEventInLane,
+  pickMarker,
+  pickSpanAt,
+} from '../src/renderer/src/features/combat/timelineHitTest'
 import { dpsAt, rollingNote } from '../src/renderer/src/features/combat/dpsAt'
 import { rafThrottle } from '../src/renderer/src/lib/rafThrottle'
 import type { DpsSeries } from '../src/renderer/src/features/combat/dashboardData'
@@ -25,7 +30,7 @@ const EVENTS: TimelineEvent[] = [
   ev(500, 'Backstab'),
   ev(1000, 'Melee'),
   ev(1200, 'Melee', { outcome: 'miss', amount: 0, detail: 'parry' }),
-  ev(5000, 'Melee')
+  ev(5000, 'Melee'),
 ]
 
 test('pickEventInLane takes the nearest tick IN THAT LANE, and nothing outside the tolerance', () => {
@@ -55,7 +60,10 @@ test('the tie-break is pinned: landed beats avoided, then the larger amount, the
   const tie = [ev(900, 'Melee', { outcome: 'miss', amount: 0 }), ev(1100, 'Melee')]
   assert.equal(pickEventInLane(tie, 'Melee', 1000, 200)?.item.outcome, undefined)
   // 'hit' is spelled out the same as an absent outcome.
-  const tieHit = [ev(900, 'Melee', { outcome: 'resist', amount: 0 }), ev(1100, 'Melee', { outcome: 'hit' })]
+  const tieHit = [
+    ev(900, 'Melee', { outcome: 'resist', amount: 0 }),
+    ev(1100, 'Melee', { outcome: 'hit' }),
+  ]
   assert.equal(pickEventInLane(tieHit, 'Melee', 1000, 200)?.item.t, 1100)
   // Both landed at the same distance ⇒ the bigger hit is the one being asked about.
   const amounts = [ev(900, 'Melee', { amount: 40 }), ev(1100, 'Melee', { amount: 900 })]
@@ -72,7 +80,7 @@ test('pickMarker is lane-independent, tolerance-bounded, and ties to the earlier
   const marks: TimelineMarker[] = [
     { t: 1000, kind: 'coat', label: 'Neurotoxic' },
     { t: 1400, kind: 'slow', label: 'a zol ghoul knight' },
-    { t: 9000, kind: 'stance', label: 'Berserker' }
+    { t: 9000, kind: 'stance', label: 'Berserker' },
   ]
   assert.equal(pickMarker(marks, 1050, 200)?.item.kind, 'coat')
   assert.equal(pickMarker(marks, 1300, 200)?.item.kind, 'slow')
@@ -80,7 +88,7 @@ test('pickMarker is lane-independent, tolerance-bounded, and ties to the earlier
   assert.equal(pickMarker([], 0, 200), null)
   const tie: TimelineMarker[] = [
     { t: 900, kind: 'coat', label: 'a' },
-    { t: 1100, kind: 'coat', label: 'b' }
+    { t: 1100, kind: 'coat', label: 'b' },
   ]
   assert.equal(pickMarker(tie, 1000, 200)?.index, 0)
 })
@@ -98,7 +106,7 @@ test('pickSpanAt covers a range — inside is a hit, the gaps and the other grou
   const spans: StanceSpan[] = [
     { group: 'stance', name: 'Berserker', start: 0, end: 2000 },
     { group: 'stance', name: 'Precision', start: 3000, end: 4000 },
-    { group: 'invocation', name: 'Vigor', start: 0, end: 4000 }
+    { group: 'invocation', name: 'Vigor', start: 0, end: 4000 },
   ]
   assert.equal(pickSpanAt(spans, 'stance', 1500)?.name, 'Berserker')
   assert.equal(pickSpanAt(spans, 'stance', 2000)?.name, 'Berserker', 'the end is inclusive')
@@ -125,7 +133,7 @@ function series(over: Partial<DpsSeries> = {}): DpsSeries {
     hasAny: true,
     durationMs: 4000,
     estimated: false,
-    ...over
+    ...over,
   }
 }
 
@@ -184,7 +192,7 @@ function stubFrames(): { flush: () => void; pending: () => number; cancelled: nu
       run.forEach((cb) => cb())
     },
     pending: () => cbs.size,
-    cancelled
+    cancelled,
   }
 }
 

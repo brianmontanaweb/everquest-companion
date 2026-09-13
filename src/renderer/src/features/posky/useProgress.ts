@@ -5,7 +5,7 @@ import type {
   LootEvent,
   LootSnap,
   PoskyQuest,
-  ProgressState
+  ProgressState,
 } from '@shared/types'
 import { getPoskyData } from '../../data'
 import { itemCountKey, normalizeItemName } from '../../lib/itemName'
@@ -15,7 +15,7 @@ import {
   computeHeldCounts,
   computeHeldCountsAfter,
   computeHeldCountsAfterPerKey,
-  computeLastLootedAt
+  computeLastLootedAt,
 } from './heldCounts'
 import { useModule } from '../../lib/useModule'
 import { reconcile, type InventoryRow } from '../inventory/reconcile'
@@ -30,7 +30,7 @@ import type {
   DerivedEvidence,
   QuestTurnIns,
   TurnInInstants,
-  TurnInOffered
+  TurnInOffered,
 } from '../../../../shared/questTurnIns'
 // The hand-stated held counts (JOS-186) — same deal, same relative-import rule: the fold that
 // turns a stored list into the counting path's inputs is shared with main's store, so the two
@@ -38,7 +38,7 @@ import type {
 import {
   itemOverrideInstants,
   itemOverridesByKey,
-  sanitizeItemOverrides
+  sanitizeItemOverrides,
 } from '../../../../shared/itemOverrides'
 
 const EMPTY_LOOT: LootEvent[] = []
@@ -197,7 +197,7 @@ export function computeQuestProgress(
   quest: PoskyQuest,
   held: Record<string, number>,
   turnIns: QuestTurnInCounts,
-  facts: QuestItemFacts = {}
+  facts: QuestItemFacts = {},
 ): QuestProgress {
   const key = questKey(quest)
   const items: ItemProgress[] = quest.items.map((it) => {
@@ -218,7 +218,7 @@ export function computeQuestProgress(
       stats: it.stats,
       page: it.page,
       lastLootedAt: facts.lastLootedAt?.[countKey],
-      override: facts.overrides?.[countKey]
+      override: facts.overrides?.[countKey],
     }
   })
   const needCount = items.reduce((s, i) => s + i.need, 0)
@@ -243,7 +243,7 @@ export function computeQuestProgress(
     turnIns: count,
     logTurnIns: turnIns.log[key] ?? 0,
     completed: count > 0,
-    lastDropAt: questDropRecency(items)
+    lastDropAt: questDropRecency(items),
   }
 }
 
@@ -352,7 +352,8 @@ function useHeldItems(x: {
   /** the hand statements in force, already sanitized (JOS-186) */
   overrides: ItemCountOverride[]
 }): HeldItems {
-  const { lootHistory, progress, countSource, turnIns, detectedTurnIns, turnInOffered, overrides } = x
+  const { lootHistory, progress, countSource, turnIns, detectedTurnIns, turnInOffered, overrides } =
+    x
   const logCounts = useMemo(() => computeHeldCounts(lootHistory), [lootHistory])
   const lootNames = useMemo(() => deriveLootNames(lootHistory), [lootHistory])
   // Per-item drop recency, same counting key as the held counts — the whole plumbing the
@@ -378,11 +379,11 @@ function useHeldItems(x: {
       readsDumpForward && rebaselineAt !== null
         ? computeHeldCountsAfter(lootHistory, rebaselineAt)
         : {},
-    [lootHistory, readsDumpForward, rebaselineAt]
+    [lootHistory, readsDumpForward, rebaselineAt],
   )
   const lootSinceOverride = useMemo(
     () => computeHeldCountsAfterPerKey(lootHistory, itemOverrideInstants(overrides)),
-    [lootHistory, overrides]
+    [lootHistory, overrides],
   )
   // THE DESTROY DISCOUNTS (JOS-401) — what the log says left your bags after each witness spoke.
   // The dump one is computed under EVERY count source, not only `rebaseline`: 'inventory' and
@@ -390,11 +391,11 @@ function useHeldItems(x: {
   // ⇒ no discount, which is the same degradation `rebaseline` makes rather than a guessed instant.
   const destroyedSinceDump = useMemo(
     () => (rebaselineAt === null ? {} : computeDestroyedAfter(lootHistory, rebaselineAt)),
-    [lootHistory, rebaselineAt]
+    [lootHistory, rebaselineAt],
   )
   const destroyedSinceOverride = useMemo(
     () => computeDestroyedAfterPerKey(lootHistory, itemOverrideInstants(overrides)),
-    [lootHistory, overrides]
+    [lootHistory, overrides],
   )
   // Reconcile held items (log + inventory), subtracting anything consumed by quests that have
   // been turned in, and letting a hand statement answer for the items it speaks about.
@@ -415,7 +416,7 @@ function useHeldItems(x: {
         rebaselineAt,
         lootSinceRebaseline,
         destroyedSinceDump,
-        destroyedSinceOverride
+        destroyedSinceOverride,
       }),
     [
       logCounts,
@@ -430,8 +431,8 @@ function useHeldItems(x: {
       rebaselineAt,
       lootSinceRebaseline,
       destroyedSinceDump,
-      destroyedSinceOverride
-    ]
+      destroyedSinceOverride,
+    ],
   )
   return { net, inventoryRows, lastLootedAt }
 }
@@ -468,7 +469,7 @@ export function useProgress(opts?: UseProgressOptions): UseProgress {
   const { turnIns, detected, offered, logCounts, recordTurnIn, undoTurnIn } = useTurnInLedger(
     progress,
     setProgress,
-    opts?.onQuestComplete
+    opts?.onQuestComplete,
   )
 
   const setCountSource = useCallback((s: CountSource) => {
@@ -490,7 +491,7 @@ export function useProgress(opts?: UseProgressOptions): UseProgress {
   // feed) do not see a new list on every render.
   const itemOverrides = useMemo(
     () => sanitizeItemOverrides(progress?.itemOverrides),
-    [progress?.itemOverrides]
+    [progress?.itemOverrides],
   )
 
   /**
@@ -498,12 +499,9 @@ export function useProgress(opts?: UseProgressOptions): UseProgress {
    * over the name it drew, and `itemCountKey` is the same normalization the counts themselves are
    * keyed by, so a statement about `Sphinx Claw +1` lands on the row that counts Sphinx Claws.
    */
-  const setItemOverride = useCallback(
-    async (name: string, count: number | null): Promise<void> => {
-      setProgress(await window.eq.setItemOverride(itemCountKey(name), name, count))
-    },
-    []
-  )
+  const setItemOverride = useCallback(async (name: string, count: number | null): Promise<void> => {
+    setProgress(await window.eq.setItemOverride(itemCountKey(name), name, count))
+  }, [])
 
   const { net, inventoryRows, lastLootedAt } = useHeldItems({
     lootHistory,
@@ -512,7 +510,7 @@ export function useProgress(opts?: UseProgressOptions): UseProgress {
     turnIns,
     detectedTurnIns: detected,
     turnInOffered: offered,
-    overrides: itemOverrides
+    overrides: itemOverrides,
   })
 
   const overridesByKey = useMemo(() => itemOverridesByKey(itemOverrides), [itemOverrides])
@@ -546,6 +544,6 @@ export function useProgress(opts?: UseProgressOptions): UseProgress {
     inventoryInfo: progress?.inventorySource,
     achievementsInfo: progress?.achievementsSource,
     sharedItems: sharedItemsMap,
-    ambiguousQuestNames: ambiguousNames
+    ambiguousQuestNames: ambiguousNames,
   }
 }

@@ -46,13 +46,13 @@ import {
   isUnstatedLane,
   laneAmount,
   spellStat,
-  spellTitle
+  spellTitle,
 } from '../src/renderer/src/features/combat/healRows'
 import type {
   HealSourceView,
   HealSpellView,
   HealingView,
-  MitigationView
+  MitigationView,
 } from '../src/shared/combat'
 
 function lane(name: string, over: Partial<HealSpellView> = {}): HealSpellView {
@@ -66,7 +66,7 @@ function lane(name: string, over: Partial<HealSpellView> = {}): HealSpellView {
     overheal: 0,
     fullOverheal: 0,
     classification: 'restored',
-    ...over
+    ...over,
   }
 }
 
@@ -88,7 +88,7 @@ function healer(id: string, over: Partial<HealSourceView> = {}): HealSourceView 
     overhealPct: 0,
     fullOverheal: 0,
     spells: [],
-    ...over
+    ...over,
   }
 }
 
@@ -97,7 +97,7 @@ const MIT: MitigationView = {
   runeCount: 0,
   runeMax: 0,
   absorbedSwings: 0,
-  absorbedDamageShields: 0
+  absorbedDamageShields: 0,
 }
 
 function healing(over: Partial<HealingView> = {}): HealingView {
@@ -111,7 +111,7 @@ function healing(over: Partial<HealingView> = {}): HealingView {
     enemyHealers: [],
     enemyTotal: 0,
     mitigation: MIT,
-    ...over
+    ...over,
   }
 }
 
@@ -131,25 +131,51 @@ const SELF = healer('you', {
   overhealPct: 20.6,
   fullOverheal: 1,
   spells: [
-    lane('Lay on Hands VI', { total: 700, pct: 100, count: 2, crits: 1, max: 480, min: 220, overheal: 260, fullOverheal: 1 }),
+    lane('Lay on Hands VI', {
+      total: 700,
+      pct: 100,
+      count: 2,
+      crits: 1,
+      max: 480,
+      min: 220,
+      overheal: 260,
+      fullOverheal: 1,
+    }),
     lane('Rune', { total: 400, pct: 57, count: 2, max: 250, min: 150, classification: 'absorbed' }),
-    lane('Center', { total: 300, pct: 43, count: 2, max: 210, min: 90 })
-  ]
+    lane('Center', { total: 300, pct: 43, count: 2, max: 210, min: 90 }),
+  ],
 })
 
-const ALLY = healer('heal:kaelth', { name: 'Kaelth', kind: 'other', total: 620, hps: 10.3, pct: 44, count: 3, max: 260, min: 150 })
+const ALLY = healer('heal:kaelth', {
+  name: 'Kaelth',
+  kind: 'other',
+  total: 620,
+  hps: 10.3,
+  pct: 44,
+  count: 3,
+  max: 260,
+  min: 150,
+})
 
 // ── levels ────────────────────────────────────────────────────────────────────────────
 
 test('level 1 ranks the healers and carries what rides under them', () => {
   const mit: MitigationView = { ...MIT, absorbedSwings: 7, absorbedDamageShields: 2 }
   const p = healPanel(
-    healing({ healers: [SELF, ALLY], mitigation: mit, enemyTotal: 350, enemyHealers: [healer('heal:mob', { name: 'a healer', kind: 'enemy', total: 350 })] }),
-    null
+    healing({
+      healers: [SELF, ALLY],
+      mitigation: mit,
+      enemyTotal: 350,
+      enemyHealers: [healer('heal:mob', { name: 'a healer', kind: 'enemy', total: 350 })],
+    }),
+    null,
   )
   assert.equal(p.level, 1)
   if (p.level !== 1) return
-  assert.deepEqual(p.healers.map((h) => h.id), ['you', 'heal:kaelth'])
+  assert.deepEqual(
+    p.healers.map((h) => h.id),
+    ['you', 'heal:kaelth'],
+  )
   assert.equal(p.empty, false)
   assert.equal(p.mitigation, mit)
   // Counter-healing is carried SEPARATELY — it is an annotation on your damage, so it must
@@ -174,7 +200,10 @@ test('level 2 is ONE healer’s flat lane list — and there is no level 3', () 
   assert.equal(p.subject.id, 'you')
   // The lanes are the model's own list, verbatim: heal lanes and the absorption lane together,
   // ONE flat ranking. A grouping level here is exactly what hid the damage drill-down.
-  assert.deepEqual(p.rows.map((r) => r.name), ['Lay on Hands VI', 'Rune', 'Center'])
+  assert.deepEqual(
+    p.rows.map((r) => r.name),
+    ['Lay on Hands VI', 'Rune', 'Center'],
+  )
   // The bottom of the model. Nothing in a lane can be drilled further, so nothing here offers it.
   for (const r of p.rows) {
     assert.equal('children' in r, false, `${r.name} grew a child list the log cannot support`)
@@ -213,13 +242,22 @@ test('nothing to rank is EMPTY, not zeroed — and the count-only families still
 // ── the words (they are part of the shared seam, not decoration) ───────────────────────
 
 test('absorption is labeled, never restored: no overheal is invented for a rune', () => {
-  const rune = lane('Rune', { total: 400, count: 2, max: 250, min: 150, classification: 'absorbed' })
+  const rune = lane('Rune', {
+    total: 400,
+    count: 2,
+    max: 250,
+    min: 150,
+    classification: 'absorbed',
+  })
   assert.equal(isAbsorbLane(rune), true)
   const stat = spellStat(rune)
   assert.match(stat, /granted/, 'the absorption lane must say what the number IS')
   assert.doesNotMatch(stat, /over\b/, 'a rune reported an overheal the log never records')
   // The caveat travels with the number, on hover, as one line — never as a methodology caption.
-  assert.match(spellTitle(rune), new RegExp(ABSORB_NOTE.slice(0, 40).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  assert.match(
+    spellTitle(rune),
+    new RegExp(ABSORB_NOTE.slice(0, 40).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+  )
 })
 
 test('a MIXED healer describes its RESTORED half and calls the absorbed share out separately', () => {
@@ -255,7 +293,10 @@ test('the headline title states the restored/absorbed split only when there is o
 })
 
 test('a lane the log named no spell for is LABELED, never folded into a real spell', () => {
-  assert.match(spellTitle(lane('Unspecified', { total: 12, count: 3, max: 5 })), /the log named no spell/)
+  assert.match(
+    spellTitle(lane('Unspecified', { total: 12, count: 3, max: 5 })),
+    /the log named no spell/,
+  )
 })
 
 // ── the UNSTATED lane (JOS-86 — Mend) ──────────────────────────────────────────────────
@@ -292,7 +333,10 @@ test('the lane tag says what the LOG did, in words a player does not file as a b
   assert.doesNotMatch(UNSTATED_AMOUNT, /unvalued|unstated|not stated/, 'the jargon came back')
   assert.ok(UNSTATED_AMOUNT.length <= 16, 'the tag sits inline beside a lane name; keep it short')
   // One source for all three surfaces: the lane tag, the healer row's stat run, the hover title.
-  assert.match(healerStat(healer('you', { name: 'You', unstatedCount: 2, spells: [MEND] })), new RegExp(UNSTATED_AMOUNT))
+  assert.match(
+    healerStat(healer('you', { name: 'You', unstatedCount: 2, spells: [MEND] })),
+    new RegExp(UNSTATED_AMOUNT),
+  )
   assert.match(spellTitle(MEND), new RegExp(UNSTATED_AMOUNT))
 })
 
@@ -316,7 +360,10 @@ test('an unvalued heal is counted BESIDE the row stats, never inside their denom
   assert.equal(healerStat(mendOnly), '2x no amount')
   // …and the right end of the bar, which is the LAST place a 0 could still get through.
   assert.equal(healerAmount(mendOnly), NO_AMOUNT_MARK)
-  assert.match(healerTitle(mendOnly), new RegExp(UNSTATED_NOTE.slice(0, 40).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  assert.match(
+    healerTitle(mendOnly),
+    new RegExp(UNSTATED_NOTE.slice(0, 40).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+  )
 
   // …and on a MIXED row it never touches the figures beside it: SELF's 4 heals / 25% crit are
   // computed over VALUED lines only, and adding two Mends must not move either.
@@ -345,7 +392,7 @@ const src = (rel: string): string => readFileSync(new URL(rel, import.meta.url),
 test('NO SECOND BUILDER: both healing surfaces call healPanel and neither re-folds the model', () => {
   const surfaces = {
     'the Combat tab': src('../src/renderer/src/features/combat/HealPanel.tsx'),
-    'the floating heal overlay': src('../src/renderer/src/overlay/healBars.tsx')
+    'the floating heal overlay': src('../src/renderer/src/overlay/healBars.tsx'),
   }
   for (const [who, text] of Object.entries(surfaces)) {
     assert.match(text, /\bhealPanel\s*\(/, `${who} does not call the shared heal builder`)
@@ -361,15 +408,23 @@ test('NO SECOND PHRASING: neither surface re-implements the honesty sentences', 
     'the Combat tab': src('../src/renderer/src/features/combat/HealPanel.tsx'),
     'the floating heal overlay': src('../src/renderer/src/overlay/healBars.tsx'),
     'the heal overlay chrome': src('../src/renderer/src/overlay/HealMeter.tsx'),
-    'the panel header': src('../src/renderer/src/features/combat/SegmentHeader.tsx')
+    'the panel header': src('../src/renderer/src/features/combat/SegmentHeader.tsx'),
   }
   for (const [who, text] of Object.entries(surfaces)) {
     // The SENTENCE, not the phrase: a file header may name the caveat in prose, but no surface
     // may carry a second copy of the string the user actually reads.
-    assert.doesNotMatch(text, /The log records absorption GRANTED/, `${who} restates the absorption caveat`)
+    assert.doesNotMatch(
+      text,
+      /The log records absorption GRANTED/,
+      `${who} restates the absorption caveat`,
+    )
     assert.doesNotMatch(text, /ABSORB_NOTEs*=/, `${who} defines its own absorption caveat`)
     // `of raw)` is the printed overheal phrasing; a file header may DISCUSS overheal in prose.
     assert.doesNotMatch(text, /of raw\)/, `${who} formats an overheal figure of its own`)
-    assert.doesNotMatch(text, /Math\.round\(\s*\(?\s*[a-z]\.(overheal|crits)/i, `${who} recomputes a heal rate`)
+    assert.doesNotMatch(
+      text,
+      /Math\.round\(\s*\(?\s*[a-z]\.(overheal|crits)/i,
+      `${who} recomputes a heal rate`,
+    )
   }
 })

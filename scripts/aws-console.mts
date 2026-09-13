@@ -18,20 +18,24 @@ const profile = i === -1 ? 'eqc' : (process.argv[i + 1] ?? 'eqc')
 const creds = await fromIni({ profile })()
 if (!creds.sessionToken) {
   // Long-lived IAM user keys cannot federate — the endpoint requires a session.
-  throw new Error(`profile '${profile}' yielded non-session credentials; the federation endpoint needs an assumed role`)
+  throw new Error(
+    `profile '${profile}' yielded non-session credentials; the federation endpoint needs an assumed role`,
+  )
 }
 
 const session = JSON.stringify({
   sessionId: creds.accessKeyId,
   sessionKey: creds.secretAccessKey,
-  sessionToken: creds.sessionToken
+  sessionToken: creds.sessionToken,
 })
 const tokenRes = await fetch(
-  `https://signin.aws.amazon.com/federation?Action=getSigninToken&Session=${encodeURIComponent(session)}`
+  `https://signin.aws.amazon.com/federation?Action=getSigninToken&Session=${encodeURIComponent(session)}`,
 )
 if (!tokenRes.ok) throw new Error(`getSigninToken: HTTP ${String(tokenRes.status)}`)
 const { SigninToken } = (await tokenRes.json()) as { SigninToken: string }
 
-const dest = encodeURIComponent('https://us-east-1.console.aws.amazon.com/console/home?region=us-east-1')
+const dest = encodeURIComponent(
+  'https://us-east-1.console.aws.amazon.com/console/home?region=us-east-1',
+)
 const url = `https://signin.aws.amazon.com/federation?Action=login&Issuer=eqc-cli&Destination=${dest}&SigninToken=${SigninToken}`
 console.log(url)

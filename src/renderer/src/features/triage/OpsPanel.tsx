@@ -23,13 +23,19 @@ import {
   Stack,
   Switch,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import type { TriageOpsState } from '@shared/triage'
 import { formatDateTime } from '../../lib/formatDate'
 import { useTriageCall, useTriageMutation } from './useTriage'
 
-function KillSwitch({ ops, onChanged }: { ops: TriageOpsState; onChanged: () => void }): JSX.Element {
+function KillSwitch({
+  ops,
+  onChanged,
+}: {
+  ops: TriageOpsState
+  onChanged: () => void
+}): JSX.Element {
   const [message, setMessage] = useState(ops.closedMessage)
   const mutate = useTriageMutation(onChanged)
   const messageDirty = message.trim().length > 0 && message.trim() !== ops.closedMessage
@@ -94,7 +100,13 @@ function KillSwitch({ ops, onChanged }: { ops: TriageOpsState; onChanged: () => 
  * Every install that has ever been blocked OR unblocked — an unblock leaves the row behind
  * with `blocked: false`, so the list is a history, not a set, and it says which is which.
  */
-function BlockList({ ops, onChanged }: { ops: TriageOpsState; onChanged: () => void }): JSX.Element {
+function BlockList({
+  ops,
+  onChanged,
+}: {
+  ops: TriageOpsState
+  onChanged: () => void
+}): JSX.Element {
   const mutate = useTriageMutation(onChanged)
   if (ops.blocked.length === 0) {
     return (
@@ -106,7 +118,14 @@ function BlockList({ ops, onChanged }: { ops: TriageOpsState; onChanged: () => v
   return (
     <Stack spacing={1} data-testid="triage-blocklist">
       {ops.blocked.map((b) => (
-        <Stack key={b.installId} direction="row" spacing={1.5} alignItems="center" useFlexGap flexWrap="wrap">
+        <Stack
+          key={b.installId}
+          direction="row"
+          spacing={1.5}
+          alignItems="center"
+          useFlexGap
+          flexWrap="wrap"
+        >
           <Chip
             size="small"
             color={b.blocked ? 'error' : 'default'}
@@ -126,7 +145,11 @@ function BlockList({ ops, onChanged }: { ops: TriageOpsState; onChanged: () => v
             disabled={mutate.busy}
             onClick={() =>
               void mutate.run(() =>
-                window.eq.triageSetBlocked(b.installId, !b.blocked, b.blocked ? 'unblocked' : 'blocked from Ops')
+                window.eq.triageSetBlocked(
+                  b.installId,
+                  !b.blocked,
+                  b.blocked ? 'unblocked' : 'blocked from Ops',
+                ),
               )
             }
           >

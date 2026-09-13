@@ -32,15 +32,28 @@
 import type { ProgressionDelta, ProgressionSnap } from '@shared/types'
 
 export const EMPTY_PROGRESSION: ProgressionSnap = {
-  expTs: [], expPct: [], expFlag: [],
-  killTs: [], killZone: [], killCredit: [],
+  expTs: [],
+  expPct: [],
+  expFlag: [],
+  killTs: [],
+  killZone: [],
+  killCredit: [],
   witnessTs: [],
   recentKills: [],
   lootTs: [],
-  zoneStart: [], zoneEnd: [], zoneName: [],
-  offlineStart: [], offlineEnd: [], offlineCamped: [],
-  levelTs: [], levelValue: [], aaGainTs: [], aaGainAmount: [],
-  lastTs: 0, windowStart: 0, dropped: 0
+  zoneStart: [],
+  zoneEnd: [],
+  zoneName: [],
+  offlineStart: [],
+  offlineEnd: [],
+  offlineCamped: [],
+  levelTs: [],
+  levelValue: [],
+  aaGainTs: [],
+  aaGainAmount: [],
+  lastTs: 0,
+  windowStart: 0,
+  dropped: 0,
 }
 
 /** Append then front-drop, in that order (see step 3 of the contract above). */
@@ -52,7 +65,8 @@ function cat<T>(held: readonly T[], added: readonly T[], dropFront: number): T[]
 export function applyProgressionDelta(s: ProgressionSnap, d: ProgressionDelta): ProgressionSnap {
   // 1. close the interval we already hold, before anything is appended to the column.
   const zoneEnd = [...s.zoneEnd]
-  if (d.zoneCloseEnd !== undefined && zoneEnd.length > 0) zoneEnd[zoneEnd.length - 1] = d.zoneCloseEnd
+  if (d.zoneCloseEnd !== undefined && zoneEnd.length > 0)
+    zoneEnd[zoneEnd.length - 1] = d.zoneCloseEnd
 
   const drop = d.dropFront
   const killZone = cat(s.killZone, d.killZone, drop.kill)
@@ -92,6 +106,6 @@ export function applyProgressionDelta(s: ProgressionSnap, d: ProgressionDelta): 
     aaGainAmount: [...s.aaGainAmount, ...d.aaGainAmount],
     lastTs: d.lastTs,
     windowStart: d.windowStart,
-    dropped: d.dropped
+    dropped: d.dropped,
   }
 }

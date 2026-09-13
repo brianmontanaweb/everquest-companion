@@ -19,7 +19,7 @@ export const TELEMETRY_DOC_PATH = join(ROOT, 'TELEMETRY.md')
 if (!docCoversSchema()) {
   console.error(
     'gen:telemetry-doc: TELEMETRY_DOC_EVENTS does not match TELEMETRY_EVENT_KINDS — every event ' +
-      'in the schema needs a doc row (src/shared/telemetryDoc.ts), in the same order.'
+      'in the schema needs a doc row (src/shared/telemetryDoc.ts), in the same order.',
   )
   process.exit(1)
 }

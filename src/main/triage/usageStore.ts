@@ -67,7 +67,8 @@ const CONNECTION_LOST =
 export function unreachable(err: unknown): boolean {
   const raw = err instanceof Error ? err.message : String(err)
   if (CONNECTION_LOST.test(raw)) return true
-  const code: unknown = typeof err === 'object' && err !== null ? (err as { code?: unknown }).code : undefined
+  const code: unknown =
+    typeof err === 'object' && err !== null ? (err as { code?: unknown }).code : undefined
   return typeof code === 'string' && CONNECTION_LOST.test(code)
 }
 
@@ -281,8 +282,7 @@ export function deleteAnalyticsInstall(c: Clients, analyticsId: string): Promise
  * updated is reported to the caller as exactly that.
  */
 export function setTelemetryAccepting(c: Clients, accepting: boolean): Promise<number> {
-  return c.execute(
-    `UPDATE feedback_config SET telemetry_accepting = $1 WHERE id = 'FEEDBACK'`,
-    [accepting],
-  )
+  return c.execute(`UPDATE feedback_config SET telemetry_accepting = $1 WHERE id = 'FEEDBACK'`, [
+    accepting,
+  ])
 }

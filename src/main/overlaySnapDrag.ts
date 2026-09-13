@@ -63,7 +63,11 @@ function usable(w: BrowserWindow | null): w is BrowserWindow {
 }
 
 /** Every window of ours that is on screen right now, except the one being dragged. */
-function neighbours(kind: OverlayKind, overlays: OverlayRegistry, mainWindow: () => BrowserWindow | null): Rectangle[] {
+function neighbours(
+  kind: OverlayKind,
+  overlays: OverlayRegistry,
+  mainWindow: () => BrowserWindow | null,
+): Rectangle[] {
   const out: Rectangle[] = []
   for (const k of OVERLAY_KINDS) {
     if (k === kind) continue
@@ -89,7 +93,7 @@ export function installOverlaySnap(
   w: BrowserWindow,
   kind: OverlayKind,
   overlays: OverlayRegistry,
-  mainWindow: () => BrowserWindow | null
+  mainWindow: () => BrowserWindow | null,
 ): void {
   // The release hold, at the only place it can be absolute: no listener, no store read, no chance
   // that a stored `enabled: true` reaches a drag by some path the normalizer does not cover.
@@ -109,7 +113,7 @@ export function installOverlaySnap(
       // reach `newBounds`, and the only way to recover how far the mouse actually travelled.
       current: w.getBounds(),
       targets: { windows: neighbours(kind, overlays, mainWindow), screens: displayWorkAreas() },
-      now: Date.now()
+      now: Date.now(),
     })
     session = step.session
     if (step.apply === null) return

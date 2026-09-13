@@ -17,7 +17,14 @@
 
 import { type MobLootIndex, mobKey } from './mobLookupParse'
 import type { MobIdentity } from './mobAliases'
-import type { MobData, MobDrop, MobEntry, MobKnowledge, MobQuestUse, QuestData } from '../shared/types'
+import type {
+  MobData,
+  MobDrop,
+  MobEntry,
+  MobKnowledge,
+  MobQuestUse,
+  QuestData,
+} from '../shared/types'
 import mobsJson from '../renderer/src/data/eqlegends/mobs.json'
 import questsJson from '../renderer/src/data/eqlegends/quests.json'
 
@@ -135,7 +142,7 @@ function identityQuests(id: MobIdentity): MobQuestUse[] | null {
 export function mergeLocalKnowledge(
   base: MobKnowledge,
   id: MobIdentity,
-  loot: MobLootIndex
+  loot: MobLootIndex,
 ): MobKnowledge {
   const out: MobKnowledge = { ...base }
   const seen = loot.dropsAcross(id.keys)

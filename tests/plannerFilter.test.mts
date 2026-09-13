@@ -25,7 +25,7 @@ import {
   filterDonors,
   hiddenByView,
   type DonorRow,
-  type DonorView
+  type DonorView,
 } from '../src/renderer/src/features/planner/plannerData'
 import type { EquipSlot } from '../src/shared/planner/types'
 
@@ -50,7 +50,7 @@ function row(spec: Spec): DonorRow {
     quest: false,
     playerCrafted: false,
     eraTag: spec.eraTag,
-    searchKey: `${name} ${name} effect`.toLowerCase()
+    searchKey: `${name} ${name} effect`.toLowerCase(),
   }
 }
 
@@ -72,7 +72,10 @@ test('the two view toggles are the ones that hide a legal answer', () => {
   assert.deepEqual(names(DEFAULT_VIEW), ['Plain Wand'])
   assert.deepEqual(names({ eraOnly: false, nonEquip: false }), ['Plain Wand', 'Later Wand'])
   assert.deepEqual(names({ eraOnly: true, nonEquip: true }), ['Plain Wand', 'Slotless Potion'])
-  assert.deepEqual(names({ eraOnly: false, nonEquip: true }), ROWS.map((r) => r.name))
+  assert.deepEqual(
+    names({ eraOnly: false, nonEquip: true }),
+    ROWS.map((r) => r.name),
+  )
 })
 
 test('an empty list can say which toggle is holding the answers back', () => {
@@ -98,7 +101,7 @@ test('a toggle already released never claims to be hiding anything', () => {
   const filters = { ...FILTERS, text: 'later potion' }
   assert.deepEqual(hiddenByView(ROWS, filters, [], { eraOnly: false, nonEquip: true }), {
     era: 0,
-    nonEquip: 0
+    nonEquip: 0,
   })
 })
 

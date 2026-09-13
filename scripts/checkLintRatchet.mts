@@ -72,7 +72,7 @@ async function loadRatchet(path: string): Promise<RatchetEntry[]> {
 function haveCommit(ref: string): boolean {
   try {
     execFileSync('git', ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`], {
-      stdio: 'ignore'
+      stdio: 'ignore',
     })
     return true
   } catch {
@@ -86,7 +86,7 @@ async function ratchetAt(ref: string): Promise<RatchetEntry[]> {
   try {
     source = execFileSync('git', ['show', `${ref}:eslint.ratchet.mjs`], {
       encoding: 'utf8',
-      maxBuffer: 64 * 1024 * 1024
+      maxBuffer: 64 * 1024 * 1024,
     })
   } catch {
     return []
@@ -115,10 +115,12 @@ async function main(): Promise<void> {
     for (const k of added) console.error(`  ${k.replace('\u0000', '  ->  ')}`)
     console.error('')
     console.error('The ratchet only shrinks. Fix the code, or -- if this widening is')
-    console.error("deliberate and yours to make -- say so in the commit message.")
+    console.error('deliberate and yours to make -- say so in the commit message.')
     process.exit(1)
   }
-  console.log(`eslint.ratchet.mjs: no new entries vs ${baseRef} (${String(entryKeys(head).size)} suppressed)`)
+  console.log(
+    `eslint.ratchet.mjs: no new entries vs ${baseRef} (${String(entryKeys(head).size)} suppressed)`,
+  )
 }
 
 // Run only when INVOKED, never when imported -- tests/lintRatchetCheck.test.mts imports

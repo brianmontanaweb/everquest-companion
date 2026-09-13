@@ -49,7 +49,7 @@ import {
   getOverlayAutoHide,
   getOverlayConfig,
   getUpdateChannel,
-  getVoicePrefs
+  getVoicePrefs,
 } from '../store'
 import { listPacks } from '../sounds'
 import { recordEvent, telemetryCollecting } from './collector'
@@ -176,7 +176,7 @@ async function gatherFacts(): Promise<SetupFacts> {
     safeMode: safely(() => activeSafeMode() !== null, undefined),
     displayCount: safely(() => screen.getAllDisplays().length, undefined),
     primaryScaleFactor: safely(() => screen.getPrimaryDisplay().scaleFactor, undefined),
-    eqClientIni: safely(readEqClientIni, null)
+    eqClientIni: safely(readEqClientIni, null),
   }
 }
 
@@ -253,7 +253,7 @@ async function gpuVendorId(): Promise<number | string | undefined> {
   try {
     const info = (await Promise.race([
       app.getGPUInfo('basic'),
-      new Promise((resolve) => setTimeout(resolve, GPU_INFO_TIMEOUT_MS).unref())
+      new Promise((resolve) => setTimeout(resolve, GPU_INFO_TIMEOUT_MS).unref()),
     ])) as { gpuDevice?: { vendorId?: number | string; active?: boolean }[] } | undefined
     const devices = info?.gpuDevice ?? []
     // The ACTIVE device when Chromium names one — a laptop with switchable graphics lists both

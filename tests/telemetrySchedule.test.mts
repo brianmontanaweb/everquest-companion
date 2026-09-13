@@ -49,7 +49,7 @@ import {
   RETRY_BASE_MS,
   retryDelayMs,
   TICK_JITTER_FRACTION,
-  type TickSchedule
+  type TickSchedule,
 } from '../src/main/telemetry/schedule'
 
 const read = (p: string): string => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8')
@@ -111,7 +111,10 @@ test('TICK 0 IS THE PHASE AND NOTHING ELSE — no wobble on top of a uniform dra
   const s = beginSchedule(() => 0.4)
   // The `rand` handed to `armDelayMs` is deliberately one that would blow the delay wide open if
   // tick 0 took a wobble; it is ignored, and the first fire is exactly the phase.
-  assert.equal(armDelayMs(s, 0, () => 1), s.phaseMs)
+  assert.equal(
+    armDelayMs(s, 0, () => 1),
+    s.phaseMs,
+  )
   assert.equal(s.phaseMs, Math.floor(0.4 * FLUSH_INTERVAL_MS))
 })
 
@@ -158,12 +161,21 @@ test('THE WIRING: one loop, and the heartbeat is recorded BEFORE the tick flushe
   // (a flush that ran first would read a ring without the pulse in it and the pulse would wait a
   // full interval), so the order is asserted where it lives.
   const flush = read('src/main/telemetry/flush.ts')
-  const tick = flush.slice(flush.indexOf('function onTick'), flush.indexOf('function recordHeartbeat'))
-  assert.ok(tick.indexOf('isHeartbeatTick(s.k)') < tick.indexOf('void runFlush(0)'), 'flush ran first')
+  const tick = flush.slice(
+    flush.indexOf('function onTick'),
+    flush.indexOf('function recordHeartbeat'),
+  )
+  assert.ok(
+    tick.indexOf('isHeartbeatTick(s.k)') < tick.indexOf('void runFlush(0)'),
+    'flush ran first',
+  )
   assert.ok(tick.includes('recordHeartbeat()'))
   // ONE timer, chained — an interval cannot be re-timed per tick, so a surviving `setInterval` here
   // would mean the jitter is not actually being applied.
-  assert.ok(!flush.includes('setInterval('), 'the loop must be a chained setTimeout, not an interval')
+  assert.ok(
+    !flush.includes('setInterval('),
+    'the loop must be a chained setTimeout, not an interval',
+  )
   // Neither handle may hold the process open.
   assert.ok(flush.includes('tick.unref()') && flush.includes('retry.unref()'))
   // The loop drives the real schedule rather than a second copy of the arithmetic.
@@ -210,7 +222,9 @@ test('the average cadence is EXACTLY 5 min / 10 min across a long session', () =
   // No consecutive gap is anywhere near big enough to drop a live-sessions bucket, either.
   for (let k = 1; k < beats.length; k++) {
     const gap = beats[k] - beats[k - 1]
-    assert.ok(Math.abs(gap - HEARTBEAT_INTERVAL_MS) <= FLUSH_INTERVAL_MS * TICK_JITTER_FRACTION * 2 + 2)
+    assert.ok(
+      Math.abs(gap - HEARTBEAT_INTERVAL_MS) <= FLUSH_INTERVAL_MS * TICK_JITTER_FRACTION * 2 + 2,
+    )
   }
 })
 
@@ -236,7 +250,11 @@ const FAR = 60 * 60 * 1000 // a "next tick" far enough away that the ceiling is 
 test('the backoff is FULL jitter — uniform in [0, ceiling), not a fixed doubling wait', () => {
   // Fixed `2^n × base` is the herd arriving by a different road: every client that failed in the
   // same second retries in the same second. Full jitter is the only shape that decorrelates.
-  assert.equal(retryDelayMs(0, FAR, () => 0), 0, 'a full-jitter wait may be immediate')
+  assert.equal(
+    retryDelayMs(0, FAR, () => 0),
+    0,
+    'a full-jitter wait may be immediate',
+  )
   const top = retryDelayMs(0, FAR, () => 0.999999)
   assert.ok(top < RETRY_BASE_MS && top > RETRY_BASE_MS * 0.99, `top of the first window: ${top}`)
   const rand = seeded(31337)
@@ -265,16 +283,34 @@ test('A RETRY CAN NEVER OUTLIVE THE NEXT NOMINAL TICK — the ceiling is clamped
     assert.ok(d < toNext, `attempt ${attempt} would have landed past the tick: ${d}`)
   }
   // Once the tick has arrived (or passed) there is nothing left to schedule.
-  assert.equal(retryDelayMs(3, 0, () => 0.9), 0)
-  assert.equal(retryDelayMs(3, -5_000, () => 0.9), 0)
+  assert.equal(
+    retryDelayMs(3, 0, () => 0.9),
+    0,
+  )
+  assert.equal(
+    retryDelayMs(3, -5_000, () => 0.9),
+    0,
+  )
   // A negative/absurd attempt count cannot widen the window either.
   assert.ok(retryDelayMs(-4, FAR, () => 0.999999) < RETRY_BASE_MS)
 })
 
 test('two clients that fail in the same second come back at different times', () => {
   // The whole point, stated as the fleet property rather than as a range.
-  const a = Array.from({ length: 200 }, ((r) => () => retryDelayMs(1, FAR, r))(seeded(1)))
-  const b = Array.from({ length: 200 }, ((r) => () => retryDelayMs(1, FAR, r))(seeded(2)))
+  const a = Array.from(
+    { length: 200 },
+    (
+      (r) => () =>
+        retryDelayMs(1, FAR, r)
+    )(seeded(1)),
+  )
+  const b = Array.from(
+    { length: 200 },
+    (
+      (r) => () =>
+        retryDelayMs(1, FAR, r)
+    )(seeded(2)),
+  )
   const collisions = a.filter((x, i) => x === b[i]).length
   assert.ok(collisions < 5, `${collisions} of 200 retries collided`)
   assert.ok(new Set(a).size > 150, 'one client’s own retries must not cluster either')
@@ -284,7 +320,10 @@ test('THE WIRING: the retry rides its own handle and is superseded by the next t
   const flush = read('src/main/telemetry/flush.ts')
   // `attempt` counts within ONE interval, and the tick clears whatever the last one left pending —
   // otherwise a retry and the tick it was capped against could both post the same batch.
-  const tick = flush.slice(flush.indexOf('function onTick'), flush.indexOf('function recordHeartbeat'))
+  const tick = flush.slice(
+    flush.indexOf('function onTick'),
+    flush.indexOf('function recordHeartbeat'),
+  )
   assert.ok(tick.includes('clearRetry()'), 'a tick must supersede the pending retry')
   assert.ok(flush.includes('void runFlush(attempt + 1)'), 'the chain must count its attempts')
   assert.ok(flush.includes('retryDelayMs(attempt, toNextTick)'), 'the cap must be the next tick')

@@ -103,7 +103,9 @@ export function sanitizeItemOverrides(value: unknown): ItemCountOverride[] {
     const o = sanitizeItemOverride(raw)
     if (o) byKey.set(o.key, o)
   }
-  return [...byKey.values()].sort((a, b) => a.setAt - b.setAt || a.key.localeCompare(b.key)).slice(0, MAX_ITEM_OVERRIDES)
+  return [...byKey.values()]
+    .sort((a, b) => a.setAt - b.setAt || a.key.localeCompare(b.key))
+    .slice(0, MAX_ITEM_OVERRIDES)
 }
 
 /**
@@ -113,7 +115,7 @@ export function sanitizeItemOverrides(value: unknown): ItemCountOverride[] {
  */
 export function applyItemOverride(
   list: readonly ItemCountOverride[],
-  next: ItemCountOverride
+  next: ItemCountOverride,
 ): ItemCountOverride[] {
   return sanitizeItemOverrides([...list.filter((o) => o.key !== next.key), next])
 }
@@ -121,14 +123,14 @@ export function applyItemOverride(
 /** Take the statement back. The witnesses answer for that key again, exactly as they did before. */
 export function clearItemOverride(
   list: readonly ItemCountOverride[],
-  key: string
+  key: string,
 ): ItemCountOverride[] {
   return sanitizeItemOverrides(list.filter((o) => o.key !== key))
 }
 
 /** The list as the counting path wants it: key → statement. */
 export function itemOverridesByKey(
-  list: readonly ItemCountOverride[]
+  list: readonly ItemCountOverride[],
 ): Record<string, ItemCountOverride> {
   const out: Record<string, ItemCountOverride> = {}
   for (const o of list) out[o.key] = o
@@ -136,9 +138,7 @@ export function itemOverridesByKey(
 }
 
 /** key → the instant its statement was made — the windows the loot fold and the turn-in fold use. */
-export function itemOverrideInstants(
-  list: readonly ItemCountOverride[]
-): Record<string, number> {
+export function itemOverrideInstants(list: readonly ItemCountOverride[]): Record<string, number> {
   const out: Record<string, number> = {}
   for (const o of list) out[o.key] = o.setAt
   return out

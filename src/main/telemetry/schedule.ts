@@ -165,7 +165,11 @@ export function advance(s: TickSchedule, elapsedMs: number): TickSchedule {
  * abandoned — the buffer keeps its records (`flush.ts` `retireBatch`) and the next grid tick tries
  * again, exactly as it did when the next identical boundary was the only retry there was.
  */
-export function retryDelayMs(attempt: number, msToNextTick: number, rand: Rand = Math.random): number {
+export function retryDelayMs(
+  attempt: number,
+  msToNextTick: number,
+  rand: Rand = Math.random,
+): number {
   const backoff = RETRY_BASE_MS * 2 ** Math.max(0, Math.floor(attempt))
   const ceiling = Math.min(backoff, Math.max(0, msToNextTick))
   return Math.floor(rand() * ceiling)

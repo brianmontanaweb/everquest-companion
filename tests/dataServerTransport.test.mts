@@ -36,7 +36,7 @@ import {
   createNdjsonTransport,
   decodeLine,
   encodeLine,
-  type ByteChannel
+  type ByteChannel,
 } from '../src/shared/dataServer/ndjson'
 import { TransportError, type Transport } from '../src/shared/dataServer/transport'
 
@@ -59,12 +59,20 @@ function conversation(): Conversation {
       else engine.push(frame.message as EngineMessage)
     }
   }
-  assert.ok(client.length >= 6 && engine.length >= 6, 'the conversation is too thin to prove anything')
+  assert.ok(
+    client.length >= 6 && engine.length >= 6,
+    'the conversation is too thin to prove anything',
+  )
   return { client, engine }
 }
 
 /** A byte channel that is just a pair of arrays — the smallest thing NDJSON can sit on. */
-function pipe(): { channel: ByteChannel; written: string[]; deliver: (chunk: string) => void; end: () => void } {
+function pipe(): {
+  channel: ByteChannel
+  written: string[]
+  deliver: (chunk: string) => void
+  end: () => void
+} {
   const written: string[] = []
   let onData: ((chunk: string) => void) | undefined
   let onClose: ((error?: unknown) => void) | undefined
@@ -84,8 +92,8 @@ function pipe(): { channel: ByteChannel; written: string[]; deliver: (chunk: str
       },
       close: () => {
         /* the array pipe has nothing to release */
-      }
-    }
+      },
+    },
   }
 }
 
@@ -120,7 +128,9 @@ test('THE SAME CONVERSATION SURVIVES BOTH TRANSPORTS IDENTICALLY', () => {
 
   // …and read back off that wire, by a transport that was handed nothing but bytes.
   const engineInbox = pipe()
-  const ndHeardByEngine = drain(createNdjsonTransport<EngineMessage, ClientMessage>(engineInbox.channel))
+  const ndHeardByEngine = drain(
+    createNdjsonTransport<EngineMessage, ClientMessage>(engineInbox.channel),
+  )
   for (const chunk of toEngine.written) engineInbox.deliver(chunk)
 
   const appInbox = pipe()
@@ -145,7 +155,7 @@ test('the framing is exactly one message per line, and the last one is terminate
   assert.equal(
     [...bytes].filter((c) => c === DELIMITER).length,
     engine.length,
-    'one delimiter per message, no more and no fewer'
+    'one delimiter per message, no more and no fewer',
   )
   assert.ok(bytes.endsWith(DELIMITER), 'every frame is terminated')
   for (const line of bytes.split(DELIMITER).filter((l) => l !== '')) {
@@ -173,7 +183,7 @@ test('ndjson.ts IS THE ONLY FILE IN src/shared/dataServer THAT KNOWS A NEWLINE E
     assert.doesNotMatch(
       source,
       literal,
-      `${name} carries a newline literal — framing belongs in ndjson.ts alone`
+      `${name} carries a newline literal — framing belongs in ndjson.ts alone`,
     )
   }
 })
@@ -182,14 +192,25 @@ test('the generated types carry no framing either — the schema never gave them
   // Over the CODE, not the prose: a doc comment is allowed to explain that the socket and its
   // framing live elsewhere (the `Token` description does exactly that), and saying so is the
   // opposite of declaring it. What must not exist is a field or a constant.
-  const generated = readFileSync(join(ROOT, 'src', 'shared', 'dataServer', 'protocol.generated.ts'), 'utf8')
+  const generated = readFileSync(
+    join(ROOT, 'src', 'shared', 'dataServer', 'protocol.generated.ts'),
+    'utf8',
+  )
   const code = generated.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
   assert.ok(code.includes('export type ProtocolMessage'), 'the comment stripper ate the code')
-  for (const framing of ['DELIMITER', 'MAX_LINE', 'socket', 'Socket', 'port', 'byteLength', 'frame']) {
+  for (const framing of [
+    'DELIMITER',
+    'MAX_LINE',
+    'socket',
+    'Socket',
+    'port',
+    'byteLength',
+    'frame',
+  ]) {
     assert.equal(
       new RegExp(`\\b${framing}\\b`).test(code),
       false,
-      `the generated types declare \`${framing}\` — framing belongs in a transport adapter`
+      `the generated types declare \`${framing}\` — framing belongs in a transport adapter`,
     )
   }
 })
@@ -203,11 +224,15 @@ test('a payload full of newlines cannot forge a frame', () => {
     id: 1,
     epoch: 0,
     total: 1,
-    rows: [{ key: 'row:1', cells: { text: hostile } }]
+    rows: [{ key: 'row:1', cells: { text: hostile } }],
   } satisfies EngineMessage
 
   const line = encodeLine(message)
-  assert.equal([...line].filter((c) => c === DELIMITER).length, 1, 'the only newline is the terminator')
+  assert.equal(
+    [...line].filter((c) => c === DELIMITER).length,
+    1,
+    'the only newline is the terminator',
+  )
   assert.deepEqual(decodeLine(line.slice(0, -1)), message, 'the hostile payload came back intact')
 })
 
@@ -269,7 +294,7 @@ test('an unterminated flood is refused at the framing limit', () => {
   assert.deepEqual(decoder.push('a'.repeat(32)), [])
   assert.throws(
     () => decoder.push('a'.repeat(64)),
-    (e: unknown) => e instanceof TransportError && e.code === 'frameTooLarge'
+    (e: unknown) => e instanceof TransportError && e.code === 'frameTooLarge',
   )
   assert.ok(MAX_LINE_CHARS > 1_000_000, 'the real limit is far above any legitimate message')
 })
@@ -307,6 +332,6 @@ test('sending into a closed peer is refused, not dropped', () => {
   pair.b.close()
   assert.throws(
     () => pair.a.send(1),
-    (e: unknown) => e instanceof TransportError && e.code === 'closed'
+    (e: unknown) => e instanceof TransportError && e.code === 'closed',
   )
 })

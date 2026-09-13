@@ -64,7 +64,7 @@ export function afterLink(
   stack: readonly NavOrigin[],
   from: NavOrigin,
   to: View,
-  anchored: boolean
+  anchored: boolean,
 ): NavOrigin[] {
   // A bare opener is a tab switch — nothing to come back from, and nothing parked survives it.
   if (!anchored) return []

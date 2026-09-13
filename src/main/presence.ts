@@ -69,7 +69,7 @@ import {
   watcherExitStep,
   watcherIsStale,
   watcherRestartDelayMs,
-  type HoverZone
+  type HoverZone,
 } from './presenceProtocol'
 import { INITIAL_PRESENCE } from '../shared/presencePrefs'
 import type { PresenceState, ScreenRect } from '../shared/presencePrefs'
@@ -240,7 +240,7 @@ function applyFocus(observed: boolean): void {
   if (observed === state.eqFocused) return
   logInfo(
     '[everquest-companion]',
-    describeFocusTransition({ committed: observed, at: Date.now(), driver: lastForeground })
+    describeFocusTransition({ committed: observed, at: Date.now(), driver: lastForeground }),
   )
   update({ eqFocused: observed })
 }
@@ -326,7 +326,7 @@ function applyRecord(rec: PresenceRecord): void {
   const side = foregroundSide(
     rec,
     { pid: process.pid, appWindowFocused: mainWindowFocused() },
-    effectiveEqRoot()
+    effectiveEqRoot(),
   )
   // THE RAISE GRACE ENDS AT THE FIRST FOREIGN FOREGROUND (JOS-427): any real window that is not
   // the app window — the game, another app, one of our accessories — resumes the ordinary JOS-199
@@ -400,7 +400,7 @@ function restartCause(trigger: WatcherRestartTrigger, code: number | null): Watc
     lifetimeMs: since(watcherStartedAt),
     code,
     reason: lastExitReason,
-    attempt: restartFailures
+    attempt: restartFailures,
   }
   forgetWatcherFacts()
   return cause
@@ -577,7 +577,7 @@ function scheduleRestart(): void {
         message:
           `${String(lostWatchers)} presence watcher threads have wedged and not stopped; not ` +
           'starting another for this session. Overlay auto-hide and the cursor ring stay in ' +
-          'their fail-open posture (overlays visible, ring parked).'
+          'their fail-open posture (overlays visible, ring parked).',
       })
     }
     return
@@ -646,7 +646,7 @@ function startWatcher(): void {
     // Both clocks are DERIVED from the cursor gate (JOS-193): the fast tick exists for the cursor
     // call, so a watcher that will not make it asks for the coarse cadence instead.
     ...watcherCadence(watchCursor),
-    watchCursor
+    watchCursor,
   }
   let w: Worker
   try {
@@ -664,7 +664,7 @@ function startWatcher(): void {
     logError('main:presence', {
       message: 'could not start the presence watcher',
       err,
-      ...restartCause('start-failed', null)
+      ...restartCause('start-failed', null),
     })
     resetPresence()
     scheduleRestart()

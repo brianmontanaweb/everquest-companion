@@ -29,7 +29,7 @@ import {
   overlaysShouldHide,
   parsePresenceLine,
   watcherIsStale,
-  watcherRestartDelayMs
+  watcherRestartDelayMs,
 } from '../src/main/presenceProtocol'
 import {
   DEFAULT_CURSOR_RING,
@@ -37,7 +37,7 @@ import {
   INITIAL_PRESENCE,
   normalizeCursorRing,
   normalizeOverlayAutoHide,
-  presenceNeeded
+  presenceNeeded,
 } from '../src/shared/presencePrefs'
 // PresenceState is NOT re-exported from shared/types.ts — see the note at its foot.
 import type { PresenceState } from '../src/shared/presencePrefs'
@@ -53,7 +53,7 @@ test('a foreground record decodes into a pid, a rectangle, an image path and a t
     pid: 4321,
     rect: { x: 100, y: 50, width: 1920, height: 1080 },
     exePath: `${EQ_ROOT}\\eqgame.exe`,
-    title: 'EverQuest'
+    title: 'EverQuest',
   })
 })
 
@@ -72,7 +72,7 @@ test('an empty image path and an empty title are ordinary — many windows have 
     pid: 9,
     rect: { x: 0, y: 0, width: 10, height: 10 },
     exePath: '',
-    title: ''
+    title: '',
   })
 })
 
@@ -82,7 +82,7 @@ test('negative coordinates survive — a window on a left/upper secondary monito
     x: -1920,
     y: -200,
     width: 1920,
-    height: 1080
+    height: 1080,
   })
 })
 
@@ -129,7 +129,7 @@ test('anything malformed decodes to null and can never move the state', () => {
     'F|x|0|0|10|10|C:\\a.exe|T',
     'F|1|0|0|10|1.5|C:\\a.exe|T',
     'At line:1 char:1',
-    'X|1|2'
+    'X|1|2',
   ]) {
     assert.equal(parsePresenceLine(junk), null, `${JSON.stringify(junk)} must not decode`)
   }
@@ -142,16 +142,22 @@ test('the install root is matched with a trailing separator, so a sibling dir ca
   assert.equal(eqRootPrefix('C:\\Games\\EQ\\'), 'C:\\Games\\EQ\\')
   assert.equal(eqRootPrefix('   '), '', 'an unresolvable root disables path matching entirely')
 
-  assert.equal(isEqWindow({ exePath: 'C:\\Games\\EQ\\eqgame.exe', title: 'x' }, 'C:\\Games\\EQ'), true)
+  assert.equal(
+    isEqWindow({ exePath: 'C:\\Games\\EQ\\eqgame.exe', title: 'x' }, 'C:\\Games\\EQ'),
+    true,
+  )
   assert.equal(
     isEqWindow({ exePath: 'C:\\Games\\EQ2\\eq2.exe', title: 'x' }, 'C:\\Games\\EQ'),
     false,
-    'EQ2 is a different game and a different directory'
+    'EQ2 is a different game and a different directory',
   )
 })
 
 test('the path match is case-insensitive — Windows paths are, and the log is not the source', () => {
-  assert.equal(isEqWindow({ exePath: 'c:\\games\\eq\\EQGAME.EXE', title: '' }, 'C:\\Games\\EQ'), true)
+  assert.equal(
+    isEqWindow({ exePath: 'c:\\games\\eq\\EQGAME.EXE', title: '' }, 'C:\\Games\\EQ'),
+    true,
+  )
 })
 
 test('the TITLE is a LAST RESORT: it fires only when the image path is UNREADABLE', () => {
@@ -174,11 +180,14 @@ test('THE RING FOLLOWED THE CURSOR OVER THE BROWSER — a readable path is the a
   // A readable image path is a positive answer to "whose window is this?", so nothing else gets
   // to overrule it.
   for (const [exePath, title] of [
-    ['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', 'EverQuest Wiki - Google Chrome'],
+    [
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'EverQuest Wiki - Google Chrome',
+    ],
     ['C:\\Program Files\\Mozilla Firefox\\firefox.exe', 'EverQuest — Wikipedia — Mozilla Firefox'],
     ['C:\\Users\\me\\AppData\\Local\\Discord\\Discord.exe', '#everquest | Raid Guild - Discord'],
     ['C:\\Windows\\explorer.exe', 'EverQuest — File Explorer'],
-    ['C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe', 'EverQuest stream - OBS']
+    ['C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe', 'EverQuest stream - OBS'],
   ] as const) {
     assert.equal(isEqWindow({ exePath, title }, EQ_ROOT), false, title)
   }
@@ -189,21 +198,24 @@ test('a SECOND INSTALL still counts — by the client’s image NAME, not by its
   // pointed at. `eqgame.exe` is the EverQuest client on every build, and it is the same name
   // the watcher's own "is the game running" scan keys on — so the narrowed predicate keeps this
   // working without letting chrome.exe in behind it.
-  assert.equal(isEqWindow({ exePath: 'D:\\Games\\P99\\eqgame.exe', title: 'EverQuest' }, EQ_ROOT), true)
+  assert.equal(
+    isEqWindow({ exePath: 'D:\\Games\\P99\\eqgame.exe', title: 'EverQuest' }, EQ_ROOT),
+    true,
+  )
   assert.equal(
     isEqWindow({ exePath: 'D:\\Games\\P99\\EQGAME.EXE', title: '' }, EQ_ROOT),
     true,
-    'the image name is matched case-insensitively, like the path'
+    'the image name is matched case-insensitively, like the path',
   )
   assert.equal(
     isEqWindow({ exePath: 'D:\\Games\\P99\\eqgame.exe', title: '' }, ''),
     true,
-    'and it holds even with no install root at all, which is when it matters most'
+    'and it holds even with no install root at all, which is when it matters most',
   )
   assert.equal(
     isEqWindow({ exePath: 'D:\\Games\\EQ2\\eqgame2.exe', title: 'EverQuest II' }, EQ_ROOT),
     false,
-    'a different game with a similar name is still a different game'
+    'a different game with a similar name is still a different game',
   )
 })
 
@@ -216,7 +228,7 @@ test("this app's own windows never look like EverQuest", () => {
     'Fight Overlay',
     'Zone Overlay',
     'Event Log Overlay',
-    'Cursor Ring'
+    'Cursor Ring',
   ]) {
     assert.equal(isEqWindow({ exePath: 'C:\\app\\companion.exe', title }, EQ_ROOT), false, title)
   }
@@ -241,7 +253,7 @@ const presence = (p: Partial<PresenceState> = {}): PresenceState => ({
   eqFocused: false,
   eqBounds: null,
   cursorVisible: true,
-  ...p
+  ...p,
 })
 
 const BOUNDS = { x: 0, y: 0, width: 1920, height: 1080 }
@@ -261,7 +273,7 @@ test('each auto-hide switch hides on its own — they are independent, not a mod
   assert.equal(
     overlaysShouldHide(presence({ eqRunning: true, eqFocused: false }), notRunning),
     false,
-    'running but unfocused is NOT this switch’s business'
+    'running but unfocused is NOT this switch’s business',
   )
 
   const unfocused = { hideWhenNotRunning: false, hideWhenUnfocused: true }
@@ -277,14 +289,17 @@ test('NOTHING IS HIDDEN BEFORE THE WATCHER HAS REPORTED — never act on a guess
   const unobserved = INITIAL_PRESENCE
   for (const prefs of [
     DEFAULT_OVERLAY_AUTO_HIDE,
-    { hideWhenNotRunning: true, hideWhenUnfocused: true }
+    { hideWhenNotRunning: true, hideWhenUnfocused: true },
   ]) {
     assert.equal(overlaysShouldHide(unobserved, prefs), false)
   }
   // AND THE FLAG IS ONLY HALF THE PROMISE (JOS-425): it is raised by the first record of ANY kind,
   // so the birth values have to survive that instant on their own. The seam, and the whole of
   // JOS-425's fix, is pinned in tests/presenceRefocusFlicker.test.mts.
-  assert.equal(overlaysShouldHide({ ...INITIAL_PRESENCE, observed: true }, DEFAULT_OVERLAY_AUTO_HIDE), false)
+  assert.equal(
+    overlaysShouldHide({ ...INITIAL_PRESENCE, observed: true }, DEFAULT_OVERLAY_AUTO_HIDE),
+    false,
+  )
 })
 
 test('the DEFAULT auto-hide posture: hidden with no game, visible the moment one exists', () => {
@@ -301,19 +316,22 @@ test('THE CURSOR STREAM RUNS ONLY WHEN ENABLED **AND** FOCUSED **AND** POSITIONE
   assert.equal(cursorRingActive(presence({ eqFocused: true, eqBounds: BOUNDS }), on), true)
 
   assert.equal(
-    cursorRingActive(presence({ eqRunning: true, eqFocused: true, eqBounds: BOUNDS }), DEFAULT_CURSOR_RING),
+    cursorRingActive(
+      presence({ eqRunning: true, eqFocused: true, eqBounds: BOUNDS }),
+      DEFAULT_CURSOR_RING,
+    ),
     false,
-    'disabled ⇒ nothing, even with the game in front'
+    'disabled ⇒ nothing, even with the game in front',
   )
   assert.equal(
     cursorRingActive(presence({ eqRunning: true, eqFocused: false, eqBounds: BOUNDS }), on),
     false,
-    'ALT-TABBED AWAY ⇒ the stream stops'
+    'ALT-TABBED AWAY ⇒ the stream stops',
   )
   assert.equal(
     cursorRingActive(presence({ eqFocused: true, eqBounds: null }), on),
     false,
-    'no known EQ window ⇒ nowhere to draw, so nothing is drawn or streamed'
+    'no known EQ window ⇒ nowhere to draw, so nothing is drawn or streamed',
   )
 })
 
@@ -328,7 +346,7 @@ test('MOUSELOOK: a hidden system cursor deactivates the ring, and showing it bri
   assert.equal(
     cursorRingActive(presence({ ...live, cursorVisible: true }), on),
     true,
-    'releasing the button shows the cursor again, and the ring comes straight back'
+    'releasing the button shows the cursor again, and the ring comes straight back',
   )
 })
 
@@ -340,7 +358,7 @@ test('the cursor is presumed VISIBLE until the watcher says otherwise', () => {
   assert.equal(INITIAL_PRESENCE.cursorVisible, true)
   assert.equal(
     cursorRingActive({ ...INITIAL_PRESENCE, eqFocused: true, eqBounds: BOUNDS }, on),
-    true
+    true,
   )
 })
 
@@ -370,17 +388,17 @@ test('A DEAD OR WEDGED WATCHER PARKS THE RING AND GIVES THE OVERLAYS BACK', () =
   assert.equal(
     cursorRingActive(INITIAL_PRESENCE, on),
     false,
-    'no known bounds ⇒ the ring parks and the cursor stream stops'
+    'no known bounds ⇒ the ring parks and the cursor stream stops',
   )
   assert.equal(INITIAL_PRESENCE.eqBounds, null, 'and that is the field carrying the property')
   for (const prefs of [
     DEFAULT_OVERLAY_AUTO_HIDE,
-    { hideWhenNotRunning: true, hideWhenUnfocused: true }
+    { hideWhenNotRunning: true, hideWhenUnfocused: true },
   ]) {
     assert.equal(
       overlaysShouldHide(INITIAL_PRESENCE, prefs),
       false,
-      'and `observed:false` fails OPEN: a dead watcher must not hide the overlays forever'
+      'and `observed:false` fails OPEN: a dead watcher must not hide the overlays forever',
     )
   }
 })
@@ -397,7 +415,7 @@ test('STALENESS: silence past the window is wedged; anything inside it is just q
     [t0, t0 + 10 * WATCHER_STALE_MS, true, 'and it stays stale'],
     // `lastSignalAt` is seeded at START, so a watcher that has never spoken gets the same window
     // — which is what makes opening three system libraries a non-event.
-    [t0, t0 + 2_000, false, 'the library loading is inside the first window']
+    [t0, t0 + 2_000, false, 'the library loading is inside the first window'],
   ]
   for (const [last, now, expected, why] of cases) {
     assert.equal(watcherIsStale(last, now), expected, why)
@@ -413,7 +431,7 @@ test('RESTART BACKOFF: fast when it might be a hiccup, CAPPED when it is not', (
   assert.deepEqual(
     [1, 2, 3, 4, 5].map(watcherRestartDelayMs),
     [...WATCHER_RESTART_BACKOFF_MS],
-    'the schedule is walked in order, one step per consecutive failure'
+    'the schedule is walked in order, one step per consecutive failure',
   )
   const cap = WATCHER_RESTART_BACKOFF_MS[WATCHER_RESTART_BACKOFF_MS.length - 1]
   for (const n of [6, 7, 50, 10_000]) {
@@ -436,9 +454,12 @@ test('the shipped defaults are the zero-cost posture', () => {
     enabled: false,
     sizePx: 44,
     thicknessPx: 4,
-    colorHex: '#ffffff'
+    colorHex: '#ffffff',
   })
-  assert.deepEqual(DEFAULT_OVERLAY_AUTO_HIDE, { hideWhenNotRunning: true, hideWhenUnfocused: false })
+  assert.deepEqual(DEFAULT_OVERLAY_AUTO_HIDE, {
+    hideWhenNotRunning: true,
+    hideWhenUnfocused: false,
+  })
 })
 
 test('THE WATCHER IS NEEDED ONLY WHEN A FEATURE ASKS FOR IT', () => {
@@ -446,7 +467,7 @@ test('THE WATCHER IS NEEDED ONLY WHEN A FEATURE ASKS FOR IT', () => {
   assert.equal(
     presenceNeeded(DEFAULT_CURSOR_RING, noHide),
     false,
-    'everything off ⇒ no watcher thread is ever started'
+    'everything off ⇒ no watcher thread is ever started',
   )
   assert.equal(presenceNeeded({ ...DEFAULT_CURSOR_RING, enabled: true }, noHide), true)
   assert.equal(presenceNeeded(DEFAULT_CURSOR_RING, { ...noHide, hideWhenNotRunning: true }), true)
@@ -460,7 +481,7 @@ test('ring prefs are clamped, rounded, and never silently re-intended', () => {
     enabled: true,
     sizePx: 44,
     thicknessPx: 3,
-    colorHex: '#ffffff'
+    colorHex: '#ffffff',
   })
   assert.equal(normalizeCursorRing({ sizePx: 5 }).sizePx, 20, 'below the floor clamps up')
   assert.equal(normalizeCursorRing({ sizePx: 5000 }).sizePx, 200, 'above the cap clamps down')
@@ -475,11 +496,11 @@ test('ring prefs are clamped, rounded, and never silently re-intended', () => {
 test('auto-hide prefs default per FIELD, so a half-written blob keeps the half it has', () => {
   assert.deepEqual(normalizeOverlayAutoHide({ hideWhenUnfocused: true }), {
     hideWhenNotRunning: true,
-    hideWhenUnfocused: true
+    hideWhenUnfocused: true,
   })
   assert.deepEqual(normalizeOverlayAutoHide({ hideWhenNotRunning: false }), {
     hideWhenNotRunning: false,
-    hideWhenUnfocused: false
+    hideWhenUnfocused: false,
   })
   for (const junk of [undefined, null, 0, 'x', []]) {
     assert.deepEqual(normalizeOverlayAutoHide(junk), DEFAULT_OVERLAY_AUTO_HIDE)

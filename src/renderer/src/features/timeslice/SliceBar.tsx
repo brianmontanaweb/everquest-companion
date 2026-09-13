@@ -32,14 +32,28 @@
 // other's text: the words live here, in `SliceCaption`, wherever they are drawn.
 
 import { type JSX } from 'react'
-import { Button, MenuItem, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
+import {
+  Button,
+  MenuItem,
+  Stack,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from '@mui/material'
 import { sliceLabel, type SliceId, type SliceRange, type Timeslice } from '@shared/timeslice'
 import type { SessionSegment } from '@shared/sessionSegments'
 import { formatDateTime } from '../../lib/formatDate'
 
 /** One shape for both ends, whatever the slice: `Aug 5, 18:00`. */
 function edge(ts: number): string {
-  return formatDateTime(ts, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+  return formatDateTime(ts, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
 }
 
 /**
@@ -74,7 +88,7 @@ function fromLocalInput(v: string): number {
 function CustomRange({
   range,
   onChange,
-  testId
+  testId,
 }: {
   range: SliceRange
   onChange: (r: SliceRange) => void
@@ -113,7 +127,7 @@ function inputRange(custom: SliceRange | null | undefined, resolved: SliceRange)
   if (!custom) return resolved
   return {
     t0: Number.isFinite(custom.t0) ? custom.t0 : resolved.t0,
-    t1: Number.isFinite(custom.t1) ? custom.t1 : resolved.t1
+    t1: Number.isFinite(custom.t1) ? custom.t1 : resolved.t1,
   }
 }
 
@@ -138,7 +152,13 @@ export interface SessionSplitProps {
   onPick: (n: number) => void
 }
 
-function SessionSplit({ sessions, testId }: { sessions: SessionSplitProps; testId: string }): JSX.Element {
+function SessionSplit({
+  sessions,
+  testId,
+}: {
+  sessions: SessionSplitProps
+  testId: string
+}): JSX.Element {
   const { segments, index, onNew, onPick } = sessions
   return (
     <>
@@ -147,7 +167,14 @@ function SessionSplit({ sessions, testId }: { sessions: SessionSplitProps; testI
         variant="outlined"
         onClick={onNew}
         data-testid={`${testId}-new-session`}
-        sx={{ px: 1.1, py: 0.25, fontSize: 11, lineHeight: 1.4, textTransform: 'none', whiteSpace: 'nowrap' }}
+        sx={{
+          px: 1.1,
+          py: 0.25,
+          fontSize: 11,
+          lineHeight: 1.4,
+          textTransform: 'none',
+          whiteSpace: 'nowrap',
+        }}
       >
         New session
       </Button>
@@ -165,7 +192,11 @@ function SessionSplit({ sessions, testId }: { sessions: SessionSplitProps; testI
           slotProps={{ inputLabel: { shrink: true } }}
         >
           {[...segments].reverse().map((s) => (
-            <MenuItem key={s.n} value={String(s.n)} data-testid={`${testId}-session-opt-${String(s.n)}`}>
+            <MenuItem
+              key={s.n}
+              value={String(s.n)}
+              data-testid={`${testId}-session-opt-${String(s.n)}`}
+            >
               {s.label}
             </MenuItem>
           ))}
@@ -212,7 +243,7 @@ export function SliceControls({
   onCustom,
   custom,
   sessions,
-  testId
+  testId,
 }: SliceBarProps): JSX.Element {
   return (
     <Stack
@@ -272,7 +303,7 @@ export function SliceControls({
 export function SliceCaption({
   slice,
   testId,
-  noWrap = false
+  noWrap = false,
 }: {
   slice: Timeslice
   testId: string

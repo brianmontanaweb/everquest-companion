@@ -21,5 +21,5 @@ export const buffTrustBridge = {
    * re-deciding it later would be a second opinion about settled evidence.
    */
   setBuffTrust: (prefs: BuffTrustPrefs): Promise<BuffTrustPrefs> =>
-    ipcRenderer.invoke(IPC.buffTrustSet, prefs)
+    ipcRenderer.invoke(IPC.buffTrustSet, prefs),
 }

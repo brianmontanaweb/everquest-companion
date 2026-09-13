@@ -42,14 +42,18 @@ import { join } from 'node:path'
 import { parseInventoryDump } from '../src/main/outputs/inventoryParse'
 import { heldCountsFromDump } from '../src/shared/outputs/inventory'
 import { reconcile, type InventoryRow } from '../src/renderer/src/features/inventory/reconcile'
-import { buildOwnedRows, selectInvOnly, showsInvOnly } from '../src/renderer/src/features/loot/ownedItems'
+import {
+  buildOwnedRows,
+  selectInvOnly,
+  showsInvOnly,
+} from '../src/renderer/src/features/loot/ownedItems'
 import { itemCountKey } from '../src/renderer/src/lib/itemName'
 import poskyRaw from '../src/renderer/src/data/eqlegends/posky.json' with { type: 'json' }
 import type { CountSource, HeldCounts, PoskyQuest } from '../src/shared/types'
 
 const OWNER_DUMP = readFileSync(
   join(import.meta.dirname, 'fixtures', 'Primitive_freeport-Inventory.txt'),
-  'utf8'
+  'utf8',
 )
 
 const quests = (poskyRaw as { quests: PoskyQuest[] }).quests
@@ -67,7 +71,10 @@ function reportedInventory(): HeldCounts {
   return { ...counts, [KEY]: REPORTED }
 }
 
-function rowsFor(countSource: CountSource, log: Record<string, number> = {}): {
+function rowsFor(
+  countSource: CountSource,
+  log: Record<string, number> = {},
+): {
   rows: InventoryRow[]
   net: Record<string, number>
 } {
@@ -77,7 +84,7 @@ function rowsFor(countSource: CountSource, log: Record<string, number> = {}): {
     lootNames: {},
     countSource,
     turnIns: {},
-    quests
+    quests,
   })
 }
 
@@ -89,7 +96,7 @@ test('one spelling, one quest cell, nothing for a normalizer to fix', () => {
   const cells = quests.flatMap((q) => q.items.map((it) => [q.name, it.name] as const))
   assert.deepEqual(
     cells.filter(([, n]) => n === ITEM),
-    [['Paladin Test of Spirit', ITEM]]
+    [['Paladin Test of Spirit', ITEM]],
   )
   // No ` +N` to strip and no case difference to chase — the counting key is the name, lowercased.
   assert.equal(KEY, 'ivory sky diamond')
@@ -124,7 +131,7 @@ test('JOS-160: a row exists for an item only the export vouches for — under ev
   assert.equal(
     underOldRule.find((r) => r.key === KEY),
     undefined,
-    'the report, exactly: no row at all for a dump-only item under the default source'
+    'the report, exactly: no row at all for a dump-only item under the default source',
   )
 })
 
@@ -133,7 +140,11 @@ test('a row nobody vouches for is still not invented', () => {
   for (const r of rows) {
     assert.ok(r.log > 0 || r.inv > 0 || r.consumed > 0, `${r.key} has a witness`)
   }
-  assert.equal(rows.find((r) => r.key === 'large sky diamond'), undefined, 'an unheld Sky item stays absent')
+  assert.equal(
+    rows.find((r) => r.key === 'large sky diamond'),
+    undefined,
+    'an unheld Sky item stays absent',
+  )
 })
 
 // ---------------------------------------------------------------------------
@@ -145,12 +156,15 @@ test('the owned-but-never-looted selection keys off the export, not the active s
     const owned = selectInvOnly(rowsFor(source).rows, new Set<string>())
     assert.ok(
       owned.some((r) => r.key === KEY),
-      `selected under source=${source}`
+      `selected under source=${source}`,
     )
   }
   // Loot it once and it stops being inventory-only: it is a loot row now, with its own history.
   const looted = selectInvOnly(rowsFor('both', { [KEY]: 1 }).rows, new Set([KEY]))
-  assert.equal(looted.find((r) => r.key === KEY), undefined)
+  assert.equal(
+    looted.find((r) => r.key === KEY),
+    undefined,
+  )
 })
 
 test('a SEARCH shows the tail whatever the chip says; an empty box still obeys it', () => {
@@ -182,7 +196,7 @@ test('JOS-160 acceptance: searching the item name returns it, spelled the way th
       source: owned,
       questOnly: true,
       q: 'ivory sky diamond',
-      isQuestItem
+      isQuestItem,
     })
     assert.equal(questFiltered.length, 1)
   }
@@ -195,7 +209,7 @@ test('the search does not go fishing: a name nobody holds still returns nothing'
     source: owned,
     questOnly: false,
     q: 'large sky diamond',
-    isQuestItem
+    isQuestItem,
   })
   assert.deepEqual(hits, [], 'an item the player does not have is absent, not a zero row')
 })

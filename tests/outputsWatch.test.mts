@@ -56,7 +56,7 @@ const WAIT_MS = 8_000
 function dumpText(rows: number): string {
   return `Location\tName\tID\tCount\tSlots\n${Array.from(
     { length: rows },
-    (_, i) => `General${String(i)}\tItem ${String(i)}\t${String(1000 + i)}\t1\t0`
+    (_, i) => `General${String(i)}\tItem ${String(i)}\t${String(1000 + i)}\t1\t0`,
   ).join('\n')}\n`
 }
 
@@ -99,8 +99,8 @@ function recorder(): Recorder {
         rec.gone += 1
         fire('gone')
       },
-      onError: (e) => rec.errors.push(e)
-    }
+      onError: (e) => rec.errors.push(e),
+    },
   }
   return rec
 }
@@ -109,7 +109,7 @@ function recorder(): Recorder {
 function within(p: Promise<void>, ms = WAIT_MS): Promise<boolean> {
   return Promise.race([
     p.then(() => true),
-    new Promise<boolean>((resolve) => setTimeout(() => resolve(false), ms).unref())
+    new Promise<boolean>((resolve) => setTimeout(() => resolve(false), ms).unref()),
   ])
 }
 
@@ -129,7 +129,7 @@ function ready(watcher: FSWatcher): Promise<void> {
  * Registering on creation turns every failure back into a failure instead of a hang.
  */
 async function withRoot(
-  run: (root: string, arm: (w: FSWatcher) => FSWatcher) => Promise<void>
+  run: (root: string, arm: (w: FSWatcher) => FSWatcher) => Promise<void>,
 ): Promise<void> {
   // `realpathSync.native` because of WHERE CI puts its temp dir: `C:\Users\RUNNER~1\…` is an 8.3
   // short name, the events come back under the LONG name, and libuv's prefix assertion
@@ -222,7 +222,11 @@ test('the directory watcher sees a dump appear, first ever or after a deletion',
     // in the same tick reach a directory watcher that still tracks the file as one `change`, and
     // only a deletion this watcher has actually processed makes the return an `add`. Waiting for
     // the deletion to be a non-event is therefore also how the `add` under test is guaranteed.
-    assert.equal(await within(rec.next('gone'), 2_000), false, 'a deletion is not this watcher’s news')
+    assert.equal(
+      await within(rec.next('gone'), 2_000),
+      false,
+      'a deletion is not this watcher’s news',
+    )
     writeFileSync(path, dumpText(90))
     assert.equal(await within(again), true, 'the dump that came back was reported')
     assert.equal(rec.errors.length, 0)

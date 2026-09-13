@@ -43,7 +43,7 @@ export function fallbackPack(packs: SoundPack[], preferred?: string): SoundPack 
 
 /** First selectable soundId in a pack ('' when packs haven't loaded yet). */
 export function firstSoundId(pack: SoundPack | undefined): string {
-  return pack ? Object.keys(pack.sounds)[0] ?? '' : ''
+  return pack ? (Object.keys(pack.sounds)[0] ?? '') : ''
 }
 
 /** The pack→sound picker used in the add/edit dialog. */
@@ -52,7 +52,7 @@ export default function SoundPicker({
   packId,
   soundId,
   defaultPackId,
-  onChange
+  onChange,
 }: {
   packs: SoundPack[]
   packId: string
@@ -83,7 +83,7 @@ export default function SoundPicker({
       </Select>
       <Select
         size="small"
-        value={pack?.sounds[soundId] ? soundId : soundIds[0] ?? ''}
+        value={pack?.sounds[soundId] ? soundId : (soundIds[0] ?? '')}
         onChange={(e) => onChange(pack?.id ?? packId, e.target.value)}
         sx={{ minWidth: 170 }}
       >

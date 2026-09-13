@@ -65,7 +65,7 @@ import {
   onPick,
   saveZoneSelection,
   type ZoneMode,
-  type ZoneSelection
+  type ZoneSelection,
 } from './zoneFollow'
 import { Tooltip } from '../../lib/Tooltip'
 
@@ -74,7 +74,6 @@ const EMPTY_BOUNDS: MapBounds = { minX: -1, maxX: 1, minY: -1, maxY: 1, minZ: 0,
 
 /** Layer → what that file conventionally holds (§2.3). Used for the per-layer source chips. */
 const LAYER_NAME: Record<number, string> = { 0: 'Geometry', 1: 'Labels', 2: 'Legend', 3: 'Extra' }
-
 
 /**
  * What to call the map on screen.
@@ -183,7 +182,7 @@ function mapPossible(packs: { zones: readonly ZoneShort[]; ready: boolean }): bo
 function MapsHeader({
   title,
   zone,
-  data
+  data,
 }: {
   title: string
   zone: ZoneShort | null
@@ -191,20 +190,35 @@ function MapsHeader({
 }): JSX.Element {
   return (
     <Stack spacing={0.5} data-testid="maps-header" sx={{ flexShrink: 0 }}>
-      <Stack direction="row" spacing={1} alignItems="center" flexWrap="nowrap" useFlexGap sx={{ minWidth: 0 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="center"
+        flexWrap="nowrap"
+        useFlexGap
+        sx={{ minWidth: 0 }}
+      >
         <MapIcon sx={{ fontSize: 18, color: 'text.disabled', flexShrink: 0 }} />
         <Typography variant="h6" noWrap sx={{ mr: 0.5, flexShrink: 0 }}>
           {title}
         </Typography>
         {zone != null && (
-          <Chip size="small" variant="outlined" data-testid="maps-zone-chip" label={zone} sx={{ flexShrink: 0 }} />
+          <Chip
+            size="small"
+            variant="outlined"
+            data-testid="maps-zone-chip"
+            label={zone}
+            sx={{ flexShrink: 0 }}
+          />
         )}
         {/* THE SHRINKABLE GROUP, and the reason it clips rather than wraps: everything in it
             arrives with the map, and a row that grows a line when a map loads moves the map.
             `overflow:hidden` is the backstop under the chips' own ellipsis — without it a row
             that cannot shrink far enough overflows the content area sideways, which is the one
             thing the Maps tab must never do (maps.e2e.mts asserts exactly that). */}
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', minWidth: 0, overflow: 'hidden' }}>
+        <Box
+          sx={{ display: 'flex', gap: 1, alignItems: 'center', minWidth: 0, overflow: 'hidden' }}
+        >
           {/* Which pack each layer actually came from. Geometry and labels routinely come from
               DIFFERENT packs (§6.3), and silently merging two while naming one would be exactly
               the unlabelled inference the world-model laws forbid. */}
@@ -260,7 +274,7 @@ function MapsEmpty({
   auto,
   zones,
   zone,
-  error
+  error,
 }: {
   raw: string | undefined
   auto: ZoneShort | null
@@ -317,7 +331,13 @@ function MapsEmpty({
  * A pack with no credit points therefore also keeps the pane still, instead of trading one jump
  * for another.
  */
-function MapCredits({ data, reserve }: { data: MapData | null; reserve: boolean }): JSX.Element | null {
+function MapCredits({
+  data,
+  reserve,
+}: {
+  data: MapData | null
+  reserve: boolean
+}): JSX.Element | null {
   const line = data == null ? '' : data.credits.join(' · ')
   if (line === '' && !reserve) return null
   const blank = line === ''
@@ -374,7 +394,7 @@ export default function MapsView(): JSX.Element {
   // is no character z to auto-select with, and pretending otherwise would be law 1's exact sin.
   const bands = useMemo(
     () => (data ? floorBands(data.zLevels, data.heightHint ? { hint: data.heightHint } : {}) : []),
-    [data]
+    [data],
   )
   const [floor, setFloor] = useState<number | null>(null)
   // A new zone starts on All levels — a floor index means nothing across two different maps.
@@ -434,7 +454,8 @@ export default function MapsView(): JSX.Element {
         // Nothing is claimed before the pack listing and the first fetch have answered — a
         // panel that flashes up and vanishes reads as a bug, not as a load.
         empty={
-          ready && !loading && <MapsEmpty raw={raw} auto={auto} zones={zones} zone={zone} error={error} />
+          ready &&
+          !loading && <MapsEmpty raw={raw} auto={auto} zones={zones} zone={zone} error={error} />
         }
         vp={vp}
         hostRef={hostRef}

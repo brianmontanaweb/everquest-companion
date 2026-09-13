@@ -86,8 +86,12 @@ test('crashSignature returns null for ordinary prose — a feature request is no
 // ---- clustering ------------------------------------------------------------------
 
 test('reports sharing a crash signature are ONE cluster even with unrelated wording', () => {
-  const a = report({ description: `overlay went blank after zoning\n${errorLine('renderer:ErrorBoundary', 'OverlayMeter.tsx', 88)}` })
-  const b = report({ description: `meter died, no idea why\n${errorLine('renderer:ErrorBoundary', 'OverlayMeter.tsx', 88)}` })
+  const a = report({
+    description: `overlay went blank after zoning\n${errorLine('renderer:ErrorBoundary', 'OverlayMeter.tsx', 88)}`,
+  })
+  const b = report({
+    description: `meter died, no idea why\n${errorLine('renderer:ErrorBoundary', 'OverlayMeter.tsx', 88)}`,
+  })
   const clusters = clusterReports([a, b])
 
   assert.equal(clusters.length, 1)
@@ -99,8 +103,14 @@ test('reports sharing a crash signature are ONE cluster even with unrelated word
 })
 
 test('a crash signature also reads out of an attached slice, not just the description', () => {
-  const a = report({ description: 'it crashed', logText: errorLine('main:uncaughtException', 'engine.ts', 412) })
-  const b = report({ description: 'crashed again', logText: errorLine('main:uncaughtException', 'engine.ts', 412) })
+  const a = report({
+    description: 'it crashed',
+    logText: errorLine('main:uncaughtException', 'engine.ts', 412),
+  })
+  const b = report({
+    description: 'crashed again',
+    logText: errorLine('main:uncaughtException', 'engine.ts', 412),
+  })
   const clusters = clusterReports([a, b])
   assert.equal(clusters.length, 1)
   assert.equal(clusters[0].reportIds.length, 2)
@@ -136,7 +146,11 @@ test('a cluster whose members all sit on one version is flagged as a regression 
     report({ description: shared, appVersion: '0.2.0' }),
     report({ description: shared, appVersion: '0.2.1' }),
   ])
-  assert.equal(spread[0].regression, false, 'two versions is a long-standing gripe, not a regression')
+  assert.equal(
+    spread[0].regression,
+    false,
+    'two versions is a long-standing gripe, not a regression',
+  )
 })
 
 test('clusters are ordered by weight and count their attached logs', () => {
@@ -231,7 +245,10 @@ test('parseSince understands d/h/m and ISO dates, and refuses nonsense', () => {
 test('containsLogSlice recognises a raw EverQuest log line', () => {
   assert.equal(containsLogSlice('[Sat Aug 01 13:00:28 2026] You have entered The Hole.'), true)
   // Single-digit days are space-padded in the real log.
-  assert.equal(containsLogSlice('[Mon Aug  3 09:12:00 2026] You slash a gorgon for 214 points of damage.'), true)
+  assert.equal(
+    containsLogSlice('[Mon Aug  3 09:12:00 2026] You slash a gorgon for 214 points of damage.'),
+    true,
+  )
 })
 
 test('containsLogSlice does NOT fire on ordinary prose or on an app error line', () => {
@@ -241,7 +258,10 @@ test('containsLogSlice does NOT fire on ordinary prose or on an app error line',
 
 test('assertNoLogSlice REFUSES to publish a body carrying log lines', () => {
   const body = 'Reported:\n\n[Sat Aug 01 13:00:28 2026] Primitive tells the group, hi\n'
-  assert.throws(() => assertNoLogSlice(body, 'a public issue for 01J8'), /never reaches a public issue/)
+  assert.throws(
+    () => assertNoLogSlice(body, 'a public issue for 01J8'),
+    /never reaches a public issue/,
+  )
   assert.doesNotThrow(() => assertNoLogSlice('overlay is blank after zoning', 'a public issue'))
 })
 
@@ -281,7 +301,7 @@ test('digestLine marks an attached inventory export beside the log, and only whe
       hasLog: true,
       hasInventory: true,
       hasAchievements: true,
-      spamScore: 55
+      spamScore: 55,
     }),
   )
   assert.ok(all.includes('ach ✔'), all)

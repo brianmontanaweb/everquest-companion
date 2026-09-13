@@ -52,7 +52,7 @@ function ToggleChip({
   hint,
   on,
   onToggle,
-  testId
+  testId,
 }: {
   label: string
   hint: string
@@ -93,7 +93,7 @@ function ToggleChip({
 function ItemChip({
   focus,
   onOpen,
-  onClear
+  onClear,
 }: {
   focus: ItemFocus | null
   onOpen: (anchor: HTMLElement) => void
@@ -137,7 +137,7 @@ function ItemChip({
  */
 function ItemNarrowing({
   focus,
-  setFocus
+  setFocus,
 }: {
   focus: ItemFocus | null
   setFocus?: (f: ItemFocus | null) => void
@@ -186,7 +186,7 @@ export default function EffectFilterBar({
   nonEquip,
   groupBy,
   focus = null,
-  setFocus
+  setFocus,
 }: EffectFilterBarProps): JSX.Element {
   const [eraOnly, setEraOnly] = era
   const [showNonEquip, setShowNonEquip] = nonEquip
@@ -226,7 +226,12 @@ export default function EffectFilterBar({
         size="small"
         label="Slot"
         value={filters.slot ?? 'ALL'}
-        onChange={(e) => setFilters({ ...filters, slot: e.target.value === 'ALL' ? null : (e.target.value as EquipSlot) })}
+        onChange={(e) =>
+          setFilters({
+            ...filters,
+            slot: e.target.value === 'ALL' ? null : (e.target.value as EquipSlot),
+          })
+        }
         sx={{ minWidth: 130, flexShrink: 0 }}
       >
         {/* "All slots", not "Any slot" — since JOS-104 an ANY SLOT is a REAL place on the board,

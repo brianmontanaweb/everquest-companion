@@ -169,7 +169,12 @@ export function floorBands(zLevels: readonly number[], opts: FloorSliceOpts = {}
     const at = splitAt(z, runs[pick])
     if (at < 0) break
     const r = runs[pick]
-    runs = [...runs.slice(0, pick), { lo: r.lo, hi: at - 1 }, { lo: at, hi: r.hi }, ...runs.slice(pick + 1)]
+    runs = [
+      ...runs.slice(0, pick),
+      { lo: r.lo, hi: at - 1 },
+      { lo: at, hi: r.hi },
+      ...runs.slice(pick + 1),
+    ]
   }
   return runs.map((r) => ({ lo: z[r.lo], hi: z[r.hi], levels: r.hi - r.lo + 1 }))
 }
@@ -190,7 +195,7 @@ export function bandRange(bands: readonly FloorBand[], index: number): { lo: num
   const above = bands[index + 1]
   return {
     lo: below ? (below.hi + b.lo) / 2 : -Infinity,
-    hi: above ? (b.hi + above.lo) / 2 : Infinity
+    hi: above ? (b.hi + above.lo) / 2 : Infinity,
   }
 }
 
@@ -218,7 +223,7 @@ export function segmentZ(z1: number, z2: number): number {
 export function inActiveBand(
   bands: readonly FloorBand[],
   active: number | null,
-  z: number
+  z: number,
 ): boolean {
   if (active == null || bands.length === 0) return true
   const r = bandRange(bands, active)

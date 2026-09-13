@@ -26,9 +26,13 @@ import {
   editBudget,
   scoreQuery,
   tokenScore,
-  tokenize
+  tokenize,
 } from '../src/shared/fuzzy'
-import { MOB_CATALOG, knowledgeFromEntry, searchMobs } from '../src/renderer/src/features/mobs/mobSearch'
+import {
+  MOB_CATALOG,
+  knowledgeFromEntry,
+  searchMobs,
+} from '../src/renderer/src/features/mobs/mobSearch'
 
 // ---------------------------------------------------------------------------
 // 1. The primitives
@@ -140,7 +144,7 @@ test('M2: an empty / whitespace query returns NOTHING (the tab browses instead)'
   assert.deepEqual(searchMobs('!!!'), [])
 })
 
-test('M3: a TYPO\'D query finds the ghoul knights — the user\'s own example', () => {
+test("M3: a TYPO'D query finds the ghoul knights — the user's own example", () => {
   const hits = searchMobs('gohul knigt')
   assert.ok(hits.length > 0, 'typo query found nothing')
   // Every hit is a ghoul knight; the coverage rule is what keeps plain ghouls out.
@@ -171,7 +175,7 @@ test('M5: results are ranked score-desc and fully deterministic', () => {
   const again = searchMobs('ghoul knight')
   assert.deepEqual(
     again.map((h) => h.entry.page),
-    hits.map((h) => h.entry.page)
+    hits.map((h) => h.entry.page),
   )
 })
 
@@ -203,7 +207,7 @@ test('M9: the result cap is honoured and never reorders the head', () => {
   assert.equal(capped.length, 5)
   assert.deepEqual(
     capped.map((h) => h.entry.page),
-    all.slice(0, 5).map((h) => h.entry.page)
+    all.slice(0, 5).map((h) => h.entry.page),
   )
 })
 

@@ -152,7 +152,7 @@ function encodePng(cv: Canvas): Buffer {
     sig,
     chunk('IHDR', ihdr),
     chunk('IDAT', idat),
-    chunk('IEND', Buffer.alloc(0))
+    chunk('IEND', Buffer.alloc(0)),
   ])
 }
 
@@ -192,7 +192,15 @@ function drawMaster(): Canvas {
   cv.disc(qcx, midY, { outer: qR - strokeW + 4, inner: qR - strokeW }, [58, 48, 26, 255]) // inner shadow edge
   // Q tail (short diagonal, sized to stop before the C's ring)
   for (let t = 0; t < 14; t++) {
-    cv.rect({ x0: qcx + 14 + t, y0: midY + 14 + t, x1: qcx + 14 + t + strokeW, y1: midY + 14 + t + strokeW }, GOLD)
+    cv.rect(
+      {
+        x0: qcx + 14 + t,
+        y0: midY + 14 + t,
+        x1: qcx + 14 + t + strokeW,
+        y1: midY + 14 + t + strokeW,
+      },
+      GOLD,
+    )
   }
 
   // --- C --- (the Q's ring with its right side opened — erased back to panel color)
@@ -243,7 +251,7 @@ writeFileSync(join(outDir, 'icon.png'), masterPng)
 const sizes = [256, 128, 64, 48, 32, 16]
 const frames = sizes.map((size) => ({
   size,
-  png: encodePng(size === 256 ? master : master.scaleTo(size, size))
+  png: encodePng(size === 256 ? master : master.scaleTo(size, size)),
 }))
 const ico = buildIco(frames)
 writeFileSync(join(outDir, 'icon.ico'), ico)

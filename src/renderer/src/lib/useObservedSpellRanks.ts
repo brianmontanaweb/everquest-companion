@@ -9,10 +9,7 @@
 // bridge and no module transport. Both callers today (the unlock rows and the spell hover card)
 // are main-window surfaces already, for the same reason.
 
-import {
-  OBSERVED_SPELL_RANKS_MODULE_ID,
-  type ObservedSpellRanksSnap
-} from '@shared/spellRanks'
+import { OBSERVED_SPELL_RANKS_MODULE_ID, type ObservedSpellRanksSnap } from '@shared/spellRanks'
 import { useModule } from './useModule'
 
 /** The whole observed-rank map for the current character, or null before hydration. */

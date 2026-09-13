@@ -97,7 +97,8 @@ function storableKey(raw: unknown): string | null {
  * `=== true` rather than a cast on both halves, so a hand-written `"true"` or `1` is not a verdict.
  */
 export function normalizeBuffAllowPrefs(raw: unknown): BuffAllowPrefs {
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return { optIn: false, lines: {} }
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw))
+    return { optIn: false, lines: {} }
   const src = raw as { optIn?: unknown; lines?: unknown }
   const optIn = src.optIn === true
   const lines: Record<string, boolean> = {}
@@ -154,7 +155,7 @@ export function applyBuffAllowPatch(current: BuffAllowPrefs, patch: unknown): Bu
   }
   return normalizeBuffAllowPrefs({
     optIn: typeof src.optIn === 'boolean' ? src.optIn : current.optIn,
-    lines: { ...kept, ...stated }
+    lines: { ...kept, ...stated },
   })
 }
 

@@ -22,11 +22,11 @@ import {
   levelingSpark,
   levelingTiles,
   sparkColor,
-  splitRate
+  splitRate,
 } from '../src/renderer/src/features/overview/overviewLevelingTiles'
 import {
   levelingWindows,
-  overviewLeveling
+  overviewLeveling,
 } from '../src/renderer/src/features/overview/overviewLevelingData'
 import { zoneColor } from '../src/renderer/src/features/leveling/zoneBands'
 import { rangeStats } from '../src/shared/progressionStats'
@@ -40,13 +40,28 @@ const T0 = Date.parse('Sat Aug 01 12:00:00 2026')
 
 function emptySnap(): ProgressionSnap {
   return {
-    expTs: [], expPct: [], expFlag: [],
-    killTs: [], killZone: [], killCredit: [],
-    witnessTs: [], recentKills: [], lootTs: [],
-    zoneStart: [], zoneEnd: [], zoneName: [],
-    offlineStart: [], offlineEnd: [], offlineCamped: [],
-    levelTs: [], levelValue: [], aaGainTs: [], aaGainAmount: [],
-    lastTs: 0, windowStart: 0, dropped: 0
+    expTs: [],
+    expPct: [],
+    expFlag: [],
+    killTs: [],
+    killZone: [],
+    killCredit: [],
+    witnessTs: [],
+    recentKills: [],
+    lootTs: [],
+    zoneStart: [],
+    zoneEnd: [],
+    zoneName: [],
+    offlineStart: [],
+    offlineEnd: [],
+    offlineCamped: [],
+    levelTs: [],
+    levelValue: [],
+    aaGainTs: [],
+    aaGainAmount: [],
+    lastTs: 0,
+    windowStart: 0,
+    dropped: 0,
   }
 }
 
@@ -95,7 +110,7 @@ test('a full hour states four tiles — level, pace, AA, next level — in that 
   const state = overviewLeveling(snap)
   assert.deepEqual(
     state.tiles.map((t) => t.id),
-    ['level', 'rate', 'aa', 'eta']
+    ['level', 'rate', 'aa', 'eta'],
   )
   assert.equal(state.tiles[0].value, '43')
   assert.equal(state.tiles[1].unit, 'lvl/hr')
@@ -103,7 +118,7 @@ test('a full hour states four tiles — level, pace, AA, next level — in that 
   assert.match(state.tiles[3].label, /^to level 44$/)
   assert.ok(
     state.tiles.every((t) => t.title.length > 0),
-    'every tile answers "what window is this" on hover — a bare number is not a fact'
+    'every tile answers "what window is this" on hover — a bare number is not a fact',
   )
 })
 
@@ -116,7 +131,7 @@ test('no ding folded ⇒ NO level tile, never a guessed or em-dash one', () => {
   assert.deepEqual(
     state.tiles.map((t) => t.id),
     ['rate', 'aa'],
-    'two measurable facts is the honest floor'
+    'two measurable facts is the honest floor',
   )
 })
 
@@ -144,7 +159,11 @@ test('the level tile takes your own /who over the ding tail, and the ETA stands 
   assert.equal(tile.title, swapped.levelTitle)
   assert.equal(swapped.eta, null)
   assert.match(swapped.etaTitle, /different level than your last level-up/)
-  assert.equal(swapped.tiles.some((t) => t.id === 'eta'), false, 'and no tile pretends otherwise')
+  assert.equal(
+    swapped.tiles.some((t) => t.id === 'eta'),
+    false,
+    'and no tile pretends otherwise',
+  )
 
   // A row AGREEING with the ding is not a contradiction, and an OLDER row cannot overrule a
   // newer ding at all.
@@ -169,7 +188,7 @@ test('the AA tile reports a measured zero rather than disappearing', () => {
     levelCue: '',
     hour: hourStats(snap),
     eta: { blocked: 'no-ding' },
-    rateText: '1.00 lvl/hr'
+    rateText: '1.00 lvl/hr',
   }).find((t) => t.id === 'aa')
   assert.ok(aa)
   assert.equal(aa.value, '0', 'zero gain LINES in the hour is a count, not an unknown')
@@ -182,7 +201,7 @@ test('an absurd horizon says so in the tile instead of pretending to minutes', (
     levelCue: '',
     hour: hourStats(farming({ pct: 1 })),
     eta: { blocked: null, ms: 50 * 60 * 60_000, toLevel: 44, progress: 0.1, offlineMs: 0 },
-    rateText: '0.01 lvl/hr'
+    rateText: '0.01 lvl/hr',
   })
   assert.equal(tiles.find((t) => t.id === 'eta')?.value, '>1 day')
 })

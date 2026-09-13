@@ -21,5 +21,5 @@ export const uiScaleBridge = {
    * stored — snapped to the ladder in `shared/uiScale.ts`, so a caller can render the answer
    * rather than assume its request.
    */
-  setUiScale: (scale: number): Promise<number> => ipcRenderer.invoke(IPC.uiScaleSet, scale)
+  setUiScale: (scale: number): Promise<number> => ipcRenderer.invoke(IPC.uiScaleSet, scale),
 }

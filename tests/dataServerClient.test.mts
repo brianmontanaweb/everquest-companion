@@ -40,7 +40,7 @@ import {
   readdress,
   rig,
   rowKeys,
-  shakeHands
+  shakeHands,
 } from './dataServerRig.mjs'
 import type {
   ClientMessage,
@@ -54,7 +54,7 @@ import type {
   Row,
   SessionAttachRequest,
   ViewSubscribeRequest,
-  ViewUnsubscribeRequest
+  ViewUnsubscribeRequest,
 } from '../src/shared/dataServer/protocol.generated'
 
 const HELLO: Hello = { op: 'hello', token: TEST_TOKEN, protocolVersion: 1 }
@@ -119,14 +119,14 @@ test('THE FOUR PLAN-DOC MOMENTS MATERIALIZE THE WINDOW THE FIXTURES DESCRIBE', (
   assert.deepEqual(
     r.sent[r.sent.length - 1],
     readdress(request, loot.id),
-    'the subscribe the client wrote differs from the committed one'
+    'the subscribe the client wrote differs from the committed one',
   )
   assert.deepEqual(loot.handle.state, {
     rows: null,
     total: 0,
     epoch: null,
     loading: true,
-    error: null
+    error: null,
   })
 
   const opening = engineTurns(subscribeDoc)
@@ -147,7 +147,7 @@ test('THE FOUR PLAN-DOC MOMENTS MATERIALIZE THE WINDOW THE FIXTURES DESCRIBE', (
   assert.deepEqual(
     rowKeys(loot.handle.state),
     ['loot:9413', 'loot:9412', 'loot:9411', 'loot:9410'],
-    'the insert did not land immediately before the anchor it named'
+    'the insert did not land immediately before the anchor it named',
   )
   assert.equal(loot.handle.state.total, 1835, 'total moved, so the frame carried it')
   // The drop names loot:8790 — one of the forty-seven rows fixture 01 elides. An op naming a row
@@ -158,8 +158,11 @@ test('THE FOUR PLAN-DOC MOMENTS MATERIALIZE THE WINDOW THE FIXTURES DESCRIBE', (
   // --- moment 03: a meter tick. The window it lands on is stated here (see the header).
   const meter = openView(r, { source: 'combat.live' })
   const meterRows: Row[] = [
-    { key: 'ally:Primitive', cells: { name: 'Primitive', damage: 180000, dps: 400.1, share: 0.37 } },
-    { key: 'ally:Rowel', cells: { name: 'Rowel', damage: 90000, dps: 210.4, share: 0.2 } }
+    {
+      key: 'ally:Primitive',
+      cells: { name: 'Primitive', damage: 180000, dps: 400.1, share: 0.37 },
+    },
+    { key: 'ally:Rowel', cells: { name: 'Rowel', damage: 90000, dps: 210.4, share: 0.2 } },
   ]
   r.deliver({ kind: 'reset', id: meter.id, epoch: 3, total: 2, rows: meterRows })
   const tick = engineTurns(fixture('03-meter-tick.json'))[0] as DiffMessage
@@ -169,9 +172,13 @@ test('THE FOUR PLAN-DOC MOMENTS MATERIALIZE THE WINDOW THE FIXTURES DESCRIBE', (
   assert.deepEqual(
     meter.handle.state.rows?.[0].cells,
     { name: 'Primitive', damage: 184220, dps: 412.6, share: 0.38 },
-    '`name` was absent from the update, which means UNCHANGED, never cleared'
+    '`name` was absent from the update, which means UNCHANGED, never cleared',
   )
-  assert.equal(meter.handle.state.total, 2, 'no total in the frame means the row count did not move')
+  assert.equal(
+    meter.handle.state.total,
+    2,
+    'no total in the frame means the row count did not move',
+  )
 
   // --- moment 04: the epoch bump is connection-wide; both windows go, one comes back.
   const switchDoc = engineTurns(fixture('04-character-switch.json'))
@@ -186,7 +193,7 @@ test('THE FOUR PLAN-DOC MOMENTS MATERIALIZE THE WINDOW THE FIXTURES DESCRIBE', (
   assert.deepEqual(
     r.progress,
     [{ pct: 62.4, events: 1571003, offset: 156000000, logSize: 250000000 }],
-    'the loading UI heard nothing'
+    'the loading UI heard nothing',
   )
 
   r.deliver(readdress(switchDoc[1] as ResetMessage, loot.id))
@@ -202,7 +209,7 @@ test("the same moment over a window that holds fixture 01's elided rows", () => 
   r.deliver({
     ...reset,
     id: loot.id,
-    rows: [...reset.rows, { key: 'loot:8790', cells: { item: 'a rusty dagger' } }]
+    rows: [...reset.rows, { key: 'loot:8790', cells: { item: 'a rusty dagger' } }],
   })
   assert.equal(loot.handle.state.rows?.length, 4)
 
@@ -238,9 +245,21 @@ test('A NEW TRANSPORT IS A FULL RE-HELLO AND A RE-SUBSCRIBE OF EVERYTHING', () =
   assert.notEqual(resubscribe.id, view.id, 'a fresh id, so late frames for the old one cannot land')
 
   // A frame still in flight for the OLD id is now an unknown subscription, exactly as intended.
-  second.b.send({ kind: 'reset', id: view.id, epoch: 9, total: 1, rows: [{ key: 'ghost', cells: {} }] })
+  second.b.send({
+    kind: 'reset',
+    id: view.id,
+    epoch: 9,
+    total: 1,
+    rows: [{ key: 'ghost', cells: {} }],
+  })
   assert.equal(view.handle.state.rows, null)
-  second.b.send({ kind: 'reset', id: resubscribe.id, epoch: 9, total: 1, rows: [{ key: 'b', cells: {} }] })
+  second.b.send({
+    kind: 'reset',
+    id: resubscribe.id,
+    epoch: 9,
+    total: 1,
+    rows: [{ key: 'b', cells: {} }],
+  })
   assert.deepEqual(rowKeys(view.handle.state), ['b'])
 })
 
@@ -292,7 +311,7 @@ test('a refused subscription is the VIEW-s error, not the connection-s', async (
     kind: 'error',
     id: view.id,
     ok: false,
-    error: { code: 'notFound', message: 'unknown source' }
+    error: { code: 'notFound', message: 'unknown source' },
   })
   await flush() // a refusal reaches a view through a promise
   assert.equal(r.client.state, 'ready', 'one bad view must not take the connection down')
@@ -337,7 +356,7 @@ test('a transport that reports its own failure is the same outcome', async () =>
       fail = handler
     },
     close: () => undefined,
-    closed: false
+    closed: false,
   }
   const client = createEngineClient({ token: TEST_TOKEN })
   client.attach(transport)
@@ -450,7 +469,7 @@ test('a request that WAS answered is never given up on afterwards', async (t) =>
   assert.equal(
     r.notes.some((note) => note.includes('given up on')),
     false,
-    'a settled request kept a live timer'
+    'a settled request kept a live timer',
   )
 })
 
@@ -475,7 +494,7 @@ test('a connection that dies takes the deadline with it, and says `unavailable`'
   assert.equal(
     r.notes.some((note) => note.includes('given up on')),
     false,
-    'the deadline fired for a request the connection had already rejected'
+    'the deadline fired for a request the connection had already rejected',
   )
 })
 
@@ -484,14 +503,14 @@ test('a connection that dies takes the deadline with it, and says `unavailable`'
 test('THE CLIENT AND THE HOOK CANNOT SORT, FILTER OR AGGREGATE (owner ruling 4)', () => {
   const files = [
     join(ROOT, 'src', 'shared', 'dataServer', 'client.ts'),
-    join(ROOT, 'src', 'renderer', 'src', 'lib', 'useView.ts')
+    join(ROOT, 'src', 'renderer', 'src', 'lib', 'useView.ts'),
   ]
   const banned = /\.(sort|filter|reduce|reduceRight|flatMap|group)\(/
   for (const file of files) {
     assert.doesNotMatch(
       readFileSync(file, 'utf8'),
       banned,
-      `${file} derives something from the rows it was sent - views arrive render-ready`
+      `${file} derives something from the rows it was sent - views arrive render-ready`,
     )
   }
 })

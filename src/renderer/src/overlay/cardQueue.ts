@@ -80,7 +80,7 @@ function show<P extends QueuedPayload>(
   state: CardState<P>[],
   payload: P,
   holdMs: number,
-  cap: number
+  cap: number,
 ): CardState<P>[] {
   const at = state.findIndex((c) => c.payload.id === payload.id)
   if (at >= 0) {
@@ -105,7 +105,11 @@ function tickCard<P extends QueuedPayload>(card: CardState<P>, dtMs: number): Ca
 }
 
 /** Pointer in/out over one card: pause its clock, or resume it with the grace floor. */
-function hover<P extends QueuedPayload>(state: CardState<P>[], id: string, over: boolean): CardState<P>[] {
+function hover<P extends QueuedPayload>(
+  state: CardState<P>[],
+  id: string,
+  over: boolean,
+): CardState<P>[] {
   return state.map((c) => {
     if (c.payload.id !== id || c.exitingMs !== null) return c
     if (over) return { ...c, pinned: true }
@@ -116,13 +120,15 @@ function hover<P extends QueuedPayload>(state: CardState<P>[], id: string, over:
 /** The queue's whole behaviour. Pure: same state + same action ⇒ same result, always. */
 export function cardReduce<P extends QueuedPayload>(
   state: CardState<P>[],
-  action: CardAction<P>
+  action: CardAction<P>,
 ): CardState<P>[] {
   switch (action.type) {
     case 'show':
       return show(state, action.payload, action.holdMs, action.cap)
     case 'tick': {
-      const next = state.map((c) => tickCard(c, action.dtMs)).filter((c): c is CardState<P> => c !== null)
+      const next = state
+        .map((c) => tickCard(c, action.dtMs))
+        .filter((c): c is CardState<P> => c !== null)
       // Identity is preserved when nothing moved, so a paused, fully-pinned queue does not
       // re-render the window 10× a second over the game.
       return next.length === state.length && next.every((c, i) => c === state[i]) ? state : next
@@ -186,7 +192,7 @@ export function useQueueMouseCapture(ready: boolean, locked: boolean, hasCards: 
  */
 export function useUnpinOnPointerExit<P extends QueuedPayload>(
   cards: readonly CardState<P>[],
-  dispatch: (a: { type: 'hover'; id: string; over: boolean }) => void
+  dispatch: (a: { type: 'hover'; id: string; over: boolean }) => void,
 ): void {
   const latest = useRef(cards)
   latest.current = cards
@@ -197,7 +203,7 @@ export function useUnpinOnPointerExit<P extends QueuedPayload>(
           if (c.pinned) dispatch({ type: 'hover', id: c.payload.id, over: false })
         }
       }),
-    [dispatch]
+    [dispatch],
   )
 }
 

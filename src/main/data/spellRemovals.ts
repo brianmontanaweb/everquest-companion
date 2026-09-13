@@ -139,7 +139,7 @@ export interface RemovalsReport {
  */
 export function applySpellRemovals(
   spells: readonly SpellEntry[],
-  removals: readonly SpellRemoval[] = SPELL_REMOVALS
+  removals: readonly SpellRemoval[] = SPELL_REMOVALS,
 ): { spells: SpellEntry[]; report: RemovalsReport } {
   const wanted = new Set(removals.map((r) => r.spell))
   const hit = new Set<string>()
@@ -155,7 +155,7 @@ export function applySpellRemovals(
     removed: spells.length - out.length,
     // In list order, not set order: the boot log and the audit read the same sequence the file
     // states, so a diff of either is a diff of the list.
-    satisfied: removals.filter((r) => !hit.has(r.spell)).map((r) => r.spell)
+    satisfied: removals.filter((r) => !hit.has(r.spell)).map((r) => r.spell),
   }
   return { spells: out, report }
 }

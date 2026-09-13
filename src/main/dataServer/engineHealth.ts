@@ -53,7 +53,7 @@ export interface EngineHealth {
 export class EngineHealthError extends Error {
   constructor(
     readonly reason: HealthFailure,
-    message: string
+    message: string,
   ) {
     super(message)
     this.name = 'EngineHealthError'
@@ -80,7 +80,7 @@ const TRANSIENT_FAILURE: Readonly<Record<HealthFailure, boolean>> = {
   unexpected: false,
   // Transient by nature, and never reached through this table: the watchdog intercepts a local
   // socket before the two-strike rule, because an immediate second ask asks the same instant.
-  localSocket: true
+  localSocket: true,
 }
 
 export function isTransientHealthFailure(reason: HealthFailure): boolean {
@@ -104,7 +104,7 @@ const LOCAL_SOCKET_CODES: readonly string[] = [
   'EADDRNOTAVAIL',
   'EMFILE',
   'ENFILE',
-  'ENOBUFS'
+  'ENOBUFS',
 ]
 
 /**
@@ -145,10 +145,16 @@ type ProbeStep = 'hello' | 'health'
 
 /** Narrow a `Reply.result` to the health shape without a cast: the registry is closed, so the two
  *  fields no other arm carries are the whole test. */
-function asHealthResult(result: unknown): { status: string; epoch: number; uptimeMs: number } | null {
+function asHealthResult(
+  result: unknown,
+): { status: string; epoch: number; uptimeMs: number } | null {
   if (typeof result !== 'object' || result === null) return null
   const r = result as Record<string, unknown>
-  if (typeof r.status !== 'string' || typeof r.epoch !== 'number' || typeof r.uptimeMs !== 'number') {
+  if (
+    typeof r.status !== 'string' ||
+    typeof r.epoch !== 'number' ||
+    typeof r.uptimeMs !== 'number'
+  ) {
     return null
   }
   return { status: r.status, epoch: r.epoch, uptimeMs: r.uptimeMs }
@@ -175,7 +181,7 @@ export async function engineHealthCheck(opts: HealthProbeOptions): Promise<Engin
   // transport is about to swallow, without taking it away from the transport.
   let onHangUp: (() => void) | null = null
   const transport = createNdjsonTransport<ClientMessage, EngineMessage>(
-    watchClose(opts.channel, () => onHangUp?.())
+    watchClose(opts.channel, () => onHangUp?.()),
   )
   return new Promise<EngineHealth>((resolve, reject) => {
     const probe: ProbeState = {
@@ -200,10 +206,13 @@ export async function engineHealthCheck(opts: HealthProbeOptions): Promise<Engin
       sendHealth: () => {
         probe.step = 'health'
         transport.send({ id: HEALTH_REQUEST_ID, op: 'session.health', params: {} })
-      }
+      },
     }
     const cancel = opts.timer(() => {
-      probe.fail('timeout', `the engine did not answer ${probe.step} within ${String(opts.timeoutMs)} ms`)
+      probe.fail(
+        'timeout',
+        `the engine did not answer ${probe.step} within ${String(opts.timeoutMs)} ms`,
+      )
     }, opts.timeoutMs)
     onHangUp = () => {
       probe.fail('closed', `the engine closed the connection during ${probe.step}`)
@@ -245,7 +254,7 @@ function watchClose(channel: ByteChannel, onEnd: () => void): ByteChannel {
         handler(error)
         onEnd()
       }),
-    close: () => channel.close()
+    close: () => channel.close(),
   }
 }
 
@@ -285,7 +294,7 @@ const CONNECTION_WIDE: Readonly<Record<EngineMessage['kind'], boolean>> = {
   fire: true,
   conCard: true,
   knowledgeMiss: true,
-  moduleChanged: true
+  moduleChanged: true,
 }
 
 /** Skipping never resets the conversation timeout: a peer that streams broadcasts forever without
@@ -312,7 +321,7 @@ function handleHello(msg: EngineMessage, probe: ProbeState): void {
     // fold collapses into one entry.
     probe.fail(
       'protocolMismatch',
-      `the engine speaks protocol ${String(msg.protocolVersion)}, this build speaks ${String(probe.ours)}`
+      `the engine speaks protocol ${String(msg.protocolVersion)}, this build speaks ${String(probe.ours)}`,
     )
     return
   }
@@ -328,7 +337,10 @@ function handleHealth(msg: EngineMessage, probe: ProbeState): void {
     return
   }
   if (msg.kind !== 'reply' || msg.id !== HEALTH_REQUEST_ID) {
-    probe.fail('unexpected', `the engine sent \`${msg.kind}\` where session.health's reply belonged`)
+    probe.fail(
+      'unexpected',
+      `the engine sent \`${msg.kind}\` where session.health's reply belonged`,
+    )
     return
   }
   const health = asHealthResult(msg.result)
@@ -339,6 +351,6 @@ function handleHealth(msg: EngineMessage, probe: ProbeState): void {
   probe.ok({
     engineVersion: probe.hello?.engineVersion ?? '',
     protocolVersion: probe.hello?.protocolVersion ?? probe.ours,
-    ...health
+    ...health,
   })
 }

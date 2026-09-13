@@ -57,7 +57,7 @@ interface Spoken {
 
 function spoken(page: Page): Promise<Spoken[]> {
   return page.evaluate(
-    () => (window as unknown as { __eqSpeech?: { spoken: Spoken[] } }).__eqSpeech?.spoken ?? []
+    () => (window as unknown as { __eqSpeech?: { spoken: Spoken[] } }).__eqSpeech?.spoken ?? [],
   ) as Promise<Spoken[]>
 }
 
@@ -65,32 +65,45 @@ function spoken(page: Page): Promise<Spoken[]> {
 function storedSpeech(page: Page): Promise<{ mode?: string; phrase?: string } | null> {
   return page.evaluate(
     (id) =>
-      (window as unknown as {
-        eq: { listAlerts: () => Promise<{ id: string; speech?: { mode?: string; phrase?: string } }[]> }
-      }).eq
+      (
+        window as unknown as {
+          eq: {
+            listAlerts: () => Promise<{ id: string; speech?: { mode?: string; phrase?: string } }[]>
+          }
+        }
+      ).eq
         .listAlerts()
         .then((defs) => defs.find((d) => d.id === id)?.speech ?? null),
-    ALERT_ID
+    ALERT_ID,
   ) as Promise<{ mode?: string; phrase?: string } | null>
 }
 
 /** Rendered text of the first match; '' when the node isn't mounted (the plannerSteps helper). */
 function textOf(page: Page, sel: string): Promise<string> {
-  return page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
+  return page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    sel,
+  )
 }
 
 /** The value a MUI Select is holding, read off the hidden native input it renders. */
 function selectValueOf(page: Page, selector: string): Promise<string> {
   return page.evaluate(
-    (sel) => (document.querySelector(`${sel} input`) as HTMLInputElement | null)?.value ?? '<missing>',
-    selector
+    (sel) =>
+      (document.querySelector(`${sel} input`) as HTMLInputElement | null)?.value ?? '<missing>',
+    selector,
   )
 }
 
 /** Which def the editor says it is editing ("Edit alert - <name>") — the failure detail. */
 async function dialogTitle(page: Page): Promise<string> {
   const t = await page.evaluate(
-    () => (document.querySelector('[data-testid="alert-dialog"] .MuiDialogTitle-root') as HTMLElement | null)?.innerText ?? ''
+    () =>
+      (
+        document.querySelector(
+          '[data-testid="alert-dialog"] .MuiDialogTitle-root',
+        ) as HTMLElement | null
+      )?.innerText ?? '',
   )
   return t.replace(/\s+/g, ' ').trim()
 }
@@ -108,7 +121,7 @@ function settledPhrase(page: Page, want: string): Promise<string> {
   return settle(
     () => page.inputValue('[data-testid="alert-speech-phrase"] input'),
     (v) => v === want,
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   ).catch(() => page.inputValue('[data-testid="alert-speech-phrase"] input'))
 }
 
@@ -132,15 +145,19 @@ async function seedSuggestedDef(page: Page): Promise<number> {
         cooldownMs: 0,
         // The shape JOS-353 gave the fade template: sound + voice, saying the template's phrase.
         audio: 'both',
-        speech: { mode: 'custom', phrase }
+        speech: { mode: 'custom', phrase },
       })
       return defs.length
     },
-    { id: ALERT_ID, phrase: TEMPLATE_PHRASE }
+    { id: ALERT_ID, phrase: TEMPLATE_PHRASE },
   )
   await page.click('[data-testid="nav-alerts"]', { timeout: 60_000 })
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
-  await settle(() => countOf(page, ROW), (n) => n === 1, { timeoutMs: 20_000 })
+  await settle(
+    () => countOf(page, ROW),
+    (n) => n === 1,
+    { timeoutMs: 20_000 },
+  )
   return saved
 }
 
@@ -155,7 +172,7 @@ async function rewordFromTheRow(page: Page): Promise<boolean> {
     !check(
       'a def stored on the retired sound+voice channel opens on the voice output, not blank',
       (await selectValueOf(page, `${ROW} [data-testid="alert-output"]`)) === 'output:speech',
-      await selectValueOf(page, `${ROW} [data-testid="alert-output"]`)
+      await selectValueOf(page, `${ROW} [data-testid="alert-output"]`),
     )
   ) {
     return false
@@ -165,7 +182,7 @@ async function rewordFromTheRow(page: Page): Promise<boolean> {
       'a suggested alert shows the say picker, already on the template’s phrase',
       (await countOf(page, `${ROW} [data-testid="alert-say"]`)) === 1 &&
         (await selectValueOf(page, `${ROW} [data-testid="alert-say"]`)) === 'custom',
-      await selectValueOf(page, `${ROW} [data-testid="alert-say"]`)
+      await selectValueOf(page, `${ROW} [data-testid="alert-say"]`),
     )
   ) {
     return false
@@ -176,7 +193,7 @@ async function rewordFromTheRow(page: Page): Promise<boolean> {
   check(
     'the closed say picker states the phrase the alert speaks',
     (await textOf(page, `${ROW} [data-testid="alert-say"]`)).includes(TEMPLATE_PHRASE),
-    await textOf(page, `${ROW} [data-testid="alert-say"]`)
+    await textOf(page, `${ROW} [data-testid="alert-say"]`),
   )
 
   // …and THIS is the click that did nothing. The entry is the mode the def is already in, so the
@@ -190,17 +207,19 @@ async function rewordFromTheRow(page: Page): Promise<boolean> {
   check(
     'the custom entry reads as an edit action, alongside the phrase it would edit',
     entry.includes('Edit spoken phrase') && entry.includes(TEMPLATE_PHRASE),
-    entry
+    entry,
   )
   await page.click('li[data-value="custom"]')
-  const opened = await settle(() => countOf(page, PHRASE_BOX), (n) => n === 1, { timeoutMs: 10_000 }).catch(
-    () => 0
-  )
+  const opened = await settle(
+    () => countOf(page, PHRASE_BOX),
+    (n) => n === 1,
+    { timeoutMs: 10_000 },
+  ).catch(() => 0)
   if (
     !check(
       'THE REGRESSION: re-picking "Speak: custom…" on an alert already in custom mode opens the phrase box',
       opened === 1,
-      opened === 1 ? '' : 'the popover never rendered — the row cannot reword a suggested phrase'
+      opened === 1 ? '' : 'the popover never rendered — the row cannot reword a suggested phrase',
     )
   ) {
     return false
@@ -209,25 +228,33 @@ async function rewordFromTheRow(page: Page): Promise<boolean> {
   check(
     '…prefilled with what the alert says today, so a reword is an edit and not a retype',
     (await page.inputValue(PHRASE_BOX)) === TEMPLATE_PHRASE,
-    await page.inputValue(PHRASE_BOX)
+    await page.inputValue(PHRASE_BOX),
   )
 
   // …and it TEACHES the token, in the dialog's own words (owner, mid-JOS-362: "add a small bit of
   // explanatory text ... around {target} and what it can do"). The names come from this alert's own
   // trigger, so this is also the claim that the row is not promising a token the def cannot fill.
   const hint = await textOf(page, '[data-testid="alert-row-phrase-tokens"]')
-  check('the phrase box says which token the app fills in for this alert', hint.includes('{target}'), hint)
+  check(
+    'the phrase box says which token the app fills in for this alert',
+    hint.includes('{target}'),
+    hint,
+  )
 
   await page.fill(PHRASE_BOX, ROW_PHRASE)
   await page.press(PHRASE_BOX, 'Enter')
   await settleGone(page, PHRASE_BOX, { timeoutMs: 10_000 })
-  const stored = await settle(() => storedSpeech(page), (s) => s?.phrase === ROW_PHRASE, {
-    timeoutMs: 15_000
-  }).catch(() => null)
+  const stored = await settle(
+    () => storedSpeech(page),
+    (s) => s?.phrase === ROW_PHRASE,
+    {
+      timeoutMs: 15_000,
+    },
+  ).catch(() => null)
   return check(
     'the row wrote the user’s words onto the stored def — no editor was opened',
     stored?.mode === 'custom' && stored.phrase === ROW_PHRASE,
-    JSON.stringify(stored)
+    JSON.stringify(stored),
   )
 }
 
@@ -235,7 +262,7 @@ async function rewordFromTheRow(page: Page): Promise<boolean> {
 async function speaksTheMob(
   page: Page,
   log: { appendAt: (at: Date, ...m: readonly string[]) => number },
-  expected: string
+  expected: string,
 ): Promise<void> {
   // ── RESTORED BY JOS-500 (owner ruling 27) — THE FRAME CARRIES THE WORDS ─────────────────────
   //
@@ -254,15 +281,20 @@ async function speaksTheMob(
   const all = await settle(
     () => spoken(page),
     (list) => list.slice(before).some((s) => s.text === expected),
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   ).catch(() => null)
   const hit = all?.slice(before).find((s) => s.text === expected)
   check(
     `a hand-typed {target} reaches the speech seam substituted — “${expected}”`,
     hit !== undefined,
-    hit ? `spoke "${hit.text}"` : `never spoke "${expected}"`
+    hit ? `spoke "${hit.text}"` : `never spoke "${expected}"`,
   )
-  if (hit) check('…and this channel stayed mute doing it', hit.uttered === false, `uttered=${String(hit.uttered)}`)
+  if (hit)
+    check(
+      '…and this channel stayed mute doing it',
+      hit.uttered === false,
+      `uttered=${String(hit.uttered)}`,
+    )
 }
 
 /**
@@ -277,41 +309,56 @@ async function editorRoundTrip(page: Page): Promise<void> {
   const shown = await settledPhrase(page, ROW_PHRASE)
   check(
     'reopening the editor finds the alert still on a phrase the user wrote',
-    (await selectValueOf(page, '[data-testid="alert-speech-mode"]')) === 'custom' && shown === ROW_PHRASE,
-    `${shown} — dialog: ${await dialogTitle(page)}`
+    (await selectValueOf(page, '[data-testid="alert-speech-mode"]')) === 'custom' &&
+      shown === ROW_PHRASE,
+    `${shown} — dialog: ${await dialogTitle(page)}`,
   )
   check(
     '…and the editor still says which token it fills in for you (JOS-353)',
-    (await countOf(page, '[data-testid="alert-speech-auto-tokens"]')) === 1
+    (await countOf(page, '[data-testid="alert-speech-auto-tokens"]')) === 1,
   )
 
   await page.fill('[data-testid="alert-speech-phrase"] input', EDITOR_PHRASE)
   await page.click('[data-testid="alert-save"]')
   await settleGone(page, DIALOG, { timeoutMs: 15_000 })
 
-  const stored = await settle(() => storedSpeech(page), (s) => s?.phrase === EDITOR_PHRASE, {
-    timeoutMs: 15_000
-  }).catch(() => null)
+  const stored = await settle(
+    () => storedSpeech(page),
+    (s) => s?.phrase === EDITOR_PHRASE,
+    {
+      timeoutMs: 15_000,
+    },
+  ).catch(() => null)
   check(
     'the editor writes a custom phrase too, and the template’s default never returns',
     stored?.mode === 'custom' && stored.phrase === EDITOR_PHRASE,
-    JSON.stringify(stored)
+    JSON.stringify(stored),
   )
 
   await page.click(`${ROW} [data-testid="alert-edit"]`)
   await page.waitForSelector('[data-testid="alert-speech-phrase"] input', { timeout: 15_000 })
   const reopened = await settledPhrase(page, EDITOR_PHRASE)
-  check('and a second reopen still shows it — the round trip closes', reopened === EDITOR_PHRASE, reopened)
+  check(
+    'and a second reopen still shows it — the round trip closes',
+    reopened === EDITOR_PHRASE,
+    reopened,
+  )
   await page.keyboard.press('Escape')
   await settleGone(page, DIALOG, { timeoutMs: 10_000 })
 }
 
 export async function stepCustomPhrase(
   page: Page,
-  log: { appendAt: (at: Date, ...m: readonly string[]) => number }
+  log: { appendAt: (at: Date, ...m: readonly string[]) => number },
 ): Promise<void> {
   const saved = await seedSuggestedDef(page)
-  if (!check('a suggestion-shaped speaking def saves through the app’s own IPC', saved > 0, `${String(saved)} defs stored`)) {
+  if (
+    !check(
+      'a suggestion-shaped speaking def saves through the app’s own IPC',
+      saved > 0,
+      `${String(saved)} defs stored`,
+    )
+  ) {
     return
   }
   if (!(await rewordFromTheRow(page))) return

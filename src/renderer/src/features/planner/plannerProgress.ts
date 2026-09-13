@@ -68,7 +68,7 @@ export interface ProgressSources {
 export function donorProgress(
   donorKey: string,
   tierRequired: ExtractTier,
-  sources: ProgressSources
+  sources: ProgressSources,
 ): DonorProgress {
   const { held, looted, tier } = sources
   const base = { tier, tierRequired, held: held[donorKey] ?? 0, looted: looted[donorKey] ?? 0 }
@@ -104,8 +104,12 @@ export function usePlannerProgress(): PlannerProgressApi {
   return useMemo(
     () => ({
       of: (donorKey: string, tierRequired: ExtractTier) =>
-        donorProgress(donorKey, tierRequired, { held, looted, tier: observedTierOf(tiers, donorKey) })
+        donorProgress(donorKey, tierRequired, {
+          held,
+          looted,
+          tier: observedTierOf(tiers, donorKey),
+        }),
     }),
-    [held, looted, tiers]
+    [held, looted, tiers],
   )
 }

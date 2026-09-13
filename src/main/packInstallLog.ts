@@ -35,7 +35,7 @@
 import {
   classifyPackInstallFailure,
   packInstallFailureLine,
-  type PackInstallFailureKind
+  type PackInstallFailureKind,
 } from '../shared/packInstall'
 import { updateFailureCode } from '../shared/update'
 
@@ -103,7 +103,7 @@ export function logPackInstallFailure(
     readonly final: boolean
     readonly err: unknown
   },
-  sinks: PackInstallLogSinks
+  sinks: PackInstallLogSinks,
 ): PackInstallFailureKind {
   const { pack, attempt, attempts, final, err } = opts
   const kind = classifyPackInstallFailure(err)
@@ -117,7 +117,7 @@ export function logPackInstallFailure(
     if (takePackNetworkWarning(code)) {
       sinks.warn(
         PACK_INSTALL_LOG_PREFIX,
-        `${line}; further unreachable installs this session are not logged`
+        `${line}; further unreachable installs this session are not logged`,
       )
     }
     return kind
@@ -128,12 +128,19 @@ export function logPackInstallFailure(
     if (takePackNetworkWarning(RATE_LIMITED_WARN_CODE)) {
       sinks.warn(
         PACK_INSTALL_LOG_PREFIX,
-        `${line}; further rate-limited installs this session are not logged`
+        `${line}; further rate-limited installs this session are not logged`,
       )
     }
     return kind
   }
-  const payload: PackInstallFailurePayload = { pack, attempt, attempts, kind, message: line, error: err }
+  const payload: PackInstallFailurePayload = {
+    pack,
+    attempt,
+    attempts,
+    kind,
+    message: line,
+    error: err,
+  }
   sinks.error(PACK_INSTALL_SOURCE, payload)
   return kind
 }

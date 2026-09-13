@@ -101,6 +101,6 @@ export function messagePortChannel(port: PortLike): ByteChannel {
       }
       port.close()
       end()
-    }
+    },
   }
 }

@@ -128,7 +128,7 @@ function toMb(bytes: number | null): number | null {
  */
 export function createProcessSampler(
   read: ProcessReader,
-  now: () => number = () => Date.now()
+  now: () => number = () => Date.now(),
 ): { sample(pid: number): ProcessSample | null; forget(): void } {
   const marks = new Map<number, Mark>()
   return {
@@ -145,13 +145,14 @@ export function createProcessSampler(
       // grew would be a leak measured in respawns.
       for (const key of marks.keys()) if (key !== pid) marks.delete(key)
       return {
-        cpuPercent: previous === undefined ? null : cpuPercentBetween(previous, { cpuMs: reading.cpuMs, at }),
-        memoryMb: toMb(reading.workingSetBytes)
+        cpuPercent:
+          previous === undefined ? null : cpuPercentBetween(previous, { cpuMs: reading.cpuMs, at }),
+        memoryMb: toMb(reading.workingSetBytes),
       }
     },
     forget(): void {
       marks.clear()
-    }
+    },
   }
 }
 
@@ -233,16 +234,16 @@ function loadNative(): Native {
 
   const OpenProcess = bind(
     kernel32,
-    'void *__stdcall OpenProcess(uint32 access, bool inherit, uint32 pid)'
+    'void *__stdcall OpenProcess(uint32 access, bool inherit, uint32 pid)',
   )
   const CloseHandle = bind(kernel32, 'bool __stdcall CloseHandle(void *h)')
   const GetProcessTimes = bind(
     kernel32,
-    'bool __stdcall GetProcessTimes(void *h, _Out_ void *creation, _Out_ void *exit, _Out_ void *kernel, _Out_ void *user)'
+    'bool __stdcall GetProcessTimes(void *h, _Out_ void *creation, _Out_ void *exit, _Out_ void *kernel, _Out_ void *user)',
   )
   const GetProcessMemoryInfo = bind(
     psapi,
-    'bool __stdcall GetProcessMemoryInfo(void *h, _Out_ void *counters, uint32 cb)'
+    'bool __stdcall GetProcessMemoryInfo(void *h, _Out_ void *counters, uint32 cb)',
   )
 
   // Scratch buffers allocated ONCE. This runs at the panel's cadence rather than 69 times a
@@ -291,7 +292,7 @@ function loadNative(): Native {
       } finally {
         CloseHandle(handle)
       }
-    }
+    },
   }
 }
 

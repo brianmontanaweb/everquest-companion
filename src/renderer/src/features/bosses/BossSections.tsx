@@ -58,7 +58,7 @@ import { Tooltip } from '../../lib/Tooltip'
 function BossImage({
   target,
   height,
-  dim
+  dim,
 }: {
   target: RaidTarget
   height: number
@@ -83,7 +83,7 @@ function BossImage({
           objectFit: 'cover',
           objectPosition: 'top',
           display: 'block',
-          filter: dim ? 'grayscale(1) brightness(0.5)' : 'none'
+          filter: dim ? 'grayscale(1) brightness(0.5)' : 'none',
         }}
       />
     )
@@ -106,7 +106,7 @@ function BossImage({
         bgcolor: 'action.hover',
         color: 'text.disabled',
         fontSize: height > 90 ? 26 : 18,
-        fontWeight: 700
+        fontWeight: 700,
       }}
     >
       {initials}
@@ -131,7 +131,7 @@ function TargetKilledBadge({ tier }: { tier: TierStyle }): JSX.Element {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: 1
+        boxShadow: 1,
       }}
     >
       <CheckIcon sx={{ fontSize: 14 }} />
@@ -152,13 +152,13 @@ function TargetKilledBadge({ tier }: { tier: TierStyle }): JSX.Element {
 function chipFacts(
   s: TargetStatus,
   tier: TierStyle,
-  lock?: TierLock[]
+  lock?: TierLock[],
 ): { on: boolean; label: string; style: TierStyle } {
   if (!lock) {
     return {
       on: s.killed,
       label: s.killed ? tier.label : 'not defeated',
-      style: tier
+      style: tier,
     }
   }
   const top = lock[lock.length - 1]
@@ -176,7 +176,7 @@ type ChipFacts = ReturnType<typeof chipFacts>
 function TargetCardMedia({
   s,
   chip,
-  height
+  height,
 }: {
   s: TargetStatus
   chip: ChipFacts
@@ -197,7 +197,7 @@ function TargetCardMedia({
           color: chip.on ? chip.style.fg : '#fff',
           fontWeight: 700,
           fontSize: 11,
-          '& .MuiChip-label': { px: 0.75 }
+          '& .MuiChip-label': { px: 0.75 },
         }}
       />
     </Box>
@@ -240,7 +240,7 @@ function TargetCardCaption({
   s,
   compact,
   ladder,
-  baseMark
+  baseMark,
 }: {
   s: TargetStatus
   compact: boolean
@@ -294,11 +294,19 @@ function mobTargetForStatus(t: TargetStatus): MobTarget {
     kill:
       t.count > 0
         ? { count: t.count, bestTier: t.bestTier, firstTs: t.firstTs, lastTs: t.lastTs }
-        : undefined
+        : undefined,
   }
 }
 
-function TargetCard({ s, compact, flash, lock, ladder, baseMark, onOpen }: {
+function TargetCard({
+  s,
+  compact,
+  flash,
+  lock,
+  ladder,
+  baseMark,
+  onOpen,
+}: {
   s: TargetStatus
   compact: boolean
   flash?: boolean
@@ -337,7 +345,7 @@ function TargetCard({ s, compact, flash, lock, ladder, baseMark, onOpen }: {
             : 'none',
         transform: flash ? 'scale(1.04)' : 'none',
         transition: 'transform 200ms, box-shadow 200ms, border-color 200ms',
-        '&:hover': { transform: flash ? 'scale(1.04)' : 'translateY(-2px)' }
+        '&:hover': { transform: flash ? 'scale(1.04)' : 'translateY(-2px)' },
       }}
     >
       {chip.on && <TargetKilledBadge tier={tier} />}
@@ -366,7 +374,11 @@ interface GridProps {
    * undefined) and goes straight into `tierLadder`; `canMarkBase(s)` is the gate (a credited
    * open-world/unknown kill this week); `onToggleBase(s)` flips the mark.
    */
-  manualClear?: { baseTs: (s: TargetStatus) => number | undefined; canMarkBase: (s: TargetStatus) => boolean; onToggleBase: (s: TargetStatus) => void }
+  manualClear?: {
+    baseTs: (s: TargetStatus) => number | undefined
+    canMarkBase: (s: TargetStatus) => boolean
+    onToggleBase: (s: TargetStatus) => void
+  }
 }
 
 /** Everything a section needs to draw its grid — identical for both groupings. */
@@ -388,7 +400,16 @@ function wholeRows(list: TargetStatus[]): CardRow[] {
 }
 
 /** A header plus the grid under it. The ONE grid in this feature; both groupings use it. */
-function Section({ header, rows, compact, minCol, flashing, onOpenMob, lockOf, manualClear }: GridProps & { header: JSX.Element; rows: CardRow[] }): JSX.Element {
+function Section({
+  header,
+  rows,
+  compact,
+  minCol,
+  flashing,
+  onOpenMob,
+  lockOf,
+  manualClear,
+}: GridProps & { header: JSX.Element; rows: CardRow[] }): JSX.Element {
   return (
     <Box sx={{ mb: compact ? 1.5 : 2.5 }}>
       {header}
@@ -396,7 +417,7 @@ function Section({ header, rows, compact, minCol, flashing, onOpenMob, lockOf, m
         sx={{
           display: 'grid',
           gridTemplateColumns: `repeat(auto-fill, minmax(${minCol}px, 1fr))`,
-          gap: compact ? 1 : 1.5
+          gap: compact ? 1 : 1.5,
         }}
       >
         {rows.map((row) => (
@@ -412,7 +433,12 @@ function Section({ header, rows, compact, minCol, flashing, onOpenMob, lockOf, m
             // grey out four rungs a d0 card two sections down is showing green. `manualClear`'s
             // hand-mark rides the same `whole`. Under the category grouping `whole` IS `s`.
             ladder={lockOf && tierLadder(lockOf(row.whole), manualClear?.baseTs(row.whole))}
-            baseMark={manualClear && { canMark: manualClear.canMarkBase(row.whole), onToggle: () => manualClear.onToggleBase(row.whole) }}
+            baseMark={
+              manualClear && {
+                canMark: manualClear.canMarkBase(row.whole),
+                onToggle: () => manualClear.onToggleBase(row.whole),
+              }
+            }
             onOpen={() => onOpenMob(mobTargetForStatus(row.whole))}
           />
         ))}
@@ -422,7 +448,11 @@ function Section({ header, rows, compact, minCol, flashing, onOpenMob, lockOf, m
 }
 
 /** One progression category (Open World, Fear, Hate, Sky) and its grid of target cards. */
-export function CategorySection({ category, list, ...grid }: SectionProps & { category: string }): JSX.Element {
+export function CategorySection({
+  category,
+  list,
+  ...grid
+}: SectionProps & { category: string }): JSX.Element {
   return (
     <Section
       {...grid}
@@ -460,7 +490,8 @@ function LoadoutHeader({ group }: { group: LoadoutGrouping }): JSX.Element {
   const interval = group.interval
   const ranges = group.intervals
   const rule = group.uncertain ? MIXED_RULE : GROUP_RULE
-  const title = ranges.length > 1 ? `${rule} ${MERGED_RULE} ${ranges.map(spanText).join('; ')}` : rule
+  const title =
+    ranges.length > 1 ? `${rule} ${MERGED_RULE} ${ranges.map(spanText).join('; ')}` : rule
   return (
     <Tooltip title={title}>
       <Stack
@@ -507,7 +538,10 @@ function LoadoutHeader({ group }: { group: LoadoutGrouping }): JSX.Element {
 }
 
 /** Defeated targets, split per tier run and time-joined to the combo intervals (loadoutGroups). */
-function useLoadoutGroups(list: TargetStatus[], keep?: (card: TargetStatus) => boolean): LoadoutGrouping[] {
+function useLoadoutGroups(
+  list: TargetStatus[],
+  keep?: (card: TargetStatus) => boolean,
+): LoadoutGrouping[] {
   const intervals = useComboIntervals()
   return useMemo(() => loadoutGroups(intervals, list, keep), [intervals, list, keep])
 }
@@ -530,7 +564,12 @@ export function LoadoutSections({
   return (
     <>
       {groups.map((group) => (
-        <Section key={group.key} {...grid} rows={group.rows} header={<LoadoutHeader group={group} />} />
+        <Section
+          key={group.key}
+          {...grid}
+          rows={group.rows}
+          header={<LoadoutHeader group={group} />}
+        />
       ))}
       {undefeated.length > 0 && (
         <Section

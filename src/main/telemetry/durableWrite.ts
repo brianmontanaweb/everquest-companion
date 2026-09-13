@@ -46,7 +46,15 @@
 // `ring.ts`'s file half stays the thin shell its header promises, and this half is node-testable
 // (`tests/telemetryRingDurability.test.mts`).
 
-import { closeSync, fsyncSync, mkdirSync, openSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  closeSync,
+  fsyncSync,
+  mkdirSync,
+  openSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import { mkdir, open, rename, rm } from 'node:fs/promises'
 
 /**
@@ -90,7 +98,7 @@ export const nodeIo: DurableIo = {
   },
   remove: (path) => {
     rmSync(path, { force: true })
-  }
+  },
 }
 
 /**
@@ -121,7 +129,12 @@ export function tempPathFor(path: string, tag?: string): string {
  * Rethrows whatever failed. The caller decides what a failed telemetry write is worth — from here
  * it is not knowable, and this module has no logger to decide it with.
  */
-export function writeFileDurable(dir: string, path: string, data: string, io: DurableIo = nodeIo): void {
+export function writeFileDurable(
+  dir: string,
+  path: string,
+  data: string,
+  io: DurableIo = nodeIo,
+): void {
   writeVia({ dir, path, tmp: tempPathFor(path) }, data, io)
 }
 
@@ -137,7 +150,12 @@ export function writeFileDurable(dir: string, path: string, data: string, io: Du
  *
  * A caller that deletes `tempPathFor(path)` must delete `tempPathFor(path, FINAL_TEMP_TAG)` too.
  */
-export function writeFileDurableFinal(dir: string, path: string, data: string, io: DurableIo = nodeIo): void {
+export function writeFileDurableFinal(
+  dir: string,
+  path: string,
+  data: string,
+  io: DurableIo = nodeIo,
+): void {
   writeVia({ dir, path, tmp: tempPathFor(path, FINAL_TEMP_TAG) }, data, io)
 }
 
@@ -230,11 +248,11 @@ export const nodeIoAsync: AsyncDurableIo = {
         await fh.writeFile(data, 'utf8')
       },
       sync: () => fh.sync(),
-      close: () => fh.close()
+      close: () => fh.close(),
     }
   },
   rename: (from, to) => rename(from, to),
-  remove: (path) => rm(path, { force: true })
+  remove: (path) => rm(path, { force: true }),
 }
 
 /**
@@ -252,7 +270,7 @@ export async function writeFileDurableAsync(
   dir: string,
   path: string,
   data: string,
-  io: AsyncDurableIo = nodeIoAsync
+  io: AsyncDurableIo = nodeIoAsync,
 ): Promise<void> {
   const tmp = tempPathFor(path)
   await io.mkdir(dir)
@@ -319,7 +337,7 @@ export const WRITE_RETRY_MAX_MS = 15 * 60_000
 export function retryDelayMs(
   consecutiveFailures: number,
   base = WRITE_RETRY_BASE_MS,
-  max = WRITE_RETRY_MAX_MS
+  max = WRITE_RETRY_MAX_MS,
 ): number {
   if (consecutiveFailures <= 0) return 0
   const doubled = base * 2 ** (consecutiveFailures - 1)
@@ -366,6 +384,6 @@ export function createWriteGate(base = WRITE_RETRY_BASE_MS, max = WRITE_RETRY_MA
       failures = 0
       nextAttemptAt = 0
     },
-    failures: () => failures
+    failures: () => failures,
   }
 }

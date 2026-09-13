@@ -18,7 +18,7 @@ import {
   Stack,
   Switch,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import ClearIcon from '@mui/icons-material/Clear'
 import SearchIcon from '@mui/icons-material/Search'
@@ -40,7 +40,7 @@ import { Tooltip } from '../../lib/Tooltip'
 function VolumeControls({
   prefs,
   onPrefsDrag,
-  onPrefsCommit
+  onPrefsCommit,
 }: {
   prefs: AlertPrefs
   onPrefsDrag: (next: AlertPrefs) => void
@@ -105,7 +105,7 @@ function VolumeControls({
  */
 function AlertSearchField({
   query,
-  onQuery
+  onQuery,
 }: {
   query: string
   onQuery: (q: string) => void
@@ -137,8 +137,8 @@ function AlertSearchField({
                   <ClearIcon fontSize="small" />
                 </IconButton>
               </InputAdornment>
-            )
-        }
+            ),
+        },
       }}
     />
   )
@@ -154,7 +154,7 @@ export default function AlertsToolbar({
   onOpenMySounds,
   onCopyAll,
   onOpenImport,
-  onReset
+  onReset,
 }: {
   prefs: AlertPrefs
   /** Local-only update while the volume slider is dragged. */
@@ -174,11 +174,7 @@ export default function AlertsToolbar({
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }}>
       <Stack direction="row" spacing={3} alignItems="center" flexWrap="wrap" useFlexGap>
-        <VolumeControls
-          prefs={prefs}
-          onPrefsDrag={onPrefsDrag}
-          onPrefsCommit={onPrefsCommit}
-        />
+        <VolumeControls prefs={prefs} onPrefsDrag={onPrefsDrag} onPrefsCommit={onPrefsCommit} />
         <Box sx={{ flexGrow: 1 }} />
         <AlertSearchField query={search.query} onQuery={search.setQuery} />
         <Button

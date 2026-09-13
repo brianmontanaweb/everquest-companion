@@ -51,7 +51,7 @@ import {
   orderTimerRows,
   rowsForSurface,
   timerDrops,
-  withTimerDismissal
+  withTimerDismissal,
 } from '@shared/buffTimers'
 // THE TRACKING ALLOW-LIST (JOS-168). The controls are on the Buffs TAB — this window only obeys
 // them, which is why the hook is handed the overlay bridge (no setter on it, by construction).
@@ -110,7 +110,7 @@ const SURFACE: Record<
     selfLabel: 'Your buffs',
     empty: 'Watching for buffs you cast…',
     dropFlash: true,
-    grouping: 'target'
+    grouping: 'target',
   },
   debuffs: {
     tag: 'DEBUFFS',
@@ -122,8 +122,8 @@ const SURFACE: Record<
     selfLabel: 'On you',
     empty: 'Watching for debuffs you land and mez you hold…',
     dropFlash: false,
-    grouping: 'none'
-  }
+    grouping: 'none',
+  },
 }
 
 /**
@@ -241,7 +241,7 @@ function useSecondsClock(): number {
 function useDropFlash(
   rows: BuffTimerRow[],
   nowMs: number,
-  epoch: number
+  epoch: number,
 ): { id: string; name: string; at: number }[] {
   const prevRef = useRef<BuffTimerRow[] | null>(null)
   const epochRef = useRef(epoch)
@@ -320,7 +320,7 @@ function FooterChip({
   action,
   dim = false,
   onPress,
-  noDrag
+  noDrag,
 }: {
   testId: string
   attr: Record<string, string>
@@ -350,7 +350,7 @@ function FooterChip({
         letterSpacing: 0.4,
         textTransform: 'uppercase',
         padding: '1px 5px',
-        cursor: 'pointer'
+        cursor: 'pointer',
       }}
     >
       {label}
@@ -366,7 +366,7 @@ function BuffsFooter({
   showPermanent,
   patch,
   noDrag,
-  accent
+  accent,
 }: {
   bgAlpha: number
   textScale: number
@@ -383,7 +383,7 @@ function BuffsFooter({
         ...noDrag,
         gap: 8,
         fontSize: 10,
-        color: 'rgba(255,255,255,0.6)'
+        color: 'rgba(255,255,255,0.6)',
       }}
     >
       {/* The word IS the label (JOS-358) — the footer names its own controls, it does not hover. */}
@@ -397,7 +397,14 @@ function BuffsFooter({
         onChange={(e) => {
           patch({ bgAlpha: Number(e.target.value) })
         }}
-        style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 24, accentColor: accent, height: 4 }}
+        style={{
+          flexGrow: 1,
+          flexShrink: 1,
+          flexBasis: 0,
+          minWidth: 24,
+          accentColor: accent,
+          height: 4,
+        }}
       />
       {/* THE ROW ARRANGEMENT (JOS-140), a two-state button rather than a select: there are exactly
           two answers and the label states the one you would get by pressing it, which is the same
@@ -452,7 +459,7 @@ function BuffsFooter({
 function groupRows(
   rows: BuffTimerRow[],
   selfLabel: string,
-  grouping: TimerGrouping
+  grouping: TimerGrouping,
 ): { key: string; label: string; inferred: boolean; rows: BuffTimerRow[] }[] {
   if (grouping === 'none') {
     return rows.length === 0 ? [] : [{ key: 'all', label: '', inferred: false, rows }]
@@ -470,7 +477,7 @@ function groupRows(
       key,
       label: row.group === 'self' ? selfLabel : (row.target ?? 'Unknown target'),
       inferred: row.inferredTarget === true,
-      rows: [row]
+      rows: [row],
     })
   }
   return out
@@ -498,7 +505,7 @@ function drawnRows(
     allow: BuffAllowPrefs
     grouping: TimerGrouping
     dismissals: TimerDismissals
-  }
+  },
 ): BuffTimerRow[] {
   const mine = rowsForSurface(buildTimerRows(model.buffs, model.timers), model.kind)
   const shown = filterAllowedRows(filterPermanentRows(mine, view.showPermanent), view.allow)
@@ -509,14 +516,28 @@ export default function BuffsOverlay({ kind }: { kind: TimerOverlayKind }): JSX.
   const surface = SURFACE[kind]
   // BOTH kinds read BOTH modules. The window is a view; the model is not sliced per window, and
   // `rowsForSurface` below is the only thing that knows these are two windows at all.
-  const { state: buffs, hydrations: buffsHydrations } = useWholeSnapshot<BuffsSnap>('buffs', EMPTY_BUFFS)
+  const { state: buffs, hydrations: buffsHydrations } = useWholeSnapshot<BuffsSnap>(
+    'buffs',
+    EMPTY_BUFFS,
+  )
   const { state: timers, hydrations: timersHydrations } = useWholeSnapshot<BuffTimersSnap>(
     'buffTimers',
-    EMPTY_TIMERS
+    EMPTY_TIMERS,
   )
   const nowMs = useSecondsClock()
-  const { locked, bgAlpha, textScale, hovering, config, patch, toggleLock, onEnter, onLeave, dragRegion, noDrag } =
-    useOverlayChrome()
+  const {
+    locked,
+    bgAlpha,
+    textScale,
+    hovering,
+    config,
+    patch,
+    toggleLock,
+    onEnter,
+    onLeave,
+    dragRegion,
+    noDrag,
+  } = useOverlayChrome()
 
   // ABSENT means "this window's default", which is not the same for both — see SURFACE.
   const grouping = config?.grouping ?? surface.grouping
@@ -530,9 +551,12 @@ export default function BuffsOverlay({ kind }: { kind: TimerOverlayKind }): JSX.
   const { dismissals, dismiss } = useDismissals()
   const rows = useMemo(
     () => drawnRows({ buffs, timers, kind }, { showPermanent, allow, grouping, dismissals }),
-    [buffs, timers, kind, grouping, showPermanent, allow, dismissals]
+    [buffs, timers, kind, grouping, showPermanent, allow, dismissals],
   )
-  const groups = useMemo(() => groupRows(rows, surface.selfLabel, grouping), [rows, surface.selfLabel, grouping])
+  const groups = useMemo(
+    () => groupRows(rows, surface.selfLabel, grouping),
+    [rows, surface.selfLabel, grouping],
+  )
   // ONE COUNTER OVER BOTH MODULES: either one re-hydrating is a rebuilt row set, and the two
   // snapshots land as two separate promises — so a sum, which changes on each of them. The
   // dismissal count joins it for the same reason (JOS-203): a row the user cleared did not drop.
@@ -545,7 +569,7 @@ export default function BuffsOverlay({ kind }: { kind: TimerOverlayKind }): JSX.
   const drops = useDropFlash(
     rows,
     nowMs,
-    buffsHydrations + timersHydrations + dismissals.size + (showPermanent ? 1 : 0) + allowChanges
+    buffsHydrations + timersHydrations + dismissals.size + (showPermanent ? 1 : 0) + allowChanges,
   )
 
   return (
@@ -566,7 +590,7 @@ export default function BuffsOverlay({ kind }: { kind: TimerOverlayKind }): JSX.
         border: locked ? '1px solid rgba(255,255,255,0.04)' : `1px solid ${surface.accent}66`,
         borderRadius: 8,
         boxSizing: 'border-box',
-        overflow: 'hidden'
+        overflow: 'hidden',
       }}
     >
       {/* The same one-row header every kind draws, minus the selector: this kind has nothing to
@@ -587,7 +611,9 @@ export default function BuffsOverlay({ kind }: { kind: TimerOverlayKind }): JSX.
           below stays at 1 so it cannot be pushed out of a small window. */}
       <OverlayContent textScale={textScale} testId="buff-timer-rows">
         {groups.length === 0 ? (
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', padding: '8px 2px' }}>{surface.empty}</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', padding: '8px 2px' }}>
+            {surface.empty}
+          </div>
         ) : (
           groups.map((g) => (
             <BuffTimerGroup
@@ -605,7 +631,11 @@ export default function BuffsOverlay({ kind }: { kind: TimerOverlayKind }): JSX.
 
         {surface.dropFlash &&
           drops.map((d) => (
-            <div key={d.id} data-testid="buff-timer-drop" style={{ fontSize: 10, color: RED, padding: '2px 4px' }}>
+            <div
+              key={d.id}
+              data-testid="buff-timer-drop"
+              style={{ fontSize: 10, color: RED, padding: '2px 4px' }}
+            >
               {d.name} dropped
             </div>
           ))}

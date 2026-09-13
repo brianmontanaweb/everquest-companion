@@ -52,7 +52,7 @@ import {
   Paper,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import PlaceIcon from '@mui/icons-material/Place'
@@ -63,7 +63,7 @@ import {
   type LabelPaneRow,
   type MapPaneRow,
   type MobPaneRow,
-  type PaneCounts
+  type PaneCounts,
 } from './mobPins'
 import { Tooltip } from '../../lib/Tooltip'
 
@@ -118,7 +118,8 @@ function PinMark({ locatable }: { locatable: boolean }): JSX.Element {
  */
 function rowNote(row: MapPaneRow): string | null {
   if (row.kind !== 'mob') return null
-  if (row.unattributable) return `position stated, but the page lists ${String(row.zoneCount)} zones`
+  if (row.unattributable)
+    return `position stated, but the page lists ${String(row.zoneCount)} zones`
   if (row.pins.length === 0) return 'no location on the wiki page'
   return row.pins.length > 1 ? `${String(row.pins.length)} spawn points` : null
 }
@@ -126,7 +127,7 @@ function rowNote(row: MapPaneRow): string | null {
 function Row({
   row,
   selected,
-  onSelect
+  onSelect,
 }: {
   row: MapPaneRow
   selected: boolean
@@ -149,7 +150,10 @@ function Row({
       <ListItemText
         primary={row.name}
         secondary={rowNote(row)}
-        slotProps={{ primary: { variant: 'body2', noWrap: true }, secondary: { variant: 'caption' } }}
+        slotProps={{
+          primary: { variant: 'body2', noWrap: true },
+          secondary: { variant: 'caption' },
+        }}
       />
       {level !== undefined && level !== '' && (
         <Typography variant="caption" color="text.disabled" sx={{ flexShrink: 0, pt: 0.25 }}>
@@ -181,7 +185,7 @@ function Section({
   rows,
   selectedId,
   onSelect,
-  empty
+  empty,
 }: {
   title: string
   note: string
@@ -216,7 +220,13 @@ function Section({
  * one, so a row that cannot take you anywhere says why on the same line rather than by being
  * mysteriously dead.
  */
-function HitRow({ row, onHit }: { row: CrossZoneRow; onHit: (to: JumpTarget) => void }): JSX.Element {
+function HitRow({
+  row,
+  onHit,
+}: {
+  row: CrossZoneRow
+  onHit: (to: JumpTarget) => void
+}): JSX.Element {
   const to = jumpTarget(row)
   return (
     <ListItemButton
@@ -238,7 +248,7 @@ function HitRow({ row, onHit }: { row: CrossZoneRow; onHit: (to: JumpTarget) => 
         secondary={row.note == null ? row.zoneName : `${row.zoneName} · ${row.note}`}
         slotProps={{
           primary: { variant: 'body2', noWrap: true },
-          secondary: { variant: 'caption' }
+          secondary: { variant: 'caption' },
         }}
       />
       {row.level !== undefined && row.level !== '' && (
@@ -267,7 +277,7 @@ function HitRow({ row, onHit }: { row: CrossZoneRow; onHit: (to: JumpTarget) => 
 function HitSection({
   query,
   hits,
-  onHit
+  onHit,
 }: {
   query: string
   hits: readonly CrossZoneRow[]
@@ -305,7 +315,7 @@ export default function MapMobPane(props: MapMobPaneProps): JSX.Element {
         display: 'flex',
         flexDirection: 'column',
         minHeight: 0,
-        overflow: 'hidden'
+        overflow: 'hidden',
       }}
     >
       <Box sx={{ p: 1, pb: 0.75, flexShrink: 0 }}>

@@ -42,7 +42,7 @@ export default function MainColumn({
   view,
   onSelect,
   onReport,
-  children
+  children,
 }: {
   view: View
   onSelect: (v: View) => void
@@ -53,7 +53,13 @@ export default function MainColumn({
   return (
     <Box
       component="main"
-      sx={{ flexGrow: 1, minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+      sx={{
+        flexGrow: 1,
+        minWidth: 0,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
     >
       <EngineLaunchBanner onReport={onReport} />
       {isGearAreaView(view) && <GearAreaTabs view={view} onSelect={onSelect} />}

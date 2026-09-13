@@ -42,13 +42,28 @@ const T0 = Date.parse('Sat Aug 01 12:00:00 2026')
 
 function emptySnap(): ProgressionSnap {
   return {
-    expTs: [], expPct: [], expFlag: [],
-    killTs: [], killZone: [], killCredit: [],
-    witnessTs: [], recentKills: [], lootTs: [],
-    zoneStart: [], zoneEnd: [], zoneName: [],
-    offlineStart: [], offlineEnd: [], offlineCamped: [],
-    levelTs: [], levelValue: [], aaGainTs: [], aaGainAmount: [],
-    lastTs: 0, windowStart: 0, dropped: 0
+    expTs: [],
+    expPct: [],
+    expFlag: [],
+    killTs: [],
+    killZone: [],
+    killCredit: [],
+    witnessTs: [],
+    recentKills: [],
+    lootTs: [],
+    zoneStart: [],
+    zoneEnd: [],
+    zoneName: [],
+    offlineStart: [],
+    offlineEnd: [],
+    offlineCamped: [],
+    levelTs: [],
+    levelValue: [],
+    aaGainTs: [],
+    aaGainAmount: [],
+    lastTs: 0,
+    windowStart: 0,
+    dropped: 0,
   }
 }
 
@@ -106,7 +121,10 @@ test('the wait is one WORD of label, not a sentence', () => {
   aaAt(snap, [T0 - 45 * MIN, T0 - 30 * MIN, T0 - 15 * MIN], 2)
   const line = overviewLeveling(snap).aa ?? ''
   assert.ok(line.endsWith('est.'), line)
-  assert.ok(!/inferred|assume|projected|estimate/i.test(line), 'the tab owns the account, the line owns the number')
+  assert.ok(
+    !/inferred|assume|projected|estimate/i.test(line),
+    'the tab owns the account, the line owns the number',
+  )
   assert.ok(line.length < 60, `a caption, not a footnote (${String(line.length)} chars)`)
 })
 
@@ -136,6 +154,13 @@ test('past the mean gap it reads DUE, and past three of them it stops guessing',
   // Six completions, all early in the hour: a 10-minute rhythm that the 43 minutes of silence
   // since no longer describes. The rates are MEASURED, so they stay; the model does not.
   const cold = farming()
-  aaAt(cold, [58, 55, 52, 49, 46, 43].map((m) => T0 - m * MIN))
-  assert.equal(overviewLeveling(cold).aa, '6.00 AA/hr · 6.00 pts/hr', 'a stale rhythm is refused, not printed')
+  aaAt(
+    cold,
+    [58, 55, 52, 49, 46, 43].map((m) => T0 - m * MIN),
+  )
+  assert.equal(
+    overviewLeveling(cold).aa,
+    '6.00 AA/hr · 6.00 pts/hr',
+    'a stale rhythm is refused, not printed',
+  )
 })

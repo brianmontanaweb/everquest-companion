@@ -48,7 +48,7 @@ import {
   itemOverrideInstants,
   itemOverridesByKey,
   sanitizeItemOverride,
-  sanitizeItemOverrides
+  sanitizeItemOverrides,
 } from '../src/shared/itemOverrides'
 import { reconcile, type ReconcileInput } from '../src/renderer/src/features/inventory/reconcile'
 import { rebaselineInstant } from '../src/renderer/src/features/inventory/countSource'
@@ -57,7 +57,7 @@ import {
   computeDestroyedAfterPerKey,
   computeHeldCounts,
   computeHeldCountsAfter,
-  computeHeldCountsAfterPerKey
+  computeHeldCountsAfterPerKey,
 } from '../src/renderer/src/features/posky/heldCounts'
 import { readyQuests } from '../src/renderer/src/features/posky/questCompletion'
 import type { QuestProgress } from '../src/renderer/src/features/posky/useProgress'
@@ -74,8 +74,8 @@ const CLAW: PoskyQuest = {
   giver: 'Gorgalosk',
   items: [
     { name: 'Sphinx Claw', count: 1, who: [], where: 'Island 4' },
-    { name: 'Ivory Sky Diamond', count: 1, who: [], where: 'Island 3' }
-  ]
+    { name: 'Ivory Sky Diamond', count: 1, who: [], where: 'Island 3' },
+  ],
 }
 const QUESTS = [CLAW]
 const CLAW_KEY = questKey(CLAW)
@@ -100,7 +100,11 @@ test('a statement survives the sanitizer with its EPOCH instant intact', () => {
 
 test('junk is dropped, never thrown over — a hand-edited store still opens', () => {
   assert.equal(sanitizeItemOverride(null), null)
-  assert.equal(sanitizeItemOverride({ key: '  ', count: 1, setAt: T0 }), null, 'no key, no statement')
+  assert.equal(
+    sanitizeItemOverride({ key: '  ', count: 1, setAt: T0 }),
+    null,
+    'no key, no statement',
+  )
   assert.equal(sanitizeItemOverride({ key: claw, count: -1, setAt: T0 }), null, 'a bag holds no -1')
   assert.equal(sanitizeItemOverride({ key: claw, count: 1e9, setAt: T0 }), null, 'past the guard')
   assert.equal(sanitizeItemOverride({ key: claw, count: 'two', setAt: T0 }), null)
@@ -118,7 +122,11 @@ test('two statements about one item are ONE statement, the later one', () => {
   const list = applyItemOverride(applyItemOverride([], first), second)
   assert.equal(list.length, 1)
   assert.equal(list[0].count, 0)
-  assert.equal(list[0].setAt, T0 + HOUR, 'and it carries the LATER instant, so the window moves too')
+  assert.equal(
+    list[0].setAt,
+    T0 + HOUR,
+    'and it carries the LATER instant, so the window moves too',
+  )
   assert.deepEqual(clearItemOverride(list, claw), [], 'and the take-back leaves nothing behind')
   assert.deepEqual(clearItemOverride(list, diamond), list, 'clearing another key touches nothing')
 })
@@ -128,7 +136,7 @@ test('the list is deduped by key, ordered oldest first, and capped', () => {
     key: `item-${String(i)}`,
     name: `Item ${String(i)}`,
     count: 1,
-    setAt: T0 + i
+    setAt: T0 + i,
   }))
   const clean = sanitizeItemOverrides([...many, ...many])
   assert.equal(clean.length, MAX_ITEM_OVERRIDES)
@@ -145,7 +153,11 @@ test('the list is deduped by key, ordered oldest first, and capped', () => {
 const drop = (ts: number, item: string, count = 1): LootEvent => ({ ts, item, count })
 
 test('the windowed folds are the SAME fold over fewer rows', () => {
-  const history = [drop(T0 - HOUR, 'Sphinx Claw'), drop(T0 + HOUR, 'Sphinx Claw', 2), drop(T0 + HOUR, 'Bone Chips')]
+  const history = [
+    drop(T0 - HOUR, 'Sphinx Claw'),
+    drop(T0 + HOUR, 'Sphinx Claw', 2),
+    drop(T0 + HOUR, 'Bone Chips'),
+  ]
   assert.deepEqual(computeHeldCounts(history), { [claw]: 3, 'bone chips': 1 })
   assert.deepEqual(computeHeldCountsAfter(history, T0), { [claw]: 2, 'bone chips': 1 })
   // STRICTLY after: a dump's generation instant is floored to the second, so a drop stamped in the
@@ -159,16 +171,20 @@ test('the windowed folds are the SAME fold over fewer rows', () => {
 test('a windowed fold keeps the disposition rule it inherited', () => {
   const history: LootEvent[] = [
     { ts: T0 + HOUR, item: 'Sphinx Claw', disposition: 'sold' },
-    { ts: T0 + HOUR, item: 'Sphinx Claw', disposition: 'hoard' }
+    { ts: T0 + HOUR, item: 'Sphinx Claw', disposition: 'hoard' },
   ]
-  assert.deepEqual(computeHeldCountsAfter(history, T0), { [claw]: 1 }, 'sold is gone, hoarded is held')
+  assert.deepEqual(
+    computeHeldCountsAfter(history, T0),
+    { [claw]: 1 },
+    'sold is gone, hoarded is held',
+  )
 })
 
 test('THE WINDOWED LOOT FOLDS COUNT DROPS, GROSS - the destroys are their own window (JOS-401)', () => {
   const history: LootEvent[] = [
     drop(T0 - HOUR, 'Sphinx Claw'),
     { ts: T0 + HOUR, item: 'Sphinx Claw', disposition: 'destroyed', count: 2 },
-    drop(T0 + 2 * HOUR, 'Sphinx Claw', 3)
+    drop(T0 + 2 * HOUR, 'Sphinx Claw', 3),
   ]
   // The all-time fold nets: 1 looted, 2 destroyed (floors at 0), 3 looted = 3.
   assert.deepEqual(computeHeldCounts(history), { [claw]: 3 })
@@ -178,9 +194,17 @@ test('THE WINDOWED LOOT FOLDS COUNT DROPS, GROSS - the destroys are their own wi
   assert.deepEqual(computeHeldCountsAfterPerKey(history, { [claw]: T0 }), { [claw]: 3 })
   // …and the discount is the other map, on the same instants and the same strictly-after rule.
   assert.deepEqual(computeDestroyedAfter(history, T0), { [claw]: 2 })
-  assert.deepEqual(computeDestroyedAfter(history, T0 + HOUR), {}, 'strictly after, like every window here')
+  assert.deepEqual(
+    computeDestroyedAfter(history, T0 + HOUR),
+    {},
+    'strictly after, like every window here',
+  )
   assert.deepEqual(computeDestroyedAfterPerKey(history, { [claw]: T0 }), { [claw]: 2 })
-  assert.deepEqual(computeDestroyedAfterPerKey(history, {}), {}, 'a key nobody spoke about is absent')
+  assert.deepEqual(
+    computeDestroyedAfterPerKey(history, {}),
+    {},
+    'a key nobody spoke about is absent',
+  )
 })
 
 // =============================================================================
@@ -196,7 +220,7 @@ function run(over: Partial<ReconcileInput> = {}): ReturnType<typeof reconcile> {
     countSource: 'both',
     turnIns: {},
     quests: QUESTS,
-    ...over
+    ...over,
   })
 }
 
@@ -219,13 +243,13 @@ function progressOf(net: Record<string, number>, turnIns = 0): QuestProgress {
     missing: items.filter((i) => i.have < i.need).map((i) => i.name),
     turnIns,
     logTurnIns: 0,
-    completed: turnIns >= 1
+    completed: turnIns >= 1,
   }
 }
 
 /** A statement of `count`, made at `setAt`. */
 const stated = (key: string, count: number, setAt = T0): Record<string, ItemCountOverride> => ({
-  [key]: { key, name: key, count, setAt }
+  [key]: { key, name: key, count, setAt },
 })
 
 test('THE DESTROYED-ITEM TRACE: the Ready tab lets go the moment the count is corrected', () => {
@@ -235,7 +259,7 @@ test('THE DESTROYED-ITEM TRACE: the Ready tab lets go the moment the count is co
   assert.deepEqual(
     readyQuests([progressOf(run({ log }).net)]).map((q) => q.name),
     ['Test of Claw'],
-    'the nag, exactly as reported'
+    'the nag, exactly as reported',
   )
   const corrected = run({ log, overrides: stated(claw, 0) })
   assert.equal(corrected.net[claw], 0, 'the statement answers for the item')
@@ -244,7 +268,9 @@ test('THE DESTROYED-ITEM TRACE: the Ready tab lets go the moment the count is co
 })
 
 test('the statement is drawn as a row, and says it is the user`s', () => {
-  const row = run({ log: { [claw]: 3 }, overrides: stated(claw, 0) }).rows.find((r) => r.key === claw)
+  const row = run({ log: { [claw]: 3 }, overrides: stated(claw, 0) }).rows.find(
+    (r) => r.key === claw,
+  )
   assert.ok(row)
   assert.equal(row.net, 0)
   assert.equal(row.log, 3, 'the log witness is REPORTED, not edited — the evidence is untouched')
@@ -266,7 +292,7 @@ test('THE FORWARD RULE: loot after a statement adds, loot before it is already c
   assert.equal(
     run({ log: { [claw]: 9 }, overrides, lootSinceOverride: { [claw]: 2 } }).net[claw],
     3,
-    'two dropped since: the statement plus those two, and the nine the log remembers stay ignored'
+    'two dropped since: the statement plus those two, and the nine the log remembers stay ignored',
   )
 })
 
@@ -275,25 +301,29 @@ test('a turn-in AFTER the statement subtracts; one BEFORE it does not', () => {
   const before = run({
     overrides,
     turnIns: { [CLAW_KEY]: 1 },
-    turnInInstants: { [CLAW_KEY]: [T0 - HOUR] }
+    turnInInstants: { [CLAW_KEY]: [T0 - HOUR] },
   })
-  assert.equal(before.net[claw], 2, 'the user counted their bag AFTER handing it in — no double dip')
+  assert.equal(
+    before.net[claw],
+    2,
+    'the user counted their bag AFTER handing it in — no double dip',
+  )
   const after = run({
     overrides,
     turnIns: { [CLAW_KEY]: 1 },
-    turnInInstants: { [CLAW_KEY]: [T0 + HOUR] }
+    turnInInstants: { [CLAW_KEY]: [T0 + HOUR] },
   })
   assert.equal(after.net[claw], 1, 'a turn-in recorded since the statement really did eat one')
   const twice = run({
     overrides,
     turnIns: { [CLAW_KEY]: 2 },
-    turnInInstants: { [CLAW_KEY]: [T0 + HOUR, T0 + 2 * HOUR] }
+    turnInInstants: { [CLAW_KEY]: [T0 + HOUR, T0 + 2 * HOUR] },
   })
   assert.equal(twice.net[claw], 0, 'and it never goes below zero')
   assert.equal(
     twice.rows.find((r) => r.key === claw)?.consumedBy.length,
     1,
-    'the blame names the quest that ate it, from the WINDOWED pass rather than the all-time one'
+    'the blame names the quest that ate it, from the WINDOWED pass rather than the all-time one',
   )
 })
 
@@ -308,7 +338,7 @@ test('A DESTROY AFTER THE DUMP LOWERS THE COUNT; ONE BEFORE IT DOES NOT', () => 
     assert.equal(
       run({ countSource: s, inv, destroyedSinceDump: { [claw]: 2 } }).net[claw],
       1,
-      `${s}: less what the log says you destroyed since it was written`
+      `${s}: less what the log says you destroyed since it was written`,
     )
   }
   // A destroy BEFORE the dump is already reflected in it — and it never reaches this map, because
@@ -316,15 +346,26 @@ test('A DESTROY AFTER THE DUMP LOWERS THE COUNT; ONE BEFORE IT DOES NOT', () => 
   // that case, and it must leave the dump exactly as written.
   assert.equal(run({ countSource: 'inventory', inv, destroyedSinceDump: {} }).net[claw], 3)
   // Floored: destroying more than the file ever saw (a bank window that was shut) reads 0.
-  assert.equal(run({ countSource: 'inventory', inv, destroyedSinceDump: { [claw]: 9 } }).net[claw], 0)
+  assert.equal(
+    run({ countSource: 'inventory', inv, destroyedSinceDump: { [claw]: 9 } }).net[claw],
+    0,
+  )
 })
 
 test('under `both` the discounted dump and the log-derived count still take the MAX', () => {
   // The log witness arrives already net of every destroy (`computeHeldCounts`), so `both` is a max
   // of two independently-discounted witnesses — the monotone shape reconcile.ts argues for.
   const args = { inv: { 'sphinx claw': 3 }, log: { [claw]: 4 }, destroyedSinceDump: { [claw]: 2 } }
-  assert.equal(run({ countSource: 'both', ...args }).net[claw], 4, 'the log can still vouch for more')
-  assert.equal(run({ countSource: 'log', ...args }).net[claw], 4, '`log` never consults the dump at all')
+  assert.equal(
+    run({ countSource: 'both', ...args }).net[claw],
+    4,
+    'the log can still vouch for more',
+  )
+  assert.equal(
+    run({ countSource: 'log', ...args }).net[claw],
+    4,
+    '`log` never consults the dump at all',
+  )
 })
 
 test('a rebaseline is discounted too: dump, plus what dropped since, less what was destroyed since', () => {
@@ -332,10 +373,14 @@ test('a rebaseline is discounted too: dump, plus what dropped since, less what w
     countSource: 'rebaseline' as const,
     inv: { 'sphinx claw': 3 },
     rebaselineAt: T0,
-    lootSinceRebaseline: { [claw]: 4 }
+    lootSinceRebaseline: { [claw]: 4 },
   }
   assert.equal(run(base).net[claw], 7, 'three in the file and four dropped since')
-  assert.equal(run({ ...base, destroyedSinceDump: { [claw]: 2 } }).net[claw], 5, 'less two destroyed')
+  assert.equal(
+    run({ ...base, destroyedSinceDump: { [claw]: 2 } }).net[claw],
+    5,
+    'less two destroyed',
+  )
   assert.equal(run({ ...base, destroyedSinceDump: { [claw]: 99 } }).net[claw], 0, 'and floored')
 })
 
@@ -345,7 +390,7 @@ test('a hand statement is discounted by the destroys made after it, and never be
   assert.equal(
     run({ overrides, destroyedSinceOverride: { [claw]: 2 } }).net[claw],
     1,
-    'you said three and the log then watched two of them go'
+    'you said three and the log then watched two of them go',
   )
   assert.equal(run({ overrides, destroyedSinceOverride: { [claw]: 5 } }).net[claw], 0, 'floored')
   // The forward rules compose: loot after the statement adds, destroys after it subtract, and a
@@ -355,7 +400,7 @@ test('a hand statement is discounted by the destroys made after it, and never be
     lootSinceOverride: { [claw]: 4 },
     destroyedSinceOverride: { [claw]: 2 },
     turnIns: { [CLAW_KEY]: 1 },
-    turnInInstants: { [CLAW_KEY]: [T0 + HOUR] }
+    turnInInstants: { [CLAW_KEY]: [T0 + HOUR] },
   })
   assert.equal(both.net[claw], 4, '3 stated + 4 looted - 2 destroyed - 1 turned in')
 })
@@ -366,7 +411,7 @@ test('the statement WINS over every source, including a dump that disagrees', ()
     assert.equal(
       run({ countSource: s, log: { [claw]: 4 }, inv, overrides: stated(claw, 0) }).net[claw],
       0,
-      `${s}: a hand statement sits at the top of the provenance ladder`
+      `${s}: a hand statement sits at the top of the provenance ladder`,
     )
   }
 })
@@ -376,7 +421,7 @@ test('REVERSIBILITY IS DEEP EQUALITY: clearing restores the whole result, byte f
     log: { [claw]: 4, [diamond]: 2 },
     inv: { 'sphinx claw': 1 },
     turnIns: { [CLAW_KEY]: 1 },
-    turnInInstants: { [CLAW_KEY]: [T0 + HOUR] }
+    turnInInstants: { [CLAW_KEY]: [T0 + HOUR] },
   }
   const before = run(base)
   const during = run({ ...base, overrides: stated(claw, 0), lootSinceOverride: { [claw]: 0 } })
@@ -384,9 +429,14 @@ test('REVERSIBILITY IS DEEP EQUALITY: clearing restores the whole result, byte f
   // The take-back is `clearItemOverride`, which leaves the map empty — the exact state the caller
   // then passes back in.
   assert.deepEqual(
-    run({ ...base, overrides: itemOverridesByKey(clearItemOverride([{ key: claw, name: claw, count: 0, setAt: T0 }], claw)) }),
+    run({
+      ...base,
+      overrides: itemOverridesByKey(
+        clearItemOverride([{ key: claw, name: claw, count: 0, setAt: T0 }], claw),
+      ),
+    }),
     before,
-    'nothing about the log-derived record was contaminated'
+    'nothing about the log-derived record was contaminated',
   )
 })
 
@@ -404,7 +454,7 @@ test('THE REBASELINE TRACE: the export is the start, and the older log is discar
   assert.equal(
     run({ ...shared, countSource: 'rebaseline', lootSinceRebaseline: { [claw]: 2 } }).net[claw],
     3,
-    'and two farmed since the dump count on top of it'
+    'and two farmed since the dump count on top of it',
   )
 })
 
@@ -413,20 +463,24 @@ test('with nothing to anchor it, `rebaseline` IS `both` — never a baseline of 
     log: { [claw]: 4, [diamond]: 1 },
     inv: { 'sphinx claw': 2 },
     turnIns: { [CLAW_KEY]: 1 },
-    turnInInstants: { [CLAW_KEY]: [T0] }
+    turnInInstants: { [CLAW_KEY]: [T0] },
   }
   // Every row, every field, the row ORDER and the `net` map — not just the counts.
   assert.deepEqual(
     run({ ...shared, countSource: 'rebaseline', rebaselineAt: null }),
     run({ ...shared, countSource: 'both' }),
-    'no dump, or a dump this app could not date: the mode falls back rather than erasing the log'
+    'no dump, or a dump this app could not date: the mode falls back rather than erasing the log',
   )
   assert.equal(rebaselineInstant(undefined), null, 'a store that has never loaded one says so')
-  assert.equal(rebaselineInstant({ path: 'x', loadedAt: 'x', readAt: 5 }), 5, 'readAt is the fallback')
+  assert.equal(
+    rebaselineInstant({ path: 'x', loadedAt: 'x', readAt: 5 }),
+    5,
+    'readAt is the fallback',
+  )
   assert.equal(
     rebaselineInstant({ path: 'x', loadedAt: 'x', readAt: 5, generatedAt: 3 }),
     3,
-    'but the GENERATION instant wins — it is the moment the file describes'
+    'but the GENERATION instant wins — it is the moment the file describes',
   )
 })
 
@@ -435,17 +489,17 @@ test('a rebaseline owes only the turn-ins recorded since the dump', () => {
     countSource: 'rebaseline',
     inv: { 'sphinx claw': 2 },
     rebaselineAt: T0,
-    turnIns: { [CLAW_KEY]: 1 }
+    turnIns: { [CLAW_KEY]: 1 },
   }
   assert.equal(
     run({ ...shared, turnInInstants: { [CLAW_KEY]: [T0 - HOUR] } }).net[claw],
     2,
-    'the dump was written after that turn-in, so it already has it taken out'
+    'the dump was written after that turn-in, so it already has it taken out',
   )
   assert.equal(
     run({ ...shared, turnInInstants: { [CLAW_KEY]: [T0 + HOUR] } }).net[claw],
     1,
-    'a turn-in since the dump is a subtraction the file cannot know about'
+    'a turn-in since the dump is a subtraction the file cannot know about',
   )
 })
 
@@ -464,7 +518,7 @@ test('every witness stays MONOTONE in your own loot — a count cannot fall when
           rebaselineAt: T0,
           lootSinceRebaseline: { [claw]: since },
           turnIns: { [CLAW_KEY]: 1 },
-          turnInInstants: { [CLAW_KEY]: [T0 + HOUR] }
+          turnInInstants: { [CLAW_KEY]: [T0 + HOUR] },
         }).net[claw] ?? 0
       assert.ok(n >= previous, `${countSource}: looting one more dropped the count to ${String(n)}`)
       previous = n
@@ -480,7 +534,7 @@ test('passing the new inputs EMPTY is byte-identical to omitting them', () => {
   const base: Partial<ReconcileInput> = {
     log: { [claw]: 3, [diamond]: 1 },
     inv: { 'sphinx claw': 2 },
-    turnIns: { [CLAW_KEY]: 2 }
+    turnIns: { [CLAW_KEY]: 2 },
   }
   for (const countSource of ['log', 'inventory', 'both'] as const) {
     assert.deepEqual(
@@ -496,10 +550,10 @@ test('passing the new inputs EMPTY is byte-identical to omitting them', () => {
         // install with no dump to date them against, or a log with no destroy line in it - gets
         // the arithmetic that shipped before, key for key and row order included.
         destroyedSinceDump: {},
-        destroyedSinceOverride: {}
+        destroyedSinceOverride: {},
       }),
       run({ ...base, countSource }),
-      `${countSource}: the three shipped sources are untouched by the machinery around them`
+      `${countSource}: the three shipped sources are untouched by the machinery around them`,
     )
   }
 })

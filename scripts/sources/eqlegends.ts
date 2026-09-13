@@ -29,14 +29,14 @@ const CLASSES = [
   'Shadow Knight',
   'Shaman',
   'Warrior',
-  'Wizard'
+  'Wizard',
 ]
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
 
 async function fetchParsedHtml(title: string): Promise<string | null> {
   const url = `${API}?action=parse&page=${encodeURIComponent(
-    title
+    title,
   )}&prop=text&format=json&formatversion=2&redirects=1`
   const res = await fetch(url, { headers: { 'User-Agent': UA } })
   if (!res.ok) return null
@@ -120,7 +120,7 @@ function questColumns($: cheerio.CheerioAPI, table: cheerio.Cheerio<AnyNode>): Q
     giver: colExact('quest giver'),
     rune: colExact('rune'),
     items: colExact('quest items'),
-    reward: colExact('reward')
+    reward: colExact('reward'),
   }
   return cols.quest < 0 || cols.items < 0 ? null : cols
 }
@@ -128,7 +128,7 @@ function questColumns($: cheerio.CheerioAPI, table: cheerio.Cheerio<AnyNode>): Q
 /** Item display name → wiki page title, read off the cell's anchors. */
 function pageTitlesInCell(
   $: cheerio.CheerioAPI,
-  cell: cheerio.Cheerio<AnyNode>
+  cell: cheerio.Cheerio<AnyNode>,
 ): Record<string, string> {
   const pageByName: Record<string, string> = {}
   cell.find('a').each((_j, a) => {
@@ -163,7 +163,13 @@ function itemSegments($: cheerio.CheerioAPI, cell: cheerio.Cheerio<AnyNode>): st
   }
   return (cell.html() ?? '')
     .split(/<br\s*\/?>/i)
-    .map((h) => cheerio.load('<x>' + h + '</x>')('x').text().replace(/\s+/g, ' ').trim())
+    .map((h) =>
+      cheerio
+        .load('<x>' + h + '</x>')('x')
+        .text()
+        .replace(/\s+/g, ' ')
+        .trim(),
+    )
     .filter(Boolean)
 }
 
@@ -175,7 +181,7 @@ function parseItemHint(inside: string | undefined): { where: string; who: string
   const w = dash.slice(1).join('-').trim()
   return {
     who: w ? [w] : [],
-    where: island && /^[\d.]/.test(island) ? `Island ${island}` : island ?? ''
+    where: island && /^[\d.]/.test(island) ? `Island ${island}` : (island ?? ''),
   }
 }
 
@@ -209,7 +215,10 @@ interface RewardCell {
 
 function parseRewardCell($: cheerio.CheerioAPI, cell: cheerio.Cheerio<AnyNode> | null): RewardCell {
   if (!cell) return {}
-  const anchor = cell.find('a').filter((_j, a) => !!$(a).text().trim()).first()
+  const anchor = cell
+    .find('a')
+    .filter((_j, a) => !!$(a).text().trim())
+    .first()
   const reward = anchor.length ? dedupeDoubled(anchor.text()) : undefined
   const page = anchor.attr('title')?.trim() ?? ''
   let stats = cell.text().replace(/\s+/g, ' ').trim()
@@ -218,7 +227,7 @@ function parseRewardCell($: cheerio.CheerioAPI, cell: cheerio.Cheerio<AnyNode> |
   return {
     reward,
     rewardStats: stats.length > 0 && stats.length < 600 ? stats : undefined,
-    rewardPage: page.length > 0 ? page : undefined
+    rewardPage: page.length > 0 ? page : undefined,
   }
 }
 
@@ -255,7 +264,7 @@ function parseQuestRow(ctx: RowContext, tr: AnyNode): PoskyQuest | null {
     rewardStats: reward.rewardStats,
     rewardPage: reward.rewardPage,
     items: parseItemsCell($, $(tds[cols.items])),
-    source: ctx.source
+    source: ctx.source,
   }
 }
 
@@ -296,7 +305,6 @@ function normName(s: string): string {
   return s.toLowerCase().replace(/\s+/g, ' ').trim()
 }
 
-
 /** Turn a Rune-column value ("Wind Rune Meda") into required rune item(s). */
 function runeItems(runeText: string): PoskyItem[] {
   return runeText
@@ -307,7 +315,7 @@ function runeItems(runeText: string): PoskyItem[] {
       name,
       who: ['random drop — any Plane of Sky mob'],
       where: 'Plane of Sky',
-      count: 1
+      count: 1,
     }))
 }
 
@@ -368,7 +376,8 @@ async function attachItemStats(all: PoskyQuest[]): Promise<void> {
     await sleep(110)
   }
   for (const q of all) {
-    for (const it of q.items) if (it.page && statByPage.has(it.page)) it.stats = statByPage.get(it.page)
+    for (const it of q.items)
+      if (it.page && statByPage.has(it.page)) it.stats = statByPage.get(it.page)
     if (q.rewardPage && statByPage.has(q.rewardPage)) q.rewardStats = statByPage.get(q.rewardPage)
   }
   console.log(`Attached stats for ${statByPage.size}/${pages.size} items.`)
@@ -397,12 +406,14 @@ async function scrape(): Promise<PoskyData> {
 
   await attachItemStats(all)
 
-  console.log(`\nScraped ${all.length} quests across ${new Set(all.map((q) => q.className)).size} classes.`)
+  console.log(
+    `\nScraped ${all.length} quests across ${new Set(all.map((q) => q.className)).size} classes.`,
+  )
   return { scrapedAt: new Date().toISOString(), quests: all }
 }
 
 export const eqlegendsSource: QuestSource = {
   id: 'eqlegends',
   label: 'EverQuest Legends (eqlwiki.com)',
-  scrape
+  scrape,
 }

@@ -62,7 +62,11 @@ function arrayDiff(a: unknown, b: unknown, path: string): Diff | null {
   return null
 }
 
-function objectDiff(a: Record<string, unknown>, b: Record<string, unknown>, path: string): Diff | null {
+function objectDiff(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+  path: string,
+): Diff | null {
   const rest = new Set(Object.keys(b))
   for (const k of Object.keys(a)) {
     if (!rest.has(k)) return { path: `${path}.${k}`, expected: a[k], actual: undefined }

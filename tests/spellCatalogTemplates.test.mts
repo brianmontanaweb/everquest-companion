@@ -22,7 +22,7 @@ import {
   castOnOtherSuffix,
   isPlaceholderMessage,
   loadSpellDb,
-  spellPlaceholdersReport
+  spellPlaceholdersReport,
 } from '../src/main/data/spellDb'
 import { subjectCapturePattern } from '../src/shared/alertCaptures'
 // The RAW scrape, read directly — the independent count below has to look at the text the pass
@@ -56,7 +56,7 @@ test('the spellType table is EXHAUSTIVE over the committed DB', () => {
   assert.deepEqual(
     [...unclassified],
     [],
-    'spells.json grew a spellType the catalog does not classify — add it to BENEFICIAL_TYPES or DETRIMENTAL_TYPES in spellDb.ts'
+    'spells.json grew a spellType the catalog does not classify — add it to BENEFICIAL_TYPES or DETRIMENTAL_TYPES in spellDb.ts',
   )
 })
 
@@ -68,7 +68,7 @@ test('the classification recovered spells the two literals dropped', () => {
     assert.ok(e, `${key} must be in the catalog`)
     assert.ok(
       e.templates.wearsOff || e.templates.fade || e.templates.lands || e.templates.landsOnOther,
-      `${key} must earn at least one template`
+      `${key} must earn at least one template`,
     )
   }
   // …and the detrimental side of the same table.
@@ -88,7 +88,7 @@ test('NO DEAD `lands`: every lands template names a message the parser can match
     assert.notEqual(
       castOnOtherSuffix(s.msgCastOnOther),
       null,
-      `${e.name}: lands is offered but its message has no suffix the parser indexes`
+      `${e.name}: lands is offered but its message has no suffix the parser indexes`,
     )
   }
 })
@@ -187,13 +187,19 @@ test('`landsOnOther` always travels with the pattern it needs', () => {
     assert.equal(
       e.templates.landsOnOther,
       e.castOnOtherCapture !== undefined,
-      `${e.name}: the landsOnOther flag and its pattern must agree`
+      `${e.name}: the landsOnOther flag and its pattern must agree`,
     )
     if (!e.castOnOtherCapture) continue
     // Every authored pattern is a valid regex that declares exactly the group the phrase names.
-    assert.doesNotThrow(() => new RegExp(e.castOnOtherCapture!, 'i'), `${e.name}: pattern must compile`)
+    assert.doesNotThrow(
+      () => new RegExp(e.castOnOtherCapture!, 'i'),
+      `${e.name}: pattern must compile`,
+    )
     assert.ok(e.castOnOtherCapture.includes('(?<player>'), `${e.name}: must declare {player}`)
-    assert.ok(e.castOnOtherCapture.startsWith('^\\[[^\\]]*\\] '), `${e.name}: must anchor at line start`)
+    assert.ok(
+      e.castOnOtherCapture.startsWith('^\\[[^\\]]*\\] '),
+      `${e.name}: must anchor at line start`,
+    )
   }
 })
 
@@ -239,7 +245,7 @@ const CORRECTED_STUBS = [
   'Slugs Healing/msgCastOnYou',
   'Slugs Healing/msgCastOnOther',
   'Snails Healing/msgCastOnYou',
-  'Snails Healing/msgCastOnOther'
+  'Snails Healing/msgCastOnOther',
 ]
 
 test('THE CENSUS: the stub fields no correction answers, verbatim', () => {
@@ -258,12 +264,12 @@ test('THE CENSUS: the stub fields no correction answers, verbatim', () => {
     // awaiting-sample law — and the `healsOverTime` alert template covers it anyway, off the healing
     // engine's tick line instead of off a message the wiki never wrote.
     'Sloths Healing/msgCastOnYou = "You ."',
-    'Sloths Healing/msgCastOnOther = "Someone ."'
+    'Sloths Healing/msgCastOnOther = "Someone ."',
   ])
   assert.equal(spellPlaceholdersReport()?.nulled, 6)
 })
 
-test('…and an INDEPENDENT count finds the same ten: they are the DB\'s only one-word messages', () => {
+test("…and an INDEPENDENT count finds the same ten: they are the DB's only one-word messages", () => {
   // Two directions on one population. The rule was derived from SHAPES; a word count knows nothing
   // about shapes and lands on exactly the same ten fields of the RAW scrape. Every other one of the
   // 3,847 non-empty message fields the scrape ships carries two or more words.
@@ -276,7 +282,10 @@ test('…and an INDEPENDENT count finds the same ten: they are the DB\'s only on
     for (const field of ['msgCastOnYou', 'msgCastOnOther', 'msgWearsOff'] as const) {
       const text = s[field]
       if (!text) continue
-      const words = text.trim().split(/\s+/).filter((w) => /[A-Za-z0-9]/.test(w))
+      const words = text
+        .trim()
+        .split(/\s+/)
+        .filter((w) => /[A-Za-z0-9]/.test(w))
       if (words.length <= 1) single.push(`${s.name}/${field}`)
     }
   }
@@ -298,7 +307,7 @@ test('THE BOUNDARY: a short sentence is still a sentence and survives the pass',
     'Someone staggers.', // 41 rows share it
     'fades away.', // 10 rows — the wiki cropped the SUBJECT, not the predicate
     'starts limping!', // Hobbling Poison
-    "'s limbs move slower!" // Weakening Strike — a possessive fragment IS the parser's suffix
+    "'s limbs move slower!", // Weakening Strike — a possessive fragment IS the parser's suffix
   ]) {
     assert.equal(isPlaceholderMessage(real), false, `${JSON.stringify(real)} is a sentence`)
   }
@@ -316,7 +325,7 @@ test('THE REPORTED SPELL: Sloths Healing carries no stub anywhere downstream', (
   assert.notEqual(
     subjectCapturePattern('Someone .'),
     null,
-    'the stub really did author a pattern — this is what the pass exists to remove'
+    'the stub really did author a pattern — this is what the pass exists to remove',
   )
 
   const spell = db.byKey.get('sloths healing')
@@ -338,7 +347,7 @@ test('THE REPORTED SPELL: Sloths Healing carries no stub anywhere downstream', (
   assert.equal(
     entry.searchText,
     'sloths healing sloths healing',
-    'the search surface is the name and its rank list — no stub text joined into it'
+    'the search surface is the name and its rank list — no stub text joined into it',
   )
 
   // …and the parser's own tables never learned the stubs either. `Someone .` minted the
@@ -354,7 +363,10 @@ test('JOS-318: the corrected ladder rungs carry real sentences, and earn the chi
   // The other side of the row that moved. Snails and Slugs are the two rungs the owner's log can
   // witness, so their stubs are ANSWERED rather than blanked, and the template flags follow from the
   // sentences without anything being taught a new rule.
-  for (const [key, animal] of [['snails healing', 'snail'], ['slugs healing', 'slug']] as const) {
+  for (const [key, animal] of [
+    ['snails healing', 'snail'],
+    ['slugs healing', 'slug'],
+  ] as const) {
     const s = db.byKey.get(key)
     assert.ok(s, `${key} must still be in the DB`)
     assert.equal(s.msgCastOnYou, `You being to feel healed by the ${animal}.`)
@@ -371,14 +383,14 @@ test('JOS-318: the corrected ladder rungs carry real sentences, and earn the chi
     assert.equal(
       db.castOnOtherSuffix.get(`is healed by the spirit of the ${animal}.`)?.length,
       1,
-      `${key}: the restored sentence resolves to exactly one spell`
+      `${key}: the restored sentence resolves to exactly one spell`,
     )
   }
   // …including the rung the wiki DID fill in, whose only fault was a dropped subject.
   assert.equal(
     db.castOnOtherSuffix.get('is healed by the spirit of the tortoise.')?.length,
     1,
-    'Tortoises Healing keys the table now too'
+    'Tortoises Healing keys the table now too',
   )
 })
 

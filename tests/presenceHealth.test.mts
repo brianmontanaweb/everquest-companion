@@ -38,7 +38,7 @@ import {
   watcherExitStep,
   type WatcherExitLog,
   type WatcherExitTrail,
-  type WatcherRestartCause
+  type WatcherRestartCause,
 } from '../src/main/presenceProtocol'
 import { errorFingerprint, errorNameOf, parseStackFrames } from '../src/shared/errorReport'
 
@@ -67,7 +67,7 @@ test('the EXIT line is the watcher’s last word, and its shape is narrow on pur
     'X|Native-Unavailable',
     'X|native unavailable',
     `X|${'a'.repeat(64)}`,
-    'X|native-unavailable|extra'
+    'X|native-unavailable|extra',
   ]) {
     assert.equal(parsePresenceLine(junk), null, `${JSON.stringify(junk)} must not decode`)
   }
@@ -83,9 +83,10 @@ test('the EXIT line is the watcher’s last word, and its shape is narrow on pur
 // These drive that whole sequence, including the part that must NOT fire.
 
 /** Fold a run of exits through the trail, collecting whatever each one would have logged. */
-function exitRun(
-  exits: readonly { code: number | null; lifetimeMs: number; reason?: string }[]
-): { logs: (WatcherExitLog | null)[]; trail: WatcherExitTrail } {
+function exitRun(exits: readonly { code: number | null; lifetimeMs: number; reason?: string }[]): {
+  logs: (WatcherExitLog | null)[]
+  trail: WatcherExitTrail
+} {
   let trail = NEW_WATCHER_EXIT_TRAIL
   const logs: (WatcherExitLog | null)[] = []
   for (const e of exits) {
@@ -93,7 +94,7 @@ function exitRun(
       ...CAUSE_TAIL,
       code: e.code,
       lifetimeMs: e.lifetimeMs,
-      reason: e.reason ?? null
+      reason: e.reason ?? null,
     })
     trail = step.trail
     logs.push(step.log)
@@ -114,7 +115,7 @@ test('THE WATCHER’S REASON REACHES THE LOG — every exit carries it, and its 
     ...CAUSE_TAIL,
     code: 0,
     lifetimeMs: 900,
-    reason: 'native-unavailable'
+    reason: 'native-unavailable',
   })
   // AND SINCE JOS-310 THE WHOLE CAUSE RIDES ALONG (the exit paths are the rows that SURVIVE the
   // went-silent demotion, so they are the rows that have to answer on their own). Nothing was
@@ -127,7 +128,7 @@ test('THE WATCHER’S REASON REACHES THE LOG — every exit carries it, and its 
     lifetimeMs: 900,
     code: 0,
     reason: 'native-unavailable',
-    attempt: 1
+    attempt: 1,
   })
   // A watcher that was terminated, threw or was starved never got to say anything, and the entry
   // says so rather than inventing a reason.
@@ -136,7 +137,7 @@ test('THE WATCHER’S REASON REACHES THE LOG — every exit carries it, and its 
     lastRecord: null,
     code: 1,
     lifetimeMs: 40,
-    reason: null
+    reason: null,
   })
   assert.equal(silentDeath.log?.reason, null)
   assert.equal(silentDeath.log?.lifetimeMs, 40)
@@ -162,7 +163,11 @@ test('N CONSECUTIVE IMMEDIATE EXITS COLLAPSE INTO ONE ENTRY, AND THEN THE STORE 
   assert.equal(collapsed.name, WATCHER_EXIT_LOOP_ERROR_NAME)
   assert.equal(collapsed.exits, n)
   assert.match(collapsed.message, /exit loop/)
-  assert.equal(collapsed.reason, 'native-unavailable', 'the diagnosis carries the watcher’s own word')
+  assert.equal(
+    collapsed.reason,
+    'native-unavailable',
+    'the diagnosis carries the watcher’s own word',
+  )
   assert.equal(trail.collapsed, true)
   assert.equal(trail.streak, n, 'the streak is held at N, so a day-long session cannot run it away')
 })
@@ -208,12 +213,12 @@ test('ONLY A CLEAN, IMMEDIATE EXIT COUNTS — a throw and a long healthy run bot
   const interrupted = exitRun([
     ...Array.from({ length: n - 1 }, () => QUICK_EXIT),
     { code: 0, lifetimeMs: WATCHER_STALE_MS * 2 },
-    ...Array.from({ length: n - 1 }, () => QUICK_EXIT)
+    ...Array.from({ length: n - 1 }, () => QUICK_EXIT),
   ])
   assert.equal(
     interrupted.logs.filter((l) => l?.name === WATCHER_EXIT_LOOP_ERROR_NAME).length,
     0,
-    'never diagnosed — the pattern was broken before it completed, twice'
+    'never diagnosed — the pattern was broken before it completed, twice',
   )
   assert.equal(interrupted.logs.filter((l) => l !== null).length, 2 * (n - 1) + 1)
 })
@@ -233,7 +238,7 @@ const FULL_CAUSE: WatcherRestartCause = {
   lifetimeMs: 184_000,
   code: null,
   reason: null,
-  attempt: 2
+  attempt: 2,
 }
 
 test('THE CAUSE IS THE WHOLE POINT OF THE DEMOTION - every restart says why, in one sentence', () => {
@@ -257,7 +262,7 @@ test('THE CAUSE IS THE WHOLE POINT OF THE DEMOTION - every restart says why, in 
     silentMs: 2,
     lifetimeMs: 900,
     code: 0,
-    reason: 'native-unavailable'
+    reason: 'native-unavailable',
   })
   assert.match(exited, /exit code 0/, 'the exit code when there is one')
   assert.match(exited, /reason `native-unavailable`/, 'and the watcher’s own last word')
@@ -289,7 +294,7 @@ test('THE WENT-SILENT RESTART IS INFO AND THE THREE REAL FAILURES ARE STILL ERRO
   assert.ok(watchdog.includes("restartCause('went-silent'"))
   assert.ok(
     !presence.includes('presence watcher went silent; assuming it is wedged'),
-    'the old error sentence is gone rather than merely re-routed'
+    'the old error sentence is gone rather than merely re-routed',
   )
 
   // 2. THE FATAL ONE, in the same function that refuses to keep replacing threads. Three wedged
@@ -312,7 +317,11 @@ test('THE WENT-SILENT RESTART IS INFO AND THE THREE REAL FAILURES ARE STILL ERRO
   // silencing: `notePresenceRestart` is the one funnel all three causes reach, so a fleet where
   // this starts happening shows it as `presenceRestarts` rather than as a defect in the build.
   assert.equal(presence.match(/notePresenceRestart\(\)/g)?.length, 1)
-  assert.ok(section('function scheduleRestart', 'function handleWatcherGone').includes('notePresenceRestart()'))
+  assert.ok(
+    section('function scheduleRestart', 'function handleWatcherGone').includes(
+      'notePresenceRestart()',
+    ),
+  )
 })
 
 test('A COLLAPSED RUN STARTS REPORTING AGAIN THE MOMENT THE PATTERN BREAKS', () => {
@@ -322,7 +331,7 @@ test('A COLLAPSED RUN STARTS REPORTING AGAIN THE MOMENT THE PATTERN BREAKS', () 
   const { logs } = exitRun([
     ...Array.from({ length: n + 10 }, () => QUICK_EXIT),
     { code: 1, lifetimeMs: 50 },
-    ...Array.from({ length: n }, () => QUICK_EXIT)
+    ...Array.from({ length: n }, () => QUICK_EXIT),
   ])
   const written = logs.filter((l) => l !== null)
   assert.equal(written.length, n + 1 + n)
@@ -330,6 +339,6 @@ test('A COLLAPSED RUN STARTS REPORTING AGAIN THE MOMENT THE PATTERN BREAKS', () 
   assert.equal(
     written.filter((l) => l.name === WATCHER_EXIT_LOOP_ERROR_NAME).length,
     2,
-    'and the loop is diagnosed once per run of it, not once per session'
+    'and the loop is diagnosed once per run of it, not once per session',
   )
 })

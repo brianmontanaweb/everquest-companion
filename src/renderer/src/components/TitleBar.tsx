@@ -1,5 +1,16 @@
 import { type JSX, useEffect, useRef, useState } from 'react'
-import { Box, Checkbox, Chip, Divider, ListItemText, ListSubheader, Menu, MenuItem, Select, Typography } from '@mui/material'
+import {
+  Box,
+  Checkbox,
+  Chip,
+  Divider,
+  ListItemText,
+  ListSubheader,
+  Menu,
+  MenuItem,
+  Select,
+  Typography,
+} from '@mui/material'
 import CircleIcon from '@mui/icons-material/Circle'
 import MinimizeIcon from '@mui/icons-material/Remove'
 import CropSquareIcon from '@mui/icons-material/CropSquare'
@@ -49,7 +60,7 @@ function CaptionButton({
   onClick,
   label,
   danger,
-  children
+  children,
 }: {
   onClick: () => void
   label: string
@@ -80,8 +91,8 @@ function CaptionButton({
         '& svg': { fontSize: 18 },
         '&:hover': {
           backgroundColor: danger ? 'error.main' : 'rgba(255,255,255,0.08)',
-          color: danger ? '#fff' : 'text.primary'
-        }
+          color: danger ? '#fff' : 'text.primary',
+        },
       }}
     >
       {children}
@@ -134,7 +145,7 @@ const OVERLAY_MENU_ROWS: readonly (readonly [OverlayKind, string])[] = [
   // instruction (2026-08-16, the JOS-139 mirroring precedent): a window that appears by itself
   // needs its off switch within reach of the place you are already looking when you want it gone.
   // The 'toast' kind stays absent for its own stated reason — nobody places a celebration strip.
-  ['conCard', 'Resists, drops and level when you con']
+  ['conCard', 'Resists, drops and level when you con'],
 ]
 
 /**
@@ -144,7 +155,10 @@ const OVERLAY_MENU_ROWS: readonly (readonly [OverlayKind, string])[] = [
  * and this checkbox move together without either knowing the other exists). `null` until the first
  * read answers, so the row can render nothing it does not know (the JOS-340 law, in menu form).
  */
-function useCloseToTrayMirror(): [CloseToTrayPrefs | null, (patch: Partial<CloseToTrayPrefs>) => void] {
+function useCloseToTrayMirror(): [
+  CloseToTrayPrefs | null,
+  (patch: Partial<CloseToTrayPrefs>) => void,
+] {
   const [prefs, setPrefs] = useState<CloseToTrayPrefs | null>(null)
   useEffect(() => {
     let alive = true
@@ -169,7 +183,11 @@ function useCloseToTrayMirror(): [CloseToTrayPrefs | null, (patch: Partial<Close
  * knows an overlay is live even off-screen / behind the game. The menu anchor is local
  * state — nothing outside this button cares whether the menu is showing.
  */
-function OverlayMenu({ overlayState }: { overlayState: Record<OverlayKind, boolean> }): JSX.Element {
+function OverlayMenu({
+  overlayState,
+}: {
+  overlayState: Record<OverlayKind, boolean>
+}): JSX.Element {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
   const anyOverlayOpen = Object.values(overlayState).some(Boolean)
@@ -219,7 +237,7 @@ function OverlayMenu({ overlayState }: { overlayState: Record<OverlayKind, boole
           outline: 'none',
           transition: 'background-color 120ms, color 120ms, border-color 120ms',
           '& svg': { fontSize: 16 },
-          '&:hover': { bgcolor: 'rgba(255,255,255,0.08)', color: 'text.primary' }
+          '&:hover': { bgcolor: 'rgba(255,255,255,0.08)', color: 'text.primary' },
         }}
       >
         <PictureInPictureAltIcon />
@@ -236,8 +254,21 @@ function OverlayMenu({ overlayState }: { overlayState: Record<OverlayKind, boole
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         {OVERLAY_MENU_ROWS.map(([kind, secondary]) => (
-          <MenuItem dense key={kind} data-testid={`overlay-menu-${kind}`} onClick={() => { toggle(kind) }}>
-            <Checkbox size="small" edge="start" checked={overlayState[kind]} tabIndex={-1} disableRipple />
+          <MenuItem
+            dense
+            key={kind}
+            data-testid={`overlay-menu-${kind}`}
+            onClick={() => {
+              toggle(kind)
+            }}
+          >
+            <Checkbox
+              size="small"
+              edge="start"
+              checked={overlayState[kind]}
+              tabIndex={-1}
+              disableRipple
+            />
             <ListItemText primary={OVERLAY_KIND_LABEL[kind]} secondary={secondary} />
           </MenuItem>
         ))}
@@ -256,7 +287,13 @@ function OverlayMenu({ overlayState }: { overlayState: Record<OverlayKind, boole
             if (tray) setTray({ enabled: !tray.enabled })
           }}
         >
-          <Checkbox size="small" edge="start" checked={tray?.enabled === true} tabIndex={-1} disableRipple />
+          <Checkbox
+            size="small"
+            edge="start"
+            checked={tray?.enabled === true}
+            tabIndex={-1}
+            disableRipple
+          />
           <ListItemText
             primary="Keep running in the tray when the window closes"
             secondary="Overlays stay up; the tray icon brings the window back"
@@ -271,14 +308,17 @@ function OverlayMenu({ overlayState }: { overlayState: Record<OverlayKind, boole
 function CharacterPicker({
   character,
   characters,
-  onSelectCharacter
+  onSelectCharacter,
 }: {
   character: CharacterRef | null
   characters: CharacterRef[]
   onSelectCharacter: (logPath: string) => void
 }): JSX.Element {
   return (
-    <Box data-no-drag sx={{ WebkitAppRegion: 'no-drag', display: 'flex', alignItems: 'center', pr: 1 }}>
+    <Box
+      data-no-drag
+      sx={{ WebkitAppRegion: 'no-drag', display: 'flex', alignItems: 'center', pr: 1 }}
+    >
       {characters.length > 0 ? (
         <Select
           size="small"
@@ -320,7 +360,10 @@ function WindowControls({ maximized }: { maximized: boolean }): JSX.Element {
       <CaptionButton label="Minimize" onClick={() => window.eq.minimizeWindow()}>
         <MinimizeIcon />
       </CaptionButton>
-      <CaptionButton label={maximized ? 'Restore' : 'Maximize'} onClick={() => window.eq.toggleMaximizeWindow()}>
+      <CaptionButton
+        label={maximized ? 'Restore' : 'Maximize'}
+        onClick={() => window.eq.toggleMaximizeWindow()}
+      >
         {maximized ? <FilterNoneIcon sx={{ transform: 'scaleX(-1)' }} /> : <CropSquareIcon />}
       </CaptionButton>
       <CaptionButton label="Close" danger onClick={() => window.eq.closeWindow()}>
@@ -341,21 +384,21 @@ export default function TitleBar({
   live,
   character,
   characters,
-  onSelectCharacter
+  onSelectCharacter,
 }: TitleBarProps): JSX.Element {
   const [maximized, setMaximized] = useState(false)
   // Per-kind overlay open-state (Task #52; kinds in Task #54/#59): reflected on the compact
   // Overlay menu, kept in sync with pushes so it updates if an overlay closes itself. Seeded
   // from OVERLAY_KINDS so adding a kind needs no edit here.
   const [overlayState, setOverlayState] = useState<Record<OverlayKind, boolean>>(
-    () => Object.fromEntries(OVERLAY_KINDS.map((k) => [k, false])) as Record<OverlayKind, boolean>
+    () => Object.fromEntries(OVERLAY_KINDS.map((k) => [k, false])) as Record<OverlayKind, boolean>,
   )
 
   useEffect(() => window.eq.onWindowMaximized(setMaximized), [])
   useEffect(() => {
     void window.eq.getOverlayState().then(setOverlayState)
     return window.eq.onOverlayState(({ kind, open }) =>
-      setOverlayState((s) => ({ ...s, [kind]: open }))
+      setOverlayState((s) => ({ ...s, [kind]: open })),
     )
   }, [])
 
@@ -387,10 +430,13 @@ export default function TitleBar({
         borderBottom: 1,
         borderColor: 'divider',
         bgcolor: 'background.paper',
-        userSelect: 'none'
+        userSelect: 'none',
       }}
     >
-      <Typography variant="subtitle2" sx={{ color: 'primary.main', fontWeight: 700, whiteSpace: 'nowrap' }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ color: 'primary.main', fontWeight: 700, whiteSpace: 'nowrap' }}
+      >
         EQ Legends Companion
       </Typography>
 

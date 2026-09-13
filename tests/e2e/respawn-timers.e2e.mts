@@ -81,7 +81,7 @@ import {
   failures,
   reportRun,
   settle,
-  settleStable
+  settleStable,
 } from './appHarness.mjs'
 import { mainWindow, overlayWindow } from './appWindow.mjs'
 import { launchOnFixture, type FixtureLog } from './logFixture.mjs'
@@ -115,7 +115,10 @@ function overlayState(page: Page): Promise<Record<string, boolean>> {
   return page.evaluate(() => (window as unknown as { eq: OverlayBridge }).eq.getOverlayState())
 }
 function toggleOverlay(page: Page, kind: string): Promise<boolean> {
-  return page.evaluate((k) => (window as unknown as { eq: OverlayBridge }).eq.toggleOverlay(k), kind)
+  return page.evaluate(
+    (k) => (window as unknown as { eq: OverlayBridge }).eq.toggleOverlay(k),
+    kind,
+  )
 }
 
 /** One clock as a surface draws it, from either the tab or the floating window. */
@@ -139,9 +142,9 @@ function clocks(page: Page, testid: string): Promise<Clock[]> {
         due: e.getAttribute('data-respawn-due') ?? '',
         seen: e.getAttribute('data-respawn-seen') ?? '',
         basis: e.getAttribute('data-respawn-basis') ?? '',
-        text: (e as HTMLElement).innerText.replace(/\s+/g, ' ').trim()
+        text: (e as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
       })),
-    testid
+    testid,
   )
 }
 
@@ -157,7 +160,7 @@ interface Watches {
 }
 function readWatches(page: Page): Promise<Watches> {
   return page.evaluate(() =>
-    (window as unknown as { eq: { getRespawn: () => Promise<Watches> } }).eq.getRespawn()
+    (window as unknown as { eq: { getRespawn: () => Promise<Watches> } }).eq.getRespawn(),
   )
 }
 
@@ -172,25 +175,36 @@ function readWatches(page: Page): Promise<Watches> {
  * click; this helper hands the pointer back.
  */
 async function clickWatch(page: Page, mob: string): Promise<void> {
-  await page.click(`[data-testid="respawn-candidate"][data-respawn-mob="${mob}"] [data-testid="respawn-watch"]`, {
-    timeout: 15_000
-  })
+  await page.click(
+    `[data-testid="respawn-candidate"][data-respawn-mob="${mob}"] [data-testid="respawn-watch"]`,
+    {
+      timeout: 15_000,
+    },
+  )
   await page.mouse.move(0, 0)
 }
 
 async function stepFreshInstall(page: Page, app: ElectronApplication): Promise<void> {
   await page.click('[data-testid="nav-timers"]', { timeout: 30_000 })
-  const mounted = await settle(() => countOf(page, '[data-testid="timers-view"]'), (n) => n === 1, {
-    timeoutMs: 30_000
-  })
+  const mounted = await settle(
+    () => countOf(page, '[data-testid="timers-view"]'),
+    (n) => n === 1,
+    {
+      timeoutMs: 30_000,
+    },
+  )
   check('the Timers tab mounts', mounted === 1)
 
   // A whole log folded at launch starts NO clocks, because nothing in it is watched — the opt-in
   // ruling, in the real app. (Round 8: not because anything was swept. The step after this one
   // watches one of those days-old kills and asserts the row IS there.)
-  const empty = await settle(() => countOf(page, '[data-testid="respawn-empty"]'), (n) => n === 1, {
-    timeoutMs: 20_000
-  })
+  const empty = await settle(
+    () => countOf(page, '[data-testid="respawn-empty"]'),
+    (n) => n === 1,
+    {
+      timeoutMs: 20_000,
+    },
+  )
   check('a fresh install clocks nothing at all, and says why', empty === 1)
 
   const prefs = await readWatches(page)
@@ -199,31 +213,45 @@ async function stepFreshInstall(page: Page, app: ElectronApplication): Promise<v
   // ROUND 7, RULING 3: the page is called what the nav row has always called it. Two names for one
   // surface is the thing `VIEW_LABELS` exists to prevent one floor up, and this one had two.
   const heading = await page.evaluate(
-    () => document.querySelector('[data-testid="timers-view"] h6')?.textContent ?? ''
+    () => document.querySelector('[data-testid="timers-view"] h6')?.textContent ?? '',
   )
-  check('the page is titled Timers, like the tab that opens it', heading.trim() === 'Timers', heading)
+  check(
+    'the page is titled Timers, like the tab that opens it',
+    heading.trim() === 'Timers',
+    heading,
+  )
 
   // ROUND 7, RULING 2: "Your watches" is GONE. Both halves of what it held are on the mob now, so
   // this asserts the ABSENCE — a build that merely hid the empty state would keep the editor rows.
   check(
     'the watch list at the bottom of the page is gone, not emptied',
     (await countOf(page, '[data-testid="respawn-watches-empty"]')) === 0 &&
-      (await countOf(page, '[data-testid="respawn-watch-row"]')) === 0
+      (await countOf(page, '[data-testid="respawn-watch-row"]')) === 0,
   )
   // ROUND 9: and round 7's own seconds box is gone in its turn — deleted, not hidden. Nothing on a
   // fresh install offers to edit a duration, because no duration exists to edit.
-  check('the bare seconds box round 7 added is gone too', (await countOf(page, '[data-testid="respawn-custom"]')) === 0)
+  check(
+    'the bare seconds box round 7 added is gone too',
+    (await countOf(page, '[data-testid="respawn-custom"]')) === 0,
+  )
   check(
     '…and nothing offers to edit a number until a clock exists',
     (await countOf(page, '[data-testid="respawn-duration"]')) === 0 &&
       (await countOf(page, '[data-testid="respawn-edit"]')) === 0 &&
-      (await countOf(page, '[data-testid="respawn-edit-dialog"]')) === 0
+      (await countOf(page, '[data-testid="respawn-edit-dialog"]')) === 0,
   )
   // ROUND 7, RULING 4: the discovery panel has its own search from the first render.
-  check('Recently killed is searchable', (await countOf(page, '[data-testid="respawn-search"]')) === 1)
+  check(
+    'Recently killed is searchable',
+    (await countOf(page, '[data-testid="respawn-search"]')) === 1,
+  )
 
   const state = await overlayState(page)
-  check('…and the floating window is OFF until asked for', state.respawn === false, JSON.stringify(state))
+  check(
+    '…and the floating window is OFF until asked for',
+    state.respawn === false,
+    JSON.stringify(state),
+  )
   check('…with no window spawned at startup', (await windowsOfKind(app, 'respawn')) === 0)
 }
 
@@ -247,26 +275,52 @@ async function windowsOfKind(app: ElectronApplication, kind: string): Promise<nu
  */
 async function stepLiveKillIsOfferedThenWatched(page: Page, log: FixtureLog): Promise<void> {
   log.append(`You have slain ${WIKI_MOB}!`)
-  const offered = await settle(() => clocks(page, 'respawn-candidate'), (r) => find(r, WIKI_MOB) !== undefined, {
-    timeoutMs: 30_000
-  })
-  if (!check('a death message in the LIVE log offers the mob', find(offered, WIKI_MOB) !== undefined, JSON.stringify(offered))) {
+  const offered = await settle(
+    () => clocks(page, 'respawn-candidate'),
+    (r) => find(r, WIKI_MOB) !== undefined,
+    {
+      timeoutMs: 30_000,
+    },
+  )
+  if (
+    !check(
+      'a death message in the LIVE log offers the mob',
+      find(offered, WIKI_MOB) !== undefined,
+      JSON.stringify(offered),
+    )
+  ) {
     return
   }
   // THE RULING, ASSERTED: the wiki knows this mob's respawn and that is STILL not a reason to clock
   // it. `settleStable` is how an absence is asserted (wave E3) — wait for the reading to stop
   // moving, then assert nothing is there.
   const rows = await settleStable(() => clocks(page, 'respawn-row'))
-  check('…and clocks NOTHING, though the wiki states its respawn', find(rows, WIKI_MOB) === undefined, JSON.stringify(rows))
+  check(
+    '…and clocks NOTHING, though the wiki states its respawn',
+    find(rows, WIKI_MOB) === undefined,
+    JSON.stringify(rows),
+  )
 
   await clickWatch(page, WIKI_MOB)
-  const clocked = await settle(() => clocks(page, 'respawn-row'), (r) => find(r, WIKI_MOB) !== undefined, {
-    timeoutMs: 30_000
-  })
+  const clocked = await settle(
+    () => clocks(page, 'respawn-row'),
+    (r) => find(r, WIKI_MOB) !== undefined,
+    {
+      timeoutMs: 30_000,
+    },
+  )
   const row = find(clocked, WIKI_MOB)
   if (!check('clicking Watch starts the clock', row !== undefined, JSON.stringify(clocked))) return
-  check('…numbered from the wiki, because you have no gap of your own yet', row.source === 'wiki', JSON.stringify(row))
-  check('…and it says so rather than presenting the number bare', row.text.includes('wiki default'), row.text)
+  check(
+    '…numbered from the wiki, because you have no gap of your own yet',
+    row.source === 'wiki',
+    JSON.stringify(row),
+  )
+  check(
+    '…and it says so rather than presenting the number bare',
+    row.text.includes('wiki default'),
+    row.text,
+  )
   check('…counting down, not already due', row.due === 'false', JSON.stringify(row))
   // The ESTIMATE, printed beside the countdown: 570 s, which is what the committed floor reads out
   // of the page's "9.5 min". The number the wiki actually states, on screen, in the real app.
@@ -307,36 +361,62 @@ async function stepWatchFromRecentKills(page: Page, log: FixtureLog): Promise<vo
   const offered = await settle(
     () => clocks(page, 'respawn-candidate'),
     (r) => find(r, OWN_MOB) !== undefined,
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
   const cand = find(offered, OWN_MOB)
-  if (!check('a mob nobody watches is still OFFERED, having died', cand !== undefined, JSON.stringify(offered))) {
+  if (
+    !check(
+      'a mob nobody watches is still OFFERED, having died',
+      cand !== undefined,
+      JSON.stringify(offered),
+    )
+  ) {
     return
   }
-  check('…and is not clocked until asked for', find(await clocks(page, 'respawn-row'), OWN_MOB) === undefined)
+  check(
+    '…and is not clocked until asked for',
+    find(await clocks(page, 'respawn-row'), OWN_MOB) === undefined,
+  )
 
   await clickWatch(page, OWN_MOB)
 
-  const rows = await settle(() => clocks(page, 'respawn-row'), (r) => find(r, OWN_MOB) !== undefined, {
-    timeoutMs: 30_000
-  })
+  const rows = await settle(
+    () => clocks(page, 'respawn-row'),
+    (r) => find(r, OWN_MOB) !== undefined,
+    {
+      timeoutMs: 30_000,
+    },
+  )
   const row = find(rows, OWN_MOB)
-  if (!check('clicking Watch produces a clock at once', row !== undefined, JSON.stringify(rows))) return
+  if (!check('clicking Watch produces a clock at once', row !== undefined, JSON.stringify(rows)))
+    return
   // FROM THE KILL ALREADY FOLDED, and numbered by the gap already learned — not from the next death.
-  check('…numbered from YOUR kills, not from the wiki', row.source === 'observed', JSON.stringify(row))
+  check(
+    '…numbered from YOUR kills, not from the wiki',
+    row.source === 'observed',
+    JSON.stringify(row),
+  )
   check('…stating how thin that evidence is', row.text.includes('your kills (1 gap)'), row.text)
   // The two deaths were played three minutes apart, so the learned bound is 3m — printed with the
   // "<=" that says it is a bound and not a measurement.
-  check('…and the gap it learned is the one that was played', row.text.includes('<= 3m 00s'), row.text)
+  check(
+    '…and the gap it learned is the one that was played',
+    row.text.includes('<= 3m 00s'),
+    row.text,
+  )
   // ROUND 7, RULING 2: the row shows its WORKING — the gaps it measured, not only the minimum it
   // reduced them to. One gap was played, so one is printed, and it is that gap.
-  check('…and the row shows the gap itself, not only the estimate it became', row.text.includes('gaps: 3m 00s'), row.text)
+  check(
+    '…and the row shows the gap itself, not only the estimate it became',
+    row.text.includes('gaps: 3m 00s'),
+    row.text,
+  )
 
   const prefs = await readWatches(page)
   check(
     '…and the choice was PERSISTED, not held in the component',
     prefs.watches.some((w) => w.key === OWN_MOB),
-    JSON.stringify(prefs)
+    JSON.stringify(prefs),
   )
 }
 
@@ -355,22 +435,32 @@ async function stepOverlay(page: Page, app: ElectronApplication): Promise<Page |
   if (!check('…and a window for kind=respawn really exists', overlay !== null)) return null
   const o = overlay
 
-  const mounted = await settle(() => countOf(o, '[data-testid="respawn-overlay"]'), (n) => n === 1, {
-    timeoutMs: 20_000
-  })
+  const mounted = await settle(
+    () => countOf(o, '[data-testid="respawn-overlay"]'),
+    (n) => n === 1,
+    {
+      timeoutMs: 20_000,
+    },
+  )
   check('the respawn surface mounts', mounted === 1)
-  check('…with a visible close control', (await countOf(o, 'button[aria-label="Close overlay"]')) === 1)
-  check('…and the lock (click-through) control beside it', (await countOf(o, 'button[aria-label^="Lock"]')) === 1)
+  check(
+    '…with a visible close control',
+    (await countOf(o, 'button[aria-label="Close overlay"]')) === 1,
+  )
+  check(
+    '…and the lock (click-through) control beside it',
+    (await countOf(o, 'button[aria-label^="Lock"]')) === 1,
+  )
 
   const rows = await settle(
     () => clocks(o, 'respawn-overlay-row'),
     (r) => find(r, WIKI_MOB) !== undefined && find(r, OWN_MOB) !== undefined,
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
   check(
     'a window opened AFTER the fold shows the clocks the fold already holds',
     find(rows, WIKI_MOB) !== undefined && find(rows, OWN_MOB) !== undefined,
-    JSON.stringify(rows)
+    JSON.stringify(rows),
   )
   // ROUND 5 MOVED IT TO THE HOVER, and this still has to find it. The two claims this window makes
   // (a clock at zero is our estimate elapsing, UP is the game naming the mob) used to be a standing
@@ -383,19 +473,19 @@ async function stepOverlay(page: Page, app: ElectronApplication): Promise<Page |
   // chrome carries NO native titles at all now, by design.)
   const labels = await o.evaluate(() =>
     [...document.querySelectorAll<HTMLElement>('[aria-label]')].map(
-      (e) => e.getAttribute('aria-label') ?? ''
-    )
+      (e) => e.getAttribute('aria-label') ?? '',
+    ),
   )
   check(
     '…and never claims the mob is standing there',
     labels.some((t) => t.includes('estimate elapsed, not a sighting')),
-    JSON.stringify(labels)
+    JSON.stringify(labels),
   )
   const body = await o.evaluate(() => document.body.innerText)
   check(
     '…without spending a line of a 300px window saying it',
     !body.includes('estimate elapsed'),
-    body.slice(0, 200)
+    body.slice(0, 200),
   )
   return o
 }
@@ -407,7 +497,9 @@ async function stepOverlay(page: Page, app: ElectronApplication): Promise<Page |
  * `innerText` is the layout-aware reading of the two.
  */
 function cardText(p: Page): Promise<string> {
-  return p.evaluate(() => document.querySelector('[data-testid="mob-hover-card"]')?.textContent ?? '')
+  return p.evaluate(
+    () => document.querySelector('[data-testid="mob-hover-card"]')?.textContent ?? '',
+  )
 }
 
 /**
@@ -420,12 +512,17 @@ function cardText(p: Page): Promise<string> {
 function pointAtOverlayRow(overlay: Page, mob: string, over: boolean): Promise<void> {
   return overlay.evaluate(
     ({ mob: m, over: isOver }) => {
-      const row = document.querySelector(`[data-testid="respawn-overlay-row"][data-respawn-mob="${m}"]`)
+      const row = document.querySelector(
+        `[data-testid="respawn-overlay-row"][data-respawn-mob="${m}"]`,
+      )
       row?.dispatchEvent(
-        new MouseEvent(isOver ? 'mouseover' : 'mouseout', { bubbles: true, relatedTarget: document.body })
+        new MouseEvent(isOver ? 'mouseover' : 'mouseout', {
+          bubbles: true,
+          relatedTarget: document.body,
+        }),
       )
     },
-    { mob, over }
+    { mob, over },
   )
 }
 
@@ -469,8 +566,14 @@ async function stepHoverCard(page: Page, overlay: Page): Promise<void> {
   const before = await settleStable(() => cardText(page))
   check('a clock row draws no card until it is pointed at', before === '', before)
 
-  await page.hover(`[data-testid="respawn-row"][data-respawn-mob="${OWN_MOB}"]`, { timeout: 15_000 })
-  const shown = await settle(() => cardText(page), (t) => t.includes(LOOTED), { timeoutMs: 30_000 })
+  await page.hover(`[data-testid="respawn-row"][data-respawn-mob="${OWN_MOB}"]`, {
+    timeout: 15_000,
+  })
+  const shown = await settle(
+    () => cardText(page),
+    (t) => t.includes(LOOTED),
+    { timeoutMs: 30_000 },
+  )
   if (!check('pointing at a clock row opens the mob card', shown.length > 0, shown)) return
   // (a) THE DROPS, from our own entry for the mob — the item is on the card only because a loot
   // line said so, wherever the card's authority ordering ends up putting it.
@@ -481,17 +584,31 @@ async function stepHoverCard(page: Page, overlay: Page): Promise<void> {
   check('…labelled as ours rather than the wiki’s', shown.includes('Your shortest gap'), shown)
 
   await page.mouse.move(0, 0)
-  const tabGone = await settle(() => cardText(page), (t) => t === '', { timeoutMs: 20_000 })
+  const tabGone = await settle(
+    () => cardText(page),
+    (t) => t === '',
+    { timeoutMs: 20_000 },
+  )
   check('the card leaves with the pointer', tabGone === '', tabGone)
 
   // ROUND 7: THE SAME CARD ON THE MOB YOU HAVE ONLY KILLED. Same component, same lookup door, same
   // drops — a shorter note, because a candidate has no rung, no basis and no gap of its own.
-  await page.hover(`[data-testid="respawn-candidate"][data-respawn-mob="${OWN_MOB}"]`, { timeout: 15_000 })
-  const cand = await settle(() => cardText(page), (t) => t.includes(LOOTED), { timeoutMs: 30_000 })
+  await page.hover(`[data-testid="respawn-candidate"][data-respawn-mob="${OWN_MOB}"]`, {
+    timeout: 15_000,
+  })
+  const cand = await settle(
+    () => cardText(page),
+    (t) => t.includes(LOOTED),
+    { timeoutMs: 30_000 },
+  )
   check('pointing at a Recently-killed entry opens the same card', cand.includes(LOOTED), cand)
   check('…saying what it can honestly say about a mob with no clock', cand.includes('Killed'), cand)
   await page.mouse.move(0, 0)
-  const candGone = await settle(() => cardText(page), (t) => t === '', { timeoutMs: 20_000 })
+  const candGone = await settle(
+    () => cardText(page),
+    (t) => t === '',
+    { timeoutMs: 20_000 },
+  )
   check('…and it leaves with the pointer too', candGone === '', candGone)
 
   // ROUND 7: AND NOT OVER THE GAME. Dispatched rather than pointed at, for the reason at the top of
@@ -505,12 +622,14 @@ async function stepHoverCard(page: Page, overlay: Page): Promise<void> {
   // hover is in the title bar and is asserted alive in `stepOverlayShowsClocks`, so a change that
   // stripped the whole window would fail there instead of passing quietly here.
   const rowTitles = await overlay.evaluate(() =>
-    [...document.querySelectorAll<HTMLElement>('[data-testid="respawn-overlay-row"]')].map((e) => e.title)
+    [...document.querySelectorAll<HTMLElement>('[data-testid="respawn-overlay-row"]')].map(
+      (e) => e.title,
+    ),
   )
   check(
     '…and no longer hovers a provenance sentence over the game either',
     rowTitles.every((t) => t === ''),
-    JSON.stringify(rowTitles)
+    JSON.stringify(rowTitles),
   )
   await pointAtOverlayRow(overlay, OWN_MOB, false)
 }
@@ -534,36 +653,61 @@ async function stepHoverCard(page: Page, overlay: Page): Promise<void> {
 async function stepSeenOnLogEvidence(page: Page, overlay: Page, log: FixtureLog): Promise<void> {
   log.append(`A wan ghoul knight hits YOU for 106 points of damage.`)
 
-  const seen = await settle(() => clocks(page, 'respawn-row'), (r) => find(r, OWN_MOB)?.seen === 'true', {
-    timeoutMs: 30_000
-  })
+  const seen = await settle(
+    () => clocks(page, 'respawn-row'),
+    (r) => find(r, OWN_MOB)?.seen === 'true',
+    {
+      timeoutMs: 30_000,
+    },
+  )
   const row = find(seen, OWN_MOB)
-  if (!check('a combat line naming a watched mob flips its row UP', row?.seen === 'true', JSON.stringify(seen))) {
+  if (
+    !check(
+      'a combat line naming a watched mob flips its row UP',
+      row?.seen === 'true',
+      JSON.stringify(seen),
+    )
+  ) {
     return
   }
-  check('…and the clock says UP rather than reciting its estimate', row.text.includes('UP'), row.text)
-  check('…stating what saw it, and how long ago', row.text.includes('seen') && row.text.includes('combat line'), row.text)
-  check('…without touching the clock: it is still counting from the death', row.basis === 'death', JSON.stringify(row))
+  check(
+    '…and the clock says UP rather than reciting its estimate',
+    row.text.includes('UP'),
+    row.text,
+  )
+  check(
+    '…stating what saw it, and how long ago',
+    row.text.includes('seen') && row.text.includes('combat line'),
+    row.text,
+  )
+  check(
+    '…without touching the clock: it is still counting from the death',
+    row.basis === 'death',
+    JSON.stringify(row),
+  )
 
   const overlayRows = await settle(
     () => clocks(overlay, 'respawn-overlay-row'),
     (r) => find(r, OWN_MOB)?.seen === 'true',
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
   check(
     '…and the floating window — where the ruling came from — says UP too',
     find(overlayRows, OWN_MOB)?.text.includes('UP') === true,
-    JSON.stringify(overlayRows)
+    JSON.stringify(overlayRows),
   )
   check(
     '…with its own confirm affordance, because it is unlocked',
-    (await countOf(overlay, '[data-testid="respawn-overlay-confirm"]')) >= 1
+    (await countOf(overlay, '[data-testid="respawn-overlay-confirm"]')) >= 1,
   )
 
   // THE SECOND RULING: nothing above moved a clock. This click is the only thing that can.
-  await page.click(`[data-testid="respawn-row"][data-respawn-mob="${OWN_MOB}"] [data-testid="respawn-confirm-sighting"]`, {
-    timeout: 15_000
-  })
+  await page.click(
+    `[data-testid="respawn-row"][data-respawn-mob="${OWN_MOB}"] [data-testid="respawn-confirm-sighting"]`,
+    {
+      timeout: 15_000,
+    },
+  )
   // PARK THE POINTER (JOS-493). The click above leaves it on a control whose MUI tooltip is
   // INTERACTIVE, so the popper keeps `pointer-events: auto` over the row it belongs to — and the
   // very next step clicks Unwatch, a sibling in that same row. In a passing run the assertions in
@@ -573,14 +717,37 @@ async function stepSeenOnLogEvidence(page: Page, overlay: Page, log: FixtureLog)
   // after it. MEASURED exactly that way on this ticket. It weakens nothing: the tooltip's own
   // behaviour is `loot-sort.e2e.mts`'s subject, and the settle below reads the DOM, not the pointer.
   await page.mouse.move(0, 0)
-  const rebased = await settle(() => clocks(page, 'respawn-row'), (r) => find(r, OWN_MOB)?.basis === 'sighting', {
-    timeoutMs: 30_000
-  })
+  const rebased = await settle(
+    () => clocks(page, 'respawn-row'),
+    (r) => find(r, OWN_MOB)?.basis === 'sighting',
+    {
+      timeoutMs: 30_000,
+    },
+  )
   const after = find(rebased, OWN_MOB)
-  if (!check('confirming the sighting re-bases the clock', after?.basis === 'sighting', JSON.stringify(rebased))) return
-  check('…and says the number came from your judgement, not from a death line', after.text.includes('from your sighting'), after.text)
-  check('…leaving the seen state, because the evidence is now the base', after.seen === 'false', JSON.stringify(after))
-  check('…counting down again rather than sitting due', after.due === 'false', JSON.stringify(after))
+  if (
+    !check(
+      'confirming the sighting re-bases the clock',
+      after?.basis === 'sighting',
+      JSON.stringify(rebased),
+    )
+  )
+    return
+  check(
+    '…and says the number came from your judgement, not from a death line',
+    after.text.includes('from your sighting'),
+    after.text,
+  )
+  check(
+    '…leaving the seen state, because the evidence is now the base',
+    after.seen === 'false',
+    JSON.stringify(after),
+  )
+  check(
+    '…counting down again rather than sitting due',
+    after.due === 'false',
+    JSON.stringify(after),
+  )
 }
 
 /**
@@ -605,67 +772,128 @@ async function stepSeenOnLogEvidence(page: Page, overlay: Page, log: FixtureLog)
  * rather than a synthetic click, for the reason stated at the top of this file: the overlay is
  * hidden here, so it is read rather than clicked.
  */
-async function stepUnwatchOnTheMob(page: Page, overlay: Page, app: ElectronApplication): Promise<void> {
+async function stepUnwatchOnTheMob(
+  page: Page,
+  overlay: Page,
+  app: ElectronApplication,
+): Promise<void> {
   check(
     'an unlocked floating window offers Unwatch on its rows',
-    (await countOf(overlay, '[data-testid="respawn-overlay-unwatch"]')) >= 1
+    (await countOf(overlay, '[data-testid="respawn-overlay-unwatch"]')) >= 1,
   )
 
-  await page.click(`[data-testid="respawn-row"][data-respawn-mob="${WIKI_MOB}"] [data-testid="respawn-row-unwatch"]`, {
-    timeout: 15_000
-  })
-  const left = await settle(() => clocks(page, 'respawn-row'), (r) => find(r, WIKI_MOB) === undefined, {
-    timeoutMs: 30_000
-  })
-  if (!check('Unwatch on the clock row takes the clock away', find(left, WIKI_MOB) === undefined, JSON.stringify(left))) {
+  await page.click(
+    `[data-testid="respawn-row"][data-respawn-mob="${WIKI_MOB}"] [data-testid="respawn-row-unwatch"]`,
+    {
+      timeout: 15_000,
+    },
+  )
+  const left = await settle(
+    () => clocks(page, 'respawn-row'),
+    (r) => find(r, WIKI_MOB) === undefined,
+    {
+      timeoutMs: 30_000,
+    },
+  )
+  if (
+    !check(
+      'Unwatch on the clock row takes the clock away',
+      find(left, WIKI_MOB) === undefined,
+      JSON.stringify(left),
+    )
+  ) {
     return
   }
-  check('…and leaves the other watched mob alone', find(left, OWN_MOB) !== undefined, JSON.stringify(left))
+  check(
+    '…and leaves the other watched mob alone',
+    find(left, OWN_MOB) !== undefined,
+    JSON.stringify(left),
+  )
   const overlayLeft = await settle(
     () => clocks(overlay, 'respawn-overlay-row'),
     (r) => find(r, WIKI_MOB) === undefined,
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
-  check('…on the floating window too, off the one fold', find(overlayLeft, WIKI_MOB) === undefined, JSON.stringify(overlayLeft))
+  check(
+    '…on the floating window too, off the one fold',
+    find(overlayLeft, WIKI_MOB) === undefined,
+    JSON.stringify(overlayLeft),
+  )
   check(
     '…and the choice was PERSISTED, not held in the component',
-    (await readWatches(page)).watches.every((w) => w.key !== WIKI_MOB)
+    (await readWatches(page)).watches.every((w) => w.key !== WIKI_MOB),
   )
   const offersWatch = await settle(
-    () => countOf(page, `[data-testid="respawn-candidate"][data-respawn-mob="${WIKI_MOB}"] [data-testid="respawn-watch"]`),
+    () =>
+      countOf(
+        page,
+        `[data-testid="respawn-candidate"][data-respawn-mob="${WIKI_MOB}"] [data-testid="respawn-watch"]`,
+      ),
     (n) => n === 1,
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   )
-  check('…while the mob itself is offered again, the same control saying the opposite thing', offersWatch === 1)
+  check(
+    '…while the mob itself is offered again, the same control saying the opposite thing',
+    offersWatch === 1,
+  )
 
   // NOTHING BUT THE PREFERENCE WENT AWAY: one click and the clock is back, numbered as before.
   await clickWatch(page, WIKI_MOB)
-  const back = await settle(() => clocks(page, 'respawn-row'), (r) => find(r, WIKI_MOB) !== undefined, {
-    timeoutMs: 30_000
-  })
-  check('watching it again brings back the same clock', find(back, WIKI_MOB)?.source === 'wiki', JSON.stringify(back))
-  check('…still the duration the wiki states, so the fold kept everything', find(back, WIKI_MOB)?.text.includes('9m 30s') === true)
+  const back = await settle(
+    () => clocks(page, 'respawn-row'),
+    (r) => find(r, WIKI_MOB) !== undefined,
+    {
+      timeoutMs: 30_000,
+    },
+  )
+  check(
+    'watching it again brings back the same clock',
+    find(back, WIKI_MOB)?.source === 'wiki',
+    JSON.stringify(back),
+  )
+  check(
+    '…still the duration the wiki states, so the fold kept everything',
+    find(back, WIKI_MOB)?.text.includes('9m 30s') === true,
+  )
 
   // AND THE WINDOW OVER THE GAME CAN DO IT, which is the half of the ruling the tab cannot show.
   await unwatchFromOverlay(overlay, WIKI_MOB)
   const goneAgain = await settle(
     () => clocks(overlay, 'respawn-overlay-row'),
     (r) => find(r, WIKI_MOB) === undefined,
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
-  check('the floating window can stop a clock on its own', find(goneAgain, WIKI_MOB) === undefined, JSON.stringify(goneAgain))
-  const tabToo = await settle(() => clocks(page, 'respawn-row'), (r) => find(r, WIKI_MOB) === undefined, {
-    timeoutMs: 30_000
-  })
-  check('…and the tab agrees, because both read one fold', find(tabToo, WIKI_MOB) === undefined, JSON.stringify(tabToo))
-  check('…with no extra window spawned or lost along the way', (await windowsOfKind(app, 'respawn')) === 1)
+  check(
+    'the floating window can stop a clock on its own',
+    find(goneAgain, WIKI_MOB) === undefined,
+    JSON.stringify(goneAgain),
+  )
+  const tabToo = await settle(
+    () => clocks(page, 'respawn-row'),
+    (r) => find(r, WIKI_MOB) === undefined,
+    {
+      timeoutMs: 30_000,
+    },
+  )
+  check(
+    '…and the tab agrees, because both read one fold',
+    find(tabToo, WIKI_MOB) === undefined,
+    JSON.stringify(tabToo),
+  )
+  check(
+    '…with no extra window spawned or lost along the way',
+    (await windowsOfKind(app, 'respawn')) === 1,
+  )
 }
 
 /** Round 4's write, from the floating window's OWN bridge — the path a click there would take. */
 function unwatchFromOverlay(overlay: Page, mob: string): Promise<boolean> {
   return overlay.evaluate(
-    (k) => (window as unknown as { eqOverlay: { unwatchRespawn: (key: string) => Promise<boolean> } }).eqOverlay.unwatchRespawn(k),
-    mob
+    (k) =>
+      (
+        window as unknown as { eqOverlay: { unwatchRespawn: (key: string) => Promise<boolean> } }
+      ).eqOverlay.unwatchRespawn(k),
+    mob,
   )
 }
 
@@ -685,29 +913,60 @@ async function stepZoneScope(page: Page, overlay: Page, log: FixtureLog): Promis
   const before = await clocks(page, 'respawn-row')
   log.append(`You have entered ${OTHER_ZONE}.`)
 
-  const gone = await settle(() => clocks(page, 'respawn-row'), (r) => r.length === 0, { timeoutMs: 30_000 })
-  check('walking into another zone takes the clocks off the tab', gone.length === 0, JSON.stringify(gone))
-  const empty = await settle(
-    () => page.evaluate(() => document.querySelector('[data-testid="respawn-empty"]')?.textContent ?? ''),
-    (t) => t.length > 0,
-    { timeoutMs: 20_000 }
+  const gone = await settle(
+    () => clocks(page, 'respawn-row'),
+    (r) => r.length === 0,
+    { timeoutMs: 30_000 },
   )
-  check('…and says where they went rather than looking broken', empty.includes('running in other zones'), empty)
+  check(
+    'walking into another zone takes the clocks off the tab',
+    gone.length === 0,
+    JSON.stringify(gone),
+  )
+  const empty = await settle(
+    () =>
+      page.evaluate(
+        () => document.querySelector('[data-testid="respawn-empty"]')?.textContent ?? '',
+      ),
+    (t) => t.length > 0,
+    { timeoutMs: 20_000 },
+  )
+  check(
+    '…and says where they went rather than looking broken',
+    empty.includes('running in other zones'),
+    empty,
+  )
 
-  const overlayRows = await settle(() => clocks(overlay, 'respawn-overlay-row'), (r) => r.length === 0, {
-    timeoutMs: 30_000
-  })
-  check('…and the floating window empties with it', overlayRows.length === 0, JSON.stringify(overlayRows))
+  const overlayRows = await settle(
+    () => clocks(overlay, 'respawn-overlay-row'),
+    (r) => r.length === 0,
+    {
+      timeoutMs: 30_000,
+    },
+  )
+  check(
+    '…and the floating window empties with it',
+    overlayRows.length === 0,
+    JSON.stringify(overlayRows),
+  )
   const overlayText = await overlay.evaluate(() => document.body.innerText)
-  check('…saying the clocks are running elsewhere, not that they are gone', overlayText.includes('running elsewhere'), overlayText)
+  check(
+    '…saying the clocks are running elsewhere, not that they are gone',
+    overlayText.includes('running elsewhere'),
+    overlayText,
+  )
 
   // THE DATA IS KEPT. One click, and every clock the fold holds is back — same rows, same numbers.
   await page.click('[data-testid="respawn-scope-all"]', { timeout: 15_000 })
-  const all = await settle(() => clocks(page, 'respawn-row'), (r) => r.length === before.length, { timeoutMs: 20_000 })
+  const all = await settle(
+    () => clocks(page, 'respawn-row'),
+    (r) => r.length === before.length,
+    { timeoutMs: 20_000 },
+  )
   check(
     'the all-zones view still holds every clock the fold learned',
     all.length === before.length && before.every((b) => find(all, b.mob) !== undefined),
-    JSON.stringify({ before, all })
+    JSON.stringify({ before, all }),
   )
 }
 

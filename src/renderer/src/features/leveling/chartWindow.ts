@@ -71,7 +71,7 @@ const BUCKET_LADDER: readonly number[] = [
   2 * HOUR,
   6 * HOUR,
   12 * HOUR,
-  DAY
+  DAY,
 ]
 
 export type TimescaleId = 'full' | 'd7' | 'h24' | 'h6' | 'h1'
@@ -90,7 +90,7 @@ export const TIMESCALES: readonly Timescale[] = [
   { id: 'd7', label: '7d', ms: 7 * DAY },
   { id: 'h24', label: '24h', ms: DAY },
   { id: 'h6', label: '6h', ms: 6 * HOUR },
-  { id: 'h1', label: '1h', ms: HOUR }
+  { id: 'h1', label: '1h', ms: HOUR },
 ]
 
 /**
@@ -169,7 +169,7 @@ export function windowFor(lo: number, hi: number, id: TimescaleId): TimeWindow {
   return {
     t0: Math.floor((hi - scale.ms) / bucketMs) * bucketMs,
     t1: Math.ceil((hi + scale.ms * TRAILING_FRAC) / bucketMs) * bucketMs,
-    bucketMs
+    bucketMs,
   }
 }
 

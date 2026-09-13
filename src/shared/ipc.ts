@@ -1045,5 +1045,5 @@ export const IPC = {
   // ---- error harness (renderer -> main, fire-and-forget) ----
   // window.onerror / onunhandledrejection / React ErrorBoundary report here so
   // renderer crashes land in errors.log + dev stdout and never leave a blank window.
-  reportError: 'error:report'
+  reportError: 'error:report',
 } as const

@@ -22,7 +22,9 @@ import type { FlatSkill, SkillRow } from './dashboardData'
  *  here, so a merged row — usually the biggest one — never leaves the list mis-scaled. */
 export function rankRows(rows: SkillRow[]): SkillRow[] {
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives SkillRow. Becomes a view descriptor when the source lands.
-  const out = [...rows].sort((a, b) => b.total - a.total || b.hits - a.hits || a.name.localeCompare(b.name))
+  const out = [...rows].sort(
+    (a, b) => b.total - a.total || b.hits - a.hits || a.name.localeCompare(b.name),
+  )
   const max = Math.max(1, ...out.map((r) => r.total))
   return out.map((r) => ({ ...r, pct: (r.total / max) * 100 }))
 }
@@ -40,10 +42,12 @@ export function mergeGroup(
   members: SkillRow[],
   name: string,
   category: DamageCategory,
-  childKind: 'skill' | 'component'
+  childKind: 'skill' | 'component',
 ): SkillRow {
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives SkillRow. Becomes a view descriptor when the source lands.
-  const children = [...members].sort((a, b) => b.total - a.total || b.hits - a.hits || a.name.localeCompare(b.name))
+  const children = [...members].sort(
+    (a, b) => b.total - a.total || b.hits - a.hits || a.name.localeCompare(b.name),
+  )
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives SkillRow. Becomes a view descriptor when the source lands.
   const sum = (pick: (s: FlatSkill) => number): number => children.reduce((n, s) => n + pick(s), 0)
   const minima = children.map((s) => s.min ?? 0).filter((m) => m > 0)
@@ -61,7 +65,7 @@ export function mergeGroup(
     resists: sum((s) => s.resists ?? 0),
     lands: sum((s) => s.lands ?? 0),
     childKind,
-    children: children.map((s) => ({ ...s, pct: (s.total / childMax) * 100 }))
+    children: children.map((s) => ({ ...s, pct: (s.total / childMax) * 100 })),
   }
 }
 
@@ -115,7 +119,9 @@ export function groupSpellComponents(rows: SkillRow[]): SkillRow[] {
   const merging = [...byKey.values()].filter((m) => m.length > 1)
   if (merging.length === 0) return rows
   const merged = new Set(merging.flat())
-  const groups = merging.map((m) => mergeGroup(m, groupSpellName(m), biggest(m).category, 'component'))
+  const groups = merging.map((m) =>
+    mergeGroup(m, groupSpellName(m), biggest(m).category, 'component'),
+  )
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives SkillRow. Becomes a view descriptor when the source lands.
   return rankRows([...rows.filter((r) => !merged.has(r)), ...groups])
 }

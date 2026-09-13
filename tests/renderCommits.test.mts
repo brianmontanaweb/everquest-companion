@@ -26,7 +26,7 @@ import {
   createRing,
   recordCommit,
   summarizeCommits,
-  type CommitRing
+  type CommitRing,
 } from '../src/renderer/src/lib/renderCommits'
 
 const ROOT = 'app'
@@ -37,8 +37,11 @@ function burst(ring: CommitRing, id: string, from: number, count: number): void 
   for (let n = 0; n < count; n += 1) recordCommit(ring, id, from + n, 1)
 }
 
-const read = (ring: CommitRing, now: number, windowMs = RENDER_WINDOW_MS): ReturnType<typeof summarizeCommits> =>
-  summarizeCommits(ring, now, { rootId: ROOT, windowMs })
+const read = (
+  ring: CommitRing,
+  now: number,
+  windowMs = RENDER_WINDOW_MS,
+): ReturnType<typeof summarizeCommits> => summarizeCommits(ring, now, { rootId: ROOT, windowMs })
 
 // ---- 1. the zero that is allowed, and the ones that are not -------------------------------------
 
@@ -66,8 +69,16 @@ test('a meter younger than a second reports no rate at all', () => {
   const ring = createRing(1_000)
   burst(ring, ROOT, 1_100, 5)
   const sample = read(ring, 1_500)
-  assert.equal(sample.spanMs, 500, 'the span is the meter’s own age while that is shorter than the window')
-  assert.equal(sample.root.perSecond, null, 'five commits in 500 ms is not "10/s" — it is not yet measured')
+  assert.equal(
+    sample.spanMs,
+    500,
+    'the span is the meter’s own age while that is shorter than the window',
+  )
+  assert.equal(
+    sample.root.perSecond,
+    null,
+    'five commits in 500 ms is not "10/s" — it is not yet measured',
+  )
   assert.equal(sample.root.commits, 5, '…but the COUNT is exact from the first commit')
 })
 
@@ -100,7 +111,11 @@ test('commits older than the window are not counted, and the worst case leaves w
 
   const after = read(ring, 6_000)
   assert.equal(after.root.commits, 2, 'the 500 ms commit has aged out')
-  assert.equal(after.root.worstMs, 3, '…and so has the worst case it carried — this is a WINDOW, not a session')
+  assert.equal(
+    after.root.worstMs,
+    3,
+    '…and so has the worst case it carried — this is a WINDOW, not a session',
+  )
 })
 
 // ---- 4. the per-surface breakdown --------------------------------------------------------------
@@ -114,7 +129,7 @@ test('the root row is the app-wide one and never appears twice', () => {
   assert.deepEqual(
     sample.surfaces.map((s) => s.id),
     ['overview'],
-    'the root id is the app-wide row above, not one of the surfaces below it'
+    'the root id is the app-wide row above, not one of the surfaces below it',
   )
 })
 
@@ -124,7 +139,11 @@ test('surfaces sort busiest first, with a stable tie-break so 1 Hz reads do not 
   burst(ring, 'overview', 1_100, 9)
   burst(ring, 'alerts', 1_200, 2)
   const ids = read(ring, 5_000).surfaces.map((s) => s.id)
-  assert.deepEqual(ids, ['overview', 'alerts', 'combat'], 'busiest first; equal counts fall back to the id')
+  assert.deepEqual(
+    ids,
+    ['overview', 'alerts', 'combat'],
+    'busiest first; equal counts fall back to the id',
+  )
 })
 
 test('each surface carries its own worst commit, not the app’s', () => {
@@ -143,7 +162,11 @@ test('a ring overrun says so, and its counts read as a floor', () => {
   burst(ring, ROOT, 1_000, 6)
   const sample = read(ring, 2_000)
   assert.equal(sample.saturated, true, 'two commits were overwritten while still inside the window')
-  assert.equal(sample.root.commits, 4, 'the count is what survived — the panel prints it as "or more"')
+  assert.equal(
+    sample.root.commits,
+    4,
+    'the count is what survived — the panel prints it as "or more"',
+  )
   assert.equal(ring.offered, 6, '…and the ring still knows how many it was actually offered')
 })
 
@@ -151,7 +174,11 @@ test('a full ring whose records have all aged out is NOT saturated', () => {
   const ring = createRing(0, 4)
   burst(ring, ROOT, 0, 6)
   const sample = read(ring, 60_000)
-  assert.equal(sample.saturated, false, 'nothing in the window was lost, because nothing is in the window')
+  assert.equal(
+    sample.saturated,
+    false,
+    'nothing in the window was lost, because nothing is in the window',
+  )
   assert.equal(sample.root.commits, 0)
 })
 
@@ -159,7 +186,11 @@ test('the shipped capacity absorbs a hundred commits a second without a caveat',
   const ring = createRing(0)
   burst(ring, ROOT, 1_000, 500)
   const sample = read(ring, 6_000)
-  assert.equal(sample.saturated, false, `${String(RENDER_RING_CAPACITY)} slots hold a 5 s window at 100/s`)
+  assert.equal(
+    sample.saturated,
+    false,
+    `${String(RENDER_RING_CAPACITY)} slots hold a 5 s window at 100/s`,
+  )
   assert.equal(sample.root.commits, 500)
 })
 
@@ -192,14 +223,14 @@ test('React’s Profiler is mounted in exactly two places, and both check the de
     ['components/MainColumn.tsx', 'lib/renderMeter.tsx', 'main.tsx'],
     'JOS-513 mounts ONE Profiler at the ViewContent seam and ONE at the app root — "do not wrap ' +
       'every component". A third is a decision somebody should have to make on purpose, which is ' +
-      'what this failure is asking for.'
+      'what this failure is asking for.',
   )
   for (const path of mounts) {
     if (path === 'lib/renderMeter.tsx') continue
     assert.match(
       sources.get(path) ?? '',
       /import\.meta\.env\.DEV \?/,
-      `${path} mounts a Profiler without the dev gate — that is a production cost`
+      `${path} mounts a Profiler without the dev gate — that is a production cost`,
     )
   }
 })
@@ -210,7 +241,7 @@ test('the popover’s section is gated too — that gate is what makes the meter
     chip,
     /import\.meta\.env\.DEV && <PerfRenderSection/,
     'an ungated <PerfRenderSection> keeps the section, the meter and the ring reachable, so rollup ' +
-      'ships all three into every installer — inert, but shipped'
+      'ships all three into every installer — inert, but shipped',
   )
 })
 
@@ -229,7 +260,7 @@ test('the gate is spelled inline everywhere, because a shared constant did NOT s
     meter,
     /export const RENDER_METER/,
     'a shared gate constant is NOT constant-folded across modules — spell import.meta.env.DEV at ' +
-      'each site instead, and see this file’s header for the grep that measured it'
+      'each site instead, and see this file’s header for the grep that measured it',
   )
 })
 

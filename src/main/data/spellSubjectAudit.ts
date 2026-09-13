@@ -162,7 +162,7 @@ export function auditSpellSubjects(spells: readonly SpellEntry[]): SubjectAuditR
       message: s.msgCastOnOther,
       verdict: restored === null ? 'noSubject' : 'wrongSubject',
       restored,
-      spellUnreachable
+      spellUnreachable,
     })
   }
   return {
@@ -170,6 +170,6 @@ export function auditSpellSubjects(spells: readonly SpellEntry[]): SubjectAuditR
     firstPerson,
     wrongSubject: landings.reduce((n, r) => n + (r.verdict === 'wrongSubject' ? 1 : 0), 0),
     noSubject: landings.reduce((n, r) => n + (r.verdict === 'noSubject' ? 1 : 0), 0),
-    unreachable: [...unreachable]
+    unreachable: [...unreachable],
   }
 }

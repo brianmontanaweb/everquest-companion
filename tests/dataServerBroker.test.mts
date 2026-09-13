@@ -67,8 +67,8 @@ function fakeSocket(): FakeSocket {
       onClose: (handler) => {
         onClose = handler
       },
-      close: end
-    }
+      close: end,
+    },
   }
 }
 
@@ -140,14 +140,14 @@ function fakePair(): FakePair {
         return this as unknown as RelayPort
       },
       start: () => start(a),
-      close: () => shut(a, b)
+      close: () => shut(a, b),
     } as RelayPort,
     renderer: {
       postMessage: (message) => deliver(a, message),
       addEventListener: (_type, handler) => b.handlers.push(handler),
       start: () => start(b),
-      close: () => shut(b, a)
-    }
+      close: () => shut(b, a),
+    },
   }
 }
 
@@ -182,7 +182,11 @@ test('messages that arrived before a reader existed are still delivered', () => 
   pair.main.postMessage('early')
   const channel = messagePortChannel(pair.renderer)
   const got = reader(channel)
-  assert.deepEqual(got.chunks, ['early'], 'the buffered message was dropped — start() ran too early')
+  assert.deepEqual(
+    got.chunks,
+    ['early'],
+    'the buffered message was dropped — start() ran too early',
+  )
 })
 
 test('a payload that is not bytes is not turned into bytes', () => {
@@ -325,10 +329,16 @@ test('A REAL CONVERSATION CROSSES THE BROKER ONE CHARACTER AT A TIME', () => {
   relayBytes(socket.channel, pair.main)
 
   const wire =
-    '{"kind":"hello","ok":true}' + String.fromCharCode(10) + '{"kind":"reset","id":7}' + String.fromCharCode(10)
+    '{"kind":"hello","ok":true}' +
+    String.fromCharCode(10) +
+    '{"kind":"reset","id":7}' +
+    String.fromCharCode(10)
   for (const character of wire) socket.deliver(character)
 
-  assert.deepEqual(received, [{ kind: 'hello', ok: true }, { kind: 'reset', id: 7 }])
+  assert.deepEqual(received, [
+    { kind: 'hello', ok: true },
+    { kind: 'reset', id: 7 },
+  ])
   assert.equal(socket.written.length, 0, 'nothing has been sent back yet')
 
   // …and the client's own send goes out as one frame, terminated, with nobody above the codec

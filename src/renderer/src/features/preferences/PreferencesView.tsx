@@ -135,7 +135,13 @@ import { whatsNewSection } from '../whatsnew/WhatsNewPanel'
 import { thanksSection } from './ThanksSetting'
 // The section CARD and the arrival pulse live together in their own file — same ceiling, same
 // answer as PerfSetting's descriptor: split, don't widen the threshold.
-import PrefSectionBlock, { FILL_COLUMN_SX, FILL_ROOT_SX, FILL_ROW_SX, paneFills, useLandedSection } from './PrefSectionBlock'
+import PrefSectionBlock, {
+  FILL_COLUMN_SX,
+  FILL_ROOT_SX,
+  FILL_ROW_SX,
+  paneFills,
+  useLandedSection,
+} from './PrefSectionBlock'
 // THE HYDRATION GATE (JOS-340) — one batched read of everything this pane paints from main, and
 // nothing renders until it lands. Read that file's header before touching any card's state.
 import { PrefsGate, usePrefsSeed } from './prefsHydration'
@@ -189,9 +195,9 @@ function voiceSection(): PrefSection {
         label: 'Spoken alerts',
         keywords:
           'voice speech speak tts talk say spoken narrate announce engine kokoro sapi rate speed volume alert sound',
-        content: <VoiceSetting />
-      }
-    ]
+        content: <VoiceSetting />,
+      },
+    ],
   }
 }
 
@@ -211,8 +217,8 @@ function snapItems(): PrefItem[] {
       label: 'Snap overlays while dragging',
       keywords:
         'snap snapping magnet align alignment grid edge edges side abut stack line up lined tidy position drag move overlay overlays meter meters screen monitor match matching sizes equal',
-      content: <OverlaySnapSetting />
-    }
+      content: <OverlaySnapSetting />,
+    },
   ]
 }
 
@@ -233,7 +239,7 @@ function overlaysSection(): PrefSection {
         label: 'Hide overlays automatically',
         keywords:
           'overlay overlays meter meters hide auto autohide show running focus focused unfocused alt tab background desktop game closed floating',
-        content: <OverlayAutoHideSetting />
+        content: <OverlayAutoHideSetting />,
       },
       ...snapItems(),
       {
@@ -241,14 +247,14 @@ function overlaysSection(): PrefSection {
         label: 'Celebration toasts',
         keywords:
           'toast toasts celebrate celebration boss kill raid target defeated quest complete sky plane of sky notification popup card sound silent position move top',
-        content: <ToastSetting />
+        content: <ToastSetting />,
       },
       {
         id: 'alert-banner',
         label: 'Alert banner',
         keywords:
           'alert alerts banner on screen onscreen text overlay big large popup message discord hear miss show display warning countdown colour color position move lines hold seconds',
-        content: <AlertBannerSetting />
+        content: <AlertBannerSetting />,
       },
       {
         id: 'con-card',
@@ -258,9 +264,9 @@ function overlaysSection(): PrefSection {
         // card, a popup, resists, drops) as well as what it is called.
         keywords:
           'con consider mob card popup tooltip creature resists resist chips drops loot level zone respawn faction overlay top centre center hide auto hide seconds close',
-        content: <ConCardSetting />
-      }
-    ]
+        content: <ConCardSetting />,
+      },
+    ],
   }
 }
 
@@ -283,9 +289,9 @@ function analyticsSection(): PrefSection {
         label: 'Anonymous usage counts',
         keywords:
           'telemetry analytics usage privacy tracking opt out optout data collect anonymous id rotate payload send stats metrics',
-        content: <TelemetrySetting />
-      }
-    ]
+        content: <TelemetrySetting />,
+      },
+    ],
   }
 }
 
@@ -302,7 +308,12 @@ interface SectionInputs {
 }
 
 /** The whole settings table, in render order. Rebuilt only when its inputs change. */
-function buildSections({ version, status, onSendFeedback, onWhatsNew }: SectionInputs): PrefSection[] {
+function buildSections({
+  version,
+  status,
+  onSendFeedback,
+  onWhatsNew,
+}: SectionInputs): PrefSection[] {
   return [
     {
       id: 'game',
@@ -313,9 +324,9 @@ function buildSections({ version, status, onSendFeedback, onWhatsNew }: SectionI
           id: 'eq-folder',
           label: 'EverQuest install folder',
           keywords: 'path directory logs eqlog character detect override install location',
-          content: <EqFolderSetting />
-        }
-      ]
+          content: <EqFolderSetting />,
+        },
+      ],
     },
     // SECOND IN THE RAIL, ahead of everything about the game (JOS-123). A person who opens
     // Preferences because they can barely read the app has to find this one, and the rail is
@@ -346,13 +357,13 @@ function buildSections({ version, status, onSendFeedback, onWhatsNew }: SectionI
           id: 'export-settings',
           label: 'Export your settings',
           keywords: 'share export copy backup string bundle profile send give clipboard file',
-          content: <ExportSettingsSetting />
+          content: <ExportSettingsSetting />,
         },
         {
           id: 'import-settings',
           label: 'Import settings',
           keywords: 'share import paste restore string bundle profile receive add merge file',
-          content: <ImportSettingsSetting />
+          content: <ImportSettingsSetting />,
         },
         {
           id: 'class-combo',
@@ -364,9 +375,9 @@ function buildSections({ version, status, onSendFeedback, onWhatsNew }: SectionI
           keywords:
             'class combo loadout classes swap paladin rogue berserker who correction slot ' +
             'override manual set fix wrong incorrect change detect autodetect history',
-          content: <ClassComboSetting />
-        }
-      ]
+          content: <ClassComboSetting />,
+        },
+      ],
     },
     {
       id: 'updates',
@@ -377,15 +388,15 @@ function buildSections({ version, status, onSendFeedback, onWhatsNew }: SectionI
           id: 'version',
           label: 'Version',
           keywords: 'about build release app version',
-          content: <VersionSetting version={version} onWhatsNew={onWhatsNew} />
+          content: <VersionSetting version={version} onWhatsNew={onWhatsNew} />,
         },
         {
           id: 'app-updates',
           label: 'App updates',
           keywords: 'update upgrade check relaunch restart install download automatic release',
-          content: <UpdateSetting status={status} version={version} />
-        }
-      ]
+          content: <UpdateSetting status={status} version={version} />,
+        },
+      ],
     },
     // Directly under Updates, which is where a person who just read the version number is
     // standing when they wonder what it changed (JOS-73).
@@ -400,15 +411,16 @@ function buildSections({ version, status, onSendFeedback, onWhatsNew }: SectionI
         {
           id: 'send-feedback',
           label: 'Send feedback',
-          keywords: 'feedback bug report problem crash issue feature request idea suggest contact support log',
-          content: <FeedbackSetting onSend={onSendFeedback} />
-        }
-      ]
+          keywords:
+            'feedback bug report problem crash issue feature request idea suggest contact support log',
+          content: <FeedbackSetting onSend={onSendFeedback} />,
+        },
+      ],
     },
     // LAST in the rail, and that is where a credit belongs: it is the thing you go looking for
     // rather than the thing you land on. Never above the controls a user opened Preferences to
     // change (JOS-198).
-    thanksSection()
+    thanksSection(),
   ]
 }
 
@@ -425,7 +437,7 @@ function sectionKeys(sections: PrefSection[]): Record<string, string> {
 function filterSections(
   sections: PrefSection[],
   keys: Record<string, string>,
-  q: string
+  q: string,
 ): PrefSection[] {
   if (!q) return sections
   return sections
@@ -449,7 +461,7 @@ function SectionRail({
   sections,
   active,
   unmatched,
-  onPick
+  onPick,
 }: {
   sections: PrefSection[]
   active: string | null
@@ -461,7 +473,11 @@ function SectionRail({
     // added Thanks) outgrow a short window, and a rail that stretches the document makes the
     // whole page scroll — the exact thing the whats-new pane's "the LIST scrolls, never the
     // page" contract forbids. minHeight: 0 is what lets a flex child shrink below its content.
-    <List dense disablePadding sx={{ width: RAIL_WIDTH, flexShrink: 0, minHeight: 0, overflowY: 'auto' }}>
+    <List
+      dense
+      disablePadding
+      sx={{ width: RAIL_WIDTH, flexShrink: 0, minHeight: 0, overflowY: 'auto' }}
+    >
       {sections.map((s) => {
         const dim = unmatched.has(s.id)
         return (
@@ -486,7 +502,7 @@ function SectionRail({
 /** The search field, sized to the content column so it aligns with the cards it filters. */
 function PrefSearch({
   query,
-  onQuery
+  onQuery,
 }: {
   query: string
   onQuery: (q: string) => void
@@ -501,8 +517,10 @@ function PrefSearch({
       onChange={(e) => onQuery(e.target.value)}
       slotProps={{
         input: {
-          startAdornment: <SearchIcon fontSize="small" sx={{ mr: 0.75, color: 'text.secondary' }} />
-        }
+          startAdornment: (
+            <SearchIcon fontSize="small" sx={{ mr: 0.75, color: 'text.secondary' }} />
+          ),
+        },
       }}
     />
   )
@@ -516,7 +534,7 @@ function PrefSearch({
  */
 function PreferencesPane({
   onSendFeedback,
-  section
+  section,
 }: {
   onSendFeedback: OpenFeedback
   section: string | null
@@ -545,7 +563,7 @@ function PreferencesPane({
 
   const sections = useMemo(
     () => buildSections({ version, status, onSendFeedback, onWhatsNew: openWhatsNew }),
-    [version, status, onSendFeedback, openWhatsNew]
+    [version, status, onSendFeedback, openWhatsNew],
   )
   const keys = useMemo(() => sectionKeys(sections), [sections])
   const q = normalizeQuery(deferred)
@@ -568,7 +586,9 @@ function PreferencesPane({
         Preferences
       </Typography>
 
-      <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', ...(fills ? FILL_ROW_SX : {}) }}>
+      <Box
+        sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', ...(fills ? FILL_ROW_SX : {}) }}
+      >
         <SectionRail
           sections={sections}
           active={searching ? null : active}
@@ -583,7 +603,7 @@ function PreferencesPane({
             display: 'flex',
             flexDirection: 'column',
             gap: 2.5,
-            ...(fills ? FILL_COLUMN_SX : {})
+            ...(fills ? FILL_COLUMN_SX : {}),
           }}
         >
           <PrefSearch query={query} onQuery={setQuery} />
@@ -618,7 +638,7 @@ function PreferencesPane({
  */
 export default function PreferencesView({
   onSendFeedback,
-  section = null
+  section = null,
 }: {
   onSendFeedback: OpenFeedback
   /** A deep link's landing section, or null for the usual one. App KEYS this component on it,

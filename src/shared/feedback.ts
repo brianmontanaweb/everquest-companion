@@ -96,13 +96,7 @@ export type FeedbackType = 'feature' | 'bug'
 /** `'e2e'` is deliberately absent: the headless harness never submits (§6.6). */
 export type AppChannelTag = 'prod' | 'dev'
 export type ReportStatus =
-  | 'new'
-  | 'triaged'
-  | 'accepted'
-  | 'shipped'
-  | 'wontfix'
-  | 'duplicate'
-  | 'spam'
+  'new' | 'triaged' | 'accepted' | 'shipped' | 'wontfix' | 'duplicate' | 'spam'
 export type Severity = 'p0' | 'p1' | 'p2' | 'p3'
 
 /** Runtime-checkable spellings of the unions above (validators + the triage CLI's `set`). */
@@ -208,12 +202,7 @@ export type SubmitResponse =
     }
 
 export type SubmitErrorCode =
-  | 'invalid_payload'
-  | 'blocked'
-  | 'quota_exceeded'
-  | 'closed'
-  | 'too_large'
-  | 'internal'
+  'invalid_payload' | 'blocked' | 'quota_exceeded' | 'closed' | 'too_large' | 'internal'
 
 export interface PresignedUpload {
   url: string // S3 endpoint — VALIDATED before main POSTs to it (§6.5)
@@ -314,8 +303,7 @@ export const DEFAULT_LOG_WINDOW = 30
 export const MAX_ENV_FIELD = 120
 
 /** `crypto.randomUUID()` shape. Case-insensitive to read; clients emit lowercase. */
-export const UUID_V4_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+export const UUID_V4_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 /** `app.getVersion()` — semver, optionally with the CI channel prerelease tag. */
 export const APP_VERSION_RE = /^\d+\.\d+\.\d+(?:-[\w.]+)?$/
 /** A sha-256 digest as hex. `createHash('sha256').digest('hex')` is lowercase; both read. */
@@ -357,10 +345,7 @@ function bounded(t: string, field: string, max: number, min: number): Validated<
       ? fail(field, `${field} is required.`)
       : fail(field, `${field} must be at least ${min} characters.`)
   if (t.length > max)
-    return fail(
-      field,
-      `${field} must be ${max} characters or fewer (it is ${t.length}).`,
-    )
+    return fail(field, `${field} must be ${max} characters or fewer (it is ${t.length}).`)
   return { ok: true, value: t }
 }
 
@@ -376,8 +361,7 @@ function bounded(t: string, field: string, max: number, min: number): Validated<
 function lineText(raw: unknown, field: string, max: number): Validated<string> {
   if (typeof raw !== 'string') return fail(field, `${field} must be text.`)
   const t = raw.trim()
-  if (hasWireControls(t))
-    return fail(field, `${field} must not contain control characters.`)
+  if (hasWireControls(t)) return fail(field, `${field} must not contain control characters.`)
   return bounded(t, field, max, 1)
 }
 
@@ -396,12 +380,7 @@ function blockText(raw: unknown, field: string, max: number, min: number): Valid
   return bounded(sanitizeMultiline(raw).trim(), field, max, min)
 }
 
-function integerInRange(
-  raw: unknown,
-  field: string,
-  min: number,
-  max: number,
-): Validated<number> {
+function integerInRange(raw: unknown, field: string, min: number, max: number): Validated<number> {
   if (typeof raw !== 'number' || !Number.isSafeInteger(raw))
     return fail(field, `${field} must be a whole number.`)
   if (raw < min || raw > max)
@@ -409,11 +388,7 @@ function integerInRange(
   return { ok: true, value: raw }
 }
 
-function oneOf<T extends string>(
-  raw: unknown,
-  field: string,
-  allowed: readonly T[],
-): Validated<T> {
+function oneOf<T extends string>(raw: unknown, field: string, allowed: readonly T[]): Validated<T> {
   if (typeof raw === 'string' && (allowed as readonly string[]).includes(raw))
     return { ok: true, value: raw as T }
   return fail(field, `${field} must be one of: ${allowed.join(', ')}.`)
@@ -426,12 +401,7 @@ function oneOf<T extends string>(
  * input, never before a trailing newline. `\d`, `\w` and `[0-9a-f]` admit no control character,
  * so a forged `appVersion` with an ESC in it already fails on the shape.
  */
-function matching(
-  raw: unknown,
-  field: string,
-  re: RegExp,
-  what: string,
-): Validated<string> {
+function matching(raw: unknown, field: string, re: RegExp, what: string): Validated<string> {
   if (typeof raw === 'string' && re.test(raw)) return { ok: true, value: raw }
   return fail(field, `${field} must be ${what}.`)
 }
@@ -450,12 +420,7 @@ export function validateDraft(input: unknown): Validated<FeedbackDraft> {
   const type = oneOf(input.type, 'type', FEEDBACK_TYPES)
   if (!type.ok) return type
 
-  const description = blockText(
-    input.description,
-    'description',
-    MAX_DESCRIPTION,
-    MIN_DESCRIPTION,
-  )
+  const description = blockText(input.description, 'description', MAX_DESCRIPTION, MIN_DESCRIPTION)
   if (!description.ok) return description
 
   // A retired-field `title`/`contact` from an older client is dropped, never rejected: the
@@ -490,11 +455,7 @@ export function validateEnv(input: unknown): Validated<FeedbackEnv> {
   if (!appVersion.ok) return appVersion
   const channel = oneOf(input.channel, 'env.channel', APP_CHANNEL_TAGS)
   if (!channel.ok) return channel
-  const updateChannel = oneOf(
-    input.updateChannel,
-    'env.updateChannel',
-    UPDATE_CHANNELS,
-  )
+  const updateChannel = oneOf(input.updateChannel, 'env.updateChannel', UPDATE_CHANNELS)
   if (!updateChannel.ok) return updateChannel
 
   // The six free-form runtime strings, read in ONE loop rather than six copies of the same three
@@ -546,8 +507,7 @@ export function validateLogMeta(input: unknown): Validated<LogSliceMeta> {
   const toMs = integerInRange(input.toMs, 'log.toMs', 0, Number.MAX_SAFE_INTEGER)
   if (!toMs.ok) return toMs
   // The span is a span: a slice cannot end before it starts.
-  if (toMs.value < fromMs.value)
-    return fail('log.toMs', 'log.toMs must be at or after log.fromMs.')
+  if (toMs.value < fromMs.value) return fail('log.toMs', 'log.toMs must be at or after log.fromMs.')
   const sha256 = matching(input.sha256, 'log.sha256', SHA256_HEX_RE, '64 hex characters')
   if (!sha256.ok) return sha256
 
@@ -665,8 +625,7 @@ function optionalMeta<T>(
  */
 export function validateSubmit(input: unknown): Validated<SubmitRequest> {
   if (!isRecord(input)) return fail('body', 'A JSON object body is required.')
-  if (input.v !== FEEDBACK_API_VERSION)
-    return fail('v', `v must be ${FEEDBACK_API_VERSION}.`)
+  if (input.v !== FEEDBACK_API_VERSION) return fail('v', `v must be ${FEEDBACK_API_VERSION}.`)
 
   const draft = validateDraft(input.draft)
   if (!draft.ok) return draft
@@ -675,12 +634,7 @@ export function validateSubmit(input: unknown): Validated<SubmitRequest> {
 
   const installId = matching(input.installId, 'installId', UUID_V4_RE, 'a v4 UUID')
   if (!installId.ok) return installId
-  const clientReportId = matching(
-    input.clientReportId,
-    'clientReportId',
-    UUID_V4_RE,
-    'a v4 UUID',
-  )
+  const clientReportId = matching(input.clientReportId, 'clientReportId', UUID_V4_RE, 'a v4 UUID')
   if (!clientReportId.ok) return clientReportId
 
   if (typeof input.clientTs !== 'number' || !Number.isFinite(input.clientTs))

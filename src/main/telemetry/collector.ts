@@ -24,7 +24,7 @@ import {
   type TelemetryEvent,
   type TelemetryPayloadView,
   type TelemetryPlatform,
-  type TelemetryPrefs
+  type TelemetryPrefs,
 } from '../../shared/telemetry'
 import { CHANNEL } from '../channel'
 import { logInfo } from '../errorLog'
@@ -239,7 +239,7 @@ export function envelope(prefs: TelemetryPrefs = getTelemetryPrefs()): Telemetry
     // while the flush gate excludes e2e, and if it ever did it would read as a dev run.
     channel: CHANNEL === 'prod' ? 'prod' : 'dev',
     platform: platformOf(process.platform),
-    tzOffsetBucket: tzOffsetBucket(-new Date().getTimezoneOffset())
+    tzOffsetBucket: tzOffsetBucket(-new Date().getTimezoneOffset()),
   }
 }
 
@@ -306,6 +306,6 @@ export function telemetryPayload(): TelemetryPayloadView {
     prefs: getTelemetryPrefs(),
     endpointConfigured: telemetryEndpointConfigured(),
     buffered: ring.events,
-    lastBatch: ring.lastBatch
+    lastBatch: ring.lastBatch,
   }
 }

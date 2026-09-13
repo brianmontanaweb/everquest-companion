@@ -33,7 +33,13 @@ import { takeLiveProbeReading } from '../livePerfProbe'
 import { takeGcTally, takeSeamTally } from '../perfAttribution'
 import { getCursorRing, getOverlayAutoHide, getOverlayConfig } from '../store'
 import { overlayStateMap } from '../windows'
-import { gcStallStats, liveStallStats, seamStallStats, sessionStateStats, tailReadStats } from './liveFacts'
+import {
+  gcStallStats,
+  liveStallStats,
+  seamStallStats,
+  sessionStateStats,
+  tailReadStats,
+} from './liveFacts'
 
 /** The five optional groups, in the shape both session reports spread. */
 type LiveRiders = Pick<EvSessionHeartbeat, 'live' | 'tail' | 'state' | 'gc' | 'seams'>
@@ -121,7 +127,7 @@ function stateGroup(): LiveRiders['state'] {
     presenceOn: safely(() => presenceNeeded(getCursorRing(), getOverlayAutoHide()), false),
     ringOn: safely(() => getCursorRing().enabled, false),
     freeMemKb: safely(() => process.getSystemMemoryInfo().free, 0),
-    workingSetKb: safely(workingSetKb, 0)
+    workingSetKb: safely(workingSetKb, 0),
   })
 }
 
@@ -155,6 +161,6 @@ export function liveRiderFields(now = Date.now()): LiveRiders {
     ...(tail === undefined ? {} : { tail }),
     ...(state === undefined ? {} : { state }),
     ...(gc === undefined ? {} : { gc }),
-    ...(seams === undefined ? {} : { seams })
+    ...(seams === undefined ? {} : { seams }),
   }
 }

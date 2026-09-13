@@ -39,10 +39,8 @@ export function useAlertFilter(alerts: AlertDef[], packs: SoundPack[]): AlertFil
 
   const visible = useMemo(
     () =>
-      tokens.length === 0
-        ? alerts
-        : alerts.filter((_def, i) => matchesAlert(tokens, haystacks[i])),
-    [alerts, haystacks, tokens]
+      tokens.length === 0 ? alerts : alerts.filter((_def, i) => matchesAlert(tokens, haystacks[i])),
+    [alerts, haystacks, tokens],
   )
 
   return { query, setQuery, filtering: tokens.length > 0, visible }

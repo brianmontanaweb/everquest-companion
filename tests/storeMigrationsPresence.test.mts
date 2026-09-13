@@ -23,7 +23,7 @@ import {
   CURRENT_SCHEMA_VERSION,
   SCHEMA_VERSION_KEY,
   migrateStoreData,
-  type StoreData
+  type StoreData,
 } from '../src/main/storeMigrations'
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), 'fixtures')
@@ -53,14 +53,27 @@ test('a v4 store gains both presence blobs at their defaults, and nothing else m
   // Append-proof: step 5 is this file's, and the chain continues contiguously from there.
   // Pinning the whole list would make every future migration edit a test about another feature.
   assert.equal(applied[0], 5, 'a v4 store enters the chain at the presence step')
-  assert.deepEqual(applied, Array.from({ length: applied.length }, (_, i) => i + 5))
+  assert.deepEqual(
+    applied,
+    Array.from({ length: applied.length }, (_, i) => i + 5),
+  )
 
   assert.deepEqual(data['cursorRing'], RING_DEFAULT, 'the ring is OFF for an upgrading user')
   assert.deepEqual(data['overlayAutoHide'], AUTOHIDE_DEFAULT)
 
   // Everything the user already had is byte-identical: this step ADDS, it never edits.
-  const untouched = ['byCharacter', 'activeLogPath', 'eqInstallDir', 'windowBounds', 'alerts',
-    'alertPrefs', 'alertSoundMigration', 'overlays', 'updateChannel', 'updateLastCheckedAt']
+  const untouched = [
+    'byCharacter',
+    'activeLogPath',
+    'eqInstallDir',
+    'windowBounds',
+    'alerts',
+    'alertPrefs',
+    'alertSoundMigration',
+    'overlays',
+    'updateChannel',
+    'updateLastCheckedAt',
+  ]
   for (const key of untouched) {
     assert.deepEqual(data[key], before[key], `${key} must come through untouched`)
   }
@@ -79,7 +92,7 @@ function assertVoiceConfigSurvives(before: StoreData, data: StoreData): void {
     engine: was['engine'],
     voiceId: was['voiceId'],
     rate: was['rate'],
-    volume: was['volume']
+    volume: was['volume'],
   })
   assert.equal('enabled' in (data['voice'] as StoreData), false)
 }
@@ -96,20 +109,20 @@ test('an EXISTING cursor-ring blob is repaired field by field, never replaced wh
     sizePx: 200,
     thicknessPx: 4,
     // A CSS colour name is not a hex colour, and the store never learns to speak CSS.
-    colorHex: '#ffffff'
+    colorHex: '#ffffff',
   })
 
   // A stroke wider than the radius is a filled dot, not a ring. A colour the user DID choose
   // comes through untouched beside it.
   const fat = migrateStoreData({
     [SCHEMA_VERSION_KEY]: 4,
-    cursorRing: { sizePx: 20, thicknessPx: 12, colorHex: '#FF8800' }
+    cursorRing: { sizePx: 20, thicknessPx: 12, colorHex: '#FF8800' },
   })
   assert.deepEqual(fat.data['cursorRing'], {
     enabled: false,
     sizePx: 20,
     thicknessPx: 10,
-    colorHex: '#ff8800'
+    colorHex: '#ff8800',
   })
 
   for (const junk of [null, 42, 'nonsense', [], { nested: true }]) {
@@ -121,7 +134,7 @@ test('an EXISTING cursor-ring blob is repaired field by field, never replaced wh
 test('an EXISTING auto-hide blob keeps each switch the user set, and defaults the rest', () => {
   const { data } = migrateStoreData({
     [SCHEMA_VERSION_KEY]: 4,
-    overlayAutoHide: { hideWhenNotRunning: false, hideWhenUnfocused: 'yes' }
+    overlayAutoHide: { hideWhenNotRunning: false, hideWhenUnfocused: 'yes' },
   })
   assert.deepEqual(data['overlayAutoHide'], { hideWhenNotRunning: false, hideWhenUnfocused: false })
 

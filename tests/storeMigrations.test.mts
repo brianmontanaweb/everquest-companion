@@ -40,7 +40,7 @@ import {
   migrateStoreData,
   readSchemaVersion,
   type Migration,
-  type StoreData
+  type StoreData,
 } from '../src/main/storeMigrations'
 // The FILE half is its own module since JOS-272 (storeMigrations.ts was at the 400-code-line
 // ceiling and the salvage path had to go somewhere). Same functions, same behaviour, one import
@@ -70,12 +70,16 @@ test('the chain is contiguous, ascending, and lands exactly on CURRENT_SCHEMA_VE
   // The invariant that makes "from any version" mean anything: no gaps (a file at vN must
   // find a step to N+1), no duplicates, and nothing beyond what the code claims to be.
   const tos = MIGRATIONS.map((m) => m.to)
-  assert.deepEqual(tos, [...tos].sort((a, b) => a - b), 'steps must be declared in ascending order')
+  assert.deepEqual(
+    tos,
+    [...tos].sort((a, b) => a - b),
+    'steps must be declared in ascending order',
+  )
   assert.equal(new Set(tos).size, tos.length, 'two steps may never produce the same version')
   assert.deepEqual(
     tos,
     Array.from({ length: CURRENT_SCHEMA_VERSION - 1 }, (_, i) => i + 2),
-    `the chain must cover every version from 2 to ${CURRENT_SCHEMA_VERSION} with no gaps`
+    `the chain must cover every version from 2 to ${CURRENT_SCHEMA_VERSION} with no gaps`,
   )
   for (const m of MIGRATIONS) assert.ok(m.describe.length > 0, `step ${m.to} must describe itself`)
 })
@@ -94,7 +98,11 @@ test('a store with no version is v1 — that is what every pre-framework build w
   // Garbage in the slot is not a version; falling back to 1 re-runs idempotent steps, which
   // is always safer than skipping steps we cannot prove ran.
   for (const junk of [null, undefined, '2', 2.5, 0, -3, {}, []]) {
-    assert.equal(readSchemaVersion({ [SCHEMA_VERSION_KEY]: junk }), 1, `${JSON.stringify(junk)} is not a version`)
+    assert.equal(
+      readSchemaVersion({ [SCHEMA_VERSION_KEY]: junk }),
+      1,
+      `${JSON.stringify(junk)} is not a version`,
+    )
   }
   assert.equal(readSchemaVersion(fixture('store-v99-future.json')), 99)
 })
@@ -110,7 +118,10 @@ test('the FIRST BUILD store (top-level progress, liveLoot) migrates to the curre
   assert.equal(to, CURRENT_SCHEMA_VERSION)
   // Every step from 2 up — written generically so appending a migration does not churn a test
   // that is about the FIRST-BUILD SHAPE, not about how long the chain happens to be today.
-  assert.deepEqual(applied, Array.from({ length: CURRENT_SCHEMA_VERSION - 1 }, (_, i) => i + 2))
+  assert.deepEqual(
+    applied,
+    Array.from({ length: CURRENT_SCHEMA_VERSION - 1 }, (_, i) => i + 2),
+  )
   assert.equal(data[SCHEMA_VERSION_KEY], CURRENT_SCHEMA_VERSION)
 
   // `progress` → `byCharacter`: commit 41831cc re-keyed progress by character and never
@@ -120,9 +131,18 @@ test('the FIRST BUILD store (top-level progress, liveLoot) migrates to the curre
   const byCharacter = data['byCharacter'] as Record<string, StoreData>
   assert.deepEqual(Object.keys(byCharacter), [PRE_CHARACTER_PROGRESS_KEY])
   const recovered = byCharacter[PRE_CHARACTER_PROGRESS_KEY]
-  assert.deepEqual(recovered['completedQuests'], ['Enchanter::Sky Ring of Fire', 'Enchanter::Sky Bracer'])
-  assert.deepEqual(recovered['inventory'], { 'sky quest turn-in token': 3, 'ancient stone talisman': 1 })
-  assert.deepEqual(recovered['inventorySource'], (before['progress'] as StoreData)['inventorySource'])
+  assert.deepEqual(recovered['completedQuests'], [
+    'Enchanter::Sky Ring of Fire',
+    'Enchanter::Sky Bracer',
+  ])
+  assert.deepEqual(recovered['inventory'], {
+    'sky quest turn-in token': 3,
+    'ancient stone talisman': 1,
+  })
+  assert.deepEqual(
+    recovered['inventorySource'],
+    (before['progress'] as StoreData)['inventorySource'],
+  )
   // `liveLoot` became a replayed module in 40b274b — dead weight in the file ever since.
   assert.equal('liveLoot' in recovered, false)
 
@@ -151,7 +171,7 @@ test('the PRE-FRAMEWORK store keeps every setting and folds the flat overlay int
     'alertPrefs',
     'alertSoundMigration',
     'updateChannel',
-    'updateLastCheckedAt'
+    'updateLastCheckedAt',
   ]) {
     assert.deepEqual(data[key], before[key], `${key} must survive the migration untouched`)
   }
@@ -174,7 +194,7 @@ test('a per-kind overlay written by a newer build is never clobbered by the lega
   const fightFromV54 = { open: false, locked: false, bgAlpha: 0.72, topN: 5, drill: null }
   const { data } = migrateStoreData({
     overlay: { open: true, locked: true, bgAlpha: 0.1, topN: 10, drill: null },
-    overlays: { fight: fightFromV54 }
+    overlays: { fight: fightFromV54 },
   })
   assert.deepEqual((data['overlays'] as StoreData)['fight'], fightFromV54)
   assert.equal('overlay' in data, false)
@@ -216,7 +236,7 @@ test('an EMPTY pre-framework store migrates to a valid current store, not to jun
     // comparison on a real log said, and it said NPC casters are not systematically easier to
     // resist than players. The switch stays because that is a fact a patch could move.
     resists: { includeNpcCasters: true },
-    [SCHEMA_VERSION_KEY]: CURRENT_SCHEMA_VERSION
+    [SCHEMA_VERSION_KEY]: CURRENT_SCHEMA_VERSION,
   })
 })
 
@@ -225,7 +245,7 @@ test('a legacy progress blob is not salvaged over real characters, and empty blo
   // as a second, un-selectable bucket of stale quest state.
   const withChars = migrateStoreData({
     progress: { inventory: { x: 1 }, completedQuests: ['a'] },
-    byCharacter: { primitive_freeport: { inventory: {}, completedQuests: [] } }
+    byCharacter: { primitive_freeport: { inventory: {}, completedQuests: [] } },
   })
   assert.deepEqual(Object.keys(withChars.data['byCharacter'] as StoreData), ['primitive_freeport'])
   // An untouched default blob carries nothing worth reserving an id for.
@@ -238,7 +258,12 @@ test('malformed values never throw the chain — a hand-edited store still boots
   // Anything can be in this file: a user edits it, a disk lies, an old build wrote a
   // different type. The chain must degrade, never explode.
   for (const junk of [null, 42, 'nonsense', [], { nested: true }]) {
-    const out = migrateStoreData({ progress: junk, byCharacter: junk, overlay: junk, overlays: junk })
+    const out = migrateStoreData({
+      progress: junk,
+      byCharacter: junk,
+      overlay: junk,
+      overlays: junk,
+    })
     assert.equal(out.status, 'migrated', `${JSON.stringify(junk)} must not break the chain`)
     assert.equal(out.data[SCHEMA_VERSION_KEY], CURRENT_SCHEMA_VERSION)
   }
@@ -265,7 +290,10 @@ test('a v2 store gains combo.corrections on every character, and nothing else mo
   }
   // Nothing a v2 store already held may be disturbed by adding a key.
   const beforeChars = before['byCharacter'] as Record<string, StoreData>
-  assert.deepEqual(chars['fixture_freeport']['inventory'], beforeChars['fixture_freeport']['inventory'])
+  assert.deepEqual(
+    chars['fixture_freeport']['inventory'],
+    beforeChars['fixture_freeport']['inventory'],
+  )
   assert.deepEqual(chars['fixture_freeport']['completedQuests'], ['Enchanter::Sky Bracer'])
   for (const key of ['activeLogPath', 'alertPrefs', 'overlays']) {
     assert.deepEqual(data[key], before[key], `${key} must survive untouched`)
@@ -279,7 +307,10 @@ test('a v2 store with NO characters is still stamped to v3', () => {
   assert.deepEqual(data['byCharacter'], {})
   // A store whose byCharacter key is missing or malformed still lands on a valid shape.
   assert.deepEqual(migrateStoreData({ [SCHEMA_VERSION_KEY]: 2 }).data['byCharacter'], {})
-  assert.deepEqual(migrateStoreData({ [SCHEMA_VERSION_KEY]: 2, byCharacter: 7 }).data['byCharacter'], {})
+  assert.deepEqual(
+    migrateStoreData({ [SCHEMA_VERSION_KEY]: 2, byCharacter: 7 }).data['byCharacter'],
+    {},
+  )
 })
 
 test('PRE-LAUNCH combo corrections are dropped: they belong to the wiped beta character', () => {
@@ -288,7 +319,12 @@ test('PRE-LAUNCH combo corrections are dropped: they belong to the wiped beta ch
   // in memory too; doing it here means an upgrading user's file stops carrying them at all.
   const LAUNCH_MS = new Date(2026, 6, 28, 0, 0, 0, 0).getTime()
   const beta = { startTs: LAUNCH_MS - 86_400_000, endTs: null, classes: ['WIZ'], setAt: 1 }
-  const live = { startTs: LAUNCH_MS + 86_400_000, endTs: null, classes: ['PAL', 'ROG', 'BER'], setAt: 2 }
+  const live = {
+    startTs: LAUNCH_MS + 86_400_000,
+    endTs: null,
+    classes: ['PAL', 'ROG', 'BER'],
+    setAt: 2,
+  }
   const { data } = migrateStoreData({
     [SCHEMA_VERSION_KEY]: 2,
     byCharacter: {
@@ -296,9 +332,9 @@ test('PRE-LAUNCH combo corrections are dropped: they belong to the wiped beta ch
         inventory: {},
         completedQuests: [],
         // Junk entries a hand-edited file could hold are dropped by the same structural check.
-        combo: { corrections: [beta, live, null, { startTs: 'soon' }, 42] }
-      }
-    }
+        combo: { corrections: [beta, live, null, { startTs: 'soon' }, 42] },
+      },
+    },
   })
   const chars = data['byCharacter'] as Record<string, StoreData>
   assert.deepEqual(chars['primitive_freeport']['combo'], { corrections: [live] })
@@ -321,7 +357,7 @@ test('running the chain twice equals running it once, for every fixture', () => 
     'store-v3-alerts.json',
     'store-v4-presence.json',
     'store-v5-telemetry.json',
-    'store-v6-perf.json'
+    'store-v6-perf.json',
   ]) {
     const once = migrateStoreData(fixture(name))
     const twice = migrateStoreData(once.data)
@@ -332,7 +368,11 @@ test('running the chain twice equals running it once, for every fixture', () => 
 })
 
 test('an already-current store is left exactly alone', () => {
-  const current: StoreData = { [SCHEMA_VERSION_KEY]: CURRENT_SCHEMA_VERSION, byCharacter: {}, alerts: [] }
+  const current: StoreData = {
+    [SCHEMA_VERSION_KEY]: CURRENT_SCHEMA_VERSION,
+    byCharacter: {},
+    alerts: [],
+  }
   const out = migrateStoreData(current)
   assert.equal(out.status, 'up-to-date')
   assert.equal(out.changed, false)
@@ -406,12 +446,15 @@ test('a pre-framework file is migrated in place, with a byte-exact backup of the
 
 test('a backup already on disk is never overwritten (the pristine copy wins)', () => {
   const body = readFileSync(join(FIXTURES, 'store-v1-pre-framework.json'), 'utf8')
-  inTempDir({ [STORE]: body, [`everquest-companion-progress.v1.backup.json`]: '{"pristine":true}' }, (dir) => {
-    const path = join(dir, STORE)
-    const out = migrateStoreFile(path)
-    assert.equal(out.status, 'migrated')
-    assert.equal(readFileSync(backupPathFor(path, 1), 'utf8'), '{"pristine":true}')
-  })
+  inTempDir(
+    { [STORE]: body, [`everquest-companion-progress.v1.backup.json`]: '{"pristine":true}' },
+    (dir) => {
+      const path = join(dir, STORE)
+      const out = migrateStoreFile(path)
+      assert.equal(out.status, 'migrated')
+      assert.equal(readFileSync(backupPathFor(path, 1), 'utf8'), '{"pristine":true}')
+    },
+  )
 })
 
 test('a fresh install (no file) needs no migration and never creates one', () => {
@@ -420,7 +463,11 @@ test('a fresh install (no file) needs no migration and never creates one', () =>
     const out = migrateStoreFile(path)
     assert.equal(out.fileMissing, true)
     assert.equal(out.status, 'up-to-date')
-    assert.equal(out.to, CURRENT_SCHEMA_VERSION, 'a brand-new store IS current — store.ts stamps it')
+    assert.equal(
+      out.to,
+      CURRENT_SCHEMA_VERSION,
+      'a brand-new store IS current — store.ts stamps it',
+    )
     assert.equal(out.wrote, false)
     assert.equal(existsSync(path), false, 'the migrator never creates the store file')
     assert.equal(existsSync(backupPathFor(path, 1)), false)
@@ -438,8 +485,16 @@ test('a CORRUPT store file is quarantined instead of bricking every launch', () 
 
       assert.equal(out.quarantinedPath, quarantinePathFor(path))
       assert.equal(existsSync(path), false, 'the unreadable file is out of the way')
-      assert.equal(readFileSync(out.quarantinedPath!, 'utf8'), bad, 'and kept, verbatim, for diagnosis')
-      assert.equal(out.to, CURRENT_SCHEMA_VERSION, 'the app starts from defaults, at the current version')
+      assert.equal(
+        readFileSync(out.quarantinedPath!, 'utf8'),
+        bad,
+        'and kept, verbatim, for diagnosis',
+      )
+      assert.equal(
+        out.to,
+        CURRENT_SCHEMA_VERSION,
+        'the app starts from defaults, at the current version',
+      )
       assert.equal(out.readError, undefined)
       assert.equal(errors.length, 1)
     })
@@ -455,7 +510,7 @@ test('a CORRUPT store file is quarantined instead of bricking every launch', () 
 const step = (to: number, mark: string): Migration => ({
   to,
   describe: mark,
-  migrate: (d) => ({ ...d, trail: [...((d['trail'] as string[]) ?? []), mark] })
+  migrate: (d) => ({ ...d, trail: [...((d['trail'] as string[]) ?? []), mark] }),
 })
 
 test('a store from ANY past version enters the chain at its own version and runs forward', () => {
@@ -471,7 +526,10 @@ test('a store from ANY past version enters the chain at its own version and runs
   assert.deepEqual(middle.applied, [4])
   assert.deepEqual(middle.data['trail'], ['c'])
   // Declaration order is not execution order: `to` is.
-  const shuffled = migrateStoreData({}, { migrations: [step(4, 'c'), step(2, 'a'), step(3, 'b')], target: 4 })
+  const shuffled = migrateStoreData(
+    {},
+    { migrations: [step(4, 'c'), step(2, 'a'), step(3, 'b')], target: 4 },
+  )
   assert.deepEqual(shuffled.data['trail'], ['a', 'b', 'c'])
 })
 
@@ -484,9 +542,9 @@ test('a step that throws keeps what succeeded and leaves the rest for the next l
       migrate: (d) => {
         d['halfWritten'] = true
         throw new Error('disk went away')
-      }
+      },
     },
-    step(4, 'c')
+    step(4, 'c'),
   ]
   const out = migrateStoreData({ byCharacter: {} }, { migrations: chain, target: 4 })
 
@@ -501,7 +559,10 @@ test('a step that throws keeps what succeeded and leaves the rest for the next l
   assert.equal('halfWritten' in out.data, false)
 
   // Next launch: the survivor is not re-run, and the failing step is retried.
-  const retry = migrateStoreData(out.data, { migrations: [step(2, 'a'), step(3, 'b'), step(4, 'c')], target: 4 })
+  const retry = migrateStoreData(out.data, {
+    migrations: [step(2, 'a'), step(3, 'b'), step(4, 'c')],
+    target: 4,
+  })
   assert.deepEqual(retry.applied, [3, 4])
   assert.deepEqual(retry.data['trail'], ['a', 'b', 'c'])
 })

@@ -59,7 +59,11 @@
 
 import type { CarryRow } from '../../../../shared/carryAll'
 import { SECTION_LANE_PREFIX, laneLabel } from '../../../../shared/carryAll'
-import { parsePlace, splitLocationPath, type ContainerKind } from '../../../../shared/outputs/inventory'
+import {
+  parsePlace,
+  splitLocationPath,
+  type ContainerKind,
+} from '../../../../shared/outputs/inventory'
 import { itemCountKey, normalizeItemName } from '../../lib/itemName'
 import type { QuestProgress } from './useProgress'
 
@@ -147,7 +151,10 @@ function setsHeld(needs: Map<string, number>, held: HeldByKey): number {
 }
 
 /** Toward ONE more turn-in: what you hold of what it asks, each item clamped to its own need. */
-function progressToward(needs: Map<string, number>, held: HeldByKey): { have: number; need: number } {
+function progressToward(
+  needs: Map<string, number>,
+  held: HeldByKey,
+): { have: number; need: number } {
   let have = 0
   let need = 0
   for (const [key, n] of needs) {
@@ -184,7 +191,7 @@ function indexClaims(quests: readonly CleanupQuest[]): Map<string, ItemClaim> {
 function turnInOf(
   entry: { quest: CleanupQuest; needs: Map<string, number> },
   times: number,
-  held: HeldByKey
+  held: HeldByKey,
 ): CleanupTurnIn {
   const { quest, needs } = entry
   const { have, need } = progressToward(needs, held)
@@ -197,7 +204,7 @@ function turnInOf(
     times,
     sets: setsHeld(needs, held),
     have,
-    need
+    need,
   }
 }
 
@@ -213,7 +220,7 @@ export function cleanupRows(
   quests: readonly CleanupQuest[],
   progress: TurnInCounts,
   held: HeldByKey,
-  dumpLocations: DumpLocations = {}
+  dumpLocations: DumpLocations = {},
 ): CleanupRow[] {
   const rows: CleanupRow[] = []
   for (const [key, claim] of indexClaims(quests)) {
@@ -228,7 +235,10 @@ export function cleanupRows(
     if (times.some((n) => n < 1)) continue
     const turnIns = claim.quests
       .map((entry, i) => turnInOf(entry, times[i], held))
-      .sort((a, b) => b.sets - a.sets || a.className.localeCompare(b.className) || a.name.localeCompare(b.name))
+      .sort(
+        (a, b) =>
+          b.sets - a.sets || a.className.localeCompare(b.className) || a.name.localeCompare(b.name),
+      )
     rows.push({ key, name: claim.name, quantity, locations: dumpLocations[key] ?? [], turnIns })
   }
   rows.sort((a, b) => b.quantity - a.quantity || a.name.localeCompare(b.name))
@@ -244,7 +254,7 @@ export function cleanupRows(
  */
 export function cleanupRowsFor(
   quests: readonly QuestProgress[],
-  dumpLocations: DumpLocations = {}
+  dumpLocations: DumpLocations = {},
 ): CleanupRow[] {
   const held: Record<string, number> = {}
   const progress: Record<string, number> = {}
@@ -257,7 +267,7 @@ export function cleanupRowsFor(
       name: q.name,
       ...(q.giver ? { giver: q.giver } : {}),
       ...(q.reward ? { reward: q.reward } : {}),
-      items: q.items.map((it) => ({ name: it.name, count: it.need }))
+      items: q.items.map((it) => ({ name: it.name, count: it.need })),
     }
   })
   return cleanupRows(shaped, progress, held, dumpLocations)
@@ -272,7 +282,7 @@ const CONTAINER_LABELS: Record<ContainerKind, string> = {
   general: 'General',
   bank: 'Bank',
   sharedBank: 'Shared Bank',
-  personalDepot: 'Personal Depot'
+  personalDepot: 'Personal Depot',
 }
 
 /**
@@ -370,7 +380,10 @@ export function setsLine(t: CleanupTurnIn): string | null {
 }
 
 /** The observed upgrade level of the reward this character already owns, when itemTiers saw one. */
-export function rewardTierLine(reward: string | undefined, tier: number | undefined): string | null {
+export function rewardTierLine(
+  reward: string | undefined,
+  tier: number | undefined,
+): string | null {
   if (!reward || tier === undefined) return null
   return `your ${reward} is +${String(tier)}`
 }

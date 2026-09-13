@@ -33,14 +33,22 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { mountHook } from './hookHost.mjs'
-import { useWindowedRows, windowSlice, type WindowedRows } from '../src/renderer/src/lib/useWindowedRows'
+import {
+  useWindowedRows,
+  windowSlice,
+  type WindowedRows,
+} from '../src/renderer/src/lib/useWindowedRows'
 
 // ── the arithmetic ─────────────────────────────────────────────────────────────────────
 
 /** THE INVARIANT: the spacers and the rendered rows account for every pixel of the content. */
 function assertAccountsForEveryPixel(win: WindowedRows, rowHeight: number, what: string): void {
   const rendered = (win.end - win.start) * (rowHeight > 0 ? rowHeight : 1)
-  assert.equal(win.topPad + rendered + win.bottomPad, win.totalHeight, `${what}: padding does not sum`)
+  assert.equal(
+    win.topPad + rendered + win.bottomPad,
+    win.totalHeight,
+    `${what}: padding does not sum`,
+  )
   assert.ok(win.start >= 0, `${what}: negative start`)
   assert.ok(win.end >= win.start, `${what}: end before start`)
   assert.ok(win.topPad >= 0 && win.bottomPad >= 0, `${what}: negative spacer`)
@@ -49,25 +57,104 @@ function assertAccountsForEveryPixel(win: WindowedRows, rowHeight: number, what:
 test('the slice accounts for every pixel of the content, for every input', () => {
   const cases = [
     { name: 'an empty list', count: 0, rowHeight: 37, scrollTop: 0, viewport: 600, overscan: 8 },
-    { name: 'a list shorter than the viewport', count: 3, rowHeight: 37, scrollTop: 0, viewport: 600, overscan: 8 },
-    { name: 'the top of a long list', count: 11_000, rowHeight: 37, scrollTop: 0, viewport: 600, overscan: 8 },
-    { name: 'the middle of a long list', count: 11_000, rowHeight: 37, scrollTop: 200_000, viewport: 600, overscan: 8 },
-    { name: 'the very bottom', count: 11_000, rowHeight: 37, scrollTop: 11_000 * 37 - 600, viewport: 600, overscan: 8 },
-    { name: 'scrolled far past the end', count: 40, rowHeight: 37, scrollTop: 9_000_000, viewport: 600, overscan: 8 },
-    { name: 'a never-measured viewport', count: 11_000, rowHeight: 37, scrollTop: 0, viewport: 0, overscan: 8 },
-    { name: 'a never-measured viewport, scrolled', count: 11_000, rowHeight: 37, scrollTop: 5_000, viewport: 0, overscan: 8 },
-    { name: 'no overscan at all', count: 500, rowHeight: 20, scrollTop: 1_000, viewport: 300, overscan: 0 },
-    { name: 'a zero row height', count: 500, rowHeight: 0, scrollTop: 1_000, viewport: 300, overscan: 8 },
-    { name: 'a negative scrollTop (elastic overscroll)', count: 500, rowHeight: 37, scrollTop: -120, viewport: 600, overscan: 8 }
+    {
+      name: 'a list shorter than the viewport',
+      count: 3,
+      rowHeight: 37,
+      scrollTop: 0,
+      viewport: 600,
+      overscan: 8,
+    },
+    {
+      name: 'the top of a long list',
+      count: 11_000,
+      rowHeight: 37,
+      scrollTop: 0,
+      viewport: 600,
+      overscan: 8,
+    },
+    {
+      name: 'the middle of a long list',
+      count: 11_000,
+      rowHeight: 37,
+      scrollTop: 200_000,
+      viewport: 600,
+      overscan: 8,
+    },
+    {
+      name: 'the very bottom',
+      count: 11_000,
+      rowHeight: 37,
+      scrollTop: 11_000 * 37 - 600,
+      viewport: 600,
+      overscan: 8,
+    },
+    {
+      name: 'scrolled far past the end',
+      count: 40,
+      rowHeight: 37,
+      scrollTop: 9_000_000,
+      viewport: 600,
+      overscan: 8,
+    },
+    {
+      name: 'a never-measured viewport',
+      count: 11_000,
+      rowHeight: 37,
+      scrollTop: 0,
+      viewport: 0,
+      overscan: 8,
+    },
+    {
+      name: 'a never-measured viewport, scrolled',
+      count: 11_000,
+      rowHeight: 37,
+      scrollTop: 5_000,
+      viewport: 0,
+      overscan: 8,
+    },
+    {
+      name: 'no overscan at all',
+      count: 500,
+      rowHeight: 20,
+      scrollTop: 1_000,
+      viewport: 300,
+      overscan: 0,
+    },
+    {
+      name: 'a zero row height',
+      count: 500,
+      rowHeight: 0,
+      scrollTop: 1_000,
+      viewport: 300,
+      overscan: 8,
+    },
+    {
+      name: 'a negative scrollTop (elastic overscroll)',
+      count: 500,
+      rowHeight: 37,
+      scrollTop: -120,
+      viewport: 600,
+      overscan: 8,
+    },
   ]
   for (const c of cases) assertAccountsForEveryPixel(windowSlice(c), c.rowHeight, c.name)
 })
 
 test('a scrolled window renders the rows under the viewport, plus overscan on each side', () => {
   // 600px of viewport over 37px rows is 17 rows visible; 8 rows of overscan above and below.
-  const win = windowSlice({ count: 11_000, rowHeight: 37, scrollTop: 37 * 500, viewport: 600, overscan: 8 })
+  const win = windowSlice({
+    count: 11_000,
+    rowHeight: 37,
+    scrollTop: 37 * 500,
+    viewport: 600,
+    overscan: 8,
+  })
   assert.equal(win.start, 492)
-  assert.ok(win.end >= 500 + 17, `the viewport's own rows are not all in the slice (end=${String(win.end)})`)
+  assert.ok(
+    win.end >= 500 + 17,
+    `the viewport's own rows are not all in the slice (end=${String(win.end)})`,
+  )
   assert.equal(win.topPad, 492 * 37)
   assertAccountsForEveryPixel(win, 37, 'a scrolled window')
 })
@@ -75,7 +162,13 @@ test('a scrolled window renders the rows under the viewport, plus overscan on ea
 test('a list scrolled past its end still renders its last row rather than nothing', () => {
   // The clamp: `start` can never exceed the last index, so a stale offset (the ledger's saved
   // scroll re-applied to a list a filter has just shortened) degrades to the end of the list.
-  const win = windowSlice({ count: 40, rowHeight: 37, scrollTop: 9_000_000, viewport: 600, overscan: 8 })
+  const win = windowSlice({
+    count: 40,
+    rowHeight: 37,
+    scrollTop: 9_000_000,
+    viewport: 600,
+    overscan: 8,
+  })
   assert.equal(win.end, 40)
   assert.ok(win.start <= 39)
   assert.equal(win.bottomPad, 0)
@@ -84,8 +177,17 @@ test('a list scrolled past its end still renders its last row rather than nothin
 test('an unmeasured viewport renders a SCREENFUL, not a handful', () => {
   // The old fallback rendered `overscan` rows (8) before the ResizeObserver spoke, which is a
   // quarter-screen of content on a first paint. A screenful is the honest guess.
-  const unmeasured = windowSlice({ count: 11_000, rowHeight: 37, scrollTop: 0, viewport: 0, overscan: 8 })
-  assert.ok(unmeasured.end >= 21, `only ${String(unmeasured.end)} rows on an unmeasured first paint`)
+  const unmeasured = windowSlice({
+    count: 11_000,
+    rowHeight: 37,
+    scrollTop: 0,
+    viewport: 0,
+    overscan: 8,
+  })
+  assert.ok(
+    unmeasured.end >= 21,
+    `only ${String(unmeasured.end)} rows on an unmeasured first paint`,
+  )
 })
 
 // ── the binding ────────────────────────────────────────────────────────────────────────
@@ -168,7 +270,11 @@ test('the window follows the CONTAINER NODE, not the ref — the JOS-260 regress
     ref.current = second.el
   })
   assert.equal(second.bound, 1, 'the replaced container was never listened to')
-  assert.equal(remounted.start, 0, 'the new container reads scrollTop 0, so the window is back at the top')
+  assert.equal(
+    remounted.start,
+    0,
+    'the new container reads scrollTop 0, so the window is back at the top',
+  )
 
   // THE ASSERTION THE TICKET IS ABOUT: the window advances when the REPLACED node scrolls. Before
   // the fix the listener was still on the detached node and this stayed at the frozen slice.
@@ -176,14 +282,17 @@ test('the window follows the CONTAINER NODE, not the ref — the JOS-260 regress
     second.scrollTo(37 * 900)
   })
   assert.equal(after.start, 892, 'scrolling the REPLACED container did not advance the window')
-  assert.ok(after.end > after.start + 17, 'the replaced container is windowing fewer rows than it shows')
+  assert.ok(
+    after.end > after.start + 17,
+    'the replaced container is windowing fewer rows than it shows',
+  )
 
   host.unmount()
   assert.equal(second.bound, 0, 'unmounting left a listener behind')
   assert.ok(observers.length >= 2, 'the ResizeObserver was not re-made for the replaced container')
   assert.ok(
     observers.every((o) => !o.live),
-    'a ResizeObserver outlived the container it was watching'
+    'a ResizeObserver outlived the container it was watching',
   )
 })
 
@@ -205,6 +314,9 @@ test('a resize of the container re-measures the viewport, and a taller box rende
     // The hook holds the ResizeObserver; the fake fires the callback the browser would.
     observer.fire()
   })
-  assert.ok(tall.end > short.end, `a taller box rendered no more rows (${String(short.end)} -> ${String(tall.end)})`)
+  assert.ok(
+    tall.end > short.end,
+    `a taller box rendered no more rows (${String(short.end)} -> ${String(tall.end)})`,
+  )
   host.unmount()
 })

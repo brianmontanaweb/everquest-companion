@@ -311,7 +311,7 @@ const FAILURE_NAMES: Readonly<Record<EngineFailure, string>> = {
   unhealthy: 'EngineUnhealthy',
   exited: 'EngineExited',
   'shutdown-exit': 'EngineShutdownExit',
-  'local-socket': 'EngineLocalSocket'
+  'local-socket': 'EngineLocalSocket',
 }
 
 /** The sentence each failure opens with. */
@@ -322,7 +322,7 @@ const FAILURE_SENTENCES: Readonly<Record<EngineFailure, string>> = {
   unhealthy: 'the data-server engine stopped answering session.health',
   exited: 'the data-server engine exited unexpectedly',
   'shutdown-exit': 'the data-server engine exited nonzero after the shutdown signal',
-  'local-socket': 'this app could not open a loopback socket to the data-server engine'
+  'local-socket': 'this app could not open a loopback socket to the data-server engine',
 }
 
 /**
@@ -343,7 +343,7 @@ const FAILURE_SENTENCES: Readonly<Record<EngineFailure, string>> = {
 export function engineShutdownExitLog(
   code: number | null,
   signal: string | null,
-  lifetimeMs: number
+  lifetimeMs: number,
 ): EngineExitLog {
   return {
     failure: 'shutdown-exit',
@@ -356,7 +356,7 @@ export function engineShutdownExitLog(
     name: FAILURE_NAMES['shutdown-exit'],
     message:
       `the data-server engine exited ${code === null ? `by signal ${signal ?? 'unknown'}` : String(code)} ` +
-      `after the shutdown signal — the polite path ended badly`
+      `after the shutdown signal — the polite path ended badly`,
   }
 }
 
@@ -375,7 +375,7 @@ export function engineShutdownExitLog(
 export function engineLocalSocketLog(
   tries: number,
   lifetimeMs: number,
-  detail: string | null
+  detail: string | null,
 ): EngineExitLog {
   return {
     failure: 'local-socket',
@@ -390,7 +390,7 @@ export function engineLocalSocketLog(
       `this machine${detail === null ? '' : ` (last: ${detail})`}. The engine is bound and serving, ` +
       'so it is left alone and asked again — a respawn cannot supply a local port and would cost a ' +
       'full re-fold.',
-    exits: tries
+    exits: tries,
   }
 }
 
@@ -460,7 +460,8 @@ export function describeEngineExit(cause: EngineExitCause): string {
 function probeClause(cause: EngineExitCause): string {
   if (cause.healthReasons === undefined) return ''
   const ago = cause.resumedAgoMs
-  const woke = ago === null || ago === undefined ? 'no resume this session' : `${String(ago)} ms after resume`
+  const woke =
+    ago === null || ago === undefined ? 'no resume this session' : `${String(ago)} ms after resume`
   return `; probes ${cause.healthReasons.join(' then ')}; ${woke}`
 }
 
@@ -527,7 +528,7 @@ function ordinary(cause: EngineExitCause): EngineExitLog {
     ...cause,
     ...codeField(cause),
     name: FAILURE_NAMES[cause.failure],
-    message: describeEngineExit(cause)
+    message: describeEngineExit(cause),
   }
 }
 
@@ -544,7 +545,7 @@ export function engineExitStep(
   trail: EngineExitTrail,
   cause: EngineExitCause,
   streakToCollapse: number = ENGINE_QUICK_EXIT_STREAK,
-  quickMs: number = ENGINE_QUICK_EXIT_MS
+  quickMs: number = ENGINE_QUICK_EXIT_MS,
 ): EngineExitStep {
   if (!(cause.lifetimeMs >= 0 && cause.lifetimeMs < quickMs)) {
     return { trail: NEW_ENGINE_EXIT_TRAIL, log: ordinary(cause) }
@@ -553,7 +554,8 @@ export function engineExitStep(
   // rather than incremented so the number cannot run away on a session that lasts all day.
   if (trail.collapsed) return { trail, log: null }
   const streak = trail.streak + 1
-  if (streak < streakToCollapse) return { trail: { streak, collapsed: false }, log: ordinary(cause) }
+  if (streak < streakToCollapse)
+    return { trail: { streak, collapsed: false }, log: ordinary(cause) }
   return {
     trail: { streak, collapsed: true },
     log: {
@@ -565,8 +567,8 @@ export function engineExitStep(
         `${String(quickMs)} ms (last: ${describeEngineExit(cause)}). The engine is not going to ` +
         'start on this machine; the app runs without it. Further identical failures are counted ' +
         'by the restart backoff, not logged.',
-      exits: streak
-    }
+      exits: streak,
+    },
   }
 }
 
@@ -633,10 +635,11 @@ export interface EngineServedCycleStep {
 export function engineServedCycleStep(
   trail: EngineServedTrail,
   last: Omit<EngineExitCause, 'attempt'>,
-  streak: number = ENGINE_SERVED_CYCLE_STREAK
+  streak: number = ENGINE_SERVED_CYCLE_STREAK,
 ): EngineServedCycleStep {
   const cycles = trail.cycles + 1
-  if (trail.reported || cycles < streak) return { trail: { cycles, reported: trail.reported }, log: null }
+  if (trail.reported || cycles < streak)
+    return { trail: { cycles, reported: trail.reported }, log: null }
   return { trail: { cycles, reported: true }, log: servedCycleLog(cycles, last) }
 }
 
@@ -656,7 +659,7 @@ function servedCycleLog(cycles: number, last: Omit<EngineExitCause, 'attempt'>):
       'restart re-folds the log from the beginning, which is what a person sees as another catch-up. ' +
       `Last exit${detail} (${FAILURE_SENTENCES[last.failure]}, alive for ${String(last.lifetimeMs)} ms` +
       `${code}${signal})`,
-    exits: cycles
+    exits: cycles,
   }
 }
 

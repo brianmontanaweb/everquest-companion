@@ -46,7 +46,7 @@ import {
   SHARE_H,
   coverageNote,
   releaseChart,
-  type ReleaseChartGeometry
+  type ReleaseChartGeometry,
 } from './releaseChart'
 
 /**
@@ -71,7 +71,15 @@ function Chart({ geo }: { geo: ReleaseChartGeometry }): JSX.Element {
       {/* The rate panel's floor — a build reporting ZERO errors draws its line right here, which
           is why the floor is visible at all: an invisible axis would make a clean build's line
           look like no line, and that is the confusion this section exists to prevent. */}
-      <line x1={0} y1={RATE_H} x2={CHART_W} y2={RATE_H} stroke="currentColor" opacity={0.25} strokeWidth={1} />
+      <line
+        x1={0}
+        y1={RATE_H}
+        x2={CHART_W}
+        y2={RATE_H}
+        stroke="currentColor"
+        opacity={0.25}
+        strokeWidth={1}
+      />
       {/* RELEASE MARKERS, drawn THROUGH both panels: the whole point is to read a change in the
           curve against the day a build shipped, and a marker that stopped at the panel boundary
           would make that a comparison across two pictures. */}
@@ -144,7 +152,7 @@ function Swatch({ hue, reporting }: { hue: string; reporting: boolean }): JSX.El
         height: 0,
         alignSelf: 'center',
         border: reporting ? `2px solid ${hue}` : `2px dashed ${hue}`,
-        opacity: reporting ? 1 : 0.6
+        opacity: reporting ? 1 : 0.6,
       }}
     />
   )
@@ -181,7 +189,11 @@ function VersionRow({ v, hue }: { v: TriageReleaseHealthVersion; hue: string }):
       <Typography variant="caption" sx={{ fontVariantNumeric: 'tabular-nums' }}>
         peak {pctLabel(v.peakShare)}
       </Typography>
-      <Typography variant="caption" sx={{ fontVariantNumeric: 'tabular-nums' }} data-testid="release-health-bugs">
+      <Typography
+        variant="caption"
+        sx={{ fontVariantNumeric: 'tabular-nums' }}
+        data-testid="release-health-bugs"
+      >
         {formatNum(v.bugReports)} bug report{v.bugReports === 1 ? '' : 's'}
       </Typography>
       <Typography variant="caption" color="text.secondary">
@@ -201,10 +213,10 @@ export function ReleaseHealthSection({ data }: { data: TriageAnalyticsData }): J
   return (
     <Section title="Release health - error rate per build, over adoption">
       <Typography variant="caption" color="text.secondary">
-        Errors per health report, per build, on the same x-axis as how much of the fleet was
-        running that build; dashed verticals are release dates from the committed notes. The rate
-        is self-normalizing - a popular build cannot look buggier just for having more sessions -
-        and the bug-report column is a separate kind of evidence that is never added to it.
+        Errors per health report, per build, on the same x-axis as how much of the fleet was running
+        that build; dashed verticals are release dates from the committed notes. The rate is
+        self-normalizing - a popular build cannot look buggier just for having more sessions - and
+        the bug-report column is a separate kind of evidence that is never added to it.
       </Typography>
       {/*
         THE COVERAGE SENTENCE IS ABOVE THE CHART, deliberately. It is the caveat that governs
@@ -226,18 +238,19 @@ export function ReleaseHealthSection({ data }: { data: TriageAnalyticsData }): J
         <>
           <Chart geo={geo} />
           <Typography variant="caption" color="text.secondary">
-            Top: errors per report, 0 to {geo.maxRate.toFixed(geo.maxRate < 1 ? 2 : 0)} - a gap in
-            a line is a day that build filed nothing, drawn as a hole rather than as a zero.
-            Bottom: share of daily active installs per build, with reporting coverage dashed over
-            it. Builds that cannot report have no line at all.
+            Top: errors per report, 0 to {geo.maxRate.toFixed(geo.maxRate < 1 ? 2 : 0)} - a gap in a
+            line is a day that build filed nothing, drawn as a hole rather than as a zero. Bottom:
+            share of daily active installs per build, with reporting coverage dashed over it. Builds
+            that cannot report have no line at all.
           </Typography>
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: 'max-content max-content max-content 1fr max-content max-content 1fr',
+              gridTemplateColumns:
+                'max-content max-content max-content 1fr max-content max-content 1fr',
               columnGap: 2,
               rowGap: 0.5,
-              alignItems: 'center'
+              alignItems: 'center',
             }}
           >
             {health.versions.map((v, i) => (

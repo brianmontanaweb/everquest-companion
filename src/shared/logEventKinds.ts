@@ -54,7 +54,7 @@ export const ALL_LOG_EVENT_KINDS = [
   'poisonCoat',
   'poisonDry',
   'epoch',
-  'unknown'
+  'unknown',
 ] as const satisfies readonly LogEventKind[]
 
 // Compile-time guarantee that the array covers the WHOLE union (no missing kinds). If a new

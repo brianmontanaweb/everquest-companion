@@ -19,7 +19,12 @@ import { useState, type JSX } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-import { formatPerfState, formatPerfSummary, perfSparkline, type FeedbackPerf } from '@shared/feedbackPerf'
+import {
+  formatPerfState,
+  formatPerfSummary,
+  perfSparkline,
+  type FeedbackPerf,
+} from '@shared/feedbackPerf'
 import { formatPerfEngine } from '@shared/feedbackPerfEngine'
 import { PreviewLines } from './LogPreview'
 import type { FeedbackContext } from './useFeedback'
@@ -35,8 +40,8 @@ function rowLines(perf: FeedbackPerf): string[] {
       r.workerMaxLateMs.toString().padStart(6),
       r.tailMaxMs.toString().padStart(6),
       r.tailReads.toString().padStart(6),
-      r.tailReopens.toString().padStart(6)
-    ].join('')
+      r.tailReopens.toString().padStart(6),
+    ].join(''),
   )
   return [head, ...body]
 }
@@ -92,7 +97,7 @@ export default function PerfPreview({ ctx }: { ctx: FeedbackContext | null }): J
           fontSize: 11,
           whiteSpace: 'pre',
           overflowX: 'auto',
-          color: 'text.secondary'
+          color: 'text.secondary',
         }}
       >
         {`|${perfSparkline(perf)}|`}

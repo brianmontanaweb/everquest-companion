@@ -72,11 +72,30 @@ function Swatch({ color }: { color: string }): JSX.Element {
 }
 
 /** R on a 0..200 scale, with the 95% interval drawn as a lighter band behind it. */
-function ResistBar({ axis, R, lo, hi }: { axis: ResistAxis; R: number; lo: number; hi: number }): JSX.Element {
+function ResistBar({
+  axis,
+  R,
+  lo,
+  hi,
+}: {
+  axis: ResistAxis
+  R: number
+  lo: number
+  hi: number
+}): JSX.Element {
   const color = RESIST_AXIS_COLORS[axis]
   const band = bandFraction(lo, hi)
   return (
-    <Box sx={{ position: 'relative', height: BAR_H, borderRadius: 1, bgcolor: 'action.hover', flex: 1, minWidth: 60 }}>
+    <Box
+      sx={{
+        position: 'relative',
+        height: BAR_H,
+        borderRadius: 1,
+        bgcolor: 'action.hover',
+        flex: 1,
+        minWidth: 60,
+      }}
+    >
       <Box
         sx={{
           position: 'absolute',
@@ -174,8 +193,8 @@ function EvidencePanel({ row }: { row: MobResistAxis }): JSX.Element {
       {est.droppedNoLevel > 0 && (
         <Quiet>
           <span data-testid={`resist-nolevel-${row.axis}`}>
-            {est.droppedNoLevel} observation{est.droppedNoLevel === 1 ? '' : 's'} whose caster level the log never
-            stated - counted here, not in the number.
+            {est.droppedNoLevel} observation{est.droppedNoLevel === 1 ? '' : 's'} whose caster level
+            the log never stated - counted here, not in the number.
           </span>
         </Quiet>
       )}
@@ -185,8 +204,8 @@ function EvidencePanel({ row }: { row: MobResistAxis }): JSX.Element {
         <Quiet>
           <span data-testid={`resist-noinvocation-${row.axis}`}>
             {est.droppedUnknownInvocation} of your own cast
-            {est.droppedUnknownInvocation === 1 ? '' : 's'} from before the log stated your invocation - counted
-            here, not in the number.
+            {est.droppedUnknownInvocation === 1 ? '' : 's'} from before the log stated your
+            invocation - counted here, not in the number.
           </span>
         </Quiet>
       )}
@@ -226,42 +245,79 @@ function AxisRow({ row }: { row: MobResistAxis }): JSX.Element {
             cast at this on this axis" is not "the model could not fit what was cast", and neither
             is an estimate — so each has its own testid and its own sentence. */}
         {est?.pinned === true ? (
-          <Typography variant="caption" color="warning.main" data-testid={`resist-nofit-${row.axis}`} sx={{ flex: 1 }}>
+          <Typography
+            variant="caption"
+            color="warning.main"
+            data-testid={`resist-nofit-${row.axis}`}
+            sx={{ flex: 1 }}
+          >
             {doesNotFitText(est.empirical)}
           </Typography>
         ) : empty || !est ? (
-          <Typography variant="caption" color="text.disabled" data-testid={`resist-empty-${row.axis}`} sx={{ flex: 1 }}>
+          <Typography
+            variant="caption"
+            color="text.disabled"
+            data-testid={`resist-empty-${row.axis}`}
+            sx={{ flex: 1 }}
+          >
             {NO_DATA_TEXT}
           </Typography>
         ) : (
           <>
             <ResistBar axis={row.axis} R={est.R} lo={est.lo} hi={est.hi} />
-            <Typography variant="caption" sx={{ width: 116, flex: '0 0 auto' }} data-testid={`resist-value-${row.axis}`}>
+            <Typography
+              variant="caption"
+              sx={{ width: 116, flex: '0 0 auto' }}
+              data-testid={`resist-value-${row.axis}`}
+            >
               {estimateText(est)}
             </Typography>
             {/* Wide enough for the two-number form, which is the honest width: a column sized to
                 `n=83` would push "8 informative · 83 total" onto the tag beside it. */}
-            <Typography variant="caption" color="text.secondary" sx={{ width: 148, flex: '0 0 auto' }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ width: 148, flex: '0 0 auto' }}
+            >
               {countText(est.nInformative, est.n)}
             </Typography>
             {/* The band, its two percentages and the thin-cell caveat are ONE sentence and share one
                 cell: the numbers are what a player scales their own case from (a rank-10 spell is
                 another -150, a malo another 45), and a band without them is a verdict with its
                 arithmetic hidden. */}
-            <Typography variant="caption" sx={{ color, flex: 1, minWidth: 0 }} data-testid={`resist-tag-${row.axis}`}>
+            <Typography
+              variant="caption"
+              sx={{ color, flex: 1, minWidth: 0 }}
+              data-testid={`resist-tag-${row.axis}`}
+            >
               {row.tag}
               {row.benchmark && (
-                <Typography component="span" variant="caption" color="text.secondary" data-testid={`resist-guidance-${row.axis}`}>
+                <Typography
+                  component="span"
+                  variant="caption"
+                  color="text.secondary"
+                  data-testid={`resist-guidance-${row.axis}`}
+                >
                   {` · ${row.benchmark.guidance}`}
                 </Typography>
               )}
               {row.benchmark && (
-                <Typography component="span" variant="caption" color="text.secondary" data-testid={`resist-bench-${row.axis}`}>
+                <Typography
+                  component="span"
+                  variant="caption"
+                  color="text.secondary"
+                  data-testid={`resist-bench-${row.axis}`}
+                >
                   {` · ${benchmarkText(row.benchmark)}`}
                 </Typography>
               )}
               {lowSamples(est.nInformative) && (
-                <Typography component="span" variant="caption" color="text.disabled" data-testid={`resist-low-${row.axis}`}>
+                <Typography
+                  component="span"
+                  variant="caption"
+                  color="text.disabled"
+                  data-testid={`resist-low-${row.axis}`}
+                >
                   {` · ${LOW_SAMPLE_NOTE}`}
                 </Typography>
               )}
@@ -270,7 +326,11 @@ function AxisRow({ row }: { row: MobResistAxis }): JSX.Element {
         )}
         <ExpandMoreIcon
           fontSize="inherit"
-          sx={{ color: 'text.disabled', transition: 'transform 120ms', transform: open ? 'rotate(180deg)' : undefined }}
+          sx={{
+            color: 'text.disabled',
+            transition: 'transform 120ms',
+            transform: open ? 'rotate(180deg)' : undefined,
+          }}
         />
       </Stack>
       <Box sx={{ pl: 2.5 }}>
@@ -292,7 +352,9 @@ export function ResistProfileBody({ profile }: { profile: MobResistProfile }): J
     // knows the resolved path and both surfaces have to say the same thing.
     return (
       <Quiet>
-        <span data-testid="resist-no-spell-data">{profile.spellDataNote ?? 'Spell data unavailable.'}</span>
+        <span data-testid="resist-no-spell-data">
+          {profile.spellDataNote ?? 'Spell data unavailable.'}
+        </span>
       </Quiet>
     )
   }

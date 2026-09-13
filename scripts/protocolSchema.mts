@@ -98,7 +98,7 @@ export function bundleSchema(files: SchemaFile[] = readSchemaFiles()): Record<st
     description:
       'Anything that can travel the wire, in either direction. The transport adapters are generic over exactly this: a transport moves ProtocolMessages and knows nothing else about the protocol.',
     oneOf: [{ $ref: '#/$defs/ClientMessage' }, { $ref: '#/$defs/EngineMessage' }],
-    $defs: sorted
+    $defs: sorted,
   }
 }
 
@@ -113,7 +113,7 @@ export function protocolVersion(files: SchemaFile[] = readSchemaFiles()): number
   const declaring = files.filter((f) => f.json[VERSION_KEY] !== undefined)
   if (declaring.length !== 1) {
     throw new Error(
-      `exactly one schema file must declare "${VERSION_KEY}"; found ${String(declaring.length)}`
+      `exactly one schema file must declare "${VERSION_KEY}"; found ${String(declaring.length)}`,
     )
   }
   const value = declaring[0].json[VERSION_KEY]

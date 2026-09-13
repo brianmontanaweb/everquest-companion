@@ -56,7 +56,7 @@ function EntityLanes({
   compact,
   maxRows,
   onMore,
-  setDrill
+  setDrill,
 }: {
   rows: OwnRow[]
   /** The segment's active seconds — every lane's own rate divides by it (petRows.laneDps). */
@@ -81,7 +81,11 @@ function EntityLanes({
             pct={r.pct}
             // The pet's NAME rides along with its id: `pet:<instanceId>` is minted per summon, so
             // the name is what keeps this drill open across fights and across a re-summon (JOS-240).
-            onDrill={setDrill ? () => setDrill({ kind: 'entity', entityId: r.pet.id, name: r.pet.name }) : undefined}
+            onDrill={
+              setDrill
+                ? () => setDrill({ kind: 'entity', entityId: r.pet.id, name: r.pet.name })
+                : undefined
+            }
           />
         ) : (
           <SkillBar
@@ -91,7 +95,7 @@ function EntityLanes({
             compact={compact}
             proc={procAnnotationFor(tags, r.skill.name)}
           />
-        )
+        ),
       )}
       {rows.length === 0 && <QuietNote>No skill breakdown for this source.</QuietNote>}
       {hidden > 0 && <MoreRows n={hidden} onMore={onMore} />}
@@ -116,7 +120,7 @@ export function DrillCrumb({
   isTarget,
   parent,
   compact,
-  setDrill
+  setDrill,
 }: {
   crumb: string
   isTarget?: boolean
@@ -125,7 +129,8 @@ export function DrillCrumb({
   compact?: boolean
   setDrill: (d: Drill | null) => void
 }): React.JSX.Element {
-  const up = (): void => setDrill(parent ? { kind: 'entity', entityId: parent.id, name: parent.name } : null)
+  const up = (): void =>
+    setDrill(parent ? { kind: 'entity', entityId: parent.id, name: parent.name } : null)
   const label = isTarget ? `damage to ${crumb}` : crumb
   if (compact) {
     return (
@@ -162,7 +167,13 @@ export function DrillCrumb({
           All
         </Link>
         {parent ? (
-          <Link component="button" underline="hover" color="inherit" onClick={up} sx={{ fontSize: 12 }}>
+          <Link
+            component="button"
+            underline="hover"
+            color="inherit"
+            onClick={up}
+            sx={{ fontSize: 12 }}
+          >
             {parent.name}
           </Link>
         ) : null}
@@ -194,7 +205,7 @@ export function MeterRows({
   compact,
   maxRows,
   onMore,
-  empty
+  empty,
 }: {
   panel: MeterPanel
   activeSec: number
@@ -230,7 +241,8 @@ export function MeterRows({
   }
   const shown = maxRows === undefined ? panel.sources : panel.sources.slice(0, maxRows)
   const hidden = panel.sources.length - shown.length
-  if (shown.length === 0) return <QuietNote>{empty ?? 'No outgoing damage in this segment.'}</QuietNote>
+  if (shown.length === 0)
+    return <QuietNote>{empty ?? 'No outgoing damage in this segment.'}</QuietNote>
   return (
     <>
       {shown.map((e, i) => (
@@ -239,7 +251,9 @@ export function MeterRows({
           e={e}
           rank={i + 1}
           compact={compact}
-          onDrill={setDrill ? () => setDrill({ kind: 'entity', entityId: e.id, name: e.name }) : undefined}
+          onDrill={
+            setDrill ? () => setDrill({ kind: 'entity', entityId: e.id, name: e.name }) : undefined
+          }
         />
       ))}
       {hidden > 0 && <MoreRows n={hidden} onMore={onMore} />}

@@ -63,7 +63,7 @@ export const ALERT_TRIGGER_MIGRATION_VERSION = 2
 const SLOW_ONLY_TRIGGER: AlertTrigger = {
   type: 'event',
   kind: 'poisonProc',
-  where: { effect: 'slow' }
+  where: { effect: 'slow' },
 }
 
 /**
@@ -73,7 +73,7 @@ const SLOW_ONLY_TRIGGER: AlertTrigger = {
 const BOTH_SLOWS_TRIGGER: AlertTrigger = {
   type: 'event',
   kind: 'poisonProc',
-  where: { effect: '/^(slow|spellSlow)$/' }
+  where: { effect: '/^(slow|spellSlow)$/' },
 }
 
 /** One appended rewrite of the shipped rogue-slow def. */
@@ -95,7 +95,7 @@ const STEPS: readonly TriggerMigrationStep[] = [
     rewrite: (def) =>
       sameTrigger(def.trigger, SLOW_ONLY_TRIGGER)
         ? { ...def, trigger: BOTH_SLOWS_TRIGGER, cooldownScope: 'target' }
-        : null
+        : null,
   },
   {
     // 2 (2026-08-04, the owner's revert): step 1's widened def → the melee slow alone.
@@ -103,8 +103,8 @@ const STEPS: readonly TriggerMigrationStep[] = [
     // already carries 'target', and a user who took it off since said something by doing so.
     version: 2,
     rewrite: (def) =>
-      sameTrigger(def.trigger, BOTH_SLOWS_TRIGGER) ? { ...def, trigger: SLOW_ONLY_TRIGGER } : null
-  }
+      sameTrigger(def.trigger, BOTH_SLOWS_TRIGGER) ? { ...def, trigger: SLOW_ONLY_TRIGGER } : null,
+  },
 ]
 
 /** Structural equality for a trigger — key order in a stored JSON object is not meaningful. */
@@ -137,7 +137,7 @@ function sameTrigger(a: AlertTrigger, b: AlertTrigger): boolean {
  */
 export function migrateAlertTriggers(
   alerts: AlertDef[],
-  from = 0
+  from = 0,
 ): { alerts: AlertDef[]; changed: number } {
   const steps = STEPS.filter((s) => s.version > from)
   if (steps.length === 0) return { alerts, changed: 0 }

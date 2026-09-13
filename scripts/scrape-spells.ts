@@ -106,7 +106,7 @@ async function listSpellPages(): Promise<WikiPage[]> {
       eititle: 'Template:Spellpage',
       einamespace: '0', // main namespace only (real spell pages, not template docs)
       eilimit: '500',
-      ...(eicontinue ? { eicontinue } : {})
+      ...(eicontinue ? { eicontinue } : {}),
     })
     for (const p of json.query?.embeddedin ?? []) out.push(p)
     eicontinue = json.continue?.eicontinue
@@ -170,7 +170,7 @@ async function fetchRevIds(pages: WikiPage[]): Promise<Map<number, number>> {
       action: 'query',
       prop: 'revisions',
       rvprop: 'ids',
-      pageids: slice.map((p) => p.pageid).join('|')
+      pageids: slice.map((p) => p.pageid).join('|'),
     })
     for (const p of j.query?.pages ?? []) {
       const revid = p.revisions?.[0]?.revid
@@ -195,7 +195,7 @@ async function fetchStaleContent(stale: WikiPage[], idx: CacheIndex): Promise<nu
       prop: 'revisions',
       rvprop: 'ids|content',
       rvslots: 'main',
-      pageids: slice.map((p) => p.pageid).join('|')
+      pageids: slice.map((p) => p.pageid).join('|'),
     })
     const seen = writeBatch(j.query?.pages ?? [], idx)
     for (const p of slice) if (!seen.has(p.pageid)) failures.push(p.pageid)
@@ -251,7 +251,10 @@ function parseSpellpageFields(wikitext: string): Record<string, string> {
   }
   for (let i = 0; i < marks.length; i++) {
     const cur = marks[i]
-    const valEnd = i + 1 < marks.length ? findFieldValueEnd(block, cur.valStart, marks[i + 1].valStart) : block.length
+    const valEnd =
+      i + 1 < marks.length
+        ? findFieldValueEnd(block, cur.valStart, marks[i + 1].valStart)
+        : block.length
     let val = block.slice(cur.valStart, valEnd)
     // The LAST field's value runs to block end, which includes the template's closing
     // `}}` (and any trailing categories). Strip a trailing `}}` + whitespace so it never
@@ -285,8 +288,13 @@ function templateBlockEnd(text: string, start: number): number {
 function templateDepthAt(block: string, pos: number): number {
   let d = 0
   for (let i = 0; i < pos; i++) {
-    if (block[i] === '{' && block[i + 1] === '{') { d++; i++ }
-    else if (block[i] === '}' && block[i + 1] === '}') { d--; i++ }
+    if (block[i] === '{' && block[i + 1] === '{') {
+      d++
+      i++
+    } else if (block[i] === '}' && block[i + 1] === '}') {
+      d--
+      i++
+    }
   }
   return d
 }
@@ -410,7 +418,13 @@ function parseSpell(title: string, fields: Record<string, string>): SpellEntry {
   const manaRaw = clean(fields.mana)
   const mana = manaRaw && /^\d+$/.test(manaRaw) ? Number(manaRaw) : undefined
   // Illusion detection: the effects/slots/description/other text mentioning "Illusion".
-  const effectsBlob = [fields.slots, fields.description, fields.effects, fields.other, fields.spellname]
+  const effectsBlob = [
+    fields.slots,
+    fields.description,
+    fields.effects,
+    fields.other,
+    fields.spellname,
+  ]
     .filter(Boolean)
     .join(' ')
   const illusion = /illusion/i.test(effectsBlob)
@@ -433,7 +447,7 @@ function parseSpell(title: string, fields: Record<string, string>): SpellEntry {
     // Absent rather than empty: a page with no slot table said nothing, and `[]` would read as
     // "the wiki says this spell does nothing".
     ...(slotTable.effects.length ? { effects: slotTable.effects } : {}),
-    ...(slotTable.instrument ? { instrumentEnhanced: slotTable.instrument } : {})
+    ...(slotTable.instrument ? { instrumentEnhanced: slotTable.instrument } : {}),
   }
 }
 
@@ -506,7 +520,9 @@ async function main(): Promise<void> {
   // message corrections write the FIRST row of a name.
   spells.sort((a, b) => a.name.localeCompare(b.name))
   const withDur = spells.filter((s) => s.durationMs != null).length
-  const withCastMsg = spells.filter((s) => Boolean(s.msgCastOnYou) || Boolean(s.msgCastOnOther)).length
+  const withCastMsg = spells.filter(
+    (s) => Boolean(s.msgCastOnYou) || Boolean(s.msgCastOnOther),
+  ).length
   const withWearsOff = spells.filter((s) => s.msgWearsOff).length
   const illusions = spells.filter((s) => s.illusion).length
   const withEffects = spells.filter((s) => s.effects?.length).length
@@ -517,7 +533,7 @@ async function main(): Promise<void> {
     schema: SCHEMA,
     count: spells.length,
     withEffects,
-    spells
+    spells,
   }
   mkdirSync(dirname(OUT_PATH), { recursive: true })
   writeFileSync(OUT_PATH, JSON.stringify(out, null, 2))
@@ -527,17 +543,18 @@ async function main(): Promise<void> {
     `  durations: ${withDur} (${((withDur / spells.length) * 100).toFixed(0)}%)  ` +
       `cast-msg: ${withCastMsg} (${((withCastMsg / spells.length) * 100).toFixed(0)}%)  ` +
       `wears-off: ${withWearsOff} (${((withWearsOff / spells.length) * 100).toFixed(0)}%)  ` +
-      `illusion: ${illusions}`
+      `illusion: ${illusions}`,
   )
   console.log(
     `  effects: ${withEffects} (${((withEffects / spells.length) * 100).toFixed(0)}%)  ` +
-      `instrument-flag: ${withInstrument}`
+      `instrument-flag: ${withInstrument}`,
   )
   console.log(
     `  requests: ${requests}  cache hits: ${hits}  fetched: ${stale.length - failures.length}  ` +
-      `wall: ${((Date.now() - t0) / 1000).toFixed(1)}s`
+      `wall: ${((Date.now() - t0) / 1000).toFixed(1)}s`,
   )
-  if (failures.length) console.log(`  FETCH FAILURES (no revision returned): ${failures.join(', ')}`)
+  if (failures.length)
+    console.log(`  FETCH FAILURES (no revision returned): ${failures.join(', ')}`)
   if (missing.length) console.log(`  NOT IN CACHE (skipped): ${missing.join(', ')}`)
 }
 

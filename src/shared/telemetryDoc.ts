@@ -42,7 +42,7 @@ import {
   TELEMETRY_FUNNEL_STEPS,
   TOTAL_MEM_GB_EDGES,
   bucketRange,
-  type TelemetryEventKind
+  type TelemetryEventKind,
 } from './telemetry'
 import { FREE_MEM_GB_EDGES, LIVE_STALL_MS_EDGES, WORKING_SET_MB_EDGES } from './telemetryLive'
 import { TELEMETRY_DOC_EVENTS, type DocEvent, type DocField } from './telemetryDocEvents'
@@ -75,49 +75,49 @@ export const TELEMETRY_DOC_BUCKETS: readonly DocBucket[] = [
     field: 'coldStartMsBucket',
     edges: COLD_START_MS_EDGES,
     format: 'ms',
-    what: 'How long the app took to start.'
+    what: 'How long the app took to start.',
   },
   {
     field: 'charCountBucket',
     edges: CHAR_COUNT_EDGES,
     format: 'count',
-    what: 'How many character logs the app can see.'
+    what: 'How many character logs the app can see.',
   },
   {
     field: 'logSizeBucket',
     edges: LOG_SIZE_BYTES_EDGES,
     format: 'bytes',
-    what: 'Size of the log file being read.'
+    what: 'Size of the log file being read.',
   },
   {
     field: 'alertCountBucket',
     edges: ALERT_COUNT_EDGES,
     format: 'count',
-    what: 'How many alerts are configured.'
+    what: 'How many alerts are configured.',
   },
   {
     field: 'sessionAgeBucket',
     edges: SESSION_AGE_MS_EDGES,
     format: 'ms',
-    what: 'How long the app had been running when an error happened.'
+    what: 'How long the app had been running when an error happened.',
   },
   {
     field: 'startup.newBytesBucket',
     edges: NEW_BYTES_EDGES,
     format: 'bytes',
-    what: 'How much the log grew while the app was closed.'
+    what: 'How much the log grew while the app was closed.',
   },
   {
     field: 'startup.stutter.p50Bucket',
     edges: STUTTER_MS_EDGES,
     format: 'ms',
-    what: 'How late the app’s own clock ran while it read (typical beat).'
+    what: 'How late the app’s own clock ran while it read (typical beat).',
   },
   {
     field: 'startup.stutter.p95Bucket',
     edges: STUTTER_MS_EDGES,
     format: 'ms',
-    what: 'The same, at the worse end (one beat in twenty).'
+    what: 'The same, at the worse end (one beat in twenty).',
   },
   // JOS-364's machine class. Each of these is a range for the same reason every row above is one:
   // the exact figures together would describe one machine, and the questions they exist to answer
@@ -126,25 +126,25 @@ export const TELEMETRY_DOC_BUCKETS: readonly DocBucket[] = [
     field: 'cpuCountBucket',
     edges: CPU_COUNT_EDGES,
     format: 'count',
-    what: 'How many processor cores the machine has.'
+    what: 'How many processor cores the machine has.',
   },
   {
     field: 'totalMemBucket',
     edges: TOTAL_MEM_GB_EDGES,
     format: 'gb',
-    what: 'How much memory the machine has.'
+    what: 'How much memory the machine has.',
   },
   {
     field: 'displayCountBucket',
     edges: DISPLAY_COUNT_EDGES,
     format: 'count',
-    what: 'How many monitors are attached.'
+    what: 'How many monitors are attached.',
   },
   {
     field: 'primaryScaleBucket',
     edges: PRIMARY_SCALE_EDGES,
     format: 'percent',
-    what: 'The main monitor’s display scaling.'
+    what: 'The main monitor’s display scaling.',
   },
   // JOS-367's live-session riders. The stall ladder is printed ONCE and named for the four fields
   // that share it (two clock readings, two read-latency readings): four identical tables would be
@@ -153,26 +153,26 @@ export const TELEMETRY_DOC_BUCKETS: readonly DocBucket[] = [
     field: 'live.p95Bucket · live.maxBucket · tail.p95Bucket · tail.maxBucket',
     edges: LIVE_STALL_MS_EDGES,
     format: 'ms',
-    what: 'How late the app’s own timers ran, and how long its reads of the log took.'
+    what: 'How late the app’s own timers ran, and how long its reads of the log took.',
   },
   {
     field: 'tail.deltaBytesBucket',
     edges: NEW_BYTES_EDGES,
     format: 'bytes',
-    what: 'The biggest single chunk of new log read at once.'
+    what: 'The biggest single chunk of new log read at once.',
   },
   {
     field: 'state.freeMemBucket',
     edges: FREE_MEM_GB_EDGES,
     format: 'gb',
-    what: 'How much free memory the computer had.'
+    what: 'How much free memory the computer had.',
   },
   {
     field: 'state.workingSetBucket',
     edges: WORKING_SET_MB_EDGES,
     format: 'mb',
-    what: 'How much memory this app was using.'
-  }
+    what: 'How much memory this app was using.',
+  },
 ]
 
 // ------------------------------------------------------------------ rendering
@@ -206,7 +206,12 @@ function bucketLabels(b: DocBucket): string[] {
   for (let i = 0; i <= b.edges.length; i++) {
     const { lo, hi } = bucketRange(b.edges, i)
     if (hi === null) out.push(`≥ ${fmtValue(lo, b.format)}`)
-    else if (b.format !== 'count') out.push(i === 0 ? `< ${fmtValue(hi, b.format)}` : `${fmtValue(lo, b.format)} – ${fmtValue(hi, b.format)}`)
+    else if (b.format !== 'count')
+      out.push(
+        i === 0
+          ? `< ${fmtValue(hi, b.format)}`
+          : `${fmtValue(lo, b.format)} – ${fmtValue(hi, b.format)}`,
+      )
     else out.push(hi - lo === 1 ? String(lo) : `${String(lo)} – ${String(hi - 1)}`)
   }
   return out
@@ -221,7 +226,11 @@ function bucketLabels(b: DocBucket): string[] {
 function eventSection(e: DocEvent): string[] {
   const lines = [`### \`${e.t}\``, '', e.when, '']
   if (e.fields.length === 0) {
-    lines.push('**This event has no fields at all.** It says only that it happened, alongside the', 'five facts every send carries (above).', '')
+    lines.push(
+      '**This event has no fields at all.** It says only that it happened, alongside the',
+      'five facts every send carries (above).',
+      '',
+    )
     return lines
   }
   lines.push('| Field | Values | What it means |', '| --- | --- | --- |')
@@ -236,7 +245,7 @@ function bucketSection(): string[] {
     '',
     'Where a raw number would say too much about one person, the app sends a RANGE instead.',
     'These are the exact ranges, taken from the schema:',
-    ''
+    '',
   ]
   for (const b of TELEMETRY_DOC_BUCKETS) {
     lines.push(`**\`${b.field}\`** — ${b.what}`, '')
@@ -252,10 +261,13 @@ function funnelSection(): string[] {
     '## Flows',
     '',
     'A `funnelStep` event says which step of one of these you reached — nothing else.',
-    ''
+    '',
   ]
   for (const funnel of TELEMETRY_FUNNELS) {
-    lines.push(`**\`${funnel}\`** — ${TELEMETRY_FUNNEL_STEPS[funnel].map((s) => `\`${s}\``).join(' → ')}`, '')
+    lines.push(
+      `**\`${funnel}\`** — ${TELEMETRY_FUNNEL_STEPS[funnel].map((s) => `\`${s}\``).join(' → ')}`,
+      '',
+    )
   }
   return lines
 }
@@ -325,7 +337,7 @@ function headerSection(): string[] {
     'be sent in batches, not one by one. Schema version: ' + String(TELEMETRY_API_VERSION) + '.',
     '',
     '## Events',
-    ''
+    '',
   ]
 }
 
@@ -349,7 +361,7 @@ function footerSection(): string[] {
     'further is ever sent. If your machine is offline at that moment the notice is simply lost;',
     'it is never retried, because keeping something to send later is exactly what turning this',
     'off is supposed to stop. Turning it back on sends the matching notice under the new id.',
-    ''
+    '',
   ]
 }
 

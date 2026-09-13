@@ -19,7 +19,7 @@ import {
   CARD_GRACE_MS,
   cardReduce,
   type CardAction,
-  type CardState
+  type CardState,
 } from './cardQueue'
 
 /** Most cards on screen at once; a fourth evicts the oldest. */
@@ -48,7 +48,7 @@ function asCardAction(action: ToastAction): CardAction<ToastPayload> {
     type: 'show',
     payload: action.payload,
     holdMs: action.payload.durationMs ?? TOAST_FALLBACK_MS,
-    cap: TOAST_CAP
+    cap: TOAST_CAP,
   }
 }
 

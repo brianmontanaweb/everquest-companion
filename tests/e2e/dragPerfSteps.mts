@@ -154,11 +154,11 @@ export async function stepDragCost(page: Page, sel: string): Promise<void> {
       `${(hover / MOVES).toFixed(2)} ms per HOVER move across the same chart ` +
       `(ratio ${(moves / Math.max(1, hover)).toFixed(2)}); ` +
       `${commit.toFixed(0)} ms for the one commit that re-derived and re-rendered the whole tab, ` +
-      `which a move used to cost — reported, not gated (see the header)`
+      `which a move used to cost — reported, not gated (see the header)`,
   )
   check(
     'a drag move costs no more than a hover move over the same chart (the drag renders a band, not the tab)',
     moves <= hover * DRAG_OVER_HOVER,
-    `${(moves / MOVES).toFixed(2)} ms/drag-move vs ${(hover / MOVES).toFixed(2)} ms/hover-move`
+    `${(moves / MOVES).toFixed(2)} ms/drag-move vs ${(hover / MOVES).toFixed(2)} ms/hover-move`,
   )
 }

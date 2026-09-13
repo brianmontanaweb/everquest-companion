@@ -37,7 +37,12 @@ const NAMED = 'The Hand of Veeshan'
 function ev(
   target: string,
   amount: number,
-  opts: { lane?: string; category?: DamageCategory; outcome?: 'hit' | 'miss' | 'resist'; t?: number } = {}
+  opts: {
+    lane?: string
+    category?: DamageCategory
+    outcome?: 'hit' | 'miss' | 'resist'
+    t?: number
+  } = {},
 ): TimelineEvent {
   return {
     t: opts.t ?? 0,
@@ -47,7 +52,7 @@ function ev(
     crit: false,
     kind: 'you',
     outcome: opts.outcome ?? 'hit',
-    target
+    target,
   }
 }
 
@@ -69,7 +74,7 @@ const EVENTS: TimelineEvent[] = [
   ev(MOB, 300, { lane: 'Smite', category: 'spell', t: 3_000 }),
   ev(MOB_CAPS, 50, { t: 4_000 }), // a later sentence-initial line, mid-fight
   ev(TWIN, 400, { t: 5_000 }),
-  ev(NAMED, 500, { t: 6_000 })
+  ev(NAMED, 500, { t: 6_000 }),
 ]
 
 const TL: TimelineView = {
@@ -82,7 +87,7 @@ const TL: TimelineView = {
   downsampled: false,
   rawCount: EVENTS.length,
   totalCount: EVENTS.length,
-  truncated: false
+  truncated: false,
 }
 
 test('per-mob rows fold case-variants of ONE spawn into ONE row', () => {
@@ -93,7 +98,7 @@ test('per-mob rows fold case-variants of ONE spawn into ONE row', () => {
   assert.equal(rows.length, 3, 'the two spellings are one mob')
   assert.ok(
     !rows.some((r) => r.target === MOB_CAPS),
-    'the sentence-initial spelling must never surface as its own row'
+    'the sentence-initial spelling must never surface as its own row',
   )
 
   const knight = rows.find((r) => r.target === MOB)
@@ -104,14 +109,21 @@ test('per-mob rows fold case-variants of ONE spawn into ONE row', () => {
   assert.equal(knight.misses, 1)
 
   // The lone-resist ghost the user saw is gone: no 0-damage row survives at all here.
-  assert.ok(rows.every((r) => r.total > 0), 'no "0 · 0%" phantom')
+  assert.ok(
+    rows.every((r) => r.total > 0),
+    'no "0 · 0%" phantom',
+  )
   assert.equal(total, 1550, '650 + 400 + 500 — the fold moves damage between rows, never out')
 })
 
 test('the fold is by NAME, not by shape: a real twin and a proper name are untouched', () => {
   const { rows } = groupByTarget(TL)
   const targets = rows.map((r) => r.target).sort()
-  assert.deepEqual(targets, [MOB, TWIN, NAMED].sort(), 'exactly the three spawns, spelled as fought')
+  assert.deepEqual(
+    targets,
+    [MOB, TWIN, NAMED].sort(),
+    'exactly the three spawns, spelled as fought',
+  )
 
   // (229) differs from (230) by its INSTANCE, not its casing — folding by lowercase key must
   // still tell them apart.
@@ -121,7 +133,10 @@ test('the fold is by NAME, not by shape: a real twin and a proper name are untou
 
   // "The Hand of Veeshan" was only ever seen capitalized; that IS its name. Nothing to prefer,
   // so nothing is lowercased — the fold relabels only when it has seen a lowercase variant.
-  assert.ok(rows.some((r) => r.target === NAMED), 'a proper name keeps its capital')
+  assert.ok(
+    rows.some((r) => r.target === NAMED),
+    'a proper name keeps its capital',
+  )
 })
 
 test('the folded row still ranks honestly — pct and share are identities, not constants', () => {
@@ -129,7 +144,7 @@ test('the folded row still ranks honestly — pct and share are identities, not 
   assert.equal(
     rows.reduce((s, r) => s + r.total, 0),
     total,
-    'per-mob damage reconstructs the panel total'
+    'per-mob damage reconstructs the panel total',
   )
   const shares = rows.reduce((s, r) => s + r.share, 0)
   assert.ok(Math.abs(shares - 100) < 1e-9, 'shares are a partition of the outgoing total')
@@ -180,7 +195,7 @@ test('the drill is case-insensitive from EITHER spelling', () => {
 test('an unknown-target instant still gets its own visible row', () => {
   const tl: TimelineView = {
     ...TL,
-    events: [...EVENTS, { ...ev(MOB, 25, { t: 6_500 }), target: undefined }]
+    events: [...EVENTS, { ...ev(MOB, 25, { t: 6_500 }), target: undefined }],
   }
   const { rows } = groupByTarget(tl)
   assert.equal(rows.length, 4)

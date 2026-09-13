@@ -22,7 +22,7 @@ import {
   ITEM_RENAMES,
   isRenamedItem,
   renameItemName,
-  renamedItems
+  renamedItems,
 } from '../src/shared/itemRenames'
 import { buildItemDbIndex, itemKey, type ItemDbFile } from '../src/main/itemsDb'
 import { buildQuestItemIndex, questItemKey } from '../src/main/questItemIndex'
@@ -39,10 +39,10 @@ const QUESTS = questsJson as unknown as QuestData
 const SCRAPES = [
   'src/main/data/items.json',
   'src/renderer/src/data/eqlegends/posky.json',
-  'src/renderer/src/data/eqlegends/quests.json'
+  'src/renderer/src/data/eqlegends/quests.json',
 ].map((rel) => ({
   rel,
-  text: readFileSync(fileURLToPath(new URL(`../${rel}`, import.meta.url)), 'utf8')
+  text: readFileSync(fileURLToPath(new URL(`../${rel}`, import.meta.url)), 'utf8'),
 }))
 
 // =============================================================================
@@ -51,7 +51,7 @@ const SCRAPES = [
 
 test('renamedItems rewrites a matching record, keeps the old key as an alias, and never mutates', () => {
   const fixture = {
-    'old sword of testing': { page: 'Old Sword of Testing', name: 'Old Sword of Testing' }
+    'old sword of testing': { page: 'Old Sword of Testing', name: 'Old Sword of Testing' },
   }
   // The mechanics run through the module's own fold: a table row is simulated by feeding the map
   // through `renamedItems` with the REAL (possibly empty) table first — identity — and then the
@@ -90,7 +90,7 @@ test('the committed scrapes still spell every renamed item the OLD way', () => {
     const carriers = SCRAPES.filter((s) => s.text.includes(r.from))
     assert.ok(
       carriers.length > 0,
-      `${r.from}: no committed scrape carries this name any more — a re-scrape landed the rename, so delete the row`
+      `${r.from}: no committed scrape carries this name any more — a re-scrape landed the rename, so delete the row`,
     )
   }
 })
@@ -100,7 +100,10 @@ test('the item DB index serves the new name, and BOTH spellings still resolve', 
   for (const r of ITEM_RENAMES) {
     const viaOld = index.get(itemKey(r.from))
     const viaNew = index.get(itemKey(r.to))
-    assert.ok(viaOld, `${r.from}: the old key must stay addressable (logs and share bundles have it)`)
+    assert.ok(
+      viaOld,
+      `${r.from}: the old key must stay addressable (logs and share bundles have it)`,
+    )
     assert.ok(viaNew, `${r.to}: the new key must resolve`)
     assert.equal(viaOld.page, r.to, 'the old key must answer with the CURRENT name')
     assert.equal(viaNew.page, r.to)
@@ -118,7 +121,11 @@ test('the Shimmering Bracer rename is upstream in every scrape that names the it
   const index = buildItemDbIndex(ITEMS)
   const renamed = index.get(itemKey('Shimmering Bracer of Protection'))
   assert.ok(renamed, 'the new page is in items.json')
-  assert.equal(index.get(itemKey('Scintillating Bracer of Protection')), undefined, 'old page dropped with the redirect')
+  assert.equal(
+    index.get(itemKey('Scintillating Bracer of Protection')),
+    undefined,
+    'old page dropped with the redirect',
+  )
   // posky.json: the Rogue Test of Stealth reward carries the new spelling on both fields.
   const rogue = POSKY.quests.find((q) => q.name === 'Rogue Test of Stealth')
   assert.ok(rogue, 'Rogue Test of Stealth is in the committed scrape')
@@ -126,7 +133,10 @@ test('the Shimmering Bracer rename is upstream in every scrape that names the it
   assert.equal(rogue.rewardPage, 'Shimmering Bracer of Protection')
   // And nothing anywhere still writes the old spelling.
   for (const s of SCRAPES) {
-    assert.ok(!s.text.includes('Scintillating Bracer'), `${s.rel} still carries the retired spelling`)
+    assert.ok(
+      !s.text.includes('Scintillating Bracer'),
+      `${s.rel} still carries the retired spelling`,
+    )
   }
 })
 

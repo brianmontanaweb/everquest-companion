@@ -66,7 +66,7 @@ function headings(wt: string, re: RegExp): { name: string; from: number; to: num
   return heads.map((h, i) => ({
     name: h[1],
     from: h.index + h[0].length,
-    to: i + 1 < heads.length ? heads[i + 1].index : wt.length
+    to: i + 1 < heads.length ? heads[i + 1].index : wt.length,
   }))
 }
 
@@ -81,7 +81,7 @@ const CLIENT_ALIAS = new Map<string, string>([
   ['empower', 'empowering'],
   // Prose says "Over Channel" (the Magician table says "Overchannel"); the client
   // prints one word, "overchannel" (487 in the real log).
-  ['over channel', 'overchannel']
+  ['over channel', 'overchannel'],
 ])
 
 export function clientKey(name: string): string {
@@ -111,12 +111,14 @@ const SKILL_ALIAS = new Map<string, string>([
   ['wind', 'Wind Instruments'],
   // Spelled both ways across the 16 pages; the client uses the -ing forms.
   ['beg', 'Begging'],
-  ['track', 'Tracking']
+  ['track', 'Tracking'],
 ])
 
 /** Exported for classUnlocks.ts, which spells unlocked SKILL names the same way. */
 export function normalizeSkill(label: string): string {
-  const s = plain(label).replace(/\s*\*+$/, '').trim()
+  const s = plain(label)
+    .replace(/\s*\*+$/, '')
+    .trim()
   const aliased = SKILL_ALIAS.get(s.toLowerCase())
   if (aliased !== undefined) return aliased
   return s.replace(/^(\d) Hand /, '$1H ')
@@ -167,7 +169,7 @@ export function parseMatrixTable(block: string, known: Set<string>): Map<string,
  */
 export function parsePerClassSections(
   wt: string,
-  abbrOf: Map<string, string>
+  abbrOf: Map<string, string>,
 ): Map<string, string[]> {
   const byName = new Map<string, Set<string>>()
   for (const sec of headings(wt, /^===\s*\[\[([^\]]+)\]\]\s*===\s*$/gm)) {
@@ -186,7 +188,9 @@ export function parsePerClassSections(
 function sectionEntryKeys(section: string): string[] {
   return section
     .split('\n')
-    .filter((l) => l.startsWith('|') && !l.startsWith('|}') && !l.startsWith('|-') && !l.includes('{{'))
+    .filter(
+      (l) => l.startsWith('|') && !l.startsWith('|}') && !l.startsWith('|-') && !l.includes('{{'),
+    )
     .map((l) => clientKey(l.slice(1).replace(/\s+(Stance|Invocation)$/i, '')))
     .filter((k) => k.length > 0)
 }
@@ -252,7 +256,7 @@ export function parseAbilityFootnotes(wt: string): string[] {
 /** `Alternate Advancement` § "=== <Class> Class AAs ===" → class-exclusive ability names. */
 export function parseAaAbilities(
   wt: string,
-  abbrOf: Map<string, string>
+  abbrOf: Map<string, string>,
 ): Map<string, Set<string>> {
   const out = new Map<string, Set<string>>()
   for (const sec of headings(wt, /^===\s*(.+?)\s+Class AAs\s*===\s*$/gm)) {
@@ -283,7 +287,7 @@ export function disputes(
   kind: string,
   other: string,
   prose: Map<string, string[]>,
-  cmp: Map<string, string[]>
+  cmp: Map<string, string[]>,
 ): string[] {
   const out: string[] = []
   for (const [name, classes] of prose) {

@@ -36,7 +36,7 @@ import {
   DEFAULT_LOOT_SORT,
   LOOT_SORT_OPTIONS,
   type LootSortKey,
-  type SortableLootRow
+  type SortableLootRow,
 } from '../src/renderer/src/features/loot/lootSort'
 
 /** A grouped row, as `groupLootRows` builds them — only the three fields the sort reads. */
@@ -67,7 +67,7 @@ test('count: equal counts break on the newer group, then on name', () => {
   const list = [
     row('Older five', 5, 100),
     row('Newer five', 5, 900),
-    row('Another five', 5, 900) // same count AND same ts as 'Newer five' — name decides
+    row('Another five', 5, 900), // same count AND same ts as 'Newer five' — name decides
   ]
   assert.deepEqual(names(sortLootRows(list, 'count')), ['Another five', 'Newer five', 'Older five'])
 })
@@ -76,12 +76,12 @@ test('recent: newest group first — the question the window could not answer', 
   const list = [
     row('Looted an hour ago', 4, 1_000),
     row('Looted just now', 1, 9_000),
-    row('Looted yesterday', 40, 10)
+    row('Looted yesterday', 40, 10),
   ]
   assert.deepEqual(names(sortLootRows(list, 'recent')), [
     'Looted just now',
     'Looted an hour ago',
-    'Looted yesterday'
+    'Looted yesterday',
   ])
 })
 
@@ -106,7 +106,7 @@ test('every order is TOTAL — no order depends on the input order', () => {
   const build = (): SortableLootRow[] => [
     row('Alpha', 5, 500),
     row('Beta', 5, 500),
-    row('Gamma', 5, 500)
+    row('Gamma', 5, 500),
   ]
   for (const opt of LOOT_SORT_OPTIONS) {
     const forward = names(sortLootRows(build(), opt.value))
@@ -144,11 +144,21 @@ test('the chosen order is the WHOLE order — nothing re-blocks the list behind 
     row('Bone Chips', 3, 100), // the oldest
     row('Rune Word', 12, 50), // the most looted
     row('Sphinx Claw', 7, 900), // the newest
-    row('Silk Swatch', 1, 800)
+    row('Silk Swatch', 1, 800),
   ]
 
-  assert.deepEqual(names(sortLootRows(list, 'recent')), ['Sphinx Claw', 'Silk Swatch', 'Bone Chips', 'Rune Word'])
-  assert.deepEqual(names(sortLootRows(list, 'count')), ['Rune Word', 'Sphinx Claw', 'Bone Chips', 'Silk Swatch'])
+  assert.deepEqual(names(sortLootRows(list, 'recent')), [
+    'Sphinx Claw',
+    'Silk Swatch',
+    'Bone Chips',
+    'Rune Word',
+  ])
+  assert.deepEqual(names(sortLootRows(list, 'count')), [
+    'Rune Word',
+    'Sphinx Claw',
+    'Bone Chips',
+    'Silk Swatch',
+  ])
 })
 
 test('the key union is closed — a new option cannot ship without a comparator', () => {

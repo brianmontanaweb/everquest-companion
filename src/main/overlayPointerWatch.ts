@@ -38,7 +38,7 @@ import {
   startPointerWatch,
   stopPointerWatch,
   type WatchPoint,
-  type WatchRect
+  type WatchRect,
 } from './pointerWatch'
 import { getOverlayConfig } from './store'
 import type { OverlayKind } from '../shared/types'
@@ -66,7 +66,7 @@ const probe: PointerWatchProbe | null = E2E
       cursor: null,
       watching: () => pointerWatchKeys(),
       applied: () => ({ ...applied }),
-      exits: () => ({ ...exits })
+      exits: () => ({ ...exits }),
     }
   : null
 if (probe) (globalThis as unknown as Record<string, unknown>).__eqOverlayPointerWatch = probe
@@ -121,7 +121,7 @@ export function watchOverlayPointer(kind: OverlayKind, w: BrowserWindow, ignore:
   const watch = overlayShouldWatch({
     locked: getOverlayConfig(kind).locked,
     captured: !ignore,
-    alive: rect !== null
+    alive: rect !== null,
   })
   if (!watch || rect === null) {
     stopPointerWatch(kind)
@@ -131,7 +131,7 @@ export function watchOverlayPointer(kind: OverlayKind, w: BrowserWindow, ignore:
     rect,
     confirm: () => windowRect(w),
     cursor: cursorPoint,
-    exit: () => sendPointerExit(kind, w)
+    exit: () => sendPointerExit(kind, w),
   })
 }
 

@@ -70,13 +70,18 @@ interface Placement {
 function fightPlacement(app: ElectronApplication): Promise<Placement> {
   return app.evaluate(({ BrowserWindow, screen }) => {
     const w = BrowserWindow.getAllWindows().find((win) =>
-      win.webContents.getURL().includes('kind=fight')
+      win.webContents.getURL().includes('kind=fight'),
     )
     if (!w) return { bounds: null, onScreen: false }
     const b = w.getBounds()
     const onScreen = screen.getAllDisplays().some((d) => {
       const a = d.workArea
-      return b.x >= a.x && b.y >= a.y && b.x + b.width <= a.x + a.width && b.y + b.height <= a.y + a.height
+      return (
+        b.x >= a.x &&
+        b.y >= a.y &&
+        b.x + b.width <= a.x + a.width &&
+        b.y + b.height <= a.y + a.height
+      )
     })
     return { bounds: b, onScreen }
   })
@@ -140,21 +145,26 @@ async function checkBottomAnchorSurvives(app: ElectronApplication, ov: Page): Pr
     x: Math.max(screenRect.x, screenRect.x + screenRect.width - 380 - 40),
     y: screenRect.y + screenRect.height - 320 + 2,
     width: 380,
-    height: 320
+    height: 320,
   }
   await storeBounds(ov, parked)
   await announceDisplayChange(app)
-  const near = (b: Bounds | null): boolean => b !== null && Math.abs(b.y - parked.y) <= 2 && Math.abs(b.x - parked.x) <= 2
-  const settled = await settle(() => fightPlacement(app), (p) => near(p.bounds), { timeoutMs: 10_000 })
+  const near = (b: Bounds | null): boolean =>
+    b !== null && Math.abs(b.y - parked.y) <= 2 && Math.abs(b.x - parked.x) <= 2
+  const settled = await settle(
+    () => fightPlacement(app),
+    (p) => near(p.bounds),
+    { timeoutMs: 10_000 },
+  )
   check(
     'JOS-433: a meter parked over the bottom edge is still there after a display change',
     near(settled.bounds),
-    `${key(settled.bounds)} (parked at ${key(parked)})`
+    `${key(settled.bounds)} (parked at ${key(parked)})`,
   )
   check(
     '…and the store still holds the rectangle the user chose',
     key(await storedBounds(ov)) === key(parked),
-    key(await storedBounds(ov))
+    key(await storedBounds(ov)),
   )
 }
 
@@ -176,7 +186,7 @@ async function reopenFightOverlay(app: ElectronApplication, page: Page): Promise
     await settle(
       () => page.evaluate(() => (window as unknown as { eq: OverlayToggle }).eq.getOverlayState()),
       (s) => s.fight === want,
-      { timeoutMs: 10_000 }
+      { timeoutMs: 10_000 },
     )
   }
   return overlayWindow(app, 'fight')
@@ -196,25 +206,48 @@ export async function stepOverlayDisplay(app: ElectronApplication, page: Page): 
   // The state a player wakes up to: the store remembers a monitor that is no longer there. Written
   // WITHOUT touching the window, exactly as an unplugged cable leaves it.
   await storeBounds(ov, LOST_MONITOR)
-  check('a rectangle on a monitor that no longer exists is still what the store remembers',
-    key(await storedBounds(ov)) === key(LOST_MONITOR))
+  check(
+    'a rectangle on a monitor that no longer exists is still what the store remembers',
+    key(await storedBounds(ov)) === key(LOST_MONITOR),
+  )
 
   // ── the LIVE half: the screens change under a running app ────────────────────────────────
   await announceDisplayChange(app)
-  const live = await settle(() => fightPlacement(app), (p) => p.onScreen, { timeoutMs: 10_000 })
-  check('a monitor change puts the overlay back on a display that exists', live.onScreen, key(live.bounds))
-  check('…and the store still remembers where the USER put it — the clamp is what is SHOWN',
-    key(await storedBounds(ov)) === key(LOST_MONITOR), key(await storedBounds(ov)))
+  const live = await settle(
+    () => fightPlacement(app),
+    (p) => p.onScreen,
+    { timeoutMs: 10_000 },
+  )
+  check(
+    'a monitor change puts the overlay back on a display that exists',
+    live.onScreen,
+    key(live.bounds),
+  )
+  check(
+    '…and the store still remembers where the USER put it — the clamp is what is SHOWN',
+    key(await storedBounds(ov)) === key(LOST_MONITOR),
+    key(await storedBounds(ov)),
+  )
 
   // ── the CREATION half: the report's own "I restarted and toggled it off and on" ───────────
   const reopened = await reopenFightOverlay(app, page)
   if (!check('the fight overlay reopens', reopened !== null)) return
-  const fresh = await settle(() => fightPlacement(app), (p) => p.bounds !== null, { timeoutMs: 10_000 })
-  check('…and a window CREATED from that rectangle comes up on screen, not past the edge of it',
-    fresh.onScreen, key(fresh.bounds))
+  const fresh = await settle(
+    () => fightPlacement(app),
+    (p) => p.bounds !== null,
+    { timeoutMs: 10_000 },
+  )
+  check(
+    '…and a window CREATED from that rectangle comes up on screen, not past the edge of it',
+    fresh.onScreen,
+    key(fresh.bounds),
+  )
   const kept = await storedBounds(reopened as Page)
-  check('…with the stored rectangle STILL untouched, so plugging the monitor back in restores it',
-    key(kept) === key(LOST_MONITOR), key(kept))
+  check(
+    '…with the stored rectangle STILL untouched, so plugging the monitor back in restores it',
+    key(kept) === key(LOST_MONITOR),
+    key(kept),
+  )
 
   // ── JOS-433: the OTHER half of "clamp what is shown" — clamp it as little as possible ──────
   await checkBottomAnchorSurvives(app, reopened as Page)

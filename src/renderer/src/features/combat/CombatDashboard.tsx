@@ -22,9 +22,23 @@ import { useMemo } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import type { SegmentView, TimelineView } from '@shared/combat'
 import { formatNum as fmt } from '../../lib/formatRate'
-import { Bar, CopyButton, DashCard, KIND_COLOR, QuietNote, RESIST_COLOR, SkillBar } from './combatShared'
+import {
+  Bar,
+  CopyButton,
+  DashCard,
+  KIND_COLOR,
+  QuietNote,
+  RESIST_COLOR,
+  SkillBar,
+} from './combatShared'
 import { formatMobsText } from './copyText'
-import { groupByTarget, skillsForTarget, type Drill, type MobBreakdown, type TargetDetail } from './dashboardData'
+import {
+  groupByTarget,
+  skillsForTarget,
+  type Drill,
+  type MobBreakdown,
+  type TargetDetail,
+} from './dashboardData'
 import { DpsOverTime } from './DpsOverTime'
 import { Tooltip } from '../../lib/Tooltip'
 
@@ -48,13 +62,15 @@ export function ringlessText(r: Ringless): string {
 export function DpsChartCard({
   tl,
   live,
-  ringless
+  ringless,
 }: {
   tl: TimelineView | null
   live: boolean
   ringless: Ringless
 }): React.JSX.Element {
-  return <DpsOverTime tl={tl} live={live} noRing={ringlessText(ringless)} fill testId="dash-panel" />
+  return (
+    <DpsOverTime tl={tl} live={live} noRing={ringlessText(ringless)} fill testId="dash-panel" />
+  )
 }
 
 // ── Panel 3: Damage by mob ─────────────────────────────────────────────────────────
@@ -62,7 +78,13 @@ export function DpsChartCard({
 const MOB_ROWS = 10
 
 /** The mob card's header stats + its copy affordance. Nothing to say ⇒ nothing rendered. */
-function MobCardStats({ seg, mobs }: { seg: SegmentView; mobs: MobBreakdown | null }): React.JSX.Element | null {
+function MobCardStats({
+  seg,
+  mobs,
+}: {
+  seg: SegmentView
+  mobs: MobBreakdown | null
+}): React.JSX.Element | null {
   if (!mobs || mobs.rows.length === 0) return null
   const a = mobs.estimated ? '~' : ''
   return (
@@ -73,7 +95,10 @@ function MobCardStats({ seg, mobs }: { seg: SegmentView; mobs: MobBreakdown | nu
       </Typography>
       {/* Copies the ranked rows as they are LISTED here — the card's own cap included, so
           the paste says what it left off instead of quietly widening. */}
-      <CopyButton getText={() => formatMobsText(seg, mobs, MOB_ROWS)} title="Copy this breakdown as text" />
+      <CopyButton
+        getText={() => formatMobsText(seg, mobs, MOB_ROWS)}
+        title="Copy this breakdown as text"
+      />
     </Stack>
   )
 }
@@ -83,7 +108,7 @@ function MobRows({
   mobs,
   rows,
   selected,
-  setDrill
+  setDrill,
 }: {
   mobs: MobBreakdown
   rows: MobBreakdown['rows']
@@ -111,7 +136,11 @@ function MobRows({
             <>
               {m.target}
               {m.resists > 0 && (
-                <Typography component="span" variant="caption" sx={{ ml: 0.5, color: RESIST_COLOR }}>
+                <Typography
+                  component="span"
+                  variant="caption"
+                  sx={{ ml: 0.5, color: RESIST_COLOR }}
+                >
                   {a}
                   {m.resists} resist
                 </Typography>
@@ -139,7 +168,7 @@ export function MobDamageCard({
   tl,
   ringless,
   drill,
-  setDrill
+  setDrill,
 }: {
   /** The selected segment — this card's rows are only meaningful against that subject, and the
    *  copied text names it. */
@@ -155,7 +184,12 @@ export function MobDamageCard({
   const selected = drill?.kind === 'target' ? drill.target : null
 
   return (
-    <DashCard title="Damage by mob" right={<MobCardStats seg={seg} mobs={mobs} />} fill testId="dash-panel">
+    <DashCard
+      title="Damage by mob"
+      right={<MobCardStats seg={seg} mobs={mobs} />}
+      fill
+      testId="dash-panel"
+    >
       {!tl || !mobs ? (
         <QuietNote>{ringlessText(ringless)}</QuietNote>
       ) : rows.length === 0 ? (
@@ -178,7 +212,7 @@ export function MobDamageCard({
 export function TargetSkillBars({
   target,
   detail,
-  seg
+  seg,
 }: {
   target: string
   detail: TargetDetail
@@ -188,7 +222,14 @@ export function TargetSkillBars({
   const share = seg.outTotal > 0 ? (detail.total / seg.outTotal) * 100 : 0
   return (
     <Box>
-      <Stack direction="row" spacing={1} alignItems="baseline" flexWrap="wrap" useFlexGap sx={{ mb: 0.75 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="baseline"
+        flexWrap="wrap"
+        useFlexGap
+        sx={{ mb: 0.75 }}
+      >
         <Typography variant="caption" sx={{ color: KIND_COLOR.enemy, fontWeight: 700 }}>
           {a}
           {fmt(detail.total)} dealt to {target}
@@ -207,9 +248,16 @@ export function TargetSkillBars({
         </Tooltip>
       </Stack>
       {detail.rows.map((s) => (
-        <SkillBar key={`${s.category}|${s.name}`} s={s} approx={detail.estimated} activeSec={seg.activeSec} />
+        <SkillBar
+          key={`${s.category}|${s.name}`}
+          s={s}
+          approx={detail.estimated}
+          activeSec={seg.activeSec}
+        />
       ))}
-      {detail.rows.length === 0 && <QuietNote>Nothing landed on this mob in the selected segment.</QuietNote>}
+      {detail.rows.length === 0 && (
+        <QuietNote>Nothing landed on this mob in the selected segment.</QuietNote>
+      )}
     </Box>
   )
 }

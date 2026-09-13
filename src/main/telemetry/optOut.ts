@@ -50,7 +50,7 @@ import {
   type TelemetryBatch,
   type TelemetryEnvelope,
   type TelemetryFlipKind,
-  type TelemetryPrefs
+  type TelemetryPrefs,
 } from '../../shared/telemetry'
 
 /**
@@ -83,7 +83,7 @@ export function flipNoticeKind(was: boolean, now: boolean): TelemetryFlipKind | 
 export function flipNoticeBatch(
   kind: TelemetryFlipKind,
   env: TelemetryEnvelope,
-  nowMs: number
+  nowMs: number,
 ): TelemetryBatch {
   return { v: TELEMETRY_API_VERSION, env, events: [{ ts: nowMs, ev: { t: kind } }] }
 }
@@ -99,7 +99,7 @@ export function flipNoticeBatch(
 export function telemetryFlipNoticeEnabled(
   e2e: boolean,
   endpoint: string,
-  prefs: TelemetryPrefs
+  prefs: TelemetryPrefs,
 ): boolean {
   return !e2e && endpoint.length > 0 && prefs.noticeShown
 }

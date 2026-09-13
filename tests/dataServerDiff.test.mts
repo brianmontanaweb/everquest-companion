@@ -36,58 +36,58 @@ const CASES: DiffCase[] = [
     what: 'insert at the head, before the first row',
     rows: [{ key: 'b', cells: {} }],
     ops: [{ op: 'insert', before: 'b', row: { key: 'a', cells: {} } }],
-    expectKeys: ['a', 'b']
+    expectKeys: ['a', 'b'],
   },
   {
     what: 'insert at the tail, after the last row',
     rows: [{ key: 'a', cells: {} }],
     ops: [{ op: 'insert', after: 'a', row: { key: 'b', cells: {} } }],
-    expectKeys: ['a', 'b']
+    expectKeys: ['a', 'b'],
   },
   {
     what: 'insert between two anchors',
     rows: [
       { key: 'a', cells: {} },
-      { key: 'c', cells: {} }
+      { key: 'c', cells: {} },
     ],
     ops: [{ op: 'insert', after: 'a', row: { key: 'b', cells: {} } }],
-    expectKeys: ['a', 'b', 'c']
+    expectKeys: ['a', 'b', 'c'],
   },
   {
     what: 'an anchor in the MIDDLE, named with before',
     rows: [
       { key: 'a', cells: {} },
-      { key: 'c', cells: {} }
+      { key: 'c', cells: {} },
     ],
     ops: [{ op: 'insert', before: 'c', row: { key: 'b', cells: {} } }],
-    expectKeys: ['a', 'b', 'c']
+    expectKeys: ['a', 'b', 'c'],
   },
   {
     what: 'insert with neither anchor means the window was empty',
     rows: [],
     ops: [{ op: 'insert', row: { key: 'only', cells: {} } }],
-    expectKeys: ['only']
+    expectKeys: ['only'],
   },
   {
     what: 'ops apply IN ORDER: the second may anchor on what the first inserted',
     rows: [{ key: 'a', cells: {} }],
     ops: [
       { op: 'insert', after: 'a', row: { key: 'b', cells: {} } },
-      { op: 'insert', after: 'b', row: { key: 'c', cells: {} } }
+      { op: 'insert', after: 'b', row: { key: 'c', cells: {} } },
     ],
-    expectKeys: ['a', 'b', 'c']
+    expectKeys: ['a', 'b', 'c'],
   },
   {
     what: 'an insert and the drop it pushes out, in one batch',
     rows: [
       { key: 'b', cells: {} },
-      { key: 'c', cells: {} }
+      { key: 'c', cells: {} },
     ],
     ops: [
       { op: 'insert', before: 'b', row: { key: 'a', cells: {} } },
-      { op: 'drop', key: 'c' }
+      { op: 'drop', key: 'c' },
     ],
-    expectKeys: ['a', 'b']
+    expectKeys: ['a', 'b'],
   },
   {
     // THE ENGINE'S OWN ORDER (JOS-480). `engined`'s diff emits every drop FIRST, so that every
@@ -99,15 +99,15 @@ const CASES: DiffCase[] = [
     rows: [
       { key: 'loot:2', cells: {} },
       { key: 'loot:1', cells: {} },
-      { key: 'loot:0', cells: {} }
+      { key: 'loot:0', cells: {} },
     ],
     ops: [
       { op: 'drop', key: 'loot:0' },
-      { op: 'insert', before: 'loot:2', row: { key: 'loot:3', cells: {} } }
+      { op: 'insert', before: 'loot:2', row: { key: 'loot:3', cells: {} } },
     ],
     total: 4,
     expectKeys: ['loot:3', 'loot:2', 'loot:1'],
-    expectTotal: 4
+    expectTotal: 4,
   },
   {
     // AN ABSENT VALUE ARRIVES AS null, not as the dash the renderer draws (`views/loot.rs` argues
@@ -120,9 +120,9 @@ const CASES: DiffCase[] = [
         before: 'loot:2',
         row: {
           key: 'loot:3',
-          cells: { item: 'Golden Efreeti Boots', count: null, disposition: null, created: null }
-        }
-      }
+          cells: { item: 'Golden Efreeti Boots', count: null, disposition: null, created: null },
+        },
+      },
     ],
     expectKeys: ['loot:3', 'loot:2'],
     expectCells: {
@@ -130,55 +130,55 @@ const CASES: DiffCase[] = [
         item: 'Golden Efreeti Boots',
         count: null,
         disposition: null,
-        created: null
-      }
-    }
+        created: null,
+      },
+    },
   },
   {
     what: 'drop shrinks the window',
     rows: [
       { key: 'a', cells: {} },
-      { key: 'b', cells: {} }
+      { key: 'b', cells: {} },
     ],
     ops: [{ op: 'drop', key: 'a' }],
-    expectKeys: ['b']
+    expectKeys: ['b'],
   },
   {
     what: 'dropping the last row leaves an EMPTY window, which is not a loading one',
     rows: [{ key: 'a', cells: {} }],
     ops: [{ op: 'drop', key: 'a' }],
-    expectKeys: []
+    expectKeys: [],
   },
   {
     what: 'update merges the cells it carries and leaves the rest alone',
     rows: [{ key: 'a', cells: { name: 'Primitive', dps: 1, share: 0.5 } }],
     ops: [{ op: 'update', key: 'a', cells: { dps: 2 } }],
     expectKeys: ['a'],
-    expectCells: { a: { name: 'Primitive', dps: 2, share: 0.5 } }
+    expectCells: { a: { name: 'Primitive', dps: 2, share: 0.5 } },
   },
   {
     what: 'an EXPLICIT null clears a cell, and only that cell',
     rows: [{ key: 'a', cells: { zone: "Nagafen's Lair", from: 'a fire giant warlord' } }],
     ops: [{ op: 'update', key: 'a', cells: { zone: null } }],
     expectKeys: ['a'],
-    expectCells: { a: { zone: null, from: 'a fire giant warlord' } }
+    expectCells: { a: { zone: null, from: 'a fire giant warlord' } },
   },
   {
     what: 'an update may introduce a cell the row never had',
     rows: [{ key: 'a', cells: { dps: 1 } }],
     ops: [{ op: 'update', key: 'a', cells: { mine: true } }],
     expectKeys: ['a'],
-    expectCells: { a: { dps: 1, mine: true } }
+    expectCells: { a: { dps: 1, mine: true } },
   },
   {
     what: 'newest wins WITHIN a batch: two updates of one cell leave the later one',
     rows: [{ key: 'a', cells: { dps: 1 } }],
     ops: [
       { op: 'update', key: 'a', cells: { dps: 2 } },
-      { op: 'update', key: 'a', cells: { dps: 3 } }
+      { op: 'update', key: 'a', cells: { dps: 3 } },
     ],
     expectKeys: ['a'],
-    expectCells: { a: { dps: 3 } }
+    expectCells: { a: { dps: 3 } },
   },
   {
     what: 'total drifts only when the frame says so',
@@ -186,28 +186,28 @@ const CASES: DiffCase[] = [
     ops: [{ op: 'drop', key: 'a' }],
     total: 1833,
     expectKeys: [],
-    expectTotal: 1833
+    expectTotal: 1833,
   },
   {
     what: 'an insert anchored on a row outside the window is refused, not guessed',
     rows: [{ key: 'a', cells: {} }],
     ops: [{ op: 'insert', before: 'zzz', row: { key: 'b', cells: {} } }],
     expectKeys: ['a'],
-    expectNote: 'zzz'
+    expectNote: 'zzz',
   },
   {
     what: 'an update of a row outside the window is refused',
     rows: [{ key: 'a', cells: {} }],
     ops: [{ op: 'update', key: 'zzz', cells: { dps: 1 } }],
     expectKeys: ['a'],
-    expectNote: 'zzz'
+    expectNote: 'zzz',
   },
   {
     what: 'a drop of a row outside the window is refused',
     rows: [{ key: 'a', cells: {} }],
     ops: [{ op: 'drop', key: 'zzz' }],
     expectKeys: ['a'],
-    expectNote: 'zzz'
+    expectNote: 'zzz',
   },
   {
     what: 'a second insert of a key the window already holds is refused',
@@ -215,19 +215,19 @@ const CASES: DiffCase[] = [
     ops: [{ op: 'insert', after: 'a', row: { key: 'a', cells: { dps: 99 } } }],
     expectKeys: ['a'],
     expectCells: { a: { dps: 1 } },
-    expectNote: 'already holds'
+    expectNote: 'already holds',
   },
   {
     what: 'one refused op does not cost the batch its other ops',
     rows: [{ key: 'a', cells: { dps: 1 } }],
     ops: [
       { op: 'drop', key: 'zzz' },
-      { op: 'update', key: 'a', cells: { dps: 2 } }
+      { op: 'update', key: 'a', cells: { dps: 2 } },
     ],
     expectKeys: ['a'],
     expectCells: { a: { dps: 2 } },
-    expectNote: 'zzz'
-  }
+    expectNote: 'zzz',
+  },
 ]
 
 for (const c of CASES) {
@@ -247,7 +247,11 @@ for (const c of CASES) {
       assert.deepEqual(view.handle.state.rows?.[keys.indexOf(key)].cells, cells)
     }
     if (c.expectNote === undefined) assert.deepEqual(r.notes, [])
-    else assert.ok(r.notes.some((n) => n.includes(c.expectNote ?? '')), r.notes.join(' | '))
+    else
+      assert.ok(
+        r.notes.some((n) => n.includes(c.expectNote ?? '')),
+        r.notes.join(' | '),
+      )
   })
 }
 
@@ -264,15 +268,15 @@ test('a diff never mutates the array or the rows a listener was already handed',
     total: 2,
     rows: [
       { key: 'a', cells: { dps: 1 } },
-      { key: 'b', cells: { dps: 2 } }
-    ]
+      { key: 'b', cells: { dps: 2 } },
+    ],
   })
   const before = view.states[view.states.length - 1]
   r.deliver({
     kind: 'diff',
     id: view.id,
     epoch: 1,
-    ops: [{ op: 'update', key: 'a', cells: { dps: 9 } }]
+    ops: [{ op: 'update', key: 'a', cells: { dps: 9 } }],
   })
   const after = view.states[view.states.length - 1]
 
@@ -296,7 +300,7 @@ test('a frame carrying a newer epoch bumps the world by itself', () => {
   assert.deepEqual(
     view.states.map((s) => s.loading),
     [false, true, false],
-    'the drop was not observable: a view must be able to say it is re-loading'
+    'the drop was not observable: a view must be able to say it is re-loading',
   )
 })
 
@@ -317,7 +321,10 @@ test('an epoch bump drops EVERY window on the connection', () => {
   // A diff for the old world cannot be applied to a window that no longer exists.
   r.deliver({ kind: 'diff', id: first.id, epoch: 2, ops: [{ op: 'drop', key: 'a' }] })
   assert.equal(first.handle.state.rows, null)
-  assert.ok(r.notes.some((n) => n.includes('before its reset')), r.notes.join(' | '))
+  assert.ok(
+    r.notes.some((n) => n.includes('before its reset')),
+    r.notes.join(' | '),
+  )
 })
 
 test('a frame from an epoch the world has left is dropped with a note', () => {
@@ -329,10 +336,13 @@ test('a frame from an epoch the world has left is dropped with a note', () => {
     kind: 'diff',
     id: view.id,
     epoch: 3,
-    ops: [{ op: 'insert', before: 'new', row: { key: 'stale', cells: {} } }]
+    ops: [{ op: 'insert', before: 'new', row: { key: 'stale', cells: {} } }],
   })
   assert.deepEqual(rowKeys(view.handle.state), ['new'])
-  assert.ok(r.notes.some((n) => n.includes('epoch 3')), r.notes.join(' | '))
+  assert.ok(
+    r.notes.some((n) => n.includes('epoch 3')),
+    r.notes.join(' | '),
+  )
   assert.equal(r.client.epoch, 4)
 })
 
@@ -357,7 +367,7 @@ test('frames for a subscription nobody opened are dropped, never thrown', () => 
       kind: 'error',
       id: 999,
       ok: false,
-      error: { code: 'internal', message: 'nobody asked' }
+      error: { code: 'internal', message: 'nobody asked' },
     })
   })
   assert.equal(r.notes.length, 4, r.notes.join(' | '))
@@ -373,8 +383,11 @@ test('a diff that arrives before its reset is dropped', () => {
     kind: 'diff',
     id: view.id,
     epoch: 1,
-    ops: [{ op: 'insert', row: { key: 'a', cells: {} } }]
+    ops: [{ op: 'insert', row: { key: 'a', cells: {} } }],
   })
   assert.equal(view.handle.state.rows, null)
-  assert.ok(r.notes.some((n) => n.includes('before its reset')), r.notes.join(' | '))
+  assert.ok(
+    r.notes.some((n) => n.includes('before its reset')),
+    r.notes.join(' | '),
+  )
 })

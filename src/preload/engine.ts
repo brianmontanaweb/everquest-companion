@@ -149,5 +149,5 @@ export const engineBridge = {
     ipcRenderer.invoke(IPC.engineLaunchState) as Promise<EngineLaunchSay>,
 
   /** The failure card's retry button. Resolves when main has taken the ask, not when it worked. */
-  engineRetry: (): Promise<void> => ipcRenderer.invoke(IPC.engineRetry) as Promise<void>
+  engineRetry: (): Promise<void> => ipcRenderer.invoke(IPC.engineRetry) as Promise<void>,
 }

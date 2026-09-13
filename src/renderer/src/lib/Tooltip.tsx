@@ -41,7 +41,7 @@ export function Tooltip({ cursor = 'pointer', children, ...rest }: TooltipProps)
   if (cursor === 'inherit') return <MuiTooltip {...rest}>{children}</MuiTooltip>
   const existing = (children.props as { className?: string }).className
   const child = cloneElement(children, {
-    className: existing ? `${existing} ${TIP_ANCHOR_CLASS}` : TIP_ANCHOR_CLASS
+    className: existing ? `${existing} ${TIP_ANCHOR_CLASS}` : TIP_ANCHOR_CLASS,
   } as Partial<unknown> & { className: string })
   return <MuiTooltip {...rest}>{child}</MuiTooltip>
 }

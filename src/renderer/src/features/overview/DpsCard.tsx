@@ -120,11 +120,19 @@ interface CardBody {
   view: ScopedView
 }
 
-function cardBody(v: ScopedView, combine: boolean, drill: Drill | null, selfLabel: string | null): CardBody {
+function cardBody(
+  v: ScopedView,
+  combine: boolean,
+  drill: Drill | null,
+  selfLabel: string | null,
+): CardBody {
   const rows = withSelfLabel(v.rows, selfLabel)
   const panel = meterPanel(rows, combine, meterDrill(drill))
   const { total, dps } = panelTotals(panel, v.total, v.dps)
-  return { panel, view: { rows, total, dps, activeDps: panelTotals(panel, v.total, v.activeDps).dps } }
+  return {
+    panel,
+    view: { rows, total, dps, activeDps: panelTotals(panel, v.total, v.activeDps).dps },
+  }
 }
 
 /** total · duration · active-time DPS — the secondary stat, never the headline (law 7). */
@@ -163,7 +171,7 @@ function DpsRows({
   seg,
   panel,
   setDrill,
-  onOpenCombat
+  onOpenCombat,
 }: {
   seg: SegmentView
   /** the shared builder's answer, built ONCE in the card so its headline reads the same one. */
@@ -174,7 +182,9 @@ function DpsRows({
   const crumb = crumbOf(panel)
   return (
     <Stack sx={{ minWidth: 0 }}>
-      {crumb && <DrillCrumb crumb={crumb.crumb} parent={crumb.parent} compact setDrill={setDrill} />}
+      {crumb && (
+        <DrillCrumb crumb={crumb.crumb} parent={crumb.parent} compact setDrill={setDrill} />
+      )}
       <MeterRows
         panel={panel}
         activeSec={seg.activeSec}
@@ -237,26 +247,46 @@ export function DpsCard({ snap, onOpenCombat }: DpsCardProps): JSX.Element {
   // exactly how the headline came to describe the fight while the rows described a drill.
   const selfName = selfCharName(useModule<CharacterSnap>('character'))
   const selfLabel = selfMeterLabel(selfName, useShowSelfName())
-  const body = seg ? cardBody(scopedView(seg, meterScope, roster), combinePetRow, drill, selfLabel) : null
+  const body = seg
+    ? cardBody(scopedView(seg, meterScope, roster), combinePetRow, drill, selfLabel)
+    : null
 
   return (
     // The link down is offered even with nothing to show: "there are no fights" is a thing the
     // Combat tab says better than a glance card can, and a disappearing button would make the
     // one affordance this card exists for the least reliable thing on it.
-    <DashCard title="Damage" testId="overview-dps" right={<OpenInCombat onOpenCombat={onOpenCombat} />}>
+    <DashCard
+      title="Damage"
+      testId="overview-dps"
+      right={<OpenInCombat onOpenCombat={onOpenCombat} />}
+    >
       {/* No fights at all ⇒ the same honest quiet state the Combat tab shows. It never borrows
           the zone aggregate to look busy — Overall is a click away and says so there. */}
       {!head || !seg || !body ? (
         <QuietNote>No fights yet - engage something and it’ll appear here.</QuietNote>
       ) : (
         <>
-          <Typography variant="caption" color="text.secondary" data-testid="overview-dps-label" noWrap>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            data-testid="overview-dps-label"
+            noWrap
+          >
             {head.label}
           </Typography>
-          <Typography variant="h4" sx={{ color: 'primary.main', lineHeight: 1.15 }} data-testid="overview-dps-value">
+          <Typography
+            variant="h4"
+            sx={{ color: 'primary.main', lineHeight: 1.15 }}
+            data-testid="overview-dps-value"
+          >
             {formatRate(body.view.dps)}
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ mb: 0.75 }} data-testid="overview-dps-support">
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ mb: 0.75 }}
+            data-testid="overview-dps-support"
+          >
             {supportingLine(seg, body.view)}
           </Typography>
           {/* The inline per-ability stats a reader expanded are remembered beside the drill they

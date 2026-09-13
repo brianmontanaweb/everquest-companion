@@ -40,7 +40,7 @@ import {
   viewRect,
   visiblePoints,
   zoomAround,
-  type LayerMask
+  type LayerMask,
 } from '../src/renderer/src/features/maps/mapGeometry'
 // The MAIN-side parser, imported here on purpose: the JOS-65 golden at the bottom of this file
 // asserts what the user sees, and "what the user sees" starts at the bytes on disk. Both halves
@@ -124,7 +124,8 @@ test('cursor-anchored zoom holds the map point under the cursor exactly where it
 
   // And it survives a run of notches, which is how a user actually zooms.
   let v = view
-  for (let i = 0; i < 6; i += 1) v = zoomAround({ view: v, bounds: BOUNDS, vp: VP, anchor, factor: ZOOM_STEP })
+  for (let i = 0; i < 6; i += 1)
+    v = zoomAround({ view: v, bounds: BOUNDS, vp: VP, anchor, factor: ZOOM_STEP })
   const held = unproject(v, VP, anchor)
   near(held.x, before.x, 1e-4)
   near(held.y, before.y, 1e-4)
@@ -203,7 +204,7 @@ function linesOf(segs: Seg[]): MapLines {
     palette: Uint8Array.from([0, 0, 0]),
     colorIndex: new Uint8Array(segs.length),
     layer,
-    count: segs.length
+    count: segs.length,
   }
 }
 
@@ -216,7 +217,7 @@ const SEGS: Seg[] = [
   { x1: -40, y1: 0, x2: 40, y2: 0, layer: 0 }, // 2: crosses the rect end to end
   { x1: 0, y1: 0, x2: 4, y2: 4, layer: 2 }, // 3: inside, but on the LEGEND layer
   { x1: -9, y1: -100, x2: 100, y2: -9, layer: 0 }, // 4: box overlaps, line misses (see below)
-  { x1: 0, y1: 40, x2: 0, y2: 200, layer: 0 } // 5: above the rect on both endpoints
+  { x1: 0, y1: 40, x2: 0, y2: 200, layer: 0 }, // 5: above the rect on both endpoints
 ]
 
 test('the cull keeps every segment that could be seen, drops the ones that provably cannot', () => {
@@ -260,7 +261,7 @@ test('visible points carry their ORIGINAL index, so a React key survives panning
   // Index 1 is off-screen; index 3 is on the hidden legend layer.
   assert.deepEqual(
     vis.map((v) => v.index),
-    [0, 2]
+    [0, 2],
   )
   assert.equal(vis[0].point.display, 'a b')
 
@@ -268,7 +269,7 @@ test('visible points carry their ORIGINAL index, so a React key survives panning
   const wide = visiblePoints(points, expandRect(RECT, 1000), DEFAULT_LAYERS)
   assert.deepEqual(
     wide.map((v) => v.index),
-    [0, 1, 2]
+    [0, 1, 2],
   )
 })
 
@@ -326,14 +327,17 @@ function onScreen(text: string, zone: string): Map<string, { px: number; py: num
 test('JOS-65 the map is not mirrored: north renders ABOVE south, in both packs', () => {
   for (const [pack, text, north, south] of [
     ['default', OASIS_DEFAULT, 'to_The_Northern_Desert_of_Ro', 'to_The_Southern_Desert_of_Ro'],
-    ['brewall', OASIS_BREWALL, 'to_North_Desert_of_Ro', 'to_South_Desert_of_Ro']
+    ['brewall', OASIS_BREWALL, 'to_North_Desert_of_Ro', 'to_South_Desert_of_Ro'],
   ] as const) {
     const at = onScreen(text, 'oasis')
     const n = at.get(north)
     const s = at.get(south)
     assert.ok(n && s, `${pack}: both exits parsed`)
     // The whole ticket, in one comparison: SMALLER py is HIGHER on screen.
-    assert.ok(n.py < s.py, `${pack}: ${north} (py=${String(n.py)}) must be above ${south} (py=${String(s.py)})`)
+    assert.ok(
+      n.py < s.py,
+      `${pack}: ${north} (py=${String(n.py)}) must be above ${south} (py=${String(s.py)})`,
+    )
     // And they are genuinely apart — a degenerate fit that collapsed both to the pane centre
     // would satisfy nothing while passing a lazier assertion.
     assert.ok(s.py - n.py > PANE.h / 2, `${pack}: the two exits span the pane`)
@@ -343,7 +347,7 @@ test('JOS-65 the map is not mirrored: north renders ABOVE south, in both packs',
 test('JOS-65 …and east-to-west is left untouched, which is why the report named only N-S', () => {
   for (const [pack, text] of [
     ['default', NKARANA_DEFAULT],
-    ['brewall', NKARANA_BREWALL]
+    ['brewall', NKARANA_BREWALL],
   ] as const) {
     const at = onScreen(text, 'northkarana')
     const east = at.get('to_The_Eastern_Plains_of_Karana')
@@ -353,6 +357,9 @@ test('JOS-65 …and east-to-west is left untouched, which is why the report name
     assert.ok(east.px > west.px, `${pack}: east must render right of west`)
     // North Karana's only stated N-S exit is its southern one, and it must sit BELOW the pair
     // that straddles the zone's middle — the same fact as the Oasis case, from other bytes.
-    assert.ok(south.py > east.py && south.py > west.py, `${pack}: the southern exit is at the bottom`)
+    assert.ok(
+      south.py > east.py && south.py > west.py,
+      `${pack}: the southern exit is at the bottom`,
+    )
   }
 })

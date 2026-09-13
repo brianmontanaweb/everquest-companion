@@ -15,7 +15,7 @@ import type { EngineTimer } from '../src/main/dataServer/engineProtocol'
 import type {
   SupervisedChild,
   SupervisedStdin,
-  SupervisedStream
+  SupervisedStream,
 } from '../src/main/dataServer/supervisor'
 
 /**
@@ -61,7 +61,7 @@ export function fakeClock(): FakeClock {
       // it — an infinite loop in a test is the hardest kind of red to read.
       for (let guard = 0; guard < 1000 && fireDue(); guard += 1) continue
     },
-    pending: () => due.size
+    pending: () => due.size,
   }
 }
 
@@ -117,7 +117,8 @@ export class FakeChild implements SupervisedChild {
   on(event: 'exit', listener: (code: number | null, signal: string | null) => void): unknown
   on(event: 'error', listener: (err: Error) => void): unknown
   on(event: string, listener: unknown): unknown {
-    if (event === 'exit') this.onExitCbs.push(listener as (c: number | null, s: string | null) => void)
+    if (event === 'exit')
+      this.onExitCbs.push(listener as (c: number | null, s: string | null) => void)
     else this.onErrorCbs.push(listener as (e: Error) => void)
     return this
   }
@@ -180,7 +181,11 @@ export function connectError(code: string, port = 51413): Error & { code: string
  * `session.health`. Replies arrive on a microtask so the supervisor's promise chain behaves exactly
  * as it does over a socket: nothing resolves inside the call that sent it.
  */
-export function scriptedChannel(token: string, behaviour: EngineBehaviour, protocol = 1): ByteChannel {
+export function scriptedChannel(
+  token: string,
+  behaviour: EngineBehaviour,
+  protocol = 1,
+): ByteChannel {
   let onData: ((chunk: string) => void) | undefined
   let onClose: ((error?: unknown) => void) | undefined
   let greeted = false
@@ -213,7 +218,7 @@ export function scriptedChannel(token: string, behaviour: EngineBehaviour, proto
     },
     close() {
       closed = true
-    }
+    },
   }
 
   function answer(message: Record<string, unknown>): void {
@@ -229,7 +234,12 @@ export function scriptedChannel(token: string, behaviour: EngineBehaviour, proto
         return
       }
       if (behaviour === 'deny') {
-        reply({ kind: 'hello', ok: false, engineVersion: '0.0.0-scripted', protocolVersion: protocol })
+        reply({
+          kind: 'hello',
+          ok: false,
+          engineVersion: '0.0.0-scripted',
+          protocolVersion: protocol,
+        })
         return
       }
       greeted = true
@@ -237,7 +247,7 @@ export function scriptedChannel(token: string, behaviour: EngineBehaviour, proto
         kind: 'hello',
         ok: true,
         engineVersion: '0.0.0-scripted',
-        protocolVersion: behaviour === 'mismatch' ? protocol + 1 : protocol
+        protocolVersion: behaviour === 'mismatch' ? protocol + 1 : protocol,
       })
       return
     }
@@ -247,7 +257,7 @@ export function scriptedChannel(token: string, behaviour: EngineBehaviour, proto
       kind: 'reply',
       id: message.id,
       ok: true,
-      result: { status: 'idle', epoch: 1, uptimeMs: 1234 }
+      result: { status: 'idle', epoch: 1, uptimeMs: 1234 },
     })
   }
 }

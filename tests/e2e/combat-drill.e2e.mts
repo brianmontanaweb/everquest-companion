@@ -39,7 +39,7 @@ import {
   reportRun,
   settle,
   settleCount,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture } from './logFixture.mjs'
@@ -62,7 +62,10 @@ async function drilled(page: Page): Promise<boolean> {
 /** Open the Combat tab and wait for the dashboard. Safe when it is already open. */
 async function openCombat(page: Page): Promise<boolean> {
   await page.click(NAV_COMBAT, { timeout: 30_000 })
-  return page.waitForSelector(DASH, { timeout: 60_000 }).then(() => true, () => false)
+  return page.waitForSelector(DASH, { timeout: 60_000 }).then(
+    () => true,
+    () => false,
+  )
 }
 
 /** What the renderer actually stored, verbatim. `null` when nothing was ever drilled. */
@@ -82,10 +85,22 @@ async function armTheDrill(page: Page): Promise<boolean> {
     return false
   }
   check('a fresh install opens on level 1 — nothing auto-drills (JOS-35)', !(await drilled(page)))
-  check('…and nothing is stored yet, so an absent key IS level 1', (await storedDrill(page)) === null)
+  check(
+    '…and nothing is stored yet, so an absent key IS level 1',
+    (await storedDrill(page)) === null,
+  )
 
   await page.click(ROW, { timeout: 15_000 })
-  if (!check('clicking a source bar drills it', await settle(() => drilled(page), (d) => d, { timeoutMs: 10_000 }))) {
+  if (
+    !check(
+      'clicking a source bar drills it',
+      await settle(
+        () => drilled(page),
+        (d) => d,
+        { timeoutMs: 10_000 },
+      ),
+    )
+  ) {
     return false
   }
 
@@ -94,12 +109,20 @@ async function armTheDrill(page: Page): Promise<boolean> {
   const bars = page.locator(`[data-testid="dash-panel"] ${SKILL}`)
   const n = await bars.count()
   for (let i = 0; i < n && (await countOf(page, STATS)) === 0; i++) {
-    await bars.nth(i).click({ position: { x: 12, y: 8 }, timeout: 5_000 }).catch(() => undefined)
+    await bars
+      .nth(i)
+      .click({ position: { x: 12, y: 8 }, timeout: 5_000 })
+      .catch(() => undefined)
   }
   const expanded = (await countOf(page, STATS)) >= 1
-  if (!expanded) note('the drilled source has no stat-bearing ability here — only the drill is armed')
+  if (!expanded)
+    note('the drilled source has no stat-bearing ability here — only the drill is armed')
 
-  const stored = await settle(() => storedDrill(page), (v) => v !== null, { timeoutMs: 8_000 })
+  const stored = await settle(
+    () => storedDrill(page),
+    (v) => v !== null,
+    { timeoutMs: 8_000 },
+  )
   check(`the drill is stored under ${KEY}`, stored !== null, String(stored))
   return expanded
 }
@@ -107,22 +130,40 @@ async function armTheDrill(page: Page): Promise<boolean> {
 /** LAUNCH 2 — a second process, the same userData dir, the same drill. */
 async function checkAfterRestart(page: Page, expectAbility: boolean): Promise<void> {
   if (!check('the Combat tab opens after a restart', await openCombat(page))) return
-  check('…and the stored drill crossed the process boundary intact', (await storedDrill(page)) !== null)
+  check(
+    '…and the stored drill crossed the process boundary intact',
+    (await storedDrill(page)) !== null,
+  )
 
-  const still = await settle(() => drilled(page), (d) => d, { timeoutMs: 15_000 })
+  const still = await settle(
+    () => drilled(page),
+    (d) => d,
+    { timeoutMs: 15_000 },
+  )
   check('THE DRILL SURVIVES A FULL RESTART', still)
   if (!still) return
   if (expectAbility) {
-    const stats = await settle(() => countOf(page, STATS), (c) => c >= 1, { timeoutMs: 10_000 })
+    const stats = await settle(
+      () => countOf(page, STATS),
+      (c) => c >= 1,
+      { timeoutMs: 10_000 },
+    )
     check('…and so does the ability whose stats were open', stats >= 1, `${stats} readout(s)`)
   }
 
   // AND IT IS STILL A DRILL YOU CAN LEAVE. A remembered level is worth nothing if the way out
   // went with the process, so the crumb's root link is exercised on the far side of the restart.
   await page.click('[data-testid="drill-all"]', { timeout: 10_000 }).catch(() => undefined)
-  const out = await settle(() => drilled(page), (d) => !d, { timeoutMs: 10_000 })
+  const out = await settle(
+    () => drilled(page),
+    (d) => !d,
+    { timeoutMs: 10_000 },
+  )
   check('…and it can still be walked out of', out === false)
-  check('…which clears the stored value rather than remembering "level 1"', (await storedDrill(page)) === null)
+  check(
+    '…which clears the stored value rather than remembering "level 1"',
+    (await storedDrill(page)) === null,
+  )
 }
 
 async function main(): Promise<void> {
@@ -139,7 +180,12 @@ async function main(): Promise<void> {
     try {
       const page = await mainWindow(app)
       await page.waitForSelector('[data-testid="nav-preferences"]', { timeout: 60_000 })
-      if (check('hydration completes (replay hands off to the live tail)', !(await waitHydrated(page)).snap.hydrating)) {
+      if (
+        check(
+          'hydration completes (replay hands off to the live tail)',
+          !(await waitHydrated(page)).snap.hydrating,
+        )
+      ) {
         expectAbility = await armTheDrill(page)
       }
       if (failures.length) await dumpArtifacts(page, 'combat-drill-launch1-FAIL')
@@ -154,7 +200,12 @@ async function main(): Promise<void> {
     try {
       const page = await mainWindow(app)
       await page.waitForSelector('[data-testid="nav-preferences"]', { timeout: 60_000 })
-      if (check('hydration completes on the second launch', !(await waitHydrated(page)).snap.hydrating)) {
+      if (
+        check(
+          'hydration completes on the second launch',
+          !(await waitHydrated(page)).snap.hydrating,
+        )
+      ) {
         await checkAfterRestart(page, expectAbility)
       }
       if (failures.length) await dumpArtifacts(page, 'combat-drill-launch2-FAIL')

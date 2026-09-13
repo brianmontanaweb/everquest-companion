@@ -59,7 +59,7 @@ import {
   CURSOR_POLL_MS,
   cursorRingActive,
   overlaysShouldHide,
-  ringDisposition
+  ringDisposition,
 } from './presenceProtocol'
 import { getCursorRing, getOverlayAutoHide } from './store'
 import {
@@ -69,13 +69,13 @@ import {
   onOverlayHoverStale,
   parkOverlays,
   setCursorRingBounds,
-  setCursorRingVisible
+  setCursorRingVisible,
 } from './windows'
 import {
   initOverlayHover,
   overlayHoverNeeded,
   refreshOverlayHover,
-  stopOverlayHover
+  stopOverlayHover,
 } from './overlayHover'
 import { cursorWatchNeeded, presenceNeeded } from '../shared/presencePrefs'
 import type { CursorPoint, PresenceState, ScreenRect } from '../shared/presencePrefs'

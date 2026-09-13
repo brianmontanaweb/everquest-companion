@@ -56,7 +56,7 @@ function DragFrame({
   textScale,
   bgAlpha,
   patch,
-  noDrag
+  noDrag,
 }: {
   onDone: () => void
   textScale: number
@@ -78,12 +78,14 @@ function DragFrame({
         border: `1px dashed ${GOLD}`,
         background: 'rgba(15,17,21,0.65)',
         color: GOLD,
-        fontSize: 11
+        fontSize: 11,
       }}
     >
       {/* The PROSE is the give on a narrow strip; the three controls beside it are the whole point
           of the frame and stay whole at every width. */}
-      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span
+        style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+      >
         Drag me where celebrations should appear
       </span>
       <BgAlphaSlider bgAlpha={bgAlpha} patch={patch} noDrag={noDrag} />
@@ -100,7 +102,7 @@ function DragFrame({
           color: GOLD,
           fontSize: 11,
           padding: '2px 8px',
-          cursor: 'pointer'
+          cursor: 'pointer',
         }}
       >
         Done
@@ -144,7 +146,7 @@ function useMouseCapture(ready: boolean, locked: boolean, hasCards: boolean): vo
 function useIntroduction(
   config: OverlayConfig | null,
   patch: (p: Partial<OverlayConfig>) => void,
-  dispatch: Dispatch<ToastAction>
+  dispatch: Dispatch<ToastAction>,
 ): void {
   const doneRef = useRef(false)
   useEffect(() => {
@@ -183,7 +185,13 @@ export default function ToastOverlay(): JSX.Element {
       data-testid="toast-overlay"
       /* 100%, NOT 100vw/100vh — a viewport unit inside the scaled cards is resolved against the
          window and then zoomed (overlayScale). */
-      style={{ width: '100%', height: '100%', padding: 6, boxSizing: 'border-box', ...chrome.dragRegion }}
+      style={{
+        width: '100%',
+        height: '100%',
+        padding: 6,
+        boxSizing: 'border-box',
+        ...chrome.dragRegion,
+      }}
     >
       {/* The drag frame is CHROME: unscaled, so "Done" and A− / A+ stay inside the strip at 2.0
           — the one route to both knobs must not be the thing the scale pushes off screen. */}

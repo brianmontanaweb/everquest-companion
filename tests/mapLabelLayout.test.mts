@@ -25,7 +25,7 @@ import {
   labelKind,
   labelRank,
   layoutLabels,
-  type LabelItem
+  type LabelItem,
 } from '../src/renderer/src/features/maps/labelLayout'
 import type { MapPoint } from '../src/shared/maps'
 
@@ -40,7 +40,7 @@ function point(display: string, size: 1 | 2 | 3 = 2, z = 0): MapPoint {
     size,
     label: display.replace(/ /g, '_'),
     display,
-    layer: 1
+    layer: 1,
   }
 }
 
@@ -86,7 +86,11 @@ test('stacked labels collide and the higher-priority one keeps the space', () =>
 })
 
 test('labels far enough apart all survive — the declutter drops nothing it need not', () => {
-  const slots = layoutLabels([item(0, 'north', 0, 0), item(1, 'south', 0, 400), item(2, 'east', 600, 0)])
+  const slots = layoutLabels([
+    item(0, 'north', 0, 0),
+    item(1, 'south', 0, 400),
+    item(2, 'east', 600, 0),
+  ])
   assert.equal(shownLabels(slots).length, 3)
 })
 
@@ -94,19 +98,30 @@ test('the result is in INPUT order, so React keys and the DOM never churn on a p
   const slots = layoutLabels([item(0, 'a rusty gate', 100, 100), item(1, 'to Befallen', 100, 100)])
   assert.deepEqual(
     slots.map((s) => s.index),
-    [0, 1]
+    [0, 1],
   )
 })
 
 test('the ranking is data-only: panning every label by the same delta changes nothing', () => {
-  const base = [item(0, 'a rusty gate', 100, 100), item(1, 'to Befallen', 108, 103), item(2, 'a lever', 300, 100)]
+  const base = [
+    item(0, 'a rusty gate', 100, 100),
+    item(1, 'to Befallen', 108, 103),
+    item(2, 'a lever', 300, 100),
+  ]
   const panned = base.map((i) => ({ ...i, px: i.px + 37.4, py: i.py - 11.2 }))
   assert.deepEqual(shownLabels(layoutLabels(panned)), shownLabels(layoutLabels(base)))
 })
 
 test('the ranking is order-independent: shuffling the input keeps the same survivors', () => {
-  const base = [item(0, 'a rusty gate', 100, 100), item(1, 'to Befallen', 104, 100), item(2, 'a lever', 96, 102)]
-  assert.deepEqual(shownLabels(layoutLabels([...base].reverse())).sort(), shownLabels(layoutLabels(base)).sort())
+  const base = [
+    item(0, 'a rusty gate', 100, 100),
+    item(1, 'to Befallen', 104, 100),
+    item(2, 'a lever', 96, 102),
+  ]
+  assert.deepEqual(
+    shownLabels(layoutLabels([...base].reverse())).sort(),
+    shownLabels(layoutLabels(base)).sort(),
+  )
 })
 
 test('zoom IS the density control: the same points, further apart, fit more labels', () => {

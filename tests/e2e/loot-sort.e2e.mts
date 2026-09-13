@@ -48,7 +48,7 @@ import {
   reportRun,
   settleCount,
   settleStable,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -77,7 +77,7 @@ const PICKUP = '[data-testid="loot-list"] .MuiChip-clickable'
 function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
   return page.waitForSelector(sel, { timeout: ms }).then(
     () => true,
-    () => false
+    () => false,
   )
 }
 
@@ -94,7 +94,10 @@ function whatCoversSort(page: Page): Promise<{ tag: string; inside: boolean }> {
     const el = document.querySelector(sel)
     if (!el) return { tag: 'none', inside: false }
     const r = el.getBoundingClientRect()
-    const hit = document.elementFromPoint(Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2))
+    const hit = document.elementFromPoint(
+      Math.round(r.left + r.width / 2),
+      Math.round(r.top + r.height / 2),
+    )
     if (!hit) return { tag: 'none', inside: false }
     return { tag: hit.tagName.toLowerCase(), inside: el.contains(hit) || hit === el }
   }, SORT)
@@ -104,7 +107,7 @@ function whatCoversSort(page: Page): Promise<{ tag: string; inside: boolean }> {
 function sortValue(page: Page): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText.trim() ?? '',
-    SORT_BUTTON
+    SORT_BUTTON,
   )
 }
 
@@ -141,12 +144,16 @@ async function stepNothingCoversSort(page: Page, sel: string, what: string): Pro
     return
   }
   const poppers = await settleStable(() => countOf(page, POPPER), { timeoutMs: 4000 })
-  check(`hovering the ${what} opens no tooltip popper at all`, poppers === 0, `poppers=${String(poppers)}`)
+  check(
+    `hovering the ${what} opens no tooltip popper at all`,
+    poppers === 0,
+    `poppers=${String(poppers)}`,
+  )
   const cover = await whatCoversSort(page)
   check(
     `…and the Sort control is still the topmost thing at its own centre (${what})`,
     cover.inside,
-    `elementFromPoint hit <${cover.tag}>`
+    `elementFromPoint hit <${cover.tag}>`,
   )
 }
 
@@ -165,10 +172,17 @@ async function stepSortChanges(page: Page): Promise<void> {
 
   const labels = await page.evaluate(
     (sel) => [...document.querySelectorAll(sel)].map((o) => (o as HTMLElement).innerText.trim()),
-    SORT_OPTION
+    SORT_OPTION,
   )
   const other = labels.find((l) => l !== before)
-  if (!check('…offering an order other than the one already chosen', other != null, labels.join(' | '))) return
+  if (
+    !check(
+      '…offering an order other than the one already chosen',
+      other != null,
+      labels.join(' | '),
+    )
+  )
+    return
 
   await page.click(`${SORT_OPTION} >> text="${other ?? ''}"`, { timeout: 15_000 })
   const after = await settleStable(() => sortValue(page), { timeoutMs: 6000 })
@@ -185,7 +199,10 @@ async function stepRowStillDrills(page: Page): Promise<void> {
     return
   }
   await page.click(LOOT_ROW, { timeout: 15_000 })
-  check('a ledger row still opens that item’s drill-down', await appears(page, '[data-testid="loot-detail"]'))
+  check(
+    'a ledger row still opens that item’s drill-down',
+    await appears(page, '[data-testid="loot-detail"]'),
+  )
 }
 
 async function main(): Promise<void> {
@@ -221,7 +238,11 @@ async function main(): Promise<void> {
     await stepOneClickSplitsBoth(page, log)
     await stepRowStillDrills(page)
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
 
     await dumpArtifacts(page, failures.length ? 'loot-sort-FAIL' : 'loot-sort-pass')
   } finally {

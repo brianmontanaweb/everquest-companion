@@ -27,13 +27,13 @@ import assert from 'node:assert/strict'
 import {
   filterByQuery,
   questMatchesQuery,
-  type SearchQuest
+  type SearchQuest,
 } from '../src/renderer/src/features/posky/questSearch'
 import {
   facetOptions,
   filterByFacets,
   questBosses,
-  questIslands
+  questIslands,
 } from '../src/renderer/src/features/posky/questFacets'
 import { skyDroppersFor } from '../src/renderer/src/features/posky/poskyDroppers'
 import poskyRaw from '../src/renderer/src/data/eqlegends/posky.json' with { type: 'json' }
@@ -50,8 +50,8 @@ function searchQuest(q: PoskyQuest): SearchQuest & { className: string } {
     items: q.items.map((it) => ({
       name: it.name,
       where: it.where,
-      droppers: skyDroppersFor(it.name, it.who)
-    }))
+      droppers: skyDroppersFor(it.name, it.who),
+    })),
   }
 }
 
@@ -77,8 +77,8 @@ function quest(name: string, ...items: [string, string, ...string[]][]): SearchQ
     items: items.map(([itemName, where, ...droppers]) => ({
       name: itemName,
       where,
-      droppers: droppers.map((d) => ({ name: d }))
-    }))
+      droppers: droppers.map((d) => ({ name: d })),
+    })),
   }
 }
 
@@ -131,13 +131,14 @@ test('…and the same for every island offered', () => {
     'Island 5',
     'Island 6',
     'Island 7',
-    'Island 8'
+    'Island 8',
   ])
   for (const island of OPTIONS.islands) {
     const picked = keys(filterByFacets(ALL, { islands: [island], bosses: [] }))
     const typed = new Set(keys(filterByQuery(ALL, island)))
     assert.ok(picked.length > 0, island)
-    for (const k of picked) assert.ok(typed.has(k), `${island}: picking finds ${k}, typing does not`)
+    for (const k of picked)
+      assert.ok(typed.has(k), `${island}: picking finds ${k}, typing does not`)
   }
 })
 
@@ -146,7 +147,9 @@ test('…and the same for every island offered', () => {
 // committed data: The Spiroc Lord stands in front of eighteen quests, and eight quests name a
 // Spiroc-something item. A search is an OR over five fields, so it answers with both.
 test('a boss name that is ALSO an item word returns the union, not one of the two', () => {
-  const byBoss = keys(ALL.filter((q) => questBosses(q).some((b) => b.toLowerCase().includes('spiroc'))))
+  const byBoss = keys(
+    ALL.filter((q) => questBosses(q).some((b) => b.toLowerCase().includes('spiroc'))),
+  )
   const byItem = keys(ALL.filter((q) => matchedBefore(q, 'spiroc')))
   assert.equal(byBoss.length, 18, byBoss.join(', '))
   assert.equal(byItem.length, 8, byItem.join(', '))
@@ -163,7 +166,7 @@ test('where a boss name appears nowhere else, typing it and picking it give the 
     assert.deepEqual(
       keys(filterByQuery(ALL, boss)),
       keys(filterByFacets(ALL, { islands: [], bosses: [boss] })),
-      boss
+      boss,
     )
   }
 })
@@ -178,9 +181,15 @@ test('LAW 1 — a quest that resolves no boss is found by no boss name', () => {
   // quest is boss-less any more (questFacets.test.mts measures the same zero and enforces the law
   // on a synthetic row). What this file can still assert over real data: the pair is now found BY
   // that boss's name, and still by the island it states.
-  assert.deepEqual(ALL.filter((q) => questBosses(q).length === 0), [])
+  assert.deepEqual(
+    ALL.filter((q) => questBosses(q).length === 0),
+    [],
+  )
   const byBoss = keys(filterByQuery(ALL, 'Protector of Sky'))
-  assert.ok(byBoss.includes('Beastlord::Beastlord Test of Azarack'), 'Azarack found by its new boss')
+  assert.ok(
+    byBoss.includes('Beastlord::Beastlord Test of Azarack'),
+    'Azarack found by its new boss',
+  )
   assert.ok(byBoss.includes('Berserker::Berserker Test of Blood'), 'Blood found by its new boss')
   assert.ok(keys(filterByQuery(ALL, 'Island 2')).includes('Beastlord::Beastlord Test of Azarack'))
 })
@@ -219,7 +228,7 @@ test('every island a quest names is searchable, not only the first', () => {
   const spread = quest(
     'Spread',
     ['Alpha', 'Island 2', 'Bzzzt'],
-    ['Beta', 'Island 8', 'Protector of Sky']
+    ['Beta', 'Island 8', 'Protector of Sky'],
   )
   assert.deepEqual(questIslands(spread), ['Island 2', 'Island 8'])
   assert.equal(questMatchesQuery(spread, 'island 8'), true)

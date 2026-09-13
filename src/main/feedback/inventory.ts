@@ -54,7 +54,7 @@ import {
   MAX_UPLOAD_BYTES,
   PREVIEW_MAX_LINES,
   type InventoryDumpMeta,
-  type InventoryUnavailable
+  type InventoryUnavailable,
 } from '../../shared/feedback'
 
 /**
@@ -81,8 +81,7 @@ export interface InventoryAttachment extends InventoryDumpMeta {
 /** Either a packaged dump or the NAMED reason there is none. Never a bare null: see
  *  `FeedbackInventoryPreview`'s header for why the reason has to survive to the UI. */
 export type InventoryResult =
-  | InventoryAttachment
-  | { readonly ok: false; readonly reason: InventoryUnavailable }
+  InventoryAttachment | { readonly ok: false; readonly reason: InventoryUnavailable }
 
 const refuse = (reason: InventoryUnavailable): InventoryResult => ({ ok: false, reason })
 
@@ -116,9 +115,9 @@ export function previewOfDump(lines: readonly string[]): {
   return {
     previewLines: [
       ...lines.slice(0, PREVIEW_MAX_LINES),
-      `… ${omitted.toLocaleString()} more rows in the dump …`
+      `… ${omitted.toLocaleString()} more rows in the dump …`,
     ],
-    truncatedPreview: true
+    truncatedPreview: true,
   }
 }
 
@@ -132,7 +131,7 @@ export function previewOfDump(lines: readonly string[]): {
  */
 export async function buildInventoryAttachment(
   path: string,
-  fileName: string
+  fileName: string,
 ): Promise<InventoryResult> {
   let updatedAt: number
   let rawBytes: number
@@ -176,7 +175,7 @@ export async function buildInventoryAttachment(
     gz,
     text,
     fileName,
-    ...previewOfDump(lines)
+    ...previewOfDump(lines),
   }
 }
 

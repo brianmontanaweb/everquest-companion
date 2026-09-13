@@ -31,7 +31,7 @@ import type {
   RespawnConfirmAck,
   SessionMarkAck,
   SpellsSearchResult,
-  SubscribeAck
+  SubscribeAck,
 } from './protocol.generated'
 
 interface ResultRegistry {
@@ -74,7 +74,7 @@ interface ResultRegistry {
   // moved server-side, the other is a question rather than a window — and the third surface the
   // ticket adds, `combat.live`, is a view SOURCE and therefore not an op at all.
   'combat.snapshot': CombatSnapshotResult
-  'combat.searchFights': CombatSearchFightsResult,
+  'combat.searchFights': CombatSearchFightsResult
   // THE KNOWLEDGE SURFACE (JOS-486). Three lookups share one result shape and that is the shape
   // being right rather than the registry being lazy: `KnowledgeResult` names its own `domain`, so a
   // caller holding an item card and a mob card can tell them apart from the value alone — which is
@@ -253,7 +253,7 @@ export const RESULT_GUARDS: Record<RequestOp, (result: ReplyResult) => boolean> 
   // later result shape is likely to want too. `characters` is what the op is FOR, no other arm
   // carries it, and the schema requires it even when it is empty — which matters here, because "this
   // install has no character logs" is a real answer and must not read as a wrong shape.
-  'logs.list': (r) => 'characters' in r
+  'logs.list': (r) => 'characters' in r,
 }
 
 /**
@@ -271,7 +271,7 @@ export class EngineError extends Error {
     readonly code: ErrorCode,
     message: string,
     readonly requestId?: RequestId,
-    readonly cause?: unknown
+    readonly cause?: unknown,
   ) {
     super(message)
     this.name = 'EngineError'

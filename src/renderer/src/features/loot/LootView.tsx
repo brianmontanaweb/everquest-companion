@@ -47,7 +47,14 @@ import { LootTable, type LootTableContext } from './LootTables'
 // The chrome around the table — the toolbar, the caption and the notices — plus the two pieces of
 // view state that belong to them. JOS-160 moved it out when this file crossed its measured line
 // ceiling; nothing changed in the move.
-import { LootNotices, LootSourceToggle, LootSummary, LootToolbar, useLootSort, type LootSource } from './LootChrome'
+import {
+  LootNotices,
+  LootSourceToggle,
+  LootSummary,
+  LootToolbar,
+  useLootSort,
+  type LootSource,
+} from './LootChrome'
 // THE DATA-SERVER SURFACE (JOS-484). The context is READ DIRECTLY rather than through
 // `useEngineClient`, and that is the whole gate: it holds null on every launch without a live engine
 // — which is every launch a user makes — so the toggle below never renders and the engine ledger is
@@ -91,7 +98,12 @@ function LootSliceBar(ts: TimesliceState): JSX.Element {
       onPick={ts.setId}
       onCustom={ts.setCustom}
       custom={ts.custom}
-      sessions={{ segments: ts.segments, index: ts.segmentIndex, onNew: ts.newSession, onPick: ts.pickSegment }}
+      sessions={{
+        segments: ts.segments,
+        index: ts.segmentIndex,
+        onNew: ts.newSession,
+        onPick: ts.pickSegment,
+      }}
       testId="loot-slice"
     />
   )
@@ -132,7 +144,7 @@ interface LootDetail {
  */
 function useLootDetail(
   props: LootViewProps,
-  scrollRef: React.RefObject<HTMLDivElement | null>
+  scrollRef: React.RefObject<HTMLDivElement | null>,
 ): LootDetail {
   const { focusItem, focusNonce, onFocusConsumed } = props
   const [selected, setSelected] = useState<string | null>(null)
@@ -162,7 +174,7 @@ function useLootDetail(
       props.nav?.clear()
       setSelected(item)
     },
-    close: () => setSelected(null)
+    close: () => setSelected(null),
   }
 }
 
@@ -239,7 +251,7 @@ function LootLedgerBody({
   groupByItem,
   groupRows,
   events,
-  ctx
+  ctx,
 }: {
   scrollRef: React.RefObject<HTMLDivElement | null>
   groupByItem: boolean
@@ -313,7 +325,7 @@ export default function LootView(props: LootViewProps = {}): JSX.Element {
     countSource,
     setCountSource,
     reloadInventory,
-    inventoryInfo
+    inventoryInfo,
   } = useProgress()
   const [query, setQuery] = useState('')
   const [groupByItem, setGroupByItem] = useState(true)
@@ -335,8 +347,11 @@ export default function LootView(props: LootViewProps = {}): JSX.Element {
   // membership test (`shared/timeslice.ts`), half-open exactly like `rangeStats`, so a row is in
   // this table if and only if the same instant is inside the range the xp numbers were measured
   // over. Under `All` it keeps every row, so this costs one pass and changes nothing.
-  // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives LootEvent. Becomes a view descriptor when the source lands.
-  const sliced = useMemo(() => history.filter((e) => inSlice(slice, e.ts, e.zone)), [history, slice])
+  const sliced = useMemo(
+    // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives LootEvent. Becomes a view descriptor when the source lands.
+    () => history.filter((e) => inSlice(slice, e.ts, e.zone)),
+    [history, slice],
+  )
   // THE WHOLE history goes in, not `sliced`: the hook applies the slice through the same membership
   // test `inSlice` is, so the caption's count and the caption's rate cannot disagree about what
   // "inside this slice" means (useSliceLootRates' header states the argument).
@@ -348,7 +363,7 @@ export default function LootView(props: LootViewProps = {}): JSX.Element {
     query,
     questOnly,
     showInventoryOnly,
-    sort
+    sort,
   })
   const { events, grouped, groupRows, invOnlySource, invOnlyRows, invByKey } = rows
 

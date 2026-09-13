@@ -125,7 +125,7 @@ export function sessionSegments(marks: readonly number[]): SessionSegment[] {
       range: { t0, t1: current ? OPEN_END : starts[i + 1] },
       current,
       label: current ? `Session ${String(n)} (now)` : `Session ${String(n)}`,
-      caption: `session ${String(n)}`
+      caption: `session ${String(n)}`,
     }
   })
 }

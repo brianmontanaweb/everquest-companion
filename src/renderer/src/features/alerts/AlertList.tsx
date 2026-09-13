@@ -22,7 +22,7 @@ import {
   Slider,
   Stack,
   Switch,
-  Typography
+  Typography,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
@@ -61,7 +61,7 @@ function RecentFires({ fires }: { fires: AlertFireRecord[] }): JSX.Element {
             fontFamily: 'monospace',
             fontSize: 11,
             lineHeight: 1.5,
-            color: 'text.secondary'
+            color: 'text.secondary',
           }}
         >
           <Box component="span" sx={{ color: 'text.disabled', whiteSpace: 'nowrap' }}>
@@ -111,8 +111,8 @@ const ALERT_ROW_GRID_SX = {
   gridTemplateAreas: `"toggle identity identity actions" ". voice line volume"`,
   '@container (min-width: 860px)': {
     gridTemplateColumns: ALERT_ROW_WIDE_COLUMNS,
-    gridTemplateAreas: `"toggle identity voice line volume actions"`
-  }
+    gridTemplateAreas: `"toggle identity voice line volume actions"`,
+  },
 } as const
 
 // The action cluster is constant: same five icons, same order, same right edge, never
@@ -123,7 +123,7 @@ const ALERT_ROW_ACTIONS_SX = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'flex-end',
-  flexWrap: 'nowrap'
+  flexWrap: 'nowrap',
 } as const
 
 const ALERT_ROW_PAPER_SX = {
@@ -132,7 +132,7 @@ const ALERT_ROW_PAPER_SX = {
   // Establishes the container the row's grid queries above (see ALERT_ROW_GRID_SX).
   containerType: 'inline-size',
   '& .alertRowActions': { opacity: 0.62, transition: 'opacity 120ms ease' },
-  '&:hover .alertRowActions, &:focus-within .alertRowActions': { opacity: 1 }
+  '&:hover .alertRowActions, &:focus-within .alertRowActions': { opacity: 1 },
 } as const
 
 /**
@@ -165,7 +165,7 @@ function AlertRowIdentity({ def, badge }: { def: AlertDef; badge: string }): JSX
 function AlertRowVolume({
   volume,
   onDrag,
-  onCommit
+  onCommit,
 }: {
   volume: number
   onDrag: (v: number) => void
@@ -216,7 +216,7 @@ function AlertRowActions({
   onTest,
   onCopyShare,
   onEdit,
-  onDelete
+  onDelete,
 }: {
   fireCount: number
   isOpen: boolean
@@ -259,7 +259,13 @@ function AlertRowActions({
       >
         <HistoryIcon fontSize="small" />
       </IconButton>
-      <IconButton size="small" aria-label="Test (play now)" title="Test (play now)" data-testid="alert-test" onClick={onTest}>
+      <IconButton
+        size="small"
+        aria-label="Test (play now)"
+        title="Test (play now)"
+        data-testid="alert-test"
+        onClick={onTest}
+      >
         <PlayArrowIcon fontSize="small" />
       </IconButton>
       <IconButton
@@ -270,7 +276,13 @@ function AlertRowActions({
       >
         <IosShareIcon fontSize="small" />
       </IconButton>
-      <IconButton size="small" aria-label="Edit" title="Edit" data-testid="alert-edit" onClick={onEdit}>
+      <IconButton
+        size="small"
+        aria-label="Edit"
+        title="Edit"
+        data-testid="alert-edit"
+        onClick={onEdit}
+      >
         <EditIcon fontSize="small" />
       </IconButton>
       <IconButton size="small" aria-label="Delete" title="Delete" color="error" onClick={onDelete}>
@@ -299,7 +311,7 @@ function AlertRow({
   defaultPackId,
   bannerOverlayOn,
   onToggle,
-  handlers
+  handlers,
 }: {
   def: AlertDef
   fires: AlertFireRecord[]
@@ -390,7 +402,7 @@ export default function AlertList({
   bannerOverlayOn,
   filtering,
   onAddSuggestion,
-  handlers
+  handlers,
 }: {
   /** The rows to show — already narrowed by the search box, in the stored order. */
   alerts: AlertDef[]

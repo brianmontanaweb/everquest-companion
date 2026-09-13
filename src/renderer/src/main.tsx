@@ -39,7 +39,7 @@ if (import.meta.env.DEV) {
       ', __EQ_DEV_TOOLS__ define ' +
       (DEV_TOOLS_DEFINE === undefined
         ? 'ABSENT - this dev server booted before the define existed; restart `npm run dev` if a dev-only surface misbehaves'
-        : `= ${String(DEV_TOOLS_DEFINE)}`)
+        : `= ${String(DEV_TOOLS_DEFINE)}`),
   )
 }
 
@@ -67,7 +67,11 @@ window.addEventListener('error', (e) => {
 window.addEventListener('unhandledrejection', (e) => {
   const reason = e.reason as unknown
   if (reason instanceof Error) {
-    report('unhandledrejection', { name: reason.name, message: reason.message, stack: reason.stack })
+    report('unhandledrejection', {
+      name: reason.name,
+      message: reason.message,
+      stack: reason.stack,
+    })
   } else {
     // A rejection with a non-Error reason has no name and no stack. It still reports: the
     // fingerprint degrades to `Error` with no frames, which groups every one of them together —
@@ -108,5 +112,5 @@ ReactDOM.createRoot(container).render(
         </AppBackProvider>
       </ThemeProvider>
     </ErrorBoundary>
-  </React.StrictMode>
+  </React.StrictMode>,
 )

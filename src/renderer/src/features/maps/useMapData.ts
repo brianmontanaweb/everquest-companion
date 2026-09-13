@@ -152,14 +152,14 @@ export function useMapData(zone: ZoneShort | null, prefs: MapPackPrefs): MapLoad
     void window.eq
       .getMapData(zone, {
         ...(geometry == null ? {} : { geometry }),
-        ...(labels == null ? {} : { labels })
+        ...(labels == null ? {} : { labels }),
       })
       .then((res) => {
         if (cancelled) return
         setLoad(
           res.ok
             ? { data: res.data, error: null, loading: false }
-            : { data: null, error: res.error, loading: false }
+            : { data: null, error: res.error, loading: false },
         )
       })
       .catch((err: unknown) => {

@@ -41,7 +41,7 @@ import {
   statedDroppers,
   type DropperMob,
   type ItemDropRow,
-  type KillTargetItem
+  type KillTargetItem,
 } from '../src/renderer/src/features/posky/poskyDroppers'
 // The mob-island overlay's own audit lives in tests/skyMobIslands.test.mts; this suite only needs
 // to know which pages it speaks for, so the "every island came from an item" invariant below stays
@@ -65,7 +65,7 @@ const dropper = (name: string, zones: string[] = ['Plane of Sky']): DropperMob =
   name,
   page: name,
   zones,
-  entry: { page: name, name, zones }
+  entry: { page: name, name, zones },
 })
 
 /** One quest's item rows as the tracker computes them: what it needs, what it has, where. */
@@ -74,7 +74,7 @@ const questRows = (q: PoskyQuest, have: Record<string, number> = {}): KillTarget
     need: it.count > 0 ? it.count : 1,
     have: have[it.name] ?? 0,
     where: it.where,
-    droppers: skyDroppersFor(it.name, it.who)
+    droppers: skyDroppersFor(it.name, it.who),
   }))
 
 /** One item row exactly as the tracker hands it to the hover roster, read off the real scrape. */
@@ -111,7 +111,7 @@ test('an efreeti-chain item resolves EVERY boss that drops it, deterministically
   assert.deepEqual(names(skyDroppersFor('Efreeti Mace')), [
     'Noble Dojorn',
     'Overseer of Air',
-    'the Hand of Veeshan'
+    'the Hand of Veeshan',
   ])
 })
 
@@ -144,7 +144,7 @@ test('Bixie Stinger: the unrestricted index answers with the WRONG item, the Sky
   assert.ok(loose.length > 0, 'the unrestricted index does resolve this name')
   assert.ok(
     loose.every((m) => !isSkyMob(m)),
-    'and not one of its hits lives in the Plane of Sky'
+    'and not one of its hits lives in the Plane of Sky',
   )
   // Sky-gated: nothing. The tracker shows posky's own "BZ" instead of a wrong mob.
   assert.deepEqual(skyDroppersFor('Bixie Stinger'), [])
@@ -153,7 +153,7 @@ test('Bixie Stinger: the unrestricted index answers with the WRONG item, the Sky
 test('the Sky gate costs exactly ONE distinct item across the whole dataset', () => {
   const items = new Set(QUESTS.flatMap((q) => q.items.map((i) => i.name)))
   const lost = [...items].filter(
-    (n) => droppersFor(n, FULL_INDEX).length > 0 && skyDroppersFor(n).length === 0
+    (n) => droppersFor(n, FULL_INDEX).length > 0 && skyDroppersFor(n).length === 0,
   )
   assert.deepEqual(lost, ['Bixie Stinger'])
 })
@@ -164,7 +164,17 @@ test('the Sky gate costs exactly ONE distinct item across the whole dataset', ()
 
 test('none of the strings posky actually puts in `who` names a mob the catalog knows', () => {
   // Verbatim, all nine distinct values in the committed posky.json.
-  const stated = ['Gorga', 'KoS', 'SL', 'BZ', 'SotS', 'EoV', 'PoS', 'Trash', 'random drop — any Plane of Sky mob']
+  const stated = [
+    'Gorga',
+    'KoS',
+    'SL',
+    'BZ',
+    'SotS',
+    'EoV',
+    'PoS',
+    'Trash',
+    'random drop — any Plane of Sky mob',
+  ]
   assert.deepEqual(statedDroppers(stated, FULL_NAMES), [])
   // So the reverse index is doing all of the work — sanity-check the same call end to end.
   assert.deepEqual(names(skyDroppersFor('Ceremonial Belt', ['SL'])), ['The Spiroc Lord'])
@@ -178,7 +188,7 @@ test('a `who` that DOES name a catalog mob resolves, and leads the merged list',
   assert.deepEqual(names(skyDroppersFor('Efreeti Mace', ['Overseer of Air'])), [
     'Overseer of Air',
     'Noble Dojorn',
-    'the Hand of Veeshan'
+    'the Hand of Veeshan',
   ])
 })
 
@@ -232,7 +242,7 @@ test('itemCountKey variant folding: a `+N` upgrade resolves its BASE item droppe
   // The catalog itself carries zero `+N` drop names, so the folding is query-side only.
   assert.equal(
     MOBS.some((m) => (m.drops ?? []).some((d) => / \+\d+$/.test(d))),
-    false
+    false,
   )
 })
 
@@ -245,7 +255,7 @@ test('more droppers than the cap fold into "+N more"', () => {
   assert.equal(disp.more, 1)
   assert.equal(
     dropperLabel(four),
-    'a fatestealer drake, a greater sphinx, a heartsbane drake +1 more'
+    'a fatestealer drake, a greater sphinx, a heartsbane drake +1 more',
   )
   // Under the cap: no overflow clause at all.
   assert.equal(dropperLabel(skyDroppersFor('Ceremonial Belt')), 'The Spiroc Lord')
@@ -262,7 +272,7 @@ test('buildDropperIndex folds variants, sorts by name, and survives drop-less pa
   const mobs: MobEntry[] = [
     { page: 'Zeta', name: 'Zeta', zones: ['Plane of Sky'], drops: ['Widget'] },
     { page: 'Alpha', name: 'Alpha', zones: ['Plane of Sky'], drops: ['Widget +1', 'Gadget'] },
-    { page: 'Empty', name: 'Empty', zones: ['Plane of Sky'] }
+    { page: 'Empty', name: 'Empty', zones: ['Plane of Sky'] },
   ]
   const idx = buildDropperIndex(mobs)
   assert.deepEqual(names(droppersFor('Widget', idx)), ['Alpha', 'Zeta'])
@@ -276,7 +286,7 @@ test('buildDropperIndex folds variants, sorts by name, and survives drop-less pa
 test('buildMobNameIndex keeps the FIRST page for a duplicated name (scrape order wins once)', () => {
   const idx = buildMobNameIndex([
     { page: 'a bandit (Qeynos Hills)', name: 'a bandit' },
-    { page: 'a bandit (North Karana)', name: 'a bandit' }
+    { page: 'a bandit (North Karana)', name: 'a bandit' },
   ])
   assert.equal(idx.get('a bandit')?.page, 'a bandit (Qeynos Hills)')
 })
@@ -297,7 +307,7 @@ test('the tracker resolves a kill target for the great majority of its items', (
   for (const n of unresolved) {
     assert.ok(
       n.toLowerCase().startsWith('wind rune') || expectedGaps.has(n),
-      `unexpected unresolved item: ${n}`
+      `unexpected unresolved item: ${n}`,
     )
   }
 })
@@ -319,7 +329,10 @@ test('a resolved dropper carries its catalog ROW — what a click routes to MobP
   // The whole row, not a projection of it: `MobTarget.entry` pins the page this item's loot
   // list actually came from (a name alone can name several pages, so a name-only link would
   // let the destination resolve a different one).
-  assert.deepEqual(lord.entry, MOBS.find((m) => m.page === lord.page))
+  assert.deepEqual(
+    lord.entry,
+    MOBS.find((m) => m.page === lord.page),
+  )
   assert.equal(lord.entry.name, lord.name)
   assert.ok((lord.entry.drops ?? []).includes('Ceremonial Belt'))
 })
@@ -374,7 +387,7 @@ test('a quest names the mob AND the island for the items it still needs', () => 
   const targets = questKillTargets(questRows(q))
   assert.deepEqual(
     targets.map((t) => [t.mob.name, t.covers, t.islands]),
-    [['Gorgalosk', 1, ['Island 3']]]
+    [['Gorgalosk', 1, ['Island 3']]],
   )
   assert.equal(killTargetLabel(targets), 'Kill: Gorgalosk · Island 3')
   assert.equal(killTargetFacts(targets[0]), 'Gorgalosk · level 60 · Plane of Sky · Island 3')
@@ -391,7 +404,7 @@ test('a random-drop item contributes NO kill target and NO island', () => {
   // The wind runes: posky says "random drop — any Plane of Sky mob", the catalog lists no
   // dropper, and `where` is the zone itself. Nothing is invented from any of that (law 1).
   const runes: KillTargetItem[] = [
-    { need: 1, have: 0, where: 'Plane of Sky', droppers: skyDroppersFor('Wind Rune Meda') }
+    { need: 1, have: 0, where: 'Plane of Sky', droppers: skyDroppersFor('Wind Rune Meda') },
   ]
   assert.deepEqual(questKillTargets(runes), [])
   assert.equal(killTargetLabel(questKillTargets(runes)), '')
@@ -402,13 +415,16 @@ test('the lead target is the mob covering the MOST still-needed items', () => {
   const trash = dropper('a trash mob')
   const items: KillTargetItem[] = [
     { need: 1, have: 0, where: 'Island 3', droppers: [boss] },
-    { need: 1, have: 0, where: 'Island 5', droppers: [boss, trash] }
+    { need: 1, have: 0, where: 'Island 5', droppers: [boss, trash] },
   ]
   const targets = questKillTargets(items)
   // Name order would lead with "a trash mob"; coverage leads with the mob that closes two.
   assert.deepEqual(
     targets.map((t) => [t.mob.name, t.covers]),
-    [['Zzz Boss', 2], ['a trash mob', 1]]
+    [
+      ['Zzz Boss', 2],
+      ['a trash mob', 1],
+    ],
   )
   // The islands ride PER MOB — the lead's two items sit on two islands, the other's on one.
   assert.deepEqual(targets[0].islands, ['Island 3', 'Island 5'])
@@ -416,18 +432,21 @@ test('the lead target is the mob covering the MOST still-needed items', () => {
   assert.equal(killTargetLabel(targets), 'Kill: Zzz Boss +1 · Islands 3, 5')
 })
 
-test('equal coverage falls back to the module\'s name order, and a repeat counts once', () => {
+test("equal coverage falls back to the module's name order, and a repeat counts once", () => {
   const a = dropper('Alpha')
   const z = dropper('Zeta')
   const items: KillTargetItem[] = [
     // Zeta listed twice on ONE item must not out-rank Alpha by inflating its coverage.
     { need: 2, have: 0, where: 'Island 2', droppers: [z, z] },
-    { need: 1, have: 0, where: '', droppers: [a] }
+    { need: 1, have: 0, where: '', droppers: [a] },
   ]
   const targets = questKillTargets(items)
   assert.deepEqual(
     targets.map((t) => [t.mob.name, t.covers]),
-    [['Alpha', 1], ['Zeta', 1]]
+    [
+      ['Alpha', 1],
+      ['Zeta', 1],
+    ],
   )
   // No island stated for Alpha's item ⇒ no island clause. Never a guess.
   assert.equal(killTargetLabel(targets), 'Kill: Alpha +1')
@@ -443,7 +462,7 @@ test('the caption covers nearly every quest, and states an island for most', () 
   assert.ok(captioned.length >= 93, `captioned: ${captioned.length} of ${QUESTS.length}`)
   assert.ok(
     captioned.filter((l) => l.includes('Island')).length >= 82,
-    `with island: ${captioned.filter((l) => l.includes('Island')).length}`
+    `with island: ${captioned.filter((l) => l.includes('Island')).length}`,
   )
   // Every island a caption states came from a stated `where` on one of that quest's items — OR
   // from the mob-island overlay, which is the ONE thing allowed to answer differently and states
@@ -455,7 +474,7 @@ test('the caption covers nearly every quest, and states an island for most', () 
       for (const i of t.islands) {
         assert.ok(
           overlay ? i === overlay.island : stated.has(i),
-          `${q.name}: ${i} is not stated by any item`
+          `${q.name}: ${i} is not stated by any item`,
         )
       }
     }
@@ -490,7 +509,7 @@ test('the item hover names the mob AND the island — not the island alone (JOS-
   assert.notEqual(facts.droppers.length, 0)
   assert.deepEqual(facts, {
     where: 'Island 5',
-    droppers: ['The Spiroc Lord · level 63 · Plane of Sky']
+    droppers: ['The Spiroc Lord · level 63 · Plane of Sky'],
   })
 })
 
@@ -502,8 +521,8 @@ test('the item hover lists EVERY dropper, uncapped — the card has no line to b
     droppers: [
       'Noble Dojorn · level 63+ · Plane of Sky',
       'Overseer of Air · level 63 · Plane of Sky',
-      'the Hand of Veeshan · level 63 · Plane of Sky'
-    ]
+      'the Hand of Veeshan · level 63 · Plane of Sky',
+    ],
   })
 })
 
@@ -512,16 +531,22 @@ test("an item no mob resolves falls back to posky's own words, verbatim", () => 
   // through islandOf — "Plane of Sky" is a true answer that the island matcher deliberately drops.
   assert.deepEqual(itemDropFacts(itemFromScrape('Wind Rune Meda')), {
     where: 'Plane of Sky',
-    droppers: ['random drop — any Plane of Sky mob']
+    droppers: ['random drop — any Plane of Sky mob'],
   })
 })
 
 test('nothing known at all degrades to an empty block — never a guess', () => {
   // Both parts empty is the caller's signal to draw no block at all (SkyItemCard.tsx).
   assert.deepEqual(itemDropFacts({ droppers: [] }), { where: '', droppers: [] })
-  assert.deepEqual(itemDropFacts({ where: '  ', who: [' '], droppers: [] }), { where: '', droppers: [] })
+  assert.deepEqual(itemDropFacts({ where: '  ', who: [' '], droppers: [] }), {
+    where: '',
+    droppers: [],
+  })
   // A stated `where` with no dropper still answers half the question.
-  assert.deepEqual(itemDropFacts({ where: 'Island 8', droppers: [] }), { where: 'Island 8', droppers: [] })
+  assert.deepEqual(itemDropFacts({ where: 'Island 8', droppers: [] }), {
+    where: 'Island 8',
+    droppers: [],
+  })
 })
 
 test('EVERY committed item row says who drops it, and none of them says only an island', () => {
@@ -542,7 +567,7 @@ test('EVERY committed item row says who drops it, and none of them says only an 
         named += 1
         assert.ok(
           facts.droppers.every((d) => d.includes(' · Plane of Sky')),
-          `${it.name}: a resolved mob states no zone`
+          `${it.name}: a resolved mob states no zone`,
         )
       }
       // …and the island, when posky states one, is still there beside them.

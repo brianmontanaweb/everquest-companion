@@ -74,7 +74,7 @@ import {
   type EvErrorReport,
   type TelemetryBreadcrumb,
   type TelemetryBreadcrumbKind,
-  type TelemetryFrame
+  type TelemetryFrame,
 } from './telemetry'
 import { redactMessage } from './errorReport'
 import { bucket, fail, matching, oneOf, whole, type Validated } from './telemetryValidateBase'
@@ -92,7 +92,7 @@ function vFrame(raw: unknown, at: string, filePattern: RegExp): Validated<Teleme
   if (!func.ok) return func
   return {
     ok: true,
-    value: { file: file.value, line: line.value, col: col.value, func: func.value }
+    value: { file: file.value, line: line.value, col: col.value, func: func.value },
   }
 }
 
@@ -102,7 +102,7 @@ function vFrameList(
   raw: unknown,
   field: string,
   filePattern: RegExp,
-  max: number
+  max: number,
 ): Validated<TelemetryFrame[]> {
   if (!Array.isArray(raw)) return fail(field, `${field} must be a list.`)
   if (raw.length > max) {
@@ -162,13 +162,13 @@ function vRedactedMessage(raw: unknown): Validated<string> {
     raw,
     'redactedMessage',
     REDACTED_MESSAGE_RE,
-    'printable ASCII, length-capped'
+    'printable ASCII, length-capped',
   )
   if (!text.ok) return text
   if (redactMessage(text.value) !== text.value) {
     return fail(
       'redactedMessage',
-      'redactedMessage must already be redacted: it changed when the redactor was re-run.'
+      'redactedMessage must already be redacted: it changed when the redactor was re-run.',
     )
   }
   return text
@@ -194,7 +194,7 @@ function vContext(o: Record<string, unknown>): Validated<ErrorContext> {
   if (!count.ok) return count
   return {
     ok: true,
-    value: { view: view.value, sessionAgeBucket: age.value, mode: mode.value, count: count.value }
+    value: { view: view.value, sessionAgeBucket: age.value, mode: mode.value, count: count.value },
   }
 }
 
@@ -230,13 +230,18 @@ function applyOptional(o: Record<string, unknown>, value: EvErrorReport): Valida
       o.externalFrames,
       'externalFrames',
       EXTERNAL_FRAME_FILE_RE,
-      MAX_EXTERNAL_FRAMES_WIRE
+      MAX_EXTERNAL_FRAMES_WIRE,
     )
     if (!ext.ok) return ext
     value.externalFrames = ext.value
   }
   if (given(o.componentPath)) {
-    const path = matching(o.componentPath, 'componentPath', COMPONENT_PATH_RE, 'component names joined with >')
+    const path = matching(
+      o.componentPath,
+      'componentPath',
+      COMPONENT_PATH_RE,
+      'component names joined with >',
+    )
     if (!path.ok) return path
     value.componentPath = path.value
   }
@@ -268,7 +273,7 @@ export function validateErrorReport(o: Record<string, unknown>): Validated<EvErr
     frames: frames.value,
     fingerprint: fingerprint.value,
     breadcrumbs: crumbs.value,
-    ...ctx.value
+    ...ctx.value,
   }
   return applyOptional(o, value)
 }

@@ -30,7 +30,7 @@ import type { PackSound, SoundData, SoundPack, SoundPackManifest } from '../shar
 const AUDIO_MIME: Record<string, string> = {
   '.wav': 'audio/wav',
   '.mp3': 'audio/mpeg',
-  '.ogg': 'audio/ogg'
+  '.ogg': 'audio/ogg',
 }
 
 /** Bundled soundpacks root. In dev `app.getAppPath()` is the project root (where
@@ -41,7 +41,7 @@ function bundledRoots(): string[] {
     join(app.getAppPath(), 'resources', 'soundpacks'),
     join(process.resourcesPath ?? '', 'soundpacks'),
     // packaged: resources are asarUnpack'd under app.asar.unpacked/resources
-    join(app.getAppPath() + '.unpacked', 'resources', 'soundpacks')
+    join(app.getAppPath() + '.unpacked', 'resources', 'soundpacks'),
   ]
   return roots.filter((r) => r && existsSync(r))
 }
@@ -104,7 +104,7 @@ export const CESP_CATEGORY_LABEL: Record<string, string> = {
   'task.progress': 'Progress',
   'input.required': 'Input',
   'resource.limit': 'Limit',
-  'user.spam': 'Spam'
+  'user.spam': 'Spam',
 }
 
 /** A single sound entry inside a CESP category. */
@@ -139,8 +139,15 @@ export function packBasename(p: string): string {
  */
 export function deriveSoundId(category: string, file: string, taken: Set<string>): string {
   const base = packBasename(file).replace(/\.[^.]+$/, '')
-  const catSlug = category.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()
-  const baseSlug = base.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'sound'
+  const catSlug = category
+    .replace(/[^a-z0-9]+/gi, '-')
+    .replace(/^-|-$/g, '')
+    .toLowerCase()
+  const baseSlug =
+    base
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase() || 'sound'
   let id = catSlug ? `${catSlug}-${baseSlug}` : baseSlug
   if (taken.has(id)) {
     let i = 2
@@ -172,7 +179,7 @@ function cespCategorySounds(value: CespManifest['categories'][string]): CespSoun
  */
 export function cespToManifestSounds(
   cesp: CespManifest,
-  idFor: (category: string, file: string) => string | null
+  idFor: (category: string, file: string) => string | null,
 ): Record<string, PackSound> {
   const sounds: Record<string, PackSound> = {}
   for (const [category, value] of Object.entries(cesp.categories ?? {})) {
@@ -233,13 +240,15 @@ function packsInRoot(root: string, source: SoundPack['source']): SoundPack[] {
  */
 function packDir(
   roots: SoundRoots,
-  packId: string
+  packId: string,
 ): { dir: string; source: SoundPack['source'] } | null {
   // The reserved id resolves to its own root FIRST — ahead of both the soundpacks root and
   // the bundled ones — so a directory that somehow acquired that name over there can never
   // serve bytes in place of the user's imported audio.
   if (packId === USER_SOUNDS_PACK_ID) {
-    return existsSync(join(roots.mine, 'manifest.json')) ? { dir: roots.mine, source: 'user' } : null
+    return existsSync(join(roots.mine, 'manifest.json'))
+      ? { dir: roots.mine, source: 'user' }
+      : null
   }
   const uDir = join(roots.user, packId)
   if (existsSync(join(uDir, 'manifest.json'))) return { dir: uDir, source: 'user' }
@@ -266,7 +275,7 @@ function userSoundsPack(roots: SoundRoots): SoundPack | null {
     id: USER_SOUNDS_PACK_ID,
     name: USER_SOUNDS_PACK_NAME,
     sounds: manifest.sounds,
-    source: 'user'
+    source: 'user',
   }
 }
 
@@ -317,13 +326,13 @@ export function getSoundDataIn(
   roots: SoundRoots,
   packId: string,
   soundId: string,
-  defaultPackId: string = DEFAULT_ALERT_PACK_ID
+  defaultPackId: string = DEFAULT_ALERT_PACK_ID,
 ): SoundData | null {
   const direct = readPackSound(roots, packId, soundId)
   if (direct) return direct
   const resolved = resolveSoundRef({ packId, soundId }, listPacksIn(roots), {
     defaultPackId,
-    fallbackSoundId: DEFAULT_ALERT_SOUNDS.buffWearsOff
+    fallbackSoundId: DEFAULT_ALERT_SOUNDS.buffWearsOff,
   })
   if (resolved.status === 'missing') return null
   return readPackSound(roots, resolved.packId, resolved.soundId)
@@ -333,7 +342,7 @@ export function getSoundDataIn(
 export function getSoundData(
   packId: string,
   soundId: string,
-  defaultPackId?: string
+  defaultPackId?: string,
 ): SoundData | null {
   return getSoundDataIn(realRoots(), packId, soundId, defaultPackId)
 }

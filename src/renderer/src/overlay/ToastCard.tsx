@@ -36,7 +36,12 @@
 // button that closes the overlay for good.
 
 import { type CSSProperties, type JSX, type MouseEvent, useEffect, useState } from 'react'
-import { TOAST_INTRO_BODY, toastActionLabel, type ToastItemCard, type ToastPayload } from '@shared/toast'
+import {
+  TOAST_INTRO_BODY,
+  toastActionLabel,
+  type ToastItemCard,
+  type ToastPayload,
+} from '@shared/toast'
 import { TOAST_ENTER_MS, TOAST_EXIT_MS } from './toastQueue'
 
 const GOLD = '#d9b25f'
@@ -78,7 +83,7 @@ function CardChrome({ onDismiss }: { onDismiss: () => void }): JSX.Element {
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 8,
-        marginBottom: 6
+        marginBottom: 6,
       }}
     >
       <span
@@ -92,7 +97,7 @@ function CardChrome({ onDismiss }: { onDismiss: () => void }): JSX.Element {
           minWidth: 0,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap'
+          whiteSpace: 'nowrap',
         }}
       >
         {OVERLAY_LABEL}
@@ -118,7 +123,7 @@ function CardChrome({ onDismiss }: { onDismiss: () => void }): JSX.Element {
           background: hot ? 'rgba(217,178,95,0.16)' : 'transparent',
           color: hot ? GOLD : MUTED,
           fontSize: 13,
-          cursor: 'pointer'
+          cursor: 'pointer',
         }}
       >
         ×
@@ -157,7 +162,7 @@ function IntroBlock(): JSX.Element {
           color: GOLD,
           fontSize: 12,
           padding: '4px 10px',
-          cursor: 'pointer'
+          cursor: 'pointer',
         }}
       >
         Turn this overlay off
@@ -205,7 +210,7 @@ function CardAction({ label, onClick }: { label: string; onClick: () => void }):
           color: GOLD,
           fontSize: 12,
           padding: '3px 10px',
-          cursor: 'pointer'
+          cursor: 'pointer',
         }}
       >
         {label}
@@ -214,7 +219,13 @@ function CardAction({ label, onClick }: { label: string; onClick: () => void }):
   )
 }
 
-function RewardBlock({ item, onClick }: { item: ToastItemCard; onClick?: () => void }): JSX.Element {
+function RewardBlock({
+  item,
+  onClick,
+}: {
+  item: ToastItemCard
+  onClick?: () => void
+}): JSX.Element {
   const [hot, setHot] = useState(false)
   const clickable = !!onClick
   return (
@@ -230,7 +241,7 @@ function RewardBlock({ item, onClick }: { item: ToastItemCard; onClick?: () => v
         borderRadius: 8,
         border: `1px solid ${hot && clickable ? GOLD : 'rgba(255,255,255,0.10)'}`,
         background: 'rgba(255,255,255,0.04)',
-        cursor: clickable ? 'pointer' : 'default'
+        cursor: clickable ? 'pointer' : 'default',
       }}
     >
       {item.iconId !== undefined && (
@@ -248,7 +259,14 @@ function RewardBlock({ item, onClick }: { item: ToastItemCard; onClick?: () => v
         />
       )}
       <div style={{ minWidth: 0 }}>
-        <div style={{ color: nameColor(item.colorFlag), fontSize: 14, fontFamily: MONO, fontWeight: 700 }}>
+        <div
+          style={{
+            color: nameColor(item.colorFlag),
+            fontSize: 14,
+            fontFamily: MONO,
+            fontWeight: 700,
+          }}
+        >
           {item.name}
         </div>
         {item.lines.map((l) => (
@@ -272,8 +290,8 @@ function motionStyle(entering: boolean, exiting: boolean): CSSProperties {
     opacity: hidden ? 0 : 1,
     transform: hidden ? 'translateY(-8px)' : 'translateY(0)',
     transition: `opacity ${String(exiting ? TOAST_EXIT_MS : TOAST_ENTER_MS)}ms ease-out, transform ${String(
-      exiting ? TOAST_EXIT_MS : TOAST_ENTER_MS
-    )}ms ease-out`
+      exiting ? TOAST_EXIT_MS : TOAST_ENTER_MS,
+    )}ms ease-out`,
   }
 }
 
@@ -282,7 +300,7 @@ export function ToastCard({
   exiting,
   bgAlpha,
   onHover,
-  onDismiss
+  onDismiss,
 }: {
   payload: ToastPayload
   exiting: boolean
@@ -327,11 +345,14 @@ export function ToastCard({
         background: `rgba(15,17,21,${String(bgAlpha)})`,
         backdropFilter: 'blur(6px)',
         boxShadow: '0 8px 22px rgba(0,0,0,0.45)',
-        ...motionStyle(entering, exiting)
+        ...motionStyle(entering, exiting),
       }}
     >
       <CardChrome onDismiss={onDismiss} />
-      <div data-testid="toast-title" style={{ color: GOLD, fontSize: 18, fontWeight: 700, lineHeight: 1.3 }}>
+      <div
+        data-testid="toast-title"
+        style={{ color: GOLD, fontSize: 18, fontWeight: 700, lineHeight: 1.3 }}
+      >
         {payload.title}
       </div>
       {payload.subtitle && (

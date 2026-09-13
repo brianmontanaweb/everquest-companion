@@ -66,10 +66,11 @@ async function readNudge(overlay: Page): Promise<NudgeBox | null> {
       return {
         text: (el.textContent ?? '').trim(),
         pointerEvents: getComputedStyle(el).pointerEvents,
-        overPane: a.left >= b.left - 4 && a.right <= b.right + 4 && a.top >= b.top - 6 && a.top < b.bottom
+        overPane:
+          a.left >= b.left - 4 && a.right <= b.right + 4 && a.top >= b.top - 6 && a.top < b.bottom,
       }
     },
-    [NUDGE, PANE] as const
+    [NUDGE, PANE] as const,
   )
 }
 
@@ -85,19 +86,34 @@ export async function stepPetNudge(log: FixtureLog, overlay: Page): Promise<void
 
   const summonedAt = new Date(Date.now() - BACKDATE_MS)
   log.appendAt(summonedAt, SUMMON_LINE)
-  note(`appended "${SUMMON_LINE}" stamped ${BACKDATE_MS / 1000}s ago — inside the nudge's window, past its grace`)
+  note(
+    `appended "${SUMMON_LINE}" stamped ${BACKDATE_MS / 1000}s ago — inside the nudge's window, past its grace`,
+  )
 
-  const shown = await settle(() => readNudge(overlay), (n) => n !== null, { timeoutMs: 20_000 })
-  if (!check('A PET SUMMON NOBODY BOUND RAISES THE NUDGE ON THE METER OVERLAY', shown !== null)) return
+  const shown = await settle(
+    () => readNudge(overlay),
+    (n) => n !== null,
+    { timeoutMs: 20_000 },
+  )
+  if (!check('A PET SUMMON NOBODY BOUND RAISES THE NUDGE ON THE METER OVERLAY', shown !== null))
+    return
   const box = shown as NudgeBox
 
-  check('it names both ways out of the blind spot', /order it once/i.test(box.text) && /\/pet who leader/i.test(box.text), box.text)
+  check(
+    'it names both ways out of the blind spot',
+    /order it once/i.test(box.text) && /\/pet who leader/i.test(box.text),
+    box.text,
+  )
   check('one sentence, not a paragraph', box.text.length <= 90, `${box.text.length} chars`)
   check('no em dash in copy a player reads', !/[–—]/.test(box.text), box.text)
   check('it is drawn ON the meter`s own content background, not above it', box.overPane)
   // The whole panel below a pinned meter's header offers no hit target; a coaching hint is exactly
   // the thing that must not become the exception, or it eats a click meant for the game.
-  check('and it takes no mouse — the pane stays click-through', box.pointerEvents === 'none', box.pointerEvents)
+  check(
+    'and it takes no mouse — the pane stays click-through',
+    box.pointerEvents === 'none',
+    box.pointerEvents,
+  )
 
   // THE RULING'S OWN WORD: it TIMES OUT. Nobody clicks anything, nothing else is appended, and the
   // sentence leaves by itself.

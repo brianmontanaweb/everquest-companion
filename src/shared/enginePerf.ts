@@ -212,7 +212,7 @@ export function formatEngineClock(sample: EnginePerfSample): EngineClockLine | n
   if (skew !== undefined && Math.abs(skew) >= CLOCK_SKEW_WARN_MS) {
     return {
       text: `The log's clock disagrees with this machine's by ${hoursAndMinutes(skew)}. Fights and timers will be wrong.`,
-      warning: true
+      warning: true,
     }
   }
   const source = engine?.clockSource

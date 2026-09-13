@@ -12,7 +12,12 @@
 
 import { ipcMain } from 'electron'
 import { IPC } from '../../shared/ipc'
-import { isClassAbbr, MAX_COMBO_SLOTS, type ClassAbbr, type ComboCorrection } from '../../shared/classCombo'
+import {
+  isClassAbbr,
+  MAX_COMBO_SLOTS,
+  type ClassAbbr,
+  type ComboCorrection,
+} from '../../shared/classCombo'
 /**
  * THE LAUNCH EPOCH, INLINED (JOS-499 item 2). It lived in `log/epochDetector.ts`, which is deleted
  * with the fold; this file survives and still has to refuse a correction that describes the wiped

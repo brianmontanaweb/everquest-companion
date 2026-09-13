@@ -18,7 +18,7 @@ import {
   mergeOverlayBgAlpha,
   normalizeOverlayBgAlpha,
   storedSharedBgAlpha,
-  type OverlayBgAlphaPrefs
+  type OverlayBgAlphaPrefs,
 } from '../shared/overlayBgAlpha'
 
 /**

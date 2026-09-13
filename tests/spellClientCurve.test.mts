@@ -24,7 +24,7 @@ import {
   spellMetricsAt,
   type ClientHpFacts,
   type SpellMetrics,
-  type SpellMetricsInput
+  type SpellMetricsInput,
 } from '../src/shared/spellMetrics.ts'
 
 /** The figures for a spell that MUST produce some. */
@@ -39,7 +39,7 @@ const ETHEREAL_CLIENT: ClientHpFacts = {
   hp: [{ base: 10, max: 100, calc: 103, perTick: true }],
   hpDuration: { formula: 3, value: 4 },
   recastMs: 30_000,
-  mana: 150
+  mana: 150,
 }
 /** And what the wiki states for it: one flat line, 24 seconds, 150 mana. */
 const ETHEREAL_WIKI: SpellMetricsInput = {
@@ -47,7 +47,7 @@ const ETHEREAL_WIKI: SpellMetricsInput = {
   mana: 150,
   castTimeMs: 1500,
   recastMs: 30_000,
-  durationMs: 24_000
+  durationMs: 24_000,
 }
 
 test('R17 THE TICKET: a flat wiki line over a curved client slot reads the CURVE', () => {
@@ -58,7 +58,7 @@ test('R17 THE TICKET: a flat wiki line over a curved client slot reads the CURVE
     hps: 1.3,
     hot: true,
     overSec: 24,
-    recastMs: 30_000
+    recastMs: 30_000,
   })
   // After, at the level a paladin gains it: 10 + 2x44 = 98 a tick, four ticks, 392.
   assert.deepEqual(spellMetricsAt(ETHEREAL_WIKI, 44, ETHEREAL_CLIENT), {
@@ -68,11 +68,15 @@ test('R17 THE TICKET: a flat wiki line over a curved client slot reads the CURVE
     hot: true,
     overSec: 24,
     recastMs: 30_000,
-    clientCurve: true
+    clientCurve: true,
   })
   // …and at 50 the cap binds, which is the acceptance the ticket names: about 400.
   assert.equal(spellMetricsAt(ETHEREAL_WIKI, 50, ETHEREAL_CLIENT)?.heal, 400)
-  assert.equal(spellMetricsAt(ETHEREAL_WIKI, 60, ETHEREAL_CLIENT)?.heal, 400, 'capped at 100 a tick')
+  assert.equal(
+    spellMetricsAt(ETHEREAL_WIKI, 60, ETHEREAL_CLIENT)?.heal,
+    400,
+    'capped at 100 a tick',
+  )
   // THE DURATION IS STILL THE PAGE'S. Only the magnitude moves; the four ticks are `durationMs`.
   assert.equal(spellMetricsAt(ETHEREAL_WIKI, 50, ETHEREAL_CLIENT)?.overSec, 24)
 })
@@ -80,10 +84,10 @@ test('R17 THE TICKET: a flat wiki line over a curved client slot reads the CURVE
 test('R18 the rule is a SHAPE, and every part of it is load-bearing', () => {
   const fire = (
     wiki: string,
-    slot: { base: number; max: number; calc: number; perTick: boolean }
+    slot: { base: number; max: number; calc: number; perTick: boolean },
   ): boolean =>
     spellMetricsAt({ effects: [wiki], mana: 100, castTimeMs: 1000, durationMs: 24_000 }, 44, {
-      hp: [slot]
+      hp: [slot],
     })?.clientCurve === true
 
   const curve = { base: 10, max: 100, calc: 103, perTick: true }
@@ -114,10 +118,10 @@ test('R18 the rule is a SHAPE, and every part of it is load-bearing', () => {
       effects: ['Increase Hitpoints by 10 per tick'],
       mana: 100,
       castTimeMs: 1000,
-      durationMs: 24_000
+      durationMs: 24_000,
     },
     44,
-    { hp: [curve, { base: 10, max: 0, calc: 102, perTick: true }] }
+    { hp: [curve, { base: 10, max: 0, calc: 102, perTick: true }] },
   )
   assert.equal(two?.clientCurve, undefined)
   assert.equal(two?.heal, 40, 'and the wiki number stands')
@@ -147,7 +151,7 @@ test('R19 the calc codes JOS-451 measured off the catalog ramps', () => {
   for (const calc of [123, 139, 144, 4005]) {
     assert.deepEqual(clientHpMagnitudeAt({ base: 60, max: 0, calc, perTick: false }, 50), {
       amount: 60,
-      formulaUnknown: true
+      formulaUnknown: true,
     })
   }
 })
@@ -171,7 +175,7 @@ test('R20 the mana rule: the client answers a stated zero and nothing else', () 
   const free: SpellMetricsInput = {
     effects: ['Decrease Hitpoints by 315'],
     mana: 0,
-    castTimeMs: 3000
+    castTimeMs: 3000,
   }
   assert.equal(metrics(free, 43).damagePerMana, undefined)
   assert.equal(spellMetricsAt(free, 43, { mana: 800 })?.damagePerMana, 0.4)

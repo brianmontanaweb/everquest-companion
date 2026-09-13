@@ -57,7 +57,7 @@ export {
   type AlertBannerSeed,
   type ConCardSeed,
   type PrefsSnapshot,
-  type ToastSeed
+  type ToastSeed,
 } from './prefsSnapshot'
 
 /** "The gate above me is open." The VALUE comes from the cache, for the reason below. */
@@ -87,7 +87,9 @@ export function usePrefsSeed(): PrefsSnapshot {
   const open = useContext(GateContext)
   const snap = peekPrefsSnapshot()
   if (!open || snap === null) {
-    throw new Error('a Preferences card was rendered outside <PrefsGate>, so it has no value to paint')
+    throw new Error(
+      'a Preferences card was rendered outside <PrefsGate>, so it has no value to paint',
+    )
   }
   return snap
 }
@@ -123,9 +125,9 @@ export function PrefsGate({ children }: { children: ReactNode }): JSX.Element | 
         setFailed(true)
         window.eq.reportError({
           source: 'renderer:prefsHydration',
-          message: `Preferences could not read its settings from the app: ${String(err)}`
+          message: `Preferences could not read its settings from the app: ${String(err)}`,
         })
-      }
+      },
     )
     return () => {
       alive = false

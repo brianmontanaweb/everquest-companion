@@ -61,7 +61,13 @@ function provenance(row: DropRow): string {
   return [row.source, row.zone].filter((s): s is string => !!s).join(' · ')
 }
 
-function Row({ row, onOpenLoot }: { row: DropRow; onOpenLoot: (item?: string) => void }): JSX.Element {
+function Row({
+  row,
+  onOpenLoot,
+}: {
+  row: DropRow
+  onOpenLoot: (item?: string) => void
+}): JSX.Element {
   // The DEEP LINK: this row's own item, opened on the Loot tab's detail pane. The whole row is
   // the target (a 18px icon and a timestamp are not a click), and the NAME additionally carries
   // the app's in-place link treatment — the dotted underline the Target card's mob name uses —
@@ -94,7 +100,7 @@ function Row({ row, onOpenLoot }: { row: DropRow; onOpenLoot: (item?: string) =>
             ? { bgcolor: 'action.hover', borderLeft: 3, borderColor: 'secondary.main', pl: 0.25 }
             : { borderLeft: 3, borderColor: 'transparent', pl: 0.25 }),
           '&:hover': { bgcolor: 'action.selected' },
-          '&:hover [data-testid="overview-drop-name"]': { color: 'primary.main' }
+          '&:hover [data-testid="overview-drop-name"]': { color: 'primary.main' },
         }}
       >
         <DropIcon iconId={row.knowledge?.iconId} />
@@ -106,14 +112,19 @@ function Row({ row, onOpenLoot }: { row: DropRow; onOpenLoot: (item?: string) =>
             fontWeight: row.highlighted ? 700 : 400,
             minWidth: 0,
             textDecoration: 'underline dotted',
-            textUnderlineOffset: 3
+            textUnderlineOffset: 3,
           }}
         >
           {row.count != null && row.count > 1 && `${String(row.count)}× `}
           {row.item}
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
-        <Typography variant="caption" color="text.secondary" noWrap sx={{ flexShrink: 1, minWidth: 0 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          noWrap
+          sx={{ flexShrink: 1, minWidth: 0 }}
+        >
           {provenance(row)}
         </Typography>
         <Typography variant="caption" color="text.disabled" sx={{ flexShrink: 0 }}>
@@ -157,7 +168,7 @@ export function RecentDropsCard({ rows, onOpenLoot }: RecentDropsCardProps): JSX
               </Box>
             ) : (
               <Row key={row.id} row={row} onOpenLoot={onOpenLoot} />
-            )
+            ),
           )
         )}
       </Box>

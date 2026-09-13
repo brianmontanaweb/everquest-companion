@@ -20,7 +20,15 @@
 // journey. If that judgement is ever revisited, it is one `useBackTarget` call — the mechanism is
 // not the argument.
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react'
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from 'react'
 import { addTarget, removeTarget, runBack, type BackTarget } from './backTargets'
 
 interface BackRegistry {
@@ -32,7 +40,7 @@ interface BackRegistry {
 
 const NOOP_REGISTRY: BackRegistry = {
   push: () => () => undefined,
-  setFallback: () => () => undefined
+  setFallback: () => () => undefined,
 }
 
 /**
@@ -70,7 +78,10 @@ export function AppBackProvider({ children }: { children: ReactNode }): React.JS
     }
   }, [])
 
-  useEffect(() => window.eq.onAppBack(() => void runBack(stack.current, () => fallback.current())), [])
+  useEffect(
+    () => window.eq.onAppBack(() => void runBack(stack.current, () => fallback.current())),
+    [],
+  )
 
   // A stable value: both members are `useCallback`s with no dependencies, so every consumer's
   // registration effect runs exactly once per mount rather than once per render of this provider.

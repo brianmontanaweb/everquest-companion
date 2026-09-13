@@ -42,7 +42,7 @@ export interface BossKillCallbacks {
 
 export function useBossKills(
   targets: RaidTarget[],
-  cbs?: BossKillCallbacks
+  cbs?: BossKillCallbacks,
 ): { kills: KillMap; statuses: TargetStatus[] } {
   // Per-mob wholesale replace, with the shape guard: a delta stamped with a version the held
   // baseline was not written at re-hydrates instead of merging (shared/kills.ts).

@@ -54,7 +54,7 @@ import {
   hotZoneStyle,
   overlayHotZones,
   overlayWantsHoverZones,
-  type ZoneRect
+  type ZoneRect,
 } from './overlayHotZone'
 import { clearHoverZones, setHoverZones, subscribeHoverTransitions } from './presence'
 import { getOverlayConfig } from './store'
@@ -123,7 +123,7 @@ function zonesFor(kind: OverlayKind, w: BrowserWindow | null): ZoneRect[] {
     // …and the park is ALSO where the presence preferences land (presenceEffects.ts `onPresence`),
     // which is the whole of this predicate's relationship with EverQuest since the 2026-08-24
     // ruling. There is no `eqFocused` argument to pass any more, on purpose.
-    parked: overlaysParked()
+    parked: overlaysParked(),
   })
   if (!want) return []
   // The page's own zoom, so a CSS-px strip is a DIP strip — overlayHotZone.ts's `zoom` note.
@@ -183,7 +183,7 @@ const probe: HoverProbe | null = E2E
         onTransition(key, inside)
       },
       pushed: () => ({ ...pushedInside }),
-      stripPx: CHROME_STRIP_PX
+      stripPx: CHROME_STRIP_PX,
     }
   : null
 

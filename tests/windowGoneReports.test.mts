@@ -21,7 +21,7 @@ import {
   RENDER_GONE_ERROR_NAME,
   didFailLoadMessage,
   numericOr,
-  renderGoneReport
+  renderGoneReport,
 } from '../src/main/windowGone'
 import { GPU_LOSS_ERROR_NAME } from '../src/main/childProcessGone'
 import { NO_MESSAGE, stampedMessage } from '../src/shared/errorReportLocation'
@@ -29,7 +29,7 @@ import {
   MAX_REDACTED_MESSAGE,
   errorFingerprint,
   errorNameOf,
-  redactMessage
+  redactMessage,
 } from '../src/shared/errorReport'
 import { REDACTED_MESSAGE_RE } from '../src/shared/telemetry'
 import { noteError, resetErrorReports, takeErrorReports } from '../src/main/telemetry/errorReports'
@@ -60,7 +60,7 @@ test('THE SHAPE GATE: a reason that is not one of Chromium’s words does not ri
   // path, a character name or a line of the game's log is refused ENTIRELY, not trimmed.
   const nasty = renderGoneReport({
     reason: "C:\\Users\\jmoye\\Logs\\eqlog_Primitive_freeport.txt says 'a rat'",
-    exitCode: 1
+    exitCode: 1,
   })
   assert.equal(nasty.message, 'render process gone: reason=unknown, exitCode=1')
   assert.equal(nasty.message.includes('Primitive'), false)
@@ -69,18 +69,18 @@ test('THE SHAPE GATE: a reason that is not one of Chromium’s words does not ri
   // why this is a pattern and not a frozen list.
   assert.equal(
     renderGoneReport({ reason: 'memory-eviction', exitCode: 0 }).message,
-    'render process gone: reason=memory-eviction, exitCode=0'
+    'render process gone: reason=memory-eviction, exitCode=0',
   )
 })
 
 test('A FAILED LOAD names the net error, and leaves the URL out of the message', () => {
   assert.equal(
     didFailLoadMessage('ERR_FILE_NOT_FOUND', -6, true),
-    'load failed: ERR_FILE_NOT_FOUND (errorCode=-6, mainFrame=true)'
+    'load failed: ERR_FILE_NOT_FOUND (errorCode=-6, mainFrame=true)',
   )
   assert.equal(
     didFailLoadMessage(undefined, undefined, undefined),
-    'load failed: unknown (errorCode=-1, mainFrame=false)'
+    'load failed: unknown (errorCode=-1, mainFrame=false)',
   )
   // The URL is a `file:///C:/Users/<the user's name>/…` in a packaged install. It stays in the
   // payload for `errors.log`; it is not in the sentence the fleet receives.
@@ -110,19 +110,28 @@ test('numericOr refuses NaN and Infinity, which would print as words in a messag
 // =========================================================================================
 
 test('AN EMPTY MESSAGE IS STAMPED WITH THE CAPTURE SITE, never sent blank', () => {
-  assert.equal(stampedMessage('', 'main:render-process-gone'), `${NO_MESSAGE} [main:render-process-gone]`)
+  assert.equal(
+    stampedMessage('', 'main:render-process-gone'),
+    `${NO_MESSAGE} [main:render-process-gone]`,
+  )
   // Whitespace is empty. `redactMessage` already trims, but the belt must not depend on that.
-  assert.equal(stampedMessage('   ', 'renderer:ErrorBoundary'), `${NO_MESSAGE} [renderer:ErrorBoundary]`)
+  assert.equal(
+    stampedMessage('   ', 'renderer:ErrorBoundary'),
+    `${NO_MESSAGE} [renderer:ErrorBoundary]`,
+  )
   // A message that says anything at all is returned untouched — the belt is a last resort and
   // must never edit a real message.
-  assert.equal(stampedMessage('x is not a function', 'main:uncaughtException'), 'x is not a function')
+  assert.equal(
+    stampedMessage('x is not a function', 'main:uncaughtException'),
+    'x is not a function',
+  )
 })
 
 test('THE TAG IS HELD TO A SHAPE, because one logError source is renderer-supplied', () => {
   // `ipc/windowControls.ts` builds `renderer:${report.source}` out of the `error:report` IPC, so
   // "every call site passes a literal" is FALSE and the shape is the actual control.
   const hostile = [
-    "renderer:C:\\Users\\jmoye\\Logs\\eqlog_Primitive.txt",
+    'renderer:C:\\Users\\jmoye\\Logs\\eqlog_Primitive.txt',
     'renderer:a rat says hello',
     "renderer:'Primitive'",
     'renderer:[Sat Aug 01 13:00:28 2026] You slash a rat',
@@ -130,7 +139,7 @@ test('THE TAG IS HELD TO A SHAPE, because one logError source is renderer-suppli
     `renderer:${'x'.repeat(200)}`,
     42,
     null,
-    undefined
+    undefined,
   ]
   for (const source of hostile) {
     assert.equal(stampedMessage('', source), NO_MESSAGE, `let through: ${String(source)}`)
@@ -147,7 +156,7 @@ test('THE TAG IS HELD TO A SHAPE, because one logError source is renderer-suppli
     'renderer:ErrorBoundary',
     'renderer:console',
     'cursorRing:preload-error',
-    'trayNotice:preload-error'
+    'trayNotice:preload-error',
   ]) {
     assert.equal(stampedMessage('', source), `${NO_MESSAGE} [${source}]`, source)
   }
@@ -161,7 +170,7 @@ test('EVERY STAMP IS A FIXED POINT OF redactMessage — the server re-runs it an
     'main:render-process-gone',
     'renderer:ErrorBoundary',
     'trayNotice:preload-error',
-    'nope not a tag'
+    'nope not a tag',
   ]) {
     const stamp = stampedMessage('', source)
     assert.equal(redactMessage(stamp), stamp, `not a fixed point: ${stamp}`)
@@ -180,8 +189,8 @@ function withFrames(message: string): Record<string, unknown> {
     message,
     stack: [
       `Error: ${message}`,
-      '    at WebContents.<anonymous> (C:\\Users\\jmoye\\eqc\\out\\main\\index.js:10455:5)'
-    ].join('\n')
+      '    at WebContents.<anonymous> (C:\\Users\\jmoye\\eqc\\out\\main\\index.js:10455:5)',
+    ].join('\n'),
   }
 }
 
@@ -217,11 +226,13 @@ test('THE BELT CANNOT MOVE A FINGERPRINT THAT ALREADY HAS FRAMES', () => {
   resetErrorReports(1_000_000)
   noteError('main:render-process-gone', withFrames(''), 1_000_100)
   const [stamped] = takeErrorReports()
-  const frames = [{ file: 'out/main/index.js', line: 10_455, col: 5, func: 'WebContents.<anonymous>' }]
+  const frames = [
+    { file: 'out/main/index.js', line: 10_455, col: 5, func: 'WebContents.<anonymous>' },
+  ]
   assert.equal(
     stamped.fingerprint,
     errorFingerprint('Error', frames),
-    'the fingerprint is the name and the frames — the stamped message is not in it'
+    'the fingerprint is the name and the frames — the stamped message is not in it',
   )
 })
 

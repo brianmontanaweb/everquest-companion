@@ -51,13 +51,13 @@ export const PROC_BUFF_CATALOG: ProcBuffDef[] = [
     classes: '* Paladin - Level 15',
     applyMsg: 'A brilliant blue aura surrounds your weapon.',
     wearOffMsg: 'The brilliant blue aura fades.',
-    grantsProc: 'Condemnation of Nife'
-  }
+    grantsProc: 'Condemnation of Nife',
+  },
 ]
 
 /** Canonical join keys of the catalog (lowercased names), for the O(1) ingest gate. */
 export const PROC_BUFF_KEYS: ReadonlySet<string> = new Set(
-  PROC_BUFF_CATALOG.map((b) => b.name.toLowerCase())
+  PROC_BUFF_CATALOG.map((b) => b.name.toLowerCase()),
 )
 
 /** The catalog entry a candidate spell name names, or undefined. Case-insensitive: buff

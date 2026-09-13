@@ -21,5 +21,5 @@ import { ownerToolsEnabled } from '../shared/ownerTools'
 export const OWNER_TOOLS = ownerToolsEnabled({
   env: process.env,
   isPackaged: app.isPackaged,
-  e2e: E2E
+  e2e: E2E,
 })

@@ -26,7 +26,7 @@ import {
   bandRange,
   floorBands,
   inActiveBand,
-  segmentZ
+  segmentZ,
 } from '../src/renderer/src/features/maps/floorSlice'
 
 /** `n` levels spread evenly from `lo` to `hi` — a dense, gapless run, as a real dungeon is. */
@@ -49,8 +49,8 @@ test('two clusters separated by a void split into exactly those two clusters', (
     bands.map((b) => [b.lo, b.hi, b.levels]),
     [
       [-100, -80, 20],
-      [180, 200, 20]
-    ]
+      [180, 200, 20],
+    ],
   )
 })
 
@@ -60,7 +60,7 @@ test("crystallos' 10,694 distinct levels collapse to the band cap, not to a pick
   assert.equal(bands.length, MAX_BANDS)
   assert.equal(
     bands.reduce((n, b) => n + b.levels, 0),
-    10694
+    10694,
   )
 })
 
@@ -70,7 +70,7 @@ test('bands PARTITION the input: ascending, disjoint, and every level in exactly
   for (let i = 1; i < bands.length; i += 1) assert.ok(bands[i - 1].hi < bands[i].lo)
   assert.equal(
     bands.reduce((n, b) => n + b.levels, 0),
-    z.length
+    z.length,
   )
   for (const v of z) {
     const hits = bands.filter((b) => v >= b.lo && v <= b.hi)

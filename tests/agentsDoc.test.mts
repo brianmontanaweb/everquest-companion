@@ -50,7 +50,7 @@ test('AGENTS.md stays under the 20,000-word ceiling', () => {
       `never mechanical truncation, archive before cutting. ` +
       `Every rule survives verbatim; war stories compress to one line + the Linear ` +
       `ticket id; long-form histories MOVE verbatim to docs/agents-archive.md with ` +
-      `pointers back, so any cut is reversible in one paste.`
+      `pointers back, so any cut is reversible in one paste.`,
   )
 })
 
@@ -62,6 +62,6 @@ test('the archive that distillation moves history into exists beside it', () => 
     existsSync(ARCHIVE_MD),
     'docs/agents-archive.md is missing. AGENTS.md is distilled (JOS-252) and its ' +
       'long-form histories live in that archive; restore it — distillation moves ' +
-      'content, it never deletes it.'
+      'content, it never deletes it.',
   )
 })

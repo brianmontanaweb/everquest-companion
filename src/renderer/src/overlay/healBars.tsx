@@ -34,7 +34,7 @@ import {
   isAbsorbLane,
   isUnstatedLane,
   laneAmount,
-  spellStat
+  spellStat,
 } from '../features/combat/healRows'
 
 // Re-exported so HealMeter (and anything else in this bundle) keeps one import site for the
@@ -56,7 +56,7 @@ const KIND_COLOR: Record<string, string> = {
   you: '#7fd1a0',
   pet: '#6fb3d2',
   other: '#a98fe0',
-  enemy: '#cf6679'
+  enemy: '#cf6679',
 }
 
 /** A single horizontal bar: label + right-text + pct-fill. Same treatment as the DPS overlay —
@@ -68,7 +68,7 @@ function Bar({
   label,
   right,
   onClick,
-  accent
+  accent,
 }: {
   color: string
   pct: number
@@ -88,11 +88,23 @@ function Bar({
         marginBottom: 2,
         overflow: 'hidden',
         cursor: onClick ? 'pointer' : 'default',
-        background: 'rgba(255,255,255,0.06)'
+        background: 'rgba(255,255,255,0.06)',
       }}
     >
-      <div style={{ position: 'absolute', inset: 0, width: `${Math.max(2, fill)}%`, background: color, opacity: 0.55 }} />
-      {accent && <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: accent }} />}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: `${Math.max(2, fill)}%`,
+          background: color,
+          opacity: 0.55,
+        }}
+      />
+      {accent && (
+        <div
+          style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: accent }}
+        />
+      )}
       <div
         style={{
           position: 'absolute',
@@ -103,13 +115,23 @@ function Bar({
           gap: 6,
           fontSize: 11,
           lineHeight: 1,
-          textShadow: '0 1px 2px rgba(0,0,0,0.9)'
+          textShadow: '0 1px 2px rgba(0,0,0,0.9)',
         }}
       >
         {rank != null && (
-          <span style={{ color: 'rgba(255,255,255,0.55)', width: 12, textAlign: 'right' }}>{rank}</span>
+          <span style={{ color: 'rgba(255,255,255,0.55)', width: 12, textAlign: 'right' }}>
+            {rank}
+          </span>
         )}
-        <span style={{ fontWeight: 600, flexGrow: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <span
+          style={{
+            fontWeight: 600,
+            flexGrow: 1,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
           {label}
         </span>
         <span style={{ whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{right}</span>
@@ -132,7 +154,14 @@ export type Drill = OverlayDrill
 function AbsorbCounts({ mit }: { mit: MitigationView }): JSX.Element | null {
   if (!hasAbsorbCounts(mit)) return null
   return (
-    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', padding: '5px 2px 0', lineHeight: 1.5 }}>
+    <div
+      style={{
+        fontSize: 10,
+        color: 'rgba(255,255,255,0.55)',
+        padding: '5px 2px 0',
+        lineHeight: 1.5,
+      }}
+    >
       {mit.absorbedSwings > 0 && <>{mit.absorbedSwings} swings absorbed</>}
       {mit.absorbedSwings > 0 && mit.absorbedDamageShields > 0 && ' · '}
       {mit.absorbedDamageShields > 0 && <>{mit.absorbedDamageShields} damage shields absorbed</>}
@@ -184,7 +213,7 @@ export function HealBars({
   roster,
   drill,
   setDrill,
-  live
+  live,
 }: {
   seg: SegmentView | undefined
   scope: MeterScope
@@ -242,7 +271,7 @@ export function HealBars({
 
 /** One lane inside a healer's drill: a heal spell, or the absorption lane. */
 function SpellBar({ s, healerKind }: { s: HealSpellView; healerKind: string }): JSX.Element {
-  const color = isAbsorbLane(s) ? MIT_COLOR : KIND_COLOR[healerKind] ?? '#888'
+  const color = isAbsorbLane(s) ? MIT_COLOR : (KIND_COLOR[healerKind] ?? '#888')
   return (
     <Bar
       color={color}
@@ -254,7 +283,10 @@ function SpellBar({ s, healerKind }: { s: HealSpellView; healerKind: string }): 
           {/* Heal lines that named no spell get an explicit, labeled lane — never folded
               silently into a real spell's numbers. */}
           {s.name === 'Unspecified' && (
-            <span style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}> ~no spell named</span>
+            <span style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>
+              {' '}
+              ~no spell named
+            </span>
           )}
           {/* The classification as a plain suffix, matching this file's existing `·pet` /
               `·enemy` convention — no badge, so it can never overflow the bar. */}
@@ -265,7 +297,10 @@ function SpellBar({ s, healerKind }: { s: HealSpellView; healerKind: string }): 
               The suffix is what stops the zero-length bar beside it reading as a heal that did
               nothing. */}
           {isUnstatedLane(s) && (
-            <span style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}> ·{UNSTATED_AMOUNT}</span>
+            <span style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>
+              {' '}
+              ·{UNSTATED_AMOUNT}
+            </span>
           )}
           <span style={{ marginLeft: 6, color: 'rgba(255,255,255,0.62)', fontWeight: 400 }}>
             {spellStat(s)}
@@ -281,7 +316,7 @@ function SpellBar({ s, healerKind }: { s: HealSpellView; healerKind: string }): 
 function HealerBar({
   h,
   rank,
-  onDrill
+  onDrill,
 }: {
   h: HealSourceView
   rank: number
@@ -313,7 +348,7 @@ function HealerBar({
 /** Counter-healing is an ANNOTATION on your damage, not part of your sustain, so it never
  *  enters the ranking above — it gets one honest line. */
 function EnemyHealedLine({
-  enemy
+  enemy,
 }: {
   enemy: { total: number; healers: HealSourceView[] }
 }): JSX.Element | null {

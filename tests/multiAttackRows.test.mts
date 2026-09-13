@@ -28,7 +28,7 @@ function laneOf(o: Partial<RoundLaneView> & { verb: string; buckets: number[] })
     multiPct: rounds > 0 ? (multi / rounds) * 100 : 0,
     fannedRounds: 0,
     confidence: 'aggregate',
-    ...o
+    ...o,
   }
 }
 
@@ -44,12 +44,17 @@ function viewOf(o: Partial<SourceRoundsView> & { lanes: RoundLaneView[] }): Sour
     rampagesTaken: 0,
     flurries: 0,
     flurryPct: 0,
-    ...o
+    ...o,
   }
 }
 
 // The w49 backstab lane, verbatim from the engine: 6 single / 4 double / 1 triple.
-const BACKSTAB = laneOf({ verb: 'backstab', label: 'Backstab', buckets: [6, 4, 1, 0], confidence: 'perEvent' })
+const BACKSTAB = laneOf({
+  verb: 'backstab',
+  label: 'Backstab',
+  buckets: [6, 4, 1, 0],
+  confidence: 'perEvent',
+})
 const SLASH = laneOf({ verb: 'slash', label: 'Melee', buckets: [18, 10, 5, 2] })
 
 test('every lane states how often it doubled and tripled, over its OWN rounds', () => {
@@ -65,13 +70,17 @@ test('every lane states how often it doubled and tripled, over its OWN rounds', 
 })
 
 test('a bucket that never fired is ABSENT from the run, never a 0%', () => {
-  const [row] = multiAttackRows(viewOf({ lanes: [laneOf({ verb: 'kick', buckets: [40, 6, 0, 0] })] }))
+  const [row] = multiAttackRows(
+    viewOf({ lanes: [laneOf({ verb: 'kick', buckets: [40, 6, 0, 0] })] }),
+  )
   assert.equal(row.text, '13% doubled')
   assert.equal(row.tripledPct, 0)
 })
 
 test('a lane that never multi-attacked says so in words, not in zeroes', () => {
-  const [row] = multiAttackRows(viewOf({ lanes: [laneOf({ verb: 'punch', buckets: [3, 0, 0, 0] })] }))
+  const [row] = multiAttackRows(
+    viewOf({ lanes: [laneOf({ verb: 'punch', buckets: [3, 0, 0, 0] })] }),
+  )
   assert.equal(row.text, 'never multi-attacked')
   assert.equal(row.doubledPct, 0)
 })
@@ -88,7 +97,7 @@ test('the bar ranks lanes against the biggest, and a round-less lane never draws
   assert.deepEqual(
     rows.map((r) => r.verb),
     ['slash', 'backstab'],
-    '0 rounds ⇒ no row at all'
+    '0 rounds ⇒ no row at all',
   )
   assert.equal(rows[0].pct, 100)
   assert.ok(rows[1].pct < 100)
@@ -98,6 +107,6 @@ test('flurry is stated ONCE for the source — the log never says which verb flu
   assert.equal(flurryText(viewOf({ lanes: [BACKSTAB] })), null, 'no flurries ⇒ no line at all')
   assert.equal(
     flurryText(viewOf({ lanes: [BACKSTAB], flurries: 3, flurryPct: 1.7647 })),
-    'flurry ×3 · 1.8% of rounds'
+    'flurry ×3 · 1.8% of rounds',
   )
 })

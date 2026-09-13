@@ -64,7 +64,7 @@ const PICK: readonly string[] = [
   'SV_COLD',
   'SV_MAGIC',
   'WIS',
-  'DMG'
+  'DMG',
 ]
 
 export interface GearColumnFixture {
@@ -79,7 +79,10 @@ function until(fn: () => Promise<boolean>, ms: number): Promise<boolean> {
 }
 
 function textOf(page: Page, sel: string): Promise<string> {
-  return page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
+  return page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    sel,
+  )
 }
 
 async function shownCount(page: Page): Promise<number> {
@@ -99,7 +102,7 @@ async function typeAndSettle(page: Page, value: string): Promise<number> {
       return stable
     },
     (ok) => ok,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   return last
 }
@@ -120,7 +123,7 @@ export function cellText(page: Page, key: string, column: string): Promise<strin
         ?.querySelector(`[data-testid="gear-cell-${c}"]`)
       return cell instanceof HTMLElement ? cell.innerText.trim() : ''
     },
-    [key, column]
+    [key, column],
   )
 }
 
@@ -140,7 +143,7 @@ function overflowX(page: Page): Promise<{ list: number; doc: number; content: nu
     return {
       list: list === null ? -1 : list.scrollWidth - list.clientWidth,
       doc: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
-      content: content === null ? -1 : Math.max(0, content.scrollWidth - content.clientWidth)
+      content: content === null ? -1 : Math.max(0, content.scrollWidth - content.clientWidth),
     }
   })
 }
@@ -149,19 +152,28 @@ function overflowX(page: Page): Promise<{ list: number; doc: number; content: nu
 function rowHeights(page: Page): Promise<number[]> {
   return page.evaluate((sel) => {
     const seen = new Set<number>()
-    for (const el of document.querySelectorAll(sel)) seen.add(Math.round(el.getBoundingClientRect().height))
+    for (const el of document.querySelectorAll(sel))
+      seen.add(Math.round(el.getBoundingClientRect().height))
     return [...seen]
   }, ROW)
 }
 
 /** Open a picker menu, click a list of options, and close it with the platform's own gesture. */
-async function pick(page: Page, toggle: string, testId: string, keys: readonly string[]): Promise<void> {
+async function pick(
+  page: Page,
+  toggle: string,
+  testId: string,
+  keys: readonly string[],
+): Promise<void> {
   await page.click(toggle, { timeout: 15_000 })
   for (const key of keys) {
     await page.click(`[data-testid="${testId}-option-${key}"]`, { timeout: 15_000 })
   }
   await page.keyboard.press('Escape')
-  await until(async () => (await countOf(page, `[data-testid="${testId}-option-${keys[0] ?? 'AC'}"]`)) === 0, 10_000)
+  await until(
+    async () => (await countOf(page, `[data-testid="${testId}-option-${keys[0] ?? 'AC'}"]`)) === 0,
+    10_000,
+  )
 }
 
 /**
@@ -202,9 +214,18 @@ async function stepPick(page: Page): Promise<boolean> {
   const before = await countOf(page, '[data-testid^="gear-sort-"]')
   await pick(page, COLUMNS_TOGGLE, 'gear-columns', PICK)
 
-  const grew = await until(async () => (await countOf(page, '[data-testid^="gear-sort-"]')) > before, 15_000)
+  const grew = await until(
+    async () => (await countOf(page, '[data-testid^="gear-sort-"]')) > before,
+    15_000,
+  )
   const after = await countOf(page, '[data-testid^="gear-sort-"]')
-  if (!check('picking stats puts them on the table as columns', grew, `${String(before)} headers → ${String(after)}`)) {
+  if (
+    !check(
+      'picking stats puts them on the table as columns',
+      grew,
+      `${String(before)} headers → ${String(after)}`,
+    )
+  ) {
     return false
   }
 
@@ -215,13 +236,15 @@ async function stepPick(page: Page): Promise<boolean> {
   check(
     'every picked stat gets a SORTABLE header - the exposure is the whole of "all columns sortable"',
     missing.length === 0,
-    missing.length === 0 ? `${String(PICK.length)} picked, all sortable` : `no header for ${missing.join(' ')}`
+    missing.length === 0
+      ? `${String(PICK.length)} picked, all sortable`
+      : `no header for ${missing.join(' ')}`,
   )
   // The chip says the choice is now the user's, not the app's.
   check(
     'the Columns chip counts what is drawn',
     (await textOf(page, COLUMNS_TOGGLE)).includes(String(after - 1)),
-    (await textOf(page, COLUMNS_TOGGLE)).replace(/\s+/g, ' ').trim()
+    (await textOf(page, COLUMNS_TOGGLE)).replace(/\s+/g, ' ').trim(),
   )
   return missing.length === 0
 }
@@ -236,18 +259,22 @@ async function stepPick(page: Page): Promise<boolean> {
  */
 async function stepWidth(page: Page): Promise<void> {
   const mode = await page.getAttribute(TABLE, 'data-layout', { timeout: 15_000 })
-  check('a column set past the percentage floor switches the table to stated pixel widths', mode === 'pixel', String(mode))
+  check(
+    'a column set past the percentage floor switches the table to stated pixel widths',
+    mode === 'pixel',
+    String(mode),
+  )
 
   const over = await overflowX(page)
   check(
     'the wide table scrolls horizontally INSIDE the gear list, which is its own box',
     over.list > 0,
-    `list overflows by ${String(over.list)}px`
+    `list overflows by ${String(over.list)}px`,
   )
   check(
     '…and the PAGE never scrolls sideways for it - not the document, not the content area',
     over.doc === 0 && over.content === 0,
-    `document +${String(over.doc)}px · content area +${String(over.content)}px`
+    `document +${String(over.doc)}px · content area +${String(over.content)}px`,
   )
 
   // THE FIXED-HEIGHT CONTRACT, MEASURED. Eighteen columns is exactly when a cell would wrap.
@@ -255,7 +282,7 @@ async function stepWidth(page: Page): Promise<void> {
   check(
     'every row is still exactly one clipped line tall - the windowing hook`s whole precondition',
     heights.length === 1 && Math.abs((heights[0] ?? 0) - ROW_HEIGHT) <= 1,
-    `heights seen: ${heights.join(' ') || 'none'}`
+    `heights seen: ${heights.join(' ') || 'none'}`,
   )
 }
 
@@ -269,29 +296,32 @@ async function stepWidth(page: Page): Promise<void> {
 async function stepSortPicked(page: Page): Promise<void> {
   await page.click('[data-testid="gear-sort-STR"]', { timeout: 15_000 })
   const ready = await until(async () => {
-    const seen = await page.evaluate(() =>
-      [...document.querySelectorAll('[data-testid="gear-cell-STR"]')]
-        .map((c) => (c as HTMLElement).innerText.trim())
-        .filter((t) => t !== '').length
+    const seen = await page.evaluate(
+      () =>
+        [...document.querySelectorAll('[data-testid="gear-cell-STR"]')]
+          .map((c) => (c as HTMLElement).innerText.trim())
+          .filter((t) => t !== '').length,
     )
     return seen > 1
   }, 15_000)
   if (!check('sorting by a picked stat leaves rows on screen that state it', ready)) return
 
   const values = await page.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="gear-cell-STR"]')].map((c) => (c as HTMLElement).innerText.trim())
+    [...document.querySelectorAll('[data-testid="gear-cell-STR"]')].map((c) =>
+      (c as HTMLElement).innerText.trim(),
+    ),
   )
   const numbers = values.filter((t) => t !== '').map(Number)
   check(
     'a picked column ranks the visible rows highest first, like any other',
     numbers.every((n, i) => i === 0 || (numbers[i - 1] ?? 0) >= n),
-    numbers.slice(0, 6).join(' ')
+    numbers.slice(0, 6).join(' '),
   )
   const firstBlank = values.indexOf('')
   check(
     'and a row stating no STR never outranks one that states it - absent is not zero',
     firstBlank === -1 || values.slice(firstBlank).every((t) => t === ''),
-    `first blank at ${String(firstBlank)} of ${String(values.length)}`
+    `first blank at ${String(firstBlank)} of ${String(values.length)}`,
   )
 }
 
@@ -309,23 +339,23 @@ async function stepNumbersUnmoved(page: Page, fixture: GearColumnFixture): Promi
   const want = {
     dmg: String(scaled.stats.DMG),
     wis: String(scaled.stats.WIS),
-    ratio: gearRatio(scaled.stats)?.toFixed(2) ?? ''
+    ratio: gearRatio(scaled.stats)?.toFixed(2) ?? '',
   }
   const got = {
     dmg: await cellText(page, fixture.row.key, 'DMG'),
     wis: await cellText(page, fixture.row.key, 'WIS'),
-    ratio: await cellText(page, fixture.row.key, 'RATIO')
+    ratio: await cellText(page, fixture.row.key, 'RATIO'),
   }
   check(
     'a picked-wide table still states scaleGearRow`s answer at the selector`s plus - the picker draws, it does not compute',
     got.dmg === want.dmg && got.wis === want.wis && got.ratio === want.ratio,
-    `screen ${got.dmg}/${got.wis}/${got.ratio} · scaleGearRow ${want.dmg}/${want.wis}/${want.ratio}`
+    `screen ${got.dmg}/${got.wis}/${got.ratio} · scaleGearRow ${want.dmg}/${want.wis}/${want.ratio}`,
   )
   // A column the item does not state is BLANK beside the ones it does — never a zero it never had.
   check(
     '…and a picked column this item states nothing for is blank, not a zero it never had',
     (await cellText(page, fixture.row.key, 'STR')) === '',
-    `reads "${await cellText(page, fixture.row.key, 'STR')}"`
+    `reads "${await cellText(page, fixture.row.key, 'STR')}"`,
   )
 }
 
@@ -341,7 +371,10 @@ async function stepReset(page: Page): Promise<void> {
 
   const back = (await page.getAttribute(TABLE, 'data-layout')) === 'percent'
   check('resetting the picker returns the columns to following the sort', back)
-  const gone = await until(async () => (await countOf(page, '[data-testid="gear-sort-CHA"]')) === 0, 10_000)
+  const gone = await until(
+    async () => (await countOf(page, '[data-testid="gear-sort-CHA"]')) === 0,
+    10_000,
+  )
   check('…so a stat nothing is sorting on stops drawing a column', gone)
   // AND THE ONE THE SORT IS ON SURVIVES THE RESET — which is the whole of the derivation now that
   // the stat thresholds are gone (JOS-302). `stepSortPicked` above left the table ranked by STR, so
@@ -349,13 +382,13 @@ async function stepReset(page: Page): Promise<void> {
   check(
     '…while the column the table is RANKED by stays, derived rather than chosen',
     (await countOf(page, '[data-testid="gear-sort-STR"]')) === 1,
-    'the sort key is the derivation`s only source'
+    'the sort key is the derivation`s only source',
   )
   const over = await overflowX(page)
   check(
     '…and the derived set fits the pane again, with no sideways scroll anywhere',
     over.list <= 1 && over.doc === 0 && over.content === 0,
-    `list +${String(over.list)}px · document +${String(over.doc)}px`
+    `list +${String(over.list)}px · document +${String(over.doc)}px`,
   )
 }
 
@@ -380,25 +413,31 @@ async function stepFilterPicker(page: Page): Promise<void> {
   check(
     'the host spec left one slot pick on for this step',
     (await countOf(page, SLOT_SELECT)) === 1,
-    `${String(narrowed)} rows`
+    `${String(narrowed)} rows`,
   )
 
   await pick(page, FILTERS_TOGGLE, 'gear-filters', ['slot'])
-  check('unpicking a filter takes its control off the toolbar', await until(async () => (await countOf(page, SLOT_SELECT)) === 0, 15_000))
+  check(
+    'unpicking a filter takes its control off the toolbar',
+    await until(async () => (await countOf(page, SLOT_SELECT)) === 0, 15_000),
+  )
   const widened = await until(async () => (await shownCount(page)) > narrowed, 15_000)
   check(
     'a hidden control STOPS ITS FILTER - nobody may be held back by a pick they cannot see',
     widened,
-    `${String(narrowed)} with the slot pick → ${String(await shownCount(page))} without its control`
+    `${String(narrowed)} with the slot pick → ${String(await shownCount(page))} without its control`,
   )
 
   await pick(page, FILTERS_TOGGLE, 'gear-filters', ['slot'])
-  check('…and picking it again puts it back', await until(async () => (await countOf(page, SLOT_SELECT)) === 1, 15_000))
+  check(
+    '…and picking it again puts it back',
+    await until(async () => (await countOf(page, SLOT_SELECT)) === 1, 15_000),
+  )
   const restored = await until(async () => (await shownCount(page)) === narrowed, 15_000)
   check(
     'putting the control back restores the value it was holding, unchanged',
     restored,
-    `${String(await shownCount(page))} rows, wanted ${String(narrowed)}`
+    `${String(await shownCount(page))} rows, wanted ${String(narrowed)}`,
   )
 }
 
@@ -441,15 +480,18 @@ export async function stepGearColumnsRelaunched(page: Page): Promise<void> {
   const mounted = await until(async () => (await countOf(page, TABLE)) === 1, 30_000)
   if (!check('the table mounts on the second launch', mounted)) return
 
-  const cha = await until(async () => (await countOf(page, '[data-testid="gear-sort-CHA"]')) === 1, 15_000)
+  const cha = await until(
+    async () => (await countOf(page, '[data-testid="gear-sort-CHA"]')) === 1,
+    15_000,
+  )
   check('a picked column comes back after a relaunch, sortable header and all', cha)
   check(
     '…and an EXPLICIT choice beats the derivation across a process: the core AC column stays removed',
     (await countOf(page, '[data-testid="gear-sort-AC"]')) === 0,
-    'AC would be drawn by the seed on every launch'
+    'AC would be drawn by the seed on every launch',
   )
   check(
     'a hidden filter control stays hidden, while the ones that were never unpicked come back',
-    (await countOf(page, EFFECT_SELECT)) === 0 && (await countOf(page, SLOT_SELECT)) === 1
+    (await countOf(page, EFFECT_SELECT)) === 0 && (await countOf(page, SLOT_SELECT)) === 1,
   )
 }

@@ -96,7 +96,7 @@ export function windowSlice({
   rowHeight,
   scrollTop,
   viewport,
-  overscan
+  overscan,
 }: WindowedRowsInput): WindowedRows {
   const row = rowHeight > 0 ? rowHeight : 1
   const rows = Math.max(0, Math.floor(count))
@@ -114,7 +114,7 @@ export function windowSlice({
     end,
     topPad: start * row,
     bottomPad: Math.max(0, (rows - end) * row),
-    totalHeight
+    totalHeight,
   }
 }
 
@@ -122,7 +122,7 @@ export function useWindowedRows({
   count,
   rowHeight,
   scrollRef,
-  overscan = 8
+  overscan = 8,
 }: UseWindowedRowsOptions): WindowedRows {
   const [scrollTop, setScrollTop] = useState(0)
   const [viewport, setViewport] = useState(0)

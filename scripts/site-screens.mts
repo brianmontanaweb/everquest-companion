@@ -25,7 +25,12 @@
  * Output: site/assets/shot-*.png
  */
 
-import { _electron as electron, type ElectronApplication, type JSHandle, type Page } from 'playwright-core'
+import {
+  _electron as electron,
+  type ElectronApplication,
+  type JSHandle,
+  type Page,
+} from 'playwright-core'
 import { existsSync, mkdirSync, readFileSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -67,7 +72,6 @@ function log(msg: string): void {
   console.log(msg)
 }
 
-
 // ── off-screen compositing ─────────────────────────────────────────────────────────────
 
 interface Bounds {
@@ -104,7 +108,10 @@ interface ScreenshotWindow {
  * the main process can be busy enough that the resulting promise is garbage-collected before it
  * settles ("Resulting promise was garbage collected"). Retry rather than lose the run.
  */
-async function browserWindowOf(app: ElectronApplication, page: Page): Promise<JSHandle<ScreenshotWindow>> {
+async function browserWindowOf(
+  app: ElectronApplication,
+  page: Page,
+): Promise<JSHandle<ScreenshotWindow>> {
   let last: unknown
   for (let i = 0; i < 6; i++) {
     try {
@@ -119,7 +126,7 @@ async function browserWindowOf(app: ElectronApplication, page: Page): Promise<JS
 
 async function showOffscreen(
   win: JSHandle<ScreenshotWindow>,
-  size: { width: number; height: number }
+  size: { width: number; height: number },
 ): Promise<boolean> {
   const target: Bounds = { ...OFFSCREEN, ...size }
   const got: Bounds = await win.evaluate((w, b) => {
@@ -221,7 +228,7 @@ async function selectorValues(page: Page): Promise<string[]> {
   await page.click('[data-testid="segment-select"]')
   await page.waitForSelector('li[data-value]', { timeout: 15_000 })
   const values = await page.evaluate<string[]>(
-    '[...document.querySelectorAll("li[data-value]")].map(el => el.getAttribute("data-value") || "")'
+    '[...document.querySelectorAll("li[data-value]")].map(el => el.getAttribute("data-value") || "")',
   )
   await page.keyboard.press('Escape')
   await sleep(400)
@@ -285,7 +292,7 @@ async function captureCombatAndTimeline(page: Page, mode: string): Promise<void>
   await shot(page, {
     file: 'shot-combat.png',
     mode,
-    note: `${panels} panels · ${rows} meter rows · fight "${pick?.name ?? 'live/last'}"`
+    note: `${panels} panels · ${rows} meter rows · fight "${pick?.name ?? 'live/last'}"`,
   })
 
   // Timeline is a LENS over the same selection.
@@ -298,7 +305,7 @@ async function captureCombatAndTimeline(page: Page, mode: string): Promise<void>
     mode,
     note: stillDash
       ? 'WARNING: fell back to the dashboard (no event ring for this selection)'
-      : `timeline of "${pick?.name ?? 'live/last'}" · ${lanes} svg labels`
+      : `timeline of "${pick?.name ?? 'live/last'}" · ${lanes} svg labels`,
   })
   await page.click('[data-testid="view-toggle"] button:nth-child(1)')
   await sleep(600)
@@ -312,13 +319,17 @@ async function capturePosky(page: Page, mode: string): Promise<void> {
   // neither tension nor a reason for the tab to exist).
   const idx = await page.evaluate<number>(
     `[...document.querySelectorAll(".MuiAccordionSummary-root")]
-       .findIndex(el => / of \\d+ missing/.test(el.innerText || ""))`
+       .findIndex(el => / of \\d+ missing/.test(el.innerText || ""))`,
   )
   const target = idx >= 0 && idx < 4 ? idx : 0
   await page.locator('.MuiAccordionSummary-root').nth(target).click()
   await sleep(2000)
   const chips = await count(page, '.MuiAccordionDetails-root .MuiTableRow-root')
-  await shot(page, { file: 'shot-posky.png', mode, note: `quest #${target + 1} expanded · ${chips} turn-in item rows` })
+  await shot(page, {
+    file: 'shot-posky.png',
+    mode,
+    note: `quest #${target + 1} expanded · ${chips} turn-in item rows`,
+  })
 }
 
 async function captureOverlay(app: ElectronApplication, page: Page, mode: string): Promise<void> {
@@ -352,7 +363,7 @@ async function captureOverlay(app: ElectronApplication, page: Page, mode: string
     file: 'shot-overlay.png',
     mode: ovMode,
     note: `fight overlay · header "${head.trim()}" · ${rows} bars`,
-    omitBackground: true
+    omitBackground: true,
   })
   await hideWindow(ovWin)
   await page.evaluate<boolean>('window.eq.toggleOverlay("fight")')
@@ -385,14 +396,14 @@ async function captureBosses(page: Page, mode: string): Promise<void> {
   // The portraits stream through the eqimg:// cache on a cold userData — wait them out.
   for (let i = 0; i < 40; i++) {
     const pending = await page.evaluate<number>(
-      '[...document.images].filter(im => !im.complete).length'
+      '[...document.images].filter(im => !im.complete).length',
     )
     if (pending === 0) break
     await sleep(500)
   }
   await sleep(1500)
   const imgs = await page.evaluate<number>(
-    '[...document.images].filter(im => im.naturalWidth > 0).length'
+    '[...document.images].filter(im => im.naturalWidth > 0).length',
   )
   await shot(page, { file: 'shot-bosses.png', mode, note: `${imgs} boss portraits loaded` })
 }
@@ -405,7 +416,7 @@ function report(): void {
     log(
       `${r.ok ? 'ok  ' : 'FAIL'} ${r.file.padEnd(20)} ${`${r.width}x${r.height}`.padEnd(10)} ${`${(
         r.bytes / 1024
-      ).toFixed(0)}KB`.padEnd(8)} ${r.mode.padEnd(9)} ${r.note}`
+      ).toFixed(0)}KB`.padEnd(8)} ${r.mode.padEnd(9)} ${r.note}`,
     )
   }
   for (const s of skipped) log(`SKIP ${s.file} — ${s.why}`)
@@ -429,7 +440,7 @@ async function main(): Promise<void> {
     args: [MAIN_ENTRY, '--mute-audio'],
     cwd: ROOT,
     env: { ...process.env, EQ_E2E: '1', EQ_E2E_USER_DATA: USER_DATA, NODE_ENV: 'production' },
-    timeout: 60_000
+    timeout: 60_000,
   })
 
   let mainWin: JSHandle<ScreenshotWindow> | null = null
@@ -443,7 +454,9 @@ async function main(): Promise<void> {
     mainWin = await browserWindowOf(app, page)
     const shown = await showOffscreen(mainWin, WIN)
     const mode = shown ? 'offscreen' : 'hidden'
-    log(`window: 1280x800 at x=${OFFSCREEN.x} — ${shown ? 'composited off-screen' : 'HIDDEN (fallback)'}`)
+    log(
+      `window: 1280x800 at x=${OFFSCREEN.x} — ${shown ? 'composited off-screen' : 'HIDDEN (fallback)'}`,
+    )
     // A few seconds of LIVE data on top of the replay, so the combat log has fresh lines.
     await sleep(6000)
 
@@ -457,18 +470,26 @@ async function main(): Promise<void> {
     } else {
       skipped.push({
         file: 'shot-posky.png',
-        why: 'the tree never typechecked clean (a sibling agent is editing features/posky/**)'
+        why: 'the tree never typechecked clean (a sibling agent is editing features/posky/**)',
       })
       log('  SKIPPED shot-posky.png — the posky feature does not typecheck right now')
     }
 
     log('capture: Loot')
     await goTab(page, 'Loot', 3500)
-    await shot(page, { file: 'shot-loot.png', mode, note: `${await count(page, '.MuiTableRow-root')} loot rows` })
+    await shot(page, {
+      file: 'shot-loot.png',
+      mode,
+      note: `${await count(page, '.MuiTableRow-root')} loot rows`,
+    })
 
     log('capture: Alerts')
     await goTab(page, 'Alerts', 3000)
-    await shot(page, { file: 'shot-alerts.png', mode, note: `${await count(page, '.MuiPaper-root')} cards` })
+    await shot(page, {
+      file: 'shot-alerts.png',
+      mode,
+      note: `${await count(page, '.MuiPaper-root')} cards`,
+    })
 
     log('capture: Raid Targets')
     await captureBosses(page, mode)

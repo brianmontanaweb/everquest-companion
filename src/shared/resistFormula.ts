@@ -128,7 +128,15 @@ export const OVERCHANNEL_PER_CASTER_CLASS = -15
  * arithmetic constant in a pure module, and a data file that gains a tenth invocation must not
  * silently change what a resist estimate means.
  */
-export const PURE_CASTER_CLASSES: readonly string[] = ['CLR', 'DRU', 'ENC', 'MAG', 'NEC', 'SHM', 'WIZ']
+export const PURE_CASTER_CLASSES: readonly string[] = [
+  'CLR',
+  'DRU',
+  'ENC',
+  'MAG',
+  'NEC',
+  'SHM',
+  'WIZ',
+]
 
 const PURE_CASTER_SET: ReadonlySet<string> = new Set(PURE_CASTER_CLASSES)
 
@@ -159,7 +167,7 @@ export function castAdjustBonus(input: {
 /** The resist adjust a cast actually rolled against: the spell's own, plus its rank and invocation. */
 export function effectiveResistAdj(
   resistAdj: number,
-  cast: { rank?: number; overchannel?: boolean | null; casterClasses?: number }
+  cast: { rank?: number; overchannel?: boolean | null; casterClasses?: number },
 ): number {
   return resistAdj + castAdjustBonus(cast)
 }
@@ -310,7 +318,7 @@ export function benchmarkTag(R: number, guidance: ResistGuidance): ResistTag {
 export function resistBenchmark(
   R: number,
   viewerLevel: number | null,
-  mobLevel: number | null
+  mobLevel: number | null,
 ): ResistBenchmark {
   const atMobLevel = viewerLevel === null || mobLevel === null
   const level = atMobLevel ? (mobLevel ?? 0) : viewerLevel

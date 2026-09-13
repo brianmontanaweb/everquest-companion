@@ -31,14 +31,19 @@ import assert from 'node:assert/strict'
 import itemsJson from '../src/main/data/items.json'
 import type { ItemDbEntry, ItemDbFile } from '../src/main/itemsDb'
 import { ITEMS_RESEARCH, knowledgeWithResearch } from '../src/main/itemsResearch'
-import { buildGearIndex, gearStatNumber, gearWeightNumber, readGearStats } from '../src/main/planner/gearIndex'
+import {
+  buildGearIndex,
+  gearStatNumber,
+  gearWeightNumber,
+  readGearStats,
+} from '../src/main/planner/gearIndex'
 import { buildPlannerIndex } from '../src/main/planner/effectIndex'
 import {
   GEAR_INDEX_VERSION,
   GEAR_PERCENT_STAT_KEYS,
   GEAR_STAT_KEYS,
   isGearStatKey,
-  type GearRow
+  type GearRow,
 } from '../src/shared/planner/gear'
 import { gearRatio, scaleGearRow, scaleGearStats } from '../src/shared/planner/gearScale'
 import {
@@ -46,13 +51,13 @@ import {
   weaponPicksMatch,
   weaponTypeOf,
   type WeaponPick,
-  type WeaponType
+  type WeaponType,
 } from '../src/shared/planner/weaponType'
 import {
   normalizeStatKey,
   scaleStatBlock,
   synthesizesVoidSave,
-  type ItemUpgradeState
+  type ItemUpgradeState,
 } from '../src/shared/itemUpgrade'
 import { EQUIP_SLOTS } from '../src/shared/planner/types'
 import { isClassAbbr } from '../src/shared/classCombo'
@@ -73,7 +78,7 @@ const STATES: ItemUpgradeState[] = [
   { full: 0, fraction: 0 },
   CHECKPOINT,
   { full: 5, fraction: 17 },
-  { full: 10, fraction: 0 }
+  { full: 10, fraction: 0 },
 ]
 
 // =================================================================================
@@ -86,7 +91,7 @@ test('every equippable item becomes exactly one row (floors + the page identity)
     payloadMB: Number((JSON.stringify(index).length / 1024 / 1024).toFixed(2)),
     ...index.stats,
     unindexedStatKeys: index.stats.unindexedStatKeys,
-    unreadableStatKeys: index.stats.unreadableStatKeys
+    unreadableStatKeys: index.stats.unreadableStatKeys,
   })
 
   // Floors, under the measured build so a growing corpus stays green.
@@ -100,7 +105,7 @@ test('every equippable item becomes exactly one row (floors + the page identity)
   assert.equal(
     index.stats.pages,
     rows.length + index.stats.slotless + index.stats.duplicatePages,
-    'a page must become a row, a slotless skip, or a duplicate — never vanish'
+    'a page must become a row, a slotless skip, or a duplicate — never vanish',
   )
   // Alias keys are skipped by PAGE identity, the same way the donor index skips them.
   assert.equal(index.stats.aliasKeys, buildPlannerIndex(file).stats.aliasKeys)
@@ -133,7 +138,13 @@ test('slots, classes and the search key are normalized at the boundary', () => {
     for (const s of r.slots) assert.ok(EQUIP_SLOTS.includes(s), `${r.name}: bad slot ${s}`)
     for (const c of r.classes) assert.ok(isClassAbbr(c), `${r.name}: bad class ${c}`)
     assert.equal(r.searchKey, r.name.toLowerCase(), `${r.name}: stale search key`)
-    assert.equal(r.key, r.name.replace(/ \+\d+$/, '').trim().toLowerCase())
+    assert.equal(
+      r.key,
+      r.name
+        .replace(/ \+\d+$/, '')
+        .trim()
+        .toLowerCase(),
+    )
   }
 })
 
@@ -220,7 +231,7 @@ function compareOneBlock(
   name: string,
   block: ItemStatBlock,
   state: ItemUpgradeState,
-  extraKeys: Set<string>
+  extraKeys: Set<string>,
 ): number {
   const base = readGearStats(block).stats
   const fast = scaleGearStats(base, state, synthesizesVoidSave(block, { full: 1, fraction: 0 }))
@@ -249,9 +260,13 @@ test('scaling a row is a PURE MAP that agrees with scaleStatBlock, corpus-wide',
   // ("CHA: 15 and faction at Kindly"). A key that appears here WITHOUT having been refused at
   // base would mean the two paths genuinely disagree about what an item states.
   const refusedAtBase = new Set<string>()
-  for (const { block } of blocks) for (const k of Object.keys(readGearStats(block).unreadable)) refusedAtBase.add(k)
+  for (const { block } of blocks)
+    for (const k of Object.keys(readGearStats(block).unreadable)) refusedAtBase.add(k)
   for (const key of extraKeys) {
-    assert.ok(refusedAtBase.has(key), `${key} appears only after scaling and was never refused at base`)
+    assert.ok(
+      refusedAtBase.has(key),
+      `${key} appears only after scaling and was never refused at base`,
+    )
   }
   for (const key of Object.keys(index.stats.unreadableStatKeys)) assert.ok(refusedAtBase.has(key))
 })
@@ -291,7 +306,7 @@ test('the unindexed stat keys are exactly the five the corpus states', () => {
     'CHARGES',
     'COOLDOWN',
     'REQUIRED_LEVEL',
-    'REQ_LEVEL'
+    'REQ_LEVEL',
   ])
 })
 
@@ -309,7 +324,9 @@ test('every weapon skill the corpus states folds to a type - and the exceptions 
     if (r.skill === undefined) continue
     spellings.set(r.skill, (spellings.get(r.skill) ?? 0) + 1)
   }
-  const unmapped = [...spellings].filter(([s]) => weaponTypeOf(s) === null).map(([s, n]) => `${s} (${String(n)})`)
+  const unmapped = [...spellings]
+    .filter(([s]) => weaponTypeOf(s) === null)
+    .map(([s, n]) => `${s} (${String(n)})`)
   console.log('weapon skills', Object.fromEntries([...spellings].sort((a, b) => b[1] - a[1])))
 
   // AN EQUALITY, exactly like `unindexedStatKeys` above and for exactly the same reason: a rescrape
@@ -343,17 +360,21 @@ test('the weapon type census is deep enough for the filter to be worth having', 
   // THE CATEGORIES ARE UNIONS, over the REAL rows and not just over the vocabulary: picking
   // "one-handed" must select exactly the rows its four member types select, and the three
   // categories together must select every weapon row and nothing else.
-  const matched = (picks: WeaponPick[]): number => rows.filter((r) => weaponPicksMatch(r.skill, picks)).length
+  const matched = (picks: WeaponPick[]): number =>
+    rows.filter((r) => weaponPicksMatch(r.skill, picks)).length
   assert.equal(matched(['ONE_HAND']), matched(['1HS', '1HB', '1HP', 'H2H']))
   assert.equal(matched(['TWO_HAND']), matched(['2HS', '2HB', '2HP']))
   assert.equal(matched(['RANGED']), matched(['ARCHERY', 'THROWING']))
   assert.equal(
     matched(['ONE_HAND', 'TWO_HAND', 'RANGED']),
     rows.filter((r) => weaponTypeOf(r.skill) !== null).length,
-    'the three categories cover every weapon the fold recognizes'
+    'the three categories cover every weapon the fold recognizes',
   )
   // …and a pick list is a NARROWING: nothing that is not a weapon survives one.
-  assert.ok(rows.some((r) => r.skill === undefined), 'the corpus is mostly armour')
+  assert.ok(
+    rows.some((r) => r.skill === undefined),
+    'the corpus is mostly armour',
+  )
   assert.ok(matched([]) > matched(['ONE_HAND', 'TWO_HAND', 'RANGED']), 'no pick is not a filter')
 })
 
@@ -362,7 +383,11 @@ test('HASTE is the only key that ever states a percent', () => {
   for (const { block } of blocks) {
     for (const s of [...block.stats, ...block.saves]) {
       const key = normalizeStatKey(s.key)
-      if (isGearStatKey(key) && gearStatNumber(s.value) !== null && !/^[+-]?\d+$/.test(s.value.trim())) {
+      if (
+        isGearStatKey(key) &&
+        gearStatNumber(s.value) !== null &&
+        !/^[+-]?\d+$/.test(s.value.trim())
+      ) {
         percentKeys.add(key)
       }
     }
@@ -393,7 +418,10 @@ test('a range the corpus states as a triple is kept as TEXT, never as its first 
     assert.equal(r.stats.RANGE, undefined, `${r.name} states a range triple AND a number`)
   }
   // …and the single-number ranges DID make it into the vector.
-  assert.ok(rows.some((r) => r.stats.RANGE !== undefined), 'no row carries a numeric range')
+  assert.ok(
+    rows.some((r) => r.stats.RANGE !== undefined),
+    'no row carries a numeric range',
+  )
 })
 
 // =================================================================================
@@ -412,7 +440,10 @@ const collidedKeys = ((): Set<string> => {
     if (seen.has(entry.page)) continue
     seen.add(entry.page)
     const k = knowledgeWithResearch(entry, ITEMS_RESEARCH)
-    const key = k.name.replace(/ \+\d+$/, '').trim().toLowerCase()
+    const key = k.name
+      .replace(/ \+\d+$/, '')
+      .trim()
+      .toLowerCase()
     if (!byKey.has(key)) continue
     pagesPerKey.set(key, (pagesPerKey.get(key) ?? 0) + 1)
   }
@@ -489,11 +520,16 @@ test('a socketless `Effect:` line is KEPT on a gear row (the donor index drops i
 
 test('CHEST by AC surfaces no wiki-badged out-of-era row (the JOS-298 report, as a list)', () => {
   const ac = (r: GearRow): number => r.stats.AC ?? 0
-  const chest = rows.filter((r) => r.slots.includes('CHEST') && ac(r) > 0).sort((a, b) => ac(b) - ac(a))
+  const chest = rows
+    .filter((r) => r.slots.includes('CHEST') && ac(r) > 0)
+    .sort((a, b) => ac(b) - ac(a))
   assert.ok(chest.length >= 200, `only ${String(chest.length)} AC-bearing chest rows`)
 
   const visible = chest.filter((r) => !eraHides(r, true))
-  assert.ok(visible.length >= 50, `only ${String(visible.length)} chest rows survive the era filter`)
+  assert.ok(
+    visible.length >= 50,
+    `only ${String(visible.length)} chest rows survive the era filter`,
+  )
 
   // THE PROPERTY, over the whole visible list and not just its head: nothing the wiki badges
   // `Out of Era` may be on screen while the filter is on. One assertion, and it names the row.
@@ -501,7 +537,7 @@ test('CHEST by AC surfaces no wiki-badged out-of-era row (the JOS-298 report, as
     assert.notEqual(
       row.eraTag === undefined ? 'in' : eraBadge(row.eraTag),
       'out',
-      `${row.name} (AC ${String(ac(row))}) is badged ${String(row.eraTag)} and still visible`
+      `${row.name} (AC ${String(ac(row))}) is badged ${String(row.eraTag)} and still visible`,
     )
   }
 
@@ -511,7 +547,7 @@ test('CHEST by AC surfaces no wiki-badged out-of-era row (the JOS-298 report, as
     'Breastplate of the Righteous',
     'Breastplate of the Untamed',
     'Legionnaire Scale Breastplate',
-    'Greenmist Breastplate'
+    'Greenmist Breastplate',
   ]) {
     const row = chest.find((r) => r.name === name)
     assert.ok(row, `${name} left the gear index`)
@@ -535,9 +571,17 @@ test('the era chip names the BANNER when the banner is what decided (never the d
   const chip = eraChip(bp)
   assert.ok(chip, 'an out-of-era row must carry a chip')
   assert.equal(chip.unknown, false)
-  assert.equal(chip.label, 'out of era', 'FearHateRevamp names no expansion, so the chip must not name one')
+  assert.equal(
+    chip.label,
+    'out of era',
+    'FearHateRevamp names no expansion, so the chip must not name one',
+  )
   assert.match(chip.tooltip, /FearHateRevamp/, 'the tooltip must quote the banner token')
-  assert.doesNotMatch(chip.tooltip, /sources are in/, 'the zone did not decide and must not be cited')
+  assert.doesNotMatch(
+    chip.tooltip,
+    /sources are in/,
+    'the zone did not decide and must not be cited',
+  )
 
   // An ordinary Velious row still reads as Velious — the chip only loses its expansion name when
   // the token genuinely has none.
@@ -555,5 +599,6 @@ test('the payload states its version and the corpus it was built from', () => {
   assert.deepEqual(wire.rows[0], rows[0])
   // The vocabulary is closed, and a scaled vector may only ever speak it.
   const keys = new Set<string>(GEAR_STAT_KEYS)
-  for (const r of rows) for (const k of Object.keys(r.stats)) assert.ok(keys.has(k), `stray key ${k}`)
+  for (const r of rows)
+    for (const k of Object.keys(r.stats)) assert.ok(keys.has(k), `stray key ${k}`)
 })

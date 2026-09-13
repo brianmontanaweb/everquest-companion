@@ -35,7 +35,8 @@ const AUTO_COLOR = '#7a7a7a'
 function rangeLabel(ranks: readonly number[]): string {
   if (ranks.length === 0) return ''
   const contiguous = ranks[ranks.length - 1] - ranks[0] + 1 === ranks.length
-  if (contiguous && ranks.length > 1) return `${String(ranks[0])}-${String(ranks[ranks.length - 1])}`
+  if (contiguous && ranks.length > 1)
+    return `${String(ranks[0])}-${String(ranks[ranks.length - 1])}`
   return ranks.map(String).join(', ')
 }
 
@@ -44,7 +45,7 @@ const chipSx = (color: string): SxProps<Theme> => ({
   fontSize: 10,
   bgcolor: `${color}22`,
   color,
-  '& .MuiChip-label': { px: 0.6 }
+  '& .MuiChip-label': { px: 0.6 },
 })
 
 /** The badges that qualify a row: auto-granted, re-purchased, partially logged. */
@@ -129,7 +130,7 @@ const AbilityRow = memo(function AbilityRow({
   row,
   max,
   open,
-  onToggle
+  onToggle,
 }: {
   row: AaAbilityRow
   max: number
@@ -156,7 +157,7 @@ const AbilityRow = memo(function AbilityRow({
           cursor: 'pointer',
           position: 'relative',
           borderRadius: 0.5,
-          '&:hover': { bgcolor: 'action.hover' }
+          '&:hover': { bgcolor: 'action.hover' },
         }}
       >
         {/* left/top/bottom, never `inset: 0` — that pins `right` too and the width is ignored. */}
@@ -169,7 +170,7 @@ const AbilityRow = memo(function AbilityRow({
             width: `${String(share)}%`,
             bgcolor: `${PAID_COLOR}18`,
             borderRadius: 0.5,
-            pointerEvents: 'none'
+            pointerEvents: 'none',
           }}
         />
         {open ? (
@@ -194,7 +195,11 @@ const AbilityRow = memo(function AbilityRow({
         </Tooltip>
         <Typography
           variant="caption"
-          sx={{ minWidth: 46, textAlign: 'right', color: paid ? 'text.secondary' : 'text.disabled' }}
+          sx={{
+            minWidth: 46,
+            textAlign: 'right',
+            color: paid ? 'text.secondary' : 'text.disabled',
+          }}
         >
           {paid ? `${String(row.invested)} pts` : '-'}
         </Typography>
@@ -231,7 +236,7 @@ function MoreLadders({
   rows,
   max,
   open,
-  onToggle
+  onToggle,
 }: {
   rows: readonly AaAbilityRow[]
   max: number
@@ -259,7 +264,7 @@ function MoreLadders({
           display: 'inline-flex',
           cursor: 'pointer',
           color: 'text.secondary',
-          '&:hover': { color: 'primary.main' }
+          '&:hover': { color: 'primary.main' },
         }}
       >
         <Typography variant="caption" sx={{ fontSize: 10.5 }}>
@@ -285,7 +290,7 @@ function MoreLadders({
  */
 export function AaLedgerPanel({
   spends,
-  allocated
+  allocated,
 }: {
   spends: readonly AASpendEvent[]
   allocated: number
@@ -339,8 +344,8 @@ export function AaLedgerPanel({
       >
         {summary.invested.toLocaleString()} pts across {summary.paidRanks} bought rank
         {summary.paidRanks === 1 ? '' : 's'}
-        {summary.autoRanks > 0 && ` · ${String(summary.autoRanks)} granted`} - the same total as
-        the {allocated.toLocaleString()} AA points spent above
+        {summary.autoRanks > 0 && ` · ${String(summary.autoRanks)} granted`} - the same total as the{' '}
+        {allocated.toLocaleString()} AA points spent above
       </Typography>
     </Paper>
   )

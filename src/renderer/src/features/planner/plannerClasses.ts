@@ -50,7 +50,7 @@ export function sameClasses(a: readonly ClassAbbr[], b: readonly ClassAbbr[]): b
  */
 export function boundClasses(
   plan: Pick<ExaltPlan, 'classes' | 'classesProvenance'>,
-  detected: readonly ClassAbbr[]
+  detected: readonly ClassAbbr[],
 ): ClassAbbr[] | null {
   if (provenanceOf(plan) !== 'detected') return null
   if (detected.length === 0 || sameClasses(plan.classes, detected)) return null
@@ -66,7 +66,7 @@ export function boundClasses(
  */
 export function detectedOffer(
   plan: Pick<ExaltPlan, 'classes' | 'classesProvenance'>,
-  detected: readonly ClassAbbr[]
+  detected: readonly ClassAbbr[],
 ): ClassAbbr[] | null {
   if (provenanceOf(plan) !== 'user') return null
   if (detected.length === 0 || sameClasses(plan.classes, detected)) return null
@@ -84,7 +84,7 @@ export function detectedOffer(
  */
 export function classesMismatch(
   donorClasses: readonly ClassAbbr[],
-  planClasses: readonly ClassAbbr[]
+  planClasses: readonly ClassAbbr[],
 ): boolean {
   if (donorClasses.length === 0 || planClasses.length === 0) return false
   return !donorClasses.some((c) => planClasses.includes(c))

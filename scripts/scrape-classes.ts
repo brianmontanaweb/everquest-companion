@@ -57,13 +57,13 @@ import {
   parseMatrixTable,
   parsePerClassSections,
   parseProseTable,
-  sliceSection
+  sliceSection,
 } from './sources/classWiki'
 import {
   disciplineDisputes,
   parseClassUnlocks,
   unlockSections,
-  type ClassUnlock
+  type ClassUnlock,
 } from './sources/classUnlocks'
 
 const API = 'https://eqlwiki.com/api.php'
@@ -92,7 +92,9 @@ async function politeFetch(url: string): Promise<Response | null> {
     const retryAfter = Number(res.headers.get('retry-after') ?? '')
     const waitMs =
       Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : BACKOFF_MS * 2 ** attempt
-    console.warn(`  ${res.status} — backing off ${waitMs}ms (attempt ${attempt + 1}/${MAX_ATTEMPTS})`)
+    console.warn(
+      `  ${res.status} — backing off ${waitMs}ms (attempt ${attempt + 1}/${MAX_ATTEMPTS})`,
+    )
     await sleep(waitMs)
   }
   return null
@@ -113,7 +115,7 @@ async function fetchWikitext(title: string): Promise<string | null> {
     prop: 'wikitext',
     format: 'json',
     formatversion: '2',
-    redirects: '1'
+    redirects: '1',
   })
   const res = await politeFetch(`${API}?${params.toString()}`)
   if (!res?.ok) {
@@ -140,7 +142,13 @@ function spellKeys(): Set<string> {
   const keys = new Set<string>()
   for (const s of raw.spells ?? []) {
     if (typeof s.name === 'string') {
-      keys.add(s.name.trim().replace(/ (?:I|II|III|IV|V|VI|VII|VIII|IX|X)$/i, '').trim().toLowerCase())
+      keys.add(
+        s.name
+          .trim()
+          .replace(/ (?:I|II|III|IV|V|VI|VII|VIII|IX|X)$/i, '')
+          .trim()
+          .toLowerCase(),
+      )
     }
   }
   return keys
@@ -161,7 +169,7 @@ function nameCollisions(skills: Map<string, Set<string>>): string[] {
     .map(
       (name) =>
         `skill '${name}': also a Template:Spellpage spell name with a DIFFERENT class set — ` +
-        'resolve skill-ups against skills[] and casts against spells.json; never union them'
+        'resolve skill-ups against skills[] and casts against spells.json; never union them',
     )
 }
 
@@ -192,12 +200,24 @@ function sortedRecord<T>(m: Map<string, T>): Record<string, T> {
 function readStanceInvocation(
   wt: string,
   known: Set<string>,
-  abbrOf: Map<string, string>
+  abbrOf: Map<string, string>,
 ): { stances: Map<string, string[]>; invocations: Map<string, string[]>; disputed: string[] } {
-  const stanceProse = parseProseTable(sliceSection(wt, /^== Stances ==$/m, /^=== Stances by Class/m), known)
-  const stanceMatrix = parseMatrixTable(sliceSection(wt, /^=== Stances by Class/m, /^== Invocations ==$/m), known)
-  const invProse = parseProseTable(sliceSection(wt, /^== Invocations ==$/m, /^=== Invocations by Class/m), known)
-  const invMatrix = parseMatrixTable(sliceSection(wt, /^=== Invocations by Class/m, /^== Pure Melee ==$/m), known)
+  const stanceProse = parseProseTable(
+    sliceSection(wt, /^== Stances ==$/m, /^=== Stances by Class/m),
+    known,
+  )
+  const stanceMatrix = parseMatrixTable(
+    sliceSection(wt, /^=== Stances by Class/m, /^== Invocations ==$/m),
+    known,
+  )
+  const invProse = parseProseTable(
+    sliceSection(wt, /^== Invocations ==$/m, /^=== Invocations by Class/m),
+    known,
+  )
+  const invMatrix = parseMatrixTable(
+    sliceSection(wt, /^=== Invocations by Class/m, /^== Pure Melee ==$/m),
+    known,
+  )
   const sections = parsePerClassSections(wt, abbrOf)
 
   const perClass = (t: Map<string, string[]>): Map<string, string[]> =>
@@ -210,8 +230,8 @@ function readStanceInvocation(
       ...disputes('stance', 'the by-class matrix', stanceProse, stanceMatrix),
       ...disputes('stance', 'the per-class sections', stanceProse, perClass(stanceProse)),
       ...disputes('invocation', 'the by-class matrix', invProse, invMatrix),
-      ...disputes('invocation', 'the per-class sections', invProse, perClass(invProse))
-    ]
+      ...disputes('invocation', 'the per-class sections', invProse, perClass(invProse)),
+    ],
   }
 }
 
@@ -230,7 +250,7 @@ async function readClassPages(names: Map<string, string>): Promise<ClassPages> {
     skills: new Map<string, Set<string>>(),
     footnotes: new Map<string, Set<string>>(),
     unlocks: new Map<string, ClassUnlock[]>(),
-    gaps: []
+    gaps: [],
   }
   const add = (m: Map<string, Set<string>>, key: string, abbr: string): void => {
     const set = m.get(key) ?? new Set<string>()
@@ -242,7 +262,9 @@ async function readClassPages(names: Map<string, string>): Promise<ClassPages> {
     const wt = await fetchWikitext(title)
     if (wt == null) {
       console.warn(`  ! ${title}: skipped (no wikitext)`)
-      out.gaps.push(`${abbr}: the class page could not be fetched — it states no unlock levels here`)
+      out.gaps.push(
+        `${abbr}: the class page could not be fetched — it states no unlock levels here`,
+      )
       continue
     }
     const found = parseClassSkills(wt)
@@ -252,7 +274,9 @@ async function readClassPages(names: Map<string, string>): Promise<ClassPages> {
     out.unlocks.set(abbr, scan.unlocks)
     for (const g of scan.skipped) out.gaps.push(`${abbr}: ${g}`)
     const discs = scan.unlocks.filter((u) => u.kind === 'disc').length
-    console.log(`  ✓ ${abbr} ${title}: ${found.length} skills · ${scan.unlocks.length} unlocks (${discs} disc)`)
+    console.log(
+      `  ✓ ${abbr} ${title}: ${found.length} skills · ${scan.unlocks.length} unlocks (${discs} disc)`,
+    )
   }
   return out
 }
@@ -260,7 +284,7 @@ async function readClassPages(names: Map<string, string>): Promise<ClassPages> {
 /** Merge the AA + footnote abilities and drop anything spells.json already covers. */
 function buildAbilities(
   aa: Map<string, Set<string>>,
-  footnotes: Map<string, Set<string>>
+  footnotes: Map<string, Set<string>>,
 ): Map<string, string[]> {
   const known = spellKeys()
   const merged = new Map<string, Set<string>>()
@@ -281,7 +305,8 @@ function buildAbilities(
 function writeIfChanged(next: ClassTableFile): void {
   if (existsSync(OUT_PATH)) {
     const prev = JSON.parse(readFileSync(OUT_PATH, 'utf8')) as ClassTableFile
-    const same = JSON.stringify({ ...prev, scrapedAt: '' }) === JSON.stringify({ ...next, scrapedAt: '' })
+    const same =
+      JSON.stringify({ ...prev, scrapedAt: '' }) === JSON.stringify({ ...next, scrapedAt: '' })
     if (same) {
       console.log('Payload unchanged — keeping the existing scrapedAt.')
       return
@@ -321,13 +346,15 @@ async function main(): Promise<void> {
   const discWt = await fetchWikitext('Disciplines')
   const disputed = [...si.disputed]
   if (discWt == null || !/rogue/i.test(discWt) || !/poison/i.test(discWt)) {
-    disputed.push('Disciplines: could not confirm the Rogue-poison statement — poisonCoat exclusivity unverified')
+    disputed.push(
+      'Disciplines: could not confirm the Rogue-poison statement — poisonCoat exclusivity unverified',
+    )
   }
   disputed.push(
-    "invocation 'empowering': the prose row is headed \"Empower\"; keyed on the client string"
+    'invocation \'empowering\': the prose row is headed "Empower"; keyed on the client string',
   )
   disputed.push(
-    "invocation 'overchannel': the wiki writes \"Over Channel\" (\"Overchannel\" in the Magician table); keyed on the client string"
+    'invocation \'overchannel\': the wiki writes "Over Channel" ("Overchannel" in the Magician table); keyed on the client string',
   )
   const { skillUnlocks, discUnlocks } = unlockSections(pages.unlocks)
   disputed.push(...disciplineDisputes(discWt, discUnlocks))
@@ -335,8 +362,8 @@ async function main(): Promise<void> {
   disputed.push(...nameCollisions(pages.skills))
   if (![...pages.skills.keys()].some((k) => k.startsWith('Specialize '))) {
     disputed.push(
-      "skill 'Specialize <school>': the class pages list one row, \"Specialization\", and transclude the five " +
-        'per-school skills the client actually prints — so 1,251 Specialize skill-ups in the real log resolve to no class'
+      'skill \'Specialize <school>\': the class pages list one row, "Specialization", and transclude the five ' +
+        'per-school skills the client actually prints — so 1,251 Specialize skill-ups in the real log resolve to no class',
     )
   }
 
@@ -349,7 +376,7 @@ async function main(): Promise<void> {
     abilities: sortedRecord(buildAbilities(aa, pages.footnotes)),
     skillUnlocks: sortedRecord(skillUnlocks),
     discUnlocks: sortedRecord(discUnlocks),
-    disputed: disputed.slice().sort()
+    disputed: disputed.slice().sort(),
   }
   writeIfChanged(out)
 
@@ -359,7 +386,7 @@ async function main(): Promise<void> {
     `\nWrote ${Object.keys(out.names).length} classes · ${Object.keys(out.stances).length} stances · ` +
       `${Object.keys(out.invocations).length} invocations · ${Object.keys(out.skills).length} skills · ` +
       `${Object.keys(out.abilities).length} abilities · ${rows(out.skillUnlocks)} skill unlocks · ` +
-      `${rows(out.discUnlocks)} disc unlocks · ${out.disputed.length} disputed → ${OUT_PATH}`
+      `${rows(out.discUnlocks)} disc unlocks · ${out.disputed.length} disputed → ${OUT_PATH}`,
   )
   for (const d of out.disputed) console.log(`  ~ ${d}`)
 }

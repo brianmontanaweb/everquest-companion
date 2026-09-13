@@ -13,7 +13,12 @@
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { IDLE_GAP_MS, rangeStats, type ComboInterval, type ComboSource } from '../src/shared/progressionStats'
+import {
+  IDLE_GAP_MS,
+  rangeStats,
+  type ComboInterval,
+  type ComboSource,
+} from '../src/shared/progressionStats'
 import type { ProgressionSnap } from '../src/shared/progressionTypes'
 
 const MIN = 60_000
@@ -23,13 +28,28 @@ const T0 = Date.parse('Sat Aug 01 12:00:00 2026')
 
 function emptySnap(): ProgressionSnap {
   return {
-    expTs: [], expPct: [], expFlag: [],
-    killTs: [], killZone: [], killCredit: [],
-    witnessTs: [], recentKills: [], lootTs: [],
-    zoneStart: [], zoneEnd: [], zoneName: [],
-    offlineStart: [], offlineEnd: [], offlineCamped: [],
-    levelTs: [], levelValue: [], aaGainTs: [], aaGainAmount: [],
-    lastTs: 0, windowStart: 0, dropped: 0
+    expTs: [],
+    expPct: [],
+    expFlag: [],
+    killTs: [],
+    killZone: [],
+    killCredit: [],
+    witnessTs: [],
+    recentKills: [],
+    lootTs: [],
+    zoneStart: [],
+    zoneEnd: [],
+    zoneName: [],
+    offlineStart: [],
+    offlineEnd: [],
+    offlineCamped: [],
+    levelTs: [],
+    levelValue: [],
+    aaGainTs: [],
+    aaGainAmount: [],
+    lastTs: 0,
+    windowStart: 0,
+    dropped: 0,
   }
 }
 
@@ -78,7 +98,10 @@ test('an EMPTY range (no samples anywhere) is all zeros, not NaN and not a fake 
   assert.equal(r.aaGained, 0)
   // No zone line was ever seen, so the whole hour is the `unknown` remainder — which is what
   // keeps Σ span == duration true even with no data at all.
-  assert.deepEqual(r.zones.map((z) => z.zone), ['unknown'])
+  assert.deepEqual(
+    r.zones.map((z) => z.zone),
+    ['unknown'],
+  )
   assert.equal(r.zones[0].spanMs, HOUR)
   // An hour of pure silence with no activity on either side is idle by the stated rule.
   assert.equal(r.idleGaps, 1)
@@ -163,10 +186,19 @@ test('an idle gap is SPLIT at the zone boundaries it crosses, so per-zone idle s
   assert.equal(r.idleMs, 60 * MIN)
   assert.deepEqual(
     r.zones.map((z) => [z.zone, z.spanMs, z.idleMs]),
-    [['Befallen', 20 * MIN, 20 * MIN], ['The Feerrott', 40 * MIN, 40 * MIN]]
+    [
+      ['Befallen', 20 * MIN, 20 * MIN],
+      ['The Feerrott', 40 * MIN, 40 * MIN],
+    ],
   )
-  assert.equal(r.zones.reduce((n, z) => n + z.idleMs, 0), r.idleMs)
-  assert.equal(r.zones.reduce((n, z) => n + z.spanMs, 0), r.durationMs)
+  assert.equal(
+    r.zones.reduce((n, z) => n + z.idleMs, 0),
+    r.idleMs,
+  )
+  assert.equal(
+    r.zones.reduce((n, z) => n + z.spanMs, 0),
+    r.durationMs,
+  )
 })
 
 test('a SINGLE sample: one kill, one stated exp line, one zone', () => {
@@ -227,7 +259,11 @@ test('CLIPPED is exactly "the range reaches below the retention floor"', () => {
   snap.windowStart = T0
   snap.dropped = 12
   assert.equal(rangeStats({ snap, range: { t0: T0 - 1, t1: T0 + HOUR } }).clipped, true)
-  assert.equal(rangeStats({ snap, range: { t0: T0, t1: T0 + HOUR } }).clipped, false, 'exactly at the floor is fine')
+  assert.equal(
+    rangeStats({ snap, range: { t0: T0, t1: T0 + HOUR } }).clipped,
+    false,
+    'exactly at the floor is fine',
+  )
 })
 
 test('level runs: a REGRESSION opens a new run, and a run never descends', () => {
@@ -239,13 +275,23 @@ test('level runs: a REGRESSION opens a new run, and a run never descends', () =>
     snap.lastTs = T0 + i * MIN
   }
   const r = rangeStats({ snap, range: { t0: T0, t1: T0 + 10 * MIN } })
-  assert.deepEqual(r.levelUps.map((l) => l.level), [10, 11, 12, 4, 5, 6])
+  assert.deepEqual(
+    r.levelUps.map((l) => l.level),
+    [10, 11, 12, 4, 5, 6],
+  )
   assert.deepEqual(
     r.levelRuns.map((run) => [run.fromLevel, run.toLevel]),
-    [[10, 12], [4, 6]]
+    [
+      [10, 12],
+      [4, 6],
+    ],
   )
   assert.equal(r.levelRuns[0].endTs, T0 + 2 * MIN)
-  assert.equal(r.levelRuns[1].startTs, T0 + 3 * MIN, 'the new run opens at the first post-drop ding')
+  assert.equal(
+    r.levelRuns[1].startTs,
+    T0 + 3 * MIN,
+    'the new run opens at the first post-drop ding',
+  )
   for (const run of r.levelRuns) assert.ok(run.toLevel >= run.fromLevel)
 })
 
@@ -258,7 +304,7 @@ test('the COMBO seam is optional: absent ⇒ [], present ⇒ verbatim, and queri
   assert.deepEqual(rangeStats({ snap, range: { t0: T0, t1: T0 + HOUR } }).combos, [])
 
   const intervals: ComboInterval[] = [
-    { startTs: T0, endTs: T0 + HOUR, classes: ['PAL', 'MNK', 'ENC'], inferred: true }
+    { startTs: T0, endTs: T0 + HOUR, classes: ['PAL', 'MNK', 'ENC'], inferred: true },
   ]
   let intervalCalls = 0
   let atCalls = 0
@@ -272,7 +318,7 @@ test('the COMBO seam is optional: absent ⇒ [], present ⇒ verbatim, and queri
       assert.equal(a, T0)
       assert.equal(b, T0 + HOUR)
       return intervals
-    }
+    },
   }
   const r = rangeStats({ snap, range: { t0: T0, t1: T0 + HOUR }, combo })
   assert.equal(intervalCalls, 1, 'called EXACTLY once')
@@ -303,10 +349,22 @@ test('the Σ-identities hold across a busy multi-zone range with pets, party exp
   snap.aaGainAmount.push(3)
 
   const r = rangeStats({ snap, range: { t0: T0, t1: T0 + 40 * MIN } })
-  assert.equal(r.zones.reduce((n, z) => n + z.spanMs, 0), r.durationMs)
-  assert.equal(r.zones.reduce((n, z) => n + z.kills, 0), r.kills)
-  assert.equal(r.zones.reduce((n, z) => n + z.expSamples, 0), r.expSamples)
-  assert.equal(r.zones.reduce((n, z) => n + z.idleMs, 0), r.idleMs)
+  assert.equal(
+    r.zones.reduce((n, z) => n + z.spanMs, 0),
+    r.durationMs,
+  )
+  assert.equal(
+    r.zones.reduce((n, z) => n + z.kills, 0),
+    r.kills,
+  )
+  assert.equal(
+    r.zones.reduce((n, z) => n + z.expSamples, 0),
+    r.expSamples,
+  )
+  assert.equal(
+    r.zones.reduce((n, z) => n + z.idleMs, 0),
+    r.idleMs,
+  )
   assert.equal(r.activeMs + r.idleMs, r.durationMs)
   assert.equal(r.killsSelf + r.killsPet, r.kills)
   assert.equal(r.kills, 8)
@@ -317,7 +375,13 @@ test('the Σ-identities hold across a busy multi-zone range with pets, party exp
   assert.equal(r.aaGained, 3)
   assert.equal(r.aaGainEvents, 1)
   // Befallen's row keeps only its own five kills; The Feerrott's three land in its own row.
-  assert.deepEqual(r.zones.map((z) => [z.zone, z.kills]), [['Befallen', 5], ['The Feerrott', 3]])
+  assert.deepEqual(
+    r.zones.map((z) => [z.zone, z.kills]),
+    [
+      ['Befallen', 5],
+      ['The Feerrott', 3],
+    ],
+  )
 })
 
 // ---------------------------------------------------------------------------------------
@@ -388,7 +452,10 @@ test('an offline interval STRADDLING a range edge is clipped, never counted whol
   assert.equal(r.idleMs, HOUR, 'the hour between logging back in and the next kill')
   assert.equal(r.activeMs, 0)
   assert.equal(r.activeMs + r.idleMs + r.offlineMs, r.durationMs)
-  assert.equal(r.zones.reduce((n, z) => n + z.offlineMs, 0), r.offlineMs)
+  assert.equal(
+    r.zones.reduce((n, z) => n + z.offlineMs, 0),
+    r.offlineMs,
+  )
 })
 
 test('a range that is ENTIRELY offline: no active time, no idle, and no fabricated rate', () => {
@@ -404,7 +471,11 @@ test('a range that is ENTIRELY offline: no active time, no idle, and no fabricat
   assert.equal(r.activeMs, 0)
   assert.equal(r.activeMs + r.idleMs + r.offlineMs, r.durationMs)
   assert.equal(r.levelsPerHourActive, null)
-  assert.equal(r.levelsPerHourWall, null, 'zero online wall ⇒ no rate at all, never a division by 0')
+  assert.equal(
+    r.levelsPerHourWall,
+    null,
+    'zero online wall ⇒ no rate at all, never a division by 0',
+  )
   assert.equal(r.killsPerHourActive, null)
   const [row] = r.zones
   assert.equal(row.spanMs, HOUR)
@@ -431,14 +502,29 @@ test('the Σ identities extend to offline across a busy multi-zone range', () =>
 
   const r = rangeStats({ snap, range: { t0: T0, t1: T0 + 9 * HOUR } })
   assert.equal(r.activeMs + r.idleMs + r.offlineMs, r.durationMs)
-  assert.equal(r.zones.reduce((n, z) => n + z.spanMs, 0), r.durationMs)
-  assert.equal(r.zones.reduce((n, z) => n + z.idleMs, 0), r.idleMs)
-  assert.equal(r.zones.reduce((n, z) => n + z.offlineMs, 0), r.offlineMs)
-  assert.equal(r.zones.reduce((n, z) => n + z.activeMs, 0), r.activeMs)
+  assert.equal(
+    r.zones.reduce((n, z) => n + z.spanMs, 0),
+    r.durationMs,
+  )
+  assert.equal(
+    r.zones.reduce((n, z) => n + z.idleMs, 0),
+    r.idleMs,
+  )
+  assert.equal(
+    r.zones.reduce((n, z) => n + z.offlineMs, 0),
+    r.offlineMs,
+  )
+  assert.equal(
+    r.zones.reduce((n, z) => n + z.activeMs, 0),
+    r.activeMs,
+  )
   assert.deepEqual(
     r.zones.map((z) => [z.zone, z.offlineMs]),
-    [['Befallen', 8 * HOUR - 5 * MIN], ['The Feerrott', 0]],
-    'the absence is attributed to the camp it started in, and never to the one you arrived in'
+    [
+      ['Befallen', 8 * HOUR - 5 * MIN],
+      ['The Feerrott', 0],
+    ],
+    'the absence is attributed to the camp it started in, and never to the one you arrived in',
   )
   assert.equal(r.kills, 8)
 })
@@ -467,7 +553,11 @@ test('REGRESSION: with no offline interval in range, every number is what it alw
   assert.deepEqual(away, bare, 'byte-for-byte the same answer, offline column or not')
   assert.equal(bare.offlineMs, 0)
   assert.equal(bare.offlineGaps, 0)
-  assert.equal(bare.activeMs + bare.idleMs, bare.durationMs, 'the OLD identity is the same identity')
+  assert.equal(
+    bare.activeMs + bare.idleMs,
+    bare.durationMs,
+    'the OLD identity is the same identity',
+  )
   for (const z of bare.zones) assert.equal(z.offlineMs, 0)
 })
 
@@ -479,7 +569,10 @@ test('zone rows are keyed case-INSENSITIVELY but display the first-seen RAW name
   addZone(snap, T0 + 3 * MIN, 'BEFALLEN')
   addKill(snap, T0 + 4 * MIN)
   const r = rangeStats({ snap, range: { t0: T0, t1: T0 + 5 * MIN } })
-  assert.deepEqual(r.zones.map((z) => z.zone), ['Befallen', 'The Feerrott'])
+  assert.deepEqual(
+    r.zones.map((z) => z.zone),
+    ['Befallen', 'The Feerrott'],
+  )
   assert.equal(r.zones[0].visits, 2, 'both casings are the same zone')
   assert.equal(r.zones[0].kills, 2)
 })

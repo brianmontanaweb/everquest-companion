@@ -32,7 +32,7 @@ import {
   formatPerfEngine,
   validatePerfEngine,
   type EngineFoldInput,
-  type FeedbackPerfEngine
+  type FeedbackPerfEngine,
 } from '../src/shared/feedbackPerfEngine'
 import { MAX_PERF_COUNT, MAX_PERF_MS } from '../src/shared/feedbackPerf'
 
@@ -58,23 +58,23 @@ function live(over: Partial<EngineFoldInput> = {}): EngineFoldInput {
       // report — the zone is a string, and this block carries no strings.
       ...({
         mark: { log: A_REAL_LOG_PATH, offset: 219_000_000 },
-        clockZone: 'America/Los_Angeles'
+        clockZone: 'America/Los_Angeles',
       } as object),
       ingest: { spellDbMs: 386, scanMs: 52_500, scanBytes: 219_000_000 },
       serve: [
         { frames: 46, payloadWeight: 21_714, foldToFrameUsMax: 29 },
-        { frames: 112, payloadWeight: 58_390, foldToFrameUsMax: 56_012 }
-      ]
+        { frames: 112, payloadWeight: 58_390, foldToFrameUsMax: 56_012 },
+      ],
     },
     budgets: {
       budgets: [
         { id: 'foldRate', verdict: 'pass' },
-        { id: 'serveLatency', verdict: 'fail' }
-      ]
+        { id: 'serveLatency', verdict: 'fail' },
+      ],
     },
     timeline: { timeline: [{ frames: 46 }, { frames: 112 }, { frames: 0 }] },
     now: NOW,
-    ...over
+    ...over,
   }
 }
 
@@ -137,7 +137,7 @@ test('an idle engine reports its state and its uptime and claims nothing else', 
     snapshot: { status: 'idle', uptimeMs: 41, ingest: {}, serve: [] },
     budgets: { budgets: ENGINE_BUDGETS.map((id) => ({ id, verdict: 'unmeasured' })) },
     timeline: { timeline: [] },
-    now: NOW
+    now: NOW,
   })
   assert.ok(block !== null)
   assert.equal(block.state, 'idle')
@@ -155,7 +155,7 @@ test('an idle engine reports its state and its uptime and claims nothing else', 
     'worstServeUs',
     'windows',
     'busiestFrames',
-    'quietWindows'
+    'quietWindows',
   ] as const) {
     assert.equal(block[key], undefined, `${key} is claimed on an idle engine`)
     assert.ok(!(key in block), `${key} is present as a key on an idle engine`)
@@ -172,11 +172,11 @@ test('a scan still running has no scan figures, and untimed frames have no laten
       uptimeMs: 1_204,
       ingest: { spellDbMs: 386 },
       // A window that has been served its owed reset and nothing else: counted, never timed.
-      serve: [{ frames: 1, payloadWeight: 200 }]
+      serve: [{ frames: 1, payloadWeight: 200 }],
     },
     budgets: null,
     timeline: null,
-    now: NOW
+    now: NOW,
   })
   assert.ok(block !== null)
   assert.equal(block.spellDbMs, 386)
@@ -205,9 +205,9 @@ test('a fold DAYS behind the log still reports the lag, because a lag is not a c
         events: 941,
         lastEventTs: NOW - days,
         ingest: {},
-        serve: []
-      }
-    })
+        serve: [],
+      },
+    }),
   )
   assert.ok(block !== null)
   assert.equal(block.behindMs, days, 'reported, not dropped and not clamped')
@@ -227,10 +227,10 @@ test('a budget this build has never heard of is dropped rather than passed throu
         budgets: [
           { id: 'foldRate', verdict: 'pass' },
           { id: 'somethingLater', verdict: 'pass' },
-          { id: 'serveLatency', verdict: 'not a verdict' }
-        ]
-      }
-    })
+          { id: 'serveLatency', verdict: 'not a verdict' },
+        ],
+      },
+    }),
   )
   assert.ok(block !== null)
   assert.deepEqual(block.budgets, [{ id: 'foldRate', verdict: 'pass' }])
@@ -238,7 +238,7 @@ test('a budget this build has never heard of is dropped rather than passed throu
 
 test('a state this build has never heard of folds to null rather than to a guess', () => {
   const block = foldPerfEngine(
-    live({ snapshot: { status: 'hibernating', uptimeMs: 10, ingest: {}, serve: [] } })
+    live({ snapshot: { status: 'hibernating', uptimeMs: 10, ingest: {}, serve: [] } }),
   )
   assert.equal(block, null, 'an unreadable state is no reading at all')
 })
@@ -294,7 +294,7 @@ test('a malformed engine block is a NAMED 400, never a silently dropped field', 
     ['env.perf.engine.budgets[0].id', { ...good, budgets: [{ id: 'x', verdict: 'pass' }] }],
     [
       'env.perf.engine.budgets[0].verdict',
-      { ...good, budgets: [{ id: 'foldRate', verdict: 'maybe' }] }
+      { ...good, budgets: [{ id: 'foldRate', verdict: 'maybe' }] },
     ],
     [
       'env.perf.engine.budgets[1].id',
@@ -302,10 +302,10 @@ test('a malformed engine block is a NAMED 400, never a silently dropped field', 
         ...good,
         budgets: [
           { id: 'foldRate', verdict: 'pass' },
-          { id: 'foldRate', verdict: 'fail' }
-        ]
-      }
-    ]
+          { id: 'foldRate', verdict: 'fail' },
+        ],
+      },
+    ],
   ]
   for (const [field, raw] of cases) {
     const res = validatePerfEngine(raw)
@@ -323,7 +323,7 @@ test('the validator RECONSTRUCTS the block — a smuggled key does not survive',
     ...good,
     logPath: A_REAL_LOG_PATH,
     character: 'Primitive',
-    note: 'anything at all'
+    note: 'anything at all',
   })
   assert.equal(res.ok, true)
   const json = JSON.stringify(res.ok ? res.value : {})
@@ -339,8 +339,8 @@ test('a forged budget list cannot be longer than the number of budgets that exis
     ...good,
     budgets: Array.from({ length: ENGINE_BUDGETS.length + 1 }, () => ({
       id: 'foldRate',
-      verdict: 'pass'
-    }))
+      verdict: 'pass',
+    })),
   }
   assert.equal(validatePerfEngine(forged).ok, false)
 })
@@ -390,9 +390,9 @@ test('THE WINE REPORT: a seven-hour skew rides SIGNED and says the zone was gues
         clockSource: 'utc',
         clockSkewMs: skew,
         ingest: {},
-        serve: []
-      }
-    })
+        serve: [],
+      },
+    }),
   )
   assert.ok(block !== null)
   assert.equal(block.clockSource, 'utc', 'neither the app nor the probe named a zone')
@@ -413,9 +413,9 @@ test('a clock source this build has never heard of is dropped at both ends', () 
         clockSource: 'atomic',
         clockSkewMs: 4,
         ingest: {},
-        serve: []
-      }
-    })
+        serve: [],
+      },
+    }),
   )
   assert.ok(block !== null)
   assert.ok(!('clockSource' in block), 'an unknown member is not a string channel')
@@ -445,9 +445,9 @@ test('an engine with no skew yet claims none — the scan measures nothing', () 
         uptimeMs: 1_204,
         clockSource: 'platform',
         ingest: { spellDbMs: 386 },
-        serve: []
-      }
-    })
+        serve: [],
+      },
+    }),
   )
   assert.ok(block !== null)
   assert.equal(block.clockSource, 'platform')

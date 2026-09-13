@@ -47,7 +47,7 @@ import {
   note,
   reportRun,
   settleStable,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture, stageFixture } from './logFixture.mjs'
@@ -78,7 +78,7 @@ const SEED_ITEM = 'Windowed Ledger Ingot'
 function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
   return page.waitForSelector(sel, { timeout: ms }).then(
     () => true,
-    () => false
+    () => false,
   )
 }
 
@@ -104,36 +104,41 @@ interface Ledger {
 }
 
 function readLedger(page: Page): Promise<Ledger | null> {
-  return page.evaluate((a) => {
-    const el = document.querySelector(a.scroll)
-    if (!el) return null
-    const box = el.getBoundingClientRect()
-    const rows = [...el.querySelectorAll(a.row)]
-    const last = rows[rows.length - 1] ?? null
-    // GEOMETRY, not `elementFromPoint`: the app draws its own chrome across the bottom edge of the
-    // window (the first-run analytics notice, the what's-new teaser), so a hit test there answers
-    // a question about that notice. How far the last row's bottom is from the box's bottom is the
-    // reporter's complaint stated in pixels, and nothing can sit in front of it.
-    const tail = el.querySelector('tbody')?.lastElementChild ?? null
-    // NO named function bindings in here: tsx/esbuild's keepNames wraps `const f = () => …` in a
-    // `__name` helper that lives in the NODE bundle, and Playwright ships only this callback's
-    // source to the page (settle.mts records the same trap). Inline expressions only.
-    return {
-      mounted: rows.length,
-      atBottom: el.scrollTop + el.clientHeight >= el.scrollHeight - 2,
-      scrollTop: Math.round(el.scrollTop),
-      scrollHeight: Math.round(el.scrollHeight),
-      clientHeight: Math.round(el.clientHeight),
-      sidewaysOverflow: Math.round(el.scrollWidth - el.clientWidth),
-      blankBelowLastRow: last === null ? -1 : Math.round(box.bottom - last.getBoundingClientRect().bottom),
-      trailingSpacer:
-        tail === null || tail.hasAttribute('data-testid')
-          ? 0
-          : Math.round(tail.getBoundingClientRect().height),
-      lastRowName: last?.querySelector('[data-testid="loot-item-name"]')?.textContent?.trim() ?? '',
-      rowHeights: [...new Set(rows.map((r) => Math.round(r.getBoundingClientRect().height)))]
-    }
-  }, { scroll: LOOT_SCROLL, row: LOOT_ROW })
+  return page.evaluate(
+    (a) => {
+      const el = document.querySelector(a.scroll)
+      if (!el) return null
+      const box = el.getBoundingClientRect()
+      const rows = [...el.querySelectorAll(a.row)]
+      const last = rows[rows.length - 1] ?? null
+      // GEOMETRY, not `elementFromPoint`: the app draws its own chrome across the bottom edge of the
+      // window (the first-run analytics notice, the what's-new teaser), so a hit test there answers
+      // a question about that notice. How far the last row's bottom is from the box's bottom is the
+      // reporter's complaint stated in pixels, and nothing can sit in front of it.
+      const tail = el.querySelector('tbody')?.lastElementChild ?? null
+      // NO named function bindings in here: tsx/esbuild's keepNames wraps `const f = () => …` in a
+      // `__name` helper that lives in the NODE bundle, and Playwright ships only this callback's
+      // source to the page (settle.mts records the same trap). Inline expressions only.
+      return {
+        mounted: rows.length,
+        atBottom: el.scrollTop + el.clientHeight >= el.scrollHeight - 2,
+        scrollTop: Math.round(el.scrollTop),
+        scrollHeight: Math.round(el.scrollHeight),
+        clientHeight: Math.round(el.clientHeight),
+        sidewaysOverflow: Math.round(el.scrollWidth - el.clientWidth),
+        blankBelowLastRow:
+          last === null ? -1 : Math.round(box.bottom - last.getBoundingClientRect().bottom),
+        trailingSpacer:
+          tail === null || tail.hasAttribute('data-testid')
+            ? 0
+            : Math.round(tail.getBoundingClientRect().height),
+        lastRowName:
+          last?.querySelector('[data-testid="loot-item-name"]')?.textContent?.trim() ?? '',
+        rowHeights: [...new Set(rows.map((r) => Math.round(r.getBoundingClientRect().height)))],
+      }
+    },
+    { scroll: LOOT_SCROLL, row: LOOT_ROW },
+  )
 }
 
 /**
@@ -160,7 +165,7 @@ async function scrollLedger(page: Page, to: 'top' | 'bottom'): Promise<Ledger | 
       el.scrollTop = a.to === 'top' ? 0 : el.scrollHeight
       el.dispatchEvent(new Event('scroll'))
     },
-    { sel: LOOT_SCROLL, to }
+    { sel: LOOT_SCROLL, to },
   )
   // The window advances off a scroll event and a re-render, so the SETTLED reading is the honest
   // one — and `settleStable` is how this suite waits for a condition rather than for a clock.
@@ -195,12 +200,12 @@ async function stepWindowed(page: Page): Promise<Ledger | null> {
   check(
     'the seeded ledger is thousands of rows tall',
     l.scrollHeight > l.clientHeight * 10,
-    `${String(l.scrollHeight)}px of content in a ${String(l.clientHeight)}px box`
+    `${String(l.scrollHeight)}px of content in a ${String(l.clientHeight)}px box`,
   )
   check(
     '…and only a screenful of rows is mounted',
     l.mounted > 0 && l.mounted < 120,
-    `${String(l.mounted)} row nodes for ${String(SEEDED_ROWS)}+ rows`
+    `${String(l.mounted)} row nodes for ${String(SEEDED_ROWS)}+ rows`,
   )
   // The fixed-height contract the hook's arithmetic assumes (lootRows.tsx). One height, not a
   // spread: a row that wrapped to two lines would desync the window from the browser's geometry,
@@ -210,7 +215,7 @@ async function stepWindowed(page: Page): Promise<Ledger | null> {
   check(
     'every mounted row is the same one row tall',
     l.rowHeights.length > 0 && spread <= 1,
-    `heights: ${l.rowHeights.join(', ')}`
+    `heights: ${l.rowHeights.join(', ')}`,
   )
   // The width half of the same contract: a `tableLayout: fixed` table takes its columns from the
   // header, so it fits the pane whatever the mounted slice happens to contain. An auto-layout one
@@ -219,7 +224,7 @@ async function stepWindowed(page: Page): Promise<Ledger | null> {
   check(
     'the ledger has nothing to scroll sideways',
     l.sidewaysOverflow <= 1,
-    `${String(l.sidewaysOverflow)}px wider than its box`
+    `${String(l.sidewaysOverflow)}px wider than its box`,
   )
   return l
 }
@@ -229,23 +234,29 @@ async function stepBottomHasRows(page: Page, when: string): Promise<void> {
   const led = await scrollLedger(page, 'bottom')
   if (!check(`the ledger reports its geometry (${when})`, led !== null)) return
   const l = led as Ledger
-  if (!check(`the ledger scrolls to its very end (${when})`, l.atBottom, `${String(l.scrollTop)}/${String(l.scrollHeight - l.clientHeight)}`)) {
+  if (
+    !check(
+      `the ledger scrolls to its very end (${when})`,
+      l.atBottom,
+      `${String(l.scrollTop)}/${String(l.scrollHeight - l.clientHeight)}`,
+    )
+  ) {
     return
   }
   check(
     `THE REPORT: at the bottom of the ledger there are rows, not blank space (${when})`,
     l.blankBelowLastRow >= 0 && l.blankBelowLastRow <= 2,
-    `${String(l.blankBelowLastRow)}px of blank below the last of ${String(l.mounted)} mounted rows ("${l.lastRowName}")`
+    `${String(l.blankBelowLastRow)}px of blank below the last of ${String(l.mounted)} mounted rows ("${l.lastRowName}")`,
   )
   check(
     `…and the table reserves nothing below it — the LAST row is mounted (${when})`,
     l.trailingSpacer === 0,
-    `${String(l.trailingSpacer)}px of unrendered spacer left at the end`
+    `${String(l.trailingSpacer)}px of unrendered spacer left at the end`,
   )
   check(
     `…with the window still bounded, not the whole list mounted (${when})`,
     l.mounted < 120,
-    `${String(l.mounted)} row nodes`
+    `${String(l.mounted)} row nodes`,
   )
 }
 
@@ -269,9 +280,14 @@ async function stepDrillAndBack(page: Page): Promise<boolean> {
     return false
   }
   const top = await scrollLedger(page, 'top')
-  check('the ledger scrolls back to the top before the drill', (top?.scrollTop ?? -1) === 0, String(top?.scrollTop))
+  check(
+    'the ledger scrolls back to the top before the drill',
+    (top?.scrollTop ?? -1) === 0,
+    String(top?.scrollTop),
+  )
   await page.click(LOOT_ROW, { timeout: 15_000 })
-  if (!check('a ledger row opens that item’s drill-down', await appears(page, LOOT_DETAIL))) return false
+  if (!check('a ledger row opens that item’s drill-down', await appears(page, LOOT_DETAIL)))
+    return false
   await page.click(LOOT_BACK, { timeout: 15_000 })
   if (!check('…and Back returns to the ledger', await appears(page, LOOT_LIST))) return false
   check('…on a scroll container that is mounted again', await appears(page, LOOT_SCROLL))
@@ -290,16 +306,19 @@ async function stepNoDoubleScroll(page: Page): Promise<void> {
       page.evaluate((sel) => {
         const el = document.querySelector(sel)
         if (!el) return null
-        return { over: Math.round(el.scrollHeight - el.clientHeight), h: Math.round(el.clientHeight) }
+        return {
+          over: Math.round(el.scrollHeight - el.clientHeight),
+          h: Math.round(el.clientHeight),
+        }
       }, APP_CONTENT),
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   )
   if (!check('the app’s content area reports its geometry', shell !== null)) return
   const s = shell as { over: number; h: number }
   check(
     'the shell behind the ledger has nothing of its own to scroll',
     s.over <= 1,
-    `${String(s.over)}px of overscroll in a ${String(s.h)}px area`
+    `${String(s.over)}px of overscroll in a ${String(s.h)}px area`,
   )
 }
 
@@ -350,13 +369,21 @@ async function main(): Promise<void> {
     page.on('pageerror', (e) => consoleErrors.push(String(e)))
 
     await stepReady(page)
-    check('every seeded row reached the ledger', seeded === SEEDED_ROWS, `${String(seeded)} written`)
+    check(
+      'every seeded row reached the ledger',
+      seeded === SEEDED_ROWS,
+      `${String(seeded)} written`,
+    )
     await stepWindowed(page)
     await stepNoDoubleScroll(page)
     await stepBottomHasRows(page, 'first visit')
     if (await stepDrillAndBack(page)) await stepBottomHasRows(page, 'after a drill and Back')
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
 
     await dumpArtifacts(page, failures.length ? 'loot-window-FAIL' : 'loot-window-pass')
   } finally {

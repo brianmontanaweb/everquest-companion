@@ -26,7 +26,7 @@ import {
   anyOwner,
   ofCohort,
   type InstallRow,
-  type UsageRow
+  type UsageRow,
 } from '../src/main/triage/usageRows'
 import { USAGE_METRICS, type UsageCohort } from '../src/shared/telemetryRollup'
 import { renderAnalyticsDigest } from '../scripts/analyticsDigest.mjs'
@@ -40,7 +40,7 @@ const row = (cohort: UsageCohort, metric: string, dim: string, n: number): Usage
   cohort,
   metric,
   dim,
-  n
+  n,
 })
 
 const install = (cohort: UsageCohort): InstallRow => ({
@@ -49,16 +49,19 @@ const install = (cohort: UsageCohort): InstallRow => ({
   daysSeen: 1,
   appVersion: '0.2.0',
   channel: cohort === 'owner' ? 'dev' : 'prod',
-  cohort
+  cohort,
 })
 
-const build = (usage: UsageRow[] = [], installs: InstallRow[] = []): ReturnType<typeof buildAnalytics> =>
+const build = (
+  usage: UsageRow[] = [],
+  installs: InstallRow[] = [],
+): ReturnType<typeof buildAnalytics> =>
   buildAnalytics({ usage, funnels: [], installs, windowDays: 30, nowMs: NOW })
 
 test('ofCohort PARTITIONS: neither side sees the other’s rows, and nothing is dropped', () => {
   const rows = [
     row('user', USAGE_METRICS.sessions, '-', 3),
-    row('owner', USAGE_METRICS.sessions, '-', 40)
+    row('owner', USAGE_METRICS.sessions, '-', 40),
   ]
   assert.deepEqual(ofCohort(rows, 'user'), [rows[0]])
   assert.deepEqual(ofCohort(rows, 'owner'), [rows[1]])
@@ -74,7 +77,7 @@ test('a cohort’s rates use ITS OWN denominators — the owner is not in the us
     row('user', USAGE_METRICS.sessions, '-', 4),
     row('user', USAGE_METRICS.featureUse, 'mapOpen', 4),
     row('owner', USAGE_METRICS.sessions, '-', 40),
-    row('owner', USAGE_METRICS.featureUse, 'mapOpen', 400)
+    row('owner', USAGE_METRICS.featureUse, 'mapOpen', 400),
   ]
   const users = build(ofCohort(all, 'user'))
   const owner = build(ofCohort(all, 'owner'))

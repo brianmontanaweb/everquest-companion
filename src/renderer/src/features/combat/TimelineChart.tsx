@@ -8,7 +8,14 @@ import { CATEGORY_LABEL } from '@shared/combat'
 import { formatNum as fmt } from '../../lib/formatRate'
 import { CAT_COLOR, RESIST_COLOR } from './combatShared'
 import { MARKER_COLOR } from './markerStyle'
-import { MARKER_RAIL_H, PIN_H, fmtClock, fmtDur, type PinGroup, type TimelineMetrics } from './timelineGeometry'
+import {
+  MARKER_RAIL_H,
+  PIN_H,
+  fmtClock,
+  fmtDur,
+  type PinGroup,
+  type TimelineMetrics,
+} from './timelineGeometry'
 
 // Category colors + the miss/resist tint come from combatShared — ONE source, so the timeline
 // lane stripe, the drill-down bar and the overlay can never disagree about what 'slay' looks
@@ -23,7 +30,7 @@ const KIND_OPACITY: Record<string, number> = { you: 1, pet: 0.75, enemy: 0.5 }
 export function PinSpans({
   tl,
   m,
-  xOf
+  xOf,
 }: {
   tl: TimelineView
   m: TimelineMetrics
@@ -54,7 +61,13 @@ export function PinSpans({
                       strokeWidth={0.5}
                     />
                     {x2 - x1 > 30 && (
-                      <text x={Math.max(m.labelW + 3, x1 + 3)} y={y + PIN_H - 4} fontSize={9} fill="#e6e6e6" style={{ pointerEvents: 'none' }}>
+                      <text
+                        x={Math.max(m.labelW + 3, x1 + 3)}
+                        y={y + PIN_H - 4}
+                        fontSize={9}
+                        fill="#e6e6e6"
+                        style={{ pointerEvents: 'none' }}
+                      >
                         {s.name}
                       </text>
                     )}
@@ -89,12 +102,31 @@ export function LaneRows({ tl, m }: { tl: TimelineView; m: TimelineMetrics }): R
         const y = i * m.laneH
         return (
           <g key={l.lane}>
-            <rect x={m.labelW} y={y} width={m.plotW} height={m.laneH} fill={i % 2 ? 'rgba(255,255,255,0.02)' : 'transparent'} />
-            <text x={m.labelW - 6} y={y + m.laneH / 2 + m.labelFont / 2 - 2} fontSize={m.labelFont} textAnchor="end" fill="#c8c8c8">
+            <rect
+              x={m.labelW}
+              y={y}
+              width={m.plotW}
+              height={m.laneH}
+              fill={i % 2 ? 'rgba(255,255,255,0.02)' : 'transparent'}
+            />
+            <text
+              x={m.labelW - 6}
+              y={y + m.laneH / 2 + m.labelFont / 2 - 2}
+              fontSize={m.labelFont}
+              textAnchor="end"
+              fill="#c8c8c8"
+            >
               <title>{`${CATEGORY_LABEL[l.category]} · ${fmt(l.total)} total`}</title>
               {l.lane.length > m.labelMax ? l.lane.slice(0, m.labelMax - 1) + '…' : l.lane}
             </text>
-            <rect x={m.labelW - 3} y={y + 3} width={2} height={m.laneH - 6} fill={CAT_COLOR[l.category]} opacity={0.8} />
+            <rect
+              x={m.labelW - 3}
+              y={y + 3}
+              width={2}
+              height={m.laneH - 6}
+              fill={CAT_COLOR[l.category]}
+              opacity={0.8}
+            />
           </g>
         )
       })}
@@ -106,9 +138,28 @@ export function LaneRows({ tl, m }: { tl: TimelineView; m: TimelineMetrics }): R
  * ONE event tick. A miss/resist is a HOLLOW, red-tinted mark — an open circle for a resist, a
  * thin hollow bar for a miss — visually distinct from the solid damage ticks (world-model law 8).
  */
-function EventTick({ e, x, y, m }: { e: TimelineEvent; x: number; y: number; m: TimelineMetrics }): React.JSX.Element {
+function EventTick({
+  e,
+  x,
+  y,
+  m,
+}: {
+  e: TimelineEvent
+  x: number
+  y: number
+  m: TimelineMetrics
+}): React.JSX.Element {
   if (e.outcome === 'resist') {
-    return <circle cx={x} cy={y + m.laneH / 2} r={3} fill="none" stroke={RESIST_COLOR} strokeWidth={1.2} />
+    return (
+      <circle
+        cx={x}
+        cy={y + m.laneH / 2}
+        r={3}
+        fill="none"
+        stroke={RESIST_COLOR}
+        strokeWidth={1.2}
+      />
+    )
   }
   if (e.outcome === 'miss') {
     return (
@@ -142,7 +193,7 @@ export function EventTicks({
   events,
   laneIndex,
   m,
-  xOf
+  xOf,
 }: {
   events: TimelineEvent[]
   laneIndex: Map<string, number>
@@ -171,7 +222,7 @@ export function EventTicks({
 export function MarkerRail({
   tl,
   m,
-  xOf
+  xOf,
 }: {
   tl: TimelineView
   m: TimelineMetrics
@@ -201,7 +252,15 @@ export function MarkerRail({
                 fill={color}
               />
             ) : (
-              <rect x={x - 2} y={m.markerTop + 1} width={4} height={MARKER_RAIL_H - 5} rx={1} fill={color} opacity={0.9} />
+              <rect
+                x={x - 2}
+                y={m.markerTop + 1}
+                width={4}
+                height={MARKER_RAIL_H - 5}
+                rx={1}
+                fill={color}
+                opacity={0.9}
+              />
             )}
           </g>
         )
@@ -215,7 +274,7 @@ export function TimeAxis({
   ticks,
   m,
   xOf,
-  zoomedIn
+  zoomedIn,
 }: {
   ticks: number[]
   m: TimelineMetrics

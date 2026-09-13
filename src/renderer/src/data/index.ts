@@ -14,11 +14,11 @@ import eqlegendsBosses from './eqlegends/bosses.json'
 // Bundled quest datasets keyed by profile id. Add a profile's dataset here after
 // scraping it (npm run scrape:posky -- --source <id>).
 const DATASETS: Record<string, PoskyData> = {
-  eqlegends
+  eqlegends,
 }
 
 const BOSSES: Record<string, BossData> = {
-  eqlegends: eqlegendsBosses
+  eqlegends: eqlegendsBosses,
 }
 
 const PROFILE_KEY = 'eq.profile'
@@ -48,7 +48,8 @@ export function setActiveProfileId(id: string): void {
  */
 function renamed(data: PoskyData): PoskyData {
   const touches = (q: PoskyData['quests'][number]): boolean =>
-    (q.reward !== undefined && isRenamedItem(q.reward)) || q.items.some((it) => isRenamedItem(it.name))
+    (q.reward !== undefined && isRenamedItem(q.reward)) ||
+    q.items.some((it) => isRenamedItem(it.name))
   if (!data.quests.some(touches)) return data
   return {
     ...data,
@@ -60,12 +61,16 @@ function renamed(data: PoskyData): PoskyData {
             ...(q.rewardPage === undefined ? {} : { rewardPage: renameItemName(q.rewardPage) }),
             items: q.items.map((it) =>
               isRenamedItem(it.name)
-                ? { ...it, name: renameItemName(it.name), ...(it.page === undefined ? {} : { page: renameItemName(it.page) }) }
-                : it
-            )
+                ? {
+                    ...it,
+                    name: renameItemName(it.name),
+                    ...(it.page === undefined ? {} : { page: renameItemName(it.page) }),
+                  }
+                : it,
+            ),
           }
-        : q
-    )
+        : q,
+    ),
   }
 }
 

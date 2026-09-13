@@ -43,7 +43,7 @@ import {
   eqStamp,
   renderSmokeLine,
   smokeLines,
-  synthesizeSmokeLog
+  synthesizeSmokeLog,
 } from '../scripts/smokeLog.mjs'
 import { isThirdPartyChat, scrubLines } from '../src/shared/logScrub'
 import { buildSlice, lineTs } from '../src/main/feedback/slice'
@@ -55,14 +55,14 @@ import {
   smokeDescription,
   smokeNonce,
   smokeOutcome,
-  smokeResultLine
+  smokeResultLine,
 } from '../src/main/smokeGate'
 import {
   SESSION_METRICS,
   isAnalyticsId,
   sessionMetricFor,
   telemetryAccepting,
-  telemetryLegVerdict
+  telemetryLegVerdict,
 } from '../scripts/smokeTelemetry.mjs'
 import { USAGE_METRICS } from '../src/shared/telemetryRollup'
 
@@ -79,19 +79,27 @@ test('smokeLines: 200 lines, ascending, spanning at most the declared window', (
   for (let i = 1; i < lines.length; i++) {
     assert.ok(lines[i].ts >= lines[i - 1].ts, `line ${String(i)} went backwards in time`)
   }
-  assert.equal(lines[lines.length - 1].ts, NOW, 'the LAST line must be stamped `nowMs` — the slice anchors on it')
+  assert.equal(
+    lines[lines.length - 1].ts,
+    NOW,
+    'the LAST line must be stamped `nowMs` — the slice anchors on it',
+  )
   const spanMs = lines[lines.length - 1].ts - lines[0].ts
   assert.equal(spanMs, SMOKE_SPAN_MINUTES * 60_000)
   for (const line of lines) {
-    assert.equal(line.ts % 1000, 0, 'an EQ stamp has one-second resolution; a ms component is lost on disk')
+    assert.equal(
+      line.ts % 1000,
+      0,
+      'an EQ stamp has one-second resolution; a ms component is lost on disk',
+    )
   }
   assert.ok(
     SMOKE_SPAN_MINUTES < SMOKE_WINDOW_MINUTES,
-    'the log must fit inside the window the hook attaches, or the oldest lines fall out'
+    'the log must fit inside the window the hook attaches, or the oldest lines fall out',
   )
 })
 
-test('eqStamp renders a prefix the APP\'s own timestamp reader parses', () => {
+test("eqStamp renders a prefix the APP's own timestamp reader parses", () => {
   // Not a second parser: `lineTs` is what feedback/slice.ts uses, which is what the packaged
   // app will use on this very file. A stamp it cannot read anchors the window at 0.
   for (const line of smokeLines({ nonce: NONCE, nowMs: NOW })) {
@@ -119,7 +127,7 @@ test('every chat line is scrub-class and every combat/filler line is keep-class'
     assert.equal(
       dropped,
       line.kind === 'chat',
-      `${line.kind} line was classified ${dropped ? 'DROP' : 'KEEP'}: ${rendered}`
+      `${line.kind} line was classified ${dropped ? 'DROP' : 'KEEP'}: ${rendered}`,
     )
     if (line.kind === 'chat') chat++
     if (line.kind === 'combat') combat++
@@ -146,7 +154,10 @@ test('scrubLines keeps the nonce and removes the marker outright', () => {
   assert.equal(dropped, chatCount, 'dropped must be exactly the chat lines — no more, no fewer')
   const text = kept.join('\n')
   assert.ok(text.includes(NONCE), 'the nonce must survive: it is the proof content travelled')
-  assert.ok(!text.includes(CHAT_MARKER), 'the marker must NOT survive: it is the proof the scrub ran')
+  assert.ok(
+    !text.includes(CHAT_MARKER),
+    'the marker must NOT survive: it is the proof the scrub ran',
+  )
 })
 
 // ---------------------------------------------------------------------------------------
@@ -163,7 +174,7 @@ test('buildSlice on the synthesized log yields a slice with the nonce and no mar
     const slice = await buildSlice({
       logPath,
       windowMinutes: SMOKE_WINDOW_MINUTES,
-      selfName: SMOKE_SELF
+      selfName: SMOKE_SELF,
     })
     assert.ok(slice !== null, 'the synthesized log must produce a slice, not null')
     assert.equal(slice.lines + slice.dropped, SMOKE_LINE_COUNT)
@@ -209,11 +220,20 @@ test('smokeDescription passes the SHARED validator, padded only when it must be'
 
 test('smokeOutcome tells the four cases apart, with `closed` beating `queued`', () => {
   assert.equal(smokeOutcome({ ok: true, reportId: 'r1', logUploaded: true }), 'sent')
-  assert.equal(smokeOutcome({ ok: false, error: 'closed', message: 'paused', queued: false }), 'closed')
+  assert.equal(
+    smokeOutcome({ ok: false, error: 'closed', message: 'paused', queued: false }),
+    'closed',
+  )
   // A `closed` that somehow claimed to be queued is still `closed`: re-POSTing at a paused
   // endpoint is exactly what the kill switch exists to prevent.
-  assert.equal(smokeOutcome({ ok: false, error: 'closed', message: 'paused', queued: true }), 'closed')
-  assert.equal(smokeOutcome({ ok: false, error: 'internal', message: 'offline', queued: true }), 'queued')
+  assert.equal(
+    smokeOutcome({ ok: false, error: 'closed', message: 'paused', queued: true }),
+    'closed',
+  )
+  assert.equal(
+    smokeOutcome({ ok: false, error: 'internal', message: 'offline', queued: true }),
+    'queued',
+  )
   assert.equal(smokeOutcome({ ok: false, error: 'blocked', message: 'no', queued: false }), 'error')
 })
 
@@ -239,19 +259,35 @@ test('sessionMetricFor: today, a session metric, and a count above zero — all 
   const DAY = '2026-08-04'
   assert.equal(sessionMetricFor([{ day: DAY, metric: 'sessions', n: 3 }], DAY), 'sessions')
   assert.equal(sessionMetricFor([{ day: DAY, metric: 'heartbeats', n: 1 }], DAY), 'heartbeats')
-  assert.equal(sessionMetricFor([{ day: '2026-08-03', metric: 'sessions', n: 9 }], DAY), null, 'yesterday is not proof')
-  assert.equal(sessionMetricFor([{ day: DAY, metric: 'featureUse', n: 9 }], DAY), null, 'not a session metric')
+  assert.equal(
+    sessionMetricFor([{ day: '2026-08-03', metric: 'sessions', n: 9 }], DAY),
+    null,
+    'yesterday is not proof',
+  )
+  assert.equal(
+    sessionMetricFor([{ day: DAY, metric: 'featureUse', n: 9 }], DAY),
+    null,
+    'not a session metric',
+  )
   assert.equal(
     sessionMetricFor([{ day: DAY, metric: 'sessions', n: 0 }], DAY),
     null,
-    'a zero counter is an aggregate that recorded nothing'
+    'a zero counter is an aggregate that recorded nothing',
   )
   assert.equal(sessionMetricFor([], DAY), null)
 })
 
 test('isAnalyticsId: a UUID, because that value is used as a query parameter and a DELETE target', () => {
   assert.ok(isAnalyticsId('3f2504e0-4f89-41d3-9a0c-0305e82c3301'))
-  for (const bad of ['', 'null', 'undefined', "' OR 1=1--", '3f2504e04f8941d39a0c0305e82c3301', 42, null]) {
+  for (const bad of [
+    '',
+    'null',
+    'undefined',
+    "' OR 1=1--",
+    '3f2504e04f8941d39a0c0305e82c3301',
+    42,
+    null,
+  ]) {
     assert.equal(isAnalyticsId(bad), false, JSON.stringify(bad))
   }
 })
@@ -272,15 +308,27 @@ test('THE KILL SWITCH IS ITS OWN VERDICT, and it short-circuits the evidence', (
       assert.equal(
         telemetryLegVerdict({ accepting: false, installRow, sessionMetric }),
         'lit-but-closed',
-        `installRow=${String(installRow)} metric=${String(sessionMetric)}`
+        `installRow=${String(installRow)} metric=${String(sessionMetric)}`,
       )
     }
   }
   // Open: both facts, or it failed.
-  assert.equal(telemetryLegVerdict({ accepting: true, installRow: true, sessionMetric: 'sessions' }), 'pass')
-  assert.equal(telemetryLegVerdict({ accepting: true, installRow: false, sessionMetric: 'sessions' }), 'fail')
-  assert.equal(telemetryLegVerdict({ accepting: true, installRow: true, sessionMetric: null }), 'fail')
-  assert.equal(telemetryLegVerdict({ accepting: true, installRow: false, sessionMetric: null }), 'fail')
+  assert.equal(
+    telemetryLegVerdict({ accepting: true, installRow: true, sessionMetric: 'sessions' }),
+    'pass',
+  )
+  assert.equal(
+    telemetryLegVerdict({ accepting: true, installRow: false, sessionMetric: 'sessions' }),
+    'fail',
+  )
+  assert.equal(
+    telemetryLegVerdict({ accepting: true, installRow: true, sessionMetric: null }),
+    'fail',
+  )
+  assert.equal(
+    telemetryLegVerdict({ accepting: true, installRow: false, sessionMetric: null }),
+    'fail',
+  )
 })
 
 test('smokeResultLine is ONE greppable line the guest can parse', () => {
@@ -296,7 +344,7 @@ test('smokeResultLine is ONE greppable line the guest can parse', () => {
     ok: false,
     error: 'quota_exceeded',
     message: 'too\nmany\treports today',
-    queued: false
+    queued: false,
   })
   assert.ok(!bad.includes('\n') && !bad.includes('\t'))
   assert.match(bad, /outcome=error/)

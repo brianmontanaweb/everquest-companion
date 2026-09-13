@@ -72,7 +72,7 @@ export interface ClassUnlockRow {
  */
 export function classUnlockRows(
   quests: readonly QuestProgress[],
-  observed: readonly ClassUnlockRecord[]
+  observed: readonly ClassUnlockRecord[],
 ): ClassUnlockRow[] {
   const byClass = new Map<string, { turnedIn: number; total: number }>()
   for (const q of quests) {
@@ -98,7 +98,7 @@ export function classUnlockRows(
       turnedIn,
       total,
       remaining: total - turnedIn,
-      unlocked: false
+      unlocked: false,
     }
     if (at !== undefined) {
       row.unlocked = true
@@ -143,10 +143,10 @@ export type ClassPinRank = (row: ClassUnlockRow) => number
  */
 export function orderClassUnlockRows(
   rows: readonly ClassUnlockRow[],
-  rank: ClassPinRank
+  rank: ClassPinRank,
 ): ClassUnlockRow[] {
   const sorted = [...rows].sort(
-    (a, b) => a.remaining - b.remaining || a.className.localeCompare(b.className)
+    (a, b) => a.remaining - b.remaining || a.className.localeCompare(b.className),
   )
   // A SECOND pass, like the quest list's: Array#sort is stable, so ties keep the first pass's
   // order and a starred class arrives at the top carrying the same closest-first order inside.

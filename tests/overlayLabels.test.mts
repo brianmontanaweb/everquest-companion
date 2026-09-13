@@ -32,28 +32,40 @@ import type { AlertPrefs } from '../src/shared/types'
 import {
   OVERLAY_KIND_LABEL,
   OVERLAY_LABEL_ORDER,
-  OVERLAY_STRIP_KINDS
+  OVERLAY_STRIP_KINDS,
 } from '../src/shared/overlayLabels'
 
 const src = (rel: string): string => readFileSync(new URL(rel, import.meta.url), 'utf8')
 
 /** The spellings the retired second map used. Kept as data because the claim is that they are
  *  GONE from what a user reads, not merely outvoted somewhere. */
-const RETIRED = ['Overall meter', 'Event feed', 'Healing (fight)', 'Healing (overall)', 'Buff timers', 'Debuff timers', 'XP and motes', 'Respawn clocks']
+const RETIRED = [
+  'Overall meter',
+  'Event feed',
+  'Healing (fight)',
+  'Healing (overall)',
+  'Buff timers',
+  'Debuff timers',
+  'XP and motes',
+  'Respawn clocks',
+]
 
 test('an import preview names an overlay the way the Overlay menu does', () => {
   const body: SettingsBundleBody = {
-    overlays: { overall: { bgAlpha: 0.5 }, events: { bgAlpha: 0.4 } }
+    overlays: { overall: { bgAlpha: 0.5 }, events: { bgAlpha: 0.4 } },
   }
   const rows = planScalarChanges(body, { alertPrefs: {} as AlertPrefs, overlays: {}, ui: {} })
   const labels = rows.map((r) => r.label)
   assert.ok(
     labels.includes('Zone meter - background opacity'),
-    `the menu calls it the Zone meter; the preview said ${labels.join(' | ')}`
+    `the menu calls it the Zone meter; the preview said ${labels.join(' | ')}`,
   )
   assert.ok(labels.includes('Event log - background opacity'))
   for (const stale of RETIRED) {
-    assert.ok(!labels.some((l) => l.startsWith(stale)), `${stale} is a name no menu in this app uses`)
+    assert.ok(
+      !labels.some((l) => l.startsWith(stale)),
+      `${stale} is a name no menu in this app uses`,
+    )
   }
 })
 

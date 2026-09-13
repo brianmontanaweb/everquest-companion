@@ -156,7 +156,11 @@ function flattenDings(segments: readonly LevelSegment[]): CurveDing[] {
   const out: CurveDing[] = []
   for (const seg of segments) {
     for (let i = 0; i < seg.points.length; i++) {
-      out.push({ ts: seg.points[i].ts, level: seg.points[i].level, afterSwap: i === 0 && seg.afterSwap })
+      out.push({
+        ts: seg.points[i].ts,
+        level: seg.points[i].level,
+        afterSwap: i === 0 && seg.afterSwap,
+      })
     }
   }
   return out
@@ -181,7 +185,11 @@ interface BarWalk {
 function walkBar(snap: ExpColumns, dingTs: number, level: number, endTs: number): BarWalk {
   const points: CurvePoint[] = [{ ts: dingTs, y: level }]
   let equiv = 0
-  for (let i = firstAfter(snap.expTs, dingTs); i < snap.expTs.length && snap.expTs[i] < endTs; i++) {
+  for (
+    let i = firstAfter(snap.expTs, dingTs);
+    i < snap.expTs.length && snap.expTs[i] < endTs;
+    i++
+  ) {
     const ts = snap.expTs[i]
     // Flag bit 1 is "the line stated no percent" (progression.ts pushExp). `expPct` is -1
     // there, never 0 — unknown is not zero, and this is where that matters most.
@@ -279,7 +287,10 @@ function foldBar(o: {
   }
   // The live bar: held flat to the end of the drawn domain, exactly as the AA curve's trailing
   // plateau is. Nothing has happened since the last line, which is what a plateau says.
-  out.runs.push({ points: walk.points, endTs: Math.max(domainEnd, walk.points[walk.points.length - 1].ts) })
+  out.runs.push({
+    points: walk.points,
+    endTs: Math.max(domainEnd, walk.points[walk.points.length - 1].ts),
+  })
 }
 
 /**
@@ -361,12 +372,19 @@ export function levelCurveFull(args: LevelCurveArgs): LevelCurve {
  * about its sub-pixel drop.
  */
 export function downsampleCurve(curve: LevelCurve, scale: ChartScale, colW = 1): LevelCurve {
-  const runs = curve.runs.map((run) => ({ points: downsamplePoints(run.points, scale, colW), endTs: run.endTs }))
+  const runs = curve.runs.map((run) => ({
+    points: downsamplePoints(run.points, scale, colW),
+    endTs: run.endTs,
+  }))
   return { ...curve, runs }
 }
 
 /** The column-collapse itself — see `downsampleCurve` for why first+last is lossless here. */
-export function downsamplePoints(points: readonly CurvePoint[], scale: ChartScale, colW = 1): CurvePoint[] {
+export function downsamplePoints(
+  points: readonly CurvePoint[],
+  scale: ChartScale,
+  colW = 1,
+): CurvePoint[] {
   if (points.length <= 2) return [...points]
   const out: CurvePoint[] = []
   const col = (p: CurvePoint): number => Math.floor(xOf(scale, p.ts) / Math.max(0.001, colW))
@@ -408,7 +426,12 @@ export function runPolyline(run: CurveRun, scale: ChartScale, yOf: (v: number) =
 }
 
 /** The filled area under a run, closed to `floor`. */
-export function runArea(run: CurveRun, scale: ChartScale, yOf: (v: number) => number, floor: number): string {
+export function runArea(
+  run: CurveRun,
+  scale: ChartScale,
+  yOf: (v: number) => number,
+  floor: number,
+): string {
   const line = runPolyline(run, scale, yOf)
   const x0 = xOf(scale, run.points[0].ts).toFixed(1)
   const x1 = xOf(scale, Math.max(run.endTs, run.points[run.points.length - 1].ts)).toFixed(1)
@@ -416,7 +439,11 @@ export function runArea(run: CurveRun, scale: ChartScale, yOf: (v: number) => nu
 }
 
 /** An uncertainty band's rectangle, or null when it is narrower than `minW` user units. */
-export function gapRect(gap: CurveGap, scale: ChartScale, minW = 1): { x: number; w: number } | null {
+export function gapRect(
+  gap: CurveGap,
+  scale: ChartScale,
+  minW = 1,
+): { x: number; w: number } | null {
   const x = xOf(scale, gap.t0)
   const w = xOf(scale, gap.t1) - x
   return w >= minW ? { x, w } : null
@@ -441,7 +468,8 @@ export function curveAt(curve: LevelCurve, ts: number): CurveAt {
     if (ts >= g.t0 && ts <= g.t1) return { kind: 'refused', refusal: g.kind, level: g.level }
   }
   for (const run of curve.runs) {
-    if (ts < run.points[0].ts || ts > Math.max(run.endTs, run.points[run.points.length - 1].ts)) continue
+    if (ts < run.points[0].ts || ts > Math.max(run.endTs, run.points[run.points.length - 1].ts))
+      continue
     let at = run.points[0]
     for (const p of run.points) {
       if (p.ts > ts) break
@@ -458,5 +486,5 @@ export const CURVE_REFUSAL_NOTE: Record<CurveRefusal, string> = {
   unstated: 'experience lines here stated no percentage - unknown, not zero',
   overfull: 'the percentages since the last level-up already exceed a full level',
   clipped: 'the retained record no longer reaches back to the level-up this bar started at',
-  swapped: 'the bar restarted at a class swap the log never announced'
+  swapped: 'the bar restarted at a class swap the log never announced',
 }

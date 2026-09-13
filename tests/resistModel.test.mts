@@ -47,7 +47,6 @@ import {
 import { LANDS_ELSEWHERE, SPELLS, blank, playAon, playDd, rng } from './resistFixtures.mts'
 import type { ResistRow } from '../src/shared/resistTypes'
 
-
 test('levelMod is the server formula, including both of its cliffs', () => {
   assert.equal(levelMod(50, 50), 0)
   // d = 3 -> +4 (integer division, as the server does it), d = -3 -> -4.
@@ -84,7 +83,11 @@ test('THE GUIDANCE IS THREE BANDS, drawn at 60% of a plain cast (JOS-387)', () =
   assert.equal(WEAK_BELOW, 10)
   assert.equal(benchmarkTag(40, 'should land'), 'normal')
   assert.equal(benchmarkTag(9, 'should land'), 'weak')
-  assert.equal(benchmarkTag(9, 'needs overchannel'), 'resistant', 'weak never survives a harder band')
+  assert.equal(
+    benchmarkTag(9, 'needs overchannel'),
+    'resistant',
+    'weak never survives a harder band',
+  )
   assert.equal(benchmarkTag(200, 'may not land even with overchannel'), 'very resistant')
 })
 
@@ -183,7 +186,10 @@ test('SYNTHETIC ROLLS: the interval covers the true R at least 90% of the time',
     }
   }
   const rate = covered / trials
-  assert.ok(rate >= 0.9, `coverage ${String(covered)}/${String(trials)} = ${rate.toFixed(2)}, want >= 0.90`)
+  assert.ok(
+    rate >= 0.9,
+    `coverage ${String(covered)}/${String(trials)} = ${rate.toFixed(2)}, want >= 0.90`,
+  )
 })
 
 test('SYNTHETIC ROLLS: the two evidence families agree with each other', () => {
@@ -198,12 +204,12 @@ test('SYNTHETIC ROLLS: the two evidence families agree with each other', () => {
     const ddFit = estimate(
       [blank({ spellKey: 'test nuke', family: 'cast', resist: dd.resist, dmg: dd.dmg })],
       SPELLS,
-      { axis: 'magic', mobLevel: 50 }
+      { axis: 'magic', mobLevel: 50 },
     )
     const overlap = aonFit.lo <= ddFit.hi && ddFit.lo <= aonFit.hi
     assert.ok(
       overlap,
-      `R=${String(R)}: all-or-nothing [${String(aonFit.lo)},${String(aonFit.hi)}] vs damage [${String(ddFit.lo)},${String(ddFit.hi)}]`
+      `R=${String(R)}: all-or-nothing [${String(aonFit.lo)},${String(aonFit.hi)}] vs damage [${String(ddFit.lo)},${String(ddFit.hi)}]`,
     )
   }
 })
@@ -228,7 +234,7 @@ test('SYNTHETIC ROLLS: a resist adjust is modelled out, not absorbed into R', ()
       blank({ spellKey: 'test plain', family: 'cast', ...plain }),
     ],
     spells,
-    { axis: 'fire', mobLevel: 50 }
+    { axis: 'fire', mobLevel: 50 },
   )
   assert.ok(est.R >= R - 20 && est.R <= R + 20, `R=${String(est.R)} for a true ${String(R)}`)
   assert.ok(R >= est.lo && R <= est.hi, `interval [${String(est.lo)},${String(est.hi)}]`)
@@ -252,10 +258,16 @@ test('SYNTHETIC ROLLS: a debuffed cell and an undebuffed one describe the same m
   const est = estimate(
     [
       blank({ spellKey: 'test hold', family: 'cast', ...clean }),
-      blank({ spellKey: 'test hold', family: 'cast', debuffs: 'test malo', casterLevel: 60, ...maloed }),
+      blank({
+        spellKey: 'test hold',
+        family: 'cast',
+        debuffs: 'test malo',
+        casterLevel: 60,
+        ...maloed,
+      }),
     ],
     SPELLS,
-    { axis: 'magic', mobLevel: 50 }
+    { axis: 'magic', mobLevel: 50 },
   )
   assert.ok(est.R >= R - 25 && est.R <= R + 25, `R=${String(est.R)} for a true ${String(R)}`)
 })
@@ -275,7 +287,7 @@ test('YOUR OWN LOG WINS: 50 of your observations beat 500 contradicting shipped 
   assert.equal(est.baselineWeight, 0)
   assert.ok(
     Math.abs(est.R - userTruth) < Math.abs(est.R - baselineTruth),
-    `R=${String(est.R)} should sit on the user's ${String(userTruth)}, not the baseline's ${String(baselineTruth)}`
+    `R=${String(est.R)} should sit on the user's ${String(userTruth)}, not the baseline's ${String(baselineTruth)}`,
   )
   assert.ok(est.R < 90, `R=${String(est.R)} is not the shipped answer`)
   assert.equal(est.differsFromShipped, true, 'and it says so')
@@ -293,7 +305,7 @@ test('below the user-only threshold the baseline still counts, at exactly K/(K+n
       blank({ spellKey: 'test hold', family: 'cast', source: 'baseline', ...base }),
     ],
     SPELLS,
-    { axis: 'magic', mobLevel: 50 }
+    { axis: 'magic', mobLevel: 50 },
   )
   assert.equal(est.userOnly, false)
   assert.ok(Math.abs(est.baselineWeight - BASELINE_K / (BASELINE_K + 20)) < 1e-9)
@@ -310,7 +322,7 @@ test('the patch detector needs BOTH sides well populated before it says anything
       blank({ spellKey: 'test hold', family: 'cast', source: 'baseline', ...base }),
     ],
     SPELLS,
-    { axis: 'magic', mobLevel: 50 }
+    { axis: 'magic', mobLevel: 50 },
   )
   assert.equal(est.differsFromShipped, false)
 })
@@ -330,9 +342,13 @@ test('a mez resist above the spell level cap is filed nowhere', () => {
 })
 
 test('a spell with no resist axis says nothing about any axis', () => {
-  const est = estimate([blank({ spellKey: 'test malo', family: 'cast', resist: 20, land: 0 })], SPELLS, {
-    axis: 'magic',
-  })
+  const est = estimate(
+    [blank({ spellKey: 'test malo', family: 'cast', resist: 20, land: 0 })],
+    SPELLS,
+    {
+      axis: 'magic',
+    },
+  )
   assert.equal(est.n, 0)
   assert.equal(est.perSpell.length, 0)
 })
@@ -341,7 +357,7 @@ test('an observation with no level on one side cannot enter the likelihood, and 
   const est = estimate(
     [blank({ spellKey: 'test hold', family: 'cast', casterLevel: null, resist: 9, land: 11 })],
     SPELLS,
-    { axis: 'magic', mobLevel: 50 }
+    { axis: 'magic', mobLevel: 50 },
   )
   assert.equal(est.n, 0)
   assert.equal(est.droppedNoLevel, 20)
@@ -352,7 +368,7 @@ test('a mob 21 levels above the caster teaches nothing about its resist stat', (
   const est = estimate(
     [blank({ spellKey: 'test hold', family: 'cast', mobLevel: 75, resist: 60, land: 0 })],
     SPELLS,
-    { axis: 'magic', mobLevel: 75 }
+    { axis: 'magic', mobLevel: 75 },
   )
   assert.equal(est.n, 0, 'immune-by-level resists are not resist-stat evidence')
 })
@@ -383,10 +399,23 @@ test('predict inverts the same model the estimator fits', () => {
   assert.equal(lure.pFull, 1)
   assert.equal(lure.pResistMsg, 0)
   // A debuff moves it the same way an adjust does.
-  const maloed = predict({ R: 100, casterLevel: 50, mobLevel: 50, resistAdj: 0, debuff: 40, kind: 'aon' })
+  const maloed = predict({
+    R: 100,
+    casterLevel: 50,
+    mobLevel: 50,
+    resistAdj: 0,
+    debuff: 40,
+    kind: 'aon',
+  })
   assert.ok(Math.abs(maloed.pLand - 0.7) < 1e-9)
   // Immune by level, from both directions.
-  const overLevelled = predict({ R: 0, casterLevel: 30, mobLevel: 60, resistAdj: -1000, kind: 'aon' })
+  const overLevelled = predict({
+    R: 0,
+    casterLevel: 30,
+    mobLevel: 60,
+    resistAdj: -1000,
+    kind: 'aon',
+  })
   assert.equal(overLevelled.pLand, 0)
 })
 
@@ -437,7 +466,13 @@ test('the verdict is about the SPELL, and the caller decides the scope', () => {
   // the verdict to one mob's rows would throw it away with the blindness it is meant to catch.
   const everywhere: ResistRow[] = [
     blank({ mobKey: 'a stubborn mob', spellKey: 'test hold', family: 'cast', resist: 40, land: 0 }),
-    blank({ mobKey: 'an ordinary mob', spellKey: 'test hold', family: 'cast', resist: 5, land: 95 }),
+    blank({
+      mobKey: 'an ordinary mob',
+      spellKey: 'test hold',
+      family: 'cast',
+      resist: 5,
+      land: 95,
+    }),
   ]
   // Over the WHOLE ledger the spell plainly lands, so nothing is held out…
   assert.equal(unobservableSpells(everywhere).size, 0)
@@ -455,11 +490,15 @@ test('the verdict is about the SPELL, and the caller decides the scope', () => {
 
 test('a thin cell does not scream immune', () => {
   // Five resists out of five. The maximum-likelihood answer is 200 and that is a confident lie.
-  const est = estimate([blank({ spellKey: 'test hold', family: 'cast', resist: 5, land: 0 })], SPELLS, {
-    axis: 'magic',
-    mobLevel: 50,
-    unobservable: LANDS_ELSEWHERE,
-  })
+  const est = estimate(
+    [blank({ spellKey: 'test hold', family: 'cast', resist: 5, land: 0 })],
+    SPELLS,
+    {
+      axis: 'magic',
+      mobLevel: 50,
+      unobservable: LANDS_ELSEWHERE,
+    },
+  )
   assert.equal(est.n, 5)
   assert.ok(est.R < 200, `R=${String(est.R)} — the prior has to pull this down`)
   // And the interval has to admit how little it rules out: five resists cannot distinguish
@@ -467,6 +506,9 @@ test('a thin cell does not scream immune', () => {
   // because the interval is the central 95% of a posterior with a broad prior on it rather than a
   // likelihood cut — JOS-387 — so the claim is about WIDTH, which is the honest one.)
   assert.ok(est.hi >= 250, `hi=${String(est.hi)} — the evidence rules out very little above`)
-  assert.ok(est.hi - est.lo > 200, `interval width ${String(est.hi - est.lo)} — five casts know nothing`)
+  assert.ok(
+    est.hi - est.lo > 200,
+    `interval width ${String(est.hi - est.lo)} — five casts know nothing`,
+  )
   assert.equal(est.nearlyImmune, false)
 })

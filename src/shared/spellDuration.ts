@@ -59,7 +59,9 @@ function parseClockMs(t: string): number | null {
   const m = /(\d+):(\d{2})(?::(\d{2}))?/.exec(t)
   if (!m) return null
   const [h, min, s] =
-    m[3] !== undefined ? [Number(m[1]), Number(m[2]), Number(m[3])] : [0, Number(m[1]), Number(m[2])]
+    m[3] !== undefined
+      ? [Number(m[1]), Number(m[2]), Number(m[3])]
+      : [0, Number(m[1]), Number(m[2])]
   const ms = ((h * 60 + min) * 60 + s) * 1000
   return ms > 0 ? ms : null
 }
@@ -90,7 +92,8 @@ export function parseDurationMs(text: string | undefined): number | null {
   // the presence of a range separator ("to"/"@L"/"@ L"). The single letters come LAST in the
   // alternation so "2 min 30 sec" still matches "min"/"sec" rather than "m"/"s".
   const comps: number[] = []
-  const re = /(\d+(?:\.\d+)?)\s*(hours?|hrs?|hr|minutes?|mins?|min|seconds?|secs?|sec|ticks?|h|m|s)\b/g
+  const re =
+    /(\d+(?:\.\d+)?)\s*(hours?|hrs?|hr|minutes?|mins?|min|seconds?|secs?|sec|ticks?|h|m|s)\b/g
   let m: RegExpExecArray | null
   while ((m = re.exec(t)) !== null) {
     const ms = unitMs(parseFloat(m[1]), m[2])

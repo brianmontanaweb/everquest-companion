@@ -60,7 +60,7 @@ export function MapLocMarker({ at, loc, vp }: MapLocMarkerProps): JSX.Element {
         width: 0,
         height: 0,
         pointerEvents: 'none',
-        zIndex: 4
+        zIndex: 4,
       }}
     >
       <span
@@ -74,7 +74,7 @@ export function MapLocMarker({ at, loc, vp }: MapLocMarkerProps): JSX.Element {
           borderRadius: '50%',
           border: `2px solid ${color}`,
           boxShadow: '0 0 0 1px rgba(0,0,0,0.75)',
-          pointerEvents: 'auto'
+          pointerEvents: 'auto',
         }}
       />
       {tick(color, { ...arm, left: 0, top: -half - TICK_PX })}

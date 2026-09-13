@@ -54,7 +54,7 @@ function switchState(page: Page, sel: string): Promise<SwitchState> {
 function wrapTitle(page: Page): Promise<string> {
   return page.evaluate(
     (s) => (document.querySelector(s) as HTMLElement | null)?.getAttribute('title') ?? '',
-    PER_ALERT_WRAP
+    PER_ALERT_WRAP,
   )
 }
 
@@ -72,9 +72,13 @@ async function closeEditor(page: Page): Promise<void> {
 /** The per-alert switch as the editor currently renders it, waited for rather than sampled. */
 async function perAlertWhen(page: Page, disabled: boolean): Promise<SwitchState> {
   await openFirstEditor(page)
-  return settle(() => switchState(page, PER_ALERT), (s) => s.disabled === disabled, {
-    timeoutMs: 10_000
-  }).catch(() => ABSENT)
+  return settle(
+    () => switchState(page, PER_ALERT),
+    (s) => s.disabled === disabled,
+    {
+      timeoutMs: 10_000,
+    },
+  ).catch(() => ABSENT)
 }
 
 /**
@@ -89,7 +93,7 @@ async function setGlobal(page: Page, on: boolean): Promise<boolean> {
   const stored = await settle(
     () => page.evaluate(() => window.eq.getAlertPrefs().then((p) => p.alwaysPlayAll === true)),
     (v) => v === on,
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   ).catch(() => !on)
   return stored === on
 }
@@ -103,7 +107,7 @@ async function stepDefaultOff(page: Page): Promise<SwitchState> {
   check(
     'a fresh install has it OFF — the audio throttle keeps its default behaviour (owner spec)',
     toolbar.checked === false,
-    `checked=${String(toolbar.checked)}`
+    `checked=${String(toolbar.checked)}`,
   )
   const box = await perAlertWhen(page, false)
   // `present` is asserted, not assumed: an ABSENT control also reads `disabled:false`, so without
@@ -111,7 +115,7 @@ async function stepDefaultOff(page: Page): Promise<SwitchState> {
   check(
     '…so each alert still owns its own opt-out, editable, with nothing to explain',
     box.present && box.disabled === false && (await wrapTitle(page)) === '',
-    `present=${String(box.present)} disabled=${String(box.disabled)}`
+    `present=${String(box.present)} disabled=${String(box.disabled)}`,
   )
   await closeEditor(page)
   return box
@@ -123,18 +127,18 @@ async function stepGreyedOut(page: Page, before: SwitchState): Promise<void> {
   check(
     'the per-alert option GREYS OUT while the global preference is on',
     box.disabled,
-    `disabled=${String(box.disabled)}`
+    `disabled=${String(box.disabled)}`,
   )
   check(
     '…still showing THIS alert’s own saved value — the global one is a bypass, not a rewrite',
     box.checked === before.checked,
-    `${String(before.checked)} → ${String(box.checked)}`
+    `${String(before.checked)} → ${String(box.checked)}`,
   )
   const title = await wrapTitle(page)
   check(
     '…and one short sentence on hover says the global preference is what controls it',
     title.includes('Always play is on for every alert') && title.length < 160,
-    `title="${title}"`
+    `title="${title}"`,
   )
   await closeEditor(page)
 }
@@ -146,7 +150,7 @@ async function stepHandedBack(page: Page): Promise<void> {
   check(
     'switching the preference back off hands the per-alert option straight back',
     box.present && box.disabled === false && title === '',
-    `disabled=${String(box.disabled)} title="${title}"`
+    `disabled=${String(box.disabled)} title="${title}"`,
   )
   await closeEditor(page)
 }
@@ -163,5 +167,8 @@ export async function stepAlwaysPlayAll(page: Page): Promise<void> {
 
   if (!check('turning it off again is stored too', await setGlobal(page, false))) return
   await stepHandedBack(page)
-  check('the alert list survived the round trip', (await countOf(page, '[data-testid="alert-row"]')) > 0)
+  check(
+    'the alert list survived the round trip',
+    (await countOf(page, '[data-testid="alert-row"]')) > 0,
+  )
 }

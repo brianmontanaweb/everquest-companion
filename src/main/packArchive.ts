@@ -44,7 +44,10 @@ export interface TarEntry {
 
 /** Parse an octal numeric tar header field (space/NUL terminated). */
 function parseOctal(buf: Buffer, offset: number, length: number): number {
-  const s = buf.toString('ascii', offset, offset + length).replace(/[\0 ]+$/, '').trim()
+  const s = buf
+    .toString('ascii', offset, offset + length)
+    .replace(/[\0 ]+$/, '')
+    .trim()
   if (!s) return 0
   const n = parseInt(s, 8)
   return Number.isFinite(n) ? n : 0
@@ -92,7 +95,7 @@ export function readTar(buf: Buffer): TarEntry[] {
       name: fullName,
       type,
       size,
-      data: buf.subarray(dataStart, dataStart + size)
+      data: buf.subarray(dataStart, dataStart + size),
     })
   }
   return out
@@ -120,7 +123,11 @@ export interface StagedEntries {
  * after removing the stage dir — on an entry that would escape the target or push the total
  * written past MAX_STAGED_BYTES.
  */
-export function stageEntries(entries: TarEntry[], rootPrefix: string, stageDir: string): StagedEntries {
+export function stageEntries(
+  entries: TarEntry[],
+  rootPrefix: string,
+  stageDir: string,
+): StagedEntries {
   let cespRaw: string | null = null
   let wrote = 0
   let stagedBytes = 0

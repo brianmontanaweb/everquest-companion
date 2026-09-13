@@ -32,7 +32,7 @@ import {
   SERVABLE,
   type FallbackReason,
   type ReadShim,
-  type Readiness
+  type Readiness,
 } from '../src/main/dataServer/readShim'
 import type { ParamsFor, RequestOp, ResultFor } from '../src/shared/dataServer/ops'
 import type { ModuleSnapshotResult } from '../src/shared/dataServer/protocol.generated'
@@ -98,7 +98,7 @@ function rig(client: FakeClient, opts: { noteEveryMs?: number } = {}): Rig {
     now: () => at,
     timeoutMs: 5,
     noteEveryMs: opts.noteEveryMs ?? 5_000,
-    delay: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+    delay: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
   })
 
   return {
@@ -107,7 +107,7 @@ function rig(client: FakeClient, opts: { noteEveryMs?: number } = {}): Rig {
     sent,
     tick: (ms: number): void => {
       at += ms
-    }
+    },
   }
 }
 
@@ -136,10 +136,19 @@ test('CONNECTED AND ANSWERING: the engine answers and the empty shape is never b
   const r = rig({ kind: 'answering', result: snap('loot', 9, ENGINE_STATE) })
   const calls = { n: 0 }
 
-  const got = await r.shim.serve(OP, { module: 'loot' }, project('loot'), emptyShape(calls, EMPTY_ANSWER))
+  const got = await r.shim.serve(
+    OP,
+    { module: 'loot' },
+    project('loot'),
+    emptyShape(calls, EMPTY_ANSWER),
+  )
 
   assert.deepEqual(got, { seq: 9, state: ENGINE_STATE }, 'the caller got the ENGINE’s answer')
-  assert.equal(calls.n, 0, 'the empty shape is a thunk, so a served call does not pay to build it at all')
+  assert.equal(
+    calls.n,
+    0,
+    'the empty shape is a thunk, so a served call does not pay to build it at all',
+  )
   assert.deepEqual(r.sent, [OP])
   assert.deepEqual(r.notes, [], 'nothing fell back, so there is nothing to narrate')
 })
@@ -155,7 +164,7 @@ const NOT_READY: readonly { readonly why: FallbackReason; readonly phrase: strin
   { why: 'noClient', phrase: 'no engine client on this launch' },
   { why: 'notConnected', phrase: 'the connection is not ready' },
   { why: 'notAttached', phrase: 'the engine is on another log' },
-  { why: 'notLive', phrase: 'the engine is still folding' }
+  { why: 'notLive', phrase: 'the engine is still folding' },
 ]
 
 for (const row of NOT_READY) {
@@ -163,7 +172,12 @@ for (const row of NOT_READY) {
     const r = rig({ kind: 'disconnected', why: row.why })
     const calls = { n: 0 }
 
-    const got = await r.shim.serve(OP, { module: 'loot' }, project('loot'), emptyShape(calls, EMPTY_ANSWER))
+    const got = await r.shim.serve(
+      OP,
+      { module: 'loot' },
+      project('loot'),
+      emptyShape(calls, EMPTY_ANSWER),
+    )
 
     assert.deepEqual(got, EMPTY_ANSWER, 'the empty shape, unchanged')
     assert.equal(calls.n, 1)
@@ -176,10 +190,18 @@ for (const row of NOT_READY) {
 // ---- the three answered-but-not-answered rows --------------------------------------------------
 
 test('ERRORING: a refusal is swallowed — the caller sees the app’s answer, never a throw', async () => {
-  const r = rig({ kind: 'erroring', error: Object.assign(new Error('no such module'), { code: 'notFound' }) })
+  const r = rig({
+    kind: 'erroring',
+    error: Object.assign(new Error('no such module'), { code: 'notFound' }),
+  })
   const calls = { n: 0 }
 
-  const got = await r.shim.serve(OP, { module: 'loot' }, project('loot'), emptyShape(calls, EMPTY_ANSWER))
+  const got = await r.shim.serve(
+    OP,
+    { module: 'loot' },
+    project('loot'),
+    emptyShape(calls, EMPTY_ANSWER),
+  )
 
   assert.deepEqual(got, EMPTY_ANSWER)
   assert.equal(calls.n, 1)
@@ -191,19 +213,32 @@ test('ERRORING with a non-Error rejection: still swallowed, and the note still n
   const r = rig({ kind: 'erroring', error: { code: 'internal' } })
   const calls = { n: 0 }
 
-  const got = await r.shim.serve(OP, { module: 'loot' }, project('loot'), emptyShape(calls, EMPTY_ANSWER))
+  const got = await r.shim.serve(
+    OP,
+    { module: 'loot' },
+    project('loot'),
+    emptyShape(calls, EMPTY_ANSWER),
+  )
 
   assert.deepEqual(got, EMPTY_ANSWER)
   const detail = await r.shim.ask(OP, { module: 'loot' }, project('loot'))
   assert.equal(detail.served, false)
-  assert.ok(!detail.served && detail.detail.includes('internal'), detail.served ? '' : detail.detail)
+  assert.ok(
+    !detail.served && detail.detail.includes('internal'),
+    detail.served ? '' : detail.detail,
+  )
 })
 
 test('IDLE: an engine that never answers does not hang the caller — the deadline hands it back', async () => {
   const r = rig({ kind: 'idle' })
   const calls = { n: 0 }
 
-  const got = await r.shim.serve(OP, { module: 'loot' }, project('loot'), emptyShape(calls, EMPTY_ANSWER))
+  const got = await r.shim.serve(
+    OP,
+    { module: 'loot' },
+    project('loot'),
+    emptyShape(calls, EMPTY_ANSWER),
+  )
 
   assert.deepEqual(got, EMPTY_ANSWER, 'the promise resolved, which is the whole claim')
   assert.equal(calls.n, 1)
@@ -216,7 +251,12 @@ test('A GUESS: the reply is well-formed, is not an answer to the question asked,
   const r = rig({ kind: 'answering', result: snap('kills', 9, ENGINE_STATE) })
   const calls = { n: 0 }
 
-  const got = await r.shim.serve(OP, { module: 'loot' }, project('loot'), emptyShape(calls, EMPTY_ANSWER))
+  const got = await r.shim.serve(
+    OP,
+    { module: 'loot' },
+    project('loot'),
+    emptyShape(calls, EMPTY_ANSWER),
+  )
 
   assert.deepEqual(got, EMPTY_ANSWER)
   assert.equal(calls.n, 1)
@@ -248,7 +288,7 @@ test('THE CALLER’S OWN THROW IS THE CALLER’S OWN THROW: the shim swallows th
         throw boom
       }),
     (err: unknown) => err === boom,
-    'the engine’s failures are absorbed; the app’s own are not the shim’s to hide'
+    'the engine’s failures are absorbed; the app’s own are not the shim’s to hide',
   )
 })
 
@@ -261,7 +301,11 @@ test('THE NOTE IS COALESCED: a burst of fallbacks costs one sentence, and the se
     r.shim.serve(OP, { module: 'loot' }, project('loot'), emptyShape(calls, EMPTY_ANSWER))
 
   await ask()
-  assert.equal(r.notes.length, 1, 'the first one is printed at once — a dev looking at a blank surface')
+  assert.equal(
+    r.notes.length,
+    1,
+    'the first one is printed at once — a dev looking at a blank surface',
+  )
   // THE SENTENCE NAMES THE EMPTY SHAPE, NOT A FOLD (JOS-501). It used to read "answered by the
   // app's own fold", which stopped being true the day JOS-499 deleted that fold: what answers now
   // is the empty shape each channel owes a caller it cannot serve. Both arms of the singular/plural
@@ -278,7 +322,7 @@ test('THE NOTE IS COALESCED: a burst of fallbacks costs one sentence, and the se
   assert.match(
     r.notes[1],
     /41 unserved reads answered with the empty shape/,
-    'nothing was dropped from the count'
+    'nothing was dropped from the count',
   )
 })
 
@@ -298,7 +342,7 @@ test('THE NOTE NAMES EVERY REASON IT SAW, with a count each', async () => {
     now: () => at,
     timeoutMs: 5,
     noteEveryMs: 5_000,
-    delay: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+    delay: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
   })
   const calls = { n: 0 }
   const ask = async (): Promise<unknown> =>

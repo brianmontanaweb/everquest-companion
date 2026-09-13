@@ -72,7 +72,7 @@ export function socketChannel(socket: Socket): ByteChannel {
       // half-open FIN handshake would leave it waiting on a peer that has no reason to answer.
       socket.destroy()
       end()
-    }
+    },
   }
 }
 

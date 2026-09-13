@@ -65,7 +65,7 @@ test('every key is canonical, and derived from the record it points at', () => {
     const fromRename = isRenamedItem(key) && itemKey(renameItemName(key)) === itemKey(entry.page)
     assert.ok(
       fromTitle || fromName || fromRename,
-      `key ${key} matches neither page ${entry.page} nor name ${entry.name}`
+      `key ${key} matches neither page ${entry.page} nor name ${entry.name}`,
     )
   }
 })
@@ -119,7 +119,10 @@ function poskyItemsWithRealPages(): string[] {
 
 test('every Plane of Sky quest item with a real wiki page is in the corpus', () => {
   const names = poskyItemsWithRealPages()
-  assert.ok(names.length >= 100, `expected posky to name >= 100 real item pages, got ${names.length}`)
+  assert.ok(
+    names.length >= 100,
+    `expected posky to name >= 100 real item pages, got ${names.length}`,
+  )
   const missing = names.filter((n) => !index.has(itemKey(n)))
   assert.deepEqual(missing, [], `posky items absent from items.json: ${missing.join(', ')}`)
 })
@@ -137,7 +140,10 @@ test('known Sky items resolve to the knowledge the wiki states', () => {
     assert.ok(entry, `${name} missing from items.json`)
     assert.equal(entry.page, name)
     assert.equal(entry.quest, true, `${name} should carry the QUEST ITEM flag`)
-    assert.ok(typeof entry.iconId === 'number' && entry.iconId > 0, `${name} should carry an icon id`)
+    assert.ok(
+      typeof entry.iconId === 'number' && entry.iconId > 0,
+      `${name} should carry an icon id`,
+    )
   }
   const claw = index.get(itemKey('Sphinx Claw'))
   assert.ok(claw)
@@ -154,5 +160,6 @@ test('the `+N` item level never reaches the database', () => {
   const base = index.get(itemKey('Cloak of Flames'))
   assert.ok(base, 'Cloak of Flames missing from items.json')
   assert.equal(index.get(itemKey('Cloak of Flames +4')), base)
-  for (const key of index.keys()) assert.doesNotMatch(key, / \+\d+$/, `tiered key in corpus: ${key}`)
+  for (const key of index.keys())
+    assert.doesNotMatch(key, / \+\d+$/, `tiered key in corpus: ${key}`)
 })

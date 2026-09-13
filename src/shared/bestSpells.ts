@@ -73,7 +73,12 @@
 
 import { aeHits, aeMaxTargets, aoeAssumptionLabel, isAeTargetType } from './aoeSpells'
 import type { ClassAbbr } from './classCombo'
-import { comboClassSet, type ComboClasses, type LevelUnlockData, type UnlockSpell } from './levelUnlocks'
+import {
+  comboClassSet,
+  type ComboClasses,
+  type LevelUnlockData,
+  type UnlockSpell,
+} from './levelUnlocks'
 import { spellMetricsAt, type SpellMetrics } from './spellMetrics'
 import { observedRankRow, type ObservedSpellRanksSnap } from './spellRanks'
 import { effectiveSpellRank, normalizeSpellRank } from './spellScale'
@@ -129,14 +134,7 @@ import { bestWornFocus, wornFocusLabel, type FocusKind, type WornFocus } from '.
 
 /** Which of the eight numbers a table is ranked on. `hits` draws on the AOE tab alone. */
 export type BestSpellColumn =
-  | 'dps'
-  | 'damage'
-  | 'damagePerMana'
-  | 'hps'
-  | 'heal'
-  | 'healPerMana'
-  | 'mana'
-  | 'hits'
+  'dps' | 'damage' | 'damagePerMana' | 'hps' | 'heal' | 'healPerMana' | 'mana' | 'hits'
 
 /** The four answers the owner asked for in JOS-448, plus JOS-449's area reading. */
 export type BestSpellTab = 'dd' | 'dot' | 'aoe' | 'heal' | 'hot'
@@ -156,7 +154,7 @@ export const TAB_LABEL: Record<BestSpellTab, string> = {
   dot: 'DoT',
   aoe: 'AOE',
   heal: 'Heal',
-  hot: 'HoT'
+  hot: 'HoT',
 }
 
 /** Which SIDE of the metrics a tab reads. AOE is a damage tab; there is no area healing reading. */
@@ -165,7 +163,7 @@ export const TAB_SIDE: Record<BestSpellTab, 'damage' | 'heal'> = {
   dot: 'damage',
   aoe: 'damage',
   heal: 'heal',
-  hot: 'heal'
+  hot: 'heal',
 }
 
 /**
@@ -187,7 +185,7 @@ export const TAB_SIDE: Record<BestSpellTab, 'damage' | 'heal'> = {
  */
 export const SIDE_COLUMNS: Record<'damage' | 'heal', readonly BestSpellColumn[]> = {
   damage: ['dps', 'damage', 'mana', 'damagePerMana'],
-  heal: ['hps', 'heal', 'mana', 'healPerMana']
+  heal: ['hps', 'heal', 'mana', 'healPerMana'],
 }
 
 /**
@@ -209,7 +207,7 @@ export const TAB_RANK_COLUMN: Record<BestSpellTab, BestSpellColumn> = {
   dot: 'dps',
   aoe: 'dps',
   heal: 'hps',
-  hot: 'hps'
+  hot: 'hps',
 }
 
 /** Header text, single-sourced so a test can pin the words. No em dashes anywhere near a player. */
@@ -221,7 +219,7 @@ export const COLUMN_LABEL: Record<BestSpellColumn, string> = {
   heal: 'heal',
   healPerMana: 'heal/mana',
   mana: 'mana',
-  hits: 'hits'
+  hits: 'hits',
 }
 
 /** The longer sentence behind a header, for the tooltip. Stated once, beside the label. */
@@ -233,7 +231,7 @@ export const COLUMN_TITLE: Record<BestSpellColumn, string> = {
   heal: 'total base healing at this level, every tick included',
   healPerMana: 'total healing divided by the mana it costs',
   mana: 'what the spell costs to cast',
-  hits: 'how many times one cast lands at the assumed target count: the number the damage total was multiplied by'
+  hits: 'how many times one cast lands at the assumed target count: the number the damage total was multiplied by',
 }
 
 /** One ranked spell. `metrics` is read AT THE VIEWED LEVEL - the whole point of the file. */
@@ -365,7 +363,7 @@ const emptyTables = (): Record<BestSpellTab, BestSpellsTable> => ({
   dot: emptyTable(),
   aoe: emptyTable(),
   heal: emptyTable(),
-  hot: emptyTable()
+  hot: emptyTable(),
 })
 
 /** The default sort for a tab: its own rank column, best first. */
@@ -380,7 +378,7 @@ export function defaultSorts(): Record<BestSpellTab, BestSpellSort> {
     dot: defaultSort('dot'),
     aoe: defaultSort('aoe'),
     heal: defaultSort('heal'),
-    hot: defaultSort('hot')
+    hot: defaultSort('hot'),
   }
 }
 
@@ -435,7 +433,7 @@ export interface MetricsReading {
 export function spellMetricsForLevel(
   spell: UnlockSpell,
   level: number,
-  reading: MetricsReading = {}
+  reading: MetricsReading = {},
 ): SpellMetrics | undefined {
   const { rank = 0, targets = 1 } = reading
   const input = {
@@ -456,7 +454,7 @@ export function spellMetricsForLevel(
     // AND WHAT YOUR GEAR ADDS (JOS-452), resolved by `rowFocus` below against this same spell so the
     // percentage the figures used and the percentage the marker prints are one number.
     focusDamagePct: reading.focusDamagePct,
-    focusHealPct: reading.focusHealPct
+    focusHealPct: reading.focusHealPct,
   }
   return spellMetricsAt(input, level, spell.clientHp)
 }
@@ -471,7 +469,7 @@ export function spellMetricsForLevel(
 export function rowFocus(
   spell: UnlockSpell,
   worn: readonly WornFocus[],
-  gainedAt: number
+  gainedAt: number,
 ): BestSpellFocus[] {
   if (worn.length === 0) return []
   const facts = {
@@ -479,7 +477,7 @@ export function rowFocus(
     level: gainedAt,
     spellType: spell.spellType,
     durationMs: spell.durationMs,
-    targetType: spell.targetType
+    targetType: spell.targetType,
   }
   const out: BestSpellFocus[] = []
   for (const side of ['damage', 'heal'] as const) {
@@ -514,7 +512,7 @@ export function targetsFor(spell: UnlockSpell): number {
 export function ownedBy(
   spell: UnlockSpell,
   want: ReadonlySet<string>,
-  level: number
+  level: number,
 ): { classes: ClassAbbr[]; gainedAt: number } | null {
   const lowest = new Map<ClassAbbr, number>()
   for (const p of spell.at) {
@@ -525,7 +523,7 @@ export function ownedBy(
   if (lowest.size === 0) return null
   return {
     classes: [...lowest.keys()].sort((a, b) => a.localeCompare(b)),
-    gainedAt: Math.min(...lowest.values())
+    gainedAt: Math.min(...lowest.values()),
   }
 }
 
@@ -558,7 +556,7 @@ function ownedRows(
   data: LevelUnlockData,
   want: ReadonlySet<string>,
   level: number,
-  fold: RowFold
+  fold: RowFold,
 ): BestSpellRow[] {
   const view = fold.view
   const simulate = normalizeSpellRank(view.simulate)
@@ -599,7 +597,7 @@ interface RowContext {
 function buildRow(
   spell: UnlockSpell,
   ctx: RowContext,
-  owned: { classes: ClassAbbr[]; gainedAt: number }
+  owned: { classes: ClassAbbr[]; gainedAt: number },
 ): BestSpellRow | null {
   const view = ctx.fold.view
   // JOS-446's map is keyed by spell LINE, so the join is the display name and `observedRankRow`
@@ -612,7 +610,7 @@ function buildRow(
     rank,
     targets,
     focusDamagePct: pctOfSide(focus, 'damage'),
-    focusHealPct: pctOfSide(focus, 'heal')
+    focusHealPct: pctOfSide(focus, 'heal'),
   })
   if (!metrics) return null
   return {
@@ -626,7 +624,7 @@ function buildRow(
     observedRank,
     targets,
     hits: spellHitsFor(spell, targets),
-    ...(focus.length > 0 ? { focus } : {})
+    ...(focus.length > 0 ? { focus } : {}),
   }
 }
 
@@ -667,7 +665,10 @@ function compareRows(a: BestSpellRow, b: BestSpellRow, sort: BestSpellSort): num
  * `BestSpellRow` plus its class-level chips, and a sort that handed back the narrow row would make
  * the caller cast the chips back on.
  */
-export function sortBestSpells<T extends BestSpellRow>(rows: readonly T[], sort: BestSpellSort): T[] {
+export function sortBestSpells<T extends BestSpellRow>(
+  rows: readonly T[],
+  sort: BestSpellSort,
+): T[] {
   return [...rows].sort((a, b) => compareRows(a, b, sort))
 }
 
@@ -689,7 +690,7 @@ const TAB_MEMBER: Record<BestSpellTab, (m: SpellMetrics) => boolean> = {
   // separate lists nobody reads apart. The row still marks itself `over Ns` in its tooltip.
   aoe: (m) => m.damage !== undefined,
   heal: (m) => m.heal !== undefined && m.hot !== true,
-  hot: (m) => m.heal !== undefined && m.hot === true
+  hot: (m) => m.heal !== undefined && m.hot === true,
 }
 
 /**
@@ -712,7 +713,7 @@ export function spellInTab(tab: BestSpellTab, metrics: SpellMetrics): boolean {
 function tableOf(
   rows: readonly BestSpellRow[],
   tab: BestSpellTab,
-  sort: BestSpellSort
+  sort: BestSpellSort,
 ): BestSpellsTable {
   const has = TAB_MEMBER[tab]
   const side = TAB_SIDE[tab]
@@ -728,7 +729,7 @@ function tableOf(
   return {
     shown: sortBestSpells(shown, sort),
     outOfEra: sortBestSpells(outOfEra, sort),
-    wornFocus: wornFocusLabel(pcts)
+    wornFocus: wornFocusLabel(pcts),
   }
 }
 
@@ -746,7 +747,7 @@ export function bestSpellsAt(
   data: LevelUnlockData,
   combo: ComboClasses,
   level: number,
-  view: BestSpellsView
+  view: BestSpellsView,
 ): BestSpells {
   const classes = comboClassSet(combo)
   const base = { level, classes, ambiguous: combo.ambiguous }
@@ -765,7 +766,7 @@ export function bestSpellsAt(
     tabs[tab] = tableOf(tab === 'aoe' ? areaRows : rows, tab, view.sorts[tab])
   }
   const aoeTargets = aoeAssumptionLabel(
-    [...tabs.aoe.shown, ...tabs.aoe.outOfEra].map((r) => r.targets)
+    [...tabs.aoe.shown, ...tabs.aoe.outOfEra].map((r) => r.targets),
   )
   return { ...base, tabs, aoeTargets }
 }

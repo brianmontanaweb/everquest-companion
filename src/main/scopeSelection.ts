@@ -22,7 +22,7 @@ import {
   SCOPE_SELECTION_OPENING,
   applyScopePatch,
   sameScopeSelection,
-  type ScopeSelection
+  type ScopeSelection,
 } from '../shared/scopeSelection'
 import { OVERLAY_KINDS } from '../shared/types'
 import { getMainWindow, getOverlayWindow } from './windows'

@@ -44,12 +44,9 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
-import type {
-  SpellCatalogueRow,
-  SpellCategoryFacet
-} from '@shared/dataServer/protocol.generated'
+import type { SpellCatalogueRow, SpellCategoryFacet } from '@shared/dataServer/protocol.generated'
 import { SpellTooltip } from '../../lib/SpellCard'
 import type { SpellCatalogueState } from './useSpellCatalogue'
 
@@ -66,7 +63,7 @@ export function SpellTypeFilter({
   category,
   state,
   onChange,
-  onOpen
+  onOpen,
 }: {
   category: string
   state: SpellCatalogueState
@@ -89,9 +86,9 @@ export function SpellTypeFilter({
           displayEmpty: true,
           // The control is one line in a 260px column, so the value renders as a word rather than
           // as a label-plus-value pair.
-          renderValue: (v) => (v === ALL_TYPES ? 'All types' : String(v))
+          renderValue: (v) => (v === ALL_TYPES ? 'All types' : String(v)),
         },
-        htmlInput: { 'data-testid': 'best-spells-type-input' }
+        htmlInput: { 'data-testid': 'best-spells-type-input' },
       }}
       data-testid="best-spells-type"
       data-category={category}
@@ -114,7 +111,12 @@ export function SpellTypeFilter({
         </MenuItem>
       )}
       {facets.map((f) => (
-        <MenuItem key={f.name} value={f.name} data-testid="best-spells-type-option" data-value={f.name}>
+        <MenuItem
+          key={f.name}
+          value={f.name}
+          data-testid="best-spells-type-option"
+          data-value={f.name}
+        >
           {f.name}
         </MenuItem>
       ))}
@@ -255,7 +257,7 @@ export interface BestSpellsCatalogueProps {
 export function BestSpellsCatalogue({
   state,
   scoped,
-  onScoped
+  onScoped,
 }: BestSpellsCatalogueProps): JSX.Element {
   const rows = state.result?.spells ?? []
   const total = state.result?.total ?? 0
@@ -279,7 +281,12 @@ export function BestSpellsCatalogue({
           if (e.key === 'Enter' || e.key === ' ') onScoped(!scoped)
         }}
         data-testid="best-spells-catalogue-scope"
-        sx={{ cursor: 'pointer', color: 'text.secondary', '&:hover': { color: 'primary.main' }, mb: 0.25 }}
+        sx={{
+          cursor: 'pointer',
+          color: 'text.secondary',
+          '&:hover': { color: 'primary.main' },
+          mb: 0.25,
+        }}
       >
         <Typography variant="caption" sx={{ fontSize: 9.5 }}>
           {scoped ? 'your classes - show every class' : 'every class - show only yours'}
@@ -314,7 +321,13 @@ export function BestSpellsCatalogue({
                   {/* THE TWO WORDS THE GAME PRINTS, in the slot the era verdict and the class levels
                       already share — see the header for the measurement that keeps them off the
                       column axis. */}
-                  <Stack direction="row" spacing={0.5} alignItems="baseline" flexWrap="wrap" useFlexGap>
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    alignItems="baseline"
+                    flexWrap="wrap"
+                    useFlexGap
+                  >
                     <TypeChips row={row} />
                     <CatalogueClassChips row={row} />
                   </Stack>

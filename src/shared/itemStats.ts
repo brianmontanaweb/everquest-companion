@@ -96,38 +96,103 @@ export interface ItemStatBlock {
 // ---- key tables ---------------------------------------------------------------
 
 const SAVE_KEYS = [
-  'SV FIRE', 'SV COLD', 'SV MAGIC', 'SV DISEASE', 'SV POISON',
-  'SV VOID', 'SV CORRUPTION', 'SV CHROMATIC', 'SV PRISMATIC', 'SV ALL'
+  'SV FIRE',
+  'SV COLD',
+  'SV MAGIC',
+  'SV DISEASE',
+  'SV POISON',
+  'SV VOID',
+  'SV CORRUPTION',
+  'SV CHROMATIC',
+  'SV PRISMATIC',
+  'SV ALL',
 ]
 
-const EFFECT_KEYS = ['Combat Effect', 'Click Effect', 'Worn Effect', 'Proc Effect', 'Focus Effect', 'Effect']
+const EFFECT_KEYS = [
+  'Combat Effect',
+  'Click Effect',
+  'Worn Effect',
+  'Proc Effect',
+  'Focus Effect',
+  'Effect',
+]
 
 const STRUCT_KEYS = [
-  'Slot', 'Class', 'Race', 'Skill', 'Atk Delay', 'Delay', 'DMG', 'Dmg Bon', 'Damage Bonus',
+  'Slot',
+  'Class',
+  'Race',
+  'Skill',
+  'Atk Delay',
+  'Delay',
+  'DMG',
+  'Dmg Bon',
+  'Damage Bonus',
   // Third spelling, first seen on the 2026-08-18 Mistmoore-rework pages ("Atk Delay: 28 DMG
   // Bonus: 13" — Cherista's Fangs, Rod of Understanding) and already in posky.json's Skycleaver.
   'Dmg Bonus',
-  'BACKSTAB', 'Backstab', 'WT', 'Weight', 'Size', 'Range', 'AC'
+  'BACKSTAB',
+  'Backstab',
+  'WT',
+  'Weight',
+  'Size',
+  'Range',
+  'AC',
 ]
 
 /** Plain `KEY: value` stats that land in the attribute grid. */
 const STAT_KEYS = [
-  'STR', 'STA', 'AGI', 'DEX', 'WIS', 'INT', 'CHA', 'HP', 'MANA', 'END', 'ENDURANCE',
-  'Haste', 'Attack', 'Regen', 'Mana Regen', 'Charges', 'Rec Level', 'Recommended Level',
-  'Required Level', 'Req Level', 'Cast Time', 'Cooldown', 'Recast', 'Range Damage'
+  'STR',
+  'STA',
+  'AGI',
+  'DEX',
+  'WIS',
+  'INT',
+  'CHA',
+  'HP',
+  'MANA',
+  'END',
+  'ENDURANCE',
+  'Haste',
+  'Attack',
+  'Regen',
+  'Mana Regen',
+  'Charges',
+  'Rec Level',
+  'Recommended Level',
+  'Required Level',
+  'Req Level',
+  'Cast Time',
+  'Cooldown',
+  'Recast',
+  'Range Damage',
 ]
 
 const ALL_KEYS = [...SAVE_KEYS, ...EFFECT_KEYS, ...STRUCT_KEYS, ...STAT_KEYS]
 
 const esc = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 // Longest-first so `Dmg Bon` wins over `DMG` and `Atk Delay` over `Delay` at the same spot.
-const KEY_ALT = [...ALL_KEYS].sort((a, b) => b.length - a.length).map(esc).join('|')
+const KEY_ALT = [...ALL_KEYS]
+  .sort((a, b) => b.length - a.length)
+  .map(esc)
+  .join('|')
 const KEY_RE = new RegExp(`(?:^|\\s)(${KEY_ALT})\\s*:\\s*`, 'gi')
 
 /** Flag phrases the game prints above the stats. Longest-first; matched case-insensitively. */
 const FLAG_PHRASES = [
-  'LORE EQUIPPED', 'MAGIC ITEM', 'LORE ITEM', 'QUEST ITEM', 'NO DROP', 'NO TRADE', 'NO RENT',
-  'NO STORAGE', 'ATTUNABLE', 'TEMPORARY', 'EXPENDABLE', 'PLACEABLE', 'ARTIFACT', 'AUGMENTATION'
+  'LORE EQUIPPED',
+  'MAGIC ITEM',
+  'LORE ITEM',
+  'QUEST ITEM',
+  'NO DROP',
+  'NO TRADE',
+  'NO RENT',
+  'NO STORAGE',
+  'ATTUNABLE',
+  'TEMPORARY',
+  'EXPENDABLE',
+  'PLACEABLE',
+  'ARTIFACT',
+  'AUGMENTATION',
 ].sort((a, b) => b.length - a.length)
 
 const EXALT_SLOT_NAMES = ['Ornamentation', 'Focus', 'Click', 'Worn', 'Proc']
@@ -172,7 +237,7 @@ const KEY_PREFIX_KIND: [string, ItemEffectKind][] = [
   ['click', 'click'],
   ['worn', 'worn'],
   ['proc', 'proc'],
-  ['focus', 'focus']
+  ['focus', 'focus'],
 ]
 
 /**
@@ -188,7 +253,8 @@ function effectKind(key: string, detail: string | undefined): ItemEffectKind {
   const d = detail.toLowerCase()
   if (d.startsWith('combat')) return 'combat'
   if (d.startsWith('worn')) return 'worn'
-  if (d.includes('must equip') || d.includes('any slot') || d.includes('casting time')) return 'click'
+  if (d.includes('must equip') || d.includes('any slot') || d.includes('casting time'))
+    return 'click'
   return 'effect'
 }
 
@@ -255,7 +321,12 @@ function parseEffect(key: string, rawValue: string): ItemEffect {
     .replace(/[,;]$/, '')
   const lvl = /Req(?:uires)?\.?\s*Level\s*[: ]\s*(\d+)/i.exec(value) ?? AT_LEVEL.exec(value)
 
-  return { kind: effectKind(key, detail), name, detail, ...(lvl ? { reqLevel: Number(lvl[1]) } : {}) }
+  return {
+    kind: effectKind(key, detail),
+    name,
+    detail,
+    ...(lvl ? { reqLevel: Number(lvl[1]) } : {}),
+  }
 }
 
 const num = (s: string): number | undefined => {
@@ -268,7 +339,14 @@ const num = (s: string): number | undefined => {
  * fields the item window draws. Never throws; unknown text survives in `extras`.
  */
 export function parseStatsBlock(raw: string): ItemStatBlock {
-  const out: ItemStatBlock = { flags: [], stats: [], saves: [], effects: [], exaltationSlots: [], extras: [] }
+  const out: ItemStatBlock = {
+    flags: [],
+    stats: [],
+    saves: [],
+    effects: [],
+    exaltationSlots: [],
+    extras: [],
+  }
   const lines = stripWikiMarkup(raw)
     .split('\n')
     .map((l) => l.replace(/[ \t]+/g, ' ').trim())
@@ -280,7 +358,8 @@ export function parseStatsBlock(raw: string): ItemStatBlock {
     let m: RegExpExecArray | null
     while ((m = KEY_RE.exec(line)) !== null) {
       // A KEY INSIDE THE EFFECT'S OWN PARENTHETICAL IS NOT A KEY (JOS-438). See `insideParens`.
-      if (!insideParens(line, m.index)) hits.push({ key: m[1], from: m.index, to: m.index + m[0].length })
+      if (!insideParens(line, m.index))
+        hits.push({ key: m[1], from: m.index, to: m.index + m[0].length })
       // Zero-width guard (a key can't be empty, but be safe against pathological input).
       if (KEY_RE.lastIndex === m.index) KEY_RE.lastIndex++
     }
@@ -295,7 +374,9 @@ export function parseStatsBlock(raw: string): ItemStatBlock {
 
     for (let i = 0; i < hits.length; i++) {
       const key = hits[i].key
-      const value = line.slice(hits[i].to, i + 1 < hits.length ? hits[i + 1].from : line.length).trim()
+      const value = line
+        .slice(hits[i].to, i + 1 < hits.length ? hits[i + 1].from : line.length)
+        .trim()
       applyPair(out, key, value)
     }
   }
@@ -315,7 +396,7 @@ const NUMERIC_FIELDS: Record<string, 'atkDelay' | 'dmg' | 'dmgBonus' | 'backstab
   'DMG BONUS': 'dmgBonus',
   'DAMAGE BONUS': 'dmgBonus',
   BACKSTAB: 'backstab',
-  AC: 'ac'
+  AC: 'ac',
 }
 
 /** Keys stored VERBATIM ("2.5", "LARGE", "1H Slashing"). */
@@ -324,7 +405,7 @@ const TEXT_FIELDS: Record<string, 'skill' | 'weight' | 'size' | 'range'> = {
   WT: 'weight',
   WEIGHT: 'weight',
   SIZE: 'size',
-  RANGE: 'range'
+  RANGE: 'range',
 }
 
 /** Keys stored as a whitespace/comma-split list ("WAR PAL RNG" → three entries). */
@@ -337,7 +418,9 @@ function applySlot(out: ItemStatBlock, value: string): void {
   if (sub && EXALT_SLOT_NAMES.some((n) => n.toLowerCase() === sub[1].toLowerCase())) {
     const content = sub[2].trim()
     out.exaltationSlots.push(
-      /^empty$/i.test(content) ? { type: titleCase(sub[1]), empty: true } : { type: titleCase(sub[1]), content }
+      /^empty$/i.test(content)
+        ? { type: titleCase(sub[1]), empty: true }
+        : { type: titleCase(sub[1]), content },
     )
     return
   }
@@ -386,10 +469,21 @@ function applyPair(out: ItemStatBlock, keyRaw: string, value: string): void {
 // ---- display helpers ----------------------------------------------------------
 
 const STAT_LABEL: Record<string, string> = {
-  STR: 'Strength', STA: 'Stamina', AGI: 'Agility', DEX: 'Dexterity',
-  WIS: 'Wisdom', INT: 'Intelligence', CHA: 'Charisma',
-  HP: 'HP', MANA: 'Mana', END: 'Endurance', ENDURANCE: 'Endurance',
-  AC: 'AC', HASTE: 'Haste', ATTACK: 'Attack', REGEN: 'Regen'
+  STR: 'Strength',
+  STA: 'Stamina',
+  AGI: 'Agility',
+  DEX: 'Dexterity',
+  WIS: 'Wisdom',
+  INT: 'Intelligence',
+  CHA: 'Charisma',
+  HP: 'HP',
+  MANA: 'Mana',
+  END: 'Endurance',
+  ENDURANCE: 'Endurance',
+  AC: 'AC',
+  HASTE: 'Haste',
+  ATTACK: 'Attack',
+  REGEN: 'Regen',
 }
 
 /** In-window label for a stat key ("STR" → "Strength", "SV FIRE" → "SV Fire"). */
@@ -412,7 +506,7 @@ export const EFFECT_LABEL: Record<ItemEffectKind, string> = {
   click: 'Click Effect',
   worn: 'Worn Effect',
   proc: 'Proc Effect',
-  effect: 'Effect'
+  effect: 'Effect',
 }
 
 // ---- item level / tier + exaltation sockets ------------------------------------
@@ -447,11 +541,15 @@ export interface ExaltationSlotType {
 
 /** The five exaltation socket types, in unlock order (wiki: "Exaltations"). */
 export const EXALTATION_SLOT_TYPES: ExaltationSlotType[] = [
-  { type: 'Ornamentation', unlocksAt: 0, what: 'Appearance copied from another item (visible gear only)' },
+  {
+    type: 'Ornamentation',
+    unlocksAt: 0,
+    what: 'Appearance copied from another item (visible gear only)',
+  },
   { type: 'Focus', unlocksAt: 1, what: 'A Focus Effect moved from another item' },
   { type: 'Click', unlocksAt: 2, what: 'A Click Effect moved from another item' },
   { type: 'Worn', unlocksAt: 3, what: 'A passive Worn Effect moved from another item' },
-  { type: 'Proc', unlocksAt: 4, what: 'A Proc Effect moved from another item' }
+  { type: 'Proc', unlocksAt: 4, what: 'A Proc Effect moved from another item' },
 ]
 
 /** Which socket types an item of this level has unlocked. */

@@ -18,7 +18,7 @@ import type {
   CursorRingPrefs,
   OverlayAutoHidePrefs,
   PresenceState,
-  ScreenRect
+  ScreenRect,
 } from '../shared/presencePrefs'
 
 // ---------------------------------------------------------------- the line protocol
@@ -107,7 +107,7 @@ function parseForeground(parts: string[]): PresenceRecord | null {
     rect: { x, y, width: w, height: h },
     exePath: parts[6] ?? '',
     // The title is whatever remains — it is user/game-supplied text and may contain `|`.
-    title: parts.slice(7).join('|')
+    title: parts.slice(7).join('|'),
   }
 }
 
@@ -208,7 +208,9 @@ export const HOVER_ZONES_CLEAR = 'Z'
 
 /** One key's WHOLE zone set as a line. An empty list is the key's own clear. */
 export function encodeHoverZones(key: string, zones: readonly HoverZone[]): string {
-  const fields = zones.flatMap((z) => [z.x, z.y, z.width, z.height].map((n) => String(Math.round(n))))
+  const fields = zones.flatMap((z) =>
+    [z.x, z.y, z.width, z.height].map((n) => String(Math.round(n))),
+  )
   return ['Z', key, ...fields].join('|')
 }
 
@@ -295,7 +297,7 @@ export function eqBoundsInDip(rect: ScreenRect, toDip: PhysicalToDip): ScreenRec
     x: Math.round(dip.x),
     y: Math.round(dip.y),
     width: Math.round(dip.width),
-    height: Math.round(dip.height)
+    height: Math.round(dip.height),
   }
 }
 
@@ -399,7 +401,7 @@ export type ForegroundSide = 'eq' | 'own-accessory' | 'own-app' | 'other'
 export function foregroundSide(
   w: { pid: number; exePath: string; title: string },
   self: { pid: number; appWindowFocused: boolean },
-  eqRoot: string
+  eqRoot: string,
 ): ForegroundSide {
   if (w.pid === self.pid) return self.appWindowFocused ? 'own-app' : 'own-accessory'
   return isEqWindow(w, eqRoot) ? 'eq' : 'other'
@@ -450,7 +452,6 @@ export function focusCountsAsEq(side: ForegroundSide, ownRaise = false): boolean
 // The alt-tab task-switcher case the original debounce was built for is accepted as-is: the
 // switcher is a real foreground window, the overlays park instantly under it and return instantly
 // after - parking is an opacity flip now, so there is no strobe left for a transition to cause.
-
 
 // ------------------------------------------------- what a committed flip says out loud (JOS-424)
 //
@@ -731,7 +732,7 @@ export const CURSOR_GATE_LATENCY_MS = WATCHER_TICK_FLOOR_MS * 2
  */
 export function unguardedSamplesPerHiddenCursor(
   gateLatencyMs: number,
-  samplerMs: number = CURSOR_POLL_MS
+  samplerMs: number = CURSOR_POLL_MS,
 ): number {
   if (samplerMs <= 0) return 0
   return Math.ceil(gateLatencyMs / samplerMs)
@@ -786,7 +787,7 @@ export const WATCHER_STALE_MS = 30_000
 export function watcherIsStale(
   lastSignalAt: number,
   now: number,
-  staleMs: number = WATCHER_STALE_MS
+  staleMs: number = WATCHER_STALE_MS,
 ): boolean {
   return now - lastSignalAt >= staleMs
 }
@@ -890,7 +891,8 @@ export interface WatcherRestartCause {
  * is that moving a line between sinks does not change what it says.
  */
 export function describeRestartCause(cause: WatcherRestartCause): string {
-  const said = cause.lastRecord === null ? 'never said anything' : `last said \`${cause.lastRecord}\``
+  const said =
+    cause.lastRecord === null ? 'never said anything' : `last said \`${cause.lastRecord}\``
   const code = cause.code === null ? '' : `, exit code ${String(cause.code)}`
   const reason = cause.reason === null ? '' : `, reason \`${cause.reason}\``
   return (
@@ -1010,12 +1012,12 @@ export function watcherExitStep(
   trail: WatcherExitTrail,
   cause: WatcherRestartCause,
   streakToCollapse: number = WATCHER_QUICK_EXIT_STREAK,
-  staleMs: number = WATCHER_STALE_MS
+  staleMs: number = WATCHER_STALE_MS,
 ): WatcherExitStep {
   if (!quickCleanExit(cause, staleMs)) {
     return {
       trail: NEW_WATCHER_EXIT_TRAIL,
-      log: { message: 'presence watcher exited unexpectedly', ...cause }
+      log: { message: 'presence watcher exited unexpectedly', ...cause },
     }
   }
   // Already diagnosed: the pattern is unchanged, so there is nothing new to say. The streak is
@@ -1025,7 +1027,7 @@ export function watcherExitStep(
   if (streak < streakToCollapse) {
     return {
       trail: { streak, collapsed: false },
-      log: { message: 'presence watcher exited unexpectedly', ...cause }
+      log: { message: 'presence watcher exited unexpectedly', ...cause },
     }
   }
   return {
@@ -1038,8 +1040,8 @@ export function watcherExitStep(
         '(see `reason`); overlay auto-hide and the cursor ring are dead for this session. ' +
         'Further identical exits are counted by the restart backoff, not logged.',
       exits: streak,
-      ...cause
-    }
+      ...cause,
+    },
   }
 }
 
@@ -1133,7 +1135,7 @@ export interface PresenceWorkerInit {
  */
 export function watcherCadence(
   watchCursor: boolean,
-  watchHover = false
+  watchHover = false,
 ): {
   tickMs: number
   foregroundEveryTicks: number
@@ -1141,20 +1143,26 @@ export function watcherCadence(
 } {
   const hoverEveryTicks = watchHover ? HOVER_EVERY_FAST_TICKS : 0
   if (watchCursor) {
-    return { tickMs: WATCHER_TICK_MS, foregroundEveryTicks: FOREGROUND_EVERY_TICKS, hoverEveryTicks }
+    return {
+      tickMs: WATCHER_TICK_MS,
+      foregroundEveryTicks: FOREGROUND_EVERY_TICKS,
+      hoverEveryTicks,
+    }
   }
   if (watchHover) {
     return {
       tickMs: HOVER_POLL_MS,
       // …and the foreground block keeps the ~160 ms it has always had: five hover ticks.
-      foregroundEveryTicks: Math.round((WATCHER_TICK_FLOOR_MS * FOREGROUND_EVERY_TICKS) / HOVER_POLL_MS),
-      hoverEveryTicks: 1
+      foregroundEveryTicks: Math.round(
+        (WATCHER_TICK_FLOOR_MS * FOREGROUND_EVERY_TICKS) / HOVER_POLL_MS,
+      ),
+      hoverEveryTicks: 1,
     }
   }
   return {
     tickMs: WATCHER_TICK_FLOOR_MS * FOREGROUND_EVERY_TICKS,
     foregroundEveryTicks: 1,
-    hoverEveryTicks: 0
+    hoverEveryTicks: 0,
   }
 }
 

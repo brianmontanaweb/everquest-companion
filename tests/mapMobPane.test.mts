@@ -36,7 +36,7 @@ import {
   paneCounts,
   pinsForRows,
   rowTarget,
-  type MobPaneRow
+  type MobPaneRow,
 } from '../src/renderer/src/features/maps/mobPins'
 import { MOB_CATALOG } from '../src/renderer/src/features/mobs/mobSearch'
 import type { MapPoint } from '../src/shared/maps'
@@ -56,7 +56,7 @@ test('parseMobLocations reads a triple — the ~2% of pages that state an elevat
 test('parseMobLocations keeps EVERY spawn point, with the share the page stated', () => {
   assert.deepEqual(parseMobLocations('50% @ (1, 2), 50% @ (-3, 4)'), [
     { ns: 1, ew: 2, pct: 50 },
-    { ns: -3, ew: 4, pct: 50 }
+    { ns: -3, ew: 4, pct: 50 },
   ])
 })
 
@@ -70,12 +70,21 @@ test('parseMobLocations ignores the prose either side of a coordinate', () => {
   // Both verbatim shapes: a floor note before, a map-key note after (with a wiki link in it).
   assert.deepEqual(parseMobLocations('Basement 25% @ (10,20)'), [{ ns: 10, ew: 20, pct: 25 }])
   assert.deepEqual(parseMobLocations('50% @ (-1121, 233) at [[The Velium Keg]] No. 3 on map'), [
-    { ns: -1121, ew: 233, pct: 50 }
+    { ns: -1121, ew: 233, pct: 50 },
   ])
 })
 
 test('parseMobLocations yields NOTHING for the 1,470 pages that state only prose', () => {
-  for (const prose of ['Various', 'various', '?', "''Need Info''", 'Need Info', 'Wanders', 'Droga Main', ''])
+  for (const prose of [
+    'Various',
+    'various',
+    '?',
+    "''Need Info''",
+    'Need Info',
+    'Wanders',
+    'Droga Main',
+    '',
+  ])
     assert.deepEqual(parseMobLocations(prose), [], prose)
 })
 
@@ -88,8 +97,18 @@ test('mobPins converts /loc to map coordinates through mapFromLoc — mapX = -ew
 })
 
 test('mobPins carries the stated spawn share and drops nothing when several are stated', () => {
-  const entry: MobEntry = { page: 'p', name: 'n', loc: [{ ns: 1, ew: 2, pct: 60 }, { ns: 3, ew: 4 }] }
-  assert.deepEqual(mobPins(entry), [{ x: -2, y: -1, pct: 60 }, { x: -4, y: -3 }])
+  const entry: MobEntry = {
+    page: 'p',
+    name: 'n',
+    loc: [
+      { ns: 1, ew: 2, pct: 60 },
+      { ns: 3, ew: 4 },
+    ],
+  }
+  assert.deepEqual(mobPins(entry), [
+    { x: -2, y: -1, pct: 60 },
+    { x: -4, y: -3 },
+  ])
 })
 
 test('mobPins invents nothing for a mob whose page stated no numbers', () => {
@@ -99,9 +118,21 @@ test('mobPins invents nothing for a mob whose page stated no numbers', () => {
 // ---- 3. the rows -------------------------------------------------------------------------
 
 const CATALOG: MobEntry[] = [
-  { page: 'Placed One', name: 'a placed one', level: '10', zones: ['Najena'], loc: [{ ns: 100, ew: 200 }] },
+  {
+    page: 'Placed One',
+    name: 'a placed one',
+    level: '10',
+    zones: ['Najena'],
+    loc: [{ ns: 100, ew: 200 }],
+  },
   { page: 'Unplaced One', name: 'an unplaced one', level: '20', zones: ['Najena'] },
-  { page: 'Elsewhere', name: 'an elsewhere', level: '5', zones: ['Befallen'], loc: [{ ns: 1, ew: 1 }] }
+  {
+    page: 'Elsewhere',
+    name: 'an elsewhere',
+    level: '5',
+    zones: ['Befallen'],
+    loc: [{ ns: 1, ew: 1 }],
+  },
 ]
 
 /** A page that states a position AND names two zones — the coordinate belongs to one of them. */
@@ -110,17 +141,21 @@ const WANDERER: MobEntry = {
   name: 'a wanderer',
   level: '30',
   zones: ['Najena', 'Befallen'],
-  loc: [{ ns: 9, ew: 9 }]
+  loc: [{ ns: 9, ew: 9 }],
 }
 
 test('mobRows lists the zone’s mobs, lowest level first, and marks which are placeable', () => {
   const rows = mobRows('Najena', CATALOG)
   assert.deepEqual(
     rows.map((r) => r.name),
-    ['a placed one', 'an unplaced one']
+    ['a placed one', 'an unplaced one'],
   )
   assert.equal(isLocatable(rows[0]), true)
-  assert.equal(isLocatable(rows[1]), false, 'a mob with no stated position is LISTED but not placeable')
+  assert.equal(
+    isLocatable(rows[1]),
+    false,
+    'a mob with no stated position is LISTED but not placeable',
+  )
   assert.deepEqual(rowTarget(rows[0]), { x: -200, y: -100 })
   assert.equal(rowTarget(rows[1]), null)
 })
@@ -152,18 +187,18 @@ const POINT = (over: Partial<MapPoint>): MapPoint => ({
   label: 'A_Label',
   display: 'A Label',
   layer: 1,
-  ...over
+  ...over,
 })
 
 test('labelRows takes the parser’s points as-is and drops the LEGEND layer', () => {
   const rows = labelRows([
     POINT({ label: 'Bank', display: 'Bank', x: 10, y: 20 }),
-    POINT({ label: 'Height_Filter:_25/25', display: 'Height Filter: 25/25', layer: 2 })
+    POINT({ label: 'Height_Filter:_25/25', display: 'Height Filter: 25/25', layer: 2 }),
   ])
   assert.deepEqual(
     rows.map((r) => r.name),
     ['Bank'],
-    'the legend is drawn at off-map coordinates — centring on it would fly outside the zone'
+    'the legend is drawn at off-map coordinates — centring on it would fly outside the zone',
   )
   assert.deepEqual(rowTarget(rows[0]), { x: 10, y: 20 })
   assert.equal(isLocatable(rows[0]), true, 'a map label IS a coordinate; it is always locatable')
@@ -181,14 +216,17 @@ test('filterPaneRows requires EVERY word, and preserves the list’s order', () 
   const rows = mobRows('Najena', CATALOG)
   assert.deepEqual(
     filterPaneRows(rows, 'one').map((r) => r.name),
-    ['a placed one', 'an unplaced one']
+    ['a placed one', 'an unplaced one'],
   )
   assert.deepEqual(
     filterPaneRows(rows, 'placed one').map((r) => r.name),
     ['a placed one', 'an unplaced one'],
-    '"placed" is a substring of "unplaced" — substring-AND, not word-boundary matching'
+    '"placed" is a substring of "unplaced" — substring-AND, not word-boundary matching',
   )
-  assert.deepEqual(filterPaneRows(rows, 'unplaced').map((r) => r.name), ['an unplaced one'])
+  assert.deepEqual(
+    filterPaneRows(rows, 'unplaced').map((r) => r.name),
+    ['an unplaced one'],
+  )
   assert.deepEqual(filterPaneRows(rows, 'nothing here'), [])
 })
 
@@ -201,7 +239,7 @@ test('filterPaneRows treats a blank query as "everything", not "nothing"', () =>
 test('filterPaneRows matches a mob by the level the page states', () => {
   assert.deepEqual(
     filterPaneRows(mobRows('Najena', CATALOG), '20').map((r) => r.name),
-    ['an unplaced one']
+    ['an unplaced one'],
   )
 })
 
@@ -215,7 +253,7 @@ function pinRow(id: string, n: number): MobPaneRow {
     pins: Array.from({ length: n }, (_v, i) => ({ x: i, y: i })),
     zoneCount: 1,
     unattributable: false,
-    searchKey: id
+    searchKey: id,
   }
 }
 
@@ -224,7 +262,7 @@ test('pinsForRows walks rows in order and reports when it hit the cap', () => {
   assert.equal(one.capped, false)
   assert.deepEqual(
     one.pins.map((p) => p.key),
-    ['a#0', 'a#1', 'b#0']
+    ['a#0', 'a#1', 'b#0'],
   )
   const capped = pinsForRows([pinRow('a', 5), pinRow('b', 5)], 3)
   assert.equal(capped.capped, true)
@@ -248,14 +286,17 @@ test('the shipped catalog states coordinates for most named mobs, and they reach
   // 7,866 pages state at least one coordinate — four in five.
   assert.ok(
     withLoc.length > MOB_CATALOG.length * 0.6,
-    `only ${String(withLoc.length)} of ${String(MOB_CATALOG.length)} catalog rows carry a location`
+    `only ${String(withLoc.length)} of ${String(MOB_CATALOG.length)} catalog rows carry a location`,
   )
   for (const m of withLoc.slice(0, 200)) {
     for (const l of m.loc ?? []) {
       assert.ok(Number.isFinite(l.ns) && Number.isFinite(l.ew), `${m.page} has a non-numeric loc`)
       // EQ world coordinates are bounded; a parse that swallowed a drop rate or a page id would
       // land far outside this and put a pin in empty space.
-      assert.ok(Math.abs(l.ns) < 25_000 && Math.abs(l.ew) < 25_000, `${m.page} loc is out of world range`)
+      assert.ok(
+        Math.abs(l.ns) < 25_000 && Math.abs(l.ew) < 25_000,
+        `${m.page} loc is out of world range`,
+      )
     }
   }
 })

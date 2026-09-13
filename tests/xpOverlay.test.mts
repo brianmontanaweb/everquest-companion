@@ -19,7 +19,12 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import type { LootEvent } from '../src/shared/types'
 import type { ProgressionSnap } from '../src/shared/progressionTypes'
-import { availableSlices, resolveSlice, resolveSliceId, type SliceId } from '../src/shared/timeslice'
+import {
+  availableSlices,
+  resolveSlice,
+  resolveSliceId,
+  type SliceId,
+} from '../src/shared/timeslice'
 import {
   XP_ROW_IDS,
   isMote,
@@ -27,7 +32,7 @@ import {
   moteTier,
   normalizeXpRows,
   toggleXpRow,
-  xpRowVisible
+  xpRowVisible,
 } from '../src/shared/xpOverlay'
 import { dataBounds } from '../src/renderer/src/features/leveling/zoneBands'
 // The em-dash rule's one spelling (rangeStatsRows rule 1): an unknown prints as this, never a 0.
@@ -41,13 +46,28 @@ const T0 = Date.parse('Sat Aug 01 12:00:00 2026')
 
 function emptySnap(): ProgressionSnap {
   return {
-    expTs: [], expPct: [], expFlag: [],
-    killTs: [], killZone: [], killCredit: [],
-    witnessTs: [], recentKills: [], lootTs: [],
-    zoneStart: [], zoneEnd: [], zoneName: [],
-    offlineStart: [], offlineEnd: [], offlineCamped: [],
-    levelTs: [], levelValue: [], aaGainTs: [], aaGainAmount: [],
-    lastTs: 0, windowStart: 0, dropped: 0
+    expTs: [],
+    expPct: [],
+    expFlag: [],
+    killTs: [],
+    killZone: [],
+    killCredit: [],
+    witnessTs: [],
+    recentKills: [],
+    lootTs: [],
+    zoneStart: [],
+    zoneEnd: [],
+    zoneName: [],
+    offlineStart: [],
+    offlineEnd: [],
+    offlineCamped: [],
+    levelTs: [],
+    levelValue: [],
+    aaGainTs: [],
+    aaGainAmount: [],
+    lastTs: 0,
+    windowStart: 0,
+    dropped: 0,
   }
 }
 
@@ -98,14 +118,14 @@ function view(
   snap: ProgressionSnap,
   events: LootEvent[],
   id: SliceId = 'all',
-  visible?: string[]
+  visible?: string[],
 ): ReturnType<typeof xpOverlayView> {
   const bounds = dataBounds(snap, [])
   return xpOverlayView({
     snap,
     loot: events,
     slice: resolveSlice({ snap, bounds, id }),
-    visible: normalizeXpRows(visible)
+    visible: normalizeXpRows(visible),
   })
 }
 
@@ -149,8 +169,14 @@ test('a hidden row is ABSENT from the window, never present and blank', () => {
   const only = view(snap, [], 'all', ['xp'])
   // The pace entry draws TWO rows (levels and AA), so what survives the checklist is both of them
   // and nothing else — one entry, one decision.
-  assert.deepEqual(only.rows.map((r) => r.row), ['xp', 'xp'])
-  assert.deepEqual(only.rows.map((r) => r.id), ['xp', 'aa'])
+  assert.deepEqual(
+    only.rows.map((r) => r.row),
+    ['xp', 'xp'],
+  )
+  assert.deepEqual(
+    only.rows.map((r) => r.id),
+    ['xp', 'aa'],
+  )
   assert.deepEqual(view(snap, [], 'all', []).rows, [], 'all three off is an empty window, honestly')
 })
 
@@ -175,15 +201,22 @@ test('motes are ordered by what was OBSERVED, and a stack counts as its size', (
     loot('Mote of Infinitesimal Potential', 50 * MIN, zone),
     loot('Mote of Infinitesimal Potential', 40 * MIN, zone),
     loot('Mote of Lesser Potential', 30 * MIN, zone, 3),
-    loot('Bone Chips', 20 * MIN, zone, 9)
+    loot('Bone Chips', 20 * MIN, zone, 9),
   ]
   // JOS-288: the spans travel as one object (lootRates rule 5 — both denominators or neither), and
   // every mote row now carries both rates. This hour was fully active with no logout in it, so the
   // two are the same number here, which is exactly what an unremarkable hour looks like.
   const spans = { durationMs: HOUR, activeMs: HOUR, offlineMs: 0 }
   const rows = moteRates({ events, t0: T0 - HOUR, t1: T0 + 1, spans })
-  assert.deepEqual(rows.map((r) => r.tier), ['Lesser', 'Infinitesimal'], 'the stack of 3 outranks two lines')
-  assert.deepEqual(rows.map((r) => r.drops), [3, 2])
+  assert.deepEqual(
+    rows.map((r) => r.tier),
+    ['Lesser', 'Infinitesimal'],
+    'the stack of 3 outranks two lines',
+  )
+  assert.deepEqual(
+    rows.map((r) => r.drops),
+    [3, 2],
+  )
   // Nothing in this repo ranks the ten tiers, so the top row is only ever "the one you looted
   // most" — Bone Chips is simply not a mote and never enters at all.
   assert.equal(rows.length, 2)
@@ -195,10 +228,14 @@ test('motes are ordered by what was OBSERVED, and a stack counts as its size', (
     events,
     t0: T0 - HOUR,
     t1: T0 + 1,
-    spans: { durationMs: HOUR, activeMs: HOUR / 2, offlineMs: 0 }
+    spans: { durationMs: HOUR, activeMs: HOUR / 2, offlineMs: 0 },
   })
   assert.equal(halfIdle[0].perHourActive, 6)
-  assert.equal(halfIdle[0].perHourWall, 3, 'the medding stays in the elapsed denominator, deliberately')
+  assert.equal(
+    halfIdle[0].perHourWall,
+    3,
+    'the medding stays in the elapsed denominator, deliberately',
+  )
 })
 
 test('a slice with no mote says so, once, instead of leaving a blank section', () => {
@@ -217,7 +254,7 @@ test('the ZONE half of a slice reaches the motes too — instance noise and all'
   const events = [
     // Same camp, a different instance ordinal: the MEMBERSHIP fold strips it, so this counts.
     loot('Mote of Minor Potential', 50 * MIN, 'Nagafen’s Lair - Solo 7 (Refined)'),
-    loot('Mote of Minor Potential', 40 * MIN, 'Plane of Sky')
+    loot('Mote of Minor Potential', 40 * MIN, 'Plane of Sky'),
   ]
   const zoned = view(snap, events, 'zone').rows.filter((r) => r.row === 'motes')
   assert.equal(zoned.length, 1)
@@ -263,7 +300,7 @@ test('the header takes your own /who over the ding tail, and says so', () => {
     loot: [],
     slice: resolveSlice({ snap, bounds, id: 'all' }),
     visible: undefined,
-    level: { level: 11, ts: T0 - 5 * MIN, source: 'who' }
+    level: { level: 11, ts: T0 - 5 * MIN, source: 'who' },
   })
   assert.equal(withWho.level, 11)
   assert.equal(withWho.levelCue, '/who')
@@ -285,7 +322,7 @@ test('a level nothing has restated for hours wears its age in the header', () =>
     loot: [],
     slice: resolveSlice({ snap, bounds, id: 'all' }),
     visible: undefined,
-    level: { level: 43, ts: T0 - 40 * HOUR, source: 'ding' }
+    level: { level: 43, ts: T0 - 40 * HOUR, source: 'ding' },
   })
   assert.equal(stale.level, 43)
   assert.equal(stale.levelCue, '40h 0m ago')
@@ -306,7 +343,7 @@ test('AA/hr rides BESIDE the levels pace while leveling, points and all', () => 
   // Both paces, in this order, under the ONE checklist entry a user switches off.
   assert.deepEqual(
     v.rows.filter((r) => r.row === 'xp').map((r) => r.id),
-    ['xp', 'aa']
+    ['xp', 'aa'],
   )
   assert.equal(labelOf(v, 'aa'), 'AA')
   assert.equal(valueOf(v, 'aa'), '2.00', 'two completions over one fully-active hour')
@@ -329,9 +366,13 @@ test('a slice holding no AA completion still reads AA — a measured 0.00, not a
   assert.deepEqual(
     hour.rows.filter((r) => r.row === 'xp').map((r) => r.id),
     ['xp', 'aa'],
-    'both paces, whatever the slice happens to hold'
+    'both paces, whatever the slice happens to hold',
   )
-  assert.equal(valueOf(hour, 'aa'), '0.00', 'no completion in range is a measurement, not an unknown')
+  assert.equal(
+    valueOf(hour, 'aa'),
+    '0.00',
+    'no completion in range is a measurement, not an unknown',
+  )
   assert.equal(hour.rows.find((r) => r.id === 'aa')?.unit, 'AA/hr')
   // …and the same record over the whole log, where the completion IS in range, reads above zero.
   const all = view(snap, [], 'all')
@@ -343,8 +384,14 @@ test('the AA row is the pace entry, so hiding that entry hides BOTH paces', () =
   const snap = farming({ pct: 1 })
   aa(snap, 20 * MIN)
   const v = view(snap, [], 'all', ['eta', 'motes'])
-  assert.equal(v.rows.some((r) => r.row === 'xp'), false)
-  assert.deepEqual(v.rows.map((r) => r.row), ['eta', 'motes'])
+  assert.equal(
+    v.rows.some((r) => r.row === 'xp'),
+    false,
+  )
+  assert.deepEqual(
+    v.rows.map((r) => r.row),
+    ['eta', 'motes'],
+  )
 })
 
 test('AT THE CAP the levels row goes away, and the wait says it is inferred', () => {
@@ -358,7 +405,7 @@ test('AT THE CAP the levels row goes away, and the wait says it is inferred', ()
   assert.deepEqual(
     v.rows.filter((r) => r.row === 'xp').map((r) => r.id),
     ['aa'],
-    'no level bar is stated, so no levels row is drawn'
+    'no level bar is stated, so no levels row is drawn',
   )
   assert.equal(labelOf(v, 'aa'), 'AA', 'the read that survives the cap')
   assert.equal(v.rows.find((r) => r.id === 'aa')?.unit, 'AA/hr')
@@ -414,7 +461,7 @@ test('SESSION is a narrower stretch than ALL, and every number follows it', () =
   snap.offlineCamped.push(1)
   const events = [
     loot('Mote of Minor Potential', 50 * MIN, 'Nagafen’s Lair - Solo 4 (Refined)'),
-    loot('Mote of Minor Potential', 10 * MIN, 'Nagafen’s Lair - Solo 4 (Refined)')
+    loot('Mote of Minor Potential', 10 * MIN, 'Nagafen’s Lair - Solo 4 (Refined)'),
   ]
   const session = view(snap, events, 'session')
   const all = view(snap, events, 'all')
@@ -436,8 +483,16 @@ test('SESSION is a narrower stretch than ALL, and every number follows it', () =
 test('Zone + Session is offered only when both halves are, and degrades to the whole log otherwise', () => {
   const bare = farming({ pct: 1 })
   const bounds = dataBounds(bare, [])
-  assert.equal(availableSlices(bare, bounds).includes('zoneSession'), false, 'no logout ⇒ no session half')
-  assert.equal(resolveSliceId('zoneSession', bare, bounds), 'all', 'so the shipped default degrades honestly')
+  assert.equal(
+    availableSlices(bare, bounds).includes('zoneSession'),
+    false,
+    'no logout ⇒ no session half',
+  )
+  assert.equal(
+    resolveSliceId('zoneSession', bare, bounds),
+    'all',
+    'so the shipped default degrades honestly',
+  )
 
   const both = farming({ pct: 1 })
   both.offlineStart.push(T0 - 40 * MIN)
@@ -457,12 +512,11 @@ test('Zone + Session measures the CAMP this session, not everything since the lo
     // Same session, a DIFFERENT camp: in `session`, out of `zoneSession`. This is the audit's own
     // dilution in miniature — the session slice answers for a stretch you have left.
     loot('Mote of Minor Potential', 15 * MIN, 'Plane of Sky'),
-    loot('Mote of Minor Potential', 5 * MIN, 'Befallen')
+    loot('Mote of Minor Potential', 5 * MIN, 'Befallen'),
   ]
   assert.equal(view(snap, events, 'session').rows.find((r) => r.row === 'motes')?.detail, '2×')
   assert.equal(view(snap, events, 'zoneSession').rows.find((r) => r.row === 'motes')?.detail, '1×')
 })
-
 
 test('a record that states no logout cannot define a session — the pick degrades to the whole log', () => {
   const snap = farming({ pct: 1 })
@@ -471,5 +525,8 @@ test('a record that states no logout cannot define a session — the pick degrad
   // not offer the button), and the overlay's own `resolveSliceId` is what turns the stored
   // `session` default into `all` before it ever gets here.
   assert.equal(resolveSlice({ snap, bounds, id: 'session' }).caption, 'this session')
-  assert.deepEqual(resolveSlice({ snap, bounds, id: 'session' }).range, resolveSlice({ snap, bounds, id: 'all' }).range)
+  assert.deepEqual(
+    resolveSlice({ snap, bounds, id: 'session' }).range,
+    resolveSlice({ snap, bounds, id: 'all' }).range,
+  )
 })

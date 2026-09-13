@@ -77,7 +77,7 @@ export const DEFAULT_CLOSE_TO_TRAY: CloseToTrayPrefs = { enabled: false, noticeA
  */
 export function mergeCloseToTray(
   value: unknown,
-  fallback: CloseToTrayPrefs = DEFAULT_CLOSE_TO_TRAY
+  fallback: CloseToTrayPrefs = DEFAULT_CLOSE_TO_TRAY,
 ): CloseToTrayPrefs {
   const v =
     typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -86,7 +86,9 @@ export function mergeCloseToTray(
   return {
     enabled: typeof v.enabled === 'boolean' ? v.enabled : fallback.enabled,
     noticeAcknowledged:
-      typeof v.noticeAcknowledged === 'boolean' ? v.noticeAcknowledged : fallback.noticeAcknowledged
+      typeof v.noticeAcknowledged === 'boolean'
+        ? v.noticeAcknowledged
+        : fallback.noticeAcknowledged,
   }
 }
 
@@ -100,7 +102,7 @@ export function mergeCloseToTray(
  */
 export function normalizeCloseToTray(
   value: unknown,
-  fallback: CloseToTrayPrefs = DEFAULT_CLOSE_TO_TRAY
+  fallback: CloseToTrayPrefs = DEFAULT_CLOSE_TO_TRAY,
 ): CloseToTrayPrefs {
   return mergeCloseToTray(value, fallback)
 }
@@ -187,7 +189,7 @@ export interface NoticeRect {
 export function trayNoticeBounds(
   tray: NoticeRect,
   workArea: NoticeRect,
-  size: { width: number; height: number } = TRAY_NOTICE_SIZE
+  size: { width: number; height: number } = TRAY_NOTICE_SIZE,
 ): NoticeRect {
   const GAP = 8
   const anchored = tray.width > 0 || tray.height > 0
@@ -205,7 +207,7 @@ export function trayNoticeBounds(
     width: size.width,
     height: size.height,
     x: clamp(x, workArea.x, workArea.x + workArea.width - size.width),
-    y: clamp(y, workArea.y, workArea.y + workArea.height - size.height)
+    y: clamp(y, workArea.y, workArea.y + workArea.height - size.height),
   }
 }
 

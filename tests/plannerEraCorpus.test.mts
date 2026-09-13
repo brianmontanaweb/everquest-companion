@@ -42,7 +42,7 @@ import {
   layeredVerdict,
   type Era,
   type EraDerivation,
-  type EraVerdict
+  type EraVerdict,
 } from '../src/shared/planner/era'
 import { buildEraDerivations } from '../src/main/planner/eraDerive'
 import mobsJson from '../src/renderer/src/data/eqlegends/mobs.json'
@@ -107,7 +107,7 @@ const CORPUS: CorpusRow[] = Object.entries(corpus.items).map(([key, entry]) => {
     page: entry.page,
     tag: entry.eraTag,
     zones: [...zones],
-    ac: Number(entry.stats?.ac ?? 0)
+    ac: Number(entry.stats?.ac ?? 0),
   }
 })
 
@@ -134,17 +134,18 @@ function verdictBeforeJos298(zones: readonly string[], tag: string | undefined):
     'chardok revamp': 'kunark',
     velious: 'velious',
     luclin: 'luclin',
-    unknown: null
+    unknown: null,
   }
   const byZone = eraVerdict(zones)
   if (byZone !== 'unknown') return byZone
-  const named = tag === undefined || tag === '' ? null : (OLD_TABLE[tag.trim().toLowerCase()] ?? null)
+  const named =
+    tag === undefined || tag === '' ? null : (OLD_TABLE[tag.trim().toLowerCase()] ?? null)
   if (named === null) return 'unknown'
   return eraRank(named) <= eraRank(CURRENT_ERA) ? 'in-era' : 'out-of-era'
 }
 
 const FLIPPED = CORPUS.filter(
-  (r) => verdictBeforeJos298(r.zones, r.tag) !== layeredVerdict(r.zones, r.tag)
+  (r) => verdictBeforeJos298(r.zones, r.tag) !== layeredVerdict(r.zones, r.tag),
 )
 
 test('THE BREASTPLATE: the row the owner reported, decided from its own committed record', () => {
@@ -168,7 +169,11 @@ test('THE BREASTPLATE: the row the owner reported, decided from its own committe
     const rows = CORPUS.filter((r) => r.key.includes(family) && r.tag !== undefined)
     assert.ok(rows.length >= 4, `only ${String(rows.length)} rows match "${family}"`)
     for (const row of rows) {
-      assert.equal(layeredVerdict(row.zones, row.tag), 'out-of-era', `${row.page} [${String(row.tag)}]`)
+      assert.equal(
+        layeredVerdict(row.zones, row.tag),
+        'out-of-era',
+        `${row.page} [${String(row.tag)}]`,
+      )
     }
   }
 })
@@ -188,7 +193,11 @@ test('the override is ONE-DIRECTIONAL over the whole corpus: it hides, it never 
   // If a row is ever hidden without that badge, this assertion names it.
   for (const row of FLIPPED) {
     assert.ok(row.tag !== undefined && row.tag !== '', `${row.page} was hidden with NO banner`)
-    assert.equal(eraBadge(row.tag ?? ''), 'out', `${row.page} [${String(row.tag)}] is not badged out`)
+    assert.equal(
+      eraBadge(row.tag ?? ''),
+      'out',
+      `${row.page} [${String(row.tag)}] is not badged out`,
+    )
   }
 
   // Measured 2026-08-13 over the refreshed scrape: 151 keys, 113 of them slotted, 80 AC-bearing,
@@ -198,7 +207,10 @@ test('the override is ONE-DIRECTIONAL over the whole corpus: it hides, it never 
   // Mastery, all re-bannered Classic upstream). A FLOOR, not a count — a later refresh will
   // correct more, and that must not turn this red.
   assert.ok(FLIPPED.length >= 140, `only ${String(FLIPPED.length)} verdicts changed`)
-  assert.ok(FLIPPED.filter((r) => r.ac > 0).length >= 70, 'the AC-bearing damage stopped reproducing')
+  assert.ok(
+    FLIPPED.filter((r) => r.ac > 0).length >= 70,
+    'the AC-bearing damage stopped reproducing',
+  )
 })
 
 test('no banner token in the corpus reaches the register default (the new-template tripwire)', () => {
@@ -208,15 +220,38 @@ test('no banner token in the corpus reaches the register default (the new-templa
   // the register NAMES. A rescrape that introduces one turns this red, by name, on the run that
   // introduces it — which is the moment to go and read `Template:PageEra` again.
   const NAMED = new Set([
-    'classic', 'kunark', 'velious', 'luclin', 'chardok', 'chardokrevamp', 'fear', 'hate', 'hole',
-    'holevp', 'sky', 'stonebrunt', 'temple', 'warrens', 'warrensfearhaterevamp', 'fearhaterevamp',
-    'paineel', 'epics', 'epicquests', 'unknown'
+    'classic',
+    'kunark',
+    'velious',
+    'luclin',
+    'chardok',
+    'chardokrevamp',
+    'fear',
+    'hate',
+    'hole',
+    'holevp',
+    'sky',
+    'stonebrunt',
+    'temple',
+    'warrens',
+    'warrensfearhaterevamp',
+    'fearhaterevamp',
+    'paineel',
+    'epics',
+    'epicquests',
+    'unknown',
   ])
   const tokens = new Set(CORPUS.flatMap((r) => (r.tag === undefined ? [] : [r.tag])))
   assert.ok(tokens.size >= 14, `only ${String(tokens.size)} distinct banner tokens in the corpus`)
   for (const token of tokens) {
-    const folded = token.trim().toLowerCase().replace(/[\s_]+/g, '')
-    assert.ok(NAMED.has(folded), `banner token "${token}" folds to "${folded}", unknown to the register`)
+    const folded = token
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_]+/g, '')
+    assert.ok(
+      NAMED.has(folded),
+      `banner token "${token}" folds to "${folded}", unknown to the register`,
+    )
   }
 })
 
@@ -235,9 +270,13 @@ test('no banner token in the corpus reaches the register default (the new-templa
 test('the two out-of-head era claims are read, by name, off the committed corpus', () => {
   // FAMILY 1 — the banner in the BODY: `{{Classic Era}}` inside `|playercrafted`, 36 crafted-plate
   // pages that the parser header listed as an accepted loss until this wave.
-  const FAMILY = /^(small |large )?fine (plate \w|splinted cloak$)|^(small|large) fine steel breastplate$/
+  const FAMILY =
+    /^(small |large )?fine (plate \w|splinted cloak$)|^(small|large) fine steel breastplate$/
   const finePlate = CORPUS.filter((r) => FAMILY.test(r.key))
-  assert.ok(finePlate.length >= 36, `only ${String(finePlate.length)} Fine Plate pages in the corpus`)
+  assert.ok(
+    finePlate.length >= 36,
+    `only ${String(finePlate.length)} Fine Plate pages in the corpus`,
+  )
   for (const row of finePlate) {
     assert.equal(row.tag, 'Classic', `${row.page} lost its body banner`)
     assert.equal(eraBadge(row.tag ?? ''), 'in', `${row.page} is not an in-era claim`)
@@ -255,7 +294,7 @@ test('the two out-of-head era claims are read, by name, off the committed corpus
     'sash of the dragonborn': 'Kunark',
     'scaled prowler belt': 'Kunark',
     'scaled wolf hide belt': 'Kunark',
-    'fist of lightning': 'Velious'
+    'fist of lightning': 'Velious',
   }
   for (const [key, tag] of Object.entries(byCategory)) {
     const row = CORPUS.find((r) => r.key === key)
@@ -296,7 +335,7 @@ test('THE FOUR OWNER EXAMPLES, by name, off the committed corpus', () => {
     basis: 'component',
     verdict: 'out-of-era',
     target: 'Small Breastplate Mold',
-    detail: 'Epics'
+    detail: 'Epics',
   })
 
   // 2. The quests. `|relatedquests` names Scaled Mystic Armor Quests, which the committed quest
@@ -307,7 +346,7 @@ test('THE FOUR OWNER EXAMPLES, by name, off the committed corpus', () => {
     basis: 'quest',
     verdict: 'out-of-era',
     target: 'Scaled Mystic Armor Quests',
-    detail: 'East Cabilis'
+    detail: 'East Cabilis',
   })
 
   // 3. THE ONE JOS-333 COULD NOT ANSWER, and the reason this ticket exists. Silver Full Breastplate's
@@ -321,12 +360,16 @@ test('THE FOUR OWNER EXAMPLES, by name, off the committed corpus', () => {
     basis: 'page',
     verdict: 'out-of-era',
     target: 'Cultural Tradeskills: Human',
-    detail: 'Epics'
+    detail: 'Epics',
   })
   const sfb = CORPUS.find((r) => r.key === 'silver full breastplate')
   assert.ok(sfb, 'Silver Full Breastplate left the corpus')
   assert.equal(sfb.tag, undefined, 'its own page states no era')
-  assert.equal(layeredVerdict(sfb.zones, sfb.tag), 'unknown', 'layers 1-2 are still silent about it')
+  assert.equal(
+    layeredVerdict(sfb.zones, sfb.tag),
+    'unknown',
+    'layers 1-2 are still silent about it',
+  )
 
   // 4. LIFE'S GUARD — the owner's dropper example, and the correction that came with measuring it.
   //    It is NOT an era? row: its page opens `{{Classic Era}}` and its one dropper sits under a
@@ -339,12 +382,20 @@ test('THE FOUR OWNER EXAMPLES, by name, off the committed corpus', () => {
     verdict: 'out-of-era',
     definitive: true,
     target: 'Agent of Innoruuk',
-    detail: 'Agent of Innoruuk'
+    detail: 'Agent of Innoruuk',
   })
   const guard = CORPUS.find((r) => r.key === "life's guard")
   assert.ok(guard, "Life's Guard left the corpus")
-  assert.equal(guard.tag, 'Classic', 'its own page claims Classic — which is what the mob overrules')
-  assert.equal(layeredVerdict(guard.zones, guard.tag), 'in-era', 'and layers 1-2 really do call it farmable')
+  assert.equal(
+    guard.tag,
+    'Classic',
+    'its own page claims Classic — which is what the mob overrules',
+  )
+  assert.equal(
+    layeredVerdict(guard.zones, guard.tag),
+    'in-era',
+    'and layers 1-2 really do call it farmable',
+  )
 })
 
 test('layer 3 speaks into silence — and over it for exactly one edge', () => {
@@ -362,20 +413,33 @@ test('layer 3 speaks into silence — and over it for exactly one edge', () => {
   for (const [key, derived] of derivations) {
     const row = CORPUS.find((r) => r.key === key)
     assert.ok(row, `${key} carries a derivation but has no corpus row`)
-    assert.ok(derived.target.length > 0 && derived.detail.length > 0, `${row.page} derived a nameless edge`)
+    assert.ok(
+      derived.target.length > 0 && derived.detail.length > 0,
+      `${row.page} derived a nameless edge`,
+    )
     // Asked with the page's own zones, which is what the builder saw. The catalog can only make the
     // renderer MORE decided, and `donorEra` applies a non-definitive edge only where it is unknown.
-    const pageZones = (corpus.items[key]?.dropsFrom ?? []).flatMap((s) => (s.zone === undefined ? [] : [s.zone]))
+    const pageZones = (corpus.items[key]?.dropsFrom ?? []).flatMap((s) =>
+      s.zone === undefined ? [] : [s.zone],
+    )
     if (derived.definitive !== true) {
-      assert.equal(row.tag, undefined, `${row.page} carries BOTH a banner and a non-definitive derivation`)
-      assert.equal(layeredVerdict(pageZones, undefined), 'unknown', `${row.page} was already placed by a zone`)
+      assert.equal(
+        row.tag,
+        undefined,
+        `${row.page} carries BOTH a banner and a non-definitive derivation`,
+      )
+      assert.equal(
+        layeredVerdict(pageZones, undefined),
+        'unknown',
+        `${row.page} was already placed by a zone`,
+      )
       continue
     }
     definitive++
     assert.equal(derived.basis, 'drop-mob', `${row.page} claims a definitive ${derived.basis} edge`)
     const droppers = new Set([
       ...(corpus.items[key]?.dropsFrom ?? []).map((s) => s.mob),
-      ...(CATALOG_DROPPERS.get(key) ?? [])
+      ...(CATALOG_DROPPERS.get(key) ?? []),
     ])
     assert.ok(droppers.size > 0, `${row.page} derived a dropper edge with no droppers`)
     for (const mob of droppers) {
@@ -394,11 +458,18 @@ test('THE IN-ERA DIRECTION refuses a page that merely failed to be out', () => {
   const inEra = [...derivations.values()].filter((d) => d.verdict === 'in-era')
   assert.ok(inEra.length >= 50, `only ${String(inEra.length)} in-era derivations`)
   for (const d of inEra) {
-    assert.equal(d.basis, 'page', `an in-era verdict came from a ${d.basis} edge, which cannot mean in-era`)
+    assert.equal(
+      d.basis,
+      'page',
+      `an in-era verdict came from a ${d.basis} edge, which cannot mean in-era`,
+    )
     const target = SIDECAR.pages[pageEraKey(d.target)]
     assert.ok(target, `${d.target} is not in the committed sidecar`)
     assert.equal(target.outOfEra, false, `${d.target} is badged out and still argued IN`)
-    assert.ok(target.eraTag !== undefined && eraBadge(target.eraTag) === 'in', `${d.target} states no in-era claim`)
+    assert.ok(
+      target.eraTag !== undefined && eraBadge(target.eraTag) === 'in',
+      `${d.target} states no in-era claim`,
+    )
   }
 
   // THE NAMED REFUSAL, kept from the fetch: eight of the nine Cultural Tradeskills set hubs come
@@ -407,11 +478,15 @@ test('THE IN-ERA DIRECTION refuses a page that merely failed to be out', () => {
   const erudite = SIDECAR.pages['cultural tradeskills: erudite']
   assert.ok(erudite, 'the Erudite set page left the sidecar')
   assert.equal(erudite.outOfEra, false)
-  assert.equal(erudite.eraTag, undefined, 'if the wiki ever classifies it, this assertion is the notice')
+  assert.equal(
+    erudite.eraTag,
+    undefined,
+    'if the wiki ever classifies it, this assertion is the notice',
+  )
   assert.equal(
     [...derivations.values()].filter((d) => d.target === 'Cultural Tradeskills: Erudite').length,
     0,
-    'the Erudite set page started deciding rows'
+    'the Erudite set page started deciding rows',
   )
 })
 
@@ -434,9 +509,15 @@ test('THE CENSUS: what layer 3 costs the default era-filtered table', () => {
   const derivations = buildEraDerivations(corpus)
   const byBasis = new Map<string, number>()
   for (const d of derivations.values()) byBasis.set(d.basis, (byBasis.get(d.basis) ?? 0) + 1)
-  assert.ok((byBasis.get('drop-mob') ?? 0) >= 2000, `only ${String(byBasis.get('drop-mob'))} dropper edges`)
+  assert.ok(
+    (byBasis.get('drop-mob') ?? 0) >= 2000,
+    `only ${String(byBasis.get('drop-mob'))} dropper edges`,
+  )
   assert.ok((byBasis.get('page') ?? 0) >= 380, `only ${String(byBasis.get('page'))} page edges`)
-  assert.ok((byBasis.get('component') ?? 0) >= 280, `only ${String(byBasis.get('component'))} component edges`)
+  assert.ok(
+    (byBasis.get('component') ?? 0) >= 280,
+    `only ${String(byBasis.get('component'))} component edges`,
+  )
   assert.ok((byBasis.get('quest') ?? 0) >= 90, `only ${String(byBasis.get('quest'))} quest edges`)
 
   // EVERY BASIS THE TYPE NAMES IS ACCOUNTED FOR. `yield` legitimately fires for nothing today; the
@@ -445,7 +526,7 @@ test('THE CENSUS: what layer 3 costs the default era-filtered table', () => {
   for (const basis of byBasis.keys()) {
     assert.ok(
       ['drop-mob', 'component', 'yield', 'page', 'quest', 'component-zone'].includes(basis),
-      `unknown basis "${basis}"`
+      `unknown basis "${basis}"`,
     )
   }
 
@@ -456,7 +537,7 @@ test('THE CENSUS: what layer 3 costs the default era-filtered table', () => {
   assert.ok(resolved.length >= 700, `layer 3 only resolved ${String(resolved.length)} era? rows`)
   assert.ok(
     resolved.length < stillUnknown.length,
-    'layer 3 resolved EVERY era? row, which means it stopped refusing anything'
+    'layer 3 resolved EVERY era? row, which means it stopped refusing anything',
   )
 
   // THE SHELF IT HIDES IS ONE FAMILY, and naming it is the point: a rule this blunt is only safe if
@@ -464,12 +545,21 @@ test('THE CENSUS: what layer 3 costs the default era-filtered table', () => {
   // one's page really does open with an out-of-era banner.
   // Compared by KEY, not by spelling (law 2): the recipes write `Teir\`Dal Smithy Hammer` while the
   // page is titled `Teir\`dal Smithy Hammer`, and the edge carries the recipe's spelling verbatim.
-  for (const target of ['Elven Smithy Hammer', 'Teir`dal Smithy Hammer', 'Imbued Emerald', 'Brute Hide']) {
+  for (const target of [
+    'Elven Smithy Hammer',
+    'Teir`dal Smithy Hammer',
+    'Imbued Emerald',
+    'Brute Hide',
+  ]) {
     const riders = [...derivations.values()].filter((d) => itemKey(d.target) === itemKey(target))
     assert.ok(riders.length >= 10, `only ${String(riders.length)} pages ride on ${target}`)
     const page = CORPUS.find((r) => r.key === itemKey(target))
     assert.ok(page, `${target} is not in the corpus`)
-    assert.equal(eraBadge(page.tag ?? ''), 'out', `${target} [${String(page.tag)}] is not badged out`)
+    assert.equal(
+      eraBadge(page.tag ?? ''),
+      'out',
+      `${target} [${String(page.tag)}] is not badged out`,
+    )
   }
 })
 
@@ -505,6 +595,6 @@ test('era? means the page said NOTHING — the state carries no token to have mi
   assert.deepEqual(
     withTag.map((r) => `${r.page} [${String(r.tag)}]`).slice(0, 5),
     [],
-    `${String(withTag.length)} era? rows carry a banner token`
+    `${String(withTag.length)} era? rows carry a banner token`,
   )
 })

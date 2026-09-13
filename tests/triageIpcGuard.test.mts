@@ -26,14 +26,14 @@ import {
   validateClosedMessage,
   validatePatch,
   validateQuery,
-  MAX_NOTE
+  MAX_NOTE,
 } from '../src/main/triage/validate'
 import { parseEnv, toDetail, toOps, toRow } from '../src/main/triage/rows'
 import {
   TRIAGE_ANALYTICS_DAYS,
   TRIAGE_ANALYTICS_DEFAULT_DAYS,
   TRIAGE_DEFAULT_QUERY,
-  TRIAGE_LIMIT_MAX
+  TRIAGE_LIMIT_MAX,
 } from '../src/shared/triage'
 
 /** A real-shaped ULID: 26 Crockford base32 characters. */
@@ -54,7 +54,13 @@ test('a reportId must be a 26-character ULID — it reaches a file path, not jus
 })
 
 test('path traversal cannot survive the reportId guard', () => {
-  for (const attempt of ['../../etc/passwd', '..', 'a/../../b', 'C:\\Windows\\win.ini', `${ID}/../x`]) {
+  for (const attempt of [
+    '../../etc/passwd',
+    '..',
+    'a/../../b',
+    'C:\\Windows\\win.ini',
+    `${ID}/../x`,
+  ]) {
     assert.equal(isReportId(attempt), false, attempt)
   }
 })
@@ -97,7 +103,7 @@ test('a patch takes only the closed unions and bounded text', () => {
   assert.deepEqual(validatePatch({ status: 'shipped' }), { status: 'shipped' })
   assert.deepEqual(validatePatch({ severity: 'p0', note: ' looked at it ' }), {
     severity: 'p0',
-    note: 'looked at it'
+    note: 'looked at it',
   })
   assert.equal(validatePatch({ severity: 'p9' }), null)
   assert.equal(validatePatch({ note: 'x'.repeat(MAX_NOTE + 1) }), null)
@@ -131,7 +137,10 @@ test('an OMITTED window is the default, not a rejection — the panel’s first 
   assert.equal(validateAnalyticsDays(undefined), TRIAGE_ANALYTICS_DEFAULT_DAYS)
   assert.equal(validateAnalyticsDays(null), TRIAGE_ANALYTICS_DEFAULT_DAYS)
   // …and the default is itself one of the offered choices, so the toolbar can always show it.
-  assert.equal((TRIAGE_ANALYTICS_DAYS as readonly number[]).includes(TRIAGE_ANALYTICS_DEFAULT_DAYS), true)
+  assert.equal(
+    (TRIAGE_ANALYTICS_DAYS as readonly number[]).includes(TRIAGE_ANALYTICS_DEFAULT_DAYS),
+    true,
+  )
 })
 
 // ---- the ops guards ----------------------------------------------------------------------
@@ -167,7 +176,7 @@ const BASE = {
   spam_score: 0,
   status: 'new',
   log_json: null,
-  log_key: null
+  log_key: null,
 }
 
 test('a list row says `declared`, never `present` — the list does not pay for a HeadObject', () => {
@@ -211,10 +220,13 @@ test('`title` and `contact` are DROPPED COLUMNS: a legacy row still carrying the
 
 // ---- 3. the kill switch's polarity -------------------------------------------------------
 
-test('the ops state is POSITIVE: `accepting`, which is the inverse of the CLI\'s `closed`', () => {
+test("the ops state is POSITIVE: `accepting`, which is the inverse of the CLI's `closed`", () => {
   const open = toOps({ accepting: true, closed_message: 'paused', max_per_install_per_day: 10 }, [])
   assert.equal(open.accepting, true)
-  const closed = toOps({ accepting: false, closed_message: 'paused', max_per_install_per_day: 10 }, [])
+  const closed = toOps(
+    { accepting: false, closed_message: 'paused', max_per_install_per_day: 10 },
+    [],
+  )
   assert.equal(closed.accepting, false)
 })
 
@@ -228,9 +240,12 @@ test('a cluster with NO config row reads as closed — schema.sql seeds a fresh 
 test('the block list is a HISTORY: an unblocked install keeps its row, flagged allowed', () => {
   const ops = toOps(null, [
     { install_id: 'a', blocked: true, blocked_reason: 'flooding', blocked_at: 5 },
-    { install_id: 'b', blocked: false, blocked_reason: 'unblocked', blocked_at: 6 }
+    { install_id: 'b', blocked: false, blocked_reason: 'unblocked', blocked_at: 6 },
   ])
-  assert.deepEqual(ops.blocked.map((b) => b.blocked), [true, false])
+  assert.deepEqual(
+    ops.blocked.map((b) => b.blocked),
+    [true, false],
+  )
   assert.equal(ops.blocked[0].reason, 'flooding')
 })
 

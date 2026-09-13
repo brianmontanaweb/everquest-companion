@@ -35,7 +35,7 @@ import {
   addSeamCall,
   emptyGcTally,
   worstSeam,
-  type SeamTally
+  type SeamTally,
 } from '../src/shared/perfSeams'
 import { PERF_INTERVAL_MS } from '../src/shared/feedbackPerf'
 import { LIVE_PROBE_REPORT_MS, LIVE_STALL_LATE_MS, LIVE_TIMELINE_MS } from '../src/shared/perfLive'
@@ -51,7 +51,7 @@ import {
   resetStallAttribution,
   takeGcTally,
   takeSeamTally,
-  timeSeam
+  timeSeam,
 } from '../src/main/perfAttribution'
 
 const NOW = 1_800_000_000_000
@@ -59,14 +59,17 @@ const NOW = 1_800_000_000_000
 // ---- 1. the enum, and the constants that must not drift apart ---------------------------------
 
 test('the seam enum is closed, unique and the six the ticket names', () => {
-  assert.deepEqual([...PERF_SEAMS], [
-    'moduleSnapshot',
-    'combatSnapshot',
-    'registryFlush',
-    'inventoryLoad',
-    'achievementsLoad',
-    'worldRebuilt'
-  ])
+  assert.deepEqual(
+    [...PERF_SEAMS],
+    [
+      'moduleSnapshot',
+      'combatSnapshot',
+      'registryFlush',
+      'inventoryLoad',
+      'achievementsLoad',
+      'worldRebuilt',
+    ],
+  )
   assert.equal(new Set(PERF_SEAMS).size, PERF_SEAMS.length)
   assert.deepEqual([...GC_KINDS], ['minor', 'major', 'other'])
 })
@@ -165,7 +168,7 @@ test('an empty GC tally is zeros — a running observer that saw nothing HAS mea
     maxMs: 0,
     totalMs: 0,
     over100: 0,
-    worstAt: 0
+    worstAt: 0,
   })
 })
 
@@ -222,7 +225,7 @@ test('timeSeam lets a throw travel, and still records the call that threw', () =
   assert.throws(() =>
     timeSeam('achievementsLoad', () => {
       throw new Error('dump is a directory')
-    })
+    }),
   )
   assert.equal(takeSeamTally()?.achievementsLoad?.calls, 1)
   resetStallAttribution()
@@ -270,7 +273,7 @@ test('the millisecond becomes a decade at exactly one seam, and the counts stay 
     maxMs: 640,
     totalMs: 1_100,
     over100: 2,
-    worstAt: NOW
+    worstAt: NOW,
   })
   assert.deepEqual(stats, {
     pauses: 12,
@@ -279,7 +282,7 @@ test('the millisecond becomes a decade at exactly one seam, and the counts stay 
     // that lets "GC took 640 ms" be laid against "main was 640 ms late".
     maxBucket: bucketOf(640, LIVE_STALL_MS_EDGES),
     totalBucket: bucketOf(1_100, LIVE_STALL_MS_EDGES),
-    over100: 2
+    over100: 2,
   })
 })
 
@@ -288,14 +291,14 @@ test('seamStallStats walks the ENUM, so a key the machine invented has no route 
     worldRebuilt: { calls: 2, over100Calls: 1, maxMs: 900, totalMs: 1_000, worstAt: NOW },
     // Not a member of PERF_SEAMS. It is not rejected — it simply has no route across, which is the
     // posture every constructor on this wire takes toward a field it does not name.
-    'zone:PlaneOfSky': { calls: 9, over100Calls: 9, maxMs: 9_000, totalMs: 9_000, worstAt: NOW }
+    'zone:PlaneOfSky': { calls: 9, over100Calls: 9, maxMs: 9_000, totalMs: 9_000, worstAt: NOW },
   } as unknown as SeamTally
   const stats = seamStallStats(forged)
   assert.deepEqual(Object.keys(stats), ['worldRebuilt'])
   assert.deepEqual(stats.worldRebuilt, {
     calls: 2,
     maxBucket: bucketOf(900, LIVE_STALL_MS_EDGES),
-    over100: 1
+    over100: 1,
   })
 })
 
@@ -307,7 +310,7 @@ function heartbeat(extra: Record<string, unknown>): Record<string, unknown> {
 const GC_WIRE = { pauses: 12, majorPauses: 3, maxBucket: 6, totalBucket: 7, over100: 2 }
 const SEAMS_WIRE = {
   worldRebuilt: { calls: 4, maxBucket: 7, over100: 2 },
-  combatSnapshot: { calls: 600, maxBucket: 1, over100: 0 }
+  combatSnapshot: { calls: 600, maxBucket: 1, over100: 0 },
 }
 
 test('both attribution riders survive validation on a heartbeat, field for field', () => {
@@ -320,7 +323,13 @@ test('both attribution riders survive validation on a heartbeat, field for field
 })
 
 test('sessionEnd carries them too — a session that ends before its first heartbeat is the bad one', () => {
-  const end = { t: 'sessionEnd', durationMs: 900_000, viewsVisited: 3, gc: GC_WIRE, seams: SEAMS_WIRE }
+  const end = {
+    t: 'sessionEnd',
+    durationMs: 900_000,
+    viewsVisited: 3,
+    gc: GC_WIRE,
+    seams: SEAMS_WIRE,
+  }
   const result = validateTelemetryEvent(end)
   assert.equal(result.ok, true)
   const ev = (result as { value: TelemetryEvent }).value
@@ -355,7 +364,7 @@ test('OUT-OF-LADDER VALUES ARE REFUSED, by name — a bucket index is not a mill
   assert.equal(badGc.ok, false)
   assert.equal((badGc as { field: string }).field, 'gc.maxBucket')
   const badSeam = validateTelemetryEvent(
-    heartbeat({ seams: { registryFlush: { calls: 1, maxBucket: 900, over100: 0 } } })
+    heartbeat({ seams: { registryFlush: { calls: 1, maxBucket: 900, over100: 0 } } }),
   )
   assert.equal(badSeam.ok, false)
   assert.equal((badSeam as { field: string }).field, 'seams.registryFlush.maxBucket')
@@ -371,7 +380,7 @@ test('THE ROLLUP dimensions every seam row by its own name, and gives each count
   const rows: { metric: string; dim: string; n: number }[] = []
   foldLiveRiders((metric, dim, n) => rows.push({ metric, dim, n }), '-', {
     gc: GC_WIRE,
-    seams: SEAMS_WIRE
+    seams: SEAMS_WIRE,
   })
   const at = (metric: string): { metric: string; dim: string; n: number }[] =>
     rows.filter((r) => r.metric === metric)
@@ -384,8 +393,8 @@ test('THE ROLLUP dimensions every seam row by its own name, and gives each count
     at(LIVE_METRICS.seamStalls).map((r) => [r.dim, r.n]),
     [
       ['combatSnapshot', 0],
-      ['worldRebuilt', 2]
-    ]
+      ['worldRebuilt', 2],
+    ],
   )
   for (const row of at(LIVE_METRICS.seamCalls)) {
     assert.ok((PERF_SEAMS as readonly string[]).includes(row.dim), `dim ${row.dim} is not a seam`)
@@ -395,7 +404,7 @@ test('THE ROLLUP dimensions every seam row by its own name, and gives each count
 test('THE ROLLUP WALKS THE ENUM — a forged key that somehow got past a validator still writes no row', () => {
   const rows: string[] = []
   foldLiveRiders((metric, dim) => rows.push(`${metric}/${dim}`), '-', {
-    seams: { 'C:/Users/someone/eqlog.txt': { calls: 1, maxBucket: 0, over100: 1 } } as never
+    seams: { 'C:/Users/someone/eqlog.txt': { calls: 1, maxBucket: 0, over100: 1 } } as never,
   })
   assert.deepEqual(rows, [])
 })
@@ -404,7 +413,7 @@ test('the GC ring keeps the pause kind, unbucketed, for the report that reads it
   resetStallAttribution()
   noteGcSamples([
     { at: NOW, ms: 4, kind: 'minor' },
-    { at: NOW + 1, ms: 612, kind: 'major' }
+    { at: NOW + 1, ms: 612, kind: 'major' },
   ])
   const gc = peekAttributionTimeline(NOW + 2).gc
   assert.equal(gc.length, 1)

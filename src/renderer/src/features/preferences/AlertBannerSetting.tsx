@@ -27,7 +27,7 @@ import { FormControlLabel, MenuItem, Select, Stack, Switch, Typography } from '@
 import {
   BANNER_MAX_HOLD_MS,
   DEFAULT_ALERT_BANNER_CONFIG,
-  type AlertBannerOverlayConfig
+  type AlertBannerOverlayConfig,
 } from '@shared/alertBanner'
 import { recordPref, usePrefsSeed, type AlertBannerSeed } from './prefsHydration'
 
@@ -72,9 +72,9 @@ function useBannerState(): [BannerState, (patch: Partial<BannerState>) => void] 
           setState({
             open: open.alertBanner,
             locked: cfg.locked,
-            cfg: cfg.alertBanner ?? DEFAULT_ALERT_BANNER_CONFIG
+            cfg: cfg.alertBanner ?? DEFAULT_ALERT_BANNER_CONFIG,
           })
-        }
+        },
       )
     }
     window.addEventListener('focus', hydrate)
@@ -98,7 +98,7 @@ function useBannerState(): [BannerState, (patch: Partial<BannerState>) => void] 
 function BannerKnobs({
   cfg,
   disabled,
-  onChange
+  onChange,
 }: {
   cfg: AlertBannerOverlayConfig
   disabled: boolean
@@ -184,7 +184,11 @@ export function AlertBannerSetting(): JSX.Element {
         {/* JOS-405: same as the toast and the con card — the strip's own A− / A+ and bg slider live
             in a drag frame you have to unlock to see, so this says where else they are. The section
             is called Appearance since JOS-408, and both controls are in its one Overlays card. */}
-        <Typography variant="caption" color="text.secondary" data-testid="pref-banner-text-size-note">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          data-testid="pref-banner-text-size-note"
+        >
           Its text size and transparency are Appearance → Overlays.
         </Typography>
       </Stack>

@@ -49,7 +49,11 @@
 // the table, so `tests/gearFilter.test.mts` can assert that a sort key brings its column with it
 // and `tests/gearColumnPrefs.test.mts` that a chosen set of thirty overflows on purpose.
 
-import { GEAR_PERCENT_STAT_KEYS, GEAR_STAT_KEYS, type GearStatKey } from '../../../../shared/planner/gear'
+import {
+  GEAR_PERCENT_STAT_KEYS,
+  GEAR_STAT_KEYS,
+  type GearStatKey,
+} from '../../../../shared/planner/gear'
 import type { GearSort, GearSortKey } from './gearFilter'
 
 /**
@@ -177,11 +181,13 @@ function column(key: GearSortKey): GearColumn {
  * DERIVED FROM `GEAR_STAT_KEYS`, never re-typed. A rescrape that widens the vector widens the
  * picker in the same commit, which is the only way "all stats" can stay true.
  */
-export const PICKABLE_COLUMNS: readonly GearSortKey[] = GEAR_STAT_KEYS.flatMap<GearSortKey>((key) => {
-  if (key === 'DELAY') return [key, 'RATIO']
-  if (key === 'HP') return [key, 'EFF_HP']
-  return [key]
-})
+export const PICKABLE_COLUMNS: readonly GearSortKey[] = GEAR_STAT_KEYS.flatMap<GearSortKey>(
+  (key) => {
+    if (key === 'DELAY') return [key, 'RATIO']
+    if (key === 'HP') return [key, 'EFF_HP']
+    return [key]
+  },
+)
 
 /**
  * The numeric columns for this sort: the core, then the sort key if it is not already one of them.
@@ -268,7 +274,7 @@ export function gearTableLayout(count: number, hasOwned: boolean): GearTableLayo
       slot: SLOT_COLUMN_WIDTH,
       classes: CLASS_COLUMN_WIDTH,
       numeric: numericWidth(count),
-      owned: OWNED_COLUMN_WIDTH
+      owned: OWNED_COLUMN_WIDTH,
     }
   }
   return {
@@ -278,7 +284,7 @@ export function gearTableLayout(count: number, hasOwned: boolean): GearTableLayo
     slot: `${String(PX.slot)}px`,
     classes: `${String(PX.classes)}px`,
     numeric: `${String(PX.numeric)}px`,
-    owned: `${String(PX.owned)}px`
+    owned: `${String(PX.owned)}px`,
   }
 }
 
@@ -310,5 +316,7 @@ export function statText(value: number | undefined, key: GearSortKey): string {
  * fails to typecheck rather than quietly asking the vector for a field it does not have.
  */
 export function statKeysOf(columns: readonly GearColumn[]): GearStatKey[] {
-  return columns.flatMap((c) => (c.key === 'name' || c.key === 'RATIO' || c.key === 'EFF_HP' ? [] : [c.key]))
+  return columns.flatMap((c) =>
+    c.key === 'name' || c.key === 'RATIO' || c.key === 'EFF_HP' ? [] : [c.key],
+  )
 }

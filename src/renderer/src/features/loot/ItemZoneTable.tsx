@@ -18,7 +18,17 @@
 // the range panel use, so one zone is one hue everywhere in the app.
 
 import type { JSX } from 'react'
-import { Box, Chip, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material'
+import {
+  Box,
+  Chip,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material'
 import type { ItemZoneRow } from '@shared/lootRates'
 import { formatDropRate } from '../../lib/formatRate'
 import { fmtDuration } from '../leveling/levelChartGeometry'
@@ -79,19 +89,33 @@ export interface ItemZoneTableProps {
 export function ItemZoneTable({ rows, clipped, looted }: ItemZoneTableProps): JSX.Element {
   return (
     <Box sx={{ flex: 1.4, minWidth: 0 }} data-testid="item-zone-table">
-      <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 0.5 }} flexWrap="wrap" useFlexGap>
+      <Stack
+        direction="row"
+        spacing={0.75}
+        alignItems="center"
+        sx={{ mb: 0.5 }}
+        flexWrap="wrap"
+        useFlexGap
+      >
         <Typography variant="subtitle2">Where it drops</Typography>
         {/* The caption that names the denominator now says what it MEANS on hover (JOS-249) —
             a native title, never a popper, and no new element on a header that is already three
             things wide. */}
-        <Typography component="span" variant="caption" color="text.secondary" title={ACTIVE_TIME_TITLE}>
+        <Typography
+          component="span"
+          variant="caption"
+          color="text.secondary"
+          title={ACTIVE_TIME_TITLE}
+        >
           (per hour of active time)
         </Typography>
         <ObservedChip />
       </Stack>
       {rows.length === 0 && (
         <Typography variant="caption" data-testid="item-zone-empty">
-          {looted ? 'No zone recorded for your drops of this item.' : 'You have not looted this yet.'}
+          {looted
+            ? 'No zone recorded for your drops of this item.'
+            : 'You have not looted this yet.'}
         </Typography>
       )}
       {rows.length > 0 && (

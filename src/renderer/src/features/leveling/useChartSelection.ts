@@ -29,7 +29,13 @@
 // still React state here is `sel` and `dragging`, and both of those change at most twice per
 // gesture. Nothing about WHAT a drag selects moved: `draftRange` is the old formula, lifted.
 
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
 import { pxToUser, tOf, type ChartScale } from './levelChartGeometry'
 import { createDraftStore, draftRange, type DraftStore } from './selectionDraft'
 
@@ -106,7 +112,7 @@ export function useChartSelection(scale: ChartScale | null): SelectionApi {
       const t = tOf(scale, pxToUser(clientX - r.left, r.width, scale.w))
       return Math.min(scale.t1, Math.max(scale.t0, t))
     },
-    [scale]
+    [scale],
   )
 
   const stop = useCallback((): void => {
@@ -129,7 +135,7 @@ export function useChartSelection(scale: ChartScale | null): SelectionApi {
       el.setPointerCapture(ev.pointerId)
       dragRef.current = { pointerId: ev.pointerId, el, originX: ev.clientX, originTs: ts }
     },
-    [tsAt]
+    [tsAt],
   )
 
   const onPointerMove = useCallback(
@@ -147,7 +153,7 @@ export function useChartSelection(scale: ChartScale | null): SelectionApi {
       // value (the pointer moved inside one pixel of the domain) notifies nobody at all.
       draft.set(draftRange(d.originTs, ts))
     },
-    [tsAt, draft]
+    [tsAt, draft],
   )
 
   const onPointerUp = useCallback(
@@ -167,11 +173,15 @@ export function useChartSelection(scale: ChartScale | null): SelectionApi {
       if (t1 - t0 < MIN_SELECTION_MS) return
       setSel({ t0, t1 })
     },
-    [tsAt, stop]
+    [tsAt, stop],
   )
 
-  const onPointerCancel = useCallback((): void => { stop() }, [stop])
-  const clear = useCallback((): void => { setSel(null) }, [])
+  const onPointerCancel = useCallback((): void => {
+    stop()
+  }, [stop])
+  const clear = useCallback((): void => {
+    setSel(null)
+  }, [])
 
   // THE TIMESCALE SEAM (JOS-71). Picking a scale replaces the whole time base, and a committed
   // range from outside the new window is no longer on the chart: its band has no pixels to draw
@@ -191,7 +201,9 @@ export function useChartSelection(scale: ChartScale | null): SelectionApi {
       if (ev.key === 'Escape') setSel(null)
     }
     window.addEventListener('keydown', onKey)
-    return () => { window.removeEventListener('keydown', onKey) }
+    return () => {
+      window.removeEventListener('keydown', onKey)
+    }
   }, [sel])
 
   return { sel, draft, dragging, clear, onPointerDown, onPointerMove, onPointerUp, onPointerCancel }

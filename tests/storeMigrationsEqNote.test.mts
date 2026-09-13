@@ -29,7 +29,7 @@ import {
   CURRENT_SCHEMA_VERSION,
   SCHEMA_VERSION_KEY,
   migrateStoreData,
-  type StoreData
+  type StoreData,
 } from '../src/main/storeMigrations'
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), 'fixtures')
@@ -61,7 +61,11 @@ test('a v12 store that dismissed the note loses the key, and keeps everything el
 test('a store that never saw the note is unchanged by the step', () => {
   // Which is every install outside the dev cohort: JOS-368 shipped in no release at all, so the
   // key exists on a handful of machines and `delete` on an absent key is a no-op.
-  for (const name of ['store-v1-first-build.json', 'store-v6-perf.json', 'store-v8-toast-off.json']) {
+  for (const name of [
+    'store-v1-first-build.json',
+    'store-v6-perf.json',
+    'store-v8-toast-off.json',
+  ]) {
     const { data } = migrateStoreData(fixture(name))
     assert.equal(KEY in data, false, `${name}: nothing to drop, nothing added`)
   }

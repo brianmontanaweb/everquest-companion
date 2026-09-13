@@ -24,7 +24,7 @@ function StepButton({
   label,
   name,
   onClick,
-  disabled
+  disabled,
 }: {
   label: string
   /** the accessible name — never a tooltip. */
@@ -49,7 +49,7 @@ function StepButton({
         cursor: disabled ? 'default' : 'pointer',
         opacity: disabled ? 0.35 : 1,
         fontSize: 10,
-        lineHeight: 1.4
+        lineHeight: 1.4,
       }}
     >
       {label}
@@ -60,7 +60,7 @@ function StepButton({
 export function TextScaleStepper({
   textScale,
   patch,
-  noDrag
+  noDrag,
 }: {
   textScale: number
   patch: OverlayChrome['patch']
@@ -69,7 +69,8 @@ export function TextScaleStepper({
 }): JSX.Element {
   // Clamp HERE as well as in the store: the disabled ends stop the common case, and a value that
   // arrived from anywhere else must not walk out of range through this control either.
-  const step = (dir: 1 | -1): void => patch({ textScale: clampTextScale(textScale + dir * TEXT_SCALE_STEP) })
+  const step = (dir: 1 | -1): void =>
+    patch({ textScale: clampTextScale(textScale + dir * TEXT_SCALE_STEP) })
   // The percentage is the honest reading of what the buttons did — the scale itself is a factor
   // nobody asked for in those terms.
   const pct = `${Math.round(textScale * 100)}%`

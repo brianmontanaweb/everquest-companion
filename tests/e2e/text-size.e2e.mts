@@ -43,7 +43,7 @@ import {
   note,
   reportRun,
   settle,
-  settleGone
+  settleGone,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 // THE OVERLAYS' appearance (JOS-405, JOS-407, JOS-408) — the same Preferences section, but every
@@ -60,10 +60,15 @@ import {
   stepSharedSizeAppliesLive,
   stepSurvivesTheSwitch,
   stepSyncedShape,
-  stepWindowMovesShared
+  stepWindowMovesShared,
 } from './overlaysAppearanceSteps.mjs'
 import { launchOnFixture, stageFixture } from './logFixture.mjs'
-import { UI_SCALE_DEFAULT, UI_SCALE_MAX, UI_SCALE_MIN, uiScalePercent } from '../../src/shared/uiScale'
+import {
+  UI_SCALE_DEFAULT,
+  UI_SCALE_MAX,
+  UI_SCALE_MIN,
+  uiScalePercent,
+} from '../../src/shared/uiScale'
 
 const RAIL = '[data-testid="prefs-rail-textsize"]'
 const PANE = '[data-testid="pref-text-size"]'
@@ -95,7 +100,7 @@ function zoomOf(page: Page): Promise<Zoom> {
 
 function storedScale(page: Page): Promise<number> {
   return page.evaluate(() =>
-    (window as unknown as { eq: { getUiScale: () => Promise<number> } }).eq.getUiScale()
+    (window as unknown as { eq: { getUiScale: () => Promise<number> } }).eq.getUiScale(),
   )
 }
 
@@ -104,7 +109,7 @@ function storedScale(page: Page): Promise<number> {
 function shownScale(page: Page): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText.trim() ?? '',
-    VALUE
+    VALUE,
   )
 }
 
@@ -112,7 +117,7 @@ function shownScale(page: Page): Promise<string> {
 function isDisabled(page: Page, selector: string): Promise<boolean> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLButtonElement | null)?.disabled === true,
-    selector
+    selector,
   )
 }
 
@@ -122,7 +127,11 @@ async function press(page: Page, selector: string, times: number): Promise<void>
   for (let i = 0; i < times; i++) {
     const before = await shownScale(page)
     await page.click(selector, { timeout: 15_000 })
-    await settle(() => shownScale(page), (v) => v !== before, { timeoutMs: 15_000 }).catch(() => before)
+    await settle(
+      () => shownScale(page),
+      (v) => v !== before,
+      { timeoutMs: 15_000 },
+    ).catch(() => before)
   }
 }
 
@@ -140,7 +149,11 @@ async function pressToEnd(page: Page, selector: string): Promise<number> {
   for (let i = 0; i < 8 && !(await isDisabled(page, selector)); i++) {
     const before = await shownScale(page)
     await page.click(selector, { timeout: 15_000 })
-    await settle(() => shownScale(page), (v) => v !== before, { timeoutMs: 15_000 }).catch(() => before)
+    await settle(
+      () => shownScale(page),
+      (v) => v !== before,
+      { timeoutMs: 15_000 },
+    ).catch(() => before)
     pressed++
   }
   return pressed
@@ -172,23 +185,29 @@ async function stepCard(page: Page): Promise<void> {
   check('Preferences → Appearance has an in-app text size', (await countOf(page, PANE)) === 1)
   const rail = await page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText.trim() ?? '',
-    RAIL
+    RAIL,
   )
   check('…and the rail row is called Appearance', rail === 'Appearance', rail)
   // ONE control, not five. The whole page is steppers now (owner, 2026-08-17: "make the controls
   // uniform - the +/- version of the control on the whole page").
   const buttons = await countOf(page, `${PANE} button`)
-  check('it is ONE stepper — a minus and a plus, not a row of percentages', buttons === 2, `${String(buttons)} button(s)`)
+  check(
+    'it is ONE stepper — a minus and a plus, not a row of percentages',
+    buttons === 2,
+    `${String(buttons)} button(s)`,
+  )
   const shown = await shownScale(page)
   check(
     'a fresh install prints 100% — the default is unchanged for everybody who never chose',
     shown === uiScalePercent(UI_SCALE_DEFAULT),
-    shown || 'nothing printed'
+    shown || 'nothing printed',
   )
-  const text = (await page.evaluate(
-    (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText ?? '',
-    NOTE
-  ))
+  const text = (
+    await page.evaluate(
+      (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText ?? '',
+      NOTE,
+    )
+  )
     .replace(/\s+/g, ' ')
     .trim()
   // JOS-408 NARROWED WHAT THIS SENTENCE CLAIMS. It used to say "the whole window"; the owner asked
@@ -197,7 +216,7 @@ async function stepCard(page: Page): Promise<void> {
   check(
     '…and the caption says this is the app window only, with the overlays below',
     /app window/i.test(text) && /overlays/i.test(text),
-    text.slice(0, 160)
+    text.slice(0, 160),
   )
 }
 
@@ -207,22 +226,30 @@ async function stepBiggerNow(page: Page, base: Zoom): Promise<void> {
   const after = await settle(
     () => zoomOf(page),
     (z) => Math.abs(z.dpr / base.dpr - CHOSEN) < TOLERANCE,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   check(
     `two presses of A+ walk the ladder to ${uiScalePercent(CHOSEN)} and draw the window that much bigger, without a relaunch`,
     Math.abs(after.dpr / base.dpr - CHOSEN) < TOLERANCE,
-    `devicePixelRatio ${String(base.dpr)} -> ${String(after.dpr)}`
+    `devicePixelRatio ${String(base.dpr)} -> ${String(after.dpr)}`,
   )
   check(
     '…which is a LAYOUT change, not a font swap: the same window now holds fewer CSS pixels',
     after.innerWidth < base.innerWidth,
-    `${String(base.innerWidth)} -> ${String(after.innerWidth)} CSS px`
+    `${String(base.innerWidth)} -> ${String(after.innerWidth)} CSS px`,
   )
   const stored = await storedScale(page)
-  check('…and the stored answer is the RUNG, never a value between two of them', stored === CHOSEN, String(stored))
+  check(
+    '…and the stored answer is the RUNG, never a value between two of them',
+    stored === CHOSEN,
+    String(stored),
+  )
   const shown = await shownScale(page)
-  check('…with the stepper printing it', shown === uiScalePercent(CHOSEN), shown || 'nothing printed')
+  check(
+    '…with the stepper printing it',
+    shown === uiScalePercent(CHOSEN),
+    shown || 'nothing printed',
+  )
 }
 
 /** The second launch: the size is already on before this spec touches anything. */
@@ -231,7 +258,7 @@ async function stepPersisted(page: Page, base: Zoom): Promise<void> {
   check(
     'a relaunch comes up ALREADY at the chosen size — nothing in this spec has clicked yet',
     Math.abs(arrived.dpr / base.dpr - CHOSEN) < TOLERANCE,
-    `devicePixelRatio ${String(base.dpr)} at 100% -> ${String(arrived.dpr)} on arrival`
+    `devicePixelRatio ${String(base.dpr)} at 100% -> ${String(arrived.dpr)} on arrival`,
   )
   const stored = await storedScale(page)
   check('…because the choice outlived the process that made it', stored === CHOSEN, String(stored))
@@ -239,8 +266,16 @@ async function stepPersisted(page: Page, base: Zoom): Promise<void> {
   // NO SETTLE NEEDED SINCE JOS-340, and this is where that fix is most visible: the card seeds from
   // the pane's hydration snapshot, so the stored rung is what it prints on its FIRST frame. The
   // wait is only for the pane to exist at all.
-  const shown = await settle(() => shownScale(page), (v) => v !== '', { timeoutMs: 15_000 })
-  check('…and Preferences agrees with the window it is drawn in', shown === uiScalePercent(CHOSEN), shown || 'nothing printed')
+  const shown = await settle(
+    () => shownScale(page),
+    (v) => v !== '',
+    { timeoutMs: 15_000 },
+  )
+  check(
+    '…and Preferences agrees with the window it is drawn in',
+    shown === uiScalePercent(CHOSEN),
+    shown || 'nothing printed',
+  )
 }
 
 /**
@@ -259,7 +294,7 @@ async function stepSurvivesReload(page: Page, base: Zoom): Promise<void> {
   check(
     'a reload keeps the size, with nothing in main re-stating it',
     Math.abs(after.dpr / base.dpr - CHOSEN) < TOLERANCE,
-    `devicePixelRatio ${String(base.dpr)} at 100% -> ${String(after.dpr)} after reload`
+    `devicePixelRatio ${String(base.dpr)} at 100% -> ${String(after.dpr)} after reload`,
   )
 }
 
@@ -275,19 +310,32 @@ async function stepSurvivesReload(page: Page, base: Zoom): Promise<void> {
 async function stepEnds(page: Page): Promise<void> {
   const up = await pressToEnd(page, PLUS)
   const top = await shownScale(page)
-  check('A+ walks the ladder up and then REFUSES — it stops at the top rung', top === uiScalePercent(UI_SCALE_MAX),
-    `${String(up)} press(es) to ${top}`)
+  check(
+    'A+ walks the ladder up and then REFUSES — it stops at the top rung',
+    top === uiScalePercent(UI_SCALE_MAX),
+    `${String(up)} press(es) to ${top}`,
+  )
   check('…and it is disabled there, because the value cannot move', await isDisabled(page, PLUS))
   check('…while A− is still live, because it can', (await isDisabled(page, MINUS)) === false)
 
   const down = await pressToEnd(page, MINUS)
   const bottom = await shownScale(page)
-  check('A− does the same at the bottom', bottom === uiScalePercent(UI_SCALE_MIN), `${String(down)} press(es) to ${bottom}`)
-  check('…disabled there, with A+ live — the same rule, mirrored',
-    (await isDisabled(page, MINUS)) && !(await isDisabled(page, PLUS)))
+  check(
+    'A− does the same at the bottom',
+    bottom === uiScalePercent(UI_SCALE_MIN),
+    `${String(down)} press(es) to ${bottom}`,
+  )
+  check(
+    '…disabled there, with A+ live — the same rule, mirrored',
+    (await isDisabled(page, MINUS)) && !(await isDisabled(page, PLUS)),
+  )
   // The whole ladder was walked in both directions, which is also the claim that the five rungs
   // are still five: four presses from the top to the bottom.
-  check('…and the two walks covered the whole ladder', down === 4, `${String(down)} presses from top to bottom`)
+  check(
+    '…and the two walks covered the whole ladder',
+    down === 4,
+    `${String(down)} presses from top to bottom`,
+  )
 }
 
 /** Every way in is a way out: 100% must be reachable from anywhere on the ladder. */
@@ -296,15 +344,19 @@ async function stepBackTo100(page: Page, base: Zoom): Promise<void> {
   const back = await settle(
     () => zoomOf(page),
     (z) => Math.abs(z.dpr - base.dpr) < TOLERANCE,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   check(
     'stepping back to 100% puts the window exactly where it started',
     Math.abs(back.dpr - base.dpr) < TOLERANCE,
-    `devicePixelRatio ${String(base.dpr)} -> ${String(back.dpr)}`
+    `devicePixelRatio ${String(base.dpr)} -> ${String(back.dpr)}`,
   )
   const stored = await storedScale(page)
-  check('…and stores it, so the next launch is ordinary again', stored === UI_SCALE_DEFAULT, String(stored))
+  check(
+    '…and stores it, so the next launch is ordinary again',
+    stored === UI_SCALE_DEFAULT,
+    String(stored),
+  )
 }
 
 /**
@@ -355,7 +407,11 @@ async function main(): Promise<void> {
     await openAppearance(page)
     await stepCard(page)
     base = await zoomOf(page)
-    check('the window reports a usable baseline to measure against', base.dpr > 0 && base.innerWidth > 0, JSON.stringify(base))
+    check(
+      'the window reports a usable baseline to measure against',
+      base.dpr > 0 && base.innerWidth > 0,
+      JSON.stringify(base),
+    )
     await stepBiggerNow(page, base)
     if (failures.length) await dumpArtifacts(page, 'text-size-FAIL-first')
   } finally {
@@ -393,9 +449,15 @@ async function main(): Promise<void> {
   }
 
   // A missing IPC handler shows up here first (`invoke` rejects into an unhandled rejection).
-  check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+  check(
+    'no renderer console errors',
+    consoleErrors.length === 0,
+    consoleErrors.slice(0, 3).join(' | '),
+  )
   if (consoleErrors.length === 0) {
-    note('two real launches over one userData dir — the persistence claim is a restart, not a reload')
+    note(
+      'two real launches over one userData dir — the persistence claim is a restart, not a reload',
+    )
   }
 
   reportRun()

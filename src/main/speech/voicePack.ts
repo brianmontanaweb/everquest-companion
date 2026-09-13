@@ -56,7 +56,7 @@ function zip64Sizes(extra: Buffer): { uncompressed: number; compressed: number }
     if (id === ZIP64_EXTRA_ID && size >= 16 && at + 4 + 16 <= extra.length) {
       return {
         uncompressed: Number(extra.readBigUInt64LE(at + 4)),
-        compressed: Number(extra.readBigUInt64LE(at + 12))
+        compressed: Number(extra.readBigUInt64LE(at + 12)),
       }
     }
     at += 4 + size
@@ -76,7 +76,10 @@ function zip64Sizes(extra: Buffer): { uncompressed: number; compressed: number }
 export function parseVoicePack(buf: Buffer): VoicePackEntry[] {
   const entries: VoicePackEntry[] = []
   let at = 0
-  while (at + LOCAL_FILE_HEADER_LEN <= buf.length && buf.readUInt32LE(at) === LOCAL_FILE_HEADER_SIG) {
+  while (
+    at + LOCAL_FILE_HEADER_LEN <= buf.length &&
+    buf.readUInt32LE(at) === LOCAL_FILE_HEADER_SIG
+  ) {
     const method = buf.readUInt16LE(at + 8)
     let compressed = buf.readUInt32LE(at + 18)
     const nameLen = buf.readUInt16LE(at + 26)
@@ -127,7 +130,7 @@ export const MAX_PACK_ENTRIES = 256
 export async function scanVoiceIds(
   readAt: (offset: number, length: number) => Promise<Buffer>,
   size: number,
-  windowBytes = 512
+  windowBytes = 512,
 ): Promise<Set<string>> {
   const ids = new Set<string>()
   let at = 0

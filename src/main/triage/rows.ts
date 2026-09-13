@@ -22,20 +22,15 @@ import type {
   TriageLogState,
   TriageOpsState,
   TriageBlockedInstall,
-  TriageRow
+  TriageRow,
 } from '../../shared/triage'
-import type {
-  AppChannelTag,
-  FeedbackType,
-  ReportStatus,
-  Severity
-} from '../../shared/feedback'
+import type { AppChannelTag, FeedbackType, ReportStatus, Severity } from '../../shared/feedback'
 import { validatePerf, type FeedbackPerf } from '../../shared/feedbackPerf'
 import {
   sanitizeAndFlag,
   sanitizeMultiline,
   sanitizeOneLine,
-  sanitizeTabbedAndFlag
+  sanitizeTabbedAndFlag,
 } from '../../shared/sanitizeText'
 import { scrubLines } from '../../shared/logScrub'
 
@@ -123,7 +118,7 @@ function parseLogMeta(raw: unknown): { bytes?: number; lines?: number } {
     const meta = parsed as { bytes?: unknown; lines?: unknown }
     return {
       ...(typeof meta.bytes === 'number' ? { bytes: meta.bytes } : {}),
-      ...(typeof meta.lines === 'number' ? { lines: meta.lines } : {})
+      ...(typeof meta.lines === 'number' ? { lines: meta.lines } : {}),
     }
   } catch {
     return {}
@@ -153,7 +148,7 @@ export function toRow(row: Row): TriageRow {
     spamScore: num(row.spam_score),
     receivedAt: num(row.received_at),
     ...(triagedAt === undefined ? {} : { triagedAt }),
-    log: declaresLog(row) ? 'declared' : 'none'
+    log: declaresLog(row) ? 'declared' : 'none',
   }
 }
 
@@ -184,7 +179,7 @@ export function toDetail(row: Row, logLanded: boolean): TriageDetail {
     ...(key ? { logKey: key } : {}),
     ...(meta.bytes === undefined ? {} : { logBytes: meta.bytes }),
     ...(meta.lines === undefined ? {} : { logLines: meta.lines }),
-    log
+    log,
   }
 }
 
@@ -251,7 +246,7 @@ export function rescrubNotes(re: SliceRescrub): string[] {
   if (re.fromLegacyCache) {
     return [
       '[re-scrub: this copy was cached before re-scrub-on-read existed, so what it removed was ' +
-        `never measured. Delete ${re.path} and re-run for a real answer.]`
+        `never measured. Delete ${re.path} and re-run for a real answer.]`,
     ]
   }
   const notes: string[] = []
@@ -260,13 +255,13 @@ export function rescrubNotes(re: SliceRescrub): string[] {
       `WARNING: re-scrub removed ${String(re.dropped)} line(s) of third-party chat from this ` +
         'slice. Our own client removes them BEFORE uploading, so an honest upload has a delta ' +
         'of zero - this one was not scrubbed by our client. The S3 object is untouched (it is ' +
-        'the evidence); only the local copy was cleaned.'
+        'the evidence); only the local copy was cleaned.',
     )
   }
   if (re.cleaned > 0) {
     notes.push(
       `${String(re.cleaned)} line(s) carried control characters or ANSI escapes and were ` +
-        'sanitized before being written to disk.'
+        'sanitized before being written to disk.',
     )
   }
   return notes
@@ -348,7 +343,7 @@ export function inventoryNotes(dl: InventoryDownload): string[] {
   if (dl.fromLegacyCache) {
     return [
       '[inventory: this copy was cached before the sanitize-on-read counter existed, so what it ' +
-        `cleaned was never measured. Delete ${dl.path} and re-run for a real answer.]`
+        `cleaned was never measured. Delete ${dl.path} and re-run for a real answer.]`,
     ]
   }
   if (dl.cleaned === 0) return []
@@ -356,7 +351,7 @@ export function inventoryNotes(dl: InventoryDownload): string[] {
     `WARNING: ${String(dl.cleaned)} row(s) of this inventory export carried control characters ` +
       'or ANSI escapes and were sanitized before being written to disk. A real dump contains ' +
       'none - this one did not come from the game. The S3 object is untouched (it is the ' +
-      'evidence); only the local copy was cleaned.'
+      'evidence); only the local copy was cleaned.',
   ]
 }
 
@@ -365,7 +360,7 @@ export function achievementsNotes(dl: InventoryDownload): string[] {
   if (dl.fromLegacyCache) {
     return [
       '[achievements: this copy was cached before the sanitize-on-read counter existed, so what ' +
-        `it cleaned was never measured. Delete ${dl.path} and re-run for a real answer.]`
+        `it cleaned was never measured. Delete ${dl.path} and re-run for a real answer.]`,
     ]
   }
   if (dl.cleaned === 0) return []
@@ -373,7 +368,7 @@ export function achievementsNotes(dl: InventoryDownload): string[] {
     `WARNING: ${String(dl.cleaned)} row(s) of this achievements export carried control ` +
       'characters or ANSI escapes and were sanitized before being written to disk. A real dump ' +
       'contains none - this one did not come from the game. The S3 object is untouched (it is ' +
-      'the evidence); only the local copy was cleaned.'
+      'the evidence); only the local copy was cleaned.',
   ]
 }
 
@@ -391,7 +386,7 @@ export function toOps(config: Row | null, profiles: readonly Row[]): TriageOpsSt
     accepting: config?.accepting === true,
     closedMessage: str(config?.closed_message, NO_CONFIG_MESSAGE),
     maxPerInstallPerDay: num(config?.max_per_install_per_day, 0),
-    blocked: profiles.map(toBlocked)
+    blocked: profiles.map(toBlocked),
   }
 }
 
@@ -402,6 +397,6 @@ export function toBlocked(row: Row): TriageBlockedInstall {
     installId: str(row.install_id),
     blocked: row.blocked === true,
     ...(reason ? { reason } : {}),
-    ...(blockedAt === undefined ? {} : { blockedAt })
+    ...(blockedAt === undefined ? {} : { blockedAt }),
   }
 }

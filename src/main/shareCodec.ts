@@ -24,7 +24,7 @@ import {
   type ShareDecodeError,
   type ShareEnvelope,
   type ShareKind,
-  type ShareValidation
+  type ShareValidation,
 } from '../shared/profiles'
 
 function toBase64Url(buf: Buffer): string {

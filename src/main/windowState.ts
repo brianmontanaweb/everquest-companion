@@ -138,7 +138,7 @@ export function windowStateOf(w: WindowLike): WindowBounds | null {
 export function sameWindowState(
   a: WindowBounds | null,
   b: WindowBounds | null,
-  slackPx = 0
+  slackPx = 0,
 ): boolean {
   if (!a || !b) return false
   if ((a.maximized === true) !== (b.maximized === true)) return false
@@ -201,7 +201,7 @@ export interface WindowStateSaver {
  */
 export function createWindowStateSaver(
   save: (state: WindowBounds) => void,
-  opts: { delayMs?: number; arm?: ArmTimer } = {}
+  opts: { delayMs?: number; arm?: ArmTimer } = {},
 ): WindowStateSaver {
   const delayMs = opts.delayMs ?? SAVE_DEBOUNCE_MS
   const arm = opts.arm ?? armWithTimeout
@@ -237,7 +237,7 @@ export function createWindowStateSaver(
       write()
     },
     applied(rect: Rect | undefined, maximized: boolean): void {
-      applied = rect ? normalizeWindowState({ ...rect, maximized }) ?? null : null
-    }
+      applied = rect ? (normalizeWindowState({ ...rect, maximized }) ?? null) : null
+    },
   }
 }

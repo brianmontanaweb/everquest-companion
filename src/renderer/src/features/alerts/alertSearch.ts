@@ -77,7 +77,7 @@ export function alertFacets(def: AlertDef, packs: PackIndex): string[] {
     def.sound.soundId,
     soundLabel(pack, def.sound.soundId),
     def.speech?.phrase ?? '',
-    def.note ?? ''
+    def.note ?? '',
   ].filter((s) => s !== '')
 }
 
@@ -102,7 +102,7 @@ export function matchesAlert(queryTokens: readonly string[], haystack: string[])
 export function filterAlerts(
   alerts: readonly AlertDef[],
   packs: readonly SoundPack[],
-  query: string
+  query: string,
 ): readonly AlertDef[] {
   const tokens = tokenize(query)
   if (tokens.length === 0) return alerts

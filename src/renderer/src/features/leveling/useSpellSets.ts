@@ -19,7 +19,5 @@ export function applySpellSetsDelta(_state: SpellSetsSnap, delta: SpellSetsDelta
 
 /** Never null — an un-hydrated panel makes no claim about any gem, which is the honest state. */
 export function useSpellSets(): SpellSetsSnap {
-  return (
-    useModule<SpellSetsSnap>('spellSets') ?? EMPTY_SPELL_SETS
-  )
+  return useModule<SpellSetsSnap>('spellSets') ?? EMPTY_SPELL_SETS
 }

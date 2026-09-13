@@ -52,7 +52,7 @@ import {
   note,
   reportRun,
   settle,
-  settleGone
+  settleGone,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -85,7 +85,7 @@ const ROW_NAME = '[data-testid="suggest-row-name"]'
 const APOSTROPHE_QUERIES: readonly (readonly [string, string])[] = [
   ["snail's healing", 'Snails Healing'], // the reported query, verbatim
   ['snails healing', 'Snails Healing'], // …and the DB's own spelling still lands
-  ['aanyas animation', "Aanya's Animation"] // the other way: the DB punctuates, the user does not
+  ['aanyas animation', "Aanya's Animation"], // the other way: the DB punctuates, the user does not
 ]
 
 /** What the user types. Deliberately unlike any default, so a reset cannot look like a survival. */
@@ -94,7 +94,7 @@ const TYPED = {
   fieldKey: 'target',
   fieldVal: 'Sonista',
   cooldown: '7500',
-  phrase: 'the charm broke'
+  phrase: 'the charm broke',
 }
 
 /** What the user changes an EXISTING alert to, in the second half of the spec. */
@@ -104,7 +104,7 @@ const EDITED = { name: 'Renamed while alt-tabbed', cooldown: '9250' }
 function valueOf(page: Page, testid: string): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLInputElement | null)?.value ?? '<missing>',
-    `[data-testid="${testid}"] input`
+    `[data-testid="${testid}"] input`,
   )
 }
 
@@ -128,7 +128,7 @@ async function answerNotice(page: Page): Promise<void> {
   await page.click('[data-testid="telemetry-notice-off"]')
   check(
     'the analytics first-run notice can be answered out of the way',
-    await settleGone(page, notice, { timeoutMs: 8_000 })
+    await settleGone(page, notice, { timeoutMs: 8_000 }),
   )
 }
 
@@ -152,20 +152,17 @@ async function selectValue(page: Page, testid: string, value: string): Promise<v
 async function focusCycle(page: Page, id: string): Promise<boolean> {
   const row = `[data-alert-id="${id}"]`
   const seenBefore = await countOf(page, row)
-  await page.evaluate(
-    async (alertId) => {
-      const eq = (window as unknown as { eq: { saveAlert: (d: unknown) => Promise<unknown[]> } }).eq
-      await eq.saveAlert({
-        id: alertId,
-        name: alertId,
-        enabled: true,
-        trigger: { type: 'raw', regex: 'never matches anything at all' },
-        sound: { packId: 'alan-rickman', soundId: 'task-acknowledge-task-acknowledge-05' },
-        cooldownMs: 0
-      })
-    },
-    id
-  )
+  await page.evaluate(async (alertId) => {
+    const eq = (window as unknown as { eq: { saveAlert: (d: unknown) => Promise<unknown[]> } }).eq
+    await eq.saveAlert({
+      id: alertId,
+      name: alertId,
+      enabled: true,
+      trigger: { type: 'raw', regex: 'never matches anything at all' },
+      sound: { packId: 'alan-rickman', soundId: 'task-acknowledge-task-acknowledge-05' },
+      cooldownMs: 0,
+    })
+  }, id)
   // The write alone must NOT move the view — that is what makes the row a gate rather than a
   // coincidence. Read it once more before the focus event so the claim is measured, not assumed.
   const seenStored = await countOf(page, row)
@@ -173,11 +170,15 @@ async function focusCycle(page: Page, id: string): Promise<boolean> {
     window.dispatchEvent(new Event('blur'))
     window.dispatchEvent(new Event('focus'))
   })
-  const seen = await settle(() => countOf(page, row), (n) => n === 1, { timeoutMs: 20_000 })
+  const seen = await settle(
+    () => countOf(page, row),
+    (n) => n === 1,
+    { timeoutMs: 20_000 },
+  )
   return check(
     'the window regaining focus really does reload the alerts view underneath the dialog',
     seenBefore === 0 && seenStored === 0 && seen === 1,
-    `row: ${String(seenBefore)} before the write, ${String(seenStored)} after it, ${String(seen)} after focus — anything but 0/0/1 means this spec proved nothing`
+    `row: ${String(seenBefore)} before the write, ${String(seenStored)} after it, ${String(seen)} after focus — anything but 0/0/1 means this spec proved nothing`,
   )
 }
 
@@ -190,7 +191,10 @@ async function openManualEditor(page: Page): Promise<boolean> {
   await page.click('[data-testid="suggest-create-manually"]')
   await settleGone(page, SUGGEST, { timeoutMs: 10_000 })
   await page.waitForSelector(DIALOG, { timeout: 20_000 })
-  return check('the suggestion picker’s escape hatch opens the manual editor', (await countOf(page, DIALOG)) === 1)
+  return check(
+    'the suggestion picker’s escape hatch opens the manual editor',
+    (await countOf(page, DIALOG)) === 1,
+  )
 }
 
 /** Type into every kind of control the form owns, and prove it took. */
@@ -208,26 +212,27 @@ async function dirtyTheForm(page: Page): Promise<boolean> {
   return check(
     'the form accepted the work: name, condition, cooldown and a written phrase',
     (await valueOf(page, 'alert-name')) === TYPED.name &&
-      (await valueOf(page, 'alert-speech-phrase')) === TYPED.phrase
+      (await valueOf(page, 'alert-speech-phrase')) === TYPED.phrase,
   )
 }
 
 /** THE ASSERTION THE TICKET IS ABOUT: every field still holds what the user typed. */
 async function checkFormSurvived(page: Page): Promise<void> {
-  if (!check('the dialog is still open after the focus cycle', (await countOf(page, DIALOG)) === 1)) return
+  if (!check('the dialog is still open after the focus cycle', (await countOf(page, DIALOG)) === 1))
+    return
   const expected: [string, string][] = [
     ['alert-name', TYPED.name],
     ['alert-field-key', TYPED.fieldKey],
     ['alert-field-val', TYPED.fieldVal],
     ['alert-cooldown', TYPED.cooldown],
-    ['alert-speech-phrase', TYPED.phrase]
+    ['alert-speech-phrase', TYPED.phrase],
   ]
   for (const [testid, want] of expected) {
     const got = await valueOf(page, testid)
     check(
       `${testid} kept its value across the focus loss`,
       got === want,
-      `read "${got}", expected "${want}"`
+      `read "${got}", expected "${want}"`,
     )
   }
   // The phrase field only RENDERS while the speech mode is 'custom', so reading a value out of
@@ -240,13 +245,17 @@ function storedByName(page: Page, name: string): Promise<StoredDef | null> {
     () =>
       page.evaluate(
         (want) =>
-          (window as unknown as {
-            eq: { listAlerts: () => Promise<StoredDef[]> }
-          }).eq.listAlerts().then((defs) => defs.find((d) => d.name === want) ?? null),
-        name
+          (
+            window as unknown as {
+              eq: { listAlerts: () => Promise<StoredDef[]> }
+            }
+          ).eq
+            .listAlerts()
+            .then((defs) => defs.find((d) => d.name === want) ?? null),
+        name,
       ) as Promise<StoredDef | null>,
     (def) => def !== null,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
 }
 
@@ -273,10 +282,12 @@ async function checkAddSaves(page: Page): Promise<void> {
   const packs = await page.evaluate(() =>
     (window as unknown as { eq: { listSoundPacks: () => Promise<{ id: string }[]> } }).eq
       .listSoundPacks()
-      .then((list) => list.length)
+      .then((list) => list.length),
   )
   if (packs === 0) {
-    note('no sound pack is installed in this channel, so Add is disabled for a NEW alert — the save half of the claim is asserted on the edit path instead')
+    note(
+      'no sound pack is installed in this channel, so Add is disabled for a NEW alert — the save half of the claim is asserted on the edit path instead',
+    )
     await page.keyboard.press('Escape')
     await settleGone(page, DIALOG, { timeoutMs: 10_000 })
     return
@@ -284,11 +295,12 @@ async function checkAddSaves(page: Page): Promise<void> {
   await page.click('[data-testid="alert-save"]')
   await settleGone(page, DIALOG, { timeoutMs: 15_000 })
   const stored = await storedByName(page, TYPED.name)
-  if (!check('the alert the user was writing saves', stored !== null, JSON.stringify(stored))) return
+  if (!check('the alert the user was writing saves', stored !== null, JSON.stringify(stored)))
+    return
   check(
     '…carrying the cooldown, the condition, the channel and the phrase that were on screen',
     isTypedWork(stored),
-    JSON.stringify(stored)
+    JSON.stringify(stored),
   )
 }
 
@@ -316,7 +328,13 @@ async function checkEditSurvives(page: Page): Promise<void> {
   const before = await valueOf(page, 'alert-name')
   await fill(page, 'alert-name', EDITED.name)
   await fill(page, 'alert-cooldown', EDITED.cooldown)
-  if (!check('an existing alert opens in the editor and accepts a change', before !== EDITED.name && (await valueOf(page, 'alert-name')) === EDITED.name, before)) {
+  if (
+    !check(
+      'an existing alert opens in the editor and accepts a change',
+      before !== EDITED.name && (await valueOf(page, 'alert-name')) === EDITED.name,
+      before,
+    )
+  ) {
     return
   }
   if (!(await focusCycle(page, 'e2e:focus-probe-3'))) return
@@ -324,7 +342,7 @@ async function checkEditSurvives(page: Page): Promise<void> {
   check(
     'an EDIT survives the focus loss too, instead of reverting to the stored def',
     name === EDITED.name,
-    name === before ? `reverted to the stored "${before}"` : `read "${name}"`
+    name === before ? `reverted to the stored "${before}"` : `read "${name}"`,
   )
   const cooldown = await valueOf(page, 'alert-cooldown')
   check('…including the cooldown', cooldown === EDITED.cooldown, `read "${cooldown}"`)
@@ -335,7 +353,7 @@ async function checkEditSurvives(page: Page): Promise<void> {
   check(
     'and Save writes the EDITED def through main — surviving on screen is not enough',
     stored !== null && stored.cooldownMs === Number(EDITED.cooldown),
-    JSON.stringify(stored)
+    JSON.stringify(stored),
   )
 }
 
@@ -353,7 +371,11 @@ async function checkSuggestSearchSurvived(page: Page): Promise<void> {
   if (!(await focusCycle(page, 'e2e:focus-probe-2'))) return
   check('the suggestion picker is still open', (await countOf(page, SUGGEST)) === 1)
   const query = await valueOf(page, 'suggest-search')
-  check('…and the search the user typed is still in the box', query === 'type:buff', `read "${query}"`)
+  check(
+    '…and the search the user typed is still in the box',
+    query === 'type:buff',
+    `read "${query}"`,
+  )
   await page.keyboard.press('Escape')
   await settleGone(page, SUGGEST, { timeoutMs: 10_000 })
 }
@@ -362,7 +384,7 @@ async function checkSuggestSearchSurvived(page: Page): Promise<void> {
 function rowNames(page: Page): Promise<string[]> {
   return page.evaluate(
     (sel) => Array.from(document.querySelectorAll(sel)).map((n) => (n.textContent ?? '').trim()),
-    ROW_NAME
+    ROW_NAME,
   )
 }
 
@@ -374,24 +396,34 @@ async function checkApostropheSearch(page: Page): Promise<void> {
   await page.waitForSelector(SUGGEST, { timeout: 20_000 })
   // The catalog arrives over IPC, so the rows appear a beat after the paper does. Without this the
   // first query would race an empty list and report a miss that is only a timing artefact.
-  const mounted = await settle(() => rowNames(page).then((n) => n.length), (n) => n > 0, {
-    timeoutMs: 20_000
-  })
-  if (!check('the suggestion picker mounted its catalog rows', mounted > 0, `${String(mounted)} rows`)) {
+  const mounted = await settle(
+    () => rowNames(page).then((n) => n.length),
+    (n) => n > 0,
+    {
+      timeoutMs: 20_000,
+    },
+  )
+  if (
+    !check('the suggestion picker mounted its catalog rows', mounted > 0, `${String(mounted)} rows`)
+  ) {
     return
   }
 
   for (const [query, want] of APOSTROPHE_QUERIES) {
     await fill(page, 'suggest-search', query)
-    const names = await settle(() => rowNames(page), (list) => list.includes(want), {
-      timeoutMs: 15_000
-    })
+    const names = await settle(
+      () => rowNames(page),
+      (list) => list.includes(want),
+      {
+        timeoutMs: 15_000,
+      },
+    )
     check(
       `typing "${query}" finds ${want}`,
       names.includes(want),
       names.length === 0
         ? 'the picker showed no rows at all — the query reached nothing'
-        : `${String(names.length)} rows: ${names.slice(0, 4).join(', ')}`
+        : `${String(names.length)} rows: ${names.slice(0, 4).join(', ')}`,
     )
   }
 
@@ -429,7 +461,11 @@ async function main(): Promise<void> {
     // returns, but nothing after it should have to trust that (the JOS-151 precedent).
     await stepSuggestRowLayout(app, page, log)
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     if (failures.length) await dumpArtifacts(page, 'alert-dialog-focus-FAIL')
   } finally {
     await close()

@@ -27,7 +27,12 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 // Reuse the shared CESP→our-manifest conversion so registry installs (packRegistry.ts),
 // the runtime provisioner and this CLI produce byte-identical manifests.
-import { cespToManifestSounds, deriveSoundId, packBasename, type CespManifest } from '../src/main/sounds'
+import {
+  cespToManifestSounds,
+  deriveSoundId,
+  packBasename,
+  type CespManifest,
+} from '../src/main/sounds'
 // The pack list lives in ONE place, shared with the app's runtime self-provisioner.
 import { DEFAULT_PACKS, packRawBase } from '../src/main/data/defaultPacks'
 import type { RegistryPack } from '../src/shared/types'
@@ -55,11 +60,13 @@ async function fetchWithBackoff(url: string): Promise<Response> {
     try {
       res = await fetch(url)
       if (res.ok) return res
-      if (res.status < 500 && res.status !== 429) throw new Error(`GET ${url} → ${res.status} ${res.statusText}`)
+      if (res.status < 500 && res.status !== 429)
+        throw new Error(`GET ${url} → ${res.status} ${res.statusText}`)
     } catch (err) {
       if (attempt >= MAX_ATTEMPTS) throw err
     }
-    if (attempt >= MAX_ATTEMPTS) throw new Error(`GET ${url} → ${res?.status ?? 'network error'} (gave up)`)
+    if (attempt >= MAX_ATTEMPTS)
+      throw new Error(`GET ${url} → ${res?.status ?? 'network error'} (gave up)`)
     const waitMs = backoffMs(res, attempt)
     console.warn(`  … ${url} failed (attempt ${attempt}) — retrying in ${waitMs}ms`)
     await sleep(waitMs)
@@ -87,7 +94,7 @@ function firstNonEmpty(...values: (string | undefined)[]): string {
 async function downloadSounds(
   cesp: CespManifest,
   base: string,
-  soundsDir: string
+  soundsDir: string,
 ): Promise<{ downloaded: number; skipped: number }> {
   let downloaded = 0
   let skipped = 0
@@ -119,7 +126,9 @@ async function fetchPack(pack: RegistryPack): Promise<void> {
   // Convert with the SHARED helper + SHARED id derivation so the generated manifest
   // matches what an in-app install of the same tag produces.
   const taken = new Set<string>()
-  const manifestSounds = cespToManifestSounds(cesp, (category, file) => deriveSoundId(category, file, taken))
+  const manifestSounds = cespToManifestSounds(cesp, (category, file) =>
+    deriveSoundId(category, file, taken),
+  )
 
   const { downloaded, skipped } = await downloadSounds(cesp, base, soundsDir)
 
@@ -128,12 +137,12 @@ async function fetchPack(pack: RegistryPack): Promise<void> {
     name: firstNonEmpty(pack.display_name, cesp.display_name, pack.name),
     license: cesp.license ?? pack.license ?? 'see source repo',
     sounds: manifestSounds,
-    source: { repo: pack.source_repo, ref: pack.source_ref }
+    source: { repo: pack.source_repo, ref: pack.source_ref },
   }
   writeFileSync(join(packDir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n')
 
   console.log(
-    `${pack.name}: ${Object.keys(manifestSounds).length} sounds (${downloaded} downloaded, ${skipped} already present) → ${packDir}`
+    `${pack.name}: ${Object.keys(manifestSounds).length} sounds (${downloaded} downloaded, ${skipped} already present) → ${packDir}`,
   )
 }
 

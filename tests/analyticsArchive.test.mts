@@ -159,7 +159,10 @@ function fakeCluster(): { clients: Clients; tables: Map<string, Row[]>; sql: str
   const run = (text: string, params: unknown[]): Row[] => {
     const one = text.replace(/\s+/g, ' ').trim()
     sql.push(one)
-    const m = /^INSERT INTO (\w+) \(([^)]+)\) VALUES .* ON CONFLICT \(([^)]+)\) DO (?:UPDATE SET .+|NOTHING)$/.exec(one)
+    const m =
+      /^INSERT INTO (\w+) \(([^)]+)\) VALUES .* ON CONFLICT \(([^)]+)\) DO (?:UPDATE SET .+|NOTHING)$/.exec(
+        one,
+      )
     if (!m) throw new Error(`the fake cluster does not implement: ${one}`)
     const columns = m[2].split(',').map((s) => s.trim())
     const keys = m[3].split(',').map((s) => s.trim())
@@ -217,7 +220,9 @@ function lambdaStyleExport(tables: Record<string, Row[]>): string {
 
 test('a directory built the LAMBDA’s way restores through the operator’s importer, checksums and all', async () => {
   const dir = lambdaStyleExport({
-    usage_daily: [{ day: '2026-08-15', cohort: 'user', metric: 'sessionHeartbeat', dim: '-', n: 11 }],
+    usage_daily: [
+      { day: '2026-08-15', cohort: 'user', metric: 'sessionHeartbeat', dim: '-', n: 11 },
+    ],
     usage_daily_sharded: [
       { shard: 0, day: '2026-08-15', cohort: 'user', metric: 'sessionHeartbeat', dim: '-', n: 8 },
       { shard: 5, day: '2026-08-15', cohort: 'user', metric: 'sessionHeartbeat', dim: '-', n: 3 },

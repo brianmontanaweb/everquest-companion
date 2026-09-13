@@ -172,7 +172,7 @@ export function fit(bounds: MapBounds, vp: ViewportSize, pad = FIT_PAD): MapView
   return {
     cx: (bounds.minX + bounds.maxX) / 2,
     cy: (bounds.minY + bounds.maxY) / 2,
-    scale: fitScale(bounds, vp, pad)
+    scale: fitScale(bounds, vp, pad),
   }
 }
 
@@ -206,7 +206,7 @@ export function fit(bounds: MapBounds, vp: ViewportSize, pad = FIT_PAD): MapView
 export function project(view: MapView, vp: ViewportSize, p: MapPos): ScreenPos {
   return {
     px: vp.w / 2 + (p.x - view.cx) * view.scale,
-    py: vp.h / 2 + (p.y - view.cy) * view.scale
+    py: vp.h / 2 + (p.y - view.cy) * view.scale,
   }
 }
 
@@ -214,7 +214,7 @@ export function project(view: MapView, vp: ViewportSize, p: MapPos): ScreenPos {
 export function unproject(view: MapView, vp: ViewportSize, s: ScreenPos): MapPos {
   return {
     x: view.cx + (s.px - vp.w / 2) / view.scale,
-    y: view.cy + (s.py - vp.h / 2) / view.scale
+    y: view.cy + (s.py - vp.h / 2) / view.scale,
   }
 }
 
@@ -226,7 +226,7 @@ export function viewRect(view: MapView, vp: ViewportSize): ViewRect {
     minX: view.cx - halfW,
     maxX: view.cx + halfW,
     minY: view.cy - halfH,
-    maxY: view.cy + halfH
+    maxY: view.cy + halfH,
   }
 }
 
@@ -263,7 +263,7 @@ export function clampView(view: MapView, bounds: MapBounds, vp: ViewportSize): M
   return {
     cx: clampTo(view.cx, bounds.minX, bounds.maxX),
     cy: clampTo(view.cy, bounds.minY, bounds.maxY),
-    scale: clampScale(view.scale, bounds, vp)
+    scale: clampScale(view.scale, bounds, vp),
   }
 }
 
@@ -295,10 +295,10 @@ export function zoomAround(a: ZoomArgs): MapView {
     {
       cx: at.x - (a.anchor.px - a.vp.w / 2) / scale,
       cy: at.y - (a.anchor.py - a.vp.h / 2) / scale,
-      scale
+      scale,
     },
     a.bounds,
-    a.vp
+    a.vp,
   )
 }
 
@@ -315,7 +315,7 @@ export function panBy(view: MapView, bounds: MapBounds, vp: ViewportSize, d: Scr
   return clampView(
     { cx: view.cx - d.px / view.scale, cy: view.cy - d.py / view.scale, scale: view.scale },
     bounds,
-    vp
+    vp,
   )
 }
 
@@ -343,7 +343,7 @@ export function cullSegments(
   lines: MapLines,
   rect: ViewRect,
   layers: LayerMask,
-  out: Uint32Array
+  out: Uint32Array,
 ): number {
   const { coords, layer, count } = lines
   let n = 0
@@ -377,7 +377,7 @@ export interface VisiblePoint {
 export function visiblePoints(
   points: readonly MapPoint[],
   rect: ViewRect,
-  layers: LayerMask
+  layers: LayerMask,
 ): VisiblePoint[] {
   const out: VisiblePoint[] = []
   points.forEach((point, index) => {

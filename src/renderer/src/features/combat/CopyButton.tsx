@@ -34,7 +34,7 @@ import { Tooltip } from '../../lib/Tooltip'
  */
 export function CopyButton({
   getText,
-  title = 'Copy this view as text'
+  title = 'Copy this view as text',
 }: {
   getText: () => string
   title?: string
@@ -61,7 +61,7 @@ export function CopyButton({
         console.error('[everquest-companion:error] copy failed: nothing was written')
       },
       // eslint-disable-next-line no-console
-      (err: unknown) => console.error('[everquest-companion:error] copy failed', err)
+      (err: unknown) => console.error('[everquest-companion:error] copy failed', err),
     )
   }
   return (
@@ -75,7 +75,7 @@ export function CopyButton({
           alignSelf: 'center',
           flexShrink: 0,
           color: done ? 'success.main' : 'text.disabled',
-          '&:hover': { color: 'text.primary' }
+          '&:hover': { color: 'text.primary' },
         }}
       >
         {done ? <CheckIcon sx={{ fontSize: 15 }} /> : <ContentCopyIcon sx={{ fontSize: 15 }} />}

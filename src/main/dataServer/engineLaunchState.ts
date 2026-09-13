@@ -43,7 +43,7 @@ import type {
   EngineFaultSay,
   EngineLaunchPhase,
   EngineLaunchSay,
-  FoldSay
+  FoldSay,
 } from '../../shared/engineLaunch'
 import { ENGINE_LAUNCH_STARTING, foldFrameCounts } from '../../shared/engineLaunch'
 import type { FoldProgress } from '../../shared/dataServer/protocol.generated'
@@ -151,7 +151,7 @@ export function noteFoldProgress(progress: FoldProgress, at: number): void {
     offset: progress.offset,
     logSize: progress.logSize,
     events: progress.events,
-    at
+    at,
   }
   set({ phase: 'folding', fold, fault: null })
 }
@@ -179,8 +179,8 @@ export function noteEngineFault(cause: EngineFaultCause | null): void {
       // The paths are the actionable half of an absence and mean nothing for any other class, so
       // they are attached where they are true rather than carried on every fault.
       lookedIn: cause.kind === 'no-binary' ? lookedIn : [],
-      detail: cause.detail
-    }
+      detail: cause.detail,
+    },
   })
 }
 

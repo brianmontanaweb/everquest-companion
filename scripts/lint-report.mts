@@ -149,10 +149,7 @@ const FLOOR: Linter.Config[] = [
       complexity: ['error', { max: 0 }],
       'max-depth': ['error', { max: 0 }],
       'max-lines': ['error', { max: 0, skipBlankLines: true, skipComments: true }],
-      'max-lines-per-function': [
-        'error',
-        { max: 0, skipBlankLines: true, skipComments: true },
-      ],
+      'max-lines-per-function': ['error', { max: 0, skipBlankLines: true, skipComments: true }],
       'max-params': ['error', { max: 0 }],
     },
   },
@@ -331,7 +328,9 @@ function ratchetSource(byFile: Inventory, files: string[]): string {
       )
     }
     if (rules.length > 0) {
-      parts.push(`    rules: {\n${rules.map(([r, n]) => `      '${r}': 'off', // ${n}`).join('\n')}\n    },`)
+      parts.push(
+        `    rules: {\n${rules.map(([r, n]) => `      '${r}': 'off', // ${n}`).join('\n')}\n    },`,
+      )
     }
     return `  {\n${parts.join('\n')}\n  },`
   })
@@ -441,7 +440,9 @@ async function generateRatchet(): Promise<void> {
   writeFileSync(path.join(ROOT, 'lint-worklist.md'), worklistMarkdown(byFile, files))
   const entries = files.reduce((n, f) => n + (byFile.get(f)?.size ?? 0), 0)
   const violations = files.reduce((n, f) => n + countFor(byFile.get(f)), 0)
-  console.log(`ratchet: ${files.length} files, ${entries} file×rule entries, ${violations} violations`)
+  console.log(
+    `ratchet: ${files.length} files, ${entries} file×rule entries, ${violations} violations`,
+  )
   console.log('wrote eslint.ratchet.mjs + lint-worklist.md')
 }
 

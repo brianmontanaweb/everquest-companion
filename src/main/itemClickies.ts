@@ -110,13 +110,17 @@ let cached: { items: unknown; index: ClickyIndex } | undefined
 
 /** File one item's effects into the two tables. Separated from the walk so neither the branch
  *  count nor the nesting depth of `index()` depends on how many effect kinds there are. */
-function fileEffects(entry: { page: string; stats?: { effects: ItemEffect[] } }, into: ClickyIndex): void {
+function fileEffects(
+  entry: { page: string; stats?: { effects: ItemEffect[] } },
+  into: ClickyIndex,
+): void {
   for (const e of entry.stats?.effects ?? []) {
     const name = e.name.trim()
     if (!name) continue
     const spell = spellCanonKey(name)
     if (e.kind === 'combat' || e.kind === 'proc') into.combat.add(spell)
-    else if (e.kind === 'click' && INSTANT.test(e.detail ?? '')) push(into.byItem, itemKey(entry.page), spell)
+    else if (e.kind === 'click' && INSTANT.test(e.detail ?? ''))
+      push(into.byItem, itemKey(entry.page), spell)
   }
 }
 
@@ -150,7 +154,7 @@ function heldItemKey(raw: string): string {
     raw
       .replace(/\s*\(exaltation\)\s*$/i, '')
       .replace(/\*\s*$/, '')
-      .trim()
+      .trim(),
   )
 }
 

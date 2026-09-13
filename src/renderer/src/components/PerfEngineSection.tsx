@@ -32,7 +32,7 @@ import {
   formatEngineState,
   formatMicros,
   formatParity,
-  type EnginePerfSample
+  type EnginePerfSample,
 } from '@shared/enginePerf'
 import { formatCpu, formatMemory, formatMs } from '@shared/perf'
 import type { PerfBudget, PerfServeSource } from '@shared/dataServer/protocol.generated'
@@ -223,7 +223,7 @@ function freshness(sample: EnginePerfSample): string | null {
  * "this build has no engine" and "the engine is idle": the second is a row, the first is silence.
  */
 export default function PerfEngineSection({
-  sample
+  sample,
 }: {
   sample: EnginePerfSample | null
 }): JSX.Element | null {

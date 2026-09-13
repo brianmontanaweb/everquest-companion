@@ -38,7 +38,7 @@ import { spellCanonKey } from '../../shared/spellKey'
  */
 export function clientHpFor(
   table: SpellResistTable | null | undefined,
-  name: string
+  name: string,
 ): ClientHpFacts | undefined {
   if (!table) return undefined
   const info = table[spellCanonKey(name)]

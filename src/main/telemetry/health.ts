@@ -70,7 +70,7 @@ const zero = (): HealthDelta => ({
   suppressedErrorLines: 0,
   imageCacheReadFailures: 0,
   gpuProcessGone: 0,
-  utilityProcessGone: 0
+  utilityProcessGone: 0,
 })
 
 let pending: HealthDelta = zero()

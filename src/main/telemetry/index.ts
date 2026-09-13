@@ -24,7 +24,7 @@ export {
   platformOf,
   recordEvent,
   rotateAnalyticsId,
-  telemetryPayload
+  telemetryPayload,
 } from './collector'
 // The once-ever funnel marks. Producers (session.ts, ipc/speech.ts) reach them through here for
 // the same reason everything else does: the wiring may not reach around the façade.
@@ -33,7 +33,12 @@ export { markFunnelStep, observeFirstRun, recordFunnelFailure } from './funnels'
 // with ONE deliberate exception: `errorLog.ts` imports `./telemetry/health` DIRECTLY, because
 // importing this index would pull in `collector.ts`, which imports `errorLog.ts`. The leaf module
 // exists to make that one import safe; every other producer comes through here.
-export { noteParserStall, notePresenceRestart, noteRendererCrash, noteSpeechFailure } from './health'
+export {
+  noteParserStall,
+  notePresenceRestart,
+  noteRendererCrash,
+  noteSpeechFailure,
+} from './health'
 // THE SETUP SNAPSHOT (JOS-364) — the once-per-session reading of what this install and this
 // machine are. Armed by `perf.ts` when the startup replay finishes, through here like everything
 // else: the producer lives two files further in and no caller may reach past this line to it.
@@ -55,6 +60,6 @@ export {
   applyTelemetryEnabled,
   flushTelemetry,
   startTelemetry,
-  stopTelemetry
+  stopTelemetry,
 } from './flush'
 export { TELEMETRY_API_URL, telemetryEndpointConfigured, telemetryFlushEnabled } from './net'

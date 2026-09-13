@@ -38,7 +38,7 @@ const STACK: Stack = {
   triage_role_arn: 'arn:aws:iam::0:role/triage',
   lambda_role_arn: 'arn:aws:iam::0:role/submit',
   telemetry_lambda_role_arn: 'arn:aws:iam::0:role/telemetry',
-  api_url: 'https://example.invalid/v1/feedback'
+  api_url: 'https://example.invalid/v1/feedback',
 }
 
 /** A pg `Client` as far as this module uses one: an EventEmitter that answers `query`. */
@@ -66,7 +66,7 @@ function clientsOver(open: () => Promise<FakeClient>): { c: Clients; opened: Fak
       const fresh = await open()
       opened.push(fresh)
       return fresh as unknown as PgClient
-    }
+    },
   })
   return { c, opened }
 }
@@ -110,7 +110,9 @@ test('a FAILED connect is not cached — the next statement tries again', async 
   let attempt = 0
   const { c } = clientsOver(() => {
     attempt += 1
-    return attempt === 1 ? Promise.reject(new Error('ECONNREFUSED')) : Promise.resolve(new FakeClient())
+    return attempt === 1
+      ? Promise.reject(new Error('ECONNREFUSED'))
+      : Promise.resolve(new FakeClient())
   })
   await assert.rejects(() => c.query('SELECT 1'))
   await c.query('SELECT 1')
@@ -140,8 +142,16 @@ test('a connection failure is recognised by MESSAGE and by node system-error COD
 })
 
 test('a real SQLSTATE is NEVER a connection failure — the two paths must not steal each other', () => {
-  assert.equal(unreachable(Object.assign(new Error('column "cohort" does not exist'), { code: '42703' })), false)
-  assert.equal(unreachable(Object.assign(new Error('relation "usage_daily" does not exist'), { code: '42P01' })), false)
+  assert.equal(
+    unreachable(Object.assign(new Error('column "cohort" does not exist'), { code: '42703' })),
+    false,
+  )
+  assert.equal(
+    unreachable(
+      Object.assign(new Error('relation "usage_daily" does not exist'), { code: '42P01' }),
+    ),
+    false,
+  )
   assert.equal(unreachable(Object.assign(new Error('serialization'), { code: '40001' })), false)
   assert.equal(unreachable(new Error('permission denied for table report')), false)
   assert.equal(unreachable(undefined), false)
@@ -157,7 +167,7 @@ function failingWith(err: Error): Clients {
     execute: () => Promise.reject(err),
     s3: {},
     stack: STACK,
-    close: () => Promise.resolve()
+    close: () => Promise.resolve(),
   } as unknown as Clients
 }
 
@@ -186,6 +196,11 @@ test('a missing column still resolves to `missing`, naming it — the other degr
 })
 
 test('anything ELSE still throws — a degrade that swallowed everything would hide the next bug', async () => {
-  const denied = Object.assign(new Error('permission denied for table usage_daily'), { code: '42501' })
-  await assert.rejects(() => awsBackend(() => failingWith(denied)).analytics(30, false), /permission denied/)
+  const denied = Object.assign(new Error('permission denied for table usage_daily'), {
+    code: '42501',
+  })
+  await assert.rejects(
+    () => awsBackend(() => failingWith(denied)).analytics(30, false),
+    /permission denied/,
+  )
 })

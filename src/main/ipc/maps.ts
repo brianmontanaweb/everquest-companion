@@ -31,7 +31,7 @@ function safePrefs(raw: unknown): MapPackPrefs | false {
   if (labels != null && !isSafePackId(labels)) return false
   return {
     ...(geometry == null ? {} : { geometry }),
-    ...(labels == null ? {} : { labels })
+    ...(labels == null ? {} : { labels }),
   }
 }
 
@@ -70,7 +70,7 @@ export function registerMapsIpc(): void {
     return mapLibrary().search(query, {
       ...(zone == null ? {} : { zone: zone.toLowerCase() }),
       ...(typeof limit === 'number' ? { limit } : {}),
-      prefs: safe
+      prefs: safe,
     })
   })
 }

@@ -51,7 +51,19 @@
  * filename rule — load-bearing, see below — has one home whichever moment does the writing.
  */
 
-import { closeSync, copyFileSync, existsSync, fsyncSync, mkdirSync, mkdtempSync, openSync, symlinkSync, utimesSync, writeFileSync, writeSync } from 'node:fs'
+import {
+  closeSync,
+  copyFileSync,
+  existsSync,
+  fsyncSync,
+  mkdirSync,
+  mkdtempSync,
+  openSync,
+  symlinkSync,
+  utimesSync,
+  writeFileSync,
+  writeSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -152,13 +164,19 @@ function stageClientTables(installDir: string): void {
     { id: 341, name: 'Lifetap', category: 114, subcategory: 43, level: 1 },
     { id: 343, name: 'Siphon Strength', category: 114, subcategory: 76, level: 34 },
     { id: 500, name: 'Leech', category: 114, subcategory: 33, level: 49 },
-    { id: 600, name: 'Lightning Bolt', category: 25, subcategory: 0, level: 29 }
+    { id: 600, name: 'Lightning Bolt', category: 25, subcategory: 0, level: 29 },
   ]
     .map(row)
     .join('\n')
   writeFileSync(join(installDir, 'spells_us.txt'), `${spells}\n`, 'latin1')
   // `id^type^string^flag^`, type 5 being the spell-category namespace.
-  const dbstr = ['114^5^Taps^0^', '43^5^Health^0^', '76^5^Power Tap^0^', '33^5^Duration Tap^0^', '25^5^Direct Damage^0^'].join('\n')
+  const dbstr = [
+    '114^5^Taps^0^',
+    '43^5^Health^0^',
+    '76^5^Power Tap^0^',
+    '33^5^Duration Tap^0^',
+    '25^5^Direct Damage^0^',
+  ].join('\n')
   writeFileSync(join(installDir, 'dbstr_us.txt'), `${dbstr}\n`, 'latin1')
 }
 
@@ -282,7 +300,7 @@ export function stageFixture(
     /** a committed `/outputfile achievements` dump to stage beside the executable (JOS-429) */
     achievements?: string
     others?: Readonly<Record<string, string>>
-  } = {}
+  } = {},
 ): FixtureLog {
   const source = join(FIXTURES, fixture)
   if (!existsSync(source)) {
@@ -335,7 +353,7 @@ export function stageFixture(
     others,
     append: (...messages: readonly string[]): number => appendAt(new Date(), ...messages),
     appendAt,
-    dispose: (): Promise<void> => removeUserData(installDir)
+    dispose: (): Promise<void> => removeUserData(installDir),
   }
 }
 
@@ -371,7 +389,7 @@ function stagingOpts(opts: {
     ...(opts.clientTables === undefined ? {} : { clientTables: opts.clientTables }),
     ...(opts.inventory === undefined ? {} : { inventory: opts.inventory }),
     ...(opts.achievements === undefined ? {} : { achievements: opts.achievements }),
-    ...(opts.others === undefined ? {} : { others: opts.others })
+    ...(opts.others === undefined ? {} : { others: opts.others }),
   }
 }
 
@@ -422,7 +440,7 @@ export async function launchOnFixture(
      */
     waitForEngine?: boolean
     others?: Readonly<Record<string, string>>
-  } = {}
+  } = {},
 ): Promise<FixtureLaunch> {
   const owned = typeof fixture === 'string'
   const log = owned ? stageFixture(fixture, stagingOpts(opts)) : fixture
@@ -430,7 +448,7 @@ export async function launchOnFixture(
     installDir: log.installDir,
     ...(opts.userData === undefined ? {} : { userData: opts.userData }),
     ...(opts.env === undefined ? {} : { env: opts.env }),
-    ...(opts.cwd === undefined ? {} : { cwd: opts.cwd })
+    ...(opts.cwd === undefined ? {} : { cwd: opts.cwd }),
   })
   // See `waitForEngine`: bounded, quiet on expiry, and the reason sixty specs did not each grow a
   // wait of their own.
@@ -441,6 +459,6 @@ export async function launchOnFixture(
     close: async (): Promise<void> => {
       await launched.close()
       if (owned) await log.dispose()
-    }
+    },
   }
 }

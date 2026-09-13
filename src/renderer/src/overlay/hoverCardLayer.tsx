@@ -46,7 +46,7 @@ interface Placement {
 export function HoverCardLayer({
   anchor,
   onDismiss,
-  children
+  children,
 }: {
   anchor: HTMLElement
   /** the anchor row's own "no card" setter — the same one its `mouseleave` calls. */
@@ -83,7 +83,12 @@ export function HoverCardLayer({
       // This is the ONLY layer that converts: the selector popup hangs off the header, which is
       // unscaled chrome, so it measures and places in one space (overlayScale.tsx).
       const z = overlayCssZoom(el)
-      const next: Placement = { left: left / z, top: top / z, maxW: (vw - 2 * m) / z, maxH: (vh - 2 * m) / z }
+      const next: Placement = {
+        left: left / z,
+        top: top / z,
+        maxW: (vw - 2 * m) / z,
+        maxH: (vh - 2 * m) / z,
+      }
       setPos((p) =>
         p &&
         Math.abs(p.left - next.left) < 0.5 &&
@@ -91,7 +96,7 @@ export function HoverCardLayer({
         p.maxW === next.maxW &&
         p.maxH === next.maxH
           ? p
-          : next
+          : next,
       )
     }
     place()
@@ -121,7 +126,7 @@ export function HoverCardLayer({
         pointerEvents: 'none',
         maxWidth: pos?.maxW,
         maxHeight: pos?.maxH,
-        overflow: 'hidden'
+        overflow: 'hidden',
       }}
     >
       {children}

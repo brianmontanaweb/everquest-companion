@@ -55,7 +55,7 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import type { CarryAll as CarryAllData, CarryRow } from '@shared/carryAll'
 import { EQ_ITEM_COLORS } from '../../lib/ItemWindow'
@@ -78,8 +78,8 @@ const FIXED_ROW = {
     maxHeight: ROW_HEIGHT,
     whiteSpace: 'nowrap',
     overflow: 'hidden',
-    textOverflow: 'ellipsis'
-  }
+    textOverflow: 'ellipsis',
+  },
 } as const
 
 /**
@@ -127,7 +127,7 @@ function LaneChips({
   lanes,
   lane,
   total,
-  onPick
+  onPick,
 }: {
   lanes: CarryAllData['lanes']
   lane: string | null
@@ -189,7 +189,7 @@ export default function CarryAll({ carry }: { carry: CarryAllData }): JSX.Elemen
     const q = normalizeQuery(deferred)
     // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives CarryRow. Becomes a view descriptor when the source lands.
     return carry.rows.filter(
-      (r) => (lane === null || r.lane === lane) && (q === '' || r.searchKey.includes(q))
+      (r) => (lane === null || r.lane === lane) && (q === '' || r.searchKey.includes(q)),
     )
   }, [carry.rows, lane, deferred])
 
@@ -212,7 +212,12 @@ export default function CarryAll({ carry }: { carry: CarryAllData }): JSX.Elemen
       //     carries and the same one whose absence is always the bug.
       sx={{ p: 1, display: 'flex', flexDirection: 'column', flex: '1 0 360px', minHeight: 0 }}
     >
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }} sx={{ mb: 0.75 }}>
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        spacing={1}
+        alignItems={{ md: 'center' }}
+        sx={{ mb: 0.75 }}
+      >
         <Typography variant="subtitle2" sx={{ flexShrink: 0 }}>
           Everything you carry
         </Typography>
@@ -248,7 +253,7 @@ export default function CarryAll({ carry }: { carry: CarryAllData }): JSX.Elemen
           overflow: 'auto',
           border: 1,
           borderColor: 'divider',
-          borderRadius: 1
+          borderRadius: 1,
         }}
       >
         <Table size="small" stickyHeader sx={FIXED_TABLE} data-testid="character-carry-table">

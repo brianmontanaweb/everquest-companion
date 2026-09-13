@@ -23,7 +23,12 @@
 // RELATIVE value import, like procRows.ts and mobSearch.ts: this module is imported by node
 // tests (tests/combatPerMobGhosts.test.mts), which resolve no `@shared/*` alias for values.
 import { LIVE_FIGHT } from '../../../../shared/fightSelection'
-import { abilityMultiAttack, abilityRiposte, type AbilityMulti, type AbilityRiposte } from './abilityStats'
+import {
+  abilityMultiAttack,
+  abilityRiposte,
+  type AbilityMulti,
+  type AbilityRiposte,
+} from './abilityStats'
 import { groupSpellComponents, mergeGroup, rankRows } from './skillGroups'
 import type {
   DamageCategory,
@@ -31,7 +36,7 @@ import type {
   SkillView,
   SourceView,
   TimelineView,
-  ZoneSessionSummary
+  ZoneSessionSummary,
 } from '@shared/combat'
 
 /** A skill row tagged with the category it was rolled up under (the color key). */
@@ -114,7 +119,8 @@ export function groupSlay(rows: SkillRow[]): SkillRow[] {
  * OPTIONAL, not required: a token written by a build before JOS-240 carries no name, and reads
  * exactly as it always did. The `target` arm needs none — a mob drill was always keyed by NAME.
  */
-export type Drill = { kind: 'entity'; entityId: string; name?: string } | { kind: 'target'; target: string }
+export type Drill =
+  { kind: 'entity'; entityId: string; name?: string } | { kind: 'target'; target: string }
 
 /**
  * The drill token as the ROW BUILDER wants it (`petRows.meterPanel`). The mob arm is not a source
@@ -142,7 +148,9 @@ export function meterDrill(drill: Drill | null): { entityId: string; name?: stri
  */
 export function flattenSkills(e: SourceView): SkillRow[] {
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives CategoryView. Becomes a view descriptor when the source lands.
-  const rows: FlatSkill[] = e.categories.flatMap((c) => c.skills.map((s) => ({ ...s, category: c.category })))
+  const rows: FlatSkill[] = e.categories.flatMap((c) =>
+    c.skills.map((s) => ({ ...s, category: c.category })),
+  )
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives FlatSkill. Becomes a view descriptor when the source lands.
   rows.sort((a, b) => b.total - a.total || b.hits - a.hits || a.name.localeCompare(b.name))
   const max = Math.max(1, ...rows.map((r) => r.total))
@@ -159,9 +167,9 @@ export function flattenSkills(e: SourceView): SkillRow[] {
         // Riposte damage is a SUBSET of the ability it rides (JOS-354): stated inside the
         // auto-attack row's expansion, never given a bar of its own, because the damage is
         // already in that bar's total.
-        riposte: abilityRiposte(e, r.name, r.category)
-      }))
-    )
+        riposte: abilityRiposte(e, r.name, r.category),
+      })),
+    ),
   )
 }
 
@@ -210,7 +218,7 @@ export function approxNote(tl: TimelineView): ApproxNote | null {
     shown: tl.events.length,
     of: tl.totalCount,
     downsampled: tl.downsampled,
-    truncated: tl.truncated
+    truncated: tl.truncated,
   }
 }
 
@@ -361,7 +369,7 @@ export function buildDpsSeries(tl: TimelineView, live = false): DpsSeries {
     durationMs,
     // A truncated ring is inexact even at scale 1 (the curve simply has no data before the
     // retained window starts), so the flag is the loss predicate, not the scale.
-    estimated: isApproximate(tl)
+    estimated: isApproximate(tl),
   }
 }
 
@@ -560,7 +568,18 @@ export function skillsForTarget(tl: TimelineView, target: string): TargetDetail 
     const key = `${e.category}|${e.lane}`
     let row = byLane.get(key)
     if (!row) {
-      row = { name: e.lane, category: e.category, total: 0, pct: 0, hits: 0, crits: 0, max: 0, min: 0, misses: 0, resists: 0 }
+      row = {
+        name: e.lane,
+        category: e.category,
+        total: 0,
+        pct: 0,
+        hits: 0,
+        crits: 0,
+        max: 0,
+        min: 0,
+        misses: 0,
+        resists: 0,
+      }
       byLane.set(key, row)
     }
     foldTargetEvent(row, e, t)
@@ -582,7 +601,7 @@ export function skillsForTarget(tl: TimelineView, target: string): TargetDetail 
     crits: Math.round(t.crits * scale),
     misses: Math.round(t.misses * scale),
     resists: Math.round(t.resists * scale),
-    estimated: isApproximate(tl)
+    estimated: isApproximate(tl),
   }
 }
 
@@ -677,7 +696,7 @@ export function fightScopeOptions(segments: SegmentSummary[]): ScopeOptions {
     dps: headSeg.dps,
     startTs: headSeg.startTs,
     durationSec: headSeg.durationSec,
-    live: !!open
+    live: !!open,
   }
   const rest = (open ? finalized : finalized.slice(1)).map((s) => ({
     value: s.id,
@@ -686,7 +705,7 @@ export function fightScopeOptions(segments: SegmentSummary[]): ScopeOptions {
     dps: s.dps,
     startTs: s.startTs,
     durationSec: s.durationSec,
-    live: false
+    live: false,
   }))
   return { head, rest }
 }
@@ -717,7 +736,7 @@ export function overallScopeOptions(zoneSessions: ZoneSessionSummary[]): ScopeOp
     dps: z.dps,
     startTs: z.startTs,
     durationSec: z.live ? 0 : Math.max(1, (z.endTs - z.startTs) / 1000),
-    live: z.live
+    live: z.live,
   })
   const liveZone = zoneSessions.find((z) => z.live) ?? null
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives ZoneSessionSummary. Becomes a view descriptor when the source lands.
@@ -760,7 +779,7 @@ export function isLiveSelection(head: ScopeOption | null, selection: string): bo
 export function scopeOptions(
   scope: CombatScope,
   segments: SegmentSummary[],
-  zoneSessions: ZoneSessionSummary[]
+  zoneSessions: ZoneSessionSummary[],
 ): ScopeOptions {
   return scope === 'fight' ? fightScopeOptions(segments) : overallScopeOptions(zoneSessions)
 }
@@ -776,8 +795,10 @@ export function composition(e: SourceView): CompositionSlice[] {
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives CategoryView. Becomes a view descriptor when the source lands.
   const total = e.categories.reduce((n, c) => n + c.total, 0)
   if (total <= 0) return []
-  return e.categories
-    // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives CategoryView. Becomes a view descriptor when the source lands.
-    .filter((c) => c.total > 0)
-    .map((c) => ({ category: c.category, total: c.total, pct: (c.total / total) * 100 }))
+  return (
+    e.categories
+      // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives CategoryView. Becomes a view descriptor when the source lands.
+      .filter((c) => c.total > 0)
+      .map((c) => ({ category: c.category, total: c.total, pct: (c.total / total) * 100 }))
+  )
 }

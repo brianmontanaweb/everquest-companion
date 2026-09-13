@@ -161,11 +161,18 @@ export function priorLog(axis: ResistAxis, mobLevel: number | null): (R: number)
  * lives in `resistFit.ts`.
  */
 export function fitTerms(terms: Term[], prior: (R: number) => number): GridFit {
-  return gridFit((R) => totalLogL(terms, R) + prior(R), (R) => expectedResists(terms, R), obsResists(terms))
+  return gridFit(
+    (R) => totalLogL(terms, R) + prior(R),
+    (R) => expectedResists(terms, R),
+    obsResists(terms),
+  )
 }
 
 /** The debuff amount one slot delivers on this axis at this caster level. */
-function slotAmount(slot: { base: number; calc: number; max: number }, level: number | null): number {
+function slotAmount(
+  slot: { base: number; calc: number; max: number },
+  level: number | null,
+): number {
   const base = Math.abs(slot.base)
   const max = Math.abs(slot.max)
   const lvl = level ?? 60
@@ -187,7 +194,7 @@ export function debuffAmount(
   debuffs: string,
   axis: ResistAxis,
   level: number | null,
-  spells: SpellResistTable
+  spells: SpellResistTable,
 ): number {
   if (debuffs === '') return 0
   let total = 0
@@ -240,7 +247,9 @@ export function rowTerm(row: ResistRow, ctx: RowCtx): Term | null {
   }
   // A DoT OR A PROC LANDS OR IS REFUSED, so its damage lines are LANDINGS and the clean Bernoulli
   // is the right likelihood for them (JOS-387; see `PARTIAL_FREE_AT`).
-  if (kind === 'aon') return { kind: 'aon', offset, resist: row.resist, land: total + row.land, weight: 1 }
-  if (kind === 'ddFix') return { kind: 'ddFix', offset, full, partial, resist: row.resist, weight: 1 }
+  if (kind === 'aon')
+    return { kind: 'aon', offset, resist: row.resist, land: total + row.land, weight: 1 }
+  if (kind === 'ddFix')
+    return { kind: 'ddFix', offset, full, partial, resist: row.resist, weight: 1 }
   return { kind: 'ddVar', offset, land: total + row.land, resist: row.resist, weight: 1 }
 }

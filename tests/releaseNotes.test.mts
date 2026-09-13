@@ -29,7 +29,7 @@ import {
   releaseNotesProblems,
   variantLastSeen,
   whatsNewState,
-  type ReleaseNote
+  type ReleaseNote,
 } from '../src/shared/releaseNotes'
 
 // A small fixture list so the derivation tests do not move every time a release ships.
@@ -38,7 +38,7 @@ const NOTES: readonly ReleaseNote[] = [
   { version: '0.7.0', date: '2026-08-07', entries: [{ kind: 'fixed', text: 'Seven.' }] },
   { version: '0.6.3', date: '2026-08-06', entries: [{ text: 'Six three.' }] },
   { version: '0.6.2', date: '2026-08-05', entries: [{ text: 'Six two.' }] },
-  { version: '0.6.1', date: '2026-08-05', entries: [{ text: 'Six one.' }] }
+  { version: '0.6.1', date: '2026-08-05', entries: [{ text: 'Six one.' }] },
 ]
 
 // ---------------------------------------------------------------- the data
@@ -61,31 +61,37 @@ test('releaseNotesProblems CATCHES the mistakes this file will actually acquire'
   assert.match(
     bad([
       { version: '0.7.0', date: '2026-08-07', entries: [{ text: 'a' }] },
-      { version: '0.8.0', date: '2026-08-07', entries: [{ text: 'b' }] }
+      { version: '0.8.0', date: '2026-08-07', entries: [{ text: 'b' }] },
     ]),
-    /newest first/
+    /newest first/,
   )
   // A duplicated version — "strictly below" is what rejects it.
   assert.match(
     bad([
       { version: '0.8.0', date: '2026-08-07', entries: [{ text: 'a' }] },
-      { version: '0.8.0', date: '2026-08-07', entries: [{ text: 'b' }] }
+      { version: '0.8.0', date: '2026-08-07', entries: [{ text: 'b' }] },
     ]),
-    /strictly below/
+    /strictly below/,
   )
   // A date in the wrong format, an empty release, an empty line, an invented kind.
-  assert.match(bad([{ version: '0.8.0', date: '08/07/2026', entries: [{ text: 'a' }] }]), /YYYY-MM-DD/)
+  assert.match(
+    bad([{ version: '0.8.0', date: '08/07/2026', entries: [{ text: 'a' }] }]),
+    /YYYY-MM-DD/,
+  )
   assert.match(bad([{ version: '0.8.0', date: '2026-08-07', entries: [] }]), /no entries/)
-  assert.match(bad([{ version: '0.8.0', date: '2026-08-07', entries: [{ text: '  ' }] }]), /no text/)
+  assert.match(
+    bad([{ version: '0.8.0', date: '2026-08-07', entries: [{ text: '  ' }] }]),
+    /no text/,
+  )
   assert.match(
     bad([
       {
         version: '0.8.0',
         date: '2026-08-07',
-        entries: [{ kind: 'improved' as 'new', text: 'a' }]
-      }
+        entries: [{ kind: 'improved' as 'new', text: 'a' }],
+      },
     ]),
-    /unknown kind/
+    /unknown kind/,
   )
   // fromReport is a FLAG: present means true. A stored `false` would read as "we checked and it
   // wasn't a report", which is a claim this file has no way to make.
@@ -94,10 +100,10 @@ test('releaseNotesProblems CATCHES the mistakes this file will actually acquire'
       {
         version: '0.8.0',
         date: '2026-08-07',
-        entries: [{ text: 'a', fromReport: false }]
-      }
+        entries: [{ text: 'a', fromReport: false }],
+      },
     ]),
-    /fromReport is a flag/
+    /fromReport is a flag/,
   )
   assert.match(bad([]), /empty/)
 })
@@ -130,7 +136,7 @@ const INTRODUCTIONS: readonly { version: string; bullets: number }[] = [
   // 0.4.0: the exaltation planner (3) and the celebration cards (3).
   { version: '0.4.0', bullets: 3 },
   // 0.3.0: in-app feedback (3).
-  { version: '0.3.0', bullets: 3 }
+  { version: '0.3.0', bullets: 3 },
 ]
 
 /** The cap the owner set: an introduction may spend at most five bullets on itself. */
@@ -140,7 +146,7 @@ test('an introduction stays under the five-bullet cap', () => {
   for (const i of INTRODUCTIONS) {
     assert.ok(
       i.bullets >= 2 && i.bullets <= MAX_INTRODUCTION_BULLETS,
-      `v${i.version}'s introduction spends ${String(i.bullets)} bullets — the rule is 2 to ${String(MAX_INTRODUCTION_BULLETS)}`
+      `v${i.version}'s introduction spends ${String(i.bullets)} bullets — the rule is 2 to ${String(MAX_INTRODUCTION_BULLETS)}`,
     )
   }
 })
@@ -157,8 +163,16 @@ test('a release states one change per bullet, and multi-change releases have sev
   }
   // …and the releases that introduced a surface are LARGER, by exactly the extra bullets those
   // introductions spend. Pinned as totals so a surface's prose cannot quietly grow unbounded.
-  assert.equal(counts.get('0.9.0'), 9, 'five changes, two of them introductions worth 3 bullets each')
-  assert.equal(counts.get('0.4.0'), 8, 'four changes, two of them introductions worth 3 bullets each')
+  assert.equal(
+    counts.get('0.9.0'),
+    9,
+    'five changes, two of them introductions worth 3 bullets each',
+  )
+  assert.equal(
+    counts.get('0.4.0'),
+    8,
+    'four changes, two of them introductions worth 3 bullets each',
+  )
   assert.equal(counts.get('0.3.0'), 6, 'four changes, one of them an introduction worth 3 bullets')
   // Releases that genuinely did one thing stay at one bullet — padding them would be inventing.
   for (const v of ['0.6.1', '0.3.4', '0.3.2', '0.2.1']) {
@@ -186,11 +200,11 @@ test('a release note bullet is short: three sentences and 320 characters at most
       const sentences = sentencesOf(entry.text)
       assert.ok(
         sentences <= MAX_NOTE_SENTENCES,
-        `v${note.version}: ${String(sentences)} sentences in one bullet — outcome, cause, change; a second visible thing is a second bullet: "${entry.text.slice(0, 60)}…"`
+        `v${note.version}: ${String(sentences)} sentences in one bullet — outcome, cause, change; a second visible thing is a second bullet: "${entry.text.slice(0, 60)}…"`,
       )
       assert.ok(
         entry.text.length <= MAX_NOTE_CHARS,
-        `v${note.version}: ${String(entry.text.length)} characters in one bullet (ceiling ${String(MAX_NOTE_CHARS)}): "${entry.text.slice(0, 60)}…"`
+        `v${note.version}: ${String(entry.text.length)} characters in one bullet (ceiling ${String(MAX_NOTE_CHARS)}): "${entry.text.slice(0, 60)}…"`,
       )
     }
   }
@@ -200,7 +214,7 @@ test('a release note bullet is short: three sentences and 320 characters at most
 
 test('THANKS IS EARNED: only tagged entries carry the flag, and only tagged releases thank', () => {
   const tagged = new Map(
-    RELEASE_NOTES.map((n) => [n.version, n.entries.filter((e) => e.fromReport === true).length])
+    RELEASE_NOTES.map((n) => [n.version, n.entries.filter((e) => e.fromReport === true).length]),
   )
   // The releases whose work traceably came from player reports (each cited in the commit that
   // did it — a report id, "the YouTube report", "Mac/CrossOver user report").
@@ -212,7 +226,17 @@ test('THANKS IS EARNED: only tagged entries carry the flag, and only tagged rele
   assert.equal(tagged.get('0.5.0'), 1)
   // …and everything else is UNTAGGED. An unearned thanks costs more than a missing one, so the
   // releases whose defects the owner found himself (0.3.4's charm broadcast) do not claim one.
-  for (const v of ['0.6.2', '0.4.0', '0.3.5', '0.3.4', '0.3.2', '0.3.1', '0.3.0', '0.2.1', '0.2.0']) {
+  for (const v of [
+    '0.6.2',
+    '0.4.0',
+    '0.3.5',
+    '0.3.4',
+    '0.3.2',
+    '0.3.1',
+    '0.3.0',
+    '0.2.1',
+    '0.2.0',
+  ]) {
     assert.equal(tagged.get(v), 0, `v${v} has no traceable report behind it and must not thank`)
   }
 })
@@ -222,7 +246,7 @@ test('hasReportedEntry decides the thanks line, and agrees with the entries', ()
     assert.equal(
       hasReportedEntry(n),
       n.entries.some((e) => e.fromReport === true),
-      `v${n.version}`
+      `v${n.version}`,
     )
   }
   assert.equal(hasReportedEntry(RELEASE_NOTES.find((n) => n.version === '0.8.0')!), true)
@@ -282,7 +306,11 @@ test('a one-release upgrade marks one release and names it', () => {
 test('A→D: 0.6.3 landing on 0.8.0 marks BOTH 0.7.0 and 0.8.0, and the teaser names only the newest', () => {
   const s = whatsNewState('0.6.3', NOTES)
   assert.deepEqual(s.newVersions, ['0.8.0', '0.7.0'], 'newest first, everything since last seen')
-  assert.equal(s.teaserVersion, '0.8.0', 'one line about where you landed, not a list of what you missed')
+  assert.equal(
+    s.teaserVersion,
+    '0.8.0',
+    'one line about where you landed, not a list of what you missed',
+  )
 })
 
 test('an install already on the newest release has nothing new and no teaser', () => {
@@ -312,7 +340,7 @@ test('the DEV variant control drives exactly the three states, from the notes th
     '0.8.0',
     '0.7.0',
     '0.6.3',
-    '0.6.2'
+    '0.6.2',
   ])
 })
 

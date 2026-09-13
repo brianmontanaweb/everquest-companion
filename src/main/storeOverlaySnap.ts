@@ -17,7 +17,11 @@
 // shared/overlaySnap.ts beside the pure functions. This file is storage and nothing else.
 
 import { settingsStore } from './store'
-import { mergeOverlaySnap, normalizeOverlaySnap, type OverlaySnapPrefs } from '../shared/overlaySnap'
+import {
+  mergeOverlaySnap,
+  normalizeOverlaySnap,
+  type OverlaySnapPrefs,
+} from '../shared/overlaySnap'
 
 /** The stored blob, defaulted — and, while the release hold stands, false whatever it says
  *  (JOS-359; the clamp is in `normalizeOverlaySnap`). Never throws, never returns a partial. */

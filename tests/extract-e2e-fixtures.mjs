@@ -54,7 +54,7 @@ const LEVELING_KEEP = [
   /has been slain by|You have slain /,
   // The self /who — the ONLY line that states the class loadout, and what the combo module
   // needs before "New at this level" can name a loadout instead of refusing.
-  /^\[[^\]]+\] \[\d+ [A-Z]{3}(?:\/[A-Z]{3})*\] Primitive /
+  /^\[[^\]]+\] \[\d+ [A-Z]{3}(?:\/[A-Z]{3})*\] Primitive /,
 ]
 
 /** A world-only slice: where you are and what you killed. Enough to mount every feature view. */
@@ -62,7 +62,7 @@ const WORLD_KEEP = [
   /You have entered /,
   /You gain (?:party )?experience/,
   /has been slain by|You have slain /,
-  /--You have looted/
+  /--You have looted/,
 ]
 
 /**
@@ -74,82 +74,82 @@ const FIXTURES_SPEC = [
   {
     out: 'e2e-combat.log',
     why: 'combat-dashboard: two credited kills (a fire giant warrior, Lord Nagafen), three zone lines (so the selector has finalized zone sessions AND finalized fights), three loot lines, procs, stances, heals.',
-    spans: [[1396400, 1399240]]
+    spans: [[1396400, 1399240]],
   },
   {
     out: 'e2e-overview.log',
     why: 'overview: a credited Lord Nagafen kill with damage (the DPS card), two loot lines (the drops feed + its deep link into the Loot pane) and two zone lines (the zone strip).',
-    spans: [[1393700, 1394400]]
+    spans: [[1393700, 1394400]],
   },
   {
     out: 'e2e-deep-link.log',
     why: 'deep-link-back: the Overview needs a DROP row and a KILL row to click through, so this is the tightest slice that has both — two loot lines off a credited Lord Nagafen kill, plus the zone lines around them.',
-    spans: [[1393850, 1394200]]
+    spans: [[1393850, 1394200]],
   },
   {
     out: 'e2e-timeline.log',
     why: 'timeline: one long Lord Nagafen fight with a dense per-event ring — the timeline needs a selection that HAS a ring — plus the zone changes that finalize it.',
-    spans: [[1398000, 1399240]]
+    spans: [[1398000, 1399240]],
   },
   {
     out: 'e2e-copy.log',
     why: 'copy: a single dense fight, so the meter always has rows to serialize and a copy affordance to click.',
-    spans: [[1397000, 1398200]]
+    spans: [[1397000, 1398200]],
   },
   {
     out: 'e2e-overlay.log',
     why: 'overlay-sync: at least one FINALIZED fight (the fire giant warrior dies mid-slice) for the cross-window selection steps, and bars for the overlay drill.',
-    spans: [[1396800, 1398400]]
+    spans: [[1396800, 1398400]],
   },
   {
     out: 'e2e-leveling.log',
     why: 'leveling: three dings (48→50), seventeen AA gains and five purchases (the ledger + its reconciliation identity), 47 zone lines (the band strip and the range panel’s zone rows), experience and kill lines (the range panel’s hero cards) — plus the Jul 31 self /who, the ONE line that states the class loadout the unlock panel computes against.',
     spans: [
       [782732, 782732],
-      [1240000, 1382000]
+      [1240000, 1382000],
     ],
-    keep: LEVELING_KEEP
+    keep: LEVELING_KEEP,
   },
   {
     out: 'e2e-maps.log',
     why: 'maps: the zone lines alone. The last one (The Southern Desert of Ro) is the zone the viewer must auto-open, and it is a zone every EQ map pack ships.',
     spans: [[1399150, 1399300]],
-    keep: WORLD_KEEP
+    keep: WORLD_KEEP,
   },
   {
     out: 'e2e-planner.log',
     why: 'planner: the pane is computed from the committed item DB, so this only has to make the app have a character at all — the smallest world slice there is.',
     spans: [[1399150, 1399300]],
-    keep: WORLD_KEEP
+    keep: WORLD_KEEP,
   },
   {
     out: 'e2e-feedback.log',
     why: 'feedback: a DENSE tail. main’s slice anchors on the last timestamped line and windows BACKWARDS from it (never Date.now()), so what this fixture has to guarantee is that the minutes before its final line are full — a slice window that lands in a quiet stretch produces the honest "nothing to send" state and asserts nothing.',
-    spans: [[1398500, 1399240]]
+    spans: [[1398500, 1399240]],
   },
   {
     out: 'e2e-perf.log',
     why: 'perf: a slice with enough events that the replay phase is a real phase (eventsReplayed > 0) without making the launch wait on one.',
-    spans: [[1397500, 1398600]]
+    spans: [[1397500, 1398600]],
   },
   {
     out: 'e2e-telemetry.log',
     why: 'telemetry: four launches, none of which reads the log at all — the smallest world slice keeps all four fast.',
     spans: [[1399150, 1399300]],
-    keep: WORLD_KEEP
+    keep: WORLD_KEEP,
   },
   {
     out: 'e2e-toast.log',
     why: 'toast: the deep links need a mounted feature view and nothing else from the log.',
     spans: [[1399150, 1399300]],
-    keep: WORLD_KEEP
+    keep: WORLD_KEEP,
   },
   {
     out: 'e2e-voice.log',
     why: 'voice-alerts: alerts are seeded from the store, not the log; this only has to make the app have a character.',
     spans: [[1399150, 1399300]],
-    keep: WORLD_KEEP
-  }
+    keep: WORLD_KEEP,
+  },
 ]
 
 /** Cut one fixture and report what it actually captured, so a moved span is visible. */
@@ -167,7 +167,9 @@ function emit({ out, spans, keep }) {
   writeFileSync(join(FIXTURES, out), `${seg.join('\n')}\n`)
   const kb = Math.round(seg.join('\n').length / 1024)
   console.log(`${out}: ${seg.length} lines (${kb} KB)`)
-  console.log(`  from ${seg[0]?.slice(0, 26) ?? '?'}  to ${seg[seg.length - 1]?.slice(0, 26) ?? '?'}`)
+  console.log(
+    `  from ${seg[0]?.slice(0, 26) ?? '?'}  to ${seg[seg.length - 1]?.slice(0, 26) ?? '?'}`,
+  )
 }
 
 for (const f of FIXTURES_SPEC) emit(f)

@@ -32,7 +32,7 @@ import {
   mergeOverlayBgAlpha,
   normalizeOverlayBgAlpha,
   stepBgAlpha,
-  storedSharedBgAlpha
+  storedSharedBgAlpha,
 } from '../src/shared/overlayBgAlpha'
 // The SHARE half lives here rather than in tests/shareProfiles.test.mts, which is at the
 // 400-code-line factoring ceiling: this is the file about what this preference is, and how it
@@ -41,7 +41,7 @@ import {
   buildSettingsBody,
   makeEnvelope,
   planScalarChanges,
-  type SettingsBundleBody
+  type SettingsBundleBody,
 } from '../src/shared/profiles'
 import { decodeShareString, encodeShareString } from '../src/main/shareCodec'
 
@@ -96,7 +96,10 @@ test('in-range values survive, and float dust does not accumulate', () => {
 
 test('the grid is coarser than the slider, and a whole number of percent', () => {
   assert.equal(BG_ALPHA_PREF_STEP, 0.05)
-  assert.ok(BG_ALPHA_PREF_STEP > BG_ALPHA_STEP, 'a stepper notch must be bigger than a slider notch')
+  assert.ok(
+    BG_ALPHA_PREF_STEP > BG_ALPHA_STEP,
+    'a stepper notch must be bigger than a slider notch',
+  )
   // The overlays' own sliders are untouched: this is a second, coarser way to move the same value.
   assert.equal(BG_ALPHA_STEP, 0.02)
 })
@@ -163,7 +166,11 @@ test('a patch that names one field keeps the other — a switch flip cannot rese
   assert.deepEqual(mergeOverlayBgAlpha({ shared: 'faint', independent: 1 }, base), base)
   // With no base at all it is a normalize, which is what makes it one door for a renderer, a
   // hand-edited file and the store reader.
-  assert.deepEqual(mergeOverlayBgAlpha({ shared: 0.5 }), { shared: 0.5, independent: false, seeded: false })
+  assert.deepEqual(mergeOverlayBgAlpha({ shared: 0.5 }), {
+    shared: 0.5,
+    independent: false,
+    seeded: false,
+  })
 })
 
 test('the once-ever seed flag is ONE-WAY — a renderer cannot ask to be re-seeded', () => {
@@ -177,7 +184,11 @@ test('the once-ever seed flag is ONE-WAY — a renderer cannot ask to be re-seed
 test('THE EFFECTIVE ALPHA IS THE WHOLE RULE: independent ? per-kind : shared', () => {
   const synced = { shared: 0.4, independent: false, seeded: false }
   const apart = { shared: 0.4, independent: true, seeded: true }
-  assert.equal(effectiveOverlayBgAlpha(synced, 0.9), 0.4, 'a per-kind value is not consulted while synced')
+  assert.equal(
+    effectiveOverlayBgAlpha(synced, 0.9),
+    0.4,
+    'a per-kind value is not consulted while synced',
+  )
   assert.equal(effectiveOverlayBgAlpha(apart, 0.9), 0.9, '…and is the answer while independent')
   // An absent per-kind value under independent mode is the default, never the shared alpha: the
   // window has never been given one of its own and 0.72 is what it is painting.
@@ -214,15 +225,19 @@ test('ALL TWELVE EQUAL ⇒ synced at that value, and nothing on screen moves', (
   assert.deepEqual(deriveBgAlphaPrefs(twelve(BG_ALPHA_DEFAULT)), {
     shared: BG_ALPHA_DEFAULT,
     independent: false,
-    seeded: false
+    seeded: false,
   })
   // The tidy store that has been moved wholesale: one transparency, twelve times.
-  assert.deepEqual(deriveBgAlphaPrefs(twelve(0.4)), { shared: 0.4, independent: false, seeded: false })
+  assert.deepEqual(deriveBgAlphaPrefs(twelve(0.4)), {
+    shared: 0.4,
+    independent: false,
+    seeded: false,
+  })
   // …and the fresh install, whose twelve slots are all absent and therefore all 0.72.
   assert.deepEqual(deriveBgAlphaPrefs(new Array(12).fill(undefined) as unknown[]), {
     shared: BG_ALPHA_DEFAULT,
     independent: false,
-    seeded: false
+    seeded: false,
   })
 })
 
@@ -231,7 +246,11 @@ test('ANY VALUE DIFFERENT ⇒ INDEPENDENT, which is what leaves every window as 
   const mixed = [0.3, ...(new Array(11).fill(undefined) as unknown[])]
   const prefs = deriveBgAlphaPrefs(mixed)
   assert.equal(prefs.independent, true, 'they differ, so they stay apart')
-  assert.equal(prefs.shared, BG_ALPHA_DEFAULT, 'and the value nobody is using is the most common one')
+  assert.equal(
+    prefs.shared,
+    BG_ALPHA_DEFAULT,
+    'and the value nobody is using is the most common one',
+  )
   // SEEDED comes up TRUE on this branch, and it has to: the twelve values are the very thing the
   // rule just decided to keep, and a later first-opt-in seed would flatten them to the shared one.
   assert.equal(prefs.seeded, true)
@@ -246,7 +265,11 @@ test('…the MOST COMMON value wins, and a TIE goes to the MORE OPAQUE', () => {
   // A tie is settled toward readability rather than toward see-through: the failure that gets
   // reported is text you cannot read over a bright game, never a card that is too solid.
   assert.equal(deriveBgAlphaPrefs([0.3, 0.9]).shared, 0.9)
-  assert.equal(deriveBgAlphaPrefs([0.9, 0.3]).shared, 0.9, 'and the answer does not depend on order')
+  assert.equal(
+    deriveBgAlphaPrefs([0.9, 0.3]).shared,
+    0.9,
+    'and the answer does not depend on order',
+  )
   // Values below the floor are votes for the floor, because that is what they will be painted at.
   assert.equal(deriveBgAlphaPrefs([0, 0.05, 0.9]).shared, BG_ALPHA_MIN)
 })
@@ -276,16 +299,22 @@ test('THE DERIVATION ASKS EVERY KIND, INCLUDING THE ABSENT ONES', () => {
   // …and it is WRITTEN BACK, which is what makes it a migration rather than a computation.
   assert.match(
     store,
-    /if \(storedSharedBgAlpha\(raw\) !== null\) return normalizeOverlayBgAlpha\(raw\)[\s\S]*?settingsStore\.set\('overlayBgAlpha', next\)/
+    /if \(storedSharedBgAlpha\(raw\) !== null\) return normalizeOverlayBgAlpha\(raw\)[\s\S]*?settingsStore\.set\('overlayBgAlpha', next\)/,
   )
 })
 
 test('OPTING IN RE-PAINTS NOTHING, once ever — and the flag is what makes it once', () => {
   const store = src('../src/main/storeOverlayBgAlpha.ts')
-  assert.match(store, /if \(next\.independent && cur\.seeded !== true\) \{[\s\S]*?seedOnFirstOptIn\(cur\.shared\)/)
+  assert.match(
+    store,
+    /if \(next\.independent && cur\.seeded !== true\) \{[\s\S]*?seedOnFirstOptIn\(cur\.shared\)/,
+  )
   // EVERY kind, not "the ones with no value": any drag or lock has already materialized a
   // `bgAlpha`, so a seed keyed on absence would skip exactly the windows somebody had moved.
-  assert.match(store, /for \(const kind of OVERLAY_KINDS\) setOverlayConfig\(kind, \{ bgAlpha: shared \}\)/)
+  assert.match(
+    store,
+    /for \(const kind of OVERLAY_KINDS\) setOverlayConfig\(kind, \{ bgAlpha: shared \}\)/,
+  )
 })
 
 test('A SYNCED DRAG IS A ROUTE, NOT A FAN-OUT — and the per-kind value survives it', () => {
@@ -293,18 +322,18 @@ test('A SYNCED DRAG IS A ROUTE, NOT A FAN-OUT — and the per-kind value survive
   assert.match(
     ipc,
     /if \(p\.bgAlpha !== undefined && !getOverlayBgAlpha\(\)\.independent\) \{[\s\S]*?broadcastOverlayBgAlpha\(setOverlayBgAlpha\(\{ shared: p\.bgAlpha \}\)\)/,
-    'a synced bgAlpha write routes to the shared preference and broadcasts it'
+    'a synced bgAlpha write routes to the shared preference and broadcasts it',
   )
   // The broadcast reaches a PINNED window, which draws no chrome and has no slider of its own —
   // every change it obeys was made in Preferences or on another window.
   assert.match(
     ipc,
-    /function broadcastOverlayBgAlpha[\s\S]*?for \(const k of OVERLAY_KINDS\) \{[\s\S]*?send\(IPC\.onOverlayBgAlpha, prefs\)[\s\S]*?getMainWindow\(\)/
+    /function broadcastOverlayBgAlpha[\s\S]*?for \(const k of OVERLAY_KINDS\) \{[\s\S]*?send\(IPC\.onOverlayBgAlpha, prefs\)[\s\S]*?getMainWindow\(\)/,
   )
   // The WRITE handler always broadcasts, including the `independent` flip that carries no number.
   assert.match(
     ipc,
-    /overlayBgAlphaSet[\s\S]*?const prefs = setOverlayBgAlpha\(patch\)\s*\n\s*broadcastOverlayBgAlpha\(prefs\)/
+    /overlayBgAlphaSet[\s\S]*?const prefs = setOverlayBgAlpha\(patch\)\s*\n\s*broadcastOverlayBgAlpha\(prefs\)/,
   )
 })
 
@@ -322,26 +351,41 @@ test('EXACTLY ONE function decides what a window paints with, and every surface 
     '../src/renderer/src/overlay/EventLogOverlay.tsx',
     '../src/renderer/src/overlay/ToastCard.tsx',
     '../src/renderer/src/overlay/ConCard.tsx',
-    '../src/renderer/src/overlay/BannerLine.tsx'
+    '../src/renderer/src/overlay/BannerLine.tsx',
   ]) {
-    assert.doesNotMatch(src(path), /getOverlayBgAlpha|effectiveOverlayBgAlpha/, `${path} decides it for itself`)
+    assert.doesNotMatch(
+      src(path),
+      /getOverlayBgAlpha|effectiveOverlayBgAlpha/,
+      `${path} decides it for itself`,
+    )
   }
 })
 
 test('THE THREE STRIPS HAVE A SLIDER NOW, and it writes through the config patch', () => {
   const slider = src('../src/renderer/src/overlay/BgAlphaSlider.tsx')
   assert.match(slider, /patch\(\{ bgAlpha:/, 'the slider writes through the config patch')
-  assert.doesNotMatch(slider, /ipcRenderer|window\.eqOverlay\./, 'and reaches for no channel of its own')
+  assert.doesNotMatch(
+    slider,
+    /ipcRenderer|window\.eqOverlay\./,
+    'and reaches for no channel of its own',
+  )
   // MUI-FREE: this is the overlay bundle, which has no theme and no component library.
   assert.doesNotMatch(slider, /@mui\//)
   // The range is stated ONCE, in the shared module — not re-typed beside the input.
-  assert.match(slider, /min=\{BG_ALPHA_MIN\}[\s\S]*?max=\{BG_ALPHA_MAX\}[\s\S]*?step=\{BG_ALPHA_STEP\}/)
+  assert.match(
+    slider,
+    /min=\{BG_ALPHA_MIN\}[\s\S]*?max=\{BG_ALPHA_MAX\}[\s\S]*?step=\{BG_ALPHA_STEP\}/,
+  )
   for (const path of [
     '../src/renderer/src/overlay/ToastOverlay.tsx',
     '../src/renderer/src/overlay/AlertBannerOverlay.tsx',
-    '../src/renderer/src/overlay/ConCardOverlay.tsx'
+    '../src/renderer/src/overlay/ConCardOverlay.tsx',
   ]) {
-    assert.match(src(path), /<BgAlphaSlider bgAlpha=\{bgAlpha\}/, `${path} carries one in its drag frame`)
+    assert.match(
+      src(path),
+      /<BgAlphaSlider bgAlpha=\{bgAlpha\}/,
+      `${path} carries one in its drag frame`,
+    )
   }
 })
 
@@ -352,7 +396,7 @@ test('the transparency round-trips as a preference AND as per-kind values (JOS-4
     alerts: [],
     alertPrefs: { globalVolume: 0.7, muted: false },
     overlays: { fight: { bgAlpha: 0.3 }, overall: { bgAlpha: 0.9 } },
-    overlayBgAlpha: { shared: 0.4, independent: true, seeded: true }
+    overlayBgAlpha: { shared: 0.4, independent: true, seeded: true },
   })
   // BOTH halves travel. The per-kind values are what an OLDER build reads and applies; the
   // preference is what a build that has the switch reads. Dropping either would make one of the
@@ -368,7 +412,7 @@ test('the transparency round-trips as a preference AND as per-kind values (JOS-4
   if (!decoded.ok) return
   assert.deepEqual((decoded.envelope.body as SettingsBundleBody).overlayBgAlpha, {
     shared: 0.4,
-    independent: true
+    independent: true,
   })
 })
 
@@ -377,29 +421,40 @@ test('an OLD profile imports under the LEAST-HARM rule, read off its per-kind al
     alertPrefs: { globalVolume: 0.7, muted: false },
     overlays: { fight: { bgAlpha: 0.72 }, overall: { bgAlpha: 0.72 } },
     overlayBgAlpha: { shared: 0.72, independent: false, seeded: false },
-    ui: {}
+    ui: {},
   }
   // A bundle from a build that predates the preference, whose sender had every overlay at one
   // transparency: they were synced at 40%, so that is the only preference row offered.
-  const agreed: SettingsBundleBody = { overlays: { fight: { bgAlpha: 0.4 }, overall: { bgAlpha: 0.4 } } }
+  const agreed: SettingsBundleBody = {
+    overlays: { fight: { bgAlpha: 0.4 }, overall: { bgAlpha: 0.4 } },
+  }
   const agreedRows = planScalarChanges(agreed, ctx)
-  assert.deepEqual(
-    agreedRows.map((c) => c.id).sort(),
-    ['overlay.fight.bgAlpha', 'overlay.overall.bgAlpha', 'overlayBgAlpha.shared']
-  )
+  assert.deepEqual(agreedRows.map((c) => c.id).sort(), [
+    'overlay.fight.bgAlpha',
+    'overlay.overall.bgAlpha',
+    'overlayBgAlpha.shared',
+  ])
   assert.equal(agreedRows.find((c) => c.id === 'overlayBgAlpha.shared')?.incoming, '40%')
 
   // …and one whose sender's overlays DIFFERED: they were not synced, and the mode row says so.
-  const differed: SettingsBundleBody = { overlays: { fight: { bgAlpha: 0.3 }, overall: { bgAlpha: 0.9 } } }
+  const differed: SettingsBundleBody = {
+    overlays: { fight: { bgAlpha: 0.3 }, overall: { bgAlpha: 0.9 } },
+  }
   const rows = planScalarChanges(differed, ctx)
   const mode = rows.find((c) => c.id === 'overlayBgAlpha.independent')
-  assert.deepEqual({ current: mode?.current, incoming: mode?.incoming }, { current: 'Off', incoming: 'On' })
+  assert.deepEqual(
+    { current: mode?.current, incoming: mode?.incoming },
+    { current: 'Off', incoming: 'On' },
+  )
   // A TIE goes to the more opaque, so the shared value the sender is credited with is 90%.
   assert.equal(rows.find((c) => c.id === 'overlayBgAlpha.shared')?.incoming, '90%')
 
   // A bundle that says NOTHING about overlays offers no transparency row at all — an absent
   // opinion is not an opinion that everything should be 72%.
-  assert.deepEqual(planScalarChanges({ ui: {} }, ctx).map((c) => c.id), [])
+  assert.deepEqual(
+    planScalarChanges({ ui: {} }, ctx).map((c) => c.id),
+    [],
+  )
 })
 
 test('a bundle that CARRIES the preference is believed over its own per-kind values', () => {
@@ -408,13 +463,13 @@ test('a bundle that CARRIES the preference is believed over its own per-kind val
   // therefore overwrite a real answer with a guess.
   const body: SettingsBundleBody = {
     overlays: { fight: { bgAlpha: 0.3 }, overall: { bgAlpha: 0.3 } },
-    overlayBgAlpha: { shared: 0.9, independent: true }
+    overlayBgAlpha: { shared: 0.9, independent: true },
   }
   const rows = planScalarChanges(body, {
     alertPrefs: { globalVolume: 0.7, muted: false },
     overlays: {},
     overlayBgAlpha: { shared: 0.72, independent: false, seeded: false },
-    ui: {}
+    ui: {},
   })
   assert.equal(rows.find((c) => c.id === 'overlayBgAlpha.shared')?.incoming, '90%')
   assert.equal(rows.find((c) => c.id === 'overlayBgAlpha.independent')?.incoming, 'On')
@@ -426,16 +481,16 @@ test('THE PREFERENCE ROWS COME FIRST, because the first opt-in SEEDS every kind'
   // per-kind value applied before it would be overwritten moments later by the same import.
   const body: SettingsBundleBody = {
     overlays: { fight: { bgAlpha: 0.3 } },
-    overlayBgAlpha: { shared: 0.5, independent: true }
+    overlayBgAlpha: { shared: 0.5, independent: true },
   }
   const ids = planScalarChanges(body, {
     alertPrefs: { globalVolume: 0.7, muted: false },
     overlays: { fight: { bgAlpha: 0.72 } },
     overlayBgAlpha: { shared: 0.72, independent: false, seeded: false },
-    ui: {}
+    ui: {},
   }).map((c) => c.id)
   assert.ok(
     ids.indexOf('overlayBgAlpha.independent') < ids.indexOf('overlay.fight.bgAlpha'),
-    `the mode row must precede the per-kind rows: ${ids.join(', ')}`
+    `the mode row must precede the per-kind rows: ${ids.join(', ')}`,
   )
 })

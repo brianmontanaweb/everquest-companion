@@ -31,21 +31,35 @@ import {
   collectWishNeeds,
   indexGear,
   wishFulfilled,
-  type WishIndices
+  type WishIndices,
 } from '../src/renderer/src/features/wishlist/wishFarm'
 
 const HEADBAND = 'batfang headband'
 /** The one classic-era zone the committed catalog names for the headband. */
 const WPK = 'Western Plains of Karana'
 
-const NOTHING_KNOWN: DonorProgress = { state: 'planned', label: 'planned', tierRequired: 4, held: 0, looted: 0 }
+const NOTHING_KNOWN: DonorProgress = {
+  state: 'planned',
+  label: 'planned',
+  tierRequired: 4,
+  held: 0,
+  looted: 0,
+}
 
 function progress(over: Partial<DonorProgress> = {}): DonorProgress {
   return { ...NOTHING_KNOWN, ...over }
 }
 
 function donorWish(itemKey: string, effect: string): WishEntry {
-  return { itemKey, name: itemKey, kind: 'donor', effect, socket: 'proc', addedAt: 0, source: 'user' }
+  return {
+    itemKey,
+    name: itemKey,
+    kind: 'donor',
+    effect,
+    socket: 'proc',
+    addedAt: 0,
+    source: 'user',
+  }
 }
 
 function gearWish(itemKey: string, name = itemKey): WishEntry {
@@ -65,7 +79,7 @@ function donorRow(key: string, effect: string): DonorRow {
     hasteLocked: false,
     quest: false,
     playerCrafted: false,
-    eraTag: 'Classic'
+    eraTag: 'Classic',
   }
 }
 
@@ -82,7 +96,7 @@ function gearRow(key: string, name: string, over: Partial<GearRow> = {}): GearRo
     playerCrafted: false,
     stats: {},
     effects: [],
-    ...over
+    ...over,
   }
 }
 
@@ -96,7 +110,7 @@ test('a DONOR wish resolves against the donor corpus by (key, effect)', () => {
   const [need] = collectWishNeeds(
     [donorWish(HEADBAND, 'Bat Fang')],
     indices([donorRow(HEADBAND, 'Bat Fang')]),
-    () => progress()
+    () => progress(),
   )
   assert.ok(need)
   assert.equal(need.name, 'Batfang Headband', 'the corpus spelling wins over the stored one')
@@ -110,7 +124,7 @@ test('a GEAR wish resolves against the gear index by key — the other index, th
   const [need] = collectWishNeeds(
     [gearWish('reinforced breastplate')],
     indices([], [gearRow('reinforced breastplate', 'Reinforced Breastplate', { quest: true })]),
-    () => progress()
+    () => progress(),
   )
   assert.ok(need)
   assert.equal(need.name, 'Reinforced Breastplate')
@@ -146,7 +160,7 @@ test('a GEAR wish states NO merge tier — looting it is the whole job', () => {
   const [need] = collectWishNeeds(
     [gearWish('reinforced breastplate')],
     indices([], [gearRow('reinforced breastplate', 'Reinforced Breastplate')]),
-    () => progress()
+    () => progress(),
   )
   assert.equal(need.tierRequired, undefined)
   assert.equal(need.socket, undefined)
@@ -156,9 +170,13 @@ test('a GEAR wish states NO merge tier — looting it is the whole job', () => {
 
 test('wishes group by zone exactly as planned sockets did, and each appears EXACTLY once', () => {
   const needs = collectWishNeeds(
-    [donorWish(HEADBAND, 'Bat Fang'), donorWish('glowing bone collar', 'Bone'), gearWish('an item nobody drops')],
+    [
+      donorWish(HEADBAND, 'Bat Fang'),
+      donorWish('glowing bone collar', 'Bone'),
+      gearWish('an item nobody drops'),
+    ],
     indices(),
-    () => progress()
+    () => progress(),
   )
   for (const eraOnly of [true, false]) {
     const rows = groupNeeds(needs, { eraOnly }).flatMap((g) => g.rows)
@@ -183,7 +201,7 @@ test('a crafted wish files under Crafted — the flag comes from whichever index
   const needs = collectWishNeeds(
     [gearWish('a crafted thing')],
     indices([], [gearRow('a crafted thing', 'A Crafted Thing', { playerCrafted: true })]),
-    () => progress()
+    () => progress(),
   )
   assert.equal(groupNeeds(needs, { eraOnly: true })[0].kind, 'crafted')
 })
@@ -196,12 +214,12 @@ test('a DONOR wish is done at `ready`, and NOT one tier earlier', () => {
   assert.equal(
     wishFulfilled(wish, progress({ state: 'partial', label: '+2/+4', tier: 2 })),
     false,
-    '"+2 of the +4 you need" is how much farming is LEFT — moving it to the done strip deletes that'
+    '"+2 of the +4 you need" is how much farming is LEFT — moving it to the done strip deletes that',
   )
   assert.equal(
     wishFulfilled(wish, progress({ state: 'have', label: 'have donor', held: 1 })),
     false,
-    'holding an unmerged donor is not the effect extracted'
+    'holding an unmerged donor is not the effect extracted',
   )
   assert.equal(wishFulfilled(wish, progress()), false)
 })
@@ -213,7 +231,10 @@ test('a GEAR wish is done the moment you HAVE one — the merge ladder is not co
   assert.equal(wishFulfilled(wish, progress()), false)
   // A `+0` observation on an item you own cannot un-own it: the state says `partial`, and a gear
   // wish does not read the state at all.
-  assert.equal(wishFulfilled(wish, progress({ state: 'partial', label: '+0/+4', tier: 0, held: 1 })), true)
+  assert.equal(
+    wishFulfilled(wish, progress({ state: 'partial', label: '+0/+4', tier: 0, held: 1 })),
+    true,
+  )
 })
 
 test('the two rules disagree on the SAME progress, which is the whole reason there are two', () => {

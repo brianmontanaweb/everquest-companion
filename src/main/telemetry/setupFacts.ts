@@ -49,7 +49,7 @@ import {
   type TelemetryGpuVendor,
   type TelemetryOverlayKind,
   type TelemetryUpdateChannel,
-  type TelemetryVoiceEngine
+  type TelemetryVoiceEngine,
 } from '../../shared/telemetry'
 
 /**
@@ -96,7 +96,7 @@ export interface SetupFacts {
 const GPU_VENDOR_IDS: Readonly<Record<number, TelemetryGpuVendor>> = {
   0x10de: 'nvidia',
   0x1002: 'amd',
-  0x8086: 'intel'
+  0x8086: 'intel',
 }
 
 /**
@@ -229,7 +229,7 @@ export function buildSetupSnapshot(f: SetupFacts): EvSetupSnapshot {
     autoHide: f.autoHide,
     voiceEngine: f.voiceEngine,
     soundPackCount: Math.max(0, Math.min(MAX_COUNT, Math.trunc(f.soundPackCount))),
-    updateChannel: f.updateChannel
+    updateChannel: f.updateChannel,
   }
   if (f.cpuCount !== undefined) ev.cpuCountBucket = bucketOf(f.cpuCount, CPU_COUNT_EDGES)
   if (f.totalMemBytes !== undefined) {
@@ -244,10 +244,7 @@ export function buildSetupSnapshot(f: SetupFacts): EvSetupSnapshot {
     ev.displayCountBucket = bucketOf(f.displayCount, DISPLAY_COUNT_EDGES)
   }
   if (f.primaryScaleFactor !== undefined) {
-    ev.primaryScaleBucket = bucketOf(
-      Math.round(f.primaryScaleFactor * 100),
-      PRIMARY_SCALE_EDGES
-    )
+    ev.primaryScaleBucket = bucketOf(Math.round(f.primaryScaleFactor * 100), PRIMARY_SCALE_EDGES)
   }
   if (f.eqClientIni !== undefined) ev.eqWindowMode = eqWindowModeOf(f.eqClientIni)
   return ev

@@ -22,7 +22,7 @@ import type { InventoryDump } from '../../shared/outputs/inventory'
 import {
   classUnlockClaims,
   type AchievementsSource,
-  type ClassUnlockClaim
+  type ClassUnlockClaim,
 } from '../../shared/outputs/achievements'
 import type { OutputKindId } from '../../shared/outputs/kinds'
 import { parseOutput, type OutputParseResult } from './kinds'
@@ -37,7 +37,7 @@ export {
   watchOutputKind,
   type OutputCharacter,
   type OutputKindWatch,
-  type OutputWatchOptions
+  type OutputWatchOptions,
 } from './registry'
 export {
   isOutputFileName,
@@ -52,7 +52,7 @@ export {
   type OutputFileStatus,
   type OutputKindDef,
   type OutputKindId,
-  type OutputParseResult
+  type OutputParseResult,
 } from './kinds'
 
 /** A dump that was found on disk, with whatever the registry made of it. */
@@ -73,7 +73,7 @@ export interface LoadedOutput {
 export function loadOutput(
   id: OutputKindId,
   characterName?: string,
-  server?: string
+  server?: string,
 ): LoadedOutput | null {
   const character: OutputCharacter = { name: characterName, server }
   const status = outputStatus(id, character)
@@ -82,7 +82,7 @@ export function loadOutput(
     kind: id,
     path: status.path,
     loadedAt: status.updatedAt,
-    result: parseOutput(id, readFileSync(status.path, 'utf8'))
+    result: parseOutput(id, readFileSync(status.path, 'utf8')),
   }
 }
 
@@ -106,7 +106,7 @@ export interface LoadedInventoryDump {
  */
 export function loadInventoryDump(
   characterName?: string,
-  server?: string
+  server?: string,
 ): LoadedInventoryDump | null {
   const loaded = loadOutput('inventory', characterName, server)
   if (!loaded) return null
@@ -140,7 +140,7 @@ export interface LoadedAchievements {
 export function loadAchievements(
   characterName?: string,
   server?: string,
-  now: () => number = Date.now
+  now: () => number = Date.now,
 ): LoadedAchievements | null {
   const loaded = loadOutput('achievements', characterName, server)
   if (!loaded) return null
@@ -151,6 +151,6 @@ export function loadAchievements(
     unlocks: classUnlockClaims(result.data.dump),
     // `loadedAt` is the FILE's mtime (when the player typed the command) and `readAt` is ours —
     // the JOS-253 pair, kept because a single timestamp cannot answer both questions.
-    source: { path: loaded.path, loadedAt: loaded.loadedAt, readAt: now() }
+    source: { path: loaded.path, loadedAt: loaded.loadedAt, readAt: now() },
   }
 }

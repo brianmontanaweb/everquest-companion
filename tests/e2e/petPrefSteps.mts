@@ -49,7 +49,9 @@ function parseTotal(text: string): number | null {
 
 /** …read off the live DOM, once it has stopped moving. */
 async function headlineTotal(page: Page): Promise<number | null> {
-  const text = await settleStable(() => page.textContent(TOTAL).then((t) => t ?? ''), { timeoutMs: 10_000 })
+  const text = await settleStable(() => page.textContent(TOTAL).then((t) => t ?? ''), {
+    timeoutMs: 10_000,
+  })
   return parseTotal(text)
 }
 
@@ -76,18 +78,32 @@ function ownAndPets(snap: Snap): { you: number; pets: number } | null {
  */
 function youRowIndex(page: Page): Promise<number> {
   return page.$$eval(ROW, (rows) =>
-    rows.findIndex((r) => [...r.querySelectorAll('span')].some((s) => (s.textContent ?? '').trim() === 'You'))
+    rows.findIndex((r) =>
+      [...r.querySelectorAll('span')].some((s) => (s.textContent ?? '').trim() === 'You'),
+    ),
   )
 }
 
 /** Click that bar and wait for the level it opens. Reports which row it found, for the log. */
 async function drillYou(page: Page): Promise<{ ok: boolean; where: string }> {
   const rows = await page.locator(ROW).count()
-  const i = await settle(() => youRowIndex(page), (n) => n >= 0, { timeoutMs: 15_000 })
+  const i = await settle(
+    () => youRowIndex(page),
+    (n) => n >= 0,
+    { timeoutMs: 15_000 },
+  )
   const where = `row ${String(i)} of ${String(rows)}`
   if (i < 0) return { ok: false, where }
   await page.locator(ROW).nth(i).click({ timeout: 15_000 })
-  return { ok: (await settle(() => drilled(page), (d) => d, { timeoutMs: 10_000 })) === true, where }
+  return {
+    ok:
+      (await settle(
+        () => drilled(page),
+        (d) => d,
+        { timeoutMs: 10_000 },
+      )) === true,
+    where,
+  }
 }
 
 /**
@@ -98,7 +114,11 @@ async function drillYou(page: Page): Promise<{ ok: boolean; where: string }> {
  * "the drill you left stays drilled" is JOS-116's promise that this ticket must not break.
  */
 async function totalUnderDrill(page: Page, what: string): Promise<number | null> {
-  const still = await settle(() => drilled(page), (d) => d, { timeoutMs: 15_000 })
+  const still = await settle(
+    () => drilled(page),
+    (d) => d,
+    { timeoutMs: 15_000 },
+  )
   if (!check(`the You drill survives ${what} (JOS-116)`, still)) return null
   return headlineTotal(page)
 }
@@ -106,7 +126,8 @@ async function totalUnderDrill(page: Page, what: string): Promise<number | null>
 export async function stepPetPreferenceMovesTheYouLine(page: Page): Promise<void> {
   // Level 1 first, whatever the pet steps left behind, and the preference in its shipped state.
   await meterRows(page)
-  if (!check('the pet preference can be set to ON', await setCombinePet(page, true, 'nav-combat'))) return
+  if (!check('the pet preference can be set to ON', await setCombinePet(page, true, 'nav-combat')))
+    return
   await page.waitForSelector('[data-testid="combat-dashboard"]', { timeout: 30_000 })
   await meterRows(page)
 
@@ -120,7 +141,7 @@ export async function stepPetPreferenceMovesTheYouLine(page: Page): Promise<void
   check(
     'the live fight carries YOUR damage and a bound pet’s, so the two answers differ',
     totals.pets > 0 && totals.you > 0,
-    `you ${String(Math.round(totals.you))} + pets ${String(Math.round(totals.pets))} = ${String(Math.round(combined))}`
+    `you ${String(Math.round(totals.you))} + pets ${String(Math.round(totals.pets))} = ${String(Math.round(combined))}`,
   )
 
   // 1. DRILL INTO YOU — the state the owner reported from.
@@ -131,32 +152,41 @@ export async function stepPetPreferenceMovesTheYouLine(page: Page): Promise<void
   check(
     'pet folded in ⇒ the You line covers you AND your pet',
     near(folded as number, combined),
-    `${String(folded)} of ${String(Math.round(combined))}`
+    `${String(folded)} of ${String(Math.round(combined))}`,
   )
 
   // 2. MOVE THE PET OUT, from Preferences, exactly as a user does — the Combat tab unmounts on the
   //    way there and re-hydrates its stored drill on the way back.
-  if (!check('the pet preference can be set to OFF', await setCombinePet(page, false, 'nav-combat'))) return
+  if (
+    !check('the pet preference can be set to OFF', await setCombinePet(page, false, 'nav-combat'))
+  )
+    return
   await page.waitForSelector('[data-testid="combat-dashboard"]', { timeout: 30_000 })
   const separate = await totalUnderDrill(page, 'moving the pet out')
   if (separate === null) return
   check(
     'THE DEFECT: moving the pet out RECALCULATES the You line — it is yours alone now',
     near(separate, totals.you),
-    `${String(separate)} of ${String(Math.round(totals.you))} (it used to keep ${String(Math.round(combined))})`
+    `${String(separate)} of ${String(Math.round(totals.you))} (it used to keep ${String(Math.round(combined))})`,
   )
-  check('…and it is a different number from the folded one, without re-selecting the fight', separate !== folded)
+  check(
+    '…and it is a different number from the folded one, without re-selecting the fight',
+    separate !== folded,
+  )
 
   // 3. AND BACK. The other direction is a claim of its own: a headline that only ever shrinks
   //    would pass step 2 while still being wrong.
-  if (!check('the pet preference can be set back ON', await setCombinePet(page, true, 'nav-combat'))) return
+  if (
+    !check('the pet preference can be set back ON', await setCombinePet(page, true, 'nav-combat'))
+  )
+    return
   await page.waitForSelector('[data-testid="combat-dashboard"]', { timeout: 30_000 })
   const again = await totalUnderDrill(page, 'folding the pet back in')
   if (again === null) return
   check(
     '…and folding it back in restores the combined total, in the same render',
     near(again, combined),
-    `${String(again)} of ${String(Math.round(combined))}`
+    `${String(again)} of ${String(Math.round(combined))}`,
   )
 
   // 4. The way out still works from here — a headline that follows the drill must not have made

@@ -25,7 +25,7 @@ import {
   groupDonors,
   isAxisFor,
   type BrowserRow,
-  type DonorGroup
+  type DonorGroup,
 } from '../src/renderer/src/features/planner/plannerGroups'
 import type { Era } from '../src/shared/planner/era'
 import type { EffectFacts } from '../src/shared/planner/effectText'
@@ -63,7 +63,7 @@ function row(spec: Spec): DonorRow {
     quest: false,
     playerCrafted: false,
     ...spec.facts,
-    searchKey: `${spec.name} ${spec.effect}`.toLowerCase()
+    searchKey: `${spec.name} ${spec.effect}`.toLowerCase(),
   }
 }
 
@@ -71,20 +71,31 @@ function row(spec: Spec): DonorRow {
 const eraOf = (d: DonorRow): Era | null => ERAS.get(d.key) ?? null
 
 /** A focus row: an item, an effect, and the `[family, tier]` main parsed out of that effect's name. */
-const focus = (name: string, effect: string, rank: [string, number], rest: Partial<Spec> = {}): DonorRow =>
-  row({ name, effect, family: rank[0], familyTier: rank[1], ...rest })
+const focus = (
+  name: string,
+  effect: string,
+  rank: [string, number],
+  rest: Partial<Spec> = {},
+): DonorRow => row({ name, effect, family: rank[0], familyTier: rank[1], ...rest })
 
 // One family with three ranks and a TIE at the top, one family with a single unranked name, and
 // one two-slot donor — the three cases the fold has to get right.
 const HEAL_I = focus('Cloak of Piety', 'Improved Healing I', ['Improved Healing', 1])
 const HEAL_III_A = focus('Water Sprinkler', 'Improved Healing III', ['Improved Healing', 3])
 const HEAL_III_B = focus('Coldain Hammer', 'Improved Healing III', ['Improved Healing', 3], {
-  slots: ['PRIMARY', 'SECONDARY']
+  slots: ['PRIMARY', 'SECONDARY'],
 })
-const RANGE_I = focus('Staff of Writhing', 'Extended Range I', ['Extended Range', 1], { era: 'kunark' })
-const RANGE_II = focus('Runed Mithril Bracer', 'Extended Range II', ['Extended Range', 2], { era: 'classic' })
+const RANGE_I = focus('Staff of Writhing', 'Extended Range I', ['Extended Range', 1], {
+  era: 'kunark',
+})
+const RANGE_II = focus('Runed Mithril Bracer', 'Extended Range II', ['Extended Range', 2], {
+  era: 'classic',
+})
 const MINION = focus('Bone Bladed Claymore', 'Minion of Air', ['Minion of Air', 1], { era: null })
-const HASTED = focus('Flowing Black Robe', 'Spell Haste I', ['Spell Haste', 1], { haste: true, slots: [] })
+const HASTED = focus('Flowing Black Robe', 'Spell Haste I', ['Spell Haste', 1], {
+  haste: true,
+  slots: [],
+})
 
 const FOCUS_ROWS = [HEAL_I, HEAL_III_A, HEAL_III_B, RANGE_I, RANGE_II, MINION, HASTED]
 
@@ -98,26 +109,31 @@ test('the effect axis keeps the browser standing rule: most donors first, then b
     'Extended Range II',
     'Improved Healing I',
     'Minion of Air',
-    'Spell Haste I'
+    'Spell Haste I',
   ])
   assert.equal(groups[0].donors.length, 2)
   // Nothing on the effect axis is a family, so no row can be crowned.
   assert.deepEqual(
     groups.map((g) => g.topTier),
-    groups.map(() => null)
+    groups.map(() => null),
   )
 })
 
 test('the family axis folds ranks together, sorts tier-desc, and crowns every top-tier row', () => {
   const groups = groupDonors(FOCUS_ROWS, 'family', eraOf)
   // Group order: top tier DESC, then donor count, then name.
-  assert.deepEqual(labels(groups), ['Improved Healing', 'Extended Range', 'Minion of Air', 'Spell Haste'])
+  assert.deepEqual(labels(groups), [
+    'Improved Healing',
+    'Extended Range',
+    'Minion of Air',
+    'Spell Haste',
+  ])
 
   const healing = groups[0]
   assert.equal(healing.topTier, 3)
   assert.deepEqual(
     healing.donors.map((d) => d.effect),
-    ['Improved Healing III', 'Improved Healing III', 'Improved Healing I']
+    ['Improved Healing III', 'Improved Healing III', 'Improved Healing I'],
   )
   // The header states the best line AS WRITTEN — the corpus has no percentages to state instead.
   assert.equal(healing.note, 'Improved Healing III')
@@ -125,12 +141,14 @@ test('the family axis folds ranks together, sorts tier-desc, and crowns every to
   assert.equal(groups[2].note, '')
 
   const rows = browserRows(groups, new Set([healing.id]))
-  const crowned = rows.filter((r): r is Extract<BrowserRow, { kind: 'donor' }> => r.kind === 'donor' && r.best)
+  const crowned = rows.filter(
+    (r): r is Extract<BrowserRow, { kind: 'donor' }> => r.kind === 'donor' && r.best,
+  )
   // BOTH III donors are crowned: if two items carry the family's best line, they both ARE the best,
   // and picking one would be the planner inventing a preference.
   assert.deepEqual(
     crowned.map((r) => r.donor.name),
-    ['Water Sprinkler', 'Coldain Hammer']
+    ['Water Sprinkler', 'Coldain Hammer'],
   )
 })
 
@@ -145,23 +163,41 @@ test('a group header is a ROW, and expanding one only makes the array longer', (
   assert.equal(open.length, groups.length + groups[0].donors.length + groups[1].donors.length)
   // The interleave: each opened header is followed by its own donors, in group order.
   assert.deepEqual(
-    open.slice(0, 4).map((r) => (r.kind === 'header' ? `H ${r.group.label}` : `d ${r.donor.effect}`)),
-    ['H Improved Healing', 'd Improved Healing III', 'd Improved Healing III', 'd Improved Healing I']
+    open
+      .slice(0, 4)
+      .map((r) => (r.kind === 'header' ? `H ${r.group.label}` : `d ${r.donor.effect}`)),
+    [
+      'H Improved Healing',
+      'd Improved Healing III',
+      'd Improved Healing III',
+      'd Improved Healing I',
+    ],
   )
   // Under a family header the row must name its own effect; under an effect header it must not.
   assert.ok(open.every((r) => r.kind === 'header' || r.namesEffect))
-  const byEffect = browserRows(groupDonors(FOCUS_ROWS, 'effect', eraOf), new Set(['effect:Improved Healing III']))
+  const byEffect = browserRows(
+    groupDonors(FOCUS_ROWS, 'effect', eraOf),
+    new Set(['effect:Improved Healing III']),
+  )
   assert.ok(byEffect.every((r) => r.kind === 'header' || !r.namesEffect))
 })
 
 // ---- JOS-42 refinement 2: the one-liner belongs to the family, not to every row ---------------
 
-const BURNING: EffectFacts = { spellType: 'Beneficial', spellTarget: 'Self', spellDuration: '2:24:00' }
+const BURNING: EffectFacts = {
+  spellType: 'Beneficial',
+  spellTarget: 'Self',
+  spellDuration: '2:24:00',
+}
 
 /** Three ranks of one family, all saying the same three things about themselves — the real case. */
 const BURN_ROWS = [
-  focus('Runed Bolster Belt', 'Burning Affliction I', ['Burning Affliction', 1], { facts: BURNING }),
-  focus('Shissar Focus Ring', 'Burning Affliction III', ['Burning Affliction', 3], { facts: BURNING })
+  focus('Runed Bolster Belt', 'Burning Affliction I', ['Burning Affliction', 1], {
+    facts: BURNING,
+  }),
+  focus('Shissar Focus Ring', 'Burning Affliction III', ['Burning Affliction', 3], {
+    facts: BURNING,
+  }),
 ]
 
 test('a family header states the one-liner its whole family shares, and the rows stop repeating it', () => {
@@ -182,29 +218,36 @@ test('a header only speaks for rows that AGREE — one dissenter and the rows ke
   const dissenting = [
     ...BURN_ROWS,
     focus('Odd Trinket', 'Burning Affliction II', ['Burning Affliction', 2], {
-      facts: { spellType: 'Detrimental', spellTarget: 'Single Hostile' }
-    })
+      facts: { spellType: 'Detrimental', spellTarget: 'Single Hostile' },
+    }),
   ]
   const [family] = groupDonors(dissenting, 'family', eraOf)
   assert.equal(family.says, '', 'a header may only state what is true of every row under it')
-  assert.ok(browserRows([family], new Set([family.id])).every((r) => r.kind === 'header' || r.namesSays))
+  assert.ok(
+    browserRows([family], new Set([family.id])).every((r) => r.kind === 'header' || r.namesSays),
+  )
 })
 
 test('a SILENT rank does not veto a header — the join missing is not a disagreement', () => {
   // The other real case: one family joins the spell DB on some ranks and not others (5.8% of
   // effect rows miss the join, law 1). Letting a row that states nothing suppress a line true of
   // every row that speaks would trade a fact for nothing.
-  const withSilent = [...BURN_ROWS, focus('Plain Band', 'Burning Affliction II', ['Burning Affliction', 2])]
+  const withSilent = [
+    ...BURN_ROWS,
+    focus('Plain Band', 'Burning Affliction II', ['Burning Affliction', 2]),
+  ]
   const [family] = groupDonors(withSilent, 'family', eraOf)
   assert.equal(family.says, 'Beneficial · Self · 2:24:00')
   // …and every row goes quiet: the two that agreed because the header took their line, the silent
   // one because it never had a line to draw.
-  assert.ok(browserRows([family], new Set([family.id])).every((r) => r.kind === 'header' || !r.namesSays))
+  assert.ok(
+    browserRows([family], new Set([family.id])).every((r) => r.kind === 'header' || !r.namesSays),
+  )
 })
 
 test('a header that spoke does not silence the ONE rank that says something else', () => {
   const odd = focus('Odd Trinket', 'Burning Affliction II', ['Burning Affliction', 2], {
-    facts: { spellType: 'Beneficial', spellTarget: 'Self', spellDuration: '9:99:99' }
+    facts: { spellType: 'Beneficial', spellTarget: 'Self', spellDuration: '9:99:99' },
   })
   // Two ranks agree, one differs, and one is silent — so the header can state nothing (the
   // dissenter vetoes), which is the case above. Take the dissenter away from the veto by giving
@@ -214,11 +257,13 @@ test('a header that spoke does not silence the ONE rank that says something else
   const rows = browserRows([family], new Set([family.id]))
   assert.ok(
     rows.every((r) => r.kind === 'header' || r.namesSays),
-    'with no header line every row that HAS a line speaks'
+    'with no header line every row that HAS a line speaks',
   )
   // And with a header line in place, the row carrying exactly it is the only kind that goes quiet.
   const [agreeing] = groupDonors(BURN_ROWS, 'family', eraOf)
-  const quiet = browserRows([agreeing], new Set([agreeing.id])).filter((r) => r.kind === 'donor' && !r.namesSays)
+  const quiet = browserRows([agreeing], new Set([agreeing.id])).filter(
+    (r) => r.kind === 'donor' && !r.namesSays,
+  )
   assert.equal(quiet.length, BURN_ROWS.length)
 })
 
@@ -227,7 +272,9 @@ test('a family the spell DB never joined says nothing — no placeholder, no inv
   assert.equal(family.says, '')
   // …and neither do its rows: `namesSays` means "this row DRAWS a line", and a row the join
   // missed has none to draw. Silence at both levels, which is law 1 rather than a layout choice.
-  assert.ok(browserRows([family], new Set([family.id])).every((r) => r.kind === 'header' || !r.namesSays))
+  assert.ok(
+    browserRows([family], new Set([family.id])).every((r) => r.kind === 'header' || !r.namesSays),
+  )
 })
 
 test('only the family axis lifts the line — every other axis groups rows whose effects differ', () => {
@@ -265,7 +312,7 @@ test('the socket axis groups by unlock order — the model serves what the tabs 
   const mixed = [
     row({ name: 'Ghoulbane', effect: 'Nullify Undead', socket: 'proc' }),
     row({ name: 'Cloak of Piety', effect: 'Improved Healing I', socket: 'focus' }),
-    row({ name: 'Shiny Brass Idol', effect: 'Strengthen', socket: 'click' })
+    row({ name: 'Shiny Brass Idol', effect: 'Strengthen', socket: 'click' }),
   ]
   assert.deepEqual(labels(groupDonors(mixed, 'socket', eraOf)), ['Focus', 'Click', 'Proc'])
 })

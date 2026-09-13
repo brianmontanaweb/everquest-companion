@@ -29,7 +29,7 @@ import { logPackInstallFailure, type PackInstallLogSinks } from './packInstallLo
 import {
   MAX_INSTALL_ATTEMPTS,
   runPackInstallAttempts,
-  type PackInstallRunResult
+  type PackInstallRunResult,
 } from '../shared/packInstall'
 import type { PackInstallProgress, RegistryPack } from '../shared/types'
 
@@ -67,7 +67,7 @@ function humanWait(ms: number): string {
 export async function installPackWithRetry(
   pack: RegistryPack,
   onProgress: (p: PackInstallProgress) => void,
-  opts?: { readonly targetRoot?: string; readonly attempts?: number }
+  opts?: { readonly targetRoot?: string; readonly attempts?: number },
 ): Promise<PackInstallRunResult> {
   return runPackInstallAttempts({
     install: () => installPack(pack, onProgress, opts?.targetRoot),
@@ -80,9 +80,9 @@ export async function installPackWithRetry(
           attempt: info.attempt,
           attempts: info.attempts,
           final: info.final,
-          err: info.err
+          err: info.err,
         },
-        LOG_SINKS
+        LOG_SINKS,
       )
       if (info.final) return
       onProgress({
@@ -91,8 +91,8 @@ export async function installPackWithRetry(
         retryable: true,
         message: info.rateLimited
           ? `Download host is busy - retrying in ${humanWait(info.delayMs)}`
-          : `Retrying in ${humanWait(info.delayMs)}`
+          : `Retrying in ${humanWait(info.delayMs)}`,
       })
-    }
+    },
   })
 }

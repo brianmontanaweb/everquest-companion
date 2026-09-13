@@ -28,7 +28,7 @@ import {
   visibleFrom,
   visibleSegments,
   windowFor,
-  windowOver
+  windowOver,
 } from '../src/renderer/src/features/leveling/chartWindow'
 import { buildLevelSegments } from '../src/renderer/src/features/leveling/levelSeries'
 import { levelAt, stepIndexAt } from '../src/renderer/src/features/leveling/levelChartGeometry'
@@ -43,9 +43,17 @@ const ids = (spanMs: number): string[] => availableTimescales(spanMs).map((s) =>
 // ── 1. data honesty ───────────────────────────────────────────────────────────────────
 
 test('a scale is offered only when the history is LONGER than it', () => {
-  assert.deepEqual(ids(3 * H), ['full', 'h1'], 'three hours of play offers the hour and nothing wider')
+  assert.deepEqual(
+    ids(3 * H),
+    ['full', 'h1'],
+    'three hours of play offers the hour and nothing wider',
+  )
   assert.deepEqual(ids(4.8 * DAY), ['full', 'h24', 'h6', 'h1'], 'five days does not offer a week')
-  assert.deepEqual(ids(30 * DAY), TIMESCALES.map((s) => s.id), 'a month fills every rung')
+  assert.deepEqual(
+    ids(30 * DAY),
+    TIMESCALES.map((s) => s.id),
+    'a month fills every rung',
+  )
 })
 
 test('a scale exactly as long as the history is withheld (it would be `All` under a second name)', () => {
@@ -61,7 +69,11 @@ test('`full` is always offered and always first, so the control can never come u
 
 test('a pick the current character cannot fill degrades to `full`, never to an unfillable window', () => {
   assert.equal(resolveTimescale('h6', 30 * DAY), 'h6', 'kept while the log can fill it')
-  assert.equal(resolveTimescale('h6', 2 * H), 'full', 'a shorter character switches the picture back')
+  assert.equal(
+    resolveTimescale('h6', 2 * H),
+    'full',
+    'a shorter character switches the picture back',
+  )
   assert.equal(resolveTimescale('full', 0), 'full')
 })
 
@@ -73,7 +85,7 @@ test('the bucket is the smallest ROUND step that keeps the window inside the bud
     [6 * H, MIN],
     [DAY, 5 * MIN],
     [7 * DAY, 30 * MIN],
-    [30 * DAY, 2 * H]
+    [30 * DAY, 2 * H],
   ] as const) {
     assert.equal(bucketMsFor(spanMs), bucketMs, `${spanMs}ms window`)
   }
@@ -81,7 +93,18 @@ test('the bucket is the smallest ROUND step that keeps the window inside the bud
 
 test('every window stays inside the bucket budget, and the bucket never shrinks as it widens', () => {
   let prev = 0
-  for (const spanMs of [1, 30_000, 10 * MIN, H, 8 * H, DAY, 3 * DAY, 9 * DAY, 60 * DAY, 400 * DAY]) {
+  for (const spanMs of [
+    1,
+    30_000,
+    10 * MIN,
+    H,
+    8 * H,
+    DAY,
+    3 * DAY,
+    9 * DAY,
+    60 * DAY,
+    400 * DAY,
+  ]) {
     const b = bucketMsFor(spanMs)
     assert.ok(spanMs / b <= TARGET_BUCKETS, `${spanMs}ms would draw ${String(spanMs / b)} buckets`)
     assert.ok(b >= prev, 'a wider window may never get a finer grid')
@@ -108,7 +131,10 @@ test('a fixed window ends on the newest data and reaches back its own length', (
   assert.equal(w.t1 % w.bucketMs, 0)
   // Six hours, plus the same 4% trailing gutter every scale draws, plus at most one bucket of
   // outward snap at each end. Nothing else may creep into a window's length.
-  assert.ok(w.t1 - w.t0 < 6 * H * 1.04 + 2 * w.bucketMs, 'quantizing outward costs at most a bucket an end')
+  assert.ok(
+    w.t1 - w.t0 < 6 * H * 1.04 + 2 * w.bucketMs,
+    'quantizing outward costs at most a bucket an end',
+  )
 })
 
 test('a fixed window ADVANCES IN WHOLE BUCKETS as the log grows (law 9: no swim)', () => {
@@ -151,10 +177,18 @@ test('visibleFrom keeps everything inside the window PLUS the sample that preced
   assert.deepEqual(
     v.map((p) => p.ts - T0),
     [2 * H, 3 * H, 4 * H],
-    'the 2h sample is the anchor: it is the value in force at the left edge'
+    'the 2h sample is the anchor: it is the value in force at the left edge',
   )
-  assert.equal(visibleFrom(pts, T0 - H).length, pts.length, 'a window opening before the series keeps all of it')
-  assert.deepEqual(visibleFrom(pts, T0 + 9 * H).map((p) => p.ts), [T0 + 4 * H], 'past the last sample, the anchor alone')
+  assert.equal(
+    visibleFrom(pts, T0 - H).length,
+    pts.length,
+    'a window opening before the series keeps all of it',
+  )
+  assert.deepEqual(
+    visibleFrom(pts, T0 + 9 * H).map((p) => p.ts),
+    [T0 + 4 * H],
+    'past the last sample, the anchor alone',
+  )
   assert.deepEqual(visibleFrom([], T0), [], 'nothing in, nothing out')
 })
 
@@ -170,14 +204,18 @@ const dings = [
   { ts: T0 + H, level: 49 },
   { ts: T0 + 2 * H, level: 50 },
   { ts: T0 + DAY, level: 11 },
-  { ts: T0 + DAY + H, level: 12 }
+  { ts: T0 + DAY + H, level: 12 },
 ]
 const segs = buildLevelSegments(dings)
 
 test('visibleSegments drops runs the window has left behind and anchors the one it straddles', () => {
   const v = visibleSegments(segs, T0 + DAY + 30 * MIN)
   assert.equal(v.length, 1, 'the pre-swap run is entirely behind the window')
-  assert.deepEqual(v[0].points.map((p) => p.level), [11, 12], 'anchored on the level in force at the edge')
+  assert.deepEqual(
+    v[0].points.map((p) => p.level),
+    [11, 12],
+    'anchored on the level in force at the edge',
+  )
   assert.equal(v[0].afterSwap, true, 'the swap flag rides along, so its dashed rule is still drawn')
 })
 
@@ -186,14 +224,28 @@ test('a run reduced to its anchor SURVIVES, so the gap it opens is still reporta
   // is genuinely unknown (the swap is never logged), and only the surviving anchor can say so.
   const v = visibleSegments(segs, T0 + 12 * H)
   assert.equal(v.length, 2)
-  assert.deepEqual(v[0].points.map((p) => p.level), [50], 'the old run keeps exactly its last ding')
-  assert.equal(levelAt(v, T0 + 13 * H).kind, 'swap-gap', 'and the hover still reports the unlogged gap')
+  assert.deepEqual(
+    v[0].points.map((p) => p.level),
+    [50],
+    'the old run keeps exactly its last ding',
+  )
+  assert.equal(
+    levelAt(v, T0 + 13 * H).kind,
+    'swap-gap',
+    'and the hover still reports the unlogged gap',
+  )
 })
 
 test('a window over the whole history clips nothing at all', () => {
   const v = visibleSegments(segs, T0 - 1)
-  assert.deepEqual(v.map((s) => s.points.length), segs.map((s) => s.points.length))
-  assert.deepEqual(v.map((s) => s.afterSwap), segs.map((s) => s.afterSwap))
+  assert.deepEqual(
+    v.map((s) => s.points.length),
+    segs.map((s) => s.points.length),
+  )
+  assert.deepEqual(
+    v.map((s) => s.afterSwap),
+    segs.map((s) => s.afterSwap),
+  )
 })
 
 test('the clipped series still answers the same questions the full one did, inside the window', () => {
@@ -203,7 +255,11 @@ test('the clipped series still answers the same questions the full one did, insi
     assert.deepEqual(levelAt(v, ts), levelAt(segs, ts), `level at ${ts - T0}ms into the window`)
   }
   const va = visibleFrom(pts, t0)
-  assert.equal(va[stepIndexAt(va, t0 + 30 * MIN)].y, pts[stepIndexAt(pts, t0 + 30 * MIN)].y, 'and so does the AA step lookup')
+  assert.equal(
+    va[stepIndexAt(va, t0 + 30 * MIN)].y,
+    pts[stepIndexAt(pts, t0 + 30 * MIN)].y,
+    'and so does the AA step lookup',
+  )
 })
 
 // ── 5. the generalized domain (JOS-130) ───────────────────────────────────────────────
@@ -217,18 +273,33 @@ test('windowOver IS the `full` rule — the whole-history domain is unchanged, b
   for (const [lo, hi] of [
     [T0, T0 + 3 * H],
     [T0, T0 + 40 * DAY],
-    [T0, T0]
+    [T0, T0],
   ] as const) {
-    assert.deepEqual(windowOver(lo, hi), windowFor(lo, hi, 'full'), `${String(hi - lo)}ms of history`)
+    assert.deepEqual(
+      windowOver(lo, hi),
+      windowFor(lo, hi, 'full'),
+      `${String(hi - lo)}ms of history`,
+    )
   }
 })
 
 test('windowOver pads a narrower slice by the same 4%, and buckets it for its OWN span', () => {
   const win = windowOver(T0 + 2 * H, T0 + 3 * H)
   assert.equal(win.t0, T0 + 2 * H, 'the near end is the instant asked for — no outward snap')
-  assert.equal(win.t1, T0 + 3 * H + H * TRAILING_FRAC, 'and the far end carries the trailing gutter')
-  assert.equal(win.bucketMs, bucketMsFor(win.t1 - win.t0), 'the grid is derived from the drawn span')
-  assert.ok(win.bucketMs < windowOver(T0, T0 + 40 * DAY).bucketMs, 'a narrower slice draws on a finer grid')
+  assert.equal(
+    win.t1,
+    T0 + 3 * H + H * TRAILING_FRAC,
+    'and the far end carries the trailing gutter',
+  )
+  assert.equal(
+    win.bucketMs,
+    bucketMsFor(win.t1 - win.t0),
+    'the grid is derived from the drawn span',
+  )
+  assert.ok(
+    win.bucketMs < windowOver(T0, T0 + 40 * DAY).bucketMs,
+    'a narrower slice draws on a finer grid',
+  )
 })
 
 test('windowOver never produces a zero-width or inverted domain', () => {

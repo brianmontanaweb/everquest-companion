@@ -66,13 +66,13 @@ import {
   resolveSliceId,
   type SliceId,
   type SliceRange,
-  type Timeslice
+  type Timeslice,
 } from '@shared/timeslice'
 import {
   currentSegment,
   segmentAt,
   sessionSegments,
-  type SessionSegment
+  type SessionSegment,
 } from '@shared/sessionSegments'
 import type { ZoneScope } from '@shared/zoneScope'
 import { useModule } from '../../lib/useModule'
@@ -203,7 +203,10 @@ const NO_EXTRA: readonly number[] = []
  * IT SUBSCRIBES FOR THE CALLER THAT HAS NOTHING (the Loot ledger). A caller that ALREADY holds the
  * progression snapshot calls `useTimesliceOn` below and hands it over — see that function.
  */
-export function useTimeslice(extraTs: readonly number[] = NO_EXTRA, initialId: SliceId = 'all'): TimesliceState {
+export function useTimeslice(
+  extraTs: readonly number[] = NO_EXTRA,
+  initialId: SliceId = 'all',
+): TimesliceState {
   const prog = useModule<ProgressionSnap>('progression') ?? EMPTY_PROGRESSION
   return useTimesliceOn(prog, extraTs, initialId)
 }
@@ -230,7 +233,7 @@ export function useTimeslice(extraTs: readonly number[] = NO_EXTRA, initialId: S
 export function useTimesliceOn(
   prog: ProgressionSnap,
   extraTs: readonly number[] = NO_EXTRA,
-  initialId: SliceId = 'all'
+  initialId: SliceId = 'all',
 ): TimesliceState {
   useSyncExternalStore(subscribe, getVersion, getVersion)
   // THE MEMBERSHIP IS READ, NEVER KEPT (JOS-332). One value per app, held in main, so the tab and
@@ -259,7 +262,7 @@ export function useTimesliceOn(
   const customCaption = segments.find((s) => s.n === segmentIndex)?.caption ?? null
   const slice = useMemo(
     () => resolveSlice({ snap: prog, bounds, id, custom, customCaption, zoneScope }),
-    [prog, bounds, id, custom, customCaption, zoneScope]
+    [prog, bounds, id, custom, customCaption, zoneScope],
   )
 
   const setId = useCallback((next: SliceId) => {
@@ -287,20 +290,33 @@ export function useTimesliceOn(
     // The SELECTION waits for the answer rather than guessing: the segment this opens begins at an
     // instant this window does not know until main says so, and selecting a guessed range would
     // leave the picker reading a boundary the numbers were never measured over.
-    void press().then((next) => {
-      selectSegment(currentSegment(next))
-    }, () => undefined)
+    void press().then(
+      (next) => {
+        selectSegment(currentSegment(next))
+      },
+      () => undefined,
+    )
   }, [press])
   const pickSegment = useCallback(
     (n: number) => {
       const seg = segmentAt(marks, n)
       if (seg) selectSegment(seg)
     },
-    [marks]
+    [marks],
   )
 
   return {
-    prog, bounds, available, slice, id, setId, custom, setCustom,
-    segments, segmentIndex, newSession, pickSegment
+    prog,
+    bounds,
+    available,
+    slice,
+    id,
+    setId,
+    custom,
+    setCustom,
+    segments,
+    segmentIndex,
+    newSession,
+    pickSegment,
   }
 }

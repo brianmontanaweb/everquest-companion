@@ -26,7 +26,7 @@ import {
   columnValue,
   defaultSorts,
   type BestSpellRow,
-  type BestSpellsView
+  type BestSpellsView,
 } from '../src/shared/bestSpells'
 import { comboClassesOf, type LevelUnlockData } from '../src/shared/levelUnlocks'
 import { buildLevelUnlocks } from '../src/main/data/levelUnlocks'
@@ -37,7 +37,7 @@ const slot = (candidates: ClassAbbr[]): ComboSlot => ({
   candidates,
   confidence: 1,
   provenance: 'inferred',
-  because: []
+  because: [],
 })
 
 function interval(slots: ComboSlot[]): ComboInterval {
@@ -55,7 +55,7 @@ function interval(slots: ComboSlot[]): ComboInterval {
     levelLo: null,
     levelHi: null,
     evidenceCount: slots.length,
-    userLocked: false
+    userLocked: false,
   }
 }
 
@@ -81,7 +81,7 @@ const DATA: LevelUnlockData = {
       castTimeMs: 1000,
       targetType: 'Targeted AE',
       waves: 3,
-      hpLines: ['Decrease Hitpoints by 100']
+      hpLines: ['Decrease Hitpoints by 100'],
     },
     {
       name: 'Test Column',
@@ -89,7 +89,7 @@ const DATA: LevelUnlockData = {
       mana: 100,
       castTimeMs: 1000,
       targetType: 'Targeted AE',
-      hpLines: ['Decrease Hitpoints by 100']
+      hpLines: ['Decrease Hitpoints by 100'],
     },
     {
       // The client stated this one its own cap, which is what a PB AE really reads (field 143 = 8).
@@ -99,7 +99,7 @@ const DATA: LevelUnlockData = {
       castTimeMs: 1000,
       targetType: 'PB AE',
       aeMaxTargets: 8,
-      hpLines: ['Decrease Hitpoints by 100']
+      hpLines: ['Decrease Hitpoints by 100'],
     },
     {
       name: 'Test Bolt',
@@ -107,7 +107,7 @@ const DATA: LevelUnlockData = {
       mana: 100,
       castTimeMs: 1000,
       targetType: 'Single',
-      hpLines: ['Decrease Hitpoints by 100']
+      hpLines: ['Decrease Hitpoints by 100'],
     },
     {
       // An area DoT: 20 a tick over five ticks. It is in the DoT tab AND in AOE, because the AOE
@@ -118,10 +118,10 @@ const DATA: LevelUnlockData = {
       castTimeMs: 1000,
       durationMs: 30_000,
       targetType: 'Targeted AE',
-      hpLines: ['Decrease Hitpoints by 20 per tick']
-    }
+      hpLines: ['Decrease Hitpoints by 20 per tick'],
+    },
   ],
-  skills: {}
+  skills: {},
 }
 
 const WIZ = comboOf(['WIZ'])
@@ -151,7 +151,10 @@ test('THE DEFECT, FIXED: a rain in the DD tab is per-wave x waves, not the wiki 
 test('a rain is an instant spell, so it stays in DD and never becomes a DoT', () => {
   const best = bestSpellsAt(DATA, WIZ, 20, BOTH)
   assert.equal(rowOf(best.tabs.dd.shown, 'Test Rain').metrics.dot, undefined)
-  assert.equal(best.tabs.dot.shown.some((r) => r.name === 'Test Rain'), false)
+  assert.equal(
+    best.tabs.dot.shown.some((r) => r.name === 'Test Rain'),
+    false,
+  )
   // The waves are waves of ONE cast, not ticks of a duration — the JOS-414 ruling, restated where
   // the figures are computed.
   assert.equal(rowOf(best.tabs.dd.shown, 'Test Rain').metrics.overSec, undefined)
@@ -161,11 +164,17 @@ test('a rain is an instant spell, so it stays in DD and never becomes a DoT', ()
 
 test('MEMBERSHIP: the AOE tab is the AE-shaped spells, and only those', () => {
   const aoe = bestSpellsAt(DATA, WIZ, 20, BOTH).tabs.aoe
-  assert.deepEqual(
-    aoe.shown.map((r) => r.name).sort(),
-    ['Test Cloud', 'Test Column', 'Test Nova', 'Test Rain']
+  assert.deepEqual(aoe.shown.map((r) => r.name).sort(), [
+    'Test Cloud',
+    'Test Column',
+    'Test Nova',
+    'Test Rain',
+  ])
+  assert.equal(
+    aoe.shown.some((r) => r.name === 'Test Bolt'),
+    false,
+    'a single-target nuke has no area figure',
   )
-  assert.equal(aoe.shown.some((r) => r.name === 'Test Bolt'), false, 'a single-target nuke has no area figure')
 })
 
 test('ARITHMETIC: a rain is capped at four HITS, a plain AE is per-target, a PB AE uses its own cap', () => {
@@ -213,7 +222,10 @@ test('THE ASSUMPTION IS VISIBLE, and it states what the table used rather than t
   // client's 8. A marker reading `x4 targets` over it would be a caption that lies.
   assert.equal(bestSpellsAt(DATA, WIZ, 20, BOTH).aoeTargets, 'x4 to x8 targets')
   // Drop the PB AE and the marker collapses to the one count in force.
-  const noPbAe: LevelUnlockData = { ...DATA, spells: DATA.spells.filter((s) => s.name !== 'Test Nova') }
+  const noPbAe: LevelUnlockData = {
+    ...DATA,
+    spells: DATA.spells.filter((s) => s.name !== 'Test Nova'),
+  }
   assert.equal(bestSpellsAt(noPbAe, WIZ, 20, BOTH).aoeTargets, 'x4 targets')
   // An unknown loadout ranks nothing, and the marker still answers rather than being empty.
   assert.equal(bestSpellsAt(DATA, comboClassesOf(null), 20, BOTH).aoeTargets, 'x4 targets')
@@ -260,9 +272,17 @@ test('JOS-449 ACCEPTANCE: Frost Storm at 50, base rank, in a wizard DD tab', () 
   const best = bestSpellsAt(REAL, comboOf(['WIZ']), 50, BOTH)
   const rows = best.tabs.dd.shown
   const row = rowOf(rows, 'Frost Storm')
-  assert.equal(row.rank, 0, 'BASE RANK: he does not own it, so there is no observed rank to lean on')
+  assert.equal(
+    row.rank,
+    0,
+    'BASE RANK: he does not own it, so there is no observed rank to lean on',
+  )
   assert.equal(row.metrics.damage, 1536, '512 a wave, three waves')
-  assert.equal(row.metrics.dps, 90.4, '1536 over the 17s cycle: a 5s cast plus the 12s re-use timer')
+  assert.equal(
+    row.metrics.dps,
+    90.4,
+    '1536 over the 17s cycle: a 5s cast plus the 12s re-use timer',
+  )
   assert.equal(row.metrics.damagePerMana, 5.7, '1536 for 271 mana')
   assert.equal(row.metrics.recastMs, 12_000)
   assert.equal(row.gainedAt, 41)
@@ -274,8 +294,14 @@ test('JOS-449 ACCEPTANCE: Frost Storm at 50, base rank, in a wizard DD tab', () 
   // It is the biggest single cast in the table and the most mana-efficient one in it, which is the
   // "very efficient" the owner had heard about, now stated by the app.
   const best2 = (pick: (r: BestSpellRow) => number) => Math.max(...rows.map(pick))
-  assert.equal(best2((r) => r.metrics.damage ?? 0), 1536)
-  assert.equal(best2((r) => r.metrics.damagePerMana ?? 0), 5.7)
+  assert.equal(
+    best2((r) => r.metrics.damage ?? 0),
+    1536,
+  )
+  assert.equal(
+    best2((r) => r.metrics.damagePerMana ?? 0),
+    5.7,
+  )
 })
 
 test('JOS-449 acceptance, the other half: Frost Storm on a pack, with the assumption stated', () => {
@@ -284,19 +310,29 @@ test('JOS-449 acceptance, the other half: Frost Storm on a pack, with the assump
   // FOUR HITS, not twelve — the four-page quote, over the real catalog.
   assert.equal(row.metrics.damage, 2048, '512 x the four-hit cap')
   assert.equal(row.targets, 4)
-  assert.equal(best.aoeTargets, 'x4 targets', 'and the tab says so, over a table with no client file')
-  assert.ok(best.tabs.aoe.shown.length >= 15, `wizard AOE rows at 50: ${String(best.tabs.aoe.shown.length)}`)
+  assert.equal(
+    best.aoeTargets,
+    'x4 targets',
+    'and the tab says so, over a table with no client file',
+  )
+  assert.ok(
+    best.tabs.aoe.shown.length >= 15,
+    `wizard AOE rows at 50: ${String(best.tabs.aoe.shown.length)}`,
+  )
 })
 
 test('the AOE tab over the real corpus is AE-shaped throughout, and never a superset of DD', () => {
   const best = bestSpellsAt(REAL, comboOf(['WIZ']), 50, BOTH)
   const shapes = new Set(
     best.tabs.aoe.shown.map(
-      (r) => REAL.spells.find((s) => s.name === r.name)?.targetType ?? '(none)'
-    )
+      (r) => REAL.spells.find((s) => s.name === r.name)?.targetType ?? '(none)',
+    ),
   )
   for (const shape of shapes) {
-    assert.ok(['Targeted AE', 'PB AE', 'PBAOE', 'AE'].includes(shape), `${shape} is not an area shape`)
+    assert.ok(
+      ['Targeted AE', 'PB AE', 'PBAOE', 'AE'].includes(shape),
+      `${shape} is not an area shape`,
+    )
   }
   // Every AOE row is at least as big as its DD row: a max-target reading can never state less.
   for (const row of best.tabs.aoe.shown) {
@@ -306,7 +342,7 @@ test('the AOE tab over the real corpus is AE-shaped throughout, and never a supe
     if (!single) continue
     assert.ok(
       (row.metrics.damage ?? 0) >= (single.metrics.damage ?? 0),
-      `${row.name}: aoe ${String(row.metrics.damage)} < single ${String(single.metrics.damage)}`
+      `${row.name}: aoe ${String(row.metrics.damage)} < single ${String(single.metrics.damage)}`,
     )
   }
 })
@@ -318,5 +354,8 @@ test('nothing outside the rain roster moved: a plain nuke reads what it always r
   const comet = rowOf(best.tabs.dd.shown, 'Ice Comet')
   assert.equal(comet.metrics.damage, 808)
   assert.equal(comet.targets, 1)
-  assert.equal(best.tabs.aoe.shown.some((r) => r.name === 'Ice Comet'), false)
+  assert.equal(
+    best.tabs.aoe.shown.some((r) => r.name === 'Ice Comet'),
+    false,
+  )
 })

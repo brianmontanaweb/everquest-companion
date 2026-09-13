@@ -28,7 +28,7 @@ import {
   normalizeEqDirOverride,
   realOverrideProbes,
   tailSurvivesRootChange,
-  type DiscoveryProbes
+  type DiscoveryProbes,
 } from '../src/main/log/discovery'
 
 // --- discoverEqRoot ordering (fully injected probes) ------------------------
@@ -38,7 +38,7 @@ function probes(withLogs: Set<string>, drives: string[], extra: string[] = []): 
   return {
     hasLogs: (root) => withLogs.has(root.replace(/[\\/]+$/, '').toLowerCase()),
     extraCandidates: () => extra,
-    fixedDrives: () => drives
+    fixedDrives: () => drives,
   }
 }
 
@@ -79,7 +79,7 @@ test('discoverEqRoot: probes each candidate at most once (dedupe)', () => {
     },
     // Duplicate the target as an extra candidate + it's also produced by the sweep.
     extraCandidates: () => [target, target],
-    fixedDrives: () => ['C:']
+    fixedDrives: () => ['C:'],
   }
   const root = discoverEqRoot(p)
   assert.equal(root, target)
@@ -116,7 +116,10 @@ test('logIsUnderLogsDir: a log under a DIFFERENT root does not match', () => {
 test('logIsUnderLogsDir: a nested subdirectory is not "in" the Logs dir', () => {
   assert.equal(logIsUnderLogsDir(`${NEW_LOGS}\\archive\\eqlog_A_b.txt`, NEW_LOGS), false)
   // …and a prefix that is not a path boundary must not match either.
-  assert.equal(logIsUnderLogsDir('D:\\Games\\EverQuest Legends\\LogsOld\\eqlog_A_b.txt', NEW_LOGS), false)
+  assert.equal(
+    logIsUnderLogsDir('D:\\Games\\EverQuest Legends\\LogsOld\\eqlog_A_b.txt', NEW_LOGS),
+    false,
+  )
 })
 
 test('tailSurvivesRootChange: the reported bug — an existing OLD-root log does not survive', () => {
@@ -186,7 +189,7 @@ test('discovery is re-runnable: the same root fails before /log on and succeeds 
     const p: DiscoveryProbes = {
       hasLogs: rootHasLogs,
       extraCandidates: () => [install],
-      fixedDrives: () => []
+      fixedDrives: () => [],
     }
     assert.equal(discoverEqRoot(p), null, 'a Logs dir with no character log is not a match')
     assert.equal(countCharacterLogs(join(install, 'Logs')), 0)
@@ -210,7 +213,10 @@ test('discovery is re-runnable: the same root fails before /log on and succeeds 
 // reasonable person picks resolve to the same pair.
 
 /** Build a temp install: `<tmp>/<name>/Logs/eqlog_Gnut_qeynos.txt`. Returns the paths. */
-function tempInstall(tmp: string, name = 'EverQuest Legends'): {
+function tempInstall(
+  tmp: string,
+  name = 'EverQuest Legends',
+): {
   root: string
   logsDir: string
   logFile: string
@@ -236,13 +242,17 @@ const norm = (picked: string): { root: string; logsDir: string } =>
 function assertResolves(
   got: { root: string; logsDir: string },
   want: { root: string; logsDir: string },
-  msg = ''
+  msg = '',
 ): void {
-  assert.equal(lc(got.root.replace(/[\\/]+/g, '\\')), lc(want.root.replace(/[\\/]+/g, '\\')), `root ${msg}`)
+  assert.equal(
+    lc(got.root.replace(/[\\/]+/g, '\\')),
+    lc(want.root.replace(/[\\/]+/g, '\\')),
+    `root ${msg}`,
+  )
   assert.equal(
     lc(got.logsDir.replace(/[\\/]+/g, '\\')),
     lc(want.logsDir.replace(/[\\/]+/g, '\\')),
-    `logsDir ${msg}`
+    `logsDir ${msg}`,
   )
 }
 
@@ -291,7 +301,7 @@ test('normalizeEqDirOverride: trailing separators and forward slashes are not a 
       assertResolves(
         norm(logsDir + suffix),
         { root, logsDir },
-        `logsDir + ${JSON.stringify(suffix)}`
+        `logsDir + ${JSON.stringify(suffix)}`,
       )
     }
     // A path typed/pasted with forward slashes still resolves to the same pair.
@@ -404,29 +414,32 @@ test('normalizeEqDirOverride: the decision table, fully injected (no disk at all
   // The probes are separator-tolerant the way the real fs is (Windows accepts both).
   const key = (p: string): string => lc(p.replace(/[\\/]+/g, '\\'))
   const dirs = new Set(
-    ['D:\\games\\EverQuest Legends', 'D:\\games\\EverQuest Legends\\Logs'].map(key)
+    ['D:\\games\\EverQuest Legends', 'D:\\games\\EverQuest Legends\\Logs'].map(key),
   )
   const files = new Set(['D:\\games\\EverQuest Legends\\Logs\\eqlog_Gnut_qeynos.txt'].map(key))
   const probes = {
     isDir: (p: string) => dirs.has(key(p)),
     isFile: (p: string) => files.has(key(p)),
-    hasCharacterLogs: (d: string) => key(d) === key('D:\\games\\EverQuest Legends\\Logs')
+    hasCharacterLogs: (d: string) => key(d) === key('D:\\games\\EverQuest Legends\\Logs'),
   }
-  const expected = { root: 'D:\\games\\EverQuest Legends', logsDir: 'D:\\games\\EverQuest Legends\\Logs' }
+  const expected = {
+    root: 'D:\\games\\EverQuest Legends',
+    logsDir: 'D:\\games\\EverQuest Legends\\Logs',
+  }
   for (const picked of [
     'D:\\games\\EverQuest Legends',
     'D:\\games\\EverQuest Legends\\',
     'D:\\games\\EverQuest Legends\\Logs',
     'D:\\games\\EverQuest Legends\\Logs\\',
     'D:/games/EverQuest Legends/Logs',
-    'D:\\games\\EverQuest Legends\\Logs\\eqlog_Gnut_qeynos.txt'
+    'D:\\games\\EverQuest Legends\\Logs\\eqlog_Gnut_qeynos.txt',
   ]) {
     assertResolves(normalizeEqDirOverride(picked, probes), expected, picked)
   }
   // An unplugged drive: neither file nor dir ⇒ unchanged, old behavior.
   assert.deepEqual(normalizeEqDirOverride('Z:\\nope', probes), {
     root: 'Z:\\nope',
-    logsDir: join('Z:\\nope', 'Logs')
+    logsDir: join('Z:\\nope', 'Logs'),
   })
 })
 
@@ -440,7 +453,7 @@ test('discoverEqRoot: end-to-end with the real rootHasLogs predicate over a temp
       'Public',
       'Daybreak Game Company',
       'Installed Games',
-      'EverQuest Legends'
+      'EverQuest Legends',
     )
     mkdirSync(join(install, 'Logs'), { recursive: true })
     writeFileSync(join(install, 'Logs', 'eqlog_Primitive_freeport.txt'), '[Sat] hi\n')
@@ -451,7 +464,7 @@ test('discoverEqRoot: end-to-end with the real rootHasLogs predicate over a temp
     const root = discoverEqRoot({
       hasLogs: rootHasLogs,
       extraCandidates: () => [install, join(tmp, 'nope')],
-      fixedDrives: () => []
+      fixedDrives: () => [],
     })
     assert.equal(root, install)
   } finally {

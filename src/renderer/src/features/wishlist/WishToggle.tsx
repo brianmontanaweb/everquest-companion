@@ -46,7 +46,8 @@ import { Box, Button } from '@mui/material'
  * They are the whole explanation on either surface — no popper, no helper text, no chip carrying
  * half the meaning.
  */
-export const WISH_ADD_TITLE = 'Add to the wish list, where it joins the route grouped by where it drops.'
+export const WISH_ADD_TITLE =
+  'Add to the wish list, where it joins the route grouped by where it drops.'
 export const WISH_REMOVE_TITLE = 'Remove from the wish list. It comes off the route with it.'
 
 /**
@@ -83,7 +84,7 @@ export default function WishToggle({
   wished,
   disabled = false,
   testId,
-  onToggle
+  onToggle,
 }: WishToggleProps): JSX.Element {
   return (
     <Button
@@ -109,7 +110,10 @@ export default function WishToggle({
       // sentence still in `title`. Same width for both states either way, so a click never resizes.
       sx={{ flexShrink: 1, width: 168, minWidth: 0 }}
     >
-      <Box component="span" sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <Box
+        component="span"
+        sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+      >
         {wished ? LABEL.remove : LABEL.add}
       </Box>
     </Button>

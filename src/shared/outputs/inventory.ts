@@ -133,7 +133,7 @@ export const EQUIP_LOCATIONS = [
   'Secondary',
   'Shoulders',
   'Waist',
-  'Wrist'
+  'Wrist',
 ] as const
 
 export type EquipLocationToken = (typeof EQUIP_LOCATIONS)[number]
@@ -147,7 +147,7 @@ const CONTAINER_PATTERNS: readonly { re: RegExp; container: ContainerKind }[] = 
   { re: /^General (\d+)$/, container: 'general' },
   { re: /^Bank(\d+)$/, container: 'bank' },
   { re: /^SharedBank(\d+)$/, container: 'sharedBank' },
-  { re: /^Personal-Depot(\d+)$/, container: 'personalDepot' }
+  { re: /^Personal-Depot(\d+)$/, container: 'personalDepot' },
 ]
 
 /**
@@ -215,7 +215,7 @@ export function parseItemName(name: string): ParsedItemName {
     base,
     tier: tierMatch ? Number.parseInt(tierMatch[1], 10) : undefined,
     exaltation,
-    starred
+    starred,
   }
 }
 

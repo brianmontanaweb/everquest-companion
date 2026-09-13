@@ -31,7 +31,7 @@ import {
   readMeterScope,
   serializeHiddenLines,
   toggleHiddenLine,
-  type ChartLineKey
+  type ChartLineKey,
 } from './combatPrefs'
 import type { MeterScope } from '@shared/roster'
 
@@ -92,7 +92,7 @@ export function useRawPref(key: string): [string | null, (v: string | null) => v
   const value = useSyncExternalStore<string | null>(
     subscribe,
     () => localStorage.getItem(key),
-    () => null
+    () => null,
   )
   const set = useCallback(
     (v: string | null) => {
@@ -100,7 +100,7 @@ export function useRawPref(key: string): [string | null, (v: string | null) => v
       else localStorage.setItem(key, v)
       notifyAll()
     },
-    [key]
+    [key],
   )
   return [value, set]
 }
@@ -117,7 +117,7 @@ export function useBoolPref(key: string, dflt: boolean): [boolean, (v: boolean) 
   const value = useSyncExternalStore(
     subscribe,
     () => read(key, dflt),
-    () => dflt
+    () => dflt,
   )
   const set = useCallback((v: boolean) => write(key, v), [key])
   return [value, set]
@@ -146,7 +146,7 @@ export function useHiddenChartLines(): [readonly ChartLineKey[], (k: ChartLineKe
     (k: ChartLineKey) => {
       setRaw(serializeHiddenLines(toggleHiddenLine(hidden, k)))
     },
-    [hidden, setRaw]
+    [hidden, setRaw],
   )
   return [hidden, toggle]
 }
@@ -180,7 +180,7 @@ export function useMeterScope(): [MeterScope, (v: MeterScope) => void] {
   const value = useSyncExternalStore<MeterScope>(
     subscribe,
     () => readMeterScope(localStorage.getItem(METER_SCOPE_KEY)),
-    () => DEFAULT_METER_SCOPE
+    () => DEFAULT_METER_SCOPE,
   )
   const set = useCallback((v: MeterScope) => {
     localStorage.setItem(METER_SCOPE_KEY, v)

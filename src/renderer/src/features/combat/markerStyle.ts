@@ -24,7 +24,7 @@ export const MARKER_COLOR: Record<TimelineMarker['kind'], string> = {
   stance: '#d9b25f',
   invocation: '#a98fe0',
   coat: '#c46fd2',
-  slow: '#57e0a0'
+  slow: '#57e0a0',
 }
 
 /**
@@ -59,7 +59,7 @@ export const ORIGIN_COLOR: Record<ProcOrigin, string> = {
   // swing, and reading as siblings is correct. They stay distinguishable — cream is a near-white
   // and this is an amber — which is what keeps it a relation rather than a collision.
   aa: '#d9b25f',
-  click: CLICK_COLOR
+  click: CLICK_COLOR,
 }
 
 // The WORD is extracted verbatim from its old home — the DPS curve's legend and native tick
@@ -68,7 +68,7 @@ export const MARKER_WORD: Record<TimelineMarker['kind'], string> = {
   stance: 'stance',
   invocation: 'invocation',
   coat: 'coat',
-  slow: 'slow landed'
+  slow: 'slow landed',
 }
 
 /** The verb a marker's instant is stated with: a coat/slow HAPPENED, a stance was CHOSEN. */
@@ -76,5 +76,5 @@ export const MARKER_VERB: Record<TimelineMarker['kind'], string> = {
   stance: 'committed',
   invocation: 'committed',
   coat: 'applied',
-  slow: 'landed'
+  slow: 'landed',
 }

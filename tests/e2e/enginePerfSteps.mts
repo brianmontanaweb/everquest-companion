@@ -57,7 +57,15 @@
  * having happened, and does not turn a timing accident into a red run.
  */
 import type { Page } from 'playwright'
-import { check, countIn, note, settle, settleCount, settleGone, settleStable } from './appHarness.mjs'
+import {
+  check,
+  countIn,
+  note,
+  settle,
+  settleCount,
+  settleGone,
+  settleStable,
+} from './appHarness.mjs'
 
 const CHIP = '[data-testid="perf-chip"]'
 const POPOVER = '[data-testid="perf-popover"]'
@@ -71,7 +79,7 @@ const SAMPLE_WAIT_MS = 15_000
 function textOf(page: Page, selector: string): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText ?? '',
-    selector
+    selector,
   )
 }
 
@@ -81,13 +89,13 @@ async function enableHud(page: Page): Promise<boolean> {
   await page.evaluate(() =>
     (
       window as unknown as { eq: { setPerfHudEnabled: (on: boolean) => Promise<unknown> } }
-    ).eq.setPerfHudEnabled(true)
+    ).eq.setPerfHudEnabled(true),
   )
   const chips = await settleCount(page, CHIP, 1, { timeoutMs: SAMPLE_WAIT_MS })
   return check(
     'the performance chip appears once the HUD is switched on',
     chips === 1,
-    `${String(chips)} chip(s)`
+    `${String(chips)} chip(s)`,
   )
 }
 
@@ -105,12 +113,12 @@ async function stepNothingPollsWhileThePanelIsShut(page: Page): Promise<void> {
   const sections = await settleStable(() => countIn(page, ENGINE), {
     timeoutMs: 8_000,
     stable: 6,
-    pollMs: 150
+    pollMs: 150,
   })
   check(
     'the engine section is not rendered while the popover is shut — the poll is armed by opening it',
     sections === 0,
-    `${String(sections)} section(s)`
+    `${String(sections)} section(s)`,
   )
 }
 
@@ -123,7 +131,7 @@ async function openPanel(page: Page): Promise<boolean> {
   return check(
     'the panel grows an ENGINE section — the data-server engine appears in the app’s own performance surface',
     sections === 1,
-    sections === 1 ? 'section rendered' : await textOf(page, POPOVER)
+    sections === 1 ? 'section rendered' : await textOf(page, POPOVER),
   )
 }
 
@@ -143,17 +151,17 @@ function stepSectionCarriesTheEngineNumbers(text: string): void {
   check(
     'the engine’s OWN PROCESS is in the table — the pid this app spawned, which app.getAppMetrics() cannot report',
     /engine \(pid \d+\)/.test(flat),
-    flat
+    flat,
   )
   check(
     '…with a working set read off Windows, and a CPU figure that is either a rate or the honest "measuring"',
     /engine \(pid \d+\) (measuring|\d+%) · \d/.test(flat),
-    flat
+    flat,
   )
   check(
     'it names the engine’s own state and generation — the two terms that decide what everything else means',
     /\b(live|folding|attaching|starting|idle)\b/.test(flat) && /epoch \d+/.test(flat),
-    flat
+    flat,
   )
   // THE CLOCK THE FOLD IS ON (JOS-536). No unit test can make this claim: the zone in this pixel
   // was resolved inside the Rust process from a hint this app computed at the attach, and `host` is
@@ -163,27 +171,27 @@ function stepSectionCarriesTheEngineNumbers(text: string): void {
   check(
     'the panel says WHICH CLOCK the fold is on, resolved from the zone this app told the engine at attach',
     /clock/.test(flat) && /\((host|platform|offset)\)/.test(flat),
-    flat
+    flat,
   )
   check(
     '…and the two clocks agree, so it reports a skew rather than warning that fights will be wrong',
     !/Fights and timers will be wrong/.test(flat),
-    flat
+    flat,
   )
   check(
     '…the events the ENGINE folded, which no other part of this app counts',
     /events folded/.test(flat) && /[1-9][\d,]* /.test(flat),
-    flat
+    flat,
   )
   check(
     '…what the scan cost it: a spell-db time and a scan over a real byte count',
     /spell db/.test(flat) && /scan/.test(flat),
-    flat
+    flat,
   )
   check(
     '…the serve table off its own meter, or the honest sentence when nobody has subscribed',
     /views/.test(flat) || /loot\.ledger/.test(flat),
-    flat
+    flat,
   )
   // THE BUDGETS (JOS-502, ruling 19's completion). This is the claim no unit test can make: the
   // VERDICT in this pixel was computed inside the Rust process, against the generation this app
@@ -193,13 +201,13 @@ function stepSectionCarriesTheEngineNumbers(text: string): void {
   check(
     'the engine’s own BUDGETS are drawn, with the verdict IT reached about the generation it just built',
     /fold rate/.test(flat) && /serve latency/.test(flat),
-    flat
+    flat,
   )
   check(
     '…and each says pass, fail, or the honest "not yet measured" — never a zero and never a blank',
     /(fold rate|serve latency)[^·]*·?\s*(pass|fail|not yet measured)/.test(flat) ||
       /(pass|fail|not yet measured)/.test(flat),
-    flat
+    flat,
   )
   // THE PARITY LINE IS PERMANENTLY EMPTY AND THAT IS THE ASSERTION NOW (JOS-499 deleted the probe;
   // corrected here at JOS-502, which is when this module was first RUN by a spec). It used to
@@ -209,7 +217,7 @@ function stepSectionCarriesTheEngineNumbers(text: string): void {
   check(
     '…and the parity row states the permanent post-deletion truth: there is one fold, so nothing agrees with anything',
     /parity, last probe/.test(flat) && /no probe has run/.test(flat),
-    flat
+    flat,
   )
 }
 
@@ -219,7 +227,7 @@ async function stepClosingDisarms(page: Page): Promise<void> {
   const gone = await settleGone(page, ENGINE, { timeoutMs: SAMPLE_WAIT_MS })
   check(
     'closing the panel takes the engine section with it — the poll stops when nobody is looking',
-    gone
+    gone,
   )
 }
 
@@ -235,9 +243,13 @@ export async function stepEnginePerfPanel(page: Page): Promise<string | null> {
   // asserting on it — `settle` returns whatever it last read, so a slow machine yields the
   // placeholder and the check below still passes, while the ordinary run reports a real
   // percentage into the ticket's acceptance evidence.
-  const text = await settle(() => textOf(page, ENGINE), (t) => /\d+%/.test(t), {
-    timeoutMs: SAMPLE_WAIT_MS
-  })
+  const text = await settle(
+    () => textOf(page, ENGINE),
+    (t) => /\d+%/.test(t),
+    {
+      timeoutMs: SAMPLE_WAIT_MS,
+    },
+  )
   stepSectionCarriesTheEngineNumbers(text)
   note(`the ENGINE section read, verbatim:\n${text}`)
   await stepClosingDisarms(page)

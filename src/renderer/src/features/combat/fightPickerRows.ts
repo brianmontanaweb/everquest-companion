@@ -101,7 +101,7 @@ export function freezeOptions(opts: ScopeOptions, now: number, capped: boolean):
     head: opts.head ? { ...opts.head } : null,
     rest: opts.rest.map((o) => ({ ...o })),
     now,
-    capped
+    capped,
   }
 }
 
@@ -115,9 +115,12 @@ export function browseList(frozen: FrozenList | null, scope: CombatScope): Picke
     timing: rowTiming(o, scope, frozen.now),
     live: o.live,
     head,
-    opt: o
+    opt: o,
   })
-  return [...(frozen.head ? [toRow(frozen.head, true)] : []), ...frozen.rest.map((o) => toRow(o, false))]
+  return [
+    ...(frozen.head ? [toRow(frozen.head, true)] : []),
+    ...frozen.rest.map((o) => toRow(o, false)),
+  ]
 }
 
 /** A search hit, as a row. Zone rides along because a query spans every zone you have played. */
@@ -130,7 +133,7 @@ export function hitRow(h: FightHit): PickerRow {
     dps: s.dps,
     startTs: s.startTs,
     durationSec: s.durationSec,
-    live: s.kind === 'current'
+    live: s.kind === 'current',
   }
   return {
     value: opt.value,
@@ -139,7 +142,7 @@ export function hitRow(h: FightHit): PickerRow {
     timing: timingLabel(opt.startTs, opt.durationSec, Date.now()),
     live: opt.live,
     zone: s.zone,
-    opt
+    opt,
   }
 }
 
@@ -148,7 +151,11 @@ export function hitRow(h: FightHit): PickerRow {
  * the head row keeps re-labelling itself live/last, and ages keep ticking); `external` is the
  * fallback for a fight picked out of an all-time search that the capped list never carried.
  */
-export function triggerRow(opts: ScopeOptions, selection: string, external: ScopeOption | null): ScopeOption | null {
+export function triggerRow(
+  opts: ScopeOptions,
+  selection: string,
+  external: ScopeOption | null,
+): ScopeOption | null {
   if (opts.head?.value === selection) return opts.head
   const listed = opts.rest.find((o) => o.value === selection)
   if (listed) return listed
@@ -156,7 +163,11 @@ export function triggerRow(opts: ScopeOptions, selection: string, external: Scop
   return opts.head
 }
 
-export function emptyRowText(scope: CombatScope, query: string, results: SearchState | null): string {
+export function emptyRowText(
+  scope: CombatScope,
+  query: string,
+  results: SearchState | null,
+): string {
   if (!query.trim()) return scope === 'fight' ? 'No fights yet' : 'No zone sessions yet'
   if (scope === 'overall') return `No zone sessions match “${query.trim()}”.`
   if (!results) return 'Searching…'

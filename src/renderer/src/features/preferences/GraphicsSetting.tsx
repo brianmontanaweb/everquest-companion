@@ -40,7 +40,7 @@ import {
   resolveGraphics,
   type GraphicsPrefs,
   type ResolvedGraphics,
-  type ResolvedSwitch
+  type ResolvedSwitch,
 } from '@shared/graphicsPrefs'
 import type { GraphicsEnvironment } from '@shared/wineDetect'
 import { recordPref, usePrefsSeed } from './prefsHydration'
@@ -126,9 +126,9 @@ export function graphicsSection(): PrefSection {
         label: 'Graphics compatibility',
         keywords:
           'graphics gpu video card driver nvidia amd intel rtx software rendering render acceleration hardware black blank screen flicker flickering artifact artifacting glitch corrupt transparent transparency opaque solid overlay overlays meter meters compatibility safe mode wine linux proton',
-        content: <GraphicsSetting />
-      }
-    ]
+        content: <GraphicsSetting />,
+      },
+    ],
   }
 }
 
@@ -147,7 +147,7 @@ const SAFE_MODE_COPY: GraphicsCopy = {
   off: 'Off. The app draws with your graphics card, which is what you want unless it is misbehaving.',
   auto: 'The app turned this on for this machine - it draws without the graphics card. Turn it off to use the graphics card anyway, from the next launch.',
   overridden:
-    'Off, because you turned it off, on a machine where the app would have drawn without the graphics card.'
+    'Off, because you turned it off, on a machine where the app would have drawn without the graphics card.',
 }
 
 /**
@@ -160,7 +160,7 @@ const SAFE_MODE_COPY: GraphicsCopy = {
 const SAFE_MODE_WINE_COPY: GraphicsCopy = {
   ...SAFE_MODE_COPY,
   on: 'On, because you turned it on - and under Wine this is the setting that leaves the window blank or white. Turn it back off if nothing paints.',
-  off: 'Off. The app draws with your graphics card, which is the path that works under Wine.'
+  off: 'Off. The app draws with your graphics card, which is the path that works under Wine.',
 }
 
 /** The opaque-overlay caption in all four states — the one JOS-31 exists for. */
@@ -169,7 +169,7 @@ const OPAQUE_COPY: GraphicsCopy = {
   off: 'Off. Overlays float see-through over the game. Turn this on if they go black or leave marks on screen.',
   auto: 'Wine detected - overlays run opaque. Same meters, same colours, no see-through: under Wine a see-through overlay can stick on screen as a black box. Turn this off to keep them see-through.',
   overridden:
-    'Off, because you turned it off. Wine was detected, where a see-through overlay can stick on screen as a black box.'
+    'Off, because you turned it off. Wine was detected, where a see-through overlay can stick on screen as a black box.',
 }
 
 export function GraphicsSetting(): JSX.Element {
@@ -194,11 +194,15 @@ export function GraphicsSetting(): JSX.Element {
             </Typography>
           }
         />
-        <Typography variant="caption" color="text.secondary" data-testid="pref-graphics-safe-mode-note">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          data-testid="pref-graphics-safe-mode-note"
+        >
           {caption(
             resolved.safeMode,
             env.auto.safeMode,
-            env.wine ? SAFE_MODE_WINE_COPY : SAFE_MODE_COPY
+            env.wine ? SAFE_MODE_WINE_COPY : SAFE_MODE_COPY,
           )}
         </Typography>
       </Stack>

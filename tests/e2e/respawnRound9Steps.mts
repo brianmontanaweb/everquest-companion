@@ -62,23 +62,28 @@ function rows(page: Page, testid: string, unitTestid: string): Promise<RowRead[]
           source: e.getAttribute('data-respawn-source') ?? '',
           unit: (unit as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').trim() ?? '',
           overridden:
-            unit?.getAttribute('data-respawn-overridden') ?? e.getAttribute('data-respawn-overridden') ?? '',
-          text: (e as HTMLElement).innerText.replace(/\s+/g, ' ').trim()
+            unit?.getAttribute('data-respawn-overridden') ??
+            e.getAttribute('data-respawn-overridden') ??
+            '',
+          text: (e as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
         }
       }),
-    { id: testid, unitId: unitTestid }
+    { id: testid, unitId: unitTestid },
   )
 }
 
 const tabRows = (page: Page): Promise<RowRead[]> => rows(page, 'respawn-row', 'respawn-duration')
-const gameRows = (page: Page): Promise<RowRead[]> => rows(page, 'respawn-overlay-row', 'respawn-overlay-rung')
+const gameRows = (page: Page): Promise<RowRead[]> =>
+  rows(page, 'respawn-overlay-row', 'respawn-overlay-rung')
 const find = (list: RowRead[], mob: string): RowRead | undefined => list.find((r) => r.mob === mob)
 
 /** Everything the open modal is saying, as one string. */
 function dialogText(page: Page): Promise<string> {
   return page.evaluate(
-    (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').trim() ?? '',
-    DIALOG
+    (sel) =>
+      (document.querySelector(sel) as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').trim() ??
+      '',
+    DIALOG,
   )
 }
 
@@ -86,13 +91,21 @@ function dialogText(page: Page): Promise<string> {
 async function openEditor(page: Page, mob: string): Promise<number> {
   await page.click(`${rowSel(mob)} [data-testid="respawn-edit"]`, { timeout: 15_000 })
   await page.mouse.move(0, 0)
-  return settle(() => countOf(page, DIALOG), (n) => n === 1, { timeoutMs: 20_000 })
+  return settle(
+    () => countOf(page, DIALOG),
+    (n) => n === 1,
+    { timeoutMs: 20_000 },
+  )
 }
 
 async function closeEditor(page: Page, via: 'cancel' | 'save' | 'clear'): Promise<number> {
   await page.click(`${DIALOG} [data-testid="respawn-edit-${via}"]`, { timeout: 15_000 })
   await page.mouse.move(0, 0)
-  return settle(() => countOf(page, DIALOG), (n) => n === 0, { timeoutMs: 20_000 })
+  return settle(
+    () => countOf(page, DIALOG),
+    (n) => n === 0,
+    { timeoutMs: 20_000 },
+  )
 }
 
 /**
@@ -105,18 +118,37 @@ async function closeEditor(page: Page, via: 'cancel' | 'save' | 'clear'): Promis
 export async function stepEditTheNumber(
   page: Page,
   mob: string,
-  readWatches: (p: Page) => Promise<{ watches: { key: string; customSec?: number }[] }>
+  readWatches: (p: Page) => Promise<{ watches: { key: string; customSec?: number }[] }>,
 ): Promise<void> {
-  const before = await settle(() => tabRows(page), (r) => find(r, mob) !== undefined, { timeoutMs: 30_000 })
+  const before = await settle(
+    () => tabRows(page),
+    (r) => find(r, mob) !== undefined,
+    { timeoutMs: 30_000 },
+  )
   const row = find(before, mob)
-  if (!check('the clock row is there to be edited', row !== undefined, JSON.stringify(before))) return
+  if (!check('the clock row is there to be edited', row !== undefined, JSON.stringify(before)))
+    return
 
   // RULING 2: the duration and the rung that produced it are ONE object, not two ends of a line.
-  check('the duration and its source are one unit', row.unit.includes('3m 00s') && row.unit.includes('your kills'), row.unit)
-  check('…and it is not marked as overruled, because nobody has', row.overridden === 'false', JSON.stringify(row))
+  check(
+    'the duration and its source are one unit',
+    row.unit.includes('3m 00s') && row.unit.includes('your kills'),
+    row.unit,
+  )
+  check(
+    '…and it is not marked as overruled, because nobody has',
+    row.overridden === 'false',
+    JSON.stringify(row),
+  )
   // ROUND 7'S BOX IS GONE, not hidden. A build that kept it would still pass everything below.
-  check('the bare seconds box is deleted', (await countOf(page, '[data-testid="respawn-custom"]')) === 0)
-  check('…and no modal is standing open until one is asked for', (await countOf(page, DIALOG)) === 0)
+  check(
+    'the bare seconds box is deleted',
+    (await countOf(page, '[data-testid="respawn-custom"]')) === 0,
+  )
+  check(
+    '…and no modal is standing open until one is asked for',
+    (await countOf(page, DIALOG)) === 0,
+  )
 
   const opened = await openEditor(page, mob)
   if (!check('the edit icon on the duration opens the modal', opened === 1)) return
@@ -124,8 +156,16 @@ export async function stepEditTheNumber(
   // RULING 3: it carries what the decision needs. The card's own note (the round-5 provenance
   // sentence), every gap this fold measured, and the number clearing would go back to.
   const body = await dialogText(page)
-  check('…carrying the hover card’s own account of the timer', body.includes('A gap is an upper bound'), body)
-  check('…and the gaps themselves, not only the minimum they became', body.includes('gaps: 3m 00s'), body)
+  check(
+    '…carrying the hover card’s own account of the timer',
+    body.includes('A gap is an upper bound'),
+    body,
+  )
+  check(
+    '…and the gaps themselves, not only the minimum they became',
+    body.includes('gaps: 3m 00s'),
+    body,
+  )
   check('…and what clearing would return to', body.includes('Calculated:'), body)
 
   // RULING 4: prefilled with the duration in force, written the way the field accepts it.
@@ -136,14 +176,21 @@ export async function stepEditTheNumber(
   // read, which is the behaviour this replaces.
   await page.fill(INPUT, 'banana')
   const refused = await settle(
-    () => page.evaluate(() => document.querySelector('[data-testid="respawn-edit-error"]')?.textContent ?? ''),
+    () =>
+      page.evaluate(
+        () => document.querySelector('[data-testid="respawn-edit-error"]')?.textContent ?? '',
+      ),
     (t) => t.length > 0,
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   )
-  check('typing junk says so rather than silently clearing', refused.includes('Not a duration'), refused)
+  check(
+    'typing junk says so rather than silently clearing',
+    refused.includes('Not a duration'),
+    refused,
+  )
   const disabled = await page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLButtonElement | null)?.disabled ?? false,
-    SAVE
+    SAVE,
   )
   check('…and there is nothing to save while it is unreadable', disabled, String(disabled))
 
@@ -151,9 +198,20 @@ export async function stepEditTheNumber(
   await page.fill(INPUT, '44m 30s')
   const closed = await closeEditor(page, 'save')
   check('saving closes the modal', closed === 0)
-  const saved = await settle(() => tabRows(page), (r) => find(r, mob)?.source === 'custom', { timeoutMs: 30_000 })
+  const saved = await settle(
+    () => tabRows(page),
+    (r) => find(r, mob)?.source === 'custom',
+    { timeoutMs: 30_000 },
+  )
   const after = find(saved, mob)
-  if (!check('saving shorthand re-numbers the clock', after?.source === 'custom', JSON.stringify(saved))) return
+  if (
+    !check(
+      'saving shorthand re-numbers the clock',
+      after?.source === 'custom',
+      JSON.stringify(saved),
+    )
+  )
+    return
   check('…for the duration the shorthand means', after.unit.includes('44m 30s'), after.unit)
   check('…saying the number is yours', after.unit.includes('your number'), after.unit)
   // RULING 5: the row is in a STATE, which is a thing a surface can paint rather than a word to read.
@@ -162,24 +220,39 @@ export async function stepEditTheNumber(
   check(
     '…and it was PERSISTED, through the same door the retired box used',
     prefs.watches.some((w) => w.key === mob && w.customSec === 2670),
-    JSON.stringify(prefs)
+    JSON.stringify(prefs),
   )
 
   // RULING 6: the way back, which exists only where there is something to go back from.
   await openEditor(page, mob)
-  check('an overruled row offers the way back', (await countOf(page, `${DIALOG} [data-testid="respawn-edit-clear"]`)) === 1)
+  check(
+    'an overruled row offers the way back',
+    (await countOf(page, `${DIALOG} [data-testid="respawn-edit-clear"]`)) === 1,
+  )
   await closeEditor(page, 'clear')
-  const reverted = await settle(() => tabRows(page), (r) => find(r, mob)?.source === 'observed', { timeoutMs: 30_000 })
+  const reverted = await settle(
+    () => tabRows(page),
+    (r) => find(r, mob)?.source === 'observed',
+    { timeoutMs: 30_000 },
+  )
   const back = find(reverted, mob)
-  check('clearing returns the row to the calculated value', back?.source === 'observed', JSON.stringify(reverted))
-  check('…which is the gap this fold measured', back?.unit.includes('3m 00s') === true, JSON.stringify(back))
+  check(
+    'clearing returns the row to the calculated value',
+    back?.source === 'observed',
+    JSON.stringify(reverted),
+  )
+  check(
+    '…which is the gap this fold measured',
+    back?.unit.includes('3m 00s') === true,
+    JSON.stringify(back),
+  )
   check('…and it is no longer marked overruled', back?.overridden === 'false', JSON.stringify(back))
 
   // A ROW NOBODY OVERRULED HAS NOTHING TO CLEAR, so the control is absent rather than a no-op.
   await openEditor(page, mob)
   check(
     'a row nobody overruled offers no clear control at all',
-    (await countOf(page, `${DIALOG} [data-testid="respawn-edit-clear"]`)) === 0
+    (await countOf(page, `${DIALOG} [data-testid="respawn-edit-clear"]`)) === 0,
   )
   await closeEditor(page, 'cancel')
 }
@@ -193,7 +266,11 @@ export async function stepEditTheNumber(
  *
  * It puts the mob back on the wiki's number, which is what the unwatch step after it asserts.
  */
-export async function stepOverriddenOverTheGame(page: Page, overlay: Page, mob: string): Promise<void> {
+export async function stepOverriddenOverTheGame(
+  page: Page,
+  overlay: Page,
+  mob: string,
+): Promise<void> {
   const opened = await openEditor(page, mob)
   if (!check('the wiki-numbered row opens its modal too', opened === 1)) return
 
@@ -201,14 +278,18 @@ export async function stepOverriddenOverTheGame(page: Page, overlay: Page, mob: 
   // quoted and the page they came from was never reachable. The title is the committed floor's own.
   const href = await page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLAnchorElement | null)?.getAttribute('href') ?? '',
-    `${DIALOG} [data-testid="respawn-edit-wiki-link"]`
+    `${DIALOG} [data-testid="respawn-edit-wiki-link"]`,
   )
-  check('the modal links to the wiki page it is quoting', href === 'https://eqlwiki.com/A_frenzied_ghoul', href)
+  check(
+    'the modal links to the wiki page it is quoting',
+    href === 'https://eqlwiki.com/A_frenzied_ghoul',
+    href,
+  )
   // …and it opens in the SYSTEM browser, never in an app window: `target="_blank"` is what main's
   // `setWindowOpenHandler` turns into `shell.openExternal` against the allowlist (security.ts).
   const target = await page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLAnchorElement | null)?.target ?? '',
-    `${DIALOG} [data-testid="respawn-edit-wiki-link"]`
+    `${DIALOG} [data-testid="respawn-edit-wiki-link"]`,
   )
   check('…and hands it to the OS rather than opening a window', target === '_blank', target)
   const quoted = await dialogText(page)
@@ -216,14 +297,41 @@ export async function stepOverriddenOverTheGame(page: Page, overlay: Page, mob: 
 
   await page.fill(INPUT, '12m')
   await closeEditor(page, 'save')
-  const tab = await settle(() => tabRows(page), (r) => find(r, mob)?.source === 'custom', { timeoutMs: 30_000 })
-  check('the tab marks the row overruled', find(tab, mob)?.overridden === 'true', JSON.stringify(tab))
+  const tab = await settle(
+    () => tabRows(page),
+    (r) => find(r, mob)?.source === 'custom',
+    { timeoutMs: 30_000 },
+  )
+  check(
+    'the tab marks the row overruled',
+    find(tab, mob)?.overridden === 'true',
+    JSON.stringify(tab),
+  )
 
-  const game = await settle(() => gameRows(overlay), (r) => find(r, mob)?.source === 'custom', { timeoutMs: 30_000 })
+  const game = await settle(
+    () => gameRows(overlay),
+    (r) => find(r, mob)?.source === 'custom',
+    { timeoutMs: 30_000 },
+  )
   const over = find(game, mob)
-  if (!check('…and so does the floating window, off the one fold', over !== undefined, JSON.stringify(game))) return
-  check('the overridden state reaches the window over the game', over.overridden === 'true', JSON.stringify(over))
-  check('…which states the number and whose it is', over.unit.includes('12m') && over.unit.includes('your number'), over.unit)
+  if (
+    !check(
+      '…and so does the floating window, off the one fold',
+      over !== undefined,
+      JSON.stringify(game),
+    )
+  )
+    return
+  check(
+    'the overridden state reaches the window over the game',
+    over.overridden === 'true',
+    JSON.stringify(over),
+  )
+  check(
+    '…which states the number and whose it is',
+    over.unit.includes('12m') && over.unit.includes('your number'),
+    over.unit,
+  )
   // AND NONE OF THE EDITING FOLLOWED IT. The round-7 ruling that took the hover card off this window
   // applies one size up: there is no icon here and there is no modal here.
   const noIcon = await settleStable(() => countOf(overlay, '[data-testid="respawn-edit"]'))
@@ -233,6 +341,14 @@ export async function stepOverriddenOverTheGame(page: Page, overlay: Page, mob: 
   // BACK TO THE WIKI'S NUMBER, which is what the steps after this one read.
   await openEditor(page, mob)
   await closeEditor(page, 'clear')
-  const restored = await settle(() => tabRows(page), (r) => find(r, mob)?.source === 'wiki', { timeoutMs: 30_000 })
-  check('clearing hands the row back to the wiki default', find(restored, mob)?.source === 'wiki', JSON.stringify(restored))
+  const restored = await settle(
+    () => tabRows(page),
+    (r) => find(r, mob)?.source === 'wiki',
+    { timeoutMs: 30_000 },
+  )
+  check(
+    'clearing hands the row back to the wiki default',
+    find(restored, mob)?.source === 'wiki',
+    JSON.stringify(restored),
+  )
 }

@@ -101,7 +101,7 @@ const FACETS: ReadonlySet<string> = new Set<SpellFacet>([
   'debuff',
   'illusion',
   'poison',
-  'seen'
+  'seen',
 ])
 
 /**
@@ -263,7 +263,7 @@ export function tokenizeSpellQuery(query: string): SpellSearchToken[] {
 
 /** Roster names + Strike names, lowercased — the `type:poison` membership test's first half. */
 const POISON_NAMES: ReadonlySet<string> = new Set(
-  POISONS.flatMap((p) => [p.name.toLowerCase(), ...p.strikes.map((s) => s.toLowerCase())])
+  POISONS.flatMap((p) => [p.name.toLowerCase(), ...p.strikes.map((s) => s.toLowerCase())]),
 )
 
 /**
@@ -274,7 +274,9 @@ const POISON_NAMES: ReadonlySet<string> = new Set(
  * `'s blessings wither!`, `'s feet won't budge!`) and `searchText` no longer does. Left unfolded,
  * every rogue Strike would silently drop out of `type:poison` and out of the Poisons section.
  */
-const POISON_EMOTES: readonly string[] = POISON_PROCS.map((p) => foldApostrophes(p.suffix.toLowerCase()))
+const POISON_EMOTES: readonly string[] = POISON_PROCS.map((p) =>
+  foldApostrophes(p.suffix.toLowerCase()),
+)
 
 /**
  * Is this row a rogue poison? The roster IS the answer (shared/poisons.ts — imported, never
@@ -344,7 +346,7 @@ export function compileSpellQuery(tokens: readonly SpellSearchToken[]): Compiled
     classTexts: [],
     unknownClass: false,
     ranges: [],
-    numbers: []
+    numbers: [],
   }
   for (const t of tokens) {
     if (t.kind === 'text') q.texts.push(t.text)
@@ -369,14 +371,14 @@ export function compileSpellQuery(tokens: readonly SpellSearchToken[]): Compiled
  */
 export function matchedClassLevels(
   levels: readonly SearchClassLevel[] | undefined,
-  q: CompiledSpellQuery
+  q: CompiledSpellQuery,
 ): SearchClassLevel[] {
   const scoped = (levels ?? []).filter((c) => q.classes.length === 0 || q.classes.includes(c.cls))
   if (q.ranges.length === 0 && q.numbers.length === 0) return scoped
   return scoped.filter(
     (c) =>
       q.ranges.some((r) => c.level >= r.lo && c.level <= r.hi) ||
-      q.numbers.some((n) => c.level === n.n)
+      q.numbers.some((n) => c.level === n.n),
   )
 }
 
@@ -386,24 +388,29 @@ export function matchesCompiledQuery(entry: SearchableSpell, q: CompiledSpellQue
   if (!q.texts.every((t) => entry.searchText.includes(t))) return false
   if (!q.facets.every((f) => matchesFacet(entry, f))) return false
   const scoped = (entry.classLevels ?? []).filter(
-    (c) => q.classes.length === 0 || q.classes.includes(c.cls)
+    (c) => q.classes.length === 0 || q.classes.includes(c.cls),
   )
   // The class question, with the text half a BARE class word keeps (see the header).
   if (q.classes.length > 0 && scoped.length === 0) {
     if (!q.classTexts.some((t) => entry.searchText.includes(t))) return false
   }
-  if (q.ranges.length > 0 && !q.ranges.some((r) => scoped.some((c) => c.level >= r.lo && c.level <= r.hi))) {
+  if (
+    q.ranges.length > 0 &&
+    !q.ranges.some((r) => scoped.some((c) => c.level >= r.lo && c.level <= r.hi))
+  ) {
     return false
   }
   // A bare number is genuinely two questions ("level 25" and "Rune 2"), and the user has not
   // said which — so it is OR, and the explicit `level:` spelling is there when they mean one.
-  return q.numbers.every((n) => scoped.some((c) => c.level === n.n) || entry.searchText.includes(n.text))
+  return q.numbers.every(
+    (n) => scoped.some((c) => c.level === n.n) || entry.searchText.includes(n.text),
+  )
 }
 
 /** AND across every token — an empty token list matches everything. */
 export function matchesSpellQuery(
   entry: SearchableSpell,
-  tokens: readonly SpellSearchToken[]
+  tokens: readonly SpellSearchToken[],
 ): boolean {
   return matchesCompiledQuery(entry, compileSpellQuery(tokens))
 }
@@ -411,7 +418,7 @@ export function matchesSpellQuery(
 /** Tokenize + filter in one call (the renderer memoizes the token list separately). */
 export function filterSpells<T extends SearchableSpell>(
   entries: readonly T[],
-  tokens: readonly SpellSearchToken[]
+  tokens: readonly SpellSearchToken[],
 ): T[] {
   if (tokens.length === 0) return [...entries]
   const q = compileSpellQuery(tokens)
@@ -436,7 +443,7 @@ export const SPELL_SECTION_LABEL: Record<SpellSection, string> = {
   buffs: 'Buffs',
   debuffs: 'Debuffs',
   illusions: 'Illusions',
-  poisons: 'Poisons'
+  poisons: 'Poisons',
 }
 
 /**
@@ -457,7 +464,7 @@ export function sectionFor(entry: SearchableSpell): SpellSection {
  * Every input row lands in exactly one bucket, so the four counts sum to the input length.
  */
 export function groupSpellSections<T extends SearchableSpell>(
-  entries: readonly T[]
+  entries: readonly T[],
 ): Record<SpellSection, T[]> {
   const out: Record<SpellSection, T[]> = { buffs: [], debuffs: [], illusions: [], poisons: [] }
   for (const e of entries) out[sectionFor(e)].push(e)

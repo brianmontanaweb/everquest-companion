@@ -19,7 +19,7 @@ import {
   type BestSpellColumn,
   type BestSpellRow,
   type BestSpellSort,
-  type BestSpellTab
+  type BestSpellTab,
 } from '@shared/bestSpells'
 import type { ObservedSpellRanksSnap } from '@shared/spellRanks'
 import { Tooltip } from '../../lib/Tooltip'
@@ -32,7 +32,7 @@ export const HEAD_SX = {
   ...CELL_SX,
   fontWeight: 700,
   whiteSpace: 'nowrap',
-  color: 'text.secondary'
+  color: 'text.secondary',
 } as const
 
 /**
@@ -61,7 +61,7 @@ const COLUMN_WIDTH: Record<BestSpellColumn, string> = {
   mana: '22%',
   damagePerMana: '33%',
   healPerMana: '33%',
-  hits: '12%'
+  hits: '12%',
 }
 
 /**
@@ -75,7 +75,7 @@ const AOE_COLUMN_WIDTH: Record<string, string> = {
   damage: '21%',
   hits: '12%',
   mana: '20%',
-  damagePerMana: '27%'
+  damagePerMana: '27%',
 }
 
 /** The share one column takes on one tab: the AOE tab has five columns, every other tab four. */
@@ -88,7 +88,7 @@ export function HeadCell({
   column,
   width,
   sort,
-  onSort
+  onSort,
 }: {
   column: BestSpellColumn
   width: string
@@ -148,7 +148,7 @@ export const SpellRow = memo(function SpellRow({
   row,
   columns,
   ranks,
-  extra
+  extra,
 }: {
   row: BestSpellRow
   columns: readonly BestSpellColumn[]
@@ -183,7 +183,13 @@ export const SpellRow = memo(function SpellRow({
       </TableRow>
       <TableRow hover data-testid="best-spells-row" data-name={row.name}>
         {columns.map((c) => (
-          <TableCell key={c} align="right" sx={CELL_SX} data-testid="best-spells-cell" data-column={c}>
+          <TableCell
+            key={c}
+            align="right"
+            sx={CELL_SX}
+            data-testid="best-spells-cell"
+            data-column={c}
+          >
             {cellText(row, c)}
           </TableCell>
         ))}

@@ -176,7 +176,7 @@ function onlineMs(prog: ProgressionSnap, from: number, to: number): number {
  */
 export function aaPotionState(
   gains: readonly AAEvent[],
-  potions: readonly AAPotionEvent[]
+  potions: readonly AAPotionEvent[],
 ): AaPotionState {
   const last = potions.length > 0 ? potions[potions.length - 1] : null
   if (!last) return { activations: 0, lastTs: null, burned: 0, charges: 0, burnedPoints: [] }
@@ -191,7 +191,7 @@ export function aaPotionState(
     lastTs: last.ts,
     burned,
     charges: AA_POTION_CHARGES - burned,
-    burnedPoints: after.slice(0, burned)
+    burnedPoints: after.slice(0, burned),
   }
 }
 
@@ -221,7 +221,7 @@ export function aaEta(
   window: RangeStats,
   lastGainTs: number | null,
   prog: ProgressionSnap,
-  nowTs: number
+  nowTs: number,
 ): AaEta {
   const onlineWallMs = window.durationMs - window.offlineMs
   if (lastGainTs == null || window.aaGainEvents < AA_ETA_MIN_EVENTS || onlineWallMs <= 0) {
@@ -237,7 +237,7 @@ export function aaEta(
     meanIntervalMs,
     samples: window.aaGainEvents,
     sinceLastMs,
-    overdue: sinceLastMs > meanIntervalMs
+    overdue: sinceLastMs > meanIntervalMs,
   }
 }
 
@@ -260,6 +260,6 @@ export function aaPace(args: AaPaceArgs): AaPace {
     perHourWall: window.aaPerHourWall,
     pointsPerHourWall: window.aaPointsPerHourWall,
     eta: aaEta(window, lastGainTs, prog, prog.lastTs),
-    potion: aaPotionState(gains, leveling.aaPotions)
+    potion: aaPotionState(gains, leveling.aaPotions),
   }
 }

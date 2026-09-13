@@ -54,7 +54,7 @@ const UNITS: readonly (readonly [RegExp, number])[] = [
   [/^(?:days?|d)/i, 86400],
   [/^(?:hours?|hrs?|h)/i, 3600],
   [/^(?:minutes?|mins?|m)/i, 60],
-  [/^(?:seconds?|secs?|s)/i, 1]
+  [/^(?:seconds?|secs?|s)/i, 1],
 ]
 
 /**
@@ -109,7 +109,10 @@ const TEMPLATE_TAIL_RE = /\}+\s*$/
  * so the app can say what the wiki said instead of pretending it said a number.
  */
 export function parseWikiRespawn(field: string): number | null {
-  let s = field.replace(/\[\[|\]\]/g, '').replace(TEMPLATE_TAIL_RE, '').trim()
+  let s = field
+    .replace(/\[\[|\]\]/g, '')
+    .replace(TEMPLATE_TAIL_RE, '')
+    .trim()
   if (s.length === 0) return null
   s = s.replace(TRAILING_PAREN_RE, '').trim()
   s = s.replace(VARIANCE_RE, '').replace(DANGLING_SIGN_RE, '').trim()

@@ -79,14 +79,14 @@ import {
   isUnfarmable,
   knowledgeWithResearch,
   type ItemResearchFile,
-  type ResearchedKnowledge
+  type ResearchedKnowledge,
 } from '../itemsResearch'
 import {
   isHasteEffect,
   normalizeClasses,
   normalizeSlotTokens,
   parseFocusEffect,
-  socketTypeOf
+  socketTypeOf,
 } from '../../shared/planner/normalize'
 import { extractionTier } from '../../shared/planner/rules'
 import type { EffectFacts } from '../../shared/planner/effectText'
@@ -97,7 +97,7 @@ import type {
   EquipSlot,
   PlannerDonor,
   PlannerItemHit,
-  SocketType
+  SocketType,
 } from '../../shared/planner/types'
 
 /** A host-picker row plus its precomputed lowercase name — computed once per build, not per keystroke. */
@@ -184,8 +184,8 @@ function newAcc(): Acc {
       socketless: 0,
       duplicateRows: 0,
       excludedPages: 0,
-      spellJoined: 0
-    }
+      spellJoined: 0,
+    },
   }
 }
 
@@ -211,7 +211,11 @@ export function buildSpellFacts(spells: readonly SpellEntry[]): SpellFactsIndex 
   for (const s of spells) {
     const key = s.name.trim().toLowerCase()
     if (key === '' || out.has(key)) continue
-    out.set(key, { spellType: s.spellType, spellTarget: s.targetType, spellDuration: s.durationText })
+    out.set(key, {
+      spellType: s.spellType,
+      spellTarget: s.targetType,
+      spellDuration: s.durationText,
+    })
   }
   return out
 }
@@ -224,7 +228,7 @@ export function buildSpellFacts(spells: readonly SpellEntry[]): SpellFactsIndex 
  * page does this effect name join" — one home, one first-wins ordering.
  */
 export const COMMITTED_SPELL_FACTS: SpellFactsIndex = buildSpellFacts(
-  (spellsJson as SpellDbFile).spells
+  (spellsJson as SpellDbFile).spells,
 )
 const SPELL_FACTS = COMMITTED_SPELL_FACTS
 
@@ -285,7 +289,7 @@ export function slotsOf(k: ResearchedKnowledge, scraped: readonly EquipSlot[]): 
  */
 function pageContext(
   entry: ItemDbEntry,
-  research: ItemResearchFile
+  research: ItemResearchFile,
 ): {
   ctx: PageCtx
   effects: ItemEffect[]
@@ -308,10 +312,10 @@ function pageContext(
       wikiSources: k.dropsFrom,
       eraTag: k.eraTag,
       canonical: itemKey(entry.page) === key,
-      excluded: excludedDonor(k.name, k.research)
+      excluded: excludedDonor(k.name, k.research),
     },
     effects: k.stats?.effects ?? [],
-    unknown: slot.unknown
+    unknown: slot.unknown,
   }
 }
 
@@ -319,7 +323,7 @@ function donorRow(
   ctx: PageCtx,
   effect: ItemEffect,
   socket: SocketType,
-  spells: SpellFactsIndex
+  spells: SpellFactsIndex,
 ): PlannerDonor {
   // V5 — split once, here, and only for focus: the browser groups the focus tab by family and
   // sorts tier-desc inside it, and re-parsing the name per render per row would be the same answer
@@ -348,7 +352,7 @@ function donorRow(
     // Copied per row (donors are denormalized by effect) so a consumer never has to hold a
     // second index to answer "where does this one drop".
     wikiSources: ctx.wikiSources ? ctx.wikiSources.map((s) => ({ ...s })) : undefined,
-    eraTag: ctx.eraTag
+    eraTag: ctx.eraTag,
   }
 }
 
@@ -377,7 +381,7 @@ function rememberItem(acc: Acc, ctx: PageCtx): void {
     iconId: ctx.iconId,
     slots: [...ctx.slots],
     classes: [...ctx.classes],
-    searchKey: ctx.name.toLowerCase()
+    searchKey: ctx.name.toLowerCase(),
   })
   if (ctx.canonical) acc.itemFromCanonical.add(ctx.key)
 }
@@ -386,7 +390,7 @@ function addPage(
   acc: Acc,
   entry: ItemDbEntry,
   research: ItemResearchFile,
-  spells: SpellFactsIndex
+  spells: SpellFactsIndex,
 ): void {
   if (acc.seenPages.has(entry.page)) {
     acc.stats.aliasKeys++
@@ -424,13 +428,14 @@ function addPage(
 export function buildPlannerIndex(
   file: ItemDbFile,
   research: ItemResearchFile = ITEMS_RESEARCH,
-  spells: SpellFactsIndex = SPELL_FACTS
+  spells: SpellFactsIndex = SPELL_FACTS,
 ): PlannerIndex {
   const acc = newAcc()
   // Through the rename overlay (JOS-415), so a donor's row carries the name the wiki uses now.
   // The alias key it adds costs nothing here: `addPage` already dedupes by `entry.page`, which is
   // exactly the mechanism items.json's own two-keys-per-page shape relies on.
-  for (const entry of Object.values(renamedItems(file.items ?? {}))) addPage(acc, entry, research, spells)
+  for (const entry of Object.values(renamedItems(file.items ?? {})))
+    addPage(acc, entry, research, spells)
   const donors = [...acc.donors.values()]
   return {
     donors,
@@ -439,9 +444,10 @@ export function buildPlannerIndex(
       ...acc.stats,
       // Counted on the EMITTED rows, after both dedupes: the join's usefulness is how many rows
       // the browser can actually describe, not how many times the lookup was consulted.
-      spellJoined: donors.filter((d) => d.spellType !== undefined || d.spellDuration !== undefined).length,
-      unknownSlotTokens: [...acc.unknownSlots]
-    }
+      spellJoined: donors.filter((d) => d.spellType !== undefined || d.spellDuration !== undefined)
+        .length,
+      unknownSlotTokens: [...acc.unknownSlots],
+    },
   }
 }
 
@@ -466,7 +472,7 @@ export const PLANNER_SEARCH_LIMIT = 50
 export function searchPlannerItems(
   index: readonly PlannerItemRow[],
   query: string,
-  limit: number = PLANNER_SEARCH_LIMIT
+  limit: number = PLANNER_SEARCH_LIMIT,
 ): PlannerItemHit[] {
   const q = query.trim().toLowerCase()
   if (q === '') return []
@@ -479,13 +485,13 @@ export function searchPlannerItems(
     (a, b) =>
       a.rank - b.rank ||
       a.row.name.length - b.row.name.length ||
-      a.row.searchKey.localeCompare(b.row.searchKey)
+      a.row.searchKey.localeCompare(b.row.searchKey),
   )
   return hits.slice(0, Math.max(0, limit)).map(({ row }) => ({
     key: row.key,
     name: row.name,
     iconId: row.iconId,
     slots: row.slots,
-    classes: row.classes
+    classes: row.classes,
   }))
 }

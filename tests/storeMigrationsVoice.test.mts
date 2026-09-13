@@ -39,7 +39,7 @@ import {
   CURRENT_SCHEMA_VERSION,
   SCHEMA_VERSION_KEY,
   migrateStoreData,
-  type StoreData
+  type StoreData,
 } from '../src/main/storeMigrations'
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), 'fixtures')
@@ -97,7 +97,11 @@ test('a v3 store gains the voice prefs blob, and every alert keeps every field i
   // speech mode falls back to speaking its own name.
   assert.equal('audio' in alerts[2], false, 'an unknown audio action is dropped, not guessed at')
   assert.equal('speech' in alerts[2], false, 'an unknown speech mode takes the whole block with it')
-  assert.deepEqual(alerts[2]['trigger'], beforeAlerts[2]['trigger'], 'the rest of the def is untouched')
+  assert.deepEqual(
+    alerts[2]['trigger'],
+    beforeAlerts[2]['trigger'],
+    'the rest of the def is untouched',
+  )
 
   // Nothing else in a v3 store moves.
   for (const key of ['byCharacter', 'activeLogPath', 'alertPrefs', 'overlays']) {
@@ -126,7 +130,7 @@ test('malformed alert voice fields are dropped and over-long phrases capped — 
   const alerts = [
     { id: 'a', name: 'A', audio: 'speech', speech: { mode: 'custom', phrase: 'x'.repeat(400) } },
     { id: 'b', name: 'B', speech: 'loud', audio: 7 },
-    'not an alert'
+    'not an alert',
   ]
   const { data } = migrateStoreData({ [SCHEMA_VERSION_KEY]: 3, alerts }, TO_V4)
   const out = data['alerts'] as unknown[]
@@ -156,7 +160,7 @@ test('the voice CONFIGURATION survives untouched — only the permission was rem
     engine: 'kokoro',
     voiceId: 'af_bella',
     rate: 1.2,
-    volume: 0.9
+    volume: 0.9,
   })
 })
 
@@ -184,7 +188,7 @@ test('voice ON survives the WHOLE chain from v3 — the flag is not dropped in t
   const { data } = migrateStoreData({
     [SCHEMA_VERSION_KEY]: 3,
     voice: { enabled: true, engine: 'system', voiceId: null, rate: 1, volume: 1 },
-    alerts: [{ id: 'a', name: 'A', audio: 'speech' }]
+    alerts: [{ id: 'a', name: 'A', audio: 'speech' }],
   })
   assert.equal(byId(data, 'a')['audio'], 'speech')
 })
@@ -212,11 +216,11 @@ test('…and the user’s own words survive the rewrite: the speech block is kep
   const { data } = migrateStoreData(fixture(VOICE_OFF))
   assert.deepEqual(byId(data, 'mez-broke')['speech'], {
     mode: 'spellFirstWord',
-    voiceId: 'sapi:David'
+    voiceId: 'sapi:David',
   })
   assert.deepEqual(byId(data, 'raid-target')['speech'], {
     mode: 'custom',
-    phrase: 'raid target down'
+    phrase: 'raid target down',
   })
   // Every other field of a rewritten def is untouched — this is a one-key change, not a rebuild.
   for (const key of ['id', 'name', 'enabled', 'trigger', 'sound', 'volume', 'cooldownMs']) {
@@ -233,7 +237,7 @@ test('a MISSING or malformed voice blob counts as OFF — the same test the old 
     const { data } = migrateStoreData({
       [SCHEMA_VERSION_KEY]: 7,
       ...(voice === undefined ? {} : { voice }),
-      alerts: [{ id: 'a', name: 'A', audio: 'both' }]
+      alerts: [{ id: 'a', name: 'A', audio: 'both' }],
     })
     assert.equal('audio' in byId(data, 'a'), false, JSON.stringify(voice))
   }
@@ -244,7 +248,7 @@ test('a MISSING or malformed voice blob counts as OFF — the same test the old 
 test('a junk alerts list never throws the chain, and non-objects pass through', () => {
   const { status, data } = migrateStoreData({
     [SCHEMA_VERSION_KEY]: 7,
-    alerts: ['not an alert', null, 42, { id: 'a', name: 'A', audio: 'speech' }]
+    alerts: ['not an alert', null, 42, { id: 'a', name: 'A', audio: 'speech' }],
   })
   assert.equal(status, 'migrated')
   const alerts = data['alerts'] as unknown[]

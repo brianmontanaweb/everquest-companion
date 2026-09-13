@@ -26,12 +26,7 @@
 // (HoT ticks are byte-identical to direct heals — see the model header in shared/combat.ts).
 // The damage meter's extra depth comes from a category rollup healing simply does not have.
 
-import type {
-  HealSourceView,
-  HealSpellView,
-  HealingView,
-  MitigationView
-} from '@shared/combat'
+import type { HealSourceView, HealSpellView, HealingView, MitigationView } from '@shared/combat'
 import { formatNum as fmt, formatHealRate } from '../../lib/formatRate'
 
 /** The one honest line about the assumption, surfaced on hover (never as a caption). */
@@ -140,7 +135,7 @@ export function spellTitle(s: HealSpellView): string {
   const bits = [
     `${fmt(s.total)} effective`,
     `${s.count} ticks`,
-    `avg ${fmt(Math.round(s.total / Math.max(1, s.count)))}`
+    `avg ${fmt(Math.round(s.total / Math.max(1, s.count)))}`,
   ]
   if (s.crits > 0) bits.push(`${s.crits} crits (${pct((s.crits / Math.max(1, s.count)) * 100)})`)
   if (s.overheal > 0) {
@@ -250,6 +245,6 @@ export function healPanel(healing: HealingView | undefined, entityId: string | n
     healers,
     empty: healers.length === 0,
     mitigation: healing?.mitigation ?? null,
-    enemy: { total: healing?.enemyTotal ?? 0, healers: healing?.enemyHealers ?? [] }
+    enemy: { total: healing?.enemyTotal ?? 0, healers: healing?.enemyHealers ?? [] },
   }
 }

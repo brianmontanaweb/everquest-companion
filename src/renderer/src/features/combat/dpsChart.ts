@@ -125,7 +125,7 @@ export function bucketCenterMs(chart: DpsChart, i: number): number {
 export function buildDpsChart(
   series: DpsSeries | null,
   live: boolean,
-  hidden: readonly ChartLineKey[] = []
+  hidden: readonly ChartLineKey[] = [],
 ): DpsChart | null {
   if (!series?.hasAny) return null
   const hides = (k: ChartLineKey): boolean => hidden.includes(k)
@@ -158,10 +158,11 @@ export function buildDpsChart(
       scaled('out', out),
       scaled('pet', series.pet[i]),
       scaled('group', series.group[i]),
-      scaled('inc', series.inc[i])
+      scaled('inc', series.inc[i]),
     )
   }
-  const x = (k: number): number => (single ? PAD_X + k * INNER_W : xInSpan(t0, t1, (i0 + k + 0.5) * bucketMs))
+  const x = (k: number): number =>
+    single ? PAD_X + k * INNER_W : xInSpan(t0, t1, (i0 + k + 0.5) * bucketMs)
   const y = (v: number): number => yAt(yMax, v)
   const pts = (pick: (i: number) => number): string =>
     idx.map((i, k) => `${x(k).toFixed(1)},${y(pick(i)).toFixed(1)}`).join(' ')
@@ -185,7 +186,7 @@ export function buildDpsChart(
     peakVis,
     yMax,
     i0,
-    count: idx.length
+    count: idx.length,
   }
 }
 
@@ -246,7 +247,10 @@ export function curveYAtUserX(chart: DpsChart, series: DpsSeries, ux: number): n
   // Vertex index, read through the SAME time base the vertices were placed with: the cursor's
   // instant, in buckets from `t0`, less the half-bucket the first sample is anchored at. Deriving
   // it from `frac` directly would re-introduce a second grid the moment the anchor changed.
-  const g = Math.min(chart.count - 1, Math.max(0, (tAtUserX(chart, ux) - chart.t0) / chart.bucketMs - 0.5))
+  const g = Math.min(
+    chart.count - 1,
+    Math.max(0, (tAtUserX(chart, ux) - chart.t0) / chart.bucketMs - 0.5),
+  )
   const k = Math.min(chart.count - 2, Math.floor(g))
   const v0 = outAtVertex(chart, series, k)
   return yAt(chart.yMax, v0 + (outAtVertex(chart, series, k + 1) - v0) * (g - k))
@@ -273,8 +277,10 @@ export interface PlacedMarker {
  */
 export function placeMarkers(tl: TimelineView | null, chart: DpsChart | null): PlacedMarker[] {
   if (!tl || !chart) return []
-  // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives TimelineMarker. Becomes a view descriptor when the source lands.
-  return tl.markers.filter((m) => m.t >= chart.t0 && m.t <= chart.t1).map((m) => ({ m, x: xAtT(chart, m.t) }))
+  return tl.markers
+    // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives TimelineMarker. Becomes a view descriptor when the source lands.
+    .filter((m) => m.t >= chart.t0 && m.t <= chart.t1)
+    .map((m) => ({ m, x: xAtT(chart, m.t) }))
 }
 
 /**
@@ -288,7 +294,7 @@ export function placeMarkers(tl: TimelineView | null, chart: DpsChart | null): P
  */
 export function drawnMarkers(
   markers: readonly PlacedMarker[],
-  hidden: readonly ChartLineKey[]
+  hidden: readonly ChartLineKey[],
 ): readonly PlacedMarker[] {
   return hidden.length === 0 ? markers : markers.filter(({ m }) => !hidden.includes(m.kind))
 }
@@ -296,5 +302,10 @@ export function drawnMarkers(
 /** True when the plot has at least one line left on it. All four hidden is a legal state the card
  *  answers with an empty note (and its legend, which is the way back). */
 export function hasDrawnLine(chart: DpsChart): boolean {
-  return chart.outLine !== null || chart.petLine !== null || chart.groupLine !== null || chart.incLine !== null
+  return (
+    chart.outLine !== null ||
+    chart.petLine !== null ||
+    chart.groupLine !== null ||
+    chart.incLine !== null
+  )
 }

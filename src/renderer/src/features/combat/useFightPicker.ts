@@ -15,7 +15,7 @@ import {
   triggerRow,
   type FrozenList,
   type PickerRow,
-  type SearchState
+  type SearchState,
 } from './fightPickerRows'
 import type { FightPickerProps } from './FightPicker'
 
@@ -57,7 +57,7 @@ interface ResetFns {
 function useFrozenList(
   { opts, capped, now, onLoadMore }: FightPickerProps,
   open: boolean,
-  reset: ResetFns
+  reset: ResetFns,
 ): { frozen: FrozenList | null; requestMore: () => void } {
   const [frozen, setFrozen] = useState<FrozenList | null>(null)
   /** An explicit "Load more" is the ONE sanctioned thaw; this arms the single re-freeze. */
@@ -111,7 +111,7 @@ function useFightSearch(
   open: boolean,
   scope: CombatScope,
   query: string,
-  setActive: (i: number) => void
+  setActive: (i: number) => void,
 ): SearchState | null {
   const [results, setResults] = useState<SearchState | null>(null)
   /** Latest issued search. A response carrying anything else is stale and must be dropped. */
@@ -195,7 +195,9 @@ export function useFightPicker(props: FightPickerProps): PickerState {
   // Keep the keyboard highlight in view without stealing focus from the input.
   useEffect(() => {
     if (clampedActive < 0) return
-    listRef.current?.querySelector(`[data-idx="${clampedActive}"]`)?.scrollIntoView({ block: 'nearest' })
+    listRef.current
+      ?.querySelector(`[data-idx="${clampedActive}"]`)
+      ?.scrollIntoView({ block: 'nearest' })
   }, [clampedActive])
 
   const commit = (row: PickerRow): void => {
@@ -245,6 +247,6 @@ export function useFightPicker(props: FightPickerProps): PickerState {
     requestMore,
     // What the CLOSED trigger states — read from the LIVE options, not the frozen copy, because
     // the trigger is a state readout and must stay honest while the menu is open above it.
-    current: triggerRow(opts, selection, external)
+    current: triggerRow(opts, selection, external),
   }
 }

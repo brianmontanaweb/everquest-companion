@@ -43,7 +43,7 @@ import {
   reportRun,
   settle,
   settleCount,
-  settleStable
+  settleStable,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -77,7 +77,7 @@ const INTRO_RELEASE_BULLETS =
   RELEASE_NOTES.find((r) => r.version === INTRO_RELEASE)?.entries.length ?? 0
 const EXPECTED_TAGGED = RELEASE_NOTES.reduce(
   (n, r) => n + r.entries.filter((e) => e.fromReport === true).length,
-  0
+  0,
 )
 // The thanks line renders ONCE at the panel top (owner, 2026-08-07), gated on any release
 // carrying a tagged entry — the check below asserts exactly one line panel-wide.
@@ -94,7 +94,7 @@ function setSeen(page: Page, version: string | null): Promise<string | null> {
           eq: { setReleaseNotesSeen: (x: string | null) => Promise<string | null> }
         }
       ).eq.setReleaseNotesSeen(v),
-    version
+    version,
   )
 }
 
@@ -106,9 +106,9 @@ async function openPanel(page: Page): Promise<{ releases: number; marked: string
   await page.waitForSelector(PANEL, { timeout: 20_000 })
   return page.evaluate(() => ({
     releases: document.querySelectorAll('[data-testid^="whats-new-release-"]').length,
-    marked: [...document.querySelectorAll('[data-testid^="whats-new-release-"][data-new="true"]')].map(
-      (el) => el.getAttribute('data-testid')?.replace('whats-new-release-', '') ?? ''
-    )
+    marked: [
+      ...document.querySelectorAll('[data-testid^="whats-new-release-"][data-new="true"]'),
+    ].map((el) => el.getAttribute('data-testid')?.replace('whats-new-release-', '') ?? ''),
   }))
 }
 
@@ -130,7 +130,9 @@ function paneFit(page: Page): Promise<{
   return page.evaluate(() => {
     const box = document.querySelector('[data-testid="whats-new-history"]')?.getBoundingClientRect()
     const pane = document.querySelector('main')?.getBoundingClientRect()
-    const footer = document.querySelector('[data-testid="whats-new-github"]')?.getBoundingClientRect()
+    const footer = document
+      .querySelector('[data-testid="whats-new-github"]')
+      ?.getBoundingClientRect()
     const scroller = document.querySelector('main > div')
     return {
       // The list ends where the ONE thing under it begins (JOS-254 put the GitHub link there).
@@ -141,7 +143,7 @@ function paneFit(page: Page): Promise<{
       footerGap: footer && pane ? pane.bottom - footer.bottom : Number.NaN,
       boxHeight: box ? box.height : 0,
       // How far the pane's own scroller can travel. The list scrolls; the page must not.
-      pageOverflow: scroller ? scroller.scrollHeight - scroller.clientHeight : Number.NaN
+      pageOverflow: scroller ? scroller.scrollHeight - scroller.clientHeight : Number.NaN,
     }
   })
 }
@@ -160,22 +162,31 @@ function paneFit(page: Page): Promise<{
  * "the one that isn't an overlay" — the toast overlay is open by default and window order is not
  * a promise (appWindow.mts's rule).
  */
-async function setWindowHeight(page: Page, app: ElectronApplication, height: number): Promise<void> {
+async function setWindowHeight(
+  page: Page,
+  app: ElectronApplication,
+  height: number,
+): Promise<void> {
   await app.evaluate(({ BrowserWindow }, h) => {
     const win = BrowserWindow.getAllWindows().find((w) => !w.isAlwaysOnTop())
     win?.setContentSize(1280, h)
   }, height)
   const got = await settle(
     () => page.evaluate(() => window.innerHeight),
-    (h) => h === height
+    (h) => h === height,
   )
-  check(`the window really resized to ${String(height)}px`, got === height, `innerHeight=${String(got)}`)
+  check(
+    `the window really resized to ${String(height)}px`,
+    got === height,
+    `innerHeight=${String(got)}`,
+  )
 }
 
 /** The one line the strip says, or '' when there is no strip. */
 function teaserText(page: Page): Promise<string> {
   return page.evaluate(
-    () => document.querySelector('[data-testid="whats-new-teaser-text"]')?.textContent?.trim() ?? ''
+    () =>
+      document.querySelector('[data-testid="whats-new-teaser-text"]')?.textContent?.trim() ?? '',
   )
 }
 
@@ -198,17 +209,17 @@ async function checkFillsPane(page: Page, app: ElectronApplication): Promise<voi
     check(
       `${label} window: the history box runs down to the link under it`,
       fit.gap >= 0 && fit.gap < 24,
-      `gap=${fit.gap.toFixed(1)}px boxHeight=${fit.boxHeight.toFixed(1)}px`
+      `gap=${fit.gap.toFixed(1)}px boxHeight=${fit.boxHeight.toFixed(1)}px`,
     )
     check(
       `${label} window: …and that link is the last thing in the pane`,
       fit.footerGap >= 0 && fit.footerGap < 48,
-      `footerGap=${fit.footerGap.toFixed(1)}px`
+      `footerGap=${fit.footerGap.toFixed(1)}px`,
     )
     check(
       `${label} window: the LIST scrolls, never the page`,
       fit.pageOverflow <= 1,
-      `pageOverflow=${fit.pageOverflow.toFixed(1)}px`
+      `pageOverflow=${fit.pageOverflow.toFixed(1)}px`,
     )
     heights.push(fit.boxHeight)
   }
@@ -216,47 +227,52 @@ async function checkFillsPane(page: Page, app: ElectronApplication): Promise<voi
   check(
     'the box GREW with the window — it is filling, not a fixed height that happened to fit',
     tall > short + 200,
-    `tall=${tall.toFixed(1)}px short=${short.toFixed(1)}px`
+    `tall=${tall.toFixed(1)}px short=${short.toFixed(1)}px`,
   )
   await setWindowHeight(page, app, 900)
 }
 
 /** Bullets, the player-report chip, and the collective thanks line (JOS-76). */
 async function checkBulletsAndThanks(page: Page): Promise<void> {
-  const seen = await page.evaluate((introRelease: string) => ({
-    total: document.querySelectorAll('[data-testid="whats-new-bullet"]').length,
-    intro: document.querySelectorAll(
-      `[data-testid="whats-new-release-${introRelease}"] [data-testid="whats-new-bullet"]`
-    ).length,
-    tagged: document.querySelectorAll('[data-testid="whats-new-bullet"][data-from-report="true"]').length,
-    chips: document.querySelectorAll('[data-testid="whats-new-report-chip"]').length,
-    thanks: document.querySelectorAll('[data-testid="whats-new-thanks"]').length,
-    firstThanks: document.querySelector('[data-testid="whats-new-thanks"]')?.textContent?.trim() ?? ''
-  }), INTRO_RELEASE)
+  const seen = await page.evaluate(
+    (introRelease: string) => ({
+      total: document.querySelectorAll('[data-testid="whats-new-bullet"]').length,
+      intro: document.querySelectorAll(
+        `[data-testid="whats-new-release-${introRelease}"] [data-testid="whats-new-bullet"]`,
+      ).length,
+      tagged: document.querySelectorAll('[data-testid="whats-new-bullet"][data-from-report="true"]')
+        .length,
+      chips: document.querySelectorAll('[data-testid="whats-new-report-chip"]').length,
+      thanks: document.querySelectorAll('[data-testid="whats-new-thanks"]').length,
+      firstThanks:
+        document.querySelector('[data-testid="whats-new-thanks"]')?.textContent?.trim() ?? '',
+    }),
+    INTRO_RELEASE,
+  )
   check(
     'every entry renders as a BULLET, not a packed sentence',
     seen.total === EXPECTED_BULLETS,
-    `bullets=${String(seen.total)} expected=${String(EXPECTED_BULLETS)}`
+    `bullets=${String(seen.total)} expected=${String(EXPECTED_BULLETS)}`,
   )
   check(
     `a release that INTRODUCES a surface spends extra bullets on it, and they reach the screen`,
     seen.intro === INTRO_RELEASE_BULLETS && seen.intro > 5,
-    `v${INTRO_RELEASE} bullets=${String(seen.intro)} expected=${String(INTRO_RELEASE_BULLETS)}`
+    `v${INTRO_RELEASE} bullets=${String(seen.intro)} expected=${String(INTRO_RELEASE_BULLETS)}`,
   )
   check(
     'a player-reported bullet wears its chip, and only those bullets do',
     seen.tagged === EXPECTED_TAGGED && seen.chips === EXPECTED_TAGGED,
-    `tagged=${String(seen.tagged)} chips=${String(seen.chips)} expected=${String(EXPECTED_TAGGED)}`
+    `tagged=${String(seen.tagged)} chips=${String(seen.chips)} expected=${String(EXPECTED_TAGGED)}`,
   )
   check(
     '…and the panel thanks the people who filed them ONCE, at the top (owner, 2026-08-07)',
     seen.thanks === 1,
-    `thanksLines=${String(seen.thanks)} expected=1`
+    `thanksLines=${String(seen.thanks)} expected=1`,
   )
   check(
     '…collectively, naming nobody',
     seen.firstThanks === 'Thanks to everyone who filed reports - many of these came from you.',
-    `line="${seen.firstThanks}"`
+    `line="${seen.firstThanks}"`,
   )
 }
 
@@ -289,7 +305,7 @@ function versionIconGeometry(page: Page): Promise<{
       text: line.textContent?.trim() ?? '',
       sameLine: i.top < l.bottom && l.top < i.bottom,
       gap: i.left - l.right,
-      label: icon.getAttribute('aria-label') ?? ''
+      label: icon.getAttribute('aria-label') ?? '',
     }
   })
 }
@@ -299,20 +315,27 @@ async function checkVersionIcon(page: Page): Promise<void> {
   // one, or "beside the version number" would be asserted against an empty line.
   const seen = await settle(
     () => versionIconGeometry(page),
-    (s) => /v\d+\.\d+\.\d+/.test(s.text)
+    (s) => /v\d+\.\d+\.\d+/.test(s.text),
   )
-  if (!check('the nav chip names the version this app is running', seen.text !== '', seen.text || 'no version line')) {
+  if (
+    !check(
+      'the nav chip names the version this app is running',
+      seen.text !== '',
+      seen.text || 'no version line',
+    )
+  ) {
     return
   }
   check(
     'a patch-notes icon sits BESIDE the version number, on the same line',
     seen.sameLine && seen.gap >= -1 && seen.gap < 40,
-    `line="${seen.text}" sameLine=${String(seen.sameLine)} gap=${seen.gap.toFixed(1)}px`
+    `line="${seen.text}" sameLine=${String(seen.sameLine)} gap=${seen.gap.toFixed(1)}px`,
   )
   check(
     '…and it says what it opens, without a popper that could eat the row above it',
-    seen.label === "What's new in this version" && (await countOf(page, '.MuiTooltip-popper')) === 0,
-    `label="${seen.label}" poppers=${String(await countOf(page, '.MuiTooltip-popper'))}`
+    seen.label === "What's new in this version" &&
+      (await countOf(page, '.MuiTooltip-popper')) === 0,
+    `label="${seen.label}" poppers=${String(await countOf(page, '.MuiTooltip-popper'))}`,
   )
 
   await page.click(NOTES_ICON, { timeout: 20_000 })
@@ -320,7 +343,7 @@ async function checkVersionIcon(page: Page): Promise<void> {
   check(
     'ONE click from the version number lands on the notes, in the app',
     landed === 1,
-    `panels=${String(landed)}`
+    `panels=${String(landed)}`,
   )
 }
 
@@ -335,7 +358,13 @@ async function checkVersionIcon(page: Page): Promise<void> {
  */
 async function checkGitHubLink(page: Page): Promise<void> {
   const found = await settleCount(page, GITHUB_LINK, 1)
-  if (!check('the panel carries a way out to the full release history', found === 1, `links=${String(found)}`)) {
+  if (
+    !check(
+      'the panel carries a way out to the full release history',
+      found === 1,
+      `links=${String(found)}`,
+    )
+  ) {
     return
   }
   const link = await page.evaluate(() => {
@@ -344,25 +373,29 @@ async function checkGitHubLink(page: Page): Promise<void> {
       href: a?.getAttribute('href') ?? '',
       target: a?.getAttribute('target') ?? '',
       rel: a?.getAttribute('rel') ?? '',
-      text: a?.textContent?.trim() ?? ''
+      text: a?.textContent?.trim() ?? '',
     }
   })
   check(
     "…pointing at this app's releases page",
     link.href === 'https://github.com/jmoyers/everquest-companion/releases',
-    `href="${link.href}"`
+    `href="${link.href}"`,
   )
   check(
     '…in the SYSTEM browser, never an Electron window that would inherit the preload bridge',
     link.target === '_blank' && link.rel.includes('noreferrer'),
-    `target="${link.target}" rel="${link.rel}"`
+    `target="${link.target}" rel="${link.rel}"`,
   )
   check(
     '…and main will really open it — the href passes the same allowlist the handler applies',
     allowedExternalUrl(link.href) === link.href,
-    `allowed=${allowedExternalUrl(link.href) ?? 'null'}`
+    `allowed=${allowedExternalUrl(link.href) ?? 'null'}`,
   )
-  check('…under a label that says where it goes', link.text.includes('GitHub'), `text="${link.text}"`)
+  check(
+    '…under a label that says where it goes',
+    link.text.includes('GitHub'),
+    `text="${link.text}"`,
+  )
 }
 
 async function main(): Promise<void> {
@@ -381,7 +414,7 @@ async function main(): Promise<void> {
     check(
       'A FRESH INSTALL IS NEVER TOLD IT WAS UPDATED — no teaser strip at all',
       settled === 0,
-      `teasers=${String(settled)}`
+      `teasers=${String(settled)}`,
     )
 
     // ---- the door beside the version number (JOS-254) ----------------------
@@ -393,16 +426,16 @@ async function main(): Promise<void> {
     check(
       'the full history is browsable anyway — every release renders',
       fresh.releases === RELEASE_NOTES.length,
-      `rendered=${String(fresh.releases)} expected=${String(RELEASE_NOTES.length)}`
+      `rendered=${String(fresh.releases)} expected=${String(RELEASE_NOTES.length)}`,
     )
     check(
       '…and NOTHING is marked new, because a new user has no changes',
       fresh.marked.length === 0,
-      `marked=${fresh.marked.join(',') || 'none'}`
+      `marked=${fresh.marked.join(',') || 'none'}`,
     )
     check(
       'the DEV variant control is compiled OUT of a production-shaped build',
-      (await countOf(page, DEV_ROW)) === 0
+      (await countOf(page, DEV_ROW)) === 0,
     )
 
     await checkFillsPane(page, launched.app)
@@ -419,24 +452,28 @@ async function main(): Promise<void> {
     await page.waitForSelector('[data-testid="nav-overview"]', { timeout: 60_000 })
 
     const shown = await settleCount(page, TEASER, 1)
-    check('…and the next launch says so, in one quiet line', shown === 1, `teasers=${String(shown)}`)
+    check(
+      '…and the next launch says so, in one quiet line',
+      shown === 1,
+      `teasers=${String(shown)}`,
+    )
     const line = await teaserText(page)
     check(
       '…naming the NEWEST release and only it',
       line === `Updated to v${NEWEST}`,
-      `line="${line}"`
+      `line="${line}"`,
     )
 
     const upgraded = await openPanel(page)
     check(
       'the panel marks every release since the one this install had seen',
       upgraded.marked.length > 0 && upgraded.marked[0] === NEWEST,
-      `marked=${upgraded.marked.join(',') || 'none'}`
+      `marked=${upgraded.marked.join(',') || 'none'}`,
     )
     check(
       '…and nothing at or below the stamp',
       !upgraded.marked.includes(PREVIOUS ?? ''),
-      `stamp=${PREVIOUS ?? 'null'} marked=${upgraded.marked.join(',')}`
+      `stamp=${PREVIOUS ?? 'null'} marked=${upgraded.marked.join(',')}`,
     )
 
     if (failures.length) await dumpArtifacts(page, 'whats-new-FAIL')

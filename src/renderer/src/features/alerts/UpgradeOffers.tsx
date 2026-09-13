@@ -19,11 +19,7 @@ import { Box, Button, IconButton, Paper, Stack, Typography } from '@mui/material
 import CloseIcon from '@mui/icons-material/Close'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import type { AlertDef } from '@shared/types'
-import {
-  addRankAlongsideDef,
-  replaceRankInDef,
-  type RankUpgradeOffer
-} from '@shared/spellLines'
+import { addRankAlongsideDef, replaceRankInDef, type RankUpgradeOffer } from '@shared/spellLines'
 import { Tooltip } from '../../lib/Tooltip'
 
 export interface UpgradeOffersProps {
@@ -38,14 +34,16 @@ export interface UpgradeOffersProps {
 
 /** "Upgrade 3 alerts…" — plural-correct, and it counts OFFERS, which is one per spell line. */
 function headline(n: number): string {
-  return n === 1 ? 'One alert is behind your current rank' : `${n} alerts are behind your current ranks`
+  return n === 1
+    ? 'One alert is behind your current rank'
+    : `${n} alerts are behind your current ranks`
 }
 
 function OfferRow({
   offer,
   def,
   onPersist,
-  onDismiss
+  onDismiss,
 }: {
   offer: RankUpgradeOffer
   def: AlertDef | undefined
@@ -74,7 +72,9 @@ function OfferRow({
           </Button>
         </span>
       </Tooltip>
-      <Tooltip title={`Re-point this alert at ${offer.to} - it will no longer fire for ${offer.from}`}>
+      <Tooltip
+        title={`Re-point this alert at ${offer.to} - it will no longer fire for ${offer.from}`}
+      >
         <span>
           <Button
             size="small"
@@ -99,7 +99,7 @@ export default function UpgradeOffers({
   offers,
   alerts,
   onPersist,
-  onDismiss
+  onDismiss,
 }: UpgradeOffersProps): JSX.Element | null {
   if (offers.length === 0) return null
   const byId = new Map(alerts.map((a) => [a.id, a]))

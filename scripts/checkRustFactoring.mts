@@ -138,7 +138,7 @@ export function readBaseline(path: string): Baseline {
     if (b.bars[metric] !== bar)
       throw new Error(
         `${path} was measured against ${metric} ${String(b.bars[metric])}, the bar is now ` +
-          `${String(bar)}. A bar change means re-baselining the whole register on purpose.`
+          `${String(bar)}. A bar change means re-baselining the whole register on purpose.`,
       )
   return b
 }
@@ -170,7 +170,7 @@ function report(c: Comparison): string[] {
   for (const v of c.added) lines.push(`  NEW    ${v.metric} ${String(v.value)}  ${label(v)}`)
   for (const g of c.grown)
     lines.push(
-      `  GREW   ${g.now.metric} ${String(g.was)} → ${String(g.now.value)}  ${label(g.now)}`
+      `  GREW   ${g.now.metric} ${String(g.was)} → ${String(g.now.value)}  ${label(g.now)}`,
     )
   for (const v of c.stale) lines.push(`  FIXED  ${v.metric} was ${String(v.value)}  ${label(v)}`)
   return lines
@@ -187,7 +187,7 @@ function main(): void {
   const comparison = compare(violations, readBaseline(BASELINE_PATH), unreadable)
   if (isClean(comparison)) {
     console.log(
-      `rust factoring: green — ${String(violations.length)} baselined violations, none new, none grown.`
+      `rust factoring: green — ${String(violations.length)} baselined violations, none new, none grown.`,
     )
     return
   }
@@ -201,7 +201,7 @@ function main(): void {
   console.log(
     write
       ? '\nrust factoring: REFUSING to write — the register may only shrink, and this run grew it.'
-      : '\nrust factoring: RED. Shrinks are recorded with `npm run check:rust-factoring -- --write`.'
+      : '\nrust factoring: RED. Shrinks are recorded with `npm run check:rust-factoring -- --write`.',
   )
   process.exitCode = 1
 }

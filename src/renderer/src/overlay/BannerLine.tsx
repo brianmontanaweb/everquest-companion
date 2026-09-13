@@ -45,8 +45,8 @@ function motionStyle(entering: boolean, exiting: boolean): CSSProperties {
     opacity: hidden ? 0 : 1,
     transform: hidden ? 'translateY(-6px)' : 'translateY(0)',
     transition: `opacity ${String(exiting ? CARD_EXIT_MS : CARD_ENTER_MS)}ms ease-out, transform ${String(
-      exiting ? CARD_EXIT_MS : CARD_ENTER_MS
-    )}ms ease-out`
+      exiting ? CARD_EXIT_MS : CARD_ENTER_MS,
+    )}ms ease-out`,
   }
 }
 
@@ -67,7 +67,7 @@ export function BannerLine({
   exiting,
   bgAlpha,
   onHover,
-  onDismiss
+  onDismiss,
 }: {
   payload: AlertBannerPayload
   exiting: boolean
@@ -101,7 +101,7 @@ export function BannerLine({
         background: `rgba(15,17,21,${String(bgAlpha)})`,
         backdropFilter: 'blur(6px)',
         boxShadow: '0 6px 18px rgba(0,0,0,0.45)',
-        ...motionStyle(entering, exiting)
+        ...motionStyle(entering, exiting),
       }}
     >
       {/* THE BUTTON'S INVISIBLE TWIN. Centred text in a row that ends with a 20 px control is not
@@ -117,7 +117,7 @@ export function BannerLine({
           lineHeight: 1.25,
           minWidth: 0,
           flex: '1 1 auto',
-          textAlign: 'center'
+          textAlign: 'center',
         }}
       >
         {payload.text}
@@ -148,7 +148,7 @@ export function BannerLine({
           background: 'transparent',
           color: MUTED,
           fontSize: 13,
-          cursor: 'pointer'
+          cursor: 'pointer',
         }}
       >
         ×

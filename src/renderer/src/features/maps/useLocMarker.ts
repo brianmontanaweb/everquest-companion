@@ -27,7 +27,7 @@ import {
   locMarkerFor,
   saveLocMarkers,
   setLocMarker,
-  type LocMarkers
+  type LocMarkers,
 } from './locMarker'
 import type { MapViewport } from './useMapViewport'
 
@@ -59,7 +59,7 @@ export function useLocMarker(zone: ZoneShort | null, vp: MapViewport): LocMarker
       const p = mapFromLoc(loc)
       centerOn(p.x, p.y, zoomedIn ? undefined : view.scale * JUMP_ZOOM)
     },
-    [centerOn, zoomedIn, view.scale]
+    [centerOn, zoomedIn, view.scale],
   )
 
   const place = useCallback(
@@ -70,7 +70,7 @@ export function useLocMarker(zone: ZoneShort | null, vp: MapViewport): LocMarker
       setMarks((prev) => setLocMarker(prev, zone, loc))
       goTo(loc)
     },
-    [zone, goTo]
+    [zone, goTo],
   )
 
   const show = useCallback(() => {

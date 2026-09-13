@@ -3,7 +3,13 @@ import type { LootEvent } from '@shared/types'
 import { itemCountKey } from '../../lib/itemName'
 import { normalizeQuery } from '../../lib/search'
 import type { InventoryRow } from '../inventory/reconcile'
-import { buildInvOnlyRows, filterLootEvents, groupLootRows, type GroupRow, type KeyedLoot } from './lootGrouping'
+import {
+  buildInvOnlyRows,
+  filterLootEvents,
+  groupLootRows,
+  type GroupRow,
+  type KeyedLoot,
+} from './lootGrouping'
 import { selectInvOnly, showsInvOnly } from './ownedItems'
 import type { LootSortKey } from './lootSort'
 
@@ -47,7 +53,7 @@ export function useLootRows({
   query,
   questOnly,
   showInventoryOnly,
-  sort
+  sort,
 }: LootRowsInput): LootRows {
   // Typing echoes IMMEDIATELY (the caller's local `query` state); the filter consumes a
   // DEFERRED copy so a keystroke never blocks on the filter + re-render (Task #41).
@@ -56,8 +62,9 @@ export function useLootRows({
 
   // Precompute the lowercase + counting keys ONCE per history change (not per keystroke).
   const keyed = useMemo<KeyedLoot[]>(
-    () => history.map((e) => ({ ...e, itemKey: e.item.toLowerCase(), countKey: itemCountKey(e.item) })),
-    [history]
+    () =>
+      history.map((e) => ({ ...e, itemKey: e.item.toLowerCase(), countKey: itemCountKey(e.item) })),
+    [history],
   )
 
   // countKey → reconciled inventory row, rebuilt ONCE per inventory change so the estimate
@@ -74,7 +81,7 @@ export function useLootRows({
 
   const invOnlySource = useMemo(
     () => selectInvOnly(inventoryRows, lootCountKeys),
-    [inventoryRows, lootCountKeys]
+    [inventoryRows, lootCountKeys],
   )
 
   const events = useMemo(() => filterLootEvents({ keyed, questOnly, q }), [keyed, q, questOnly])
@@ -90,12 +97,12 @@ export function useLootRows({
       showsInvOnly(showInventoryOnly, q)
         ? buildInvOnlyRows({ source: invOnlySource, questOnly, q })
         : [],
-    [showInventoryOnly, invOnlySource, questOnly, q]
+    [showInventoryOnly, invOnlySource, questOnly, q],
   )
 
   const groupRows = useMemo(
     () => (invOnlyRows.length === 0 ? grouped : [...grouped, ...invOnlyRows]),
-    [grouped, invOnlyRows]
+    [grouped, invOnlyRows],
   )
 
   return { events, grouped, groupRows, invOnlySource, invOnlyRows, invByKey }

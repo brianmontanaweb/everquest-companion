@@ -13,7 +13,7 @@ import {
   IconButton,
   LinearProgress,
   Stack,
-  Typography
+  Typography,
 } from '@mui/material'
 import DownloadIcon from '@mui/icons-material/Download'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
@@ -54,7 +54,9 @@ function phaseLabel(p: PackInstallProgress): string {
     case 'error':
       // A RETRYABLE END IS NOT AN "Error:" (JOS-420). "Error: Rate limited by the download host"
       // reads as a broken pack; the sentence itself already says what happened and what to do.
-      return p.retryable ? (p.message ?? 'Not installed - try again shortly') : `Error: ${p.message ?? 'install failed'}`
+      return p.retryable
+        ? (p.message ?? 'Not installed - try again shortly')
+        : `Error: ${p.message ?? 'install failed'}`
     default:
       return ''
   }
@@ -63,7 +65,7 @@ function phaseLabel(p: PackInstallProgress): string {
 /** The live phase line + bar for a row mid-install; nothing until a push arrives. */
 function PackProgress({
   prog,
-  isBusy
+  isBusy,
 }: {
   prog: PackInstallProgress | undefined
   isBusy: boolean
@@ -93,7 +95,7 @@ function PreviewSoundRow({
   sound,
   isLoading,
   isPlaying,
-  onPlay
+  onPlay,
 }: {
   sound: PackPreviewSound
   isLoading: boolean
@@ -128,7 +130,7 @@ function PackPreviewList({
   preview,
   playingKey,
   loadingKey,
-  onPlay
+  onPlay,
 }: {
   packName: string
   preview: PreviewState | undefined
@@ -168,7 +170,7 @@ function PackPreviewPanel({
   preview,
   playingKey,
   loadingKey,
-  onPlay
+  onPlay,
 }: {
   packName: string
   isExpanded: boolean
@@ -210,7 +212,7 @@ function PackMeta({
   p,
   prog,
   isBusy,
-  isDefault
+  isDefault,
 }: {
   p: RegistryPackView
   prog: PackInstallProgress | undefined
@@ -254,7 +256,13 @@ function PackMeta({
       )}
       <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }} flexWrap="wrap" useFlexGap>
         {p.categories.map((c) => (
-          <Chip key={c} size="small" variant="outlined" label={c} sx={{ height: 18, fontSize: 10 }} />
+          <Chip
+            key={c}
+            size="small"
+            variant="outlined"
+            label={c}
+            sx={{ height: 18, fontSize: 10 }}
+          />
         ))}
       </Stack>
       <PackProgress prog={prog} isBusy={isBusy} />
@@ -278,7 +286,7 @@ function PackAction({
   isDefault,
   onInstall,
   onUninstall,
-  onMakeDefault
+  onMakeDefault,
 }: {
   p: RegistryPackView
   isBusy: boolean
@@ -359,7 +367,7 @@ export default function SoundPackRow({
   onInstall,
   onUninstall,
   onMakeDefault,
-  onPlay
+  onPlay,
 }: SoundPackRowProps): JSX.Element {
   return (
     <Box
@@ -367,7 +375,7 @@ export default function SoundPackRow({
         border: 1,
         borderColor: 'divider',
         borderRadius: 1,
-        p: 1.25
+        p: 1.25,
       }}
     >
       <Stack direction="row" spacing={1} alignItems="flex-start">

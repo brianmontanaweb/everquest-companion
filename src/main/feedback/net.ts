@@ -64,7 +64,8 @@ import { E2E } from '../e2e'
  *
  * e.g. 'https://<apiId>.execute-api.us-east-1.amazonaws.com/v1/feedback'
  */
-const COMPILED_FEEDBACK_API_URL = 'https://pcy0z3xjp9.execute-api.us-east-1.amazonaws.com/v1/feedback'
+const COMPILED_FEEDBACK_API_URL =
+  'https://pcy0z3xjp9.execute-api.us-east-1.amazonaws.com/v1/feedback'
 
 /**
  * The S3 bucket the presigned POST must target, and its region. EMPTY alongside the API URL:
@@ -140,8 +141,14 @@ function looksLikeRegion(region: string): boolean {
  * dualstack, accelerate, access points) are NOT accepted. Every one of them is a host we do
  * not need, and each extra accepted shape is another string an attacker gets to aim at.
  */
-export function uploadEndpoints(bucket: string, region: string): { virtualHost: string; pathHost: string } {
-  return { virtualHost: `${bucket}.s3.${region}.amazonaws.com`, pathHost: `s3.${region}.amazonaws.com` }
+export function uploadEndpoints(
+  bucket: string,
+  region: string,
+): { virtualHost: string; pathHost: string } {
+  return {
+    virtualHost: `${bucket}.s3.${region}.amazonaws.com`,
+    pathHost: `s3.${region}.amazonaws.com`,
+  }
 }
 
 /** Parse a bounded string as a URL. Non-strings, empty, absurdly long and malformed all → null. */
@@ -250,7 +257,7 @@ const DEV_ENDPOINT = devEndpointFor({
   e2e: E2E,
   // Computed key on purpose: `process.env.SOMETHING` is the shape a bundler's `define` can
   // replace, and this value must be read at RUNTIME, in the dev app, from the dev shell.
-  url: process.env[DEV_ENDPOINT_ENV]
+  url: process.env[DEV_ENDPOINT_ENV],
 })
 
 /**
@@ -266,8 +273,7 @@ export const FEEDBACK_API_URL: string =
  * the dev endpoint itself. So the local stack's presign can name its own upload route and
  * nothing else — not another port, not another host, not http on a real hostname.
  */
-export const DEV_UPLOAD_ORIGIN: string =
-  DEV_ENDPOINT === '' ? '' : new URL(DEV_ENDPOINT).origin
+export const DEV_UPLOAD_ORIGIN: string = DEV_ENDPOINT === '' ? '' : new URL(DEV_ENDPOINT).origin
 
 /** Same-origin as the dev endpoint, with the same "nothing clever attached" rules. */
 function isDevUpload(u: URL, devOrigin: string): boolean {
@@ -315,7 +321,7 @@ export function allowedUploadUrlFor(
   raw: unknown,
   bucket: string,
   region: string,
-  devOrigin = ''
+  devOrigin = '',
 ): string | null {
   const u = parseBoundedUrl(raw)
   if (u === null) return null
@@ -330,7 +336,8 @@ function s3UploadUrl(u: URL, bucket: string, region: string): string | null {
   if (!isPlainHttps(u)) return null
   const { virtualHost, pathHost } = uploadEndpoints(bucket, region)
   if (u.hostname === virtualHost) return u.pathname === '/' ? u.toString() : null
-  if (u.hostname === pathHost) return u.pathname === `/${bucket}` || u.pathname === `/${bucket}/` ? u.toString() : null
+  if (u.hostname === pathHost)
+    return u.pathname === `/${bucket}` || u.pathname === `/${bucket}/` ? u.toString() : null
   return null
 }
 
@@ -372,13 +379,17 @@ async function readJsonBody(res: Response): Promise<unknown> {
 }
 
 /** POST a JSON body. Never throws. */
-export async function postJson(url: string, body: unknown, timeoutMs = SUBMIT_TIMEOUT_MS): Promise<HttpAttempt> {
+export async function postJson(
+  url: string,
+  body: unknown,
+  timeoutMs = SUBMIT_TIMEOUT_MS,
+): Promise<HttpAttempt> {
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'User-Agent': UA },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(timeoutMs)
+      signal: AbortSignal.timeout(timeoutMs),
     })
     return { status: res.status, body: await readJsonBody(res) }
   } catch (err) {
@@ -393,13 +404,17 @@ export async function postJson(url: string, body: unknown, timeoutMs = SUBMIT_TI
  * `url` MUST already have been through `allowedUploadUrl` — this function does not re-check,
  * and its only caller (submit.ts) validates first and refuses to upload on null.
  */
-export async function postForm(url: string, form: FormData, timeoutMs = UPLOAD_TIMEOUT_MS): Promise<HttpAttempt> {
+export async function postForm(
+  url: string,
+  form: FormData,
+  timeoutMs = UPLOAD_TIMEOUT_MS,
+): Promise<HttpAttempt> {
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'User-Agent': UA },
       body: form,
-      signal: AbortSignal.timeout(timeoutMs)
+      signal: AbortSignal.timeout(timeoutMs),
     })
     return { status: res.status, body: null }
   } catch (err) {

@@ -19,7 +19,7 @@ import {
   isOutputFileName,
   outputKind,
   preferredOutputFile,
-  type OutputKindId
+  type OutputKindId,
 } from '../../shared/outputs/kinds'
 import { effectiveEqRoot } from '../log/config'
 
@@ -47,14 +47,14 @@ function candidates(id: OutputKindId): Candidate[] {
 export function findOutputFile(
   id: OutputKindId,
   characterName?: string,
-  server?: string
+  server?: string,
 ): string | null {
   const found = candidates(id)
   const pick = preferredOutputFile(
     found.map((c) => c.file),
     outputKind(id),
     characterName,
-    server
+    server,
   )
   if (pick === null) return null
   return found.find((c) => c.file === pick)?.full ?? null

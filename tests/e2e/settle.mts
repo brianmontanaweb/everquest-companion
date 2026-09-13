@@ -43,7 +43,7 @@ const DEFAULTS = { timeoutMs: 15_000, pollMs: 120 }
 export async function settle<T>(
   read: () => Promise<T>,
   ok: (value: T) => boolean,
-  opts: SettleOpts = {}
+  opts: SettleOpts = {},
 ): Promise<T> {
   const { timeoutMs, pollMs } = { ...DEFAULTS, ...opts }
   const deadline = Date.now() + timeoutMs
@@ -62,13 +62,28 @@ export function countIn(page: Page, sel: string): Promise<number> {
 }
 
 /** Poll until at least `min` matches exist; returns the count actually reached. */
-export function settleCount(page: Page, sel: string, min = 1, opts: SettleOpts = {}): Promise<number> {
-  return settle(() => countIn(page, sel), (n) => n >= min, opts)
+export function settleCount(
+  page: Page,
+  sel: string,
+  min = 1,
+  opts: SettleOpts = {},
+): Promise<number> {
+  return settle(
+    () => countIn(page, sel),
+    (n) => n >= min,
+    opts,
+  )
 }
 
 /** Poll until `sel` is gone; true when it went. */
 export async function settleGone(page: Page, sel: string, opts: SettleOpts = {}): Promise<boolean> {
-  return (await settle(() => countIn(page, sel), (n) => n === 0, opts)) === 0
+  return (
+    (await settle(
+      () => countIn(page, sel),
+      (n) => n === 0,
+      opts,
+    )) === 0
+  )
 }
 
 /**
@@ -80,7 +95,7 @@ export async function settleGone(page: Page, sel: string, opts: SettleOpts = {})
  */
 export async function settleStable<T>(
   read: () => Promise<T>,
-  opts: SettleOpts & { stable?: number } = {}
+  opts: SettleOpts & { stable?: number } = {},
 ): Promise<T> {
   const { timeoutMs, pollMs } = { ...DEFAULTS, ...opts }
   const want = opts.stable ?? 3
@@ -127,7 +142,7 @@ export function nextFrames(page: Page): Promise<void> {
             resolve()
           })
         })
-      })
+      }),
   )
 }
 
@@ -190,7 +205,7 @@ export async function hoverAt(page: Page, sel: string, fx: number, fy: number): 
       const hit = document.elementFromPoint(x, y)
       return hit && (hit === el || el.contains(hit)) ? { x, y } : null
     },
-    { sel, fx, fy }
+    { sel, fx, fy },
   )
   if (!pt) return false
   await page.mouse.move(pt.x, pt.y)

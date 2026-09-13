@@ -33,7 +33,7 @@ import type {
   InventoryEntry,
   KeyRingEntry,
   RawOutputRow,
-  SectionShape
+  SectionShape,
 } from '../../shared/outputs/inventory'
 import {
   heldCountsFromDump,
@@ -41,7 +41,7 @@ import {
   parentLocation,
   parsePlace,
   PRIMARY_ITEM_SECTION,
-  splitLocationPath
+  splitLocationPath,
 } from '../../shared/outputs/inventory'
 import type { HeldCounts } from '../../shared/types'
 
@@ -136,7 +136,7 @@ function addItemRow(state: ParseState, cols: readonly string[], line: number): v
     empty: name === '' || name === 'Empty',
     children: [],
     orphan: false,
-    line
+    line,
   }
   attach(state, entry)
 }
@@ -154,7 +154,7 @@ function addKeyRingRow(state: ParseState, cols: readonly string[], line: number)
     name,
     parsedName: parseItemName(name),
     itemId: int(cols[2]),
-    line
+    line,
   }
   state.dump.keyRing.push(entry)
 }
@@ -184,9 +184,9 @@ export function parseInventoryDump(text: string): InventoryDump {
       unknownSections: [],
       malformed: [],
       sections: [],
-      sectionShapes: {}
+      sectionShapes: {},
     },
-    byPath: new Map()
+    byPath: new Map(),
   }
   const lines = text.split(/\r?\n/)
   for (let i = 0; i < lines.length; i++) {

@@ -61,7 +61,7 @@ function OptionRow({
   hovered,
   accent,
   onHover,
-  onPick
+  onPick,
 }: {
   row: OverlaySelectRow
   selected: boolean
@@ -84,12 +84,16 @@ function OptionRow({
         // The selected row keeps a full-height accent stripe — the same device the
         // drill-down bars use for a category — so it reads without a checkmark glyph.
         borderLeft: `2px solid ${selected ? accent : 'transparent'}`,
-        background: hovered ? HOVER : selected ? 'rgba(255,255,255,0.045)' : 'transparent'
+        background: hovered ? HOVER : selected ? 'rgba(255,255,255,0.045)' : 'transparent',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, fontSize: 11, lineHeight: 1.25 }}>
+      <div
+        style={{ display: 'flex', alignItems: 'baseline', gap: 6, fontSize: 11, lineHeight: 1.25 }}
+      >
         {row.live && (
-          <span style={{ width: 5, height: 5, borderRadius: '50%', background: accent, flexShrink: 0 }} />
+          <span
+            style={{ width: 5, height: 5, borderRadius: '50%', background: accent, flexShrink: 0 }}
+          />
         )}
         <span
           style={{
@@ -98,12 +102,18 @@ function OptionRow({
             fontWeight: 600,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
-            textOverflow: 'ellipsis'
+            textOverflow: 'ellipsis',
           }}
         >
           {row.label}
         </span>
-        <span style={{ color: 'rgba(255,255,255,0.62)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+        <span
+          style={{
+            color: 'rgba(255,255,255,0.62)',
+            fontVariantNumeric: 'tabular-nums',
+            flexShrink: 0,
+          }}
+        >
           {row.rate}
         </span>
       </div>
@@ -114,7 +124,7 @@ function OptionRow({
           color: 'rgba(255,255,255,0.42)',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
-          textOverflow: 'ellipsis'
+          textOverflow: 'ellipsis',
         }}
       >
         {row.timing}
@@ -175,7 +185,7 @@ export function OverlaySelectPopup({
   triggerRef,
   noDragStyle,
   onPick,
-  onClose
+  onClose,
 }: {
   rows: OverlaySelectRow[]
   value: string
@@ -232,7 +242,7 @@ export function OverlaySelectPopup({
         border: `1px solid ${HAIRLINE}`,
         borderRadius: 5,
         boxShadow: '0 6px 18px rgba(0,0,0,0.55)',
-        padding: 2
+        padding: 2,
       }}
     >
       {rows.map((r) => (

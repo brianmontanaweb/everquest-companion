@@ -181,7 +181,10 @@ export class CastState {
    * none. See the header for both rules: another caster's invocation is unknowable, and an
    * observation with no cast behind it is a proc.
    */
-  invocationFor(kind: ResistCasterKind, armed: { overchannel: boolean | null } | null): boolean | null {
+  invocationFor(
+    kind: ResistCasterKind,
+    armed: { overchannel: boolean | null } | null,
+  ): boolean | null {
     if (kind !== 'self') return null
     return armed ? armed.overchannel : false
   }

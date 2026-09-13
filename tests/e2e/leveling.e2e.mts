@@ -97,7 +97,7 @@ import {
   settle,
   settleCount,
   settleGone,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -108,7 +108,12 @@ import { stepScopeDefaults, stepZoneSlice } from './sliceSteps.mjs'
 // The layout contract, the spell card in the per-level readout and the narrow window (JOS-289,
 // which inverted JOS-151's claim here) — next door for the same reason, and see that file's header
 // for what the reporter's 1073x937 did to this tab and what the owner overturned afterwards.
-import { dismissFirstRunNotice, stepNarrowLayout, stepPageScroll, stepSpellCard } from './levelingLayoutSteps.mjs'
+import {
+  dismissFirstRunNotice,
+  stepNarrowLayout,
+  stepPageScroll,
+  stepSpellCard,
+} from './levelingLayoutSteps.mjs'
 // WHAT A POINTERMOVE COSTS (JOS-290) — the drag-responsiveness pin, next door because this file
 // is at the repo's line budget. It measures inside the same gesture it asserts about.
 import { stepDragCost } from './dragPerfSteps.mjs'
@@ -121,7 +126,12 @@ import { stepChartShots, stepLevelCurve } from './curveSteps.mjs'
 // it (step 6a, JOS-391: the figures, `already yours`, `replaces`, and the one `directional` in
 // the header). Next door for the same line-budget reason; the pair is one question about one
 // panel, and this spec still owns the order and the launch.
-import { shootUnlockPanel, stepNewAtLevel, stepUnlockEra, stepUnlockSearch } from './unlockRowSteps.mjs'
+import {
+  shootUnlockPanel,
+  stepNewAtLevel,
+  stepUnlockEra,
+  stepUnlockSearch,
+} from './unlockRowSteps.mjs'
 // THE RIGHT COLUMN'S READOUT (JOS-445) — best damage by dps, best healing by hps, at the level the
 // tab is showing. Next door for the same line-budget reason; it asserts the SEAM the unit suite
 // cannot reach (the lines crossing IPC, one stepper driving two columns, a header click re-ranking).
@@ -164,7 +174,10 @@ const HERO_AA_SPENT = '[data-testid="leveling-hero-aa-spent"]'
 
 /** Rendered text of the first match; '' when the node isn't mounted. */
 function textOf(page: Page, sel: string): Promise<string> {
-  return page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
+  return page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    sel,
+  )
 }
 
 /** The FIRST integer in a rendered string, thousands separators removed; null when there is none. */
@@ -213,7 +226,11 @@ async function dragRange(page: Page, sel: string): Promise<boolean> {
   const held = await countOf(page, TOOLTIP)
   await hoverAt(page, sel, 0.9, 0.5)
   await page.mouse.up()
-  check('a range drag suppresses the hover tooltip (the pointer seam)', held === 0, `${String(held)} tooltip(s) mid-drag`)
+  check(
+    'a range drag suppresses the hover tooltip (the pointer seam)',
+    held === 0,
+    `${String(held)} tooltip(s) mid-drag`,
+  )
   return true
 }
 
@@ -225,7 +242,7 @@ function offeredScales(page: Page): Promise<string[]> {
   return page.evaluate(() =>
     Array.from(document.querySelectorAll('[data-testid^="leveling-slice-"]'))
       .map((e) => (e.getAttribute('data-testid') ?? '').replace('leveling-slice-', ''))
-      .filter((id) => id.length > 0 && id !== 'window' && !id.includes('-'))
+      .filter((id) => id.length > 0 && id !== 'window' && !id.includes('-')),
   )
 }
 
@@ -251,11 +268,13 @@ function bandsOutsidePlot(page: Page): Promise<number> {
  * drawing the old time base while the curve draws the new one.
  */
 function bandSignature(page: Page): Promise<string> {
-  return page.evaluate((s) =>
-    Array.from(document.querySelectorAll<SVGRectElement>(s))
-      .map((r) => `${r.x.baseVal.value.toFixed(1)}+${r.width.baseVal.value.toFixed(1)}`)
-      .join(' ')
-  , BAND)
+  return page.evaluate(
+    (s) =>
+      Array.from(document.querySelectorAll<SVGRectElement>(s))
+        .map((r) => `${r.x.baseVal.value.toFixed(1)}+${r.width.baseVal.value.toFixed(1)}`)
+        .join(' '),
+    BAND,
+  )
 }
 
 /**
@@ -278,7 +297,7 @@ function scopeOf(page: Page): Promise<string> {
 async function dashboardReadout(page: Page): Promise<string> {
   const parts = await page.evaluate(
     (sels) => sels.map((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? ''),
-    [PANEL, AA_PACE]
+    [PANEL, AA_PACE],
   )
   return parts.join(' ¦ ').replace(/\s+/g, ' ').trim()
 }
@@ -286,7 +305,11 @@ async function dashboardReadout(page: Page): Promise<string> {
 /** Credited kills as the panel's second hero card states them; null when it is not drawn. */
 function killsShown(page: Page): Promise<number | null> {
   return page
-    .evaluate((s) => (Array.from(document.querySelectorAll(s))[1] as HTMLElement | undefined)?.innerText ?? '', HERO)
+    .evaluate(
+      (s) =>
+        (Array.from(document.querySelectorAll(s))[1] as HTMLElement | undefined)?.innerText ?? '',
+      HERO,
+    )
     .then((t) => numIn(t))
 }
 
@@ -298,7 +321,11 @@ async function clickChart(page: Page, sel: string): Promise<void> {
   // The dismissal's own condition: the panel falls back to the WINDOW scope. Since JOS-75 the
   // panel does not unmount — dropping the selection is the whole observable effect, so waiting
   // for the scope to flip is waiting for the thing under test.
-  await settle(() => scopeOf(page), (s) => s !== 'selection', { timeoutMs: 8_000 })
+  await settle(
+    () => scopeOf(page),
+    (s) => s !== 'selection',
+    { timeoutMs: 8_000 },
+  )
 }
 
 // ── the run ───────────────────────────────────────────────────────────────────────────
@@ -307,20 +334,23 @@ async function clickChart(page: Page, sel: string): Promise<void> {
 async function stepMount(page: Page): Promise<boolean> {
   const hasRow = await page.waitForSelector(NAV, { timeout: 60_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!check('the nav drawer has a Leveling row', hasRow)) return false
   await page.click(NAV, { timeout: 15_000 })
   const mounted = await page.waitForSelector(VIEW, { timeout: 30_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!mounted) {
     // The one legitimate reason the view does not mount: no character logs at all, so App's
     // fresh-machine empty state stands in front of every feature view.
     const noLogs = (await textOf(page, 'main')).includes('No EverQuest logs found')
     check('clicking Leveling mounts the view (or the no-logs empty state explains why not)', noLogs)
-    if (noLogs) note('no character logs on this machine — the app shows its fresh-machine empty state and no feature view mounts')
+    if (noLogs)
+      note(
+        'no character logs on this machine — the app shows its fresh-machine empty state and no feature view mounts',
+      )
     return false
   }
   check('clicking the Leveling nav row mounts the view', true)
@@ -336,7 +366,11 @@ async function stepMount(page: Page): Promise<boolean> {
  */
 async function waitReplayed(page: Page): Promise<void> {
   const { snap, ms } = await waitHydrated(page)
-  check('hydration completes (replay hands off to the live tail)', !snap.hydrating, `${String(ms)}ms`)
+  check(
+    'hydration completes (replay hands off to the live tail)',
+    !snap.hydrating,
+    `${String(ms)}ms`,
+  )
 }
 
 /**
@@ -347,14 +381,17 @@ async function waitReplayed(page: Page): Promise<void> {
  * the SAME selection (useChartSelection is called once, in the view).
  */
 async function stepChart(page: Page): Promise<string | null> {
-  const drawn = await until(async () => (await countOf(page, LEVEL_CHART)) + (await countOf(page, AA_CHART)) > 0, 45_000)
+  const drawn = await until(
+    async () => (await countOf(page, LEVEL_CHART)) + (await countOf(page, AA_CHART)) > 0,
+    45_000,
+  )
   if (drawn) {
     const sel = (await countOf(page, LEVEL_CHART)) > 0 ? LEVEL_CHART : AA_CHART
     const box = await rectOf(page, sel)
     check(
       'the leveling chart is mounted with real size',
       !!box && box.w > 0 && box.h > 0,
-      box ? `${String(box.w)}×${String(box.h)}px` : 'absent'
+      box ? `${String(box.w)}×${String(box.h)}px` : 'absent',
     )
     return box && box.w > 0 && box.h > 0 ? sel : null
   }
@@ -362,9 +399,11 @@ async function stepChart(page: Page): Promise<string | null> {
   check(
     'no chart drawn ⇒ the view states WHY, never a blank pane',
     emptyText.length > 0,
-    emptyText.slice(0, 110)
+    emptyText.slice(0, 110),
   )
-  note('this character’s log carries too few level-ups / AA gains to draw a chart — the stated empty state is the correct surface, and the band-strip and selection assertions are skipped')
+  note(
+    'this character’s log carries too few level-ups / AA gains to draw a chart — the stated empty state is the correct surface, and the band-strip and selection assertions are skipped',
+  )
   return null
 }
 
@@ -375,11 +414,17 @@ async function stepBands(page: Page): Promise<void> {
   if (strips === 0) {
     // Correct behaviour when the analytics module has no zone intervals over the domain at all
     // (a log with no `You have entered` line yet). Nothing to draw is not a blank pane.
-    note('the progression snapshot carries no zone intervals over this domain — the band strip correctly draws nothing this run')
+    note(
+      'the progression snapshot carries no zone intervals over this domain — the band strip correctly draws nothing this run',
+    )
     return
   }
   check('the zone-band strip is mounted on the chart', strips > 0, `${String(strips)} strip(s)`)
-  check('…and it draws real bands (a strip with nothing in it would be a lie)', bands > 0, `${String(bands)} bands`)
+  check(
+    '…and it draws real bands (a strip with nothing in it would be a lie)',
+    bands > 0,
+    `${String(bands)} bands`,
+  )
   // The identification path that does NOT depend on hover (plan §6.2) — the strip and the
   // legend are two halves of one claim, so a strip without a legend is a half-drawn feature.
   const legend = await countOf(page, LEGEND_ROW)
@@ -404,7 +449,7 @@ async function stepSelection(page: Page, chart: string): Promise<void> {
     !check(
       'the range-stats panel is mounted with the view, scoped to the timescale window',
       (await countOf(page, PANEL)) === 1 && (await scopeOf(page)) === 'window',
-      `${String(await countOf(page, PANEL))} panel(s), scope "${await scopeOf(page)}"`
+      `${String(await countOf(page, PANEL))} panel(s), scope "${await scopeOf(page)}"`,
     )
   ) {
     return
@@ -413,8 +458,18 @@ async function stepSelection(page: Page, chart: string): Promise<void> {
   const windowKills = await killsShown(page)
 
   if (!check('the chart is reachable for a drag', await dragRange(page, chart))) return
-  const narrowed = await settle(() => scopeOf(page), (s) => s === 'selection', { timeoutMs: 8000 })
-  if (!check('dragging a range across the chart narrows the panel to the selection', narrowed === 'selection', narrowed)) {
+  const narrowed = await settle(
+    () => scopeOf(page),
+    (s) => s === 'selection',
+    { timeoutMs: 8000 },
+  )
+  if (
+    !check(
+      'dragging a range across the chart narrows the panel to the selection',
+      narrowed === 'selection',
+      narrowed,
+    )
+  ) {
     return
   }
 
@@ -424,7 +479,11 @@ async function stepSelection(page: Page, chart: string): Promise<void> {
   const heroes = await countOf(page, HERO)
   const zones = await countOf(page, ZONE_ROW)
   check('…with its hero stats', heroes > 0, `${String(heroes)} hero cards`)
-  check('…and at least one per-zone row (a committed range is always fully covered by zones)', zones > 0, `${String(zones)} zone rows`)
+  check(
+    '…and at least one per-zone row (a committed range is always fully covered by zones)',
+    zones > 0,
+    `${String(zones)} zone rows`,
+  )
 
   // A selection is a NARROWER range on the same base, so it can never count more than the window
   // that contains it. An identity, not today's number.
@@ -432,18 +491,18 @@ async function stepSelection(page: Page, chart: string): Promise<void> {
   check(
     'a selection inside the window can never count MORE kills than the window',
     selKills !== null && windowKills !== null && selKills <= windowKills,
-    `selection ${String(selKills)} vs window ${String(windowKills)}`
+    `selection ${String(selKills)} vs window ${String(windowKills)}`,
   )
 
   await clickChart(page, chart)
   check(
     'a click (under the drag threshold) drops the selection and the panel falls back to the window',
     (await scopeOf(page)) === 'window',
-    `scope "${await scopeOf(page)}" after the click`
+    `scope "${await scopeOf(page)}" after the click`,
   )
   check(
     '…restoring the window readout byte for byte (clearing is a fallback, never a re-measurement)',
-    (await dashboardReadout(page)) === windowReadout
+    (await dashboardReadout(page)) === windowReadout,
   )
 }
 
@@ -463,28 +522,36 @@ interface DashboardBaseline {
  * happens to fall inside the narrow window makes the second reading a legitimate equality, and
  * that is `note`d rather than quietly passed off as proof.
  */
-async function stepScopedNumbers(page: Page, narrow: string, base: DashboardBaseline): Promise<void> {
-  const range = await settle(() => textOf(page, PANEL_RANGE), (t) => t !== base.range, { timeoutMs: 8000 })
+async function stepScopedNumbers(
+  page: Page,
+  narrow: string,
+  base: DashboardBaseline,
+): Promise<void> {
+  const range = await settle(
+    () => textOf(page, PANEL_RANGE),
+    (t) => t !== base.range,
+    { timeoutMs: 8000 },
+  )
   check(
     `the dashboard states the "${narrow}" window's own stretch, not the full history's`,
     range !== base.range,
-    `${base.range} → ${range}`.replace(/\s+/g, ' ')
+    `${base.range} → ${range}`.replace(/\s+/g, ' '),
   )
   const kills = await killsShown(page)
   const known = kills !== null && base.kills !== null
   check(
     '…and its counts are DOMINATED by the wide window (a narrower stretch can never hold more)',
     known && kills <= base.kills,
-    `${String(kills)} kills at ${narrow} vs ${String(base.kills)} at All`
+    `${String(kills)} kills at ${narrow} vs ${String(base.kills)} at All`,
   )
   if (known && kills === base.kills) {
     note(
-      `every credited kill in this fixture falls inside the "${narrow}" window, so the kills readout is legitimately unchanged — the stated stretch above is what proves the re-derivation`
+      `every credited kill in this fixture falls inside the "${narrow}" window, so the kills readout is legitimately unchanged — the stated stretch above is what proves the re-derivation`,
     )
   }
   check(
     '…and the dashboard as a whole re-derived rather than restating the full-history numbers',
-    (await dashboardReadout(page)) !== base.readout
+    (await dashboardReadout(page)) !== base.readout,
   )
 }
 
@@ -515,18 +582,27 @@ async function stepScopedNumbers(page: Page, narrow: string, base: DashboardBase
  * stated in pixels instead of prose.
  */
 async function stepTimescale(page: Page, chart: string): Promise<void> {
-  if (!check('the timescale control is mounted with the charts', (await countOf(page, TIMESCALE)) > 0)) return
+  if (
+    !check('the timescale control is mounted with the charts', (await countOf(page, TIMESCALE)) > 0)
+  )
+    return
   const before = await textOf(page, TS_WINDOW)
   check('…and it states the window on screen', before.includes('→'), before.replace(/\s+/g, ' '))
 
   const offered = await offeredScales(page)
-  check('the slices offered are the ones this log can define', offered[0] === 'all', `[${offered.join(', ')}]`)
+  check(
+    'the slices offered are the ones this log can define',
+    offered[0] === 'all',
+    `[${offered.join(', ')}]`,
+  )
   // The narrowest slice this log can actually offer. `custom` is always in the list and is not a
   // change of base until somebody types two instants into it, so it is deliberately not a
   // candidate here — this step is about the control replacing the time base in one click.
   const narrow = NARROW_ORDER.find((id) => offered.includes(id))
   if (!narrow) {
-    note(`this log defines no slice narrower than All — it offers only [${offered.join(', ')}] and states the slice`)
+    note(
+      `this log defines no slice narrower than All — it offers only [${offered.join(', ')}] and states the slice`,
+    )
     return
   }
 
@@ -541,57 +617,96 @@ async function stepTimescale(page: Page, chart: string): Promise<void> {
   const bandsBefore = await bandSignature(page)
 
   await page.click(`[data-testid="leveling-slice-${narrow}"]`, { timeout: 10_000 })
-  const after = await settle(() => textOf(page, TS_WINDOW), (t) => t !== before, { timeoutMs: 8000 })
-  check(`picking "${narrow}" replaces the window wholesale`, after !== before, `${before} → ${after}`.replace(/\s+/g, ' '))
+  const after = await settle(
+    () => textOf(page, TS_WINDOW),
+    (t) => t !== before,
+    { timeoutMs: 8000 },
+  )
+  check(
+    `picking "${narrow}" replaces the window wholesale`,
+    after !== before,
+    `${before} → ${after}`.replace(/\s+/g, ' '),
+  )
   check(
     'a selection the new window cannot contain is dropped with it',
-    (await settle(() => scopeOf(page), (s) => s === 'window', { timeoutMs: 8000 })) === 'window',
-    `scope "${await scopeOf(page)}" after the switch`
+    (await settle(
+      () => scopeOf(page),
+      (s) => s === 'window',
+      { timeoutMs: 8000 },
+    )) === 'window',
+    `scope "${await scopeOf(page)}" after the switch`,
   )
 
   await stepScopedNumbers(page, narrow, { readout: allReadout, range: allRange, kills: allKills })
 
   // Everything still on screen, and still agreeing about the new base.
   const box = await rectOf(page, chart)
-  check('the chart still draws at the narrow scale', !!box && box.w > 0 && box.h > 0, box ? `${String(box.w)}×${String(box.h)}px` : 'absent')
+  check(
+    'the chart still draws at the narrow scale',
+    !!box && box.w > 0 && box.h > 0,
+    box ? `${String(box.w)}×${String(box.h)}px` : 'absent',
+  )
   const bands = await countOf(page, BAND)
   check(
     'the zone strip stays inside its plot at the new scale',
     (await bandsOutsidePlot(page)) === 0,
-    `${String(bands)} bands, ${String(await countOf(page, LEGEND_ROW))} legend rows`
+    `${String(bands)} bands, ${String(await countOf(page, LEGEND_ROW))} legend rows`,
   )
   check(
     '…and it re-cut itself to the new window (the strip reads the SAME base the curve does)',
-    bands === 0 || (await bandSignature(page)) !== bandsBefore
+    bands === 0 || (await bandSignature(page)) !== bandsBefore,
   )
 
   // Hover, at the new scale: the tooltip reads the cursor back through the SAME base the curve
   // was drawn with, so a card here is the inverse mapping still working.
   if (await hoverAt(page, chart, 0.55, 0.55)) {
-    check('the hover readout still resolves a cursor at the narrow scale', (await countOf(page, TOOLTIP)) > 0)
+    check(
+      'the hover readout still resolves a cursor at the narrow scale',
+      (await countOf(page, TOOLTIP)) > 0,
+    )
     await page.mouse.move(2, 2)
     await settleGone(page, TOOLTIP, { timeoutMs: 5000 })
   }
 
   // …and a drag inside the narrow window still narrows the panel and still clears.
   if (await dragRange(page, chart)) {
-    const narrowed = await settle(() => scopeOf(page), (s) => s === 'selection', { timeoutMs: 8000 })
-    check('dragging a range at the narrow scale narrows the panel', narrowed === 'selection', `${String(await countOf(page, HERO))} hero cards`)
+    const narrowed = await settle(
+      () => scopeOf(page),
+      (s) => s === 'selection',
+      { timeoutMs: 8000 },
+    )
+    check(
+      'dragging a range at the narrow scale narrows the panel',
+      narrowed === 'selection',
+      `${String(await countOf(page, HERO))} hero cards`,
+    )
     await clickChart(page, chart)
     check('…and a click clears it back to the window there too', (await scopeOf(page)) === 'window')
   }
 
   // Back to the default: the control is a view, not a trapdoor.
   await page.click('[data-testid="leveling-slice-all"]', { timeout: 10_000 })
-  const back = await settle(() => textOf(page, TS_WINDOW), (t) => t === before, { timeoutMs: 8000 })
-  check('returning to All restores the full-history window exactly', back === before, `${back}`.replace(/\s+/g, ' '))
+  const back = await settle(
+    () => textOf(page, TS_WINDOW),
+    (t) => t === before,
+    { timeoutMs: 8000 },
+  )
+  check(
+    'returning to All restores the full-history window exactly',
+    back === before,
+    `${back}`.replace(/\s+/g, ' '),
+  )
   // THE PROMISE, IN PIXELS: not just the drawn window but every number under it. A user who
   // takes a look through the control and comes back must find the tab exactly as they left it.
-  const restored = await settle(() => dashboardReadout(page), (t) => t === allReadout, { timeoutMs: 8000 })
+  const restored = await settle(
+    () => dashboardReadout(page),
+    (t) => t === allReadout,
+    { timeoutMs: 8000 },
+  )
   check(
     '…and every dashboard number with it, byte for byte',
     restored === allReadout,
-    restored === allReadout ? '' : `${allReadout.slice(0, 160)} ≠ ${restored.slice(0, 160)}`
+    restored === allReadout ? '' : `${allReadout.slice(0, 160)} ≠ ${restored.slice(0, 160)}`,
   )
 }
 
@@ -607,7 +722,7 @@ async function stepTimescale(page: Page, chart: string): Promise<void> {
 async function stepAaLedger(page: Page): Promise<void> {
   const mounted = await page.waitForSelector(LEDGER, { timeout: 20_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   // A character who has bought no AA at all renders no ledger, which is the correct surface.
   if (!mounted) {
@@ -615,7 +730,8 @@ async function stepAaLedger(page: Page): Promise<void> {
     return
   }
   const rows = await countOf(page, LEDGER_ROW)
-  if (!check('the AA ledger lists per-ability ladders', rows > 0, `${String(rows)} abilities`)) return
+  if (!check('the AA ledger lists per-ability ladders', rows > 0, `${String(rows)} abilities`))
+    return
 
   // The two numbers, read from the two components that computed them independently.
   const spentHero = numIn(await textOf(page, HERO_AA_SPENT))
@@ -624,17 +740,20 @@ async function stepAaLedger(page: Page): Promise<void> {
   check(
     'the ledger footer totals EXACTLY the AA-points-spent hero card (one identity, two components)',
     spentHero !== null && ledgerTotal === spentHero,
-    `ledger ${String(ledgerTotal)} vs hero ${String(spentHero)} — "${footer.replace(/\s+/g, ' ')}"`
+    `ledger ${String(ledgerTotal)} vs hero ${String(spentHero)} — "${footer.replace(/\s+/g, ' ')}"`,
   )
 
   // Progressive disclosure: the rungs are not in the DOM until the ability is opened.
-  check('a ladder keeps its rungs collapsed until it is asked for them', (await countOf(page, LEDGER_RUNG)) === 0)
+  check(
+    'a ladder keeps its rungs collapsed until it is asked for them',
+    (await countOf(page, LEDGER_RUNG)) === 0,
+  )
   // A click that cannot land is a FAILED CHECK, never a thrown spec: `main` has no catch around
   // its steps, so an escaping TimeoutError kills the whole run — including the assertions after
   // this one and the artifact dump that would explain it.
   const clicked = await page.click(`${LEDGER_ROW} >> nth=0`, { timeout: 10_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!check('the top ability row is clickable', clicked)) return
   const rungs = await settleCount(page, LEDGER_RUNG, 1, { timeoutMs: 8_000 })
@@ -657,7 +776,7 @@ async function main(): Promise<void> {
     // holds on any machine rather than only on one with EverQuest installed. It changes nothing the
     // other steps read: the ranked tables and the wiki search are the committed catalog's, and this
     // is a file only the engine's `spells.search` opens.
-    clientTables: true
+    clientTables: true,
   })
 
   let page: Page | null = null
@@ -711,7 +830,10 @@ async function main(): Promise<void> {
         // The empty-state half of the headline assertion still holds, and is the honest thing
         // to assert on a log with no chart: there is no domain, so there is no scope, so there
         // is nothing for the panel to be a read of.
-        check('…and with no chart there is no range-stats panel either', (await countOf(page, PANEL)) === 0)
+        check(
+          '…and with no chart there is no range-stats panel either',
+          (await countOf(page, PANEL)) === 0,
+        )
       }
       // Deliberately OUTSIDE the chart branch: the unlock panel is computed from the committed
       // DBs, so it must be there whether or not this log has enough dings to draw a chart.
@@ -750,7 +872,11 @@ async function main(): Promise<void> {
       await shootBestSpells(app, page)
     }
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
 
     if (failures.length) await dumpArtifacts(page, 'leveling-FAIL')
     else await dumpArtifacts(page, 'leveling-pass')

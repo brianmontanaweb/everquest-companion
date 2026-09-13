@@ -22,7 +22,7 @@ const problems = releaseNotesProblems()
 
 if (ref !== '' && !hasReleaseNote(ref)) {
   problems.push(
-    `${ref} has no entry in src/shared/releaseNotes.ts — add one before tagging, or the app ships with nothing to say about this release`
+    `${ref} has no entry in src/shared/releaseNotes.ts — add one before tagging, or the app ships with nothing to say about this release`,
   )
 }
 

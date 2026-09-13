@@ -86,7 +86,7 @@ import {
   settle,
   settleCount,
   settleGone,
-  settleStable
+  settleStable,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture, type FixtureLog } from './logFixture.mjs'
@@ -119,7 +119,7 @@ const GONE = [
   '[data-testid="posky-cleanup-destroy"]',
   '[data-testid="posky-cleanup-destroyed"]',
   '[data-testid="posky-cleanup-undo"]',
-  '[data-testid="posky-cleanup-refresh"]'
+  '[data-testid="posky-cleanup-refresh"]',
 ]
 
 const QUEST = 'Beastlord Test of Azarack'
@@ -133,7 +133,7 @@ const REWARD = 'Azarack Skin Wristwraps'
 const TURN_IN = [
   `You offered 1 ${ITEM} to ${GIVER}.`,
   `You offered 1 ${RUNE} to ${GIVER}.`,
-  `You complete the trade with ${GIVER}.`
+  `You complete the trade with ${GIVER}.`,
 ]
 /** The dump that holds exactly one Sky item — see the header. */
 const DUMP = 'Primitive_freeport-Inventory.txt'
@@ -169,7 +169,7 @@ async function captureTab(app: ElectronApplication, tag: string): Promise<void> 
       // cursor ring are windows too, and they are all hidden, so an index-based pick photographs
       // whichever blank one the array happened to start with.
       const win = BrowserWindow.getAllWindows().find(
-        (w) => !w.isDestroyed() && w.webContents.getURL().includes('index.html')
+        (w) => !w.isDestroyed() && w.webContents.getURL().includes('index.html'),
       )
       if (!win) return null
       // Inactive: the point is a frame, never the focus. Hidden again before anything else runs.
@@ -202,10 +202,13 @@ function rows(page: Page): Promise<Row[]> {
     return [...document.querySelectorAll(sel)].map((el) => ({
       item: el.getAttribute('data-item') ?? '',
       count: Number(el.getAttribute('data-count')),
-      where: (el.querySelector('[data-testid="posky-cleanup-where"]') as HTMLElement | null)?.innerText.trim() ?? '',
+      where:
+        (
+          el.querySelector('[data-testid="posky-cleanup-where"]') as HTMLElement | null
+        )?.innerText.trim() ?? '',
       turnIns: [...el.querySelectorAll('[data-testid="posky-cleanup-turnin"]')].map((t) =>
-        (t as HTMLElement).innerText.replace(/\s+/g, ' ').trim()
-      )
+        (t as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
+      ),
     }))
   }, ROW)
 }
@@ -229,7 +232,7 @@ function tabLabel(page: Page): Promise<string> {
 function haveText(page: Page, item: string): Promise<string | null> {
   return page.evaluate((name) => {
     const row = [...document.querySelectorAll('tr')].find((tr) =>
-      (tr.cells[1]?.textContent ?? '').trim().startsWith(name)
+      (tr.cells[1]?.textContent ?? '').trim().startsWith(name),
     )
     if (!row) return null
     return /^\s*(\d+\/\d+)/.exec(row.cells[2]?.textContent ?? '')?.[1] ?? null
@@ -249,14 +252,23 @@ async function openTheQuest(page: Page): Promise<boolean> {
   await page.click(NAV_SKY, { timeout: 30_000 })
   const bar = await page.waitForSelector(SEARCH, { timeout: 60_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!check('the Sky tab opens on its filter bar', bar)) return false
   await page.fill(`${SEARCH} input`, QUEST)
-  const only = await settle(() => filteredCount(page), (n) => n === 1, { timeoutMs: 30_000 })
-  if (!check(`the search narrows to ${QUEST} alone`, only === 1, `filtered=${String(only)}`)) return false
+  const only = await settle(
+    () => filteredCount(page),
+    (n) => n === 1,
+    { timeoutMs: 30_000 },
+  )
+  if (!check(`the search narrows to ${QUEST} alone`, only === 1, `filtered=${String(only)}`))
+    return false
   await page.click(SUMMARY, { timeout: 15_000 })
-  const have = await settle(() => haveText(page, ITEM), (v) => v !== null, { timeoutMs: 20_000 })
+  const have = await settle(
+    () => haveText(page, ITEM),
+    (v) => v !== null,
+    { timeoutMs: 20_000 },
+  )
   return check('…and expanding it draws the item table', have !== null, String(have))
 }
 
@@ -272,7 +284,11 @@ async function reopenTheQuestPanel(page: Page): Promise<boolean> {
   await page.click(TAB_QUESTS, { timeout: 15_000 })
   await page.waitForSelector(SUMMARY, { timeout: 20_000 })
   await page.click(SUMMARY, { timeout: 15_000 })
-  const have = await settle(() => haveText(page, ITEM), (v) => v !== null, { timeoutMs: 20_000 })
+  const have = await settle(
+    () => haveText(page, ITEM),
+    (v) => v !== null,
+    { timeoutMs: 20_000 },
+  )
   return check('the quest panel opens again on the Quests tab', have !== null, String(have))
 }
 
@@ -280,7 +296,7 @@ async function openCleanup(page: Page): Promise<boolean> {
   await page.click(TAB_CLEANUP, { timeout: 15_000 })
   const up = await page.waitForSelector(CLEANUP, { timeout: 20_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   return check('the Cleanup tab opens', up)
 }
@@ -290,7 +306,7 @@ function settleCountOf(page: Page, want: number | null): Promise<Row[]> {
   return settle(
     () => rows(page),
     (r) => (want === null ? r.length === 0 : r.length === 1 && r[0].count === want),
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
 }
 
@@ -308,15 +324,22 @@ async function stepNothingSpareYet(page: Page): Promise<boolean> {
 
   const caveat = await page.evaluate(
     (s) => (document.querySelector(s) as HTMLElement | null)?.innerText.trim() ?? '',
-    CAVEAT
+    CAVEAT,
   )
-  check('the caveat is up before anything is listed, in the owner`s words', caveat === CAVEAT_TEXT, caveat)
+  check(
+    'the caveat is up before anything is listed, in the owner`s words',
+    caveat === CAVEAT_TEXT,
+    caveat,
+  )
   // Not dismissible: an Alert with a close action renders one, and this one must never have it.
   check(
     '…and it cannot be dismissed - this screen is destructive advice by design',
-    (await countOf(page, `${CAVEAT} .MuiAlert-action`)) === 0
+    (await countOf(page, `${CAVEAT} .MuiAlert-action`)) === 0,
   )
-  check('the count-source control is still here - it is the strategy, not a refresh', (await countOf(page, SOURCE)) === 1)
+  check(
+    'the count-source control is still here - it is the strategy, not a refresh',
+    (await countOf(page, SOURCE)) === 1,
+  )
   // JOS-401's removals, as an absence. The log states a destroy, so no button asks the player to.
   for (const sel of GONE) {
     check(`no ${sel} anywhere on the tab (JOS-401)`, (await countOf(page, sel)) === 0)
@@ -326,10 +349,14 @@ async function stepNothingSpareYet(page: Page): Promise<boolean> {
   check(
     'AN ITEM AN UN-TURNED-IN QUEST STILL NEEDS IS NOT LISTED',
     listed.length === 0,
-    listed.map((r) => r.item).join(', ')
+    listed.map((r) => r.item).join(', '),
   )
   check('…so is the empty state, rather than a bare pane', (await countOf(page, EMPTY)) === 1)
-  return check('…and the tab wears no count', (await tabLabel(page)) === 'Cleanup', await tabLabel(page))
+  return check(
+    '…and the tab wears no count',
+    (await tabLabel(page)) === 'Cleanup',
+    await tabLabel(page),
+  )
 }
 
 /**
@@ -371,7 +398,7 @@ async function stepTurnInEatsTheDumpsCopy(page: Page, log: FixtureLog): Promise<
   check(
     'A HAND-RECORDED TURN-IN LEAVES THE DUMP ALONE — a click time is not an event time (JOS-409)',
     heldOn === '1/1',
-    String(heldOn)
+    String(heldOn),
   )
   // Take it back, so the ledger the rest of this spec reasons about carries the played turn-in and
   // nothing else. An undo can only reach the turn-ins the log does not also know about, which is
@@ -382,12 +409,16 @@ async function stepTurnInEatsTheDumpsCopy(page: Page, log: FixtureLog): Promise<
   // the group (shared/questTurnIns.ts states that shape; sky-turnin.e2e.mts drives it at length).
   // Its instant is the log's own, and it is stamped after the dump was read.
   log.append(...TURN_IN)
-  const spent = await settle(() => haveText(page, ITEM), (v) => v === '0/1', { timeoutMs: 20_000 })
+  const spent = await settle(
+    () => haveText(page, ITEM),
+    (v) => v === '0/1',
+    { timeoutMs: 20_000 },
+  )
   if (
     !check(
       'THE TURN-IN SPENDS THE COPY THE DUMP VOUCHED FOR — the quest reads 0/1 with no fresh dump',
       spent === '0/1',
-      String(spent)
+      String(spent),
     )
   ) {
     return false
@@ -397,9 +428,13 @@ async function stepTurnInEatsTheDumpsCopy(page: Page, log: FixtureLog): Promise<
   check(
     '…so nothing is spare: an item you no longer hold is not on the Cleanup tab',
     listed.length === 0,
-    listed.map((r) => `${r.item} x${String(r.count)}`).join(', ')
+    listed.map((r) => `${r.item} x${String(r.count)}`).join(', '),
   )
-  return check('…and the tab still wears no count', (await tabLabel(page)) === 'Cleanup', await tabLabel(page))
+  return check(
+    '…and the tab still wears no count',
+    (await tabLabel(page)) === 'Cleanup',
+    await tabLabel(page),
+  )
 }
 
 /**
@@ -423,7 +458,7 @@ async function stepRefarmMakesItSpare(page: Page, log: FixtureLog): Promise<bool
     !check(
       'A LOOT LINE ARRIVING IN THE TAILED LOG PUTS THE ITEM ON THE TAB — every quest that wants it is done',
       listed.length === 1 && listed[0].count === 3,
-      listed.map((r) => `${r.item} x${String(r.count)}`).join(', ')
+      listed.map((r) => `${r.item} x${String(r.count)}`).join(', '),
     )
   ) {
     return false
@@ -437,24 +472,30 @@ async function stepRefarmMakesItSpare(page: Page, log: FixtureLog): Promise<bool
   const placed = await settle(
     () => rows(page),
     (r) => r.length === 1 && r[0].where !== NO_PLACE,
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   )
   const [row] = placed
   check('…and placed where the DUMP says it is sitting', row.where === 'General 1', row.where)
   check(
     '…with the turn-in it feeds spelled out: who, how many times, and what it pays',
     row.turnIns.length === 1 &&
-      row.turnIns[0].startsWith(`Animist Kratho - Beastlord Test of Azarack (Beastlord) · turned in 1 time · reward: ${REWARD}`),
-    row.turnIns.join(' | ')
+      row.turnIns[0].startsWith(
+        `Animist Kratho - Beastlord Test of Azarack (Beastlord) · turned in 1 time · reward: ${REWARD}`,
+      ),
+    row.turnIns.join(' | '),
   )
   // The other half of the decision. Skins and no wind rune is not another set, so the row says what
   // it would take rather than arguing to keep something that cannot be handed in yet.
   check(
     '…and the decision line states the gap toward running it again',
     row.turnIns[0].endsWith('you hold 1 of the 2 needed for another turn-in'),
-    row.turnIns[0]
+    row.turnIns[0],
   )
-  return check('the tab now carries the count', (await tabLabel(page)) === 'Cleanup (1)', await tabLabel(page))
+  return check(
+    'the tab now carries the count',
+    (await tabLabel(page)) === 'Cleanup (1)',
+    await tabLabel(page),
+  )
 }
 
 /**
@@ -467,7 +508,13 @@ async function stepRefarmMakesItSpare(page: Page, log: FixtureLog): Promise<bool
  */
 async function stepRewardHovers(page: Page): Promise<void> {
   const links = await countOf(page, NAME_LINK)
-  if (!check('the row draws two hoverable names: the item and its reward', links === 2, `links=${String(links)}`)) {
+  if (
+    !check(
+      'the row draws two hoverable names: the item and its reward',
+      links === 2,
+      `links=${String(links)}`,
+    )
+  ) {
     return
   }
   // `locator.hover()` rather than the harness's `hoverAt`, and the difference is measured: this
@@ -481,7 +528,7 @@ async function stepRewardHovers(page: Page): Promise<void> {
     .hover({ timeout: 10_000 })
     .then(
       () => true,
-      () => false
+      () => false,
     )
   if (!put) {
     note('could not put the pointer on the reward name')
@@ -495,7 +542,10 @@ async function stepRewardHovers(page: Page): Promise<void> {
   // Off the name and the card leaves with it — a card that outlives its anchor is the click-eating
   // defect this tab's whole card policy exists to prevent.
   await page.mouse.move(5, 5)
-  check('…and it leaves when the pointer does', await settleGone(page, POPPER, { timeoutMs: 10_000 }))
+  check(
+    '…and it leaves when the pointer does',
+    await settleGone(page, POPPER, { timeoutMs: 10_000 }),
+  )
 }
 
 /**
@@ -513,18 +563,30 @@ async function stepDestroyLowersIt(page: Page, log: FixtureLog): Promise<boolean
     !check(
       'A DESTROY LINE LOWERS THE COUNT — the thing the app used to need a button for',
       after.length === 1 && after[0].count === 2,
-      after.map((r) => `${r.item} x${String(r.count)}`).join(', ')
+      after.map((r) => `${r.item} x${String(r.count)}`).join(', '),
     )
   ) {
     return false
   }
-  check('…and the tab`s count follows it', (await tabLabel(page)) === 'Cleanup (1)', await tabLabel(page))
+  check(
+    '…and the tab`s count follows it',
+    (await tabLabel(page)) === 'Cleanup (1)',
+    await tabLabel(page),
+  )
 
   // ONE HELD COUNT, TWO TABS. The Quests tab's Have cell is the same number by construction; a
   // disagreement here would mean the destroy reached one fold and not the other.
   if (!(await reopenTheQuestPanel(page))) return false
-  const have = await settle(() => haveText(page, ITEM), (v) => v === '1/1', { timeoutMs: 20_000 })
-  return check('THE QUEST THAT NEEDS IT AGREES, with no statement from anybody', have === '1/1', String(have))
+  const have = await settle(
+    () => haveText(page, ITEM),
+    (v) => v === '1/1',
+    { timeoutMs: 20_000 },
+  )
+  return check(
+    'THE QUEST THAT NEEDS IT AGREES, with no statement from anybody',
+    have === '1/1',
+    String(have),
+  )
 }
 
 /**
@@ -544,7 +606,7 @@ async function stepFloorEndsTheRow(page: Page, log: FixtureLog): Promise<void> {
     !check(
       'DESTROYING THE LOT TAKES THE ROW OFF THE TAB — and destroying more than you hold floors at 0',
       gone.length === 0,
-      gone.map((r) => `${r.item} x${String(r.count)}`).join(', ')
+      gone.map((r) => `${r.item} x${String(r.count)}`).join(', '),
     )
   ) {
     return
@@ -553,11 +615,15 @@ async function stepFloorEndsTheRow(page: Page, log: FixtureLog): Promise<void> {
   check('…and the tab drops its count', (await tabLabel(page)) === 'Cleanup', await tabLabel(page))
 
   if (!(await reopenTheQuestPanel(page))) return
-  const have = await settle(() => haveText(page, ITEM), (v) => v === '0/1', { timeoutMs: 20_000 })
+  const have = await settle(
+    () => haveText(page, ITEM),
+    (v) => v === '0/1',
+    { timeoutMs: 20_000 },
+  )
   check('THE QUEST READS 0 FOR THE ITEM TOO, and not a negative one', have === '0/1', String(have))
   check(
     '…and it says so with no provenance chip: this is the LOG talking, not the user',
-    (await countOf(page, '[data-testid="posky-item-override"]')) === 0
+    (await countOf(page, '[data-testid="posky-item-override"]')) === 0,
   )
 }
 
@@ -599,7 +665,11 @@ async function main(): Promise<void> {
       throw new Error('never reached the expanded Sky quest — nothing below can be asserted')
     }
     await arc(page, launched.app, launched.log)
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     await dumpArtifacts(page, failures.length ? 'sky-cleanup-FAIL' : 'sky-cleanup-pass')
   } finally {
     await launched.close()

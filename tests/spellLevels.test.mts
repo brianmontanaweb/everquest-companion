@@ -22,7 +22,7 @@ import {
   knownClassDisplayNames,
   parseSpellClasses,
   scanSpellClasses,
-  spellLevelFor
+  spellLevelFor,
 } from '../src/shared/spellLevels'
 
 const spells: { name: string; classes?: string }[] = spellsJson.spells
@@ -48,7 +48,7 @@ test('a multi-class field parses every bullet, sorted by class code', () => {
     { cls: 'CLR', level: 10 },
     { cls: 'DRU', level: 12 },
     { cls: 'ENC', level: 12 },
-    { cls: 'SHM', level: 14 }
+    { cls: 'SHM', level: 14 },
   ])
 })
 
@@ -74,7 +74,7 @@ test('a trailing `+` on the level is read as the level, not dropped with the bul
 
 test('a class stated twice keeps the LOWEST level, never a duplicate chip', () => {
   assert.deepEqual(parseSpellClasses('* Druid - Level 44 * Druid - Level 12'), [
-    { cls: 'DRU', level: 12 }
+    { cls: 'DRU', level: 12 },
   ])
 })
 
@@ -146,7 +146,8 @@ test('BER, MNK and WAR are placed by ZERO spells — the honest absence, not a p
   // so a level-up panel must fall back to skills for them rather than showing an empty list
   // it believes is a lookup failure.
   const placed = new Set(allPairs.map((p) => p.cls))
-  for (const abbr of ['BER', 'MNK', 'WAR']) assert.equal(placed.has(abbr), false, `${abbr} gained spells`)
+  for (const abbr of ['BER', 'MNK', 'WAR'])
+    assert.equal(placed.has(abbr), false, `${abbr} gained spells`)
   // …and every other class IS placed, so an empty set can never pass this suite quietly.
   for (const abbr of ABBRS) {
     if (abbr === 'BER' || abbr === 'MNK' || abbr === 'WAR') continue
@@ -167,11 +168,12 @@ test('the unusable bullets stay a handful, and are still counted', () => {
 test('the display-name table matches classes.json name-for-name', () => {
   const wiki = Object.values(classes.names).map((n) => n.toLowerCase())
   const known = knownClassDisplayNames()
-  for (const name of wiki) assert.ok(known.includes(name), `classes.json names '${name}', we do not`)
+  for (const name of wiki)
+    assert.ok(known.includes(name), `classes.json names '${name}', we do not`)
   // The one extra spelling is deliberate and measured: the wiki writes SHD both ways.
   assert.deepEqual(
     known.filter((n) => !wiki.includes(n)),
-    ['shadowknight']
+    ['shadowknight'],
   )
   assert.equal(known.length, wiki.length + 1)
 })
@@ -190,6 +192,10 @@ test('every display name round-trips back to its own code', () => {
   // The reverse direction is the parse the wiki fields go through, so the two tables in
   // spellLevels.ts have to agree: a name this app PRINTS must be a name it can READ.
   for (const abbr of CLASS_ABBRS) {
-    assert.equal(classAbbrForDisplayName(classDisplayName(abbr)), abbr, `${abbr} does not round-trip`)
+    assert.equal(
+      classAbbrForDisplayName(classDisplayName(abbr)),
+      abbr,
+      `${abbr} does not round-trip`,
+    )
   }
 })

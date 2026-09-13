@@ -123,7 +123,10 @@ export function parseIf<T>(text: string, accept: (v: unknown) => v is T): T | un
  * Recover a complete top-level object from torn bytes: de-pad, parse, and failing that accept a
  * balanced object prefix with the stale tail discarded. Lossless or nothing — see the header.
  */
-export function salvageJsonObject<T>(raw: string, accept: (v: unknown) => v is T): SalvagedJson<T> | undefined {
+export function salvageJsonObject<T>(
+  raw: string,
+  accept: (v: unknown) => v is T,
+): SalvagedJson<T> | undefined {
   const text = stripTornPadding(raw)
   if (text === '') return undefined
   const whole = parseIf(text, accept)
@@ -131,7 +134,9 @@ export function salvageJsonObject<T>(raw: string, accept: (v: unknown) => v is T
   const prefix = balancedObjectPrefix(text)
   if (prefix === undefined) return undefined
   const partial = parseIf(prefix, accept)
-  return partial === undefined ? undefined : { value: partial, residue: text.length - prefix.length }
+  return partial === undefined
+    ? undefined
+    : { value: partial, residue: text.length - prefix.length }
 }
 
 /** `…/x.json` → `…/x.corrupt.json`. Where a file that would not parse is KEPT, never deleted. */

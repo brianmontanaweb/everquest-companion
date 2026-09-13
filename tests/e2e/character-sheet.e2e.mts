@@ -40,7 +40,7 @@ import {
   pageOverflow,
   reportRun,
   settle,
-  settleGone
+  settleGone,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -90,7 +90,7 @@ const SEARCH_HITS = 4
 function textOf(page: Page, sel: string): Promise<string> {
   return page.evaluate(
     (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
-    sel
+    sel,
   )
 }
 
@@ -103,7 +103,10 @@ async function answerNotice(page: Page): Promise<void> {
   const notice = '[data-testid="telemetry-notice"]'
   if ((await countOf(page, notice)) === 0) return
   await page.click('[data-testid="telemetry-notice-off"]')
-  check('the analytics first-run notice can be answered out of the way', await settleGone(page, notice, { timeoutMs: 8_000 }))
+  check(
+    'the analytics first-run notice can be answered out of the way',
+    await settleGone(page, notice, { timeoutMs: 8_000 }),
+  )
 }
 
 /** What `character:sheet` answers with — the transport, read directly. */
@@ -135,7 +138,7 @@ function readSheet(page: Page): Promise<SheetShape | null> {
       unknown: sheet.totals.unknown,
       carried: sheet.carry.rows.length,
       lanes: sheet.carry.lanes.map((l) => `${l.id}:${String(l.count)}`),
-      exaltations: filled.flatMap((c) => c.item?.exaltations ?? [])
+      exaltations: filled.flatMap((c) => c.item?.exaltations ?? []),
     }
   })
 }
@@ -144,13 +147,13 @@ function readSheet(page: Page): Promise<SheetShape | null> {
 async function openGearArea(page: Page): Promise<boolean> {
   const hasRow = await page.waitForSelector(NAV_GEAR, { timeout: 60_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!check('the gear area has its one nav row', hasRow)) return false
   await page.click(NAV_GEAR, { timeout: 15_000 })
   const barUp = await page.waitForSelector(TAB_GEAR, { timeout: 30_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   return check('…and it opens an area whose tab bar is on screen', barUp)
 }
@@ -165,7 +168,9 @@ async function stepReleased(page: Page): Promise<boolean> {
   // `out-e2e/`) — the compilation an installer ships — so this is the tab being present in the
   // bytes a user gets, not merely on a dev server.
   const present = (await countOf(page, TAB)) === 1
-  if (!check('the Character tab IS on the gear area’s tab bar in a production-shaped build', present)) {
+  if (
+    !check('the Character tab IS on the gear area’s tab bar in a production-shaped build', present)
+  ) {
     return false
   }
   const label = (await textOf(page, TAB)).replace(/\s+/g, ' ').trim()
@@ -174,7 +179,7 @@ async function stepReleased(page: Page): Promise<boolean> {
   await page.click(TAB, { timeout: 15_000 })
   const mounted = await page.waitForSelector(SHEET, { timeout: 30_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   return check('…and clicking it mounts the sheet, built from the staged dump', mounted)
 }
@@ -183,17 +188,23 @@ async function stepReleased(page: Page): Promise<boolean> {
 
 async function stepSheet(page: Page): Promise<void> {
   const sheet = await readSheet(page)
-  if (!check('character:sheet answers — the handler is registered in every build now', sheet !== null)) {
+  if (
+    !check('character:sheet answers — the handler is registered in every build now', sheet !== null)
+  ) {
     return
   }
   const s = sheet as SheetShape
 
-  check('the sheet draws every slot cell, filled or not', s.cells === CELLS, `${String(s.cells)} cells`)
+  check(
+    'the sheet draws every slot cell, filled or not',
+    s.cells === CELLS,
+    `${String(s.cells)} cells`,
+  )
   check('…and the staged dump fills all but two of them', s.worn === WORN, `${String(s.worn)} worn`)
   check(
     'every worn item is either summed or counted as unknown',
     s.counted + s.unknown === s.worn,
-    `${String(s.counted)} + ${String(s.unknown)} vs ${String(s.worn)} worn`
+    `${String(s.counted)} + ${String(s.unknown)} vs ${String(s.worn)} worn`,
   )
 
   // SOCKETED EXALTATIONS (JOS-327). The transport has carried these since JOS-45 and nothing drew
@@ -201,18 +212,18 @@ async function stepSheet(page: Page): Promise<void> {
   check(
     `the worn items carry ${String(EXALTATIONS)} socketed exaltations in the transport`,
     s.exaltations.length === EXALTATIONS,
-    s.exaltations.join(' · ')
+    s.exaltations.join(' · '),
   )
   check(
     '…and the chips have already been stripped of the client’s `(Exaltation)` suffix',
     s.exaltations.every((n) => !n.includes('(Exaltation)')),
-    s.exaltations.join(' · ')
+    s.exaltations.join(' · '),
   )
   const drawn = await countOf(page, EXALTATION)
   check(
     `…and the grid DRAWS one chip per socket (${String(EXALTATIONS)})`,
     drawn === EXALTATIONS,
-    `${String(drawn)} chips under ${String(await countOf(page, SLOT_GRID))} grid(s)`
+    `${String(drawn)} chips under ${String(await countOf(page, SLOT_GRID))} grid(s)`,
   )
 }
 
@@ -230,23 +241,25 @@ async function stepCarry(page: Page): Promise<void> {
   check(
     `the transport carries all ${String(CARRIED)} rows of the dump`,
     sheet.carried === CARRIED,
-    `${String(sheet.carried)} rows`
+    `${String(sheet.carried)} rows`,
   )
   // The lanes the real dump produces. `bank` is deliberately NOT among them: the owner's dump
   // enumerates all thirty bank slots and every one is `Empty`, and an empty lane draws no chip.
   check(
     'the lanes are Worn, Bags, Depot and Key rings — and no Bank chip, because the bank is empty',
     sheet.lanes.join(' ') === 'worn:28 bags:57 depot:1 keyring:37',
-    sheet.lanes.join(' ')
+    sheet.lanes.join(' '),
   )
 
-  if (!check('the carry-all panel is on screen under the sheet', (await countOf(page, CARRY)) === 1)) {
+  if (
+    !check('the carry-all panel is on screen under the sheet', (await countOf(page, CARRY)) === 1)
+  ) {
     return
   }
   check(
     `…and its count line reads the whole ledger (${String(CARRIED)} of ${String(CARRIED)})`,
     (await carryCount(page)) === `${String(CARRIED)} of ${String(CARRIED)}`,
-    await carryCount(page)
+    await carryCount(page),
   )
 
   // WINDOWED, and this is where that is measured: the table is 123 rows of 37px and the viewport is
@@ -255,7 +268,7 @@ async function stepCarry(page: Page): Promise<void> {
   check(
     'the table is WINDOWED — far fewer rows are mounted than the ledger holds',
     mounted > 0 && mounted < CARRIED,
-    `${String(mounted)} of ${String(CARRIED)} rows mounted`
+    `${String(mounted)} of ${String(CARRIED)} rows mounted`,
   )
 
   for (const lane of ['all', 'worn', 'bags', 'depot', 'keyring']) {
@@ -271,7 +284,7 @@ async function search(page: Page, term: string): Promise<string> {
   return settle(
     () => carryCount(page),
     (text) => (want === null ? text !== `${String(CARRIED)} of ${String(CARRIED)}` : text === want),
-    { timeoutMs: 15_000, pollMs: 100 }
+    { timeoutMs: 15_000, pollMs: 100 },
   )
 }
 
@@ -283,18 +296,26 @@ async function stepSearch(page: Page): Promise<void> {
   check(
     `searching "${SEARCH_TERM}" narrows the ledger to ${String(SEARCH_HITS)}`,
     hits === `${String(SEARCH_HITS)} of ${String(CARRIED)}`,
-    hits
+    hits,
   )
   const rows = await countOf(page, CARRY_ROW)
   check('…and the table draws exactly those rows', rows === SEARCH_HITS, `${String(rows)} rows`)
 
   // A query nothing matches says so, rather than drawing an empty table with no explanation.
   const none = await search(page, 'zzzz-no-such-item')
-  check('a query nothing matches reads 0, and the panel says so', none === `0 of ${String(CARRIED)}`, none)
+  check(
+    'a query nothing matches reads 0, and the panel says so',
+    none === `0 of ${String(CARRIED)}`,
+    none,
+  )
   check('…with the empty line, not a bare table', (await countOf(page, CARRY_EMPTY)) === 1)
 
   const back = await search(page, '')
-  check('clearing the box restores the whole ledger', back === `${String(CARRIED)} of ${String(CARRIED)}`, back)
+  check(
+    'clearing the box restores the whole ledger',
+    back === `${String(CARRIED)} of ${String(CARRIED)}`,
+    back,
+  )
 }
 
 async function stepChips(page: Page): Promise<void> {
@@ -302,17 +323,19 @@ async function stepChips(page: Page): Promise<void> {
   const filtered = await settle(
     () => carryCount(page),
     (t) => t !== `${String(CARRIED)} of ${String(CARRIED)}`,
-    { timeoutMs: 15_000, pollMs: 100 }
+    { timeoutMs: 15_000, pollMs: 100 },
   )
   check(
     `the Key rings chip filters the ledger to its own ${String(KEYRING)}`,
     filtered === `${String(KEYRING)} of ${String(CARRIED)}`,
-    filtered
+    filtered,
   )
   // Every drawn row belongs to the lane that was clicked — the chip is a filter, not a sort.
   const stray = await page.evaluate(
-    (sel) => [...document.querySelectorAll(sel)].filter((el) => el.getAttribute('data-lane') !== 'keyring').length,
-    CARRY_ROW
+    (sel) =>
+      [...document.querySelectorAll(sel)].filter((el) => el.getAttribute('data-lane') !== 'keyring')
+        .length,
+    CARRY_ROW,
   )
   check('…and every drawn row is a key-ring row', stray === 0, `${String(stray)} stray rows`)
 
@@ -321,15 +344,21 @@ async function stepChips(page: Page): Promise<void> {
   const cleared = await settle(
     () => carryCount(page),
     (t) => t === `${String(CARRIED)} of ${String(CARRIED)}`,
-    { timeoutMs: 15_000, pollMs: 100 }
+    { timeoutMs: 15_000, pollMs: 100 },
   )
-  check('…and clicking it again clears the filter', cleared === `${String(CARRIED)} of ${String(CARRIED)}`, cleared)
+  check(
+    '…and clicking it again clears the filter',
+    cleared === `${String(CARRIED)} of ${String(CARRIED)}`,
+    cleared,
+  )
 }
 
 /** The app's ONE scroller between a view and the window — how tall it thinks this tab is. */
 function contentHeight(page: Page): Promise<number> {
   return page.evaluate(
-    () => (document.querySelector('[data-testid="app-content"]') as HTMLElement | null)?.scrollHeight ?? -1
+    () =>
+      (document.querySelector('[data-testid="app-content"]') as HTMLElement | null)?.scrollHeight ??
+      -1,
   )
 }
 
@@ -352,12 +381,14 @@ async function stepLayout(page: Page): Promise<void> {
   check(
     'the WINDOW itself never scrolls (the shell is 100vh; a document scrollbar means the chrome moved)',
     over.doc === 0,
-    `document +${String(over.doc)}px`
+    `document +${String(over.doc)}px`,
   )
 
   const scrolls = await page.evaluate((sel) => {
     const el = document.querySelector(sel) as HTMLElement | null
-    return !!el && el.scrollHeight > el.clientHeight + 1 && getComputedStyle(el).overflowY === 'auto'
+    return (
+      !!el && el.scrollHeight > el.clientHeight + 1 && getComputedStyle(el).overflowY === 'auto'
+    )
   }, '[data-testid="character-carry-list"]')
   check('the ledger clips inside a scroller of its own, and is using it', scrolls)
 
@@ -368,7 +399,7 @@ async function stepLayout(page: Page): Promise<void> {
   check(
     `the page height does NOT depend on how many rows the dump holds (${String(CARRIED)} vs ${String(SEARCH_HITS)})`,
     full > 0 && full === narrowed,
-    `${String(full)}px vs ${String(narrowed)}px`
+    `${String(full)}px vs ${String(narrowed)}px`,
   )
   await search(page, '')
 }
@@ -406,7 +437,11 @@ async function main(): Promise<void> {
       note('the Character tab never mounted — every claim below it is unmeasured, not passing')
     }
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     if (failures.length) await dumpArtifacts(page, 'character-sheet-FAIL')
   } finally {
     await close()

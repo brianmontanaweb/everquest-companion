@@ -39,7 +39,7 @@ import {
   LEGACY_ALERT_PACK_IDS,
   alertSoundMigrationPending,
   migrateAlertSoundRef,
-  migrateAlertSounds
+  migrateAlertSounds,
 } from '../src/main/data/defaultPacks'
 import type { AlertDef, AlertSoundRef } from '../src/shared/types'
 
@@ -52,11 +52,15 @@ test('the migration version is 1, and moving it is a fleet-wide rewrite', () => 
 test('the stamp is the gate: a store that has run it never runs it again', () => {
   assert.equal(alertSoundMigrationPending(undefined), true, 'never migrated')
   assert.equal(alertSoundMigrationPending(0), true, 'stamped below the current version')
-  assert.equal(alertSoundMigrationPending(ALERT_SOUND_MIGRATION_VERSION), false, 'stamped — done, forever')
+  assert.equal(
+    alertSoundMigrationPending(ALERT_SOUND_MIGRATION_VERSION),
+    false,
+    'stamped — done, forever',
+  )
   assert.equal(
     alertSoundMigrationPending(ALERT_SOUND_MIGRATION_VERSION + 5),
     false,
-    'a store stamped by a NEWER build is never walked backwards through this build’s mapping'
+    'a store stamped by a NEWER build is never walked backwards through this build’s mapping',
   )
   // A hand-edited or otherwise nonsensical stamp counts as never migrated, which is the safe
   // direction: the rewrite can only ever touch refs into the legacy packs, so running it once more
@@ -68,8 +72,15 @@ test('the stamp is the gate: a store that has run it never runs it again', () =>
 
 test('THE SOURCE PIN: store.ts asks the predicate rather than re-deriving the comparison', () => {
   const src = readFileSync(new URL('../src/main/store.ts', import.meta.url), 'utf8')
-  assert.ok(src.includes("if (!alertSoundMigrationPending(store.get('alertSoundMigration'))) return alerts"))
-  assert.ok(src.includes("store.set('alertSoundMigration', ALERT_SOUND_MIGRATION_VERSION)"), 'and stamps after')
+  assert.ok(
+    src.includes(
+      "if (!alertSoundMigrationPending(store.get('alertSoundMigration'))) return alerts",
+    ),
+  )
+  assert.ok(
+    src.includes("store.set('alertSoundMigration', ALERT_SOUND_MIGRATION_VERSION)"),
+    'and stamps after',
+  )
 })
 
 // --------------------------------------------------------------------- the legacy list
@@ -80,14 +91,20 @@ test('the legacy pack list is exactly these four, and the shipped pack is not on
     LEGACY_ALERT_PACK_IDS.includes(DEFAULT_ALERT_PACK_ID),
     false,
     'listing the shipped pack would make the rewrite rewrite its own output — and, paired with a ' +
-      'version bump, re-point every alert in the fleet'
+      'version bump, re-point every alert in the fleet',
   )
 })
 
 test('a ref into any pack that is NOT on the list is returned untouched, identity included', () => {
   // The user's own choice. `bastion` was retired; `openpeon-whatever` is a pack they installed
   // themselves, and an alert pointing at it is a preference, not a legacy artefact.
-  for (const packId of [DEFAULT_ALERT_PACK_ID, 'openpeon-whatever', 'my-custom-pack', 'Default', 'PEON']) {
+  for (const packId of [
+    DEFAULT_ALERT_PACK_ID,
+    'openpeon-whatever',
+    'my-custom-pack',
+    'Default',
+    'PEON',
+  ]) {
     const ref: AlertSoundRef = { packId, soundId: 'task-complete-3' }
     assert.equal(migrateAlertSoundRef(ref), ref, `untouched, by identity: ${packId}`)
   }
@@ -126,7 +143,7 @@ const MAPPING: [AlertSoundRef, string][] = [
   [{ packId: 'peon', soundId: 'ready' }, 'session-start-session-start-01'],
   [{ packId: 'peon', soundId: 'need-doing' }, 'session-start-session-start-01'],
   // Unrecognisable: the "needs your attention" line rather than silence.
-  [{ packId: 'peon', soundId: 'who-knows-what-this-was' }, DEFAULT_ALERT_SOUNDS.buffWearsOff]
+  [{ packId: 'peon', soundId: 'who-knows-what-this-was' }, DEFAULT_ALERT_SOUNDS.buffWearsOff],
 ]
 
 test('every legacy sound maps to exactly the shipped line it maps to today', () => {
@@ -134,7 +151,7 @@ test('every legacy sound maps to exactly the shipped line it maps to today', () 
     assert.deepEqual(
       migrateAlertSoundRef(ref),
       { packId: DEFAULT_ALERT_PACK_ID, soundId },
-      `${ref.packId}/${ref.soundId}`
+      `${ref.packId}/${ref.soundId}`,
     )
   }
 })
@@ -149,7 +166,7 @@ test('the seven shipped sound ids are the ones the mapping lands on', () => {
     buffWearsOff: 'input-required-input-required-01',
     buffFade: 'resource-limit-resource-limit-09',
     debuffLands: 'task-acknowledge-task-acknowledge-05',
-    illusionFade: 'task-error-task-error-08'
+    illusionFade: 'task-error-task-error-08',
   })
   assert.equal(DEFAULT_ALERT_PACK_ID, 'alan-rickman')
 })
@@ -162,7 +179,7 @@ test('a list with nothing to rewrite is returned BY IDENTITY, so no store write 
   // nothing — the same contract `migrateAlertTriggers` copied from here.
   const alerts = [
     { id: 'a', sound: { packId: DEFAULT_ALERT_PACK_ID, soundId: DEFAULT_ALERT_SOUNDS.charmBreak } },
-    { id: 'b', sound: { packId: 'openpeon-whatever', soundId: 'task-complete-1' } }
+    { id: 'b', sound: { packId: 'openpeon-whatever', soundId: 'task-complete-1' } },
   ] as unknown as AlertDef[]
   const res = migrateAlertSounds(alerts)
   assert.equal(res.changed, 0)
@@ -172,19 +189,21 @@ test('a list with nothing to rewrite is returned BY IDENTITY, so no store write 
 test('a mixed list rewrites only the legacy refs, and counts only those', () => {
   const alerts = [
     { id: 'legacy', sound: { packId: 'peon', soundId: 'ready' } },
-    { id: 'mine', sound: { packId: 'openpeon-whatever', soundId: 'task-complete-1' } }
+    { id: 'mine', sound: { packId: 'openpeon-whatever', soundId: 'task-complete-1' } },
   ] as unknown as AlertDef[]
   const res = migrateAlertSounds(alerts)
   assert.equal(res.changed, 1)
   assert.deepEqual(res.alerts[0].sound, {
     packId: DEFAULT_ALERT_PACK_ID,
-    soundId: 'session-start-session-start-01'
+    soundId: 'session-start-session-start-01',
   })
   assert.equal(res.alerts[1], alerts[1], 'the untouched def is the SAME object')
 })
 
 test('the rewrite is idempotent: running it twice is running it once', () => {
-  const alerts = [{ id: 'legacy', sound: { packId: 'peon', soundId: 'ready' } }] as unknown as AlertDef[]
+  const alerts = [
+    { id: 'legacy', sound: { packId: 'peon', soundId: 'ready' } },
+  ] as unknown as AlertDef[]
   const once = migrateAlertSounds(alerts)
   const twice = migrateAlertSounds(once.alerts)
   assert.equal(twice.changed, 0, 'a second pass finds nothing — the output is never legacy')

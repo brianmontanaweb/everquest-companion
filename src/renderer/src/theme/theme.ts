@@ -13,13 +13,13 @@ const base = createTheme({
     primary: { main: '#d9b25f' }, // muted gold
     secondary: { main: '#6fb3d2' },
     success: { main: '#5fbf72' },
-    warning: { main: '#e0a94a' }
+    warning: { main: '#e0a94a' },
   },
   shape: { borderRadius: 8 },
   typography: {
     fontFamily: 'Inter, Segoe UI, Roboto, system-ui, sans-serif',
-    h6: { fontWeight: 700 }
-  }
+    h6: { fontWeight: 700 },
+  },
 })
 
 /**
@@ -62,28 +62,28 @@ const scrollbars = {
   // identically to a vertical list scrollbar.
   '*::-webkit-scrollbar': {
     width: SCROLLBAR_SIZE,
-    height: SCROLLBAR_SIZE
+    height: SCROLLBAR_SIZE,
   },
   '*::-webkit-scrollbar-track': {
-    background: 'transparent'
+    background: 'transparent',
   },
   '*::-webkit-scrollbar-thumb': {
     backgroundColor: alpha(base.palette.common.white, 0.22),
     borderRadius: SCROLLBAR_SIZE,
     border: `${String(THUMB_INSET)}px solid transparent`,
-    backgroundClip: 'content-box'
+    backgroundClip: 'content-box',
   },
   '*::-webkit-scrollbar-thumb:hover': {
-    backgroundColor: alpha(base.palette.primary.main, 0.55)
+    backgroundColor: alpha(base.palette.primary.main, 0.55),
   },
   '*::-webkit-scrollbar-corner': {
-    background: 'transparent'
+    background: 'transparent',
   },
   // Styling ::-webkit-scrollbar re-enables the stepper arrows on some builds;
   // this app never wants them (they eat the gutter and look nothing like the rest
   // of the UI).
   '*::-webkit-scrollbar-button': {
-    display: 'none'
+    display: 'none',
   },
   // Only the document scroller reserves a gutter unconditionally. Applying
   // `scrollbar-gutter: stable` via `*` was considered and REJECTED: it makes
@@ -92,8 +92,8 @@ const scrollbars = {
   // above already reserves its own gutter the moment it appears, which is the
   // property that actually fixes the overlap.
   'html, body': {
-    scrollbarGutter: 'stable'
-  }
+    scrollbarGutter: 'stable',
+  },
 }
 
 /**
@@ -115,14 +115,14 @@ const scrollbars = {
 const tooltipAnchors = {
   '.eq-tip-anchor': { cursor: 'pointer' },
   '.eq-tip-anchor.Mui-disabled, .eq-tip-anchor:has(.Mui-disabled), .eq-tip-anchor:has(:disabled)': {
-    cursor: 'not-allowed'
-  }
+    cursor: 'not-allowed',
+  },
 }
 
 export const theme = createTheme(base, {
   components: {
     MuiCssBaseline: {
-      styleOverrides: { ...scrollbars, ...tooltipAnchors }
-    }
-  }
+      styleOverrides: { ...scrollbars, ...tooltipAnchors },
+    },
+  },
 })

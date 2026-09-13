@@ -102,18 +102,25 @@ export const DONOR_EFFECT = '[data-testid="planner-donor-effect"]'
 
 /** Rendered text of the first match; '' when the node isn't mounted. */
 export function textOf(page: Page, sel: string): Promise<string> {
-  return page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
+  return page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    sel,
+  )
 }
 
 /** Box + scroll geometry — enough to prove a growing list is a BOUNDED scroller. */
 export function boxOf(
   page: Page,
-  sel: string
+  sel: string,
 ): Promise<{ h: number; scrollH: number; clientH: number } | null> {
   return page.evaluate((s) => {
     const el = document.querySelector(s)
     if (!el) return null
-    return { h: Math.round(el.getBoundingClientRect().height), scrollH: el.scrollHeight, clientH: el.clientHeight }
+    return {
+      h: Math.round(el.getBoundingClientRect().height),
+      scrollH: el.scrollHeight,
+      clientH: el.clientHeight,
+    }
   }, sel)
 }
 
@@ -131,7 +138,9 @@ export function truncated(page: Page, sel: string): Promise<{ total: number; cli
     const els = Array.from(document.querySelectorAll(s))
     return {
       total: els.length,
-      clipped: els.filter((e) => e.scrollWidth > e.clientWidth + 1).map((e) => (e as HTMLElement).innerText)
+      clipped: els
+        .filter((e) => e.scrollWidth > e.clientWidth + 1)
+        .map((e) => (e as HTMLElement).innerText),
     }
   }, sel)
 }
@@ -178,7 +187,13 @@ async function heightAfterToggle(page: Page, was: number): Promise<number> {
  * and switching it back must land on exactly the height it started at.
  */
 export async function stepEra(page: Page): Promise<void> {
-  if (!check('the effect browser offers the current-era filter', (await countOf(page, ERA_TOGGLE)) > 0)) return
+  if (
+    !check(
+      'the effect browser offers the current-era filter',
+      (await countOf(page, ERA_TOGGLE)) > 0,
+    )
+  )
+    return
   const filtered = await listHeight(page)
 
   await page.click(ERA_TOGGLE, { timeout: 15_000 })
@@ -186,13 +201,17 @@ export async function stepEra(page: Page): Promise<void> {
   check(
     'the era filter is ON by default and hides out-of-era donors (turning it off can only reveal more)',
     unfiltered > filtered,
-    `list ${String(filtered)}px filtered → ${String(unfiltered)}px unfiltered`
+    `list ${String(filtered)}px filtered → ${String(unfiltered)}px unfiltered`,
   )
 
   // Put it back: the rest of the run should see the default surface.
   await page.click(ERA_TOGGLE, { timeout: 15_000 })
   const again = await heightAfterToggle(page, unfiltered)
-  check('…and switching it back on restores exactly the filtered list', again === filtered, `${String(again)}px`)
+  check(
+    '…and switching it back on restores exactly the filtered list',
+    again === filtered,
+    `${String(again)}px`,
+  )
 }
 
 /**
@@ -205,23 +224,35 @@ export async function stepEra(page: Page): Promise<void> {
  * it adds must carry the `no slot` chip that says why it was hidden.
  */
 export async function stepNonEquip(page: Page): Promise<void> {
-  if (!check('the effect browser offers the non-equippable escape toggle', (await countOf(page, NONEQUIP_TOGGLE)) > 0)) {
+  if (
+    !check(
+      'the effect browser offers the non-equippable escape toggle',
+      (await countOf(page, NONEQUIP_TOGGLE)) > 0,
+    )
+  ) {
     return
   }
   const hidden = await listHeight(page)
-  check('slotless donors are hidden by default, so no row claims "no slot"', (await countOf(page, NOSLOT_CHIP)) === 0)
+  check(
+    'slotless donors are hidden by default, so no row claims "no slot"',
+    (await countOf(page, NOSLOT_CHIP)) === 0,
+  )
 
   await page.click(NONEQUIP_TOGGLE, { timeout: 15_000 })
   const shown = await heightAfterToggle(page, hidden)
   check(
     'turning non-equippable ON can only reveal more donors (R2 hides them, it never invents them)',
     shown > hidden,
-    `list ${String(hidden)}px equippable-only → ${String(shown)}px with consumables`
+    `list ${String(hidden)}px equippable-only → ${String(shown)}px with consumables`,
   )
 
   await page.click(NONEQUIP_TOGGLE, { timeout: 15_000 })
   const again = await heightAfterToggle(page, shown)
-  check('…and switching it back off restores exactly the equippable list', again === hidden, `${String(again)}px`)
+  check(
+    '…and switching it back off restores exactly the equippable list',
+    again === hidden,
+    `${String(again)}px`,
+  )
 }
 
 /**
@@ -244,13 +275,14 @@ async function stepFamilyReadability(page: Page): Promise<void> {
     const out: string[] = []
     let header = ''
     for (const row of document.querySelectorAll(
-      '[data-testid="planner-effect-row"],[data-testid="planner-donor-row"]'
+      '[data-testid="planner-effect-row"],[data-testid="planner-donor-row"]',
     )) {
       if (row.getAttribute('data-testid') === 'planner-effect-row') {
         header = row.querySelector('[data-testid="planner-group-says"]')?.textContent?.trim() ?? ''
         continue
       }
-      const says = row.querySelector('[data-testid="planner-effect-says"]')?.textContent?.trim() ?? ''
+      const says =
+        row.querySelector('[data-testid="planner-effect-says"]')?.textContent?.trim() ?? ''
       if (says !== '' && says === header) out.push(says)
     }
     return out
@@ -258,7 +290,7 @@ async function stepFamilyReadability(page: Page): Promise<void> {
   check(
     'no donor row repeats the one-liner its own family header already states',
     dupes.length === 0,
-    dupes.length > 0 ? `${String(dupes.length)} rows repeated "${dupes[0]}"` : 'nothing duplicated'
+    dupes.length > 0 ? `${String(dupes.length)} rows repeated "${dupes[0]}"` : 'nothing duplicated',
   )
   const names = await truncated(page, DONOR_EFFECT)
   check(
@@ -266,7 +298,7 @@ async function stepFamilyReadability(page: Page): Promise<void> {
     names.total > 0 && names.clipped.length === 0,
     names.clipped.length > 0
       ? `${String(names.clipped.length)} of ${String(names.total)} clipped — e.g. "${names.clipped[0]}"`
-      : `${String(names.total)} names, none clipped`
+      : `${String(names.total)} names, none clipped`,
   )
 }
 
@@ -284,19 +316,20 @@ async function stepFamilyReadability(page: Page): Promise<void> {
  * Ends back on the Proc tab so every step after it sees the surface it expects.
  */
 export async function stepFocusFamilies(page: Page): Promise<void> {
-  if (!check('the effect browser offers a group-by control', (await countOf(page, GROUPBY)) > 0)) return
+  if (!check('the effect browser offers a group-by control', (await countOf(page, GROUPBY)) > 0))
+    return
   await page.click(SOCKET_FOCUS, { timeout: 15_000 })
   const grouped = await until(async () => (await countOf(page, FAMILY_ROW)) > 0, 20_000)
   if (grouped) {
     check(
       'the Focus tab groups by focus family without being asked (the per-socket default)',
       (await textOf(page, GROUPBY)).includes('Focus family'),
-      `${String(await countOf(page, FAMILY_ROW))} family headers`
+      `${String(await countOf(page, FAMILY_ROW))} family headers`,
     )
     await page.click(FAMILY_ROW, { timeout: 15_000 })
     check(
       'expanding a family crowns the best tier it can currently see',
-      await until(async () => (await countOf(page, BEST_CHIP)) > 0, 10_000)
+      await until(async () => (await countOf(page, BEST_CHIP)) > 0, 10_000),
     )
     await stepFamilyReadability(page)
   } else {
@@ -333,10 +366,21 @@ const kindTab = (kind: string): string => `[data-testid="planner-socket-${kind}"
  * so and stops rather than inventing a second guess. Ends with the filter cleared.
  */
 export async function stepItemFilter(page: Page): Promise<void> {
-  if (!check('the filter bar offers to narrow the list by an item', (await countOf(page, ITEM_FILTER)) > 0)) return
+  if (
+    !check(
+      'the filter bar offers to narrow the list by an item',
+      (await countOf(page, ITEM_FILTER)) > 0,
+    )
+  )
+    return
   const before = await listHeight(page)
   await page.click(ITEM_FILTER, { timeout: 15_000 })
-  if (!check('…and it opens a search over the whole item database', await until(async () => (await countOf(page, ITEM_SEARCH)) > 0, 10_000))) {
+  if (
+    !check(
+      '…and it opens a search over the whole item database',
+      await until(async () => (await countOf(page, ITEM_SEARCH)) > 0, 10_000),
+    )
+  ) {
     return
   }
   await page.fill(ITEM_SEARCH, 'sword', { timeout: 15_000 })
@@ -347,7 +391,12 @@ export async function stepItemFilter(page: Page): Promise<void> {
     return
   }
   await page.click(ITEM_HIT, { timeout: 15_000 })
-  if (!check('picking an item narrows the browser to it', await until(async () => (await countOf(page, ITEM_CHIP)) > 0, 10_000))) {
+  if (
+    !check(
+      'picking an item narrows the browser to it',
+      await until(async () => (await countOf(page, ITEM_CHIP)) > 0, 10_000),
+    )
+  ) {
     return
   }
   // The chip is the app's own word for which item is being filled — read the name from there
@@ -357,7 +406,7 @@ export async function stepItemFilter(page: Page): Promise<void> {
   check(
     'the item filter can only REMOVE rows — it never invents an effect for an item',
     narrowed <= before,
-    `list ${String(before)}px → ${String(narrowed)}px for "${name}"`
+    `list ${String(before)}px → ${String(narrowed)}px for "${name}"`,
   )
   // …and it removes SOME: one item shares a slot with a slice of the corpus, never all of it. When
   // that slice is empty the list says so NAMING THE ITEM, which is the same claim by other means.
@@ -365,7 +414,9 @@ export async function stepItemFilter(page: Page): Promise<void> {
   check(
     'narrowing to one item actually narrows — and an empty answer names the item, not the filters',
     narrowed < before || empty.includes(name),
-    narrowed < before ? `${String(before)}px → ${String(narrowed)}px` : `empty state reads "${empty}"`
+    narrowed < before
+      ? `${String(before)}px → ${String(narrowed)}px`
+      : `empty state reads "${empty}"`,
   )
 
   for (const kind of ['worn', 'click', 'proc'] as const) {
@@ -373,14 +424,22 @@ export async function stepItemFilter(page: Page): Promise<void> {
     const kept = await until(async () => (await countOf(page, ITEM_CHIP)) > 0, 10_000)
     if (!check(`the item filter survives the ${kind} tab (JOS-210)`, kept)) return
     const label = (await textOf(page, ITEM_CHIP)).replace(/\s+/g, ' ').trim()
-    check(`…still naming the same item after the ${kind} tab`, label === name, `chip reads "${label}" vs "${name}"`)
+    check(
+      `…still naming the same item after the ${kind} tab`,
+      label === name,
+      `chip reads "${label}" vs "${name}"`,
+    )
   }
 
   await page.click(`${ITEM_CHIP} .MuiChip-deleteIcon`, { timeout: 15_000 })
   const cleared = await until(async () => (await countOf(page, ITEM_CHIP)) === 0, 10_000)
   check('clearing the item filter hands the browser back', cleared)
   const restored = await until(async () => (await listHeight(page)) === before, 15_000)
-  check('…with the whole corpus in it again', restored, `${String(await listHeight(page))}px vs ${String(before)}px`)
+  check(
+    '…with the whole corpus in it again',
+    restored,
+    `${String(await listHeight(page))}px vs ${String(before)}px`,
+  )
 }
 
 /**
@@ -404,19 +463,19 @@ export async function stepSearchOnly(page: Page): Promise<void> {
       board: await countOf(page, '[data-testid="planner-board"]'),
       farm: await countOf(page, '[data-testid="planner-farm-list"]'),
       classes: await countOf(page, CLASS_FILTER),
-      list: await countOf(page, EFFECT_LIST)
+      list: await countOf(page, EFFECT_LIST),
     }),
     (r) => r.list > 0,
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   )
   check(
     'the Exaltations tab is search-only — no set switcher, no mode toggle, no board, no farm rollup',
     seen.sets === 0 && seen.modes === 0 && seen.board === 0 && seen.farm === 0,
-    `${String(seen.sets)} set chips · ${String(seen.modes)} mode buttons · ${String(seen.board)} boards · ${String(seen.farm)} rollups`
+    `${String(seen.sets)} set chips · ${String(seen.modes)} mode buttons · ${String(seen.board)} boards · ${String(seen.farm)} rollups`,
   )
   check(
     '…and the browse it exists for is all still there: the class filter over the effect list',
     seen.classes > 0 && seen.list > 0,
-    `${String(seen.classes)} class filters · ${String(seen.list)} effect lists`
+    `${String(seen.classes)} class filters · ${String(seen.list)} effect lists`,
   )
 }

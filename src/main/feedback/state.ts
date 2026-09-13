@@ -29,7 +29,7 @@ import {
   type FeedbackEnv,
   type AchievementsDumpMeta,
   type InventoryDumpMeta,
-  type LogSliceMeta
+  type LogSliceMeta,
 } from '../../shared/feedback'
 import { logError, logInfo } from '../errorLog'
 
@@ -226,7 +226,7 @@ export function readPendingAchievementsGz(entry: QueuedReport): Buffer | null {
  */
 export function enqueue(
   entry: QueuedReport,
-  gz: { log: Buffer | null; inventory: Buffer | null; achievements?: Buffer | null }
+  gz: { log: Buffer | null; inventory: Buffer | null; achievements?: Buffer | null },
 ): boolean {
   const state = readState()
   if (state.queue.length >= MAX_QUEUE) return false
@@ -238,7 +238,10 @@ export function enqueue(
       next.gzFile = file
     } catch (err) {
       // A report without its log beats a lost report.
-      logError('main:feedbackState', { message: 'pending gz write failed; queuing without it', err })
+      logError('main:feedbackState', {
+        message: 'pending gz write failed; queuing without it',
+        err,
+      })
       next.log = null
     }
   }
@@ -250,7 +253,7 @@ export function enqueue(
     } catch (err) {
       logError('main:feedbackState', {
         message: 'pending inventory gz write failed; queuing without it',
-        err
+        err,
       })
       next.inventory = null
     }
@@ -263,7 +266,7 @@ export function enqueue(
     } catch (err) {
       logError('main:feedbackState', {
         message: 'pending achievements gz write failed; queuing without it',
-        err
+        err,
       })
       next.achievements = null
     }
@@ -280,7 +283,7 @@ export function removeQueued(clientReportId: string): void {
     for (const path of [
       pendingGzPath(entry),
       pendingInventoryGzPath(entry),
-      pendingAchievementsGzPath(entry)
+      pendingAchievementsGzPath(entry),
     ]) {
       if (path !== null) rmSync(path, { force: true })
     }
@@ -293,7 +296,7 @@ export function updateQueued(next: QueuedReport): void {
   const state = readState()
   writeState({
     ...state,
-    queue: state.queue.map((e) => (e.clientReportId === next.clientReportId ? next : e))
+    queue: state.queue.map((e) => (e.clientReportId === next.clientReportId ? next : e)),
   })
 }
 
@@ -307,7 +310,7 @@ export function dueEntries(now: number): QueuedReport[] {
 /** Drop entries that have exhausted their attempts or aged past QUEUE_MAX_AGE_MS. */
 export function pruneQueue(now: number): number {
   const doomed = readState().queue.filter(
-    (e) => e.attempts >= MAX_ATTEMPTS || now - e.queuedAt > QUEUE_MAX_AGE_MS
+    (e) => e.attempts >= MAX_ATTEMPTS || now - e.queuedAt > QUEUE_MAX_AGE_MS,
   )
   for (const e of doomed) removeQueued(e.clientReportId)
   return doomed.length

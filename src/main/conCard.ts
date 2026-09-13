@@ -47,7 +47,7 @@ import {
   conCardChips,
   conCardIsPlayer,
   conCardSuppressed,
-  type ConCardPayload
+  type ConCardPayload,
 } from '../shared/conCard'
 import type { ConsiderEvent } from '../shared/logEvents'
 import { localMobEntry } from './mobLookup'
@@ -102,7 +102,7 @@ function sendToConCardOverlay(payload: ConCardPayload): void {
  */
 function chipsFor(
   display: string,
-  level?: ServedMobLevel
+  level?: ServedMobLevel,
 ): { chips: ConCardPayload['chips']; spellData: boolean } {
   const profile = mobResistProfile(display, resistProfileDeps(level))
   return { chips: conCardChips(profile), spellData: profile.spellDataAvailable }
@@ -123,7 +123,11 @@ function firstPass(ev: ConsiderEvent, zone: string | undefined, key: string): Co
  * ONE LIVE `/con`. Returns whether a card was sent, so the tests can drive the whole gate without
  * an overlay window in the way.
  */
-export function noteConsider(ev: ConsiderEvent, zone: string | undefined, now = Date.now()): boolean {
+export function noteConsider(
+  ev: ConsiderEvent,
+  zone: string | undefined,
+  now = Date.now(),
+): boolean {
   if (looksLikePlayer(ev.mob)) return false
   const key = mobKey(ev.mob)
   if (!key) return false
@@ -251,7 +255,8 @@ function enrich(base: ConCardPayload, key: string): void {
       const { chips, spellData } = chipsFor(base.name)
       // Nothing to say when the table changed nothing — the first con of a launch is the case this
       // pass exists for, and a re-send restarts the card's hold (cardQueue `fresh`).
-      if (spellData === base.spellData && JSON.stringify(chips) === JSON.stringify(base.chips)) return
+      if (spellData === base.spellData && JSON.stringify(chips) === JSON.stringify(base.chips))
+        return
       sendToConCardOverlay({ ...base, chips, spellData })
     })
     .catch((err: unknown) => {

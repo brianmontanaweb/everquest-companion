@@ -43,7 +43,7 @@ import {
   Link,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import {
   RESPAWN_INPUT_HELP,
@@ -56,7 +56,7 @@ import {
   respawnDurationText,
   respawnOverridden,
   respawnSourceLabel,
-  type RespawnRow
+  type RespawnRow,
 } from '@shared/respawn'
 import { wikiPageUrl } from '@shared/wiki'
 import { MobCard, useMobKnowledge } from '../../lib/hoverCards'
@@ -65,7 +65,9 @@ import { mainMobLookup } from './mobLookup'
 
 /** What the field opens with: the duration in force, in the shorthand the field itself accepts. */
 function prefillOf(row: RespawnRow): string {
-  return row.estimateMs === undefined ? '' : formatRespawnDuration(Math.round(row.estimateMs / 1000))
+  return row.estimateMs === undefined
+    ? ''
+    : formatRespawnDuration(Math.round(row.estimateMs / 1000))
 }
 
 /**
@@ -108,7 +110,9 @@ function WikiLine({ row, page }: { row: RespawnRow; page?: string }): JSX.Elemen
   const url = wikiPageUrl(page)
   return (
     <Typography variant="caption" color="text.secondary" data-testid="respawn-edit-wiki">
-      {row.wikiText === undefined ? 'The wiki states no respawn for this mob.' : `The wiki says "${row.wikiText}".`}
+      {row.wikiText === undefined
+        ? 'The wiki states no respawn for this mob.'
+        : `The wiki says "${row.wikiText}".`}
       {url !== undefined && (
         <>
           {' '}
@@ -135,7 +139,7 @@ export function RespawnEditDialog({
   row,
   open,
   onClose,
-  onSetCustom
+  onSetCustom,
 }: {
   row: RespawnRow
   open: boolean
@@ -174,8 +178,8 @@ export function RespawnEditDialog({
           {row.display}
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          {row.zone.length > 0 ? row.zone : 'unknown zone'} · {respawnDurationText(row, fmtDuration)} ·{' '}
-          {respawnSourceLabel(row)}
+          {row.zone.length > 0 ? row.zone : 'unknown zone'} ·{' '}
+          {respawnDurationText(row, fmtDuration)} · {respawnSourceLabel(row)}
         </Typography>
       </DialogTitle>
       <DialogContent>
@@ -183,7 +187,11 @@ export function RespawnEditDialog({
           {/* THE HOVER CARD ITSELF — same component, same lookup door, same note (which since round
               9 carries every measured gap and the wiki default as lines of its own). */}
           <Box>
-            <MobCard mob={row.display} note={respawnCardNote(row, fmtDuration)} lookup={mainMobLookup} />
+            <MobCard
+              mob={row.display}
+              note={respawnCardNote(row, fmtDuration)}
+              lookup={mainMobLookup}
+            />
           </Box>
           <WikiLine row={row} page={row.wikiPage ?? data?.page} />
           <CalculatedLine row={row} />
@@ -220,7 +228,13 @@ export function RespawnEditDialog({
         <Button size="small" color="inherit" data-testid="respawn-edit-cancel" onClick={onClose}>
           Cancel
         </Button>
-        <Button size="small" variant="contained" disabled={!parsed.ok} data-testid="respawn-edit-save" onClick={save}>
+        <Button
+          size="small"
+          variant="contained"
+          disabled={!parsed.ok}
+          data-testid="respawn-edit-save"
+          onClick={save}
+        >
           Save
         </Button>
       </DialogActions>

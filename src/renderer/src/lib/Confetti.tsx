@@ -43,7 +43,7 @@ export default function Confetti({ onDone }: { onDone?: () => void }): JSX.Eleme
         size: 4 + Math.random() * 6,
         rot: Math.random() * Math.PI,
         vrot: (Math.random() - 0.5) * 0.3,
-        color: COLORS[(Math.random() * COLORS.length) | 0]
+        color: COLORS[(Math.random() * COLORS.length) | 0],
       }
     })
 
@@ -84,7 +84,7 @@ export default function Confetti({ onDone }: { onDone?: () => void }): JSX.Eleme
         width: '100%',
         height: '100%',
         pointerEvents: 'none',
-        zIndex: 10
+        zIndex: 10,
       }}
     />
   )

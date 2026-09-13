@@ -36,14 +36,14 @@ export const RESPAWN_TOGGLE_SX = {
   minWidth: 0,
   fontSize: 11,
   textTransform: 'none',
-  flexShrink: 0
+  flexShrink: 0,
 } as const
 
 export function UnwatchButton({
   mobKey,
   display,
   testId,
-  onUnwatch
+  onUnwatch,
 }: {
   mobKey: string
   /**

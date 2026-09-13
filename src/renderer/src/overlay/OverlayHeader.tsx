@@ -1,10 +1,5 @@
 import { type JSX, useRef, useState } from 'react'
-import {
-  HOVER,
-  OverlaySelectPopup,
-  type ElementRef,
-  type OverlaySelectRow
-} from './OverlaySelect'
+import { HOVER, OverlaySelectPopup, type ElementRef, type OverlaySelectRow } from './OverlaySelect'
 import { IconButton, ICON_ACCENT_GOLD } from './IconButton'
 import type { CaptureReason, OverlayChrome } from './useOverlayChrome'
 
@@ -141,7 +136,7 @@ const CONTROL_PX = 20
 function HeaderControls({
   chrome,
   iconAccentBg,
-  action
+  action,
 }: {
   chrome: Pick<OverlayChrome, 'locked' | 'hovering' | 'noDrag' | 'toggleLock'>
   iconAccentBg: string
@@ -150,7 +145,12 @@ function HeaderControls({
 }): JSX.Element | null {
   const { locked, hovering, noDrag, toggleLock } = chrome
   if (locked && !hovering) {
-    return <div aria-hidden style={{ width: CONTROL_PX, height: CONTROL_PX, marginLeft: 2, flexShrink: 0 }} />
+    return (
+      <div
+        aria-hidden
+        style={{ width: CONTROL_PX, height: CONTROL_PX, marginLeft: 2, flexShrink: 0 }}
+      />
+    )
   }
   return (
     <div style={{ ...noDrag, display: 'flex', alignItems: 'center', gap: 2, marginLeft: 2 }}>
@@ -195,7 +195,7 @@ function HeaderBody({
   tail,
   tailTitle,
   tailColor,
-  open
+  open,
 }: {
   title: string
   titleColor: string
@@ -215,7 +215,7 @@ function HeaderBody({
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          flexGrow: 1
+          flexGrow: 1,
         }}
       >
         {title}
@@ -251,7 +251,7 @@ function LiveDot({ live }: { live: boolean }): JSX.Element {
         borderRadius: '50%',
         flexShrink: 0,
         background: live ? '#5fbf72' : 'rgba(255,255,255,0.25)',
-        boxShadow: live ? '0 0 5px #5fbf72' : 'none'
+        boxShadow: live ? '0 0 5px #5fbf72' : 'none',
       }}
     />
   )
@@ -277,7 +277,7 @@ function HeaderTag({ tag, last }: { tag: string; last: boolean }): JSX.Element {
         minWidth: 0,
         overflow: 'hidden',
         textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
       }}
     >
       {tag}
@@ -326,7 +326,7 @@ function HeaderTrigger({
   rowRef,
   noDrag,
   capture,
-  children
+  children,
 }: {
   select: OverlayHeaderSelect
   rowRef: ElementRef
@@ -381,7 +381,7 @@ function HeaderTrigger({
           borderRadius: 4,
           cursor: 'pointer',
           userSelect: 'none',
-          background: open || hot ? HOVER : 'transparent'
+          background: open || hot ? HOVER : 'transparent',
         }}
       >
         {children(open)}
@@ -418,7 +418,7 @@ export function OverlayHeader({
   iconAccentBg = ICON_ACCENT_GOLD,
   select,
   action,
-  chrome
+  chrome,
 }: {
   /** omit entirely for a kind with no combat state (the event log draws no dot). */
   live?: boolean
@@ -480,7 +480,7 @@ export function OverlayHeader({
         padding: '7px 8px',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
         fontSize: 11,
-        flexShrink: 0
+        flexShrink: 0,
       }}
     >
       {live !== undefined && <LiveDot live={live} />}

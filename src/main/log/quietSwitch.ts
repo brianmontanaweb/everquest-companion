@@ -122,7 +122,7 @@ function pickGrowing(
   logs: readonly SiblingSample[],
   active: string,
   before: ReadonlyMap<string, number>,
-  spent: ReadonlySet<string>
+  spent: ReadonlySet<string>,
 ): { path: string; grewBy: number } | null {
   let best: { path: string; grewBy: number } | null = null
   for (const log of logs) {
@@ -188,6 +188,11 @@ export class QuietSwitchWatcher {
     // return, so no later step — a dismissal, an IPC send, a renderer that never mounted — can be
     // the thing that was supposed to remember and didn't.
     this.spent.add(key(grown.path))
-    return { kind: 'nudge', logPath: grown.path, grewBy: grown.grewBy, quietMs: o.now - o.lastLineAt }
+    return {
+      kind: 'nudge',
+      logPath: grown.path,
+      grewBy: grown.grewBy,
+      quietMs: o.now - o.lastLineAt,
+    }
   }
 }

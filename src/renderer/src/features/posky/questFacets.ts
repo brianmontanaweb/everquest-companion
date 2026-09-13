@@ -103,7 +103,7 @@ export function matchesFacets(q: FacetQuest, f: QuestFacets): boolean {
  */
 export function filterByFacets<T extends FacetQuest>(
   quests: readonly T[],
-  f: QuestFacets
+  f: QuestFacets,
 ): readonly T[] {
   if (f.islands.length === 0 && f.bosses.length === 0) return quests
   return quests.filter((q) => matchesFacets(q, f))
@@ -129,7 +129,7 @@ export function facetOptions(quests: readonly FacetQuest[]): FacetOptions {
     islands: [...islands].sort((a, b) => islandNumber(a) - islandNumber(b)),
     bosses: [...bosses.entries()]
       .sort((a, b) => b[1] - a[1] || byFoldedName(a[0], b[0]))
-      .map(([name]) => name)
+      .map(([name]) => name),
   }
 }
 

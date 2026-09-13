@@ -58,7 +58,7 @@ export const PERF_MACHINE_CLASSES = [
   'mid-dgpu',
   'high-igpu',
   'high-dgpu',
-  'unknown'
+  'unknown',
 ] as const
 export type PerfMachineClass = (typeof PERF_MACHINE_CLASSES)[number]
 
@@ -95,7 +95,9 @@ const TIER_NAMES = ['low', 'mid', 'high'] as const
  * a client that sends none of the three fields (they are all optional on the wire — the
  * additive-field rule) and a machine whose GPU vendor came back `other`.
  */
-export function machineClassOf(ev: Pick<EvSetupSnapshot, 'cpuCountBucket' | 'totalMemBucket' | 'gpuVendor'>): PerfMachineClass {
+export function machineClassOf(
+  ev: Pick<EvSetupSnapshot, 'cpuCountBucket' | 'totalMemBucket' | 'gpuVendor'>,
+): PerfMachineClass {
   const gpu = gpuKindOf(ev.gpuVendor)
   const { cpuCountBucket: cpu, totalMemBucket: mem } = ev
   if (gpu === null || cpu === undefined || mem === undefined) return 'unknown'
@@ -103,7 +105,7 @@ export function machineClassOf(ev: Pick<EvSetupSnapshot, 'cpuCountBucket' | 'tot
   // The WEAKER axis is the tier: a machine is as fast as the thing it runs out of first.
   const tier = Math.min(
     tierOf(cpu, CPU_MID_BUCKET, CPU_HIGH_BUCKET),
-    tierOf(mem, MEM_MID_BUCKET, MEM_HIGH_BUCKET)
+    tierOf(mem, MEM_MID_BUCKET, MEM_HIGH_BUCKET),
   )
   return `${TIER_NAMES[tier]}-${gpu}` as PerfMachineClass
 }
@@ -145,14 +147,16 @@ export function perfDimsOf(machineClass: unknown, windowMode: unknown): PerfInst
     windowMode:
       typeof windowMode === 'string' && modes.includes(windowMode)
         ? (windowMode as TelemetryEqWindowMode)
-        : 'unknown'
+        : 'unknown',
   }
 }
 
 /** The dims THIS batch states, from its own `setupSnapshot` — null when it carries none. The
  *  same-batch snapshot always wins over the stored row: it is the newer fact, and a machine that
  *  just changed its EQ window mode says so in the launch that noticed. */
-export function perfDimsFromEvents(events: readonly { ev: TelemetryEvent }[]): PerfInstallDims | null {
+export function perfDimsFromEvents(
+  events: readonly { ev: TelemetryEvent }[],
+): PerfInstallDims | null {
   for (const { ev } of events) {
     if (ev.t !== 'setupSnapshot') continue
     return { machineClass: machineClassOf(ev), windowMode: ev.eqWindowMode ?? 'unknown' }
@@ -197,7 +201,7 @@ const NOT_STATED = '-'
  */
 export function foldPerfCube(
   events: readonly { ev: TelemetryEvent }[],
-  dims: PerfInstallDims
+  dims: PerfInstallDims,
 ): PerfCubeRow[] {
   const bag = new Map<string, PerfCubeRow>()
   for (const { ev } of events) {
@@ -209,9 +213,15 @@ export function foldPerfCube(
       locked: ev.state === undefined ? NOT_STATED : ev.state.overlaysLocked > 0 ? 'on' : 'off',
       stallBucket: String(ev.live.maxBucket),
       tailBucket: ev.tail === undefined ? NOT_STATED : String(ev.tail.maxBucket),
-      n: 1
+      n: 1,
     }
-    const key = [row.windowMode, row.machineClass, row.locked, row.stallBucket, row.tailBucket].join(' ')
+    const key = [
+      row.windowMode,
+      row.machineClass,
+      row.locked,
+      row.stallBucket,
+      row.tailBucket,
+    ].join(' ')
     const held = bag.get(key)
     if (held) held.n += 1
     else bag.set(key, row)

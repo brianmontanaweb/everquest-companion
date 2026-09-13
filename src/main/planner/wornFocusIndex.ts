@@ -97,7 +97,7 @@ function focusOfItem(entry: ItemDbEntry, label: string, lines: FocusLinesIndex):
 export function wornFocusFor(
   dump: InventoryDump,
   items: ItemDbFile,
-  lines: FocusLinesIndex
+  lines: FocusLinesIndex,
 ): WornFocus[] {
   const byEffect = new Map<string, WornFocus>()
   for (const bearer of focusBearers(dump)) {

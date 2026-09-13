@@ -26,7 +26,7 @@ import {
   scalePrimary,
   scaleWeight,
   upgradeStatClass,
-  type ItemUpgradeState
+  type ItemUpgradeState,
 } from '../itemUpgrade'
 import { damageRatio } from '../itemStats'
 import { GEAR_STAT_KEYS, type GearRow, type GearStatKey, type GearStats } from './gear'
@@ -65,7 +65,7 @@ export function scaleGearStat(key: GearStatKey, base: number, state: ItemUpgrade
 export function scaleGearStats(
   stats: GearStats,
   state: ItemUpgradeState,
-  voidSynth = false
+  voidSynth = false,
 ): GearStats {
   const s = normalizeUpgradeState(state)
   const out: GearStats = {}

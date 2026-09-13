@@ -42,14 +42,17 @@ export type StepperKind = 'size' | 'transparency'
  * the overlays". A screen reader announces exactly that string, so a missing preposition is the
  * whole sentence a blind user gets.
  */
-const WORDS: Record<StepperKind, { less: string; more: string; lessName: string; moreName: string }> = {
+const WORDS: Record<
+  StepperKind,
+  { less: string; more: string; lessName: string; moreName: string }
+> = {
   size: { less: 'A−', more: 'A+', lessName: 'Smaller text for', moreName: 'Larger text for' },
   transparency: {
     less: '−',
     more: '+',
     lessName: 'More see-through for',
-    moreName: 'More solid for'
-  }
+    moreName: 'More solid for',
+  },
 }
 
 /**
@@ -74,7 +77,7 @@ export function PrefStepper({
   atMax,
   onStep,
   testid,
-  plain = false
+  plain = false,
 }: {
   kind: StepperKind
   /** Already said: "125%". This component never formats a number. */

@@ -53,7 +53,9 @@ function KnowledgeHeader({ offline }: { offline?: boolean }): JSX.Element {
  */
 function questUseLabel(u: ItemQuestUse): string {
   const role = u.role === undefined ? undefined : u.role === 'reward' ? 'reward' : 'turn-in'
-  return [u.quest, role, questUseWhere(u)].filter((s): s is string => s !== undefined && s !== '').join(' · ')
+  return [u.quest, role, questUseWhere(u)]
+    .filter((s): s is string => s !== undefined && s !== '')
+    .join(' · ')
 }
 
 // The quest chips (quest · role · giver · zone), or — when the wiki flagged the item but named no
@@ -62,7 +64,7 @@ function questUseLabel(u: ItemQuestUse): string {
 function QuestUsesBlock({
   data,
   recipes,
-  crafted
+  crafted,
 }: {
   data: ItemKnowledge
   recipes: ItemRecipeUse[]
@@ -99,7 +101,13 @@ function QuestUsesBlock({
 }
 
 // The tradeskill recipes that CONSUME this item (`|recipes`).
-function RecipesBlock({ recipes, questUseCount }: { recipes: ItemRecipeUse[]; questUseCount: number }): JSX.Element | null {
+function RecipesBlock({
+  recipes,
+  questUseCount,
+}: {
+  recipes: ItemRecipeUse[]
+  questUseCount: number
+}): JSX.Element | null {
   if (recipes.length === 0) return null
   return (
     <Box sx={{ mt: questUseCount > 0 ? 1 : 0 }}>
@@ -123,7 +131,13 @@ function RecipesBlock({ recipes, questUseCount }: { recipes: ItemRecipeUse[]; qu
 
 // The prose fallback for when `|recipes` wasn't a parseable bullet list — printed only when
 // there is no structured recipe list to print instead.
-function RecipesNote({ note, recipeCount }: { note?: string; recipeCount: number }): JSX.Element | null {
+function RecipesNote({
+  note,
+  recipeCount,
+}: {
+  note?: string
+  recipeCount: number
+}): JSX.Element | null {
   if (!note || recipeCount > 0) return null
   return (
     <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
@@ -145,11 +159,20 @@ function CraftedNote({ crafted }: { crafted?: string }): JSX.Element | null {
 // from the ROOT — the `/wiki/<Title>` form this used to build 404s for EVERY item. The URL is
 // undefined when there's no page title, so the link renders only when it can actually go
 // somewhere.
-function SourceNote({ wikiUrl, questUses }: { wikiUrl?: string; questUses: ItemQuestUse[] }): JSX.Element | null {
+function SourceNote({
+  wikiUrl,
+  questUses,
+}: {
+  wikiUrl?: string
+  questUses: ItemQuestUse[]
+}): JSX.Element | null {
   if (!wikiUrl) return null
   return (
     <Typography variant="caption" color="text.disabled" display="block" sx={{ mt: 1 }}>
-      Source: <a href={wikiUrl} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>eqlwiki.com</a>
+      Source:{' '}
+      <a href={wikiUrl} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>
+        eqlwiki.com
+      </a>
       {questUses.some((u) => u.source === 'posky') && ' + Plane of Sky dataset'}
     </Typography>
   )
@@ -164,7 +187,7 @@ function SourceNote({ wikiUrl, questUses }: { wikiUrl?: string; questUses: ItemQ
  */
 export function KnowledgeSection({
   data,
-  loading
+  loading,
 }: {
   data: ItemKnowledge | null
   loading: boolean

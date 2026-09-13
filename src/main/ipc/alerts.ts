@@ -16,7 +16,7 @@ import {
   getAlerts,
   resetAlerts,
   saveAlert,
-  setAlertPrefs
+  setAlertPrefs,
 } from '../store'
 import type { AlertDef, AlertPrefs, FeedReport } from '../../shared/types'
 

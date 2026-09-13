@@ -84,14 +84,17 @@ function writeJson(key: AreaFormKey, value: unknown): void {
  * identity and a caller may pass an arrow. It is also the only thing that ever converts storage
  * into state: there is no path in this file that hands a raw parsed value to a component.
  */
-export function useRemembered<T>(key: AreaFormKey, sanitize: (raw: unknown) => T): [T, (next: T) => void] {
+export function useRemembered<T>(
+  key: AreaFormKey,
+  sanitize: (raw: unknown) => T,
+): [T, (next: T) => void] {
   const [value, setValue] = useState<T>(() => sanitize(readJson(key)))
   const set = useCallback(
     (next: T) => {
       setValue(next)
       writeJson(key, next)
     },
-    [key]
+    [key],
   )
   return [value, set]
 }

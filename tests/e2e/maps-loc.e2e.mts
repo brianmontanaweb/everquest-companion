@@ -47,7 +47,7 @@ import {
   reportRun,
   settle,
   settleGone,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture, type FixtureLog } from './logFixture.mjs'
@@ -83,7 +83,7 @@ async function openMaps(page: Page, timeoutMs = 60_000): Promise<boolean> {
   await page.click(NAV_MAPS, { timeout: 30_000 })
   return page.waitForSelector(TOOLBAR, { timeout: timeoutMs }).then(
     () => true,
-    () => false
+    () => false,
   )
 }
 
@@ -91,7 +91,7 @@ async function openMaps(page: Page, timeoutMs = 60_000): Promise<boolean> {
 function zoneOf(page: Page): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText.trim() ?? '',
-    ZONE_CHIP
+    ZONE_CHIP,
   )
 }
 
@@ -99,7 +99,7 @@ function zoneOf(page: Page): Promise<string> {
 function markerLocOf(page: Page): Promise<string | null> {
   return page.evaluate(
     (sel) => document.querySelector(sel)?.getAttribute('data-loc') ?? null,
-    LOC_MARKER
+    LOC_MARKER,
   )
 }
 
@@ -107,7 +107,7 @@ function markerLocOf(page: Page): Promise<string | null> {
 function chipTextOf(page: Page): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText.trim() ?? '',
-    LOC_CHIP
+    LOC_CHIP,
   )
 }
 
@@ -131,20 +131,22 @@ async function typeLoc(page: Page, text: string): Promise<void> {
  */
 function anchorOf(page: Page, stem: string): Promise<Anchor | null> {
   return page.evaluate(async (zone) => {
-    const eq = (window as unknown as {
-      eq: {
-        getMapData: (
-          z: string,
-          p: Record<string, string>
-        ) => Promise<{
-          ok: boolean
-          data?: {
-            points: { x: number; y: number; z: number; layer: number; display: string }[]
-            bounds: { minX: number; maxX: number; minY: number; maxY: number }
-          }
-        }>
+    const eq = (
+      window as unknown as {
+        eq: {
+          getMapData: (
+            z: string,
+            p: Record<string, string>,
+          ) => Promise<{
+            ok: boolean
+            data?: {
+              points: { x: number; y: number; z: number; layer: number; display: string }[]
+              bounds: { minX: number; maxX: number; minY: number; maxY: number }
+            }
+          }>
+        }
       }
-    }).eq
+    ).eq
     const res = await eq.getMapData(zone, {})
     const data = res.ok ? res.data : undefined
     if (!data) return null
@@ -160,7 +162,7 @@ function anchorOf(page: Page, stem: string): Promise<Anchor | null> {
         p.x < b.maxX - inX / 10 &&
         p.y > b.minY + inY / 10 &&
         p.y < b.maxY - inY / 10 &&
-        p.display.trim() !== ''
+        p.display.trim() !== '',
     )
     const p = usable[0]
     return p ? { x: p.x, y: p.y, z: p.z, label: p.display } : null
@@ -188,7 +190,9 @@ function centreOf(page: Page, sel: string): Promise<{ x: number; y: number } | n
  */
 function glyphCentreOf(page: Page, label: string): Promise<{ x: number; y: number } | null> {
   return page.evaluate((want) => {
-    const all = [...document.querySelectorAll('[data-testid="map-point"], [data-testid="map-point-dot"]')]
+    const all = [
+      ...document.querySelectorAll('[data-testid="map-point"], [data-testid="map-point-dot"]'),
+    ]
     const hit = all.filter((el) => el.getAttribute('title') === want)[0]
     if (!hit) return null
     const r = hit.getBoundingClientRect()
@@ -213,15 +217,22 @@ async function stepEmpty(page: Page): Promise<void> {
 async function stepRefusal(page: Page): Promise<void> {
   await typeLoc(page, 'somewhere near the docks')
   const said = await settle(
-    () => page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText.trim() ?? '', LOC_ERROR),
+    () =>
+      page.evaluate(
+        (s) => (document.querySelector(s) as HTMLElement | null)?.innerText.trim() ?? '',
+        LOC_ERROR,
+      ),
     (t) => t !== '',
-    { timeoutMs: 8000 }
+    { timeoutMs: 8000 },
   )
   check('a malformed entry is refused IN PROSE', said !== '', said)
   check('…and the refusal names what it choked on', said.includes('somewhere'), said)
   // THE ABSENCE, which is the whole point: a feature that guessed would have placed something.
   check('…AND NO MARKER IS PLACED FROM IT', (await countOf(page, LOC_MARKER)) === 0)
-  check('…and nothing is stored', (await storedOf(page)) !== null ? !(await storedOf(page))?.includes('ns') : true)
+  check(
+    '…and nothing is stored',
+    (await storedOf(page)) !== null ? !(await storedOf(page))?.includes('ns') : true,
+  )
 }
 
 /**
@@ -238,7 +249,11 @@ async function stepLandmark(page: Page, anchor: Anchor): Promise<void> {
   note(`standing at “${anchor.label}” the game would print: ${typed}`)
   await typeLoc(page, typed)
 
-  const placed = await settle(() => markerLocOf(page), (l) => l != null, { timeoutMs: 10_000 })
+  const placed = await settle(
+    () => markerLocOf(page),
+    (l) => l != null,
+    { timeoutMs: 10_000 },
+  )
   if (!check('a well-formed /loc places a marker', placed != null, String(placed))) return
   check('…exactly one of them', (await countOf(page, LOC_MARKER)) === 1)
   check('…and the refusal from the bad entry is gone', (await countOf(page, LOC_ERROR)) === 0)
@@ -246,14 +261,16 @@ async function stepLandmark(page: Page, anchor: Anchor): Promise<void> {
   const glyph = await glyphCentreOf(page, anchor.label)
   const mark = await centreOf(page, LOC_MARKER)
   if (glyph == null || mark == null) {
-    note(`“${anchor.label}” is not drawn as a glyph right now — the pixel check is skipped this run`)
+    note(
+      `“${anchor.label}” is not drawn as a glyph right now — the pixel check is skipped this run`,
+    )
     return
   }
   const off = Math.hypot(mark.x - glyph.x, mark.y - glyph.y)
   check(
     'THE MARKER LANDS ON THE LANDMARK ITS /loc WAS READ FROM',
     off <= 2,
-    `${String(Math.round(off))}px from “${anchor.label}” (marker ${String(Math.round(mark.x))},${String(Math.round(mark.y))} vs glyph ${String(Math.round(glyph.x))},${String(Math.round(glyph.y))})`
+    `${String(Math.round(off))}px from “${anchor.label}” (marker ${String(Math.round(mark.x))},${String(Math.round(mark.y))} vs glyph ${String(Math.round(glyph.x))},${String(Math.round(glyph.y))})`,
   )
   // Placing also GOES there — a marker you cannot see answers nothing. The centring is the
   // viewport's own clamped `centerOn`, so this is a second, independent read on the transform.
@@ -262,43 +279,62 @@ async function stepLandmark(page: Page, anchor: Anchor): Promise<void> {
   check(
     '…and placing it centres the map on it',
     Math.hypot(mark.x - surface.x, mark.y - surface.y) <= 2,
-    `${String(Math.round(Math.hypot(mark.x - surface.x, mark.y - surface.y)))}px off centre`
+    `${String(Math.round(Math.hypot(mark.x - surface.x, mark.y - surface.y)))}px off centre`,
   )
 }
 
 /** 4. IT IS STATED AND IT IS STORED — under the key the app ships, keyed by the zone on screen. */
 async function stepStated(page: Page, zone: string, anchor: Anchor): Promise<void> {
-  const chip = await settle(() => chipTextOf(page), (t) => t !== '', { timeoutMs: 8000 })
+  const chip = await settle(
+    () => chipTextOf(page),
+    (t) => t !== '',
+    { timeoutMs: 8000 },
+  )
   check('the toolbar states the marker in the game’s own words', chip !== '', chip)
   // The chip states the reading to TWO PLACES, which is what /loc itself prints; the STORE keeps
   // the full precision, and the assertion below is what pins that difference as deliberate.
   check(
     '…and states the reading that was typed, to the two places /loc prints',
     chip.startsWith(twoDp(-anchor.y)),
-    `${chip} vs ns ${twoDp(-anchor.y)}`
+    `${chip} vs ns ${twoDp(-anchor.y)}`,
   )
 
-  const stored = await settle(() => storedOf(page), (s) => s != null && s.includes(zone), { timeoutMs: 8000 })
+  const stored = await settle(
+    () => storedOf(page),
+    (s) => s != null && s.includes(zone),
+    { timeoutMs: 8000 },
+  )
   check(
     `the marker is stored under ${LOC_KEY}, keyed by the zone it belongs to`,
     stored != null && stored.includes(zone),
-    String(stored)
+    String(stored),
   )
   // ROUNDING IS A DISPLAY, NOT A LOSS: the chip says two places, the store keeps what was typed.
   check(
     '…at the full precision that was entered, not the rounded form on the chip',
     stored != null && stored.includes(String(-anchor.y)),
-    `${String(stored)} should carry ns ${String(-anchor.y)}`
+    `${String(stored)} should carry ns ${String(-anchor.y)}`,
   )
 }
 
 /** 5. THE HEADLINE: leave the tab, come back — the marker is still there and still says the same. */
 async function stepSurvivesTabs(page: Page): Promise<void> {
   const before = await markerLocOf(page)
-  if (!check('leaving the Maps tab for Loot unmounts it (the toolbar is gone)', await leaveMaps(page))) return
+  if (
+    !check('leaving the Maps tab for Loot unmounts it (the toolbar is gone)', await leaveMaps(page))
+  )
+    return
   if (!check('…and the Maps tab comes back', await openMaps(page))) return
-  const after = await settle(() => markerLocOf(page), (l) => l != null, { timeoutMs: 20_000 })
-  check('THE MARKER SURVIVES LEAVING AND RETURNING TO THE TAB', after === before, `${String(after)} vs ${String(before)}`)
+  const after = await settle(
+    () => markerLocOf(page),
+    (l) => l != null,
+    { timeoutMs: 20_000 },
+  )
+  check(
+    'THE MARKER SURVIVES LEAVING AND RETURNING TO THE TAB',
+    after === before,
+    `${String(after)} vs ${String(before)}`,
+  )
   check('…and the toolbar still states it', (await chipTextOf(page)) !== '')
 }
 
@@ -307,27 +343,54 @@ async function stepReplace(page: Page, anchor: Anchor): Promise<void> {
   const before = await markerLocOf(page)
   // A point 40 units north-east of the anchor: a real, different position on the same map.
   await typeLoc(page, `${String(-anchor.y + 40)}, ${String(-anchor.x - 40)}, ${String(anchor.z)}`)
-  const after = await settle(() => markerLocOf(page), (l) => l !== before, { timeoutMs: 10_000 })
-  check('entering another /loc REPLACES the marker', after !== before, `${String(before)} → ${String(after)}`)
+  const after = await settle(
+    () => markerLocOf(page),
+    (l) => l !== before,
+    { timeoutMs: 10_000 },
+  )
+  check(
+    'entering another /loc REPLACES the marker',
+    after !== before,
+    `${String(before)} → ${String(after)}`,
+  )
   check('…and there is still exactly one', (await countOf(page, LOC_MARKER)) === 1)
   const stored = await storedOf(page)
-  check('…with one entry stored for this zone, not two', (stored?.match(/"ns"/g) ?? []).length === 1, String(stored))
+  check(
+    '…with one entry stored for this zone, not two',
+    (stored?.match(/"ns"/g) ?? []).length === 1,
+    String(stored),
+  )
 }
 
 /** 7. CLEARING REMOVES IT — from the map, from the toolbar and from the store. */
 async function stepClear(page: Page, zone: string): Promise<void> {
   await page.click(LOC_CLEAR, { timeout: 15_000 })
-  check('clearing the chip removes the marker from the map', await settleGone(page, LOC_MARKER, { timeoutMs: 8000 }))
+  check(
+    'clearing the chip removes the marker from the map',
+    await settleGone(page, LOC_MARKER, { timeoutMs: 8000 }),
+  )
   check('…and the chip with it', (await countOf(page, LOC_CHIP)) === 0)
-  const stored = await settle(() => storedOf(page), (s) => s == null || !s.includes(`"${zone}"`), { timeoutMs: 8000 })
-  check('…and it is gone from the store, not merely off the screen', stored == null || !stored.includes(`"${zone}"`), String(stored))
+  const stored = await settle(
+    () => storedOf(page),
+    (s) => s == null || !s.includes(`"${zone}"`),
+    { timeoutMs: 8000 },
+  )
+  check(
+    '…and it is gone from the store, not merely off the screen',
+    stored == null || !stored.includes(`"${zone}"`),
+    String(stored),
+  )
 }
 
 /** Everything launch 1 asserts. Returns the reading left placed for launch 2, or null when skipped. */
 async function firstLaunch(page: Page): Promise<{ zone: string; loc: string } | null> {
   if (!check('the Maps tab opens', await openMaps(page))) return null
   await waitHydrated(page)
-  const zone = await settle(() => zoneOf(page), (z) => z !== '', { timeoutMs: 30_000 })
+  const zone = await settle(
+    () => zoneOf(page),
+    (z) => z !== '',
+    { timeoutMs: 30_000 },
+  )
   if (zone === '') {
     note('no map drew on this machine (no EQ map packs) — the /loc marker assertions are skipped')
     return null
@@ -347,34 +410,58 @@ async function firstLaunch(page: Page): Promise<{ zone: string; loc: string } | 
   await stepClear(page, zone)
 
   // Arm the restart: place one last marker and hand its reading to launch 2.
-  await typeLoc(page, `Your Location is ${String(-anchor.y)}, ${String(-anchor.x)}, ${String(anchor.z)}`)
-  const armed = await settle(() => markerLocOf(page), (l) => l != null, { timeoutMs: 10_000 })
+  await typeLoc(
+    page,
+    `Your Location is ${String(-anchor.y)}, ${String(-anchor.x)}, ${String(anchor.z)}`,
+  )
+  const armed = await settle(
+    () => markerLocOf(page),
+    (l) => l != null,
+    { timeoutMs: 10_000 },
+  )
   if (armed == null) return null
   check('a marker is placed for the restart check', true, armed)
   return { zone, loc: armed }
 }
 
 /** 8. THE RESTART: a second process, the same userData dir and the same log. */
-async function stepSurvivesRestart(page: Page, placed: { zone: string; loc: string }): Promise<void> {
+async function stepSurvivesRestart(
+  page: Page,
+  placed: { zone: string; loc: string },
+): Promise<void> {
   if (!check('the Maps tab opens after a restart', await openMaps(page))) return
-  const zone = await settle(() => zoneOf(page), (z) => z !== '', { timeoutMs: 30_000 })
+  const zone = await settle(
+    () => zoneOf(page),
+    (z) => z !== '',
+    { timeoutMs: 30_000 },
+  )
   if (zone !== placed.zone) {
-    note(`launch 2 opened "${zone}" rather than "${placed.zone}" — the marker belongs to another map, so the restart check is skipped`)
+    note(
+      `launch 2 opened "${zone}" rather than "${placed.zone}" — the marker belongs to another map, so the restart check is skipped`,
+    )
     return
   }
-  const loc = await settle(() => markerLocOf(page), (l) => l != null, { timeoutMs: 20_000 })
+  const loc = await settle(
+    () => markerLocOf(page),
+    (l) => l != null,
+    { timeoutMs: 20_000 },
+  )
   check('THE MARKER SURVIVES A FULL RESTART', loc === placed.loc, `${String(loc)} vs ${placed.loc}`)
   check('…and the toolbar states it again', (await chipTextOf(page)) !== '')
   const stored = await storedOf(page)
   check(
     '…and the stored reading crossed the process boundary intact',
     stored != null && stored.includes(placed.zone),
-    String(stored)
+    String(stored),
   )
 }
 
 /** Launch 2: a new process on the dir and the log launch 1 left behind. */
-async function secondLaunch(log: FixtureLog, userData: string, placed: { zone: string; loc: string }): Promise<void> {
+async function secondLaunch(
+  log: FixtureLog,
+  userData: string,
+  placed: { zone: string; loc: string },
+): Promise<void> {
   console.log('launch 2: the SAME userData dir and the SAME log, a new process…')
   const second = await launchOnFixture(log, { userData })
   try {
@@ -394,7 +481,9 @@ async function main(): Promise<void> {
   const userData = makeUserData()
   const log = stageFixture('e2e-maps.log', { maps: true })
   try {
-    console.log('launch 1: refuse a bad loc, place a good one on a landmark, tab round trip, replace, clear…')
+    console.log(
+      'launch 1: refuse a bad loc, place a good one on a landmark, tab round trip, replace, clear…',
+    )
     const first = await launchOnFixture(log, { userData })
     let placed: { zone: string; loc: string } | null = null
     try {
@@ -406,13 +495,18 @@ async function main(): Promise<void> {
       page.on('pageerror', (e) => consoleErrors.push(String(e)))
       await page.waitForSelector(NAV_MAPS, { timeout: 60_000 })
       placed = await firstLaunch(page)
-      check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+      check(
+        'no renderer console errors',
+        consoleErrors.length === 0,
+        consoleErrors.slice(0, 3).join(' | '),
+      )
       if (failures.length) await dumpArtifacts(page, 'maps-loc-FAIL')
     } finally {
       await first.close()
     }
 
-    if (placed == null) note('nothing was placed in launch 1 — the restart half has no subject and is skipped')
+    if (placed == null)
+      note('nothing was placed in launch 1 — the restart half has no subject and is skipped')
     else await secondLaunch(log, userData, placed)
   } finally {
     await log.dispose()

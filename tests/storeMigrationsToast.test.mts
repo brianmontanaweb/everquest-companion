@@ -34,7 +34,7 @@ import {
   CURRENT_SCHEMA_VERSION,
   SCHEMA_VERSION_KEY,
   migrateStoreData,
-  type StoreData
+  type StoreData,
 } from '../src/main/storeMigrations'
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), 'fixtures')
@@ -45,7 +45,8 @@ const fixture = (name: string): StoreData => JSON.parse(readFileSync(join(FIXTUR
  *  `toast.sound`/`toast.volume` pair still sitting inside its blob. */
 const V8 = 'store-v8-toast-off.json'
 
-const overlaysOf = (d: StoreData): Record<string, StoreData> => d['overlays'] as Record<string, StoreData>
+const overlaysOf = (d: StoreData): Record<string, StoreData> =>
+  d['overlays'] as Record<string, StoreData>
 
 test('a v8 store has its pre-default toast switch corrected, once', () => {
   const before = fixture(V8)
@@ -57,7 +58,10 @@ test('a v8 store has its pre-default toast switch corrected, once', () => {
   // Append-proof, like the sibling files: step 9 is this file's, and the chain continues
   // contiguously from there.
   assert.equal(applied[0], 9, 'a v8 store enters the chain at the toast step')
-  assert.deepEqual(applied, Array.from({ length: applied.length }, (_, i) => i + 9))
+  assert.deepEqual(
+    applied,
+    Array.from({ length: applied.length }, (_, i) => i + 9),
+  )
 
   assert.equal(overlaysOf(data)['toast']['open'], true, 'the toast is on after the upgrade')
   assert.equal(overlaysOf(before)['toast']['open'], false, 'and the input was never mutated')
@@ -106,7 +110,11 @@ test('a user who turns the toast OFF on v9 keeps it off — the correction never
 
   const again = migrateStoreData(chosen)
   assert.equal(again.status, 'up-to-date', 'a v9 store has nothing left to do')
-  assert.equal(overlaysOf(again.data)['toast']['open'], false, 'the switch stays where the user put it')
+  assert.equal(
+    overlaysOf(again.data)['toast']['open'],
+    false,
+    'the switch stays where the user put it',
+  )
 })
 
 test('running the chain twice equals running it once', () => {

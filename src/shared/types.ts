@@ -274,7 +274,13 @@ export interface OverlayConfig {
 
 // The overlays TEXT SIZE (owner feedback 2026-08-05) lives in ./overlayTextScale.ts and is
 // re-exported here, so every importer of `@shared/types` is untouched. See that file for why.
-export { TEXT_SCALE_DEFAULT, TEXT_SCALE_MAX, TEXT_SCALE_MIN, TEXT_SCALE_STEP, clampTextScale } from './overlayTextScale'
+export {
+  TEXT_SCALE_DEFAULT,
+  TEXT_SCALE_MAX,
+  TEXT_SCALE_MIN,
+  TEXT_SCALE_STEP,
+  clampTextScale,
+} from './overlayTextScale'
 // …and the overlays' BACKGROUND TRANSPARENCY (JOS-407) lives in ./overlayBgAlpha.ts on exactly the
 // same terms. Only the clamp is re-exported: `OverlayConfig.bgAlpha` above is the field it governs,
 // and store.ts reads it beside `clampTextScale` on the very next line of the same function.
@@ -925,7 +931,13 @@ export interface FeedReport {
 // ./progressState.ts. This file was AT the measured 400-code-line ceiling and the repo law is to
 // SPLIT rather than to widen a threshold (windows.ts → windowErrors.ts, store.ts → storePlans.ts
 // are the precedents). Re-exported here so every importer keeps the door it already used.
-export type { CountSource, HeldCounts, PetClaimEdit, ProgressState, RosterEdit } from './progressState'
+export type {
+  CountSource,
+  HeldCounts,
+  PetClaimEdit,
+  ProgressState,
+  RosterEdit,
+} from './progressState'
 // The hand-stated held count (JOS-186) lives in ./itemOverrides.ts with the rules that govern it,
 // and comes back through this door for the same reason the five names above do.
 export type { ItemCountOverride } from './itemOverrides'
@@ -1048,7 +1060,7 @@ export type {
   UserSound,
   UserSoundRejection,
   UserSoundImportResult,
-  UserSoundRemoveResult
+  UserSoundRemoveResult,
 } from './alertTypes'
 
 export type {
@@ -1065,14 +1077,14 @@ export type {
   SpellDbFile,
   SpellTemplateFlags,
   SpellCatalogEntry,
-  SpellCatalog
+  SpellCatalog,
 } from './buffTypes'
 
 export type {
   ProgressionSnap,
   ProgressionDropFront,
   ProgressionDelta,
-  ProgressionKill
+  ProgressionKill,
 } from './progressionTypes'
 
 // NOTE (presence-driven settings — the cursor ring + overlay auto-hide): their shapes

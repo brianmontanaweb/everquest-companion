@@ -40,7 +40,7 @@ import {
   noteSuppressedErrorLine,
   peekHealth,
   resetHealth,
-  takeHealth
+  takeHealth,
 } from '../src/main/telemetry/health'
 
 const TEST_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -48,8 +48,14 @@ const ID = '2b1b5c33-6a1a-4d3e-8f0b-2c9a5d1e7f40'
 
 const batchOf = (events: TelemetryEvent[]): TelemetryBatch => ({
   v: 1,
-  env: { analyticsId: ID, appVersion: '0.6.0', channel: 'prod', platform: 'win32', tzOffsetBucket: -5 },
-  events: events.map((ev) => ({ ts: 1_754_000_000_000, ev }))
+  env: {
+    analyticsId: ID,
+    appVersion: '0.6.0',
+    channel: 'prod',
+    platform: 'win32',
+    tzOffsetBucket: -5,
+  },
+  events: events.map((ev) => ({ ts: 1_754_000_000_000, ev })),
 })
 
 const NO_HEALTH = {
@@ -66,7 +72,7 @@ const NO_HEALTH = {
   imageCacheReadFailures: 0,
   // …and JOS-364's two lost-child counters, which is the third time this literal has done its job.
   gpuProcessGone: 0,
-  utilityProcessGone: 0
+  utilityProcessGone: 0,
 }
 
 test('the health drain is a DELTA — a drain zeroes what it took, so nothing counts twice', () => {
@@ -108,7 +114,7 @@ test('a drain with nothing pending still returns a REPORT — all zeros, never n
   const rolled = rollupBatch(batchOf([{ t: 'healthCounters', ...clean }]), {
     firstOfDay: false,
     newInstall: false,
-    upgraded: false
+    upgraded: false,
   })
   assert.equal(rolled.counters.filter((c) => c.metric === USAGE_METRICS.healthReports).length, 1)
   assert.equal(rolled.counters.filter((c) => c.metric === USAGE_METRICS.health).length, 0)
@@ -202,15 +208,26 @@ test('THE FOUR WIRED SOURCES are wired where the report says, and the fifth is n
   //    the count has to be one call per line in the batch. The SYNC writer beside it — the quit /
   //    crash final — is asserted the same way, because it is the same rule written twice.
   const errorLog = read('src/main/errorLog.ts')
-  const drain = errorLog.slice(errorLog.indexOf('async function drain('), errorLog.indexOf('function writeLine('))
-  assert.ok(drain.indexOf('await appendFile(path,') < drain.indexOf('for (const _ of batch) noteErrorLogLine()'))
+  const drain = errorLog.slice(
+    errorLog.indexOf('async function drain('),
+    errorLog.indexOf('function writeLine('),
+  )
+  assert.ok(
+    drain.indexOf('await appendFile(path,') <
+      drain.indexOf('for (const _ of batch) noteErrorLogLine()'),
+  )
   const flush = errorLog.slice(errorLog.indexOf('export function flushErrorLogSync('))
-  assert.ok(flush.indexOf('appendFileSync(path,') < flush.indexOf('for (const _ of batch) noteErrorLogLine()'))
+  assert.ok(
+    flush.indexOf('appendFileSync(path,') <
+      flush.indexOf('for (const _ of batch) noteErrorLogLine()'),
+  )
   // 2. renderer crash — at the EVENT, not off `logError` (that handler logs twice per crash), so
   //    the increment sits inside the listener and before its first log line.
   const windows = read('src/main/windowErrors.ts')
   const gone = windows.slice(windows.indexOf("wc.on('render-process-gone'"))
-  assert.ok(gone.indexOf('noteRendererCrash()') < gone.indexOf("logError('main:render-process-gone'"))
+  assert.ok(
+    gone.indexOf('noteRendererCrash()') < gone.indexOf("logError('main:render-process-gone'"),
+  )
   // 3. presence restarts — after `scheduleRestart`'s guard, so a refused restart does not count.
   const presence = read('src/main/presence.ts')
   const sched = presence.slice(presence.indexOf('function scheduleRestart'))
@@ -235,11 +252,17 @@ test('JOS-133 wired two more, and BOTH are counts on paths that used to log an e
   // 6. image fetch — the NETWORK catch, which no longer reaches `onError` at all. The whole point
   //    of the ticket is that this branch and the HTTP-status branch stopped being one decision.
   const img = read('src/main/imageCache.ts')
-  const netCatch = img.slice(img.indexOf('} catch (err) {', img.indexOf('res = await doFetch')), img.indexOf('if (!res.ok)'))
+  const netCatch = img.slice(
+    img.indexOf('} catch (err) {', img.indexOf('res = await doFetch')),
+    img.indexOf('if (!res.ok)'),
+  )
   assert.match(netCatch, /noteImageFetchFailure\(\)/, 'the network leg counts')
   assert.doesNotMatch(netCatch, /onError\(/, 'and it no longer files an error')
   // …while the branch beside it, where a host ANSWERED, still does.
-  const statusBranch = img.slice(img.indexOf('if (!res.ok)'), img.indexOf('const bytes = new Uint8Array'))
+  const statusBranch = img.slice(
+    img.indexOf('if (!res.ok)'),
+    img.indexOf('const bytes = new Uint8Array'),
+  )
   assert.match(statusBranch, /onError\(/, 'an HTTP status is still ours to fix, and still an error')
 
   // 7. suppressed lines — bumped in `logError` from a leaf rule's verdict, and from NOWHERE ELSE
@@ -257,10 +280,13 @@ test('JOS-133 wired two more, and BOTH are counts on paths that used to log an e
   // A CALL, not a mention: both cap modules NAME the counter in their headers (that is where the
   // argument for it lives) and neither may reach it — the funnel bumps it, from the verdict.
   const callers = ['src/main/crashGuards.ts', 'src/main/errorBudget.ts', 'src/main/errorRepeat.ts']
-  for (const f of callers) assert.ok(!read(f).includes('noteSuppressedErrorLine('), `${f} does not count`)
+  for (const f of callers)
+    assert.ok(!read(f).includes('noteSuppressedErrorLine('), `${f} does not count`)
   // The report is taken BEFORE both caps, so suppressing a LINE never suppresses an observation.
   assert.ok(errorLog.indexOf('noteError(source, payload,') < errorLog.indexOf('const repeat ='))
-  assert.ok(errorLog.indexOf('noteError(source, payload,') < errorLog.indexOf('if (!budget.report)'))
+  assert.ok(
+    errorLog.indexOf('noteError(source, payload,') < errorLog.indexOf('if (!budget.report)'),
+  )
 })
 
 test('JOS-266 wired the eighth, and it is the third count on a path that used to log an error', () => {
@@ -270,11 +296,22 @@ test('JOS-266 wired the eighth, and it is the third count on a path that used to
   //    the cache heals by evicting the entry and re-fetching it. The behaviour is driven for real
   //    in tests/imageCacheHeal.test.mts; what is asserted here is the counter's one call site.
   const img = read('src/main/imageCache.ts')
-  const readCatch = img.slice(img.indexOf('const bytes = await readFile(path)'), img.indexOf('return null\n  }'))
+  const readStart = img.indexOf('const bytes = await readFile(path)')
+  // Bounded from readStart: an unbounded indexOf('return null\n  }') matches an unrelated,
+  // earlier catch block (normalizeUpstreamImageUrl's) first, before ever reaching this one.
+  const readCatch = img.slice(readStart, img.indexOf('return null\n  }', readStart))
   assert.match(readCatch, /await healUnreadableEntry\(path, err, repair, warn\)/, 'the catch heals')
   assert.doesNotMatch(readCatch, /onError\(/, 'and it no longer files an error')
-  assert.match(img, /async function healUnreadableEntry[\s\S]*?noteImageCacheReadFailure\(\)/, 'the heal counts')
-  assert.equal(img.match(/noteImageCacheReadFailure\(\)/g)?.length, 1, 'one call site, in that heal')
+  assert.match(
+    img,
+    /async function healUnreadableEntry[\s\S]*?noteImageCacheReadFailure\(\)/,
+    'the heal counts',
+  )
+  assert.equal(
+    img.match(/noteImageCacheReadFailure\(\)/g)?.length,
+    1,
+    'one call site, in that heal',
+  )
   // …while the STORE failure beside it stays an error: a cache directory this app cannot write to
   // is a fact about the install, and nothing downstream heals it.
   assert.match(img, /onError\(`\[everquest-companion:error\] image cache: could not store/)
@@ -302,7 +339,11 @@ test('the five optional fields are OPTIONAL on the wire — an old client must n
   noteSuppressedErrorLine(9)
   noteImageCacheReadFailure(4)
   const now = { t: 'healthCounters', ...takeHealth() } as const
-  const rolled = rollupBatch(batchOf([now]), { firstOfDay: false, newInstall: false, upgraded: false })
+  const rolled = rollupBatch(batchOf([now]), {
+    firstOfDay: false,
+    newInstall: false,
+    upgraded: false,
+  })
   const row = (dim: string): number =>
     rolled.counters.find((c) => c.metric === USAGE_METRICS.health && c.dim === dim)?.n ?? 0
   assert.equal(row('0.6.0:imageFetchFailures'), 3)

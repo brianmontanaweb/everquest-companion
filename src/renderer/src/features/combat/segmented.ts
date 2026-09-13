@@ -46,7 +46,9 @@ export function segmented(weight: 'primary' | 'quiet' | 'text'): SxProps<Theme> 
           { bgcolor: 'rgba(255,255,255,0.09)', color: 'text.primary' }
   return {
     flexShrink: 0,
-    ...(weight === 'text' ? null : { bgcolor: 'rgba(255,255,255,0.04)', borderRadius: 1, p: '2px' }),
+    ...(weight === 'text'
+      ? null
+      : { bgcolor: 'rgba(255,255,255,0.04)', borderRadius: 1, p: '2px' }),
     '& .MuiToggleButtonGroup-grouped': {
       border: 0,
       borderRadius: '5px !important',
@@ -63,7 +65,7 @@ export function segmented(weight: 'primary' | 'quiet' | 'text'): SxProps<Theme> 
       '&.Mui-selected': { ...selected, fontWeight: 700 },
       '&.Mui-selected:hover': selected,
       // The ONE thing in this bar that is allowed to look dead, and only when it truly is.
-      '&.Mui-disabled': { color: 'text.disabled', '&:hover': { bgcolor: 'transparent' } }
-    }
+      '&.Mui-disabled': { color: 'text.disabled', '&:hover': { bgcolor: 'transparent' } },
+    },
   }
 }

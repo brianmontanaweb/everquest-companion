@@ -54,7 +54,13 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { rangeStats } from '../src/shared/progressionStats'
 import { windowItemRows } from '../src/shared/lootRates'
-import { TAIL_MS, availableSlices, inSlice, resolveSlice, type SliceId } from '../src/shared/timeslice'
+import {
+  TAIL_MS,
+  availableSlices,
+  inSlice,
+  resolveSlice,
+  type SliceId,
+} from '../src/shared/timeslice'
 import { basisMs } from '../src/shared/rateBasis'
 import {
   ZONE_SCOPES,
@@ -66,7 +72,7 @@ import {
   resolveZoneScope,
   toggleZoneScope,
   zoneAdmits,
-  zoneIdKey
+  zoneIdKey,
 } from '../src/shared/zoneScope'
 import type { LootEvent } from '../src/shared/types'
 import type { ProgressionSnap } from '../src/shared/progressionTypes'
@@ -78,13 +84,28 @@ const T0 = Date.parse('Sat Aug 01 12:00:00 2026')
 
 function emptySnap(): ProgressionSnap {
   return {
-    expTs: [], expPct: [], expFlag: [],
-    killTs: [], killZone: [], killCredit: [],
-    witnessTs: [], recentKills: [], lootTs: [],
-    zoneStart: [], zoneEnd: [], zoneName: [],
-    offlineStart: [], offlineEnd: [], offlineCamped: [],
-    levelTs: [], levelValue: [], aaGainTs: [], aaGainAmount: [],
-    lastTs: 0, windowStart: 0, dropped: 0
+    expTs: [],
+    expPct: [],
+    expFlag: [],
+    killTs: [],
+    killZone: [],
+    killCredit: [],
+    witnessTs: [],
+    recentKills: [],
+    lootTs: [],
+    zoneStart: [],
+    zoneEnd: [],
+    zoneName: [],
+    offlineStart: [],
+    offlineEnd: [],
+    offlineCamped: [],
+    levelTs: [],
+    levelValue: [],
+    aaGainTs: [],
+    aaGainAmount: [],
+    lastTs: 0,
+    windowStart: 0,
+    dropped: 0,
   }
 }
 
@@ -123,9 +144,21 @@ test('the in-app membership is READ from the shared selection and kept nowhere e
   // The hook that owns the value is `useScopeSelection`, over the MAIN window's bridge. A module
   // variable here is what made the overlay's copy invisible, so the shape of the regression is a
   // `let picked…ZoneScope` coming back.
-  assert.match(mod, /useScopeSelection\(window\.eq\)/, 'the membership is read from the shared hook')
-  assert.doesNotMatch(mod, /let picked\w*(Zone)?Scope/, 'the membership grew a second home in this file')
-  assert.match(mod, /resolveSlice\(\{[^}]*zoneScope[^}]*\}\)/, 'the pick is applied to the slice here')
+  assert.match(
+    mod,
+    /useScopeSelection\(window\.eq\)/,
+    'the membership is read from the shared hook',
+  )
+  assert.doesNotMatch(
+    mod,
+    /let picked\w*(Zone)?Scope/,
+    'the membership grew a second home in this file',
+  )
+  assert.match(
+    mod,
+    /resolveSlice\(\{[^}]*zoneScope[^}]*\}\)/,
+    'the pick is applied to the slice here',
+  )
   assert.doesNotMatch(mod, /electron-store|localStorage/, 'the pick grew a persisted home')
   // `resetTimeslice` still clears every dimension of the pick — it just delegates the one that
   // moved. A reset that left a membership behind for the next test is the bug this line is about.
@@ -174,7 +207,11 @@ test('the in-app control is mounted only while the slice carries a zone', () => 
 test('each membership button hovers what picking it does, in the browser own tooltip', () => {
   for (const scope of ZONE_SCOPES) {
     const words = ZONE_SCOPE_TITLE[scope]
-    assert.match(words, /^The numbers count /, `${scope}: the sentence is about the reads, not the fold`)
+    assert.match(
+      words,
+      /^The numbers count /,
+      `${scope}: the sentence is about the reads, not the fold`,
+    )
     assert.doesNotMatch(words, /Befallen|\$\{/, `${scope}: the zone name belongs to the caption`)
   }
   // The two sides of the one difference, each stated on its own button.
@@ -226,9 +263,17 @@ test('the store no longer keeps EITHER retired knob, whatever an older build wro
   // preserving them would leave a dead choice on disk that silently disagrees with the live one.
   assert.match(store, /delete retired\.xpBasis/)
   assert.match(store, /delete retired\.xpZoneScope/)
-  assert.doesNotMatch(store, /normalizeZoneScope|normalizeRateBasis/, 'the retired validators came back')
+  assert.doesNotMatch(
+    store,
+    /normalizeZoneScope|normalizeRateBasis/,
+    'the retired validators came back',
+  )
   // And nothing seeds either one into the shipped defaults.
-  assert.doesNotMatch(store, /xp: \{[^}]*xpZoneScope/, 'the membership was spelled into the shipped config')
+  assert.doesNotMatch(
+    store,
+    /xp: \{[^}]*xpZoneScope/,
+    'the membership was spelled into the shipped config',
+  )
   assert.doesNotMatch(store, /xpZoneScope: 'allTiers'/)
 })
 // ── 1-4. the model: the folds, the default, the caption, and the setting with no subject
@@ -256,7 +301,7 @@ function tieredSnap(): { snap: ProgressionSnap; lo: number; hi: number } {
 const tieredDrops: LootEvent[] = [
   { ts: T0 + 10 * MIN, item: 'Mote of Potential', zone: 'Befallen' },
   { ts: T0 + HOUR + 10 * MIN, item: 'Mote of Potential', zone: 'Lower Guk' },
-  { ts: T0 + 2 * HOUR + 10 * MIN, item: 'Mote of Potential', zone: 'Befallen 2 (Adaptive)' }
+  { ts: T0 + 2 * HOUR + 10 * MIN, item: 'Mote of Potential', zone: 'Befallen 2 (Adaptive)' },
 ]
 
 test('the membership folds BOTH WAYS: the place, or the tier the zone line named', () => {
@@ -268,12 +313,30 @@ test('the membership folds BOTH WAYS: the place, or the tier the zone line named
   // ONE zone key either way — exact NARROWS, it never re-points the slice at another place.
   assert.equal(every.zoneKey, 'befallen')
   assert.equal(only.zoneKey, 'befallen')
-  assert.equal(every.zoneExactKey, null, 'the default carries no exact key at all — see the pin below')
+  assert.equal(
+    every.zoneExactKey,
+    null,
+    'the default carries no exact key at all — see the pin below',
+  )
   assert.equal(only.zoneExactKey, zoneIdKey('Befallen 2 (Adaptive)'))
-  assert.equal(only.zoneName, 'Befallen 2 (Adaptive)', 'and the RAW name is still what a caption shows')
+  assert.equal(
+    only.zoneName,
+    'Befallen 2 (Adaptive)',
+    'and the RAW name is still what a caption shows',
+  )
 
-  const everyStats = rangeStats({ snap, range: every.range, zoneKey: every.zoneKey, zoneExactKey: every.zoneExactKey })
-  const onlyStats = rangeStats({ snap, range: only.range, zoneKey: only.zoneKey, zoneExactKey: only.zoneExactKey })
+  const everyStats = rangeStats({
+    snap,
+    range: every.range,
+    zoneKey: every.zoneKey,
+    zoneExactKey: every.zoneExactKey,
+  })
+  const onlyStats = rangeStats({
+    snap,
+    range: only.range,
+    zoneKey: only.zoneKey,
+    zoneExactKey: only.zoneExactKey,
+  })
   assert.equal(everyStats.kills, 120, 'both tiers of the camp, and neither of the 60 kills in Guk')
   assert.equal(onlyStats.kills, 60, 'the tier the log last named, alone')
   assert.equal(everyStats.zones.length, 2, 'two spellings, two rows')
@@ -282,17 +345,21 @@ test('the membership folds BOTH WAYS: the place, or the tier the zone line named
   assert.ok((onlyStats.levelsPerHourActive ?? 0) > (everyStats.levelsPerHourActive ?? 0))
 
   // …and the LOOT side folds identically, which is what rule 5 is for.
-  assert.deepEqual(tieredDrops.filter((e) => inSlice(every, e.ts, e.zone)).map((e) => e.zone), [
-    'Befallen',
-    'Befallen 2 (Adaptive)'
-  ])
-  assert.deepEqual(tieredDrops.filter((e) => inSlice(only, e.ts, e.zone)).map((e) => e.zone), [
-    'Befallen 2 (Adaptive)'
-  ])
+  assert.deepEqual(
+    tieredDrops.filter((e) => inSlice(every, e.ts, e.zone)).map((e) => e.zone),
+    ['Befallen', 'Befallen 2 (Adaptive)'],
+  )
+  assert.deepEqual(
+    tieredDrops.filter((e) => inSlice(only, e.ts, e.zone)).map((e) => e.zone),
+    ['Befallen 2 (Adaptive)'],
+  )
   const spans = { durationMs: HOUR, activeMs: HOUR, offlineMs: 0 }
   const args = { events: tieredDrops, t0: every.range.t0, t1: every.range.t1, spans }
   assert.equal(windowItemRows({ ...args, zoneKey: every.zoneKey })[0].drops, 2)
-  assert.equal(windowItemRows({ ...args, zoneKey: only.zoneKey, zoneExactKey: only.zoneExactKey })[0].drops, 1)
+  assert.equal(
+    windowItemRows({ ...args, zoneKey: only.zoneKey, zoneExactKey: only.zoneExactKey })[0].drops,
+    1,
+  )
 })
 
 test('the DEFAULT is all tiers, and all tiers is byte-identical to the read before the option', () => {
@@ -300,7 +367,10 @@ test('the DEFAULT is all tiers, and all tiers is byte-identical to the read befo
   const bounds = { lo, hi }
   // The resolved SLICE first: saying nothing and saying `allTiers` are the same slice, field for
   // field — including the caption, so a build with the option cannot open on a different sentence.
-  assert.deepEqual(resolveSlice({ snap, bounds, id: 'zone' }), resolveSlice({ snap, bounds, id: 'zone', zoneScope: 'allTiers' }))
+  assert.deepEqual(
+    resolveSlice({ snap, bounds, id: 'zone' }),
+    resolveSlice({ snap, bounds, id: 'zone', zoneScope: 'allTiers' }),
+  )
   assert.equal(ZONE_SCOPE_DEFAULT, 'allTiers')
   assert.equal(resolveZoneScope(undefined), 'allTiers')
 
@@ -309,7 +379,7 @@ test('the DEFAULT is all tiers, and all tiers is byte-identical to the read befo
   assert.deepEqual(rangeStats({ snap, range, zoneExactKey: null }), rangeStats({ snap, range }))
   assert.deepEqual(
     rangeStats({ snap, range, zoneKey: 'befallen', zoneExactKey: null }),
-    rangeStats({ snap, range, zoneKey: 'befallen' })
+    rangeStats({ snap, range, zoneKey: 'befallen' }),
   )
   const spans = { durationMs: HOUR, activeMs: HOUR, offlineMs: 0 }
   const args = { events: tieredDrops, t0: lo, t1: hi + TAIL_MS, spans, zoneKey: 'befallen' }
@@ -318,7 +388,10 @@ test('the DEFAULT is all tiers, and all tiers is byte-identical to the read befo
   // And `zoneAdmits` itself: no keys at all is "every zone", which is the unfiltered read.
   assert.ok(zoneAdmits('Befallen 2 (Adaptive)'))
   assert.ok(zoneAdmits('Befallen 2 (Adaptive)', 'befallen'))
-  assert.ok(!zoneAdmits('Befallen', 'befallen', zoneIdKey('Befallen 2 (Adaptive)')), 'exact narrows')
+  assert.ok(
+    !zoneAdmits('Befallen', 'befallen', zoneIdKey('Befallen 2 (Adaptive)')),
+    'exact narrows',
+  )
   assert.ok(!zoneAdmits('Lower Guk', 'befallen'), 'and the place key still decides the place')
 })
 
@@ -334,8 +407,14 @@ test('the CAPTION names what membership admitted, under both settings and under 
   assert.equal(of('zone', 'allTiers').caption, 'Befallen 2 (Adaptive), every tier')
   assert.equal(of('zone', 'exactTier').caption, 'Befallen 2 (Adaptive), this tier only')
   // The membership clause lands after the session phrase, so neither reads as "only this session".
-  assert.equal(of('zoneSession', 'allTiers').caption, 'Befallen 2 (Adaptive) this session, every tier')
-  assert.equal(of('zoneSession', 'exactTier').caption, 'Befallen 2 (Adaptive) this session, this tier only')
+  assert.equal(
+    of('zoneSession', 'allTiers').caption,
+    'Befallen 2 (Adaptive) this session, every tier',
+  )
+  assert.equal(
+    of('zoneSession', 'exactTier').caption,
+    'Befallen 2 (Adaptive) this session, this tier only',
+  )
   // The ZONE HALF alone, for the controls that print the range themselves (`SliceBar`).
   assert.equal(of('zone', 'exactTier').zoneCaption, 'Befallen 2 (Adaptive), this tier only')
   assert.equal(of('zoneSession', 'allTiers').zoneCaption, 'Befallen 2 (Adaptive), every tier')
@@ -346,10 +425,18 @@ test('a slice with no zone in it has no membership to state, whatever was picked
   const bounds = { lo, hi }
   for (const id of ['all', 'h1', 'custom'] as const) {
     const s = resolveSlice({ snap, bounds, id, zoneScope: 'exactTier' })
-    assert.equal(s.zoneScope, 'allTiers', `${id}: a membership with no subject resolves to the default`)
+    assert.equal(
+      s.zoneScope,
+      'allTiers',
+      `${id}: a membership with no subject resolves to the default`,
+    )
     assert.equal(s.zoneExactKey, null)
     assert.equal(s.zoneCaption, null, '…and the caption says nothing about tiers')
-    assert.deepEqual(s, resolveSlice({ snap, bounds, id }), '…so the pick cannot move an unzoned slice')
+    assert.deepEqual(
+      s,
+      resolveSlice({ snap, bounds, id }),
+      '…so the pick cannot move an unzoned slice',
+    )
   }
 })
 
@@ -391,7 +478,10 @@ function ownerScenarioSnap(): { snap: ProgressionSnap; lo: number; hi: number; l
 test('THIS TIER narrows the elapsed denominator, not just the row memberships', () => {
   const { snap, lo, hi, login } = ownerScenarioSnap()
   const bounds = { lo, hi }
-  assert.ok(availableSlices(snap, bounds).includes('zoneSession'), 'the fixture defines the slice the owner was on')
+  assert.ok(
+    availableSlices(snap, bounds).includes('zoneSession'),
+    'the fixture defines the slice the owner was on',
+  )
 
   const every = resolveSlice({ snap, bounds, id: 'zoneSession', zoneScope: 'allTiers' })
   const only = resolveSlice({ snap, bounds, id: 'zoneSession', zoneScope: 'exactTier' })
@@ -399,7 +489,11 @@ test('THIS TIER narrows the elapsed denominator, not just the row memberships', 
   // is a place, not a stretch of time), so the drawn window does not move — which is exactly why
   // the narrowing has to happen in the DENOMINATOR and not in `range`.
   assert.deepEqual(every.range, only.range)
-  assert.equal(every.range.t0, login, 'the range starts at the login, not at the first visit to the camp')
+  assert.equal(
+    every.range.t0,
+    login,
+    'the range starts at the login, not at the first visit to the camp',
+  )
 
   const stats = (s: ReturnType<typeof resolveSlice>): ReturnType<typeof rangeStats> =>
     rangeStats({ snap, range: s.range, zoneKey: s.zoneKey, zoneExactKey: s.zoneExactKey })
@@ -408,13 +502,21 @@ test('THIS TIER narrows the elapsed denominator, not just the row memberships', 
 
   // 25 minutes of open-world Befallen + the four the tiered visit has been running (the fifth pull
   // is the newest event, at `hi`, and the range's TAIL_MS is what holds it).
-  assert.equal(everyStats.durationMs, 29 * MIN + TAIL_MS, 'every tier: the whole camp, this session')
+  assert.equal(
+    everyStats.durationMs,
+    29 * MIN + TAIL_MS,
+    'every tier: the whole camp, this session',
+  )
   assert.equal(onlyStats.durationMs, 4 * MIN + TAIL_MS, 'this tier: the tiered visit alone')
   // …and the same narrowing reaches the two numbers a reader actually reads: the panel's header
   // duration is `durationMs`, and the `over 27m elapsed` clause is `basisMs('elapsed', …)`.
   assert.equal(basisMs('elapsed', everyStats), 29 * MIN + TAIL_MS)
   assert.equal(basisMs('elapsed', onlyStats), 4 * MIN + TAIL_MS)
-  assert.equal(basisMs('active', onlyStats), 4 * MIN + TAIL_MS, 'no qualifying gap in four minutes of pulls')
+  assert.equal(
+    basisMs('active', onlyStats),
+    4 * MIN + TAIL_MS,
+    'no qualifying gap in four minutes of pulls',
+  )
 
   // THE NARROWED DENOMINATOR IS EXACTLY THE TIER'S OWN VISITS — not a re-derivation that happens to
   // be smaller. The row `allTiers` already computed for the tiered spelling is the same number.
@@ -447,7 +549,7 @@ test('THE SURFACES OPEN ON THIS TIER, and the model default does not move with t
   assert.deepEqual(
     resolveSlice({ snap, bounds, id: 'zoneSession' }),
     resolveSlice({ snap, bounds, id: 'zoneSession', zoneScope: 'allTiers' }),
-    'saying nothing is still the unfiltered read, whatever the surfaces open on'
+    'saying nothing is still the unfiltered read, whatever the surfaces open on',
   )
 })
 
@@ -468,9 +570,14 @@ test('a camp the record spells ONE way answers identically under either membersh
   const every = resolveSlice({ snap, bounds, id: 'zone', zoneScope: 'allTiers' })
   const only = resolveSlice({ snap, bounds, id: 'zone', zoneScope: 'exactTier' })
   assert.deepEqual(
-    rangeStats({ snap, range: every.range, zoneKey: every.zoneKey, zoneExactKey: every.zoneExactKey }),
+    rangeStats({
+      snap,
+      range: every.range,
+      zoneKey: every.zoneKey,
+      zoneExactKey: every.zoneExactKey,
+    }),
     rangeStats({ snap, range: only.range, zoneKey: only.zoneKey, zoneExactKey: only.zoneExactKey }),
-    'the opening cannot hide a thing on a camp with no tiers'
+    'the opening cannot hide a thing on a camp with no tiers',
   )
   // The clause still differs, and both readings are honest: there IS only this tier here.
   assert.equal(every.caption, 'Lower Guk, every tier')
@@ -496,4 +603,3 @@ test('the membership is a CLOSED union, because it crosses a trust boundary', ()
   assert.equal(toggleZoneScope('exactTier'), 'allTiers')
   assert.equal(toggleZoneScope(toggleZoneScope(undefined)), ZONE_SCOPE_DEFAULT)
 })
-

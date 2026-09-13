@@ -152,7 +152,7 @@ export interface ReconcileResult {
  */
 function foldInventoryByKey(
   inv: Record<string, number>,
-  nameByKey: Record<string, string>
+  nameByKey: Record<string, string>,
 ): Record<string, number> {
   const invByKey: Record<string, number> = {}
   for (const [rawK, n] of Object.entries(inv)) {
@@ -425,7 +425,7 @@ function extraOffered(
   byTs: Record<number, Record<string, number>>,
   k: string,
   need: number,
-  inScope: (ts: number) => boolean
+  inScope: (ts: number) => boolean,
 ): number {
   let extra = 0
   for (const [tsKey, byItem] of Object.entries(byTs)) {
@@ -437,7 +437,7 @@ function extraOffered(
 function excessConsumption(
   quests: PoskyQuest[],
   offered: TurnInOffered,
-  inScope: (ts: number) => boolean
+  inScope: (ts: number) => boolean,
 ): Consumption {
   const consumed: Record<string, number> = {}
   const consumedBy: Record<string, string[]> = {}
@@ -471,14 +471,17 @@ function timesAfter(instants: TurnInInstants, at: number): (key: string) => numb
 function windowedConsumption(
   quests: PoskyQuest[],
   instants: TurnInInstants,
-  offered: TurnInOffered
+  offered: TurnInOffered,
 ): (at: number) => Consumption {
   const cache = new Map<number, Consumption>()
   return (at: number): Consumption => {
     let hit = cache.get(at)
     if (!hit) {
       const base = questConsumption(quests, timesAfter(instants, at))
-      hit = mergeConsumption(base, excessConsumption(quests, offered, (ts) => ts > at))
+      hit = mergeConsumption(
+        base,
+        excessConsumption(quests, offered, (ts) => ts > at),
+      )
       cache.set(at, hit)
     }
     return hit
@@ -737,15 +740,15 @@ interface RowInputs {
 function overrideWitness(
   k: string,
   statement: ItemCountOverride,
-  x: RowInputs
+  x: RowInputs,
 ): NonNullable<Witnesses['override']> {
   return {
     statement,
     base: Math.max(
       0,
-      statement.count + (x.overrideSince[k] ?? 0) - (x.destroyedSinceOverride[k] ?? 0)
+      statement.count + (x.overrideSince[k] ?? 0) - (x.destroyedSinceOverride[k] ?? 0),
     ),
-    consumed: x.windowed(statement.setAt).consumed[k] ?? 0
+    consumed: x.windowed(statement.setAt).consumed[k] ?? 0,
   }
 }
 
@@ -757,12 +760,12 @@ function witnessesFor(k: string, x: RowInputs): Witnesses {
     consumed: x.all.consumed[k] ?? 0,
     invDestroyed: x.destroyedSinceDump[k] ?? 0,
     invConsumed: x.dumpWindow?.consumed[k] ?? 0,
-    invSince: x.lootSinceDump[k] ?? 0
+    invSince: x.lootSinceDump[k] ?? 0,
   }
   if (x.rebaseline) {
     w.rebaseline = {
       base: dumpWitness(w.inv, x.rebaseline.since[k] ?? 0, w.invDestroyed),
-      consumed: x.rebaseline.consumption.consumed[k] ?? 0
+      consumed: x.rebaseline.consumption.consumed[k] ?? 0,
     }
   }
   const statement = x.overrides[k]
@@ -792,7 +795,7 @@ function buildRows(x: RowInputs): ReconcileResult {
     // A statement about an item nobody has ever looted or dumped is still a statement, and the
     // quest counting reads `net` — so its key has to be in this set or the count it states would
     // simply never be computed.
-    ...Object.keys(x.overrides)
+    ...Object.keys(x.overrides),
   ])
   for (const k of keys) {
     const w = witnessesFor(k, x)
@@ -834,7 +837,7 @@ function buildRows(x: RowInputs): ReconcileResult {
       consumed: spent,
       net: n,
       consumedBy: spent > 0 ? blameFor(k, w, x) : [],
-      ...(w.override ? { override: w.override.statement } : {})
+      ...(w.override ? { override: w.override.statement } : {}),
     })
   }
   rows.sort((a, b) => b.net - a.net || a.name.localeCompare(b.name))
@@ -854,7 +857,7 @@ function buildRows(x: RowInputs): ReconcileResult {
  */
 function dumpTurnInWindow(
   input: ReconcileInput,
-  windowed: (at: number) => Consumption
+  windowed: (at: number) => Consumption,
 ): { at: number | null; window: Consumption | null } {
   const at = input.countSource === 'log' ? null : (input.rebaselineAt ?? null)
   return { at, window: at === null ? null : windowed(at) }
@@ -878,7 +881,11 @@ interface DumpAnchored {
  * rebaseline baseline's, because the rebaseline baseline IS the dump at the dump's instant — a
  * click-time instant is as wrong against one as against the other.
  */
-function dumpAnchored(input: ReconcileInput, quests: PoskyQuest[], windowed: (at: number) => Consumption): DumpAnchored {
+function dumpAnchored(
+  input: ReconcileInput,
+  quests: PoskyQuest[],
+  windowed: (at: number) => Consumption,
+): DumpAnchored {
   const detected = input.detectedTurnInInstants
   // The same object as `windowed` whenever the caller states no provenance, so the ordinary case
   // still pays for one pass per instant rather than two. `turnInOffered` is passed through either
@@ -898,7 +905,7 @@ function dumpAnchored(input: ReconcileInput, quests: PoskyQuest[], windowed: (at
     // means "as dumped" and says so on its label, `rebaseline` carries the same loot inside its own
     // baseline, and `log` never opens the file. An undatable dump is no window at all, exactly as
     // for the two discounts.
-    lootSinceDump: input.countSource === 'both' && dumpAt !== null ? since : {}
+    lootSinceDump: input.countSource === 'both' && dumpAt !== null ? since : {},
   }
 }
 
@@ -934,7 +941,7 @@ export function reconcile(input: ReconcileInput): ReconcileResult {
     questConsumption(quests, (k) => input.turnIns[k] ?? 0),
     // ALL-TIME owes the over-hand-in excess too, unwindowed — every detected trade, regardless of
     // when it happened.
-    excessConsumption(quests, turnInOffered, () => true)
+    excessConsumption(quests, turnInOffered, () => true),
   )
   const dump = dumpAnchored(input, quests, windowed)
 
@@ -951,6 +958,6 @@ export function reconcile(input: ReconcileInput): ReconcileResult {
     destroyedSinceOverride: input.destroyedSinceOverride ?? {},
     lootSinceDump: dump.lootSinceDump,
     dumpWindow: dump.dumpWindow,
-    windowed
+    windowed,
   })
 }

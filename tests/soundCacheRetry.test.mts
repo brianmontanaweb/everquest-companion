@@ -26,12 +26,12 @@ import assert from 'node:assert/strict'
 import {
   getSoundUrl,
   invalidateSoundCaches,
-  playSound
+  playSound,
 } from '../src/renderer/src/features/alerts/soundCache'
 import {
   noteAudioPlayed,
   reportAudioFailure,
-  resetAudioHealth
+  resetAudioHealth,
 } from '../src/renderer/src/features/alerts/audioHealth'
 import { AUDIO_FAILURE_THROTTLE_MS } from '../src/shared/audioFailureLog'
 
@@ -84,8 +84,8 @@ function install(): void {
       },
       reportError: (r: ErrorReport): void => {
         reports.push(r)
-      }
-    }
+      },
+    },
   }
   Object.assign(globalThis, { window: win, Audio: StubAudio })
 }
@@ -128,7 +128,7 @@ test('C4 two alerts firing together share ONE in-flight fetch, and both still re
   script = ['throw']
   const [x, y] = await Promise.all([
     getSoundUrl('afewgoodmen', 'kaffee_hi'),
-    getSoundUrl('afewgoodmen', 'kaffee_hi')
+    getSoundUrl('afewgoodmen', 'kaffee_hi'),
   ])
   assert.equal(x, null)
   assert.equal(y, null)
@@ -160,7 +160,10 @@ test('L1 THE DEFECT: a play() rejection reaches errors.log, carrying the error n
   assert.equal(reports.length, 1)
   assert.equal(reports[0]?.source, 'renderer:alertAudio')
   assert.equal(reports[0]?.name, 'NotSupportedError')
-  assert.match(reports[0]?.message ?? '', /'afewgoodmen\/kaffee_hi' failed to play: NotSupportedError/)
+  assert.match(
+    reports[0]?.message ?? '',
+    /'afewgoodmen\/kaffee_hi' failed to play: NotSupportedError/,
+  )
 })
 
 test('L2 a failed FETCH reaches errors.log too — silence never has an unnamed cause', async () => {

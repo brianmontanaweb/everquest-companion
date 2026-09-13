@@ -42,7 +42,7 @@ import {
   parseLoc,
   saveLocMarkers,
   setLocMarker,
-  type LocStore
+  type LocStore,
 } from '../src/renderer/src/features/maps/locMarker'
 import { fit, mapFromLoc, project } from '../src/renderer/src/features/maps/mapGeometry'
 import { MOB_CATALOG } from '../src/renderer/src/features/mobs/mobSearch'
@@ -59,7 +59,7 @@ function fakeStore(seed: Record<string, string> = {}): LocStore & { data: Record
     getItem: (k) => data[k] ?? null,
     setItem: (k, v) => {
       data[k] = v
-    }
+    },
   }
 }
 
@@ -81,7 +81,11 @@ function refusal(text: string): string {
 
 test('parseLoc reads the game sentence verbatim — /loc prints NORTH/SOUTH first, then west/east', () => {
   // Verbatim from scripts/sources/cache/quests/page-15280.wikitext (a player's own pasted /loc).
-  assert.deepEqual(loc('Your Location is -192.19, -129.81, 3.26'), { ns: -192.19, ew: -129.81, z: 3.26 })
+  assert.deepEqual(loc('Your Location is -192.19, -129.81, 3.26'), {
+    ns: -192.19,
+    ew: -129.81,
+    z: 3.26,
+  })
   // THE ORDER, stated as a fact rather than as a shape: the FIRST number is the north/south one.
   const yther = loc('Your Location is 155, -411, 15')
   assert.equal(yther.ns, 155)
@@ -98,7 +102,10 @@ test('parseLoc accepts the slack a paste really carries', () => {
   // The sentence's own trailing period (page-15178 states one mid-paragraph).
   assert.deepEqual(loc('Your Location is 275.07, -3801.88, -366.59.'), want)
   // The log's stamp, in case a future line is ever pasted out of the log file itself.
-  assert.deepEqual(loc('[Wed Aug 06 18:45:55 2026] Your Location is 275.07, -3801.88, -366.59'), want)
+  assert.deepEqual(
+    loc('[Wed Aug 06 18:45:55 2026] Your Location is 275.07, -3801.88, -366.59'),
+    want,
+  )
   // The command as typed, and a lowercase spelling of the sentence.
   assert.deepEqual(loc('/loc 275.07, -3801.88, -366.59'), want)
   assert.deepEqual(loc('your location is 275.07, -3801.88, -366.59'), want)
@@ -118,7 +125,10 @@ test('parseLoc refuses rather than guessing, and names what it choked on', () =>
   assert.match(refusal('Your Location is 275.07, north, -366.59'), /“north”/)
   // The wiki sentence with its surrounding prose still attached — the numbers ARE in there, and
   // fishing them out of arbitrary text is precisely the guess this parser will not make.
-  assert.match(refusal('Your Location is 275.07, -3801.88, -366.59. This is just North of the ruins'), /isn’t a number/)
+  assert.match(
+    refusal('Your Location is 275.07, -3801.88, -366.59. This is just North of the ruins'),
+    /isn’t a number/,
+  )
   // Wrong counts, both directions. A single number is not a position and four is not a /loc.
   assert.match(refusal('275.07'), /a \/loc is three/)
   assert.match(refusal('1, 2, 3, 4'), /a \/loc is three/)
@@ -130,7 +140,14 @@ test('parseLoc refuses rather than guessing, and names what it choked on', () =>
 })
 
 test('parseLoc refuses the shapes that LOOK numeric but are not', () => {
-  for (const bad of ['1e5, 2, 3', 'NaN, 2, 3', 'Infinity, 2, 3', '1.2.3, 2, 3', '--5, 2, 3', '5-, 2, 3'])
+  for (const bad of [
+    '1e5, 2, 3',
+    'NaN, 2, 3',
+    'Infinity, 2, 3',
+    '1.2.3, 2, 3',
+    '--5, 2, 3',
+    '5-, 2, 3',
+  ])
     assert.ok(!parseLoc(bad).ok, bad)
 })
 
@@ -164,12 +181,16 @@ test('JOS-98 THE LANDMARK: a typed /loc lands on the map file’s own label for 
   const onMap = labelled(OASIS_BREWALL_NPCS, 'oasis')
   for (const [page, label] of [
     ['Transan', 'Transan_(Weapons)'],
-    ['Isslana', 'Isslana_(Merchant)']
+    ['Isslana', 'Isslana_(Merchant)'],
   ] as const) {
     const stated = wikiLoc(page)
     // The user types what the wiki (or the game) states — the sentence, not the numbers.
     const typed = loc(`Your Location is ${String(stated.ns)}, ${String(stated.ew)}, 0`)
-    assert.deepEqual(typed, { ...stated, z: 0 }, `${page}: the sentence parses to the stated reading`)
+    assert.deepEqual(
+      typed,
+      { ...stated, z: 0 },
+      `${page}: the sentence parses to the stated reading`,
+    )
 
     const placed = mapFromLoc(typed)
     const drawn = onMap.get(label)
@@ -195,10 +216,13 @@ test('JOS-98 …and a wrong order or a flipped sign would miss by hundreds of un
   for (const [name, wrong] of [
     ['x/y swapped', swapped],
     ['neither axis negated', unflipped],
-    ['only x negated', halfFlipped]
+    ['only x negated', halfFlipped],
   ] as const) {
     const off = Math.hypot(wrong.x - right.x, wrong.y - right.y)
-    assert.ok(off > 500, `${name} would be ${String(Math.round(off))} map units away — not a rounding difference`)
+    assert.ok(
+      off > 500,
+      `${name} would be ${String(Math.round(off))} map units away — not a rounding difference`,
+    )
   }
 })
 
@@ -300,8 +324,8 @@ test('a corrupt entry is dropped ALONE — one bad zone cannot take the others w
       partial: { ns: 1 },
       nulled: null,
       wrong: 'nope',
-      '': { ns: 1, ew: 2, z: 3 }
-    })
+      '': { ns: 1, ew: 2, z: 3 },
+    }),
   })
   assert.deepEqual(loadLocMarkers(store), { oasis: { ns: 613, ew: 51, z: 0 } })
 })

@@ -42,18 +42,23 @@ const readSource = (path: string): string => readFileSync(path, 'utf8').replace(
 
 test('the shard is RANDOM, and no function of the analyticsId reaches a counter table', () => {
   const src = readFileSync(join(ROOT, 'infra', 'lambda', 'telemetry.ts'), 'utf8')
-  assert.match(src, /function pickShard\(\): number \{\s*return Math\.floor\(Math\.random\(\) \* SHARD_COUNT\)/)
+  assert.match(
+    src,
+    /function pickShard\(\): number \{\s*return Math\.floor\(Math\.random\(\) \* SHARD_COUNT\)/,
+  )
   // The shard reaches SQL as a bound parameter of writeCounters and nowhere else, and the only
   // value that produces it is the call above.
   assert.equal((src.match(/pickShard\(\)/g) ?? []).length, 2, 'declared once, called once')
   // NOTHING in this file may hash, digest or otherwise fold an id into a shard.
   assert.equal(/createHash|sha256|md5|hashCode/.test(src), false, 'no hashing primitive at all')
-  const shardLines = src.split('\n').filter((l) => /shard/i.test(l) && !l.trimStart().startsWith('*'))
+  const shardLines = src
+    .split('\n')
+    .filter((l) => /shard/i.test(l) && !l.trimStart().startsWith('*'))
   for (const line of shardLines) {
     assert.equal(
       /analyticsId|analytics_id|installId/.test(line),
       false,
-      `the shard may never be derived from an id: ${line}`
+      `the shard may never be derived from an id: ${line}`,
     )
   }
 })
@@ -86,7 +91,10 @@ test('the merge views exist, sum both legs, and CAST the sum back to bigint', ()
   assert.equal((sql.match(/SUM\(n\)::bigint AS n/g) ?? []).length, 2)
   // Both legs, and the frozen one first — the view is what makes the cutover DAY, whose counters
   // live half in each table, invisible to every reader.
-  assert.match(sql, /FROM usage_daily\n\s*UNION ALL\n\s*SELECT day, cohort, metric, dim, n FROM usage_daily_sharded/)
+  assert.match(
+    sql,
+    /FROM usage_daily\n\s*UNION ALL\n\s*SELECT day, cohort, metric, dim, n FROM usage_daily_sharded/,
+  )
   assert.match(sql, /FROM perf_daily\n\s*UNION ALL/)
 })
 

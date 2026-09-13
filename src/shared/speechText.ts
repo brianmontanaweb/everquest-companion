@@ -42,7 +42,7 @@ import type {
   FiredAlert,
   SpeechEngine,
   SpeechMode,
-  VoicePrefs
+  VoicePrefs,
 } from './alertTypes'
 import { applyCaptures } from './alertCaptures'
 import { parseSpellRank } from './spellLines'
@@ -61,7 +61,7 @@ export const SPEECH_MODES = [
   'alertName',
   'spellName',
   'spellFirstWord',
-  'custom'
+  'custom',
 ] as const satisfies readonly SpeechMode[]
 
 /**
@@ -70,14 +70,21 @@ export const SPEECH_MODES = [
  * carrying the retired 'both' still round-trips instead of being coerced into a guess.
  * Exhaustive by construction.
  */
-export const ALERT_AUDIO_ACTIONS = ['sound', 'speech', 'both'] as const satisfies readonly AlertAudio[]
+export const ALERT_AUDIO_ACTIONS = [
+  'sound',
+  'speech',
+  'both',
+] as const satisfies readonly AlertAudio[]
 
 /**
  * Every audio action a PICKER offers — sound, or spoken (JOS-362, owner: "also remove sound +
  * spoken - too much garbage"). Exhaustive over `AlertAudioChoice` by construction, so retiring or
  * adding a channel is one edit to the type.
  */
-export const ALERT_AUDIO_CHOICES = ['sound', 'speech'] as const satisfies readonly AlertAudioChoice[]
+export const ALERT_AUDIO_CHOICES = [
+  'sound',
+  'speech',
+] as const satisfies readonly AlertAudioChoice[]
 
 /**
  * WHAT A STORED `audio` MEANS TODAY — the one place the retired 'both' turns back into a channel
@@ -128,7 +135,7 @@ export const DEFAULT_VOICE_PREFS: VoicePrefs = {
   engine: 'system',
   voiceId: null,
   rate: 1,
-  volume: 1
+  volume: 1,
 }
 
 /** Rate bounds. Below 0.5 speech drags past the alert's usefulness; above 2 it is a chipmunk. */
@@ -161,7 +168,7 @@ export function normalizeVoicePrefs(value: unknown): VoicePrefs {
     // null (never undefined) is the stated "use whatever voice the engine defaults to".
     voiceId: typeof voiceId === 'string' && voiceId.trim() ? voiceId : null,
     rate: clampNumber(raw.rate, MIN_SPEECH_RATE, MAX_SPEECH_RATE, DEFAULT_VOICE_PREFS.rate),
-    volume: clampNumber(raw.volume, 0, 1, DEFAULT_VOICE_PREFS.volume)
+    volume: clampNumber(raw.volume, 0, 1, DEFAULT_VOICE_PREFS.volume),
   }
 }
 
@@ -200,7 +207,11 @@ function spellBase(spell: string): string {
  * Resolve ONE mode against the firing, or null when this mode cannot answer (a spell mode with
  * no spell, an empty custom phrase). Null is what the caller turns into the alertName fallback.
  */
-function resolveMode(mode: SpeechMode, speech: AlertSpeech, firing: SpeechFiring | null): string | null {
+function resolveMode(
+  mode: SpeechMode,
+  speech: AlertSpeech,
+  firing: SpeechFiring | null,
+): string | null {
   // 'custom' is the ONLY mode a `{token}` can appear in, because it is the only one whose text
   // the def's AUTHOR wrote — the other three resolve to values the app owns (the def's name, a
   // name out of the committed spell DB) and have no template to substitute into. Substitution

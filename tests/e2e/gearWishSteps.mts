@@ -73,7 +73,8 @@ const addedOf = (key: string): string => `${wishOf(key)}[data-wished="true"]`
 const groupRowOf = (key: string): string =>
   `[data-testid="wishlist-group"] [data-testid="wishlist-row"][data-item="${key}"]`
 
-const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> => settle(fn, (ok) => ok, { timeoutMs: ms })
+const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> =>
+  settle(fn, (ok) => ok, { timeoutMs: ms })
 
 interface Pick {
   key: string
@@ -123,7 +124,7 @@ function measureWishCell(page: Page, key: string): Promise<CellWidths | null> {
       cell: Math.round(cell.getBoundingClientRect().width),
       control: Math.round(control.getBoundingClientRect().width),
       name: Math.round(name.getBoundingClientRect().width),
-      label: (control as HTMLElement).innerText.replace(/\s+/g, ' ').trim()
+      label: (control as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
     }
   }, wishOf(key))
 }
@@ -137,10 +138,18 @@ function measureWishCell(page: Page, key: string): Promise<CellWidths | null> {
  * belongs — visible on every run, failing none of them.
  */
 function stepGearWishWidth(w: CellWidths | null): void {
-  if (!check('the wish control shares the Item cell with the name, so both can be measured', w !== null) || w === null) {
+  if (
+    !check(
+      'the wish control shares the Item cell with the name, so both can be measured',
+      w !== null,
+    ) ||
+    w === null
+  ) {
     return
   }
-  note(`wish control "${w.label}" — ${String(w.control)}px of a ${String(w.cell)}px Item column · name ${String(w.name)}px`)
+  note(
+    `wish control "${w.label}" — ${String(w.control)}px of a ${String(w.cell)}px Item column · name ${String(w.name)}px`,
+  )
 }
 
 /**
@@ -154,11 +163,19 @@ function stepGearWishWidth(w: CellWidths | null): void {
 export async function stepGearWish(page: Page): Promise<void> {
   // The Owned column is the instrument the pick reads, so wait for the join rather than racing it.
   // It is a staged dump on disk at launch (the host spec's `/outputfile` carve-out), so it arrives.
-  if (!check('the gear table has its ownership column before the wish step reads it', await until(async () => (await countOf(page, OWNED_HEADER)) > 0, 30_000))) {
+  if (
+    !check(
+      'the gear table has its ownership column before the wish step reads it',
+      await until(async () => (await countOf(page, OWNED_HEADER)) > 0, 30_000),
+    )
+  ) {
     return
   }
   const pick = await pickUnowned(page)
-  check('an in-era row that neither the dump nor the log has seen is on screen to want', pick !== null)
+  check(
+    'an in-era row that neither the dump nor the log has seen is on screen to want',
+    pick !== null,
+  )
   if (pick === null) return
   const { key, name } = pick
   note(`wishing "${name}" (${key})`)
@@ -168,31 +185,59 @@ export async function stepGearWish(page: Page): Promise<void> {
   //    had none.
   const present = await until(async () => (await countOf(page, wishOf(key))) === 1, 20_000)
   if (!check('every gear search row carries an add-to-wish-list control', present)) return
-  check('…and it reads UNADDED, because nothing is wished yet', (await countOf(page, addedOf(key))) === 0)
+  check(
+    '…and it reads UNADDED, because nothing is wished yet',
+    (await countOf(page, addedOf(key))) === 0,
+  )
   stepGearWishWidth(await measureWishCell(page, key))
 
   // 2. ONE CLICK, NO DIALOG. The control's own state is the whole acknowledgement.
   await page.click(wishOf(key), { timeout: 15_000 })
-  check('clicking it adds the wish and the control says so on the spot', await until(async () => (await countOf(page, addedOf(key))) === 1, 15_000))
+  check(
+    'clicking it adds the wish and the control says so on the spot',
+    await until(async () => (await countOf(page, addedOf(key))) === 1, 15_000),
+  )
 
   // 3. THE OTHER TAB. A sibling of this one, so the trip is a click — and it unmounts this view,
   //    which is what makes the row it draws a fact about the STORE rather than about React state.
   await page.click(WISH_TAB, { timeout: 15_000 })
-  if (!check('the Wish list tab mounts', await until(async () => (await countOf(page, WISH_VIEW)) > 0, 30_000))) return
+  if (
+    !check(
+      'the Wish list tab mounts',
+      await until(async () => (await countOf(page, WISH_VIEW)) > 0, 30_000),
+    )
+  )
+    return
   const routed = await until(async () => (await countOf(page, groupRowOf(key))) === 1, 20_000)
   check(
     'the wish written from a gear row arrives in the wish list`s zone groups',
     routed,
-    `${String(await countOf(page, groupRowOf(key)))} route rows for ${key}`
+    `${String(await countOf(page, groupRowOf(key)))} route rows for ${key}`,
   )
-  check('…exactly once — the document dedupes by item key', (await countOf(page, `[data-testid="wishlist-row"][data-item="${key}"]`)) === 1)
+  check(
+    '…exactly once — the document dedupes by item key',
+    (await countOf(page, `[data-testid="wishlist-row"][data-item="${key}"]`)) === 1,
+  )
 
   // 4. BACK, AND THE CONTROL STILL READS ADDED. The view was destroyed and rebuilt in between, so
   //    this is the store answering, not a component remembering.
   await page.click(GEAR_TAB, { timeout: 15_000 })
-  if (!check('the Gear tab comes back', await until(async () => (await countOf(page, GEAR_VIEW)) > 0, 30_000))) return
+  if (
+    !check(
+      'the Gear tab comes back',
+      await until(async () => (await countOf(page, GEAR_VIEW)) > 0, 30_000),
+    )
+  )
+    return
   const back = await until(async () => (await countOf(page, addedOf(key))) === 1, 20_000)
-  if (!check('…with the row it was left on, still reading ADDED after the remount', back, `looking for ${key}`)) return
+  if (
+    !check(
+      '…with the row it was left on, still reading ADDED after the remount',
+      back,
+      `looking for ${key}`,
+    )
+  )
+    return
   note(`added-state wording: "${(await measureWishCell(page, key))?.label ?? '(gone)'}"`)
 
   // 5. THE SECOND CLICK REMOVES IT (JOS-343). This is the claim that replaced JOS-335's "a second
@@ -200,18 +245,27 @@ export async function stepGearWish(page: Page): Promise<void> {
   await page.click(wishOf(key), { timeout: 15_000 })
   check(
     'a second click takes the wish off, and the control reads UNADDED again',
-    await until(async () => (await countOf(page, addedOf(key))) === 0, 15_000)
+    await until(async () => (await countOf(page, addedOf(key))) === 0, 15_000),
   )
 
   // 6. …AND IT REALLY LEFT THE DOCUMENT, proven where the add was proven: the route no longer has
   //    a row for it. `removeWish` is the Wish list tab's own delete, so this is one deletion shape.
   if (!routed) return
   await page.click(WISH_TAB, { timeout: 15_000 })
-  if (!check('the Wish list tab mounts again', await until(async () => (await countOf(page, WISH_VIEW)) > 0, 30_000))) return
+  if (
+    !check(
+      'the Wish list tab mounts again',
+      await until(async () => (await countOf(page, WISH_VIEW)) > 0, 30_000),
+    )
+  )
+    return
   check(
     'the row the second click removed is gone from the route entirely',
-    await until(async () => (await countOf(page, `[data-testid="wishlist-row"][data-item="${key}"]`)) === 0, 20_000),
-    `${String(await countOf(page, groupRowOf(key)))} route rows left for ${key}`
+    await until(
+      async () => (await countOf(page, `[data-testid="wishlist-row"][data-item="${key}"]`)) === 0,
+      20_000,
+    ),
+    `${String(await countOf(page, groupRowOf(key)))} route rows left for ${key}`,
   )
 
   // Hand the Gear tab back the way the host spec expects to find it.
@@ -237,22 +291,54 @@ export async function stepGearWish(page: Page): Promise<void> {
  */
 async function stepRemovedOnTheOtherTab(page: Page, key: string): Promise<void> {
   await page.click(wishOf(key), { timeout: 15_000 })
-  if (!check('the row goes back on the wish list, so there is something to remove from the other tab', await until(async () => (await countOf(page, addedOf(key))) === 1, 15_000))) {
+  if (
+    !check(
+      'the row goes back on the wish list, so there is something to remove from the other tab',
+      await until(async () => (await countOf(page, addedOf(key))) === 1, 15_000),
+    )
+  ) {
     return
   }
 
   await page.click(WISH_TAB, { timeout: 15_000 })
-  if (!check('the Wish list tab mounts for the cross-tab removal', await until(async () => (await countOf(page, groupRowOf(key))) === 1, 30_000))) return
-  await page.click(`[data-testid="wishlist-row"][data-item="${key}"] [data-testid="wishlist-remove"]`, { timeout: 15_000 })
-  if (!check("the wish list's own remove takes the row off the route", await until(async () => (await countOf(page, `[data-testid="wishlist-row"][data-item="${key}"]`)) === 0, 15_000))) {
+  if (
+    !check(
+      'the Wish list tab mounts for the cross-tab removal',
+      await until(async () => (await countOf(page, groupRowOf(key))) === 1, 30_000),
+    )
+  )
+    return
+  await page.click(
+    `[data-testid="wishlist-row"][data-item="${key}"] [data-testid="wishlist-remove"]`,
+    { timeout: 15_000 },
+  )
+  if (
+    !check(
+      "the wish list's own remove takes the row off the route",
+      await until(
+        async () => (await countOf(page, `[data-testid="wishlist-row"][data-item="${key}"]`)) === 0,
+        15_000,
+      ),
+    )
+  ) {
     return
   }
 
   await page.click(GEAR_TAB, { timeout: 15_000 })
-  if (!check('the Gear tab comes back after the cross-tab removal', await until(async () => (await countOf(page, GEAR_VIEW)) > 0, 30_000))) return
+  if (
+    !check(
+      'the Gear tab comes back after the cross-tab removal',
+      await until(async () => (await countOf(page, GEAR_VIEW)) > 0, 30_000),
+    )
+  )
+    return
   check(
     '…and the gear row reads UNADDED — a wish removed on the other tab is removed on this one',
-    await until(async () => (await countOf(page, wishOf(key))) === 1 && (await countOf(page, addedOf(key))) === 0, 20_000),
-    `${String(await countOf(page, addedOf(key)))} added-state controls left for ${key}`
+    await until(
+      async () =>
+        (await countOf(page, wishOf(key))) === 1 && (await countOf(page, addedOf(key))) === 0,
+      20_000,
+    ),
+    `${String(await countOf(page, addedOf(key)))} added-state controls left for ${key}`,
   )
 }

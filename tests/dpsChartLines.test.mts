@@ -39,7 +39,7 @@ import {
   placeMarkers,
   xAtT,
   yAt,
-  type DpsChart
+  type DpsChart,
 } from '../src/renderer/src/features/combat/dpsChart'
 
 const BUCKET = 1000
@@ -69,7 +69,7 @@ function mkSeries(): DpsSeries {
     hasInc: true,
     hasAny: true,
     durationMs: YOU.length * BUCKET,
-    estimated: false
+    estimated: false,
   }
 }
 
@@ -101,7 +101,7 @@ function mkView(markers: TimelineMarker[]): TimelineView {
     downsampled: false,
     rawCount: 0,
     totalCount: 0,
-    truncated: false
+    truncated: false,
   }
 }
 
@@ -133,7 +133,7 @@ test('hiding a line does not re-time the chart — the axis, the vertices and th
   const all = mkChart()
   const markers: TimelineMarker[] = [
     { t: 0, kind: 'stance', label: 'Berserker' },
-    { t: 1400, kind: 'slow', label: 'a froglok tad' }
+    { t: 1400, kind: 'slow', label: 'a froglok tad' },
   ]
   const before = placeMarkers(mkView(markers), all)
   for (const hidden of [['out'], ['pet', 'inc'], ['out', 'pet', 'group']] as ChartLineKey[][]) {
@@ -154,7 +154,11 @@ test('hiding a line does not re-time the chart — the axis, the vertices and th
 
 test('the Y scale is measured over the DRAWN lines, so what is left fills the plot', () => {
   const all = mkChart()
-  assert.equal(all.yMax, Math.max(...OUT), 'with everything visible the outgoing peak sets the ceiling')
+  assert.equal(
+    all.yMax,
+    Math.max(...OUT),
+    'with everything visible the outgoing peak sets the ceiling',
+  )
 
   // Hide the headline curve and the ceiling drops to the tallest line still on screen — the group
   // at 80, an inch off the floor at the old scale.
@@ -162,7 +166,10 @@ test('the Y scale is measured over the DRAWN lines, so what is left fills the pl
   assert.equal(noOut.yMax, Math.max(...GROUP))
   const group = parsePts(noOut.groupLine)
   assert.equal(group[1].y, yAt(noOut.yMax, Math.max(...GROUP)))
-  assert.ok(Math.abs(group[1].y - PAD_T) < 1e-9, 'the tallest visible sample now reaches the top of the plot')
+  assert.ok(
+    Math.abs(group[1].y - PAD_T) < 1e-9,
+    'the tallest visible sample now reaches the top of the plot',
+  )
 
   // Hiding a line that never set the ceiling changes nothing about the scale.
   assert.equal(mkChart(['inc']).yMax, all.yMax)
@@ -206,7 +213,10 @@ test('every line hidden still builds a chart — with a time base, and no line o
   // markers a hidden plot still holds are placed on the same X they always were.
   assert.equal(chart.t0, 0)
   assert.equal(chart.t1, YOU.length * BUCKET)
-  assert.equal(placeMarkers(mkView([{ t: 500, kind: 'coat', label: 'Neurotoxic' }]), chart).length, 1)
+  assert.equal(
+    placeMarkers(mkView([{ t: 500, kind: 'coat', label: 'Neurotoxic' }]), chart).length,
+    1,
+  )
   // A degenerate scale must still be a usable number rather than 0 or NaN — `yAt` divides by it.
   assert.ok(chart.yMax > 0)
   assert.ok(Number.isFinite(yAt(chart.yMax, 0)))
@@ -218,7 +228,8 @@ test('all-but-one hidden draws that one, at its own full height', () => {
   assert.equal(hasDrawnLine(chart), true)
   assert.equal(chart.outLine, null)
   assert.equal(chart.yMax, Math.max(...INC))
-  for (const p of parsePts(chart.incLine)) assert.ok(Math.abs(p.y - PAD_T) < 1e-9, 'a flat line at its own peak')
+  for (const p of parsePts(chart.incLine))
+    assert.ok(Math.abs(p.y - PAD_T) < 1e-9, 'a flat line at its own peak')
 })
 
 // ── 6. hidden marker kinds ───────────────────────────────────────────────────────────────
@@ -228,14 +239,14 @@ test('a hidden marker kind comes off the ticks, and stays in the set the legend 
   const markers: TimelineMarker[] = [
     { t: 100, kind: 'coat', label: 'Neurotoxic' },
     { t: 900, kind: 'slow', label: 'a froglok tad' },
-    { t: 1500, kind: 'coat', label: 'Neurotoxic' }
+    { t: 1500, kind: 'coat', label: 'Neurotoxic' },
   ]
   const placed = placeMarkers(mkView(markers), chart)
   assert.equal(placed.length, 3, 'placeMarkers still answers for the legend — hidden is not gone')
   const drawn = drawnMarkers(placed, ['coat'])
   assert.deepEqual(
     drawn.map(({ m }) => m.kind),
-    ['slow']
+    ['slow'],
   )
   // The survivors keep their own X: filtering is not re-placing.
   assert.equal(drawn[0].x, placed[1].x)

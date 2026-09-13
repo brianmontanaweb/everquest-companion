@@ -75,7 +75,7 @@ const SET_CATEGORIES: ReadonlySet<string> = new Set([
   'evacuation',
   'tradeskill-summon',
   'poison-utility',
-  'poison-combat'
+  'poison-combat',
 ])
 
 interface ResearchMember {
@@ -155,7 +155,7 @@ function linesOf(file: ResearchFile): SpellLine[] {
       name: line.name,
       category,
       members,
-      ladder: !SET_CATEGORIES.has(category.toLowerCase())
+      ladder: !SET_CATEGORIES.has(category.toLowerCase()),
     })
   }
   return out.sort((a, b) => a.id.localeCompare(b.id))
@@ -180,7 +180,7 @@ function build(): { file: SpellLinesFile; stats: string[] } {
     const ladders = lines.filter((l) => l.ladder).length
     stats.push(
       `${cls}  ${String(lines.length).padStart(3)} lines (${String(ladders)} ladders)  ` +
-        `${String(members).padStart(4)} members`
+        `${String(members).padStart(4)} members`,
     )
   }
   // A FIXED STAMP, not `new Date()`: the output must be byte-identical across runs so a diff means

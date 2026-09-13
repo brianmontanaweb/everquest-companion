@@ -136,7 +136,7 @@ export function removeWish(list: WishList, itemKey: string): WishList {
   return {
     ...list,
     entries: list.entries.filter((e) => e.itemKey !== itemKey),
-    clearedDone: list.clearedDone.filter((k) => k !== itemKey)
+    clearedDone: list.clearedDone.filter((k) => k !== itemKey),
   }
 }
 
@@ -196,7 +196,7 @@ export function seedWishes(planned: readonly PlannedWish[], now: number): WishEn
       effect: p.effect,
       socket: p.socket,
       addedAt: now,
-      source: 'planImport'
+      source: 'planImport',
     })
   }
   return out

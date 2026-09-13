@@ -37,7 +37,12 @@
 // block at all (an empty block would claim "we checked, there's nothing" — we can't know that).
 
 import { type JSX, useEffect, useRef, useState } from 'react'
-import { MODULE_WORLD_CHANGED, type FeedEvent, type FeedSnap, type ModuleChanged } from '@shared/types'
+import {
+  MODULE_WORLD_CHANGED,
+  type FeedEvent,
+  type FeedSnap,
+  type ModuleChanged,
+} from '@shared/types'
 import { CONSIDER_FACTION_COLOR } from '@shared/logEvents'
 import { wikiPageUrl } from '@shared/wiki'
 import { formatTime } from '../lib/formatDate'
@@ -60,7 +65,7 @@ const KIND_STYLE: Record<FeedEvent['kind'], { color: string; glyph: string }> = 
   alert: { color: '#d9b25f', glyph: '!' },
   loot: { color: '#6fb3d2', glyph: '◆' },
   quest: { color: '#5fbf72', glyph: '✦' },
-  con: { color: '#a98bf0', glyph: '◎' }
+  con: { color: '#a98bf0', glyph: '◎' },
 }
 
 /**
@@ -121,7 +126,8 @@ function useTradeskillFilter(feed: FeedEvent[]): FeedEvent[] {
       void lookupItemCached(title).then((k) => {
         // A lookup that failed (null) counts as "not tradeskill" — an outage must never blank
         // the feed.
-        if (alive) setVerdict((v) => ({ ...v, [title.toLowerCase()]: k ? isTradeskillOnly(k) : false }))
+        if (alive)
+          setVerdict((v) => ({ ...v, [title.toLowerCase()]: k ? isTradeskillOnly(k) : false }))
       })
     }
     return () => {
@@ -134,7 +140,6 @@ function useTradeskillFilter(feed: FeedEvent[]): FeedEvent[] {
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives FeedEvent. Becomes a view descriptor when the source lands.
   return feed.filter((e) => e.kind !== 'loot' || verdict[e.title.toLowerCase()] === false)
 }
-
 
 /** What a row hovers, and what it links or hands off to. Locked mode has none of it. */
 interface RowAffordances {
@@ -153,13 +158,15 @@ function rowAffordances(e: FeedEvent, interactive: boolean): RowAffordances {
   const reward = e.reward
   const previewMob = interactive && e.kind === 'con' ? e.title : undefined
   const previewItem =
-    interactive && !previewMob ? (reward?.item ?? (e.kind === 'loot' ? e.title : undefined)) : undefined
+    interactive && !previewMob
+      ? (reward?.item ?? (e.kind === 'loot' ? e.title : undefined))
+      : undefined
   return {
     href: interactive ? wikiPageUrl(e.page) : undefined,
     previewMob,
     previewItem,
     rowHover: !!previewItem && !!reward,
-    nameHover: (!!previewItem && !reward) || !!previewMob
+    nameHover: (!!previewItem && !reward) || !!previewMob,
   }
 }
 
@@ -171,7 +178,7 @@ function RowTitle({
   nameHover,
   isMob,
   onEnter,
-  onLeave
+  onLeave,
 }: {
   e: FeedEvent
   accent: string
@@ -250,13 +257,21 @@ function Row({ e, interactive }: { e: FeedEvent; interactive: boolean }): JSX.El
         background: 'rgba(255,255,255,0.04)',
         borderRadius: 3,
         fontSize: 11,
-        lineHeight: 1.3
+        lineHeight: 1.3,
       }}
     >
       {/* The kind glyph. NO hover naming it (JOS-358): tooltips live in the title bar on these
           windows now, and a row that has to name its own glyph on hover is a legend the feed
           never had room for anyway. */}
-      <span style={{ color: style.color, flexShrink: 0, width: 10, textAlign: 'center', fontWeight: 700 }}>
+      <span
+        style={{
+          color: style.color,
+          flexShrink: 0,
+          width: 10,
+          textAlign: 'center',
+          fontWeight: 700,
+        }}
+      >
         {style.glyph}
       </span>
       <span
@@ -264,7 +279,7 @@ function Row({ e, interactive }: { e: FeedEvent; interactive: boolean }): JSX.El
           color: 'rgba(255,255,255,0.45)',
           flexShrink: 0,
           fontVariantNumeric: 'tabular-nums',
-          fontSize: 10
+          fontSize: 10,
         }}
       >
         {formatTime(e.ts)}
@@ -366,7 +381,7 @@ function FeedFooter({
   bgAlpha,
   textScale,
   patch,
-  noDrag
+  noDrag,
 }: {
   bgAlpha: number
   textScale: number
@@ -380,7 +395,7 @@ function FeedFooter({
         ...noDrag,
         gap: 8,
         fontSize: 10,
-        color: 'rgba(255,255,255,0.6)'
+        color: 'rgba(255,255,255,0.6)',
       }}
     >
       {/* The word IS the label (JOS-358) — the footer names its own controls, it does not hover. */}
@@ -392,7 +407,14 @@ function FeedFooter({
         step={0.02}
         value={bgAlpha}
         onChange={(e) => patch({ bgAlpha: Number(e.target.value) })}
-        style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 24, accentColor: GOLD, height: 4 }}
+        style={{
+          flexGrow: 1,
+          flexShrink: 1,
+          flexBasis: 0,
+          minWidth: 24,
+          accentColor: GOLD,
+          height: 4,
+        }}
       />
       <TextScaleStepper textScale={textScale} patch={patch} noDrag={noDrag} />
     </div>
@@ -401,8 +423,18 @@ function FeedFooter({
 
 export default function EventLogOverlay(): JSX.Element {
   const rows = useEventFeed()
-  const { locked, bgAlpha, textScale, hovering, patch, toggleLock, onEnter, onLeave, dragRegion, noDrag } =
-    useOverlayChrome()
+  const {
+    locked,
+    bgAlpha,
+    textScale,
+    hovering,
+    patch,
+    toggleLock,
+    onEnter,
+    onLeave,
+    dragRegion,
+    noDrag,
+  } = useOverlayChrome()
   const feed = useTradeskillFilter(newestFirst(rows))
 
   return (
@@ -422,7 +454,7 @@ export default function EventLogOverlay(): JSX.Element {
         border: locked ? '1px solid rgba(255,255,255,0.04)' : `1px solid rgba(217,178,95,0.4)`,
         borderRadius: 8,
         boxSizing: 'border-box',
-        overflow: 'hidden'
+        overflow: 'hidden',
       }}
     >
       {/* Same one-row header as the meters, minus the selector: this kind has nothing to select
@@ -450,7 +482,9 @@ export default function EventLogOverlay(): JSX.Element {
         )}
       </OverlayContent>
 
-      {!locked && <FeedFooter bgAlpha={bgAlpha} textScale={textScale} patch={patch} noDrag={noDrag} />}
+      {!locked && (
+        <FeedFooter bgAlpha={bgAlpha} textScale={textScale} patch={patch} noDrag={noDrag} />
+      )}
     </div>
   )
 }

@@ -98,7 +98,9 @@ export function mergeTurnInInstants(a: readonly number[], b: readonly number[]):
 }
 
 /** The ledger a persisted progress state holds, cleaned. Empty for a null/pre-JOS-131 store. */
-export function storedTurnIns(progress: Pick<ProgressState, 'questTurnIns'> | null): TurnInInstants {
+export function storedTurnIns(
+  progress: Pick<ProgressState, 'questTurnIns'> | null,
+): TurnInInstants {
   return sanitizeTurnInLedger(progress?.questTurnIns)
 }
 
@@ -167,7 +169,7 @@ export function sanitizeTurnInOffered(value: unknown): TurnInOffered {
 
 /** The offered-quantity ledger a persisted progress state holds, cleaned. */
 export function storedTurnInOffered(
-  progress: Pick<ProgressState, 'questTurnInOffered'> | null
+  progress: Pick<ProgressState, 'questTurnInOffered'> | null,
 ): TurnInOffered {
   return sanitizeTurnInOffered(progress?.questTurnInOffered)
 }
@@ -180,7 +182,7 @@ export function storedTurnInOffered(
  */
 export function resolveTurnInOffered(
   progress: Pick<ProgressState, 'questTurnInOffered'> | null,
-  detected: TurnInOffered
+  detected: TurnInOffered,
 ): TurnInOffered {
   const stored = storedTurnInOffered(progress)
   const out: TurnInOffered = {}
@@ -202,7 +204,7 @@ export function resolveTurnInOffered(
  */
 export function turnInOfferedToPersist(
   progress: Pick<ProgressState, 'questTurnInOffered'> | null,
-  merged: TurnInOffered
+  merged: TurnInOffered,
 ): { key: string; offered: Record<number, Record<string, number>> }[] {
   const stored = storedTurnInOffered(progress)
   const out: { key: string; offered: Record<number, Record<string, number>> }[] = []
@@ -230,7 +232,7 @@ export interface QuestTurnIns {
  */
 export function resolveTurnIns(
   progress: Pick<ProgressState, 'questTurnIns' | 'completedQuests'> | null,
-  detected: TurnInInstants
+  detected: TurnInInstants,
 ): QuestTurnIns {
   const stored = storedTurnIns(progress)
   const legacy = new Set(progress?.completedQuests ?? [])
@@ -254,7 +256,7 @@ export function resolveTurnIns(
  */
 export function turnInsToPersist(
   progress: Pick<ProgressState, 'questTurnIns' | 'completedQuests'> | null,
-  merged: TurnInInstants
+  merged: TurnInInstants,
 ): { key: string; instants: number[] }[] {
   const stored = storedTurnIns(progress)
   const out: { key: string; instants: number[] }[] = []
@@ -277,7 +279,7 @@ export function turnInsToPersist(
 export function applyTurnInOffered(
   progress: Pick<ProgressState, 'questTurnInOffered'>,
   key: string,
-  offered: Record<number, Record<string, number>>
+  offered: Record<number, Record<string, number>>,
 ): Pick<ProgressState, 'questTurnInOffered'> {
   const clean = sanitizeTurnInOffered({ [key]: offered })[key] ?? {}
   const ledger: TurnInOffered = {}
@@ -300,7 +302,7 @@ export function applyTurnInOffered(
 export function applyTurnIns(
   progress: Pick<ProgressState, 'questTurnIns' | 'completedQuests'>,
   key: string,
-  instants: number[]
+  instants: number[],
 ): Pick<ProgressState, 'questTurnIns' | 'completedQuests'> {
   const clean = sanitizeTurnInInstants(instants)
   const ledger: TurnInInstants = {}
@@ -384,7 +386,7 @@ export type DerivedEvidence = 'achievement' | 'reward' | 'class-unlock'
 export const DERIVED_EVIDENCE_RANK: readonly DerivedEvidence[] = [
   'achievement',
   'reward',
-  'class-unlock'
+  'class-unlock',
 ]
 
 /**
@@ -399,7 +401,7 @@ export const DERIVED_EVIDENCE_RANK: readonly DerivedEvidence[] = [
 export const DERIVED_EVIDENCE_FLOORS: Record<DerivedEvidence, boolean> = {
   achievement: true,
   reward: true,
-  'class-unlock': false
+  'class-unlock': false,
 }
 
 /** One source's verdict: which quest keys it vouches for, under its own name. */
@@ -421,7 +423,7 @@ export interface DerivedCompletionSource {
  */
 export function derivedEvidence(
   key: string,
-  sources: readonly DerivedCompletionSource[]
+  sources: readonly DerivedCompletionSource[],
 ): DerivedEvidence | null {
   for (const evidence of DERIVED_EVIDENCE_RANK) {
     if (sources.some((s) => s.evidence === evidence && s.vouched.has(key))) return evidence
@@ -438,11 +440,11 @@ export function derivedEvidence(
  */
 export function derivedCompletion(
   key: string,
-  sources: readonly DerivedCompletionSource[]
+  sources: readonly DerivedCompletionSource[],
 ): DerivedEvidence | null {
   const evidence = derivedEvidence(
     key,
-    sources.filter((s) => DERIVED_EVIDENCE_FLOORS[s.evidence])
+    sources.filter((s) => DERIVED_EVIDENCE_FLOORS[s.evidence]),
   )
   return evidence
 }

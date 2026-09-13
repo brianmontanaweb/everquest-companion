@@ -48,14 +48,14 @@ export const DEFAULT_PACK: RegistryPack = {
     'session.start',
     'task.acknowledge',
     'task.complete',
-    'task.error'
+    'task.error',
   ],
   sound_count: 60,
   total_size_bytes: 1964096,
   description:
     'Claudette notification sounds, voiced in the manner of the late Alan Rickman. Slow. Deliberate. Faintly amused.',
   license: 'CC-BY-4.0',
-  version: '1.1.2'
+  version: '1.1.2',
 }
 
 /**
@@ -78,7 +78,7 @@ export const DEFAULT_ALERT_SOUNDS = {
   /** "Consider this my opening move." — a debuff landed on a target. */
   debuffLands: 'task-acknowledge-task-acknowledge-05',
   /** "It has all gone rather pear-shaped." — your illusion dropped. */
-  illusionFade: 'task-error-task-error-08'
+  illusionFade: 'task-error-task-error-08',
 } as const
 
 /**
@@ -86,7 +86,7 @@ export const DEFAULT_ALERT_SOUNDS = {
  * alerts' lines PLUS every line the curated alert groups (shared/alertGroups.ts) point at.
  */
 export const REQUIRED_SOUND_IDS: string[] = [
-  ...new Set([...Object.values(DEFAULT_ALERT_SOUNDS), ...GROUP_SOUND_IDS])
+  ...new Set([...Object.values(DEFAULT_ALERT_SOUNDS), ...GROUP_SOUND_IDS]),
 ]
 
 /** The packs the app provisions on startup if missing (one, today). */
@@ -146,7 +146,11 @@ export const ALERT_SOUND_MIGRATION_VERSION = 1
  * legacy refs are the only thing it can touch.
  */
 export function alertSoundMigrationPending(stamp: unknown): boolean {
-  return !(typeof stamp === 'number' && Number.isInteger(stamp) && stamp >= ALERT_SOUND_MIGRATION_VERSION)
+  return !(
+    typeof stamp === 'number' &&
+    Number.isInteger(stamp) &&
+    stamp >= ALERT_SOUND_MIGRATION_VERSION
+  )
 }
 
 /**
@@ -164,7 +168,7 @@ const LEGACY_CATEGORY_SOUND: Record<string, string> = {
   'task-error': DEFAULT_ALERT_SOUNDS.illusionFade,
   'input-required': DEFAULT_ALERT_SOUNDS.buffWearsOff,
   'resource-limit': DEFAULT_ALERT_SOUNDS.buffFade,
-  'user-spam': 'input-required-input-required-10'
+  'user-spam': 'input-required-input-required-10',
 }
 
 /**
@@ -176,7 +180,7 @@ const LEGACY_DEFAULT_PACK_SOUND: Record<string, string> = {
   victory: DEFAULT_ALERT_SOUNDS.bossDefeat,
   warning: DEFAULT_ALERT_SOUNDS.charmBreak,
   chime: DEFAULT_ALERT_SOUNDS.buffWearsOff,
-  horn: DEFAULT_ALERT_SOUNDS.buffFade
+  horn: DEFAULT_ALERT_SOUNDS.buffFade,
 }
 
 /** Curated `peon` / `sc_marine` id prefixes → CESP category. */
@@ -196,13 +200,13 @@ const LEGACY_PREFIX_CATEGORY: [string, string][] = [
   ['error-', 'task-error'],
   ['input-', 'input-required'],
   ['limit-', 'resource-limit'],
-  ['spam-', 'user-spam']
+  ['spam-', 'user-spam'],
 ]
 
 /** Legacy ids with no prefix at all (peon's two session.start lines). */
 const LEGACY_EXACT_CATEGORY: Record<string, string> = {
   ready: 'session-start',
-  'need-doing': 'session-start'
+  'need-doing': 'session-start',
 }
 
 /** Recover the CESP category a legacy soundId belonged to, or null if unrecognizable. */

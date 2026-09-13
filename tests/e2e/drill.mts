@@ -24,7 +24,7 @@ import {
   settle,
   settleCount,
   settleGone,
-  settleStable
+  settleStable,
 } from './appHarness.mjs'
 
 const BACK = '[data-testid="drill-back"]'
@@ -91,15 +91,25 @@ export async function stepGlanceDrill(page: Page): Promise<void> {
     note('the glance card has no damage to rank right now — there is no bar to click')
     return
   }
-  check('the Overview damage card opens ZOOMED OUT, like every other meter (JOS-35)', !(await drilled(page)))
+  check(
+    'the Overview damage card opens ZOOMED OUT, like every other meter (JOS-35)',
+    !(await drilled(page)),
+  )
 
   await page.click(ROW, { timeout: 15_000 })
-  const opened = await settle(() => drilled(page), (d) => d, { timeoutMs: 10_000 })
+  const opened = await settle(
+    () => drilled(page),
+    (d) => d,
+    { timeoutMs: 10_000 },
+  )
   check('…and clicking a bar DRILLS — the click this card used to lack entirely', opened)
   if (!opened) return
 
   // The category chip the owner rejected must NOT be here — one bar per ability, flat (JOS-113).
-  check('…into a FLAT ability list with no category chip (JOS-113)', (await countOf(page, CHIP)) === 0)
+  check(
+    '…into a FLAT ability list with no category chip (JOS-113)',
+    (await countOf(page, CHIP)) === 0,
+  )
   const inCard = page.locator(`[data-testid="overview-dps"] ${SKILL}`)
   const bars = await inCard.count()
   if (bars === 0) {
@@ -110,7 +120,10 @@ export async function stepGlanceDrill(page: Page): Promise<void> {
     // one opens its readout — most are melee/slay swings and so expandable.
     let ok = false
     for (let i = 0; i < bars && !ok; i++) {
-      await inCard.nth(i).click({ position: { x: 12, y: 8 }, timeout: 5_000 }).catch(() => undefined)
+      await inCard
+        .nth(i)
+        .click({ position: { x: 12, y: 8 }, timeout: 5_000 })
+        .catch(() => undefined)
       ok = (await countOf(page, STATS)) >= 1
     }
     check('…and clicking a stat-bearing ability expands its stats inline, on the card too', ok)
@@ -127,26 +140,38 @@ export async function stepGlanceDrill(page: Page): Promise<void> {
   if (!(await leaveOverview(page))) {
     note('the Overview card did not unmount on the way out — the round trip was not exercised')
   } else if (await returnToOverview(page)) {
-    const still = await settle(() => drilled(page), (d) => d, { timeoutMs: 10_000 })
+    const still = await settle(
+      () => drilled(page),
+      (d) => d,
+      { timeoutMs: 10_000 },
+    )
     check('…and the drill SURVIVES leaving and returning to the Overview tab', still)
   }
 
   const back = await meterRows(page)
-  check('…and the crumb walks back out to the same source list', back === rows, `${rows} → ${back} rows`)
+  check(
+    '…and the crumb walks back out to the same source list',
+    back === rows,
+    `${rows} → ${back} rows`,
+  )
 }
 
 /** Leave for the Combat tab and confirm the glance card really unmounted. */
 async function leaveOverview(page: Page): Promise<boolean> {
   await page.click('[data-testid="nav-combat"]', { timeout: 30_000 })
-  return page
-    .waitForSelector(CARD, { state: 'detached', timeout: 15_000 })
-    .then(() => true, () => false)
+  return page.waitForSelector(CARD, { state: 'detached', timeout: 15_000 }).then(
+    () => true,
+    () => false,
+  )
 }
 
 /** …and back, waiting for the card rather than for a clock. */
 async function returnToOverview(page: Page): Promise<boolean> {
   await page.click('[data-testid="nav-overview"]', { timeout: 30_000 })
-  return page.waitForSelector(CARD, { timeout: 20_000 }).then(() => true, () => false)
+  return page.waitForSelector(CARD, { timeout: 20_000 }).then(
+    () => true,
+    () => false,
+  )
 }
 
 // ── THE DRILL YOU LEFT STAYS DRILLED (JOS-116) ─────────────────────────────────────────
@@ -179,7 +204,7 @@ function inPanelCount(page: Page, sel: string): Promise<number> {
         .querySelector('[data-testid="meter-body"]')
         ?.closest('[data-testid="dash-panel"]')
         ?.querySelectorAll(s).length ?? 0,
-    sel
+    sel,
   )
 }
 
@@ -222,22 +247,47 @@ export async function stepDrillRoundTrip(page: Page): Promise<void> {
   // 1. DRILL, then EXPAND. Two levels of state, and the ticket is about both: the drilled source
   //    and the inline per-ability readout JOS-113 put inside it.
   await page.click('[data-testid="meter-row"]', { timeout: 15_000 })
-  if (!check('a source bar drills', await settle(() => drilled(page), (d) => d, { timeoutMs: 10_000 }))) return
+  if (
+    !check(
+      'a source bar drills',
+      await settle(
+        () => drilled(page),
+        (d) => d,
+        { timeoutMs: 10_000 },
+      ),
+    )
+  )
+    return
   const ability = await expandAnAbility(page)
   if (ability === null) {
-    note('the drilled source has no stat-bearing ability in this selection — only the drill is asserted')
+    note(
+      'the drilled source has no stat-bearing ability in this selection — only the drill is asserted',
+    )
   }
 
   // 2. THE ROUND TRIP.
-  if (!check('leaving the Combat tab unmounts it (the dashboard is gone)', await leaveCombat(page))) return
+  if (!check('leaving the Combat tab unmounts it (the dashboard is gone)', await leaveCombat(page)))
+    return
   if (!check('…and the Combat tab comes back', await returnToCombat(page))) return
 
   // 3. THE HEADLINE.
-  const still = await settle(() => drilled(page), (d) => d, { timeoutMs: 10_000 })
+  const still = await settle(
+    () => drilled(page),
+    (d) => d,
+    { timeoutMs: 10_000 },
+  )
   check('THE DRILL SURVIVES LEAVING AND RETURNING TO THE COMBAT TAB', still)
   if (ability !== null) {
-    const stats = await settle(() => inPanelCount(page, STATS), (n) => n >= 1, { timeoutMs: 10_000 })
-    check(`…and so does the ability whose stats were open (${ability})`, stats >= 1, `${stats} readout(s)`)
+    const stats = await settle(
+      () => inPanelCount(page, STATS),
+      (n) => n >= 1,
+      { timeoutMs: 10_000 },
+    )
+    check(
+      `…and so does the ability whose stats were open (${ability})`,
+      stats >= 1,
+      `${stats} readout(s)`,
+    )
   }
 
   // 4. A STALE DRILL DEGRADES TO LEVEL 1, gracefully (the JOS-105 rule, now reachable from the
@@ -247,14 +297,28 @@ export async function stepDrillRoundTrip(page: Page): Promise<void> {
   await page.evaluate(() => {
     localStorage.setItem(
       'eq.combat.drill.combat',
-      JSON.stringify({ d: { kind: 'entity', entityId: 'nobody:who-left-this-fight' }, a: ['melee|Nothing'] })
+      JSON.stringify({
+        d: { kind: 'entity', entityId: 'nobody:who-left-this-fight' },
+        a: ['melee|Nothing'],
+      }),
     )
   })
   if (!check('the tab unmounts for the stale-drill check', await leaveCombat(page))) return
   if (!check('…and comes back', await returnToCombat(page))) return
-  const stillDrilled = await settle(() => drilled(page), (d) => !d, { timeoutMs: 10_000 })
-  check('a drill naming a source this fight does not have degrades to level 1', stillDrilled === false)
-  check('…and level 1 still ranks its sources rather than rendering empty', (await meterRows(page)) === rows, `${rows} rows`)
+  const stillDrilled = await settle(
+    () => drilled(page),
+    (d) => !d,
+    { timeoutMs: 10_000 },
+  )
+  check(
+    'a drill naming a source this fight does not have degrades to level 1',
+    stillDrilled === false,
+  )
+  check(
+    '…and level 1 still ranks its sources rather than rendering empty',
+    (await meterRows(page)) === rows,
+    `${rows} rows`,
+  )
   check('…with no orphaned ability readout left open', (await inPanelCount(page, STATS)) === 0)
 }
 
@@ -295,7 +359,7 @@ async function selectFight(page: Page, id: string): Promise<void> {
   // The selection change is an IPC round trip to main and back, so the honest signal that the
   // dashboard has finished re-rendering is that its crumb and its row count have stopped changing.
   await settleStable(async () => [await crumbName(page), await countOf(page, ROW)] as const, {
-    timeoutMs: 15_000
+    timeoutMs: 15_000,
   })
 }
 
@@ -307,7 +371,7 @@ export async function stepDrillAcrossFights(page: Page): Promise<void> {
   const [a, b] = fights
   if (a === undefined || b === undefined || a === b) {
     note(
-      `the fight list offers fewer than two selectable finalized fights (${fights.join(', ') || 'none'}) — nothing to switch between`
+      `the fight list offers fewer than two selectable finalized fights (${fights.join(', ') || 'none'}) — nothing to switch between`,
     )
     return
   }
@@ -319,7 +383,16 @@ export async function stepDrillAcrossFights(page: Page): Promise<void> {
     return
   }
   await page.click(ROW, { timeout: 15_000 })
-  if (!check('a source bar drills on fight A', await settle(() => drilled(page), (d) => d, { timeoutMs: 10_000 }))) {
+  if (
+    !check(
+      'a source bar drills on fight A',
+      await settle(
+        () => drilled(page),
+        (d) => d,
+        { timeoutMs: 10_000 },
+      ),
+    )
+  ) {
     return
   }
   const subject = await crumbName(page)
@@ -330,30 +403,59 @@ export async function stepDrillAcrossFights(page: Page): Promise<void> {
   //    the part that used to be false: the remembered token is never thrown away by the switch.
   await selectFight(page, b)
   const keptB = await storedDrill(page)
-  check('switching fights NEVER clears the remembered drill (JOS-240)', keptB !== null, String(keptB))
+  check(
+    'switching fights NEVER clears the remembered drill (JOS-240)',
+    keptB !== null,
+    String(keptB),
+  )
   const onB = await crumbName(page)
   if (onB === subject) {
-    check(`…and fight B has ${subject} too, so it opens drilled straight into it`, await drilled(page))
+    check(
+      `…and fight B has ${subject} too, so it opens drilled straight into it`,
+      await drilled(page),
+    )
   } else {
     // The degrade half of the acceptance: a clean top-level view, its rows intact, no crash — and
     // the memory still standing so the next fight that has the row re-opens it (step 3 proves it).
-    check(`…and a fight without ${subject} shows the clean source list instead`, !(await drilled(page)))
-    check('…which still ranks its own sources rather than rendering empty', (await countOf(page, ROW)) >= 1)
+    check(
+      `…and a fight without ${subject} shows the clean source list instead`,
+      !(await drilled(page)),
+    )
+    check(
+      '…which still ranks its own sources rather than rendering empty',
+      (await countOf(page, ROW)) >= 1,
+    )
   }
 
   // 3. …AND BACK. The headline.
   await selectFight(page, a)
-  const still = await settle(() => drilled(page), (d) => d, { timeoutMs: 10_000 })
+  const still = await settle(
+    () => drilled(page),
+    (d) => d,
+    { timeoutMs: 10_000 },
+  )
   check('THE DRILL IS WHERE YOU LEFT IT AFTER SWITCHING FIGHTS AND BACK', still)
-  check('…and it is the SAME subject, not merely some drill', (await crumbName(page)) === subject, `${subject} → ${await crumbName(page)}`)
+  check(
+    '…and it is the SAME subject, not merely some drill',
+    (await crumbName(page)) === subject,
+    `${subject} → ${await crumbName(page)}`,
+  )
 
   // 4. A DIRECTION change is the one navigation that still un-drills: Outgoing / Incoming /
   //    Healing rank three different sets of subjects, so a token carried sideways means nothing
   //    where it lands. This is the boundary of the ticket, asserted rather than described.
   const TOGGLE = '[data-testid="direction-toggle"]'
   await page.click(`${TOGGLE} button[value="in"]`, { timeout: 10_000 }).catch(() => undefined)
-  const cleared = await settle(() => storedDrill(page), (v) => v === null, { timeoutMs: 10_000 })
-  check('switching DIRECTION still un-drills — that boundary did not move', cleared === null, String(cleared))
+  const cleared = await settle(
+    () => storedDrill(page),
+    (v) => v === null,
+    { timeoutMs: 10_000 },
+  )
+  check(
+    'switching DIRECTION still un-drills — that boundary did not move',
+    cleared === null,
+    String(cleared),
+  )
 
   // 5. YOUR DEFENCE (JOS-354) rides the Incoming direction, and ONLY it — and since JOS-361 it
   //    rides the card's SECOND TAB there. The step is here rather than in a spec of its own
@@ -368,11 +470,11 @@ export async function stepDrillAcrossFights(page: Page): Promise<void> {
   await page.click(`${TOGGLE} button[value="out"]`, { timeout: 10_000 }).catch(() => undefined)
   check(
     '…and it is GONE in Outgoing, where the same numbers would mean the mob’s avoidance of YOUR swings',
-    await settleGone(page, '[data-testid="defense-panel"]', { timeoutMs: 10_000 })
+    await settleGone(page, '[data-testid="defense-panel"]', { timeoutMs: 10_000 }),
   )
   check(
     '…and Outgoing offers no Mitigation TAB either — not a disabled one, none',
-    await settleGone(page, TABS, { timeoutMs: 10_000 })
+    await settleGone(page, TABS, { timeoutMs: 10_000 }),
   )
   await settleStable(() => countOf(page, ROW), { timeoutMs: 10_000 })
 }
@@ -388,7 +490,7 @@ async function defenceCounts(page: Page): Promise<number[]> {
       // contain no digits, so the LAST such run is unambiguous.
       const m = /(\d+) · [\d.]+%\s*$/.exec(el.textContent ?? '')
       return m ? Number(m[1]) : -1
-    })
+    }),
   )
 }
 
@@ -405,26 +507,29 @@ async function stepMitigationTab(page: Page): Promise<void> {
 
   check(
     'THE CARD OPENS ON DAMAGE BREAKDOWN — mitigation is not selected by default',
-    (await page.$$(`${TABS} button[value="damage"].Mui-selected`)).length === 1
+    (await page.$$(`${TABS} button[value="damage"].Mui-selected`)).length === 1,
   )
   check(
     '…so the defence block is NOT on screen until it is asked for',
-    (await page.$$('[data-testid="defense-panel"]')).length === 0
+    (await page.$$('[data-testid="defense-panel"]')).length === 0,
   )
   // The damage tab is still the meter: the attacker rows the card is for are what it shows.
   check('…and the ranked attacker rows are what that tab shows', (await countOf(page, ROW)) >= 1)
 
   await page.click(`${TABS} button[value="mitigation"]`, { timeout: 10_000 })
   const headline = await settle(
-    () => page.evaluate(() => document.querySelector('[data-testid="defense-headline"]')?.textContent ?? ''),
+    () =>
+      page.evaluate(
+        () => document.querySelector('[data-testid="defense-headline"]')?.textContent ?? '',
+      ),
     (t) => t.length > 0,
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   )
   check('YOUR DEFENCE IS ON SCREEN ON THE MITIGATION TAB', headline.length > 0, headline)
   check(
     '…and the headline carries its own denominator — a rate with no exposure is a lie',
     /swings at you|nothing has swung/i.test(headline),
-    headline
+    headline,
   )
 
   // THE STACK RANK, read off the screen. A segment where nothing has swung at you draws the quiet
@@ -439,6 +544,6 @@ async function stepMitigationTab(page: Page): Promise<void> {
   check(
     'THE ROWS ARE STACK-RANKED BY COUNT, DESCENDING (JOS-361)',
     counts.join(',') === ranked.join(','),
-    `${counts.join(' ≥ ')} (expected ${ranked.join(' ≥ ')})`
+    `${counts.join(' ≥ ')} (expected ${ranked.join(' ≥ ')})`,
   )
 }

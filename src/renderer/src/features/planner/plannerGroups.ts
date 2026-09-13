@@ -31,7 +31,7 @@ export const SOCKET_LABEL: Record<SocketType, string> = {
   proc: 'Proc',
   worn: 'Worn',
   focus: 'Focus',
-  click: 'Click'
+  click: 'Click',
 }
 
 /**
@@ -52,7 +52,7 @@ export const AXIS_LABEL: Record<GroupAxis, string> = {
   family: 'Focus family',
   slot: 'Slot',
   socket: 'Socket',
-  era: 'Era'
+  era: 'Era',
 }
 
 /**
@@ -172,7 +172,13 @@ function facetsOf(donor: DonorRow, axis: GroupAxis, eraOf: EraOf): Facet[] {
     case 'slot':
       return slotFacets(donor)
     case 'socket':
-      return [{ key: donor.socket, label: SOCKET_LABEL[donor.socket], rank: SOCKET_TYPES.indexOf(donor.socket) }]
+      return [
+        {
+          key: donor.socket,
+          label: SOCKET_LABEL[donor.socket],
+          rank: SOCKET_TYPES.indexOf(donor.socket),
+        },
+      ]
     case 'era': {
       const era = eraOf(donor)
       return era === null ? [NO_ERA] : [{ key: era, label: ERA_LABEL[era], rank: eraRank(era) }]
@@ -220,7 +226,11 @@ function compareGroups(a: Ranked, b: Ranked): number {
   const [x, y] = [a.group, b.group]
   if (x.axis === 'effect') return y.donors.length - x.donors.length || byName(x.label, y.label)
   if (x.axis === 'family') {
-    return (y.topTier ?? 0) - (x.topTier ?? 0) || y.donors.length - x.donors.length || byName(x.label, y.label)
+    return (
+      (y.topTier ?? 0) - (x.topTier ?? 0) ||
+      y.donors.length - x.donors.length ||
+      byName(x.label, y.label)
+    )
   }
   return a.rank - b.rank || byName(x.label, y.label)
 }
@@ -290,8 +300,8 @@ function toGroup(bucket: Bucket, axis: GroupAxis): Ranked {
       socket: bucket.socket,
       hasteLocked: bucket.hasteLocked,
       topTier: axis === 'family' ? topTierOf(bucket.donors) : null,
-      donors: bucket.donors
-    }
+      donors: bucket.donors,
+    },
   }
 }
 
@@ -300,7 +310,11 @@ function toGroup(bucket: Bucket, axis: GroupAxis): Ranked {
  * caller memoizes on the filtered array's identity, so this runs once per filter change and never
  * per keystroke (the standing search law).
  */
-export function groupDonors(rows: readonly DonorRow[], axis: GroupAxis, eraOf: EraOf): DonorGroup[] {
+export function groupDonors(
+  rows: readonly DonorRow[],
+  axis: GroupAxis,
+  eraOf: EraOf,
+): DonorGroup[] {
   const buckets = new Map<string, Bucket>()
   for (const donor of rows) {
     for (const facet of facetsOf(donor, axis, eraOf)) {
@@ -309,7 +323,12 @@ export function groupDonors(rows: readonly DonorRow[], axis: GroupAxis, eraOf: E
         bucket.donors.push(donor)
         bucket.hasteLocked ||= donor.hasteLocked
       } else {
-        buckets.set(facet.key, { ...facet, socket: donor.socket, hasteLocked: donor.hasteLocked, donors: [donor] })
+        buckets.set(facet.key, {
+          ...facet,
+          socket: donor.socket,
+          hasteLocked: donor.hasteLocked,
+          donors: [donor],
+        })
       }
     }
   }
@@ -321,7 +340,10 @@ export function groupDonors(rows: readonly DonorRow[], axis: GroupAxis, eraOf: E
  * Groups → the windowed row array: a header, then its donors while it is open. Collapsed groups
  * contribute exactly one row, which is what keeps a 400-effect list a 400-row list.
  */
-export function browserRows(groups: readonly DonorGroup[], open: ReadonlySet<string>): BrowserRow[] {
+export function browserRows(
+  groups: readonly DonorGroup[],
+  open: ReadonlySet<string>,
+): BrowserRow[] {
   const rows: BrowserRow[] = []
   for (const group of groups) {
     const expanded = open.has(group.id)

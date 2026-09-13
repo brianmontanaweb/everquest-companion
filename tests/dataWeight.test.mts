@@ -27,7 +27,7 @@ import {
   foldDataWeight,
   formatBytes,
   formatDataWeight,
-  type DataWeightRow
+  type DataWeightRow,
 } from '../src/shared/dataWeight'
 import ledger from '../src/main/data/dataWeight.generated.json'
 
@@ -54,11 +54,14 @@ test('EVERY LISTED FILE still exists and is still exactly that many bytes', () =
     // NORMALIZED bytes, exactly as the generator measures (see its `price`): these are one-line
     // minified files, so on-disk size differs by one byte between an LF and a CRLF checkout of the
     // SAME commit — CI proved it on the ledger's first day. The canonical size is the LF one.
-    const size = Buffer.byteLength(readFileSync(join(ROOT, row.file), 'utf8').replace(/\r\n/g, '\n'), 'utf8')
+    const size = Buffer.byteLength(
+      readFileSync(join(ROOT, row.file), 'utf8').replace(/\r\n/g, '\n'),
+      'utf8',
+    )
     assert.equal(
       size,
       row.bytes,
-      `${row.file} is ${String(size)} normalized bytes, the ledger says ${String(row.bytes)} — run npm run gen:data-weight`
+      `${row.file} is ${String(size)} normalized bytes, the ledger says ${String(row.bytes)} — run npm run gen:data-weight`,
     )
   }
 })
@@ -79,7 +82,7 @@ test('EVERY main-side corpus over the floor is in the ledger', () => {
   for (const file of bigJsonIn('src/main/data')) {
     assert.ok(
       listed.has(file),
-      `${file} is over ${formatBytes(DATA_WEIGHT_MIN_BYTES)} and is not in the ledger — run npm run gen:data-weight`
+      `${file} is over ${formatBytes(DATA_WEIGHT_MIN_BYTES)} and is not in the ledger — run npm run gen:data-weight`,
     )
   }
 })
@@ -100,7 +103,7 @@ test('THE RENDERER GAP IS STATED — a corpus main does not load is named, never
   for (const file of bigJsonIn('src/renderer/src/data/eqlegends')) {
     assert.ok(
       listed.has(file) || named.has(file),
-      `${file} is over the floor and appears in neither rows nor rendererOnly`
+      `${file} is over the floor and appears in neither rows nor rendererOnly`,
     )
   }
   // …and nothing is in both lists, which would double-count it in a reader's head.
@@ -113,7 +116,7 @@ test('the totals are DERIVED, so a hand-edited row cannot leave a total that dis
   const folded = foldDataWeight(rows, rendererOnly)
   assert.equal(
     folded.totalBytes,
-    rows.reduce((n, r) => n + r.bytes, 0)
+    rows.reduce((n, r) => n + r.bytes, 0),
   )
   assert.equal(folded.rows.length, rows.length)
   // Sorted by BYTES descending: the question is always "what is the big one".

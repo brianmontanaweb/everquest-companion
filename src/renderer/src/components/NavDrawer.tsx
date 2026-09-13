@@ -1,5 +1,14 @@
 import type { JSX } from 'react'
-import { Box, Chip, Divider, Drawer, List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
+import {
+  Box,
+  Chip,
+  Divider,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material'
 import SettingsIcon from '@mui/icons-material/Settings'
 import ShieldMoonIcon from '@mui/icons-material/ShieldMoon'
 import BarChartIcon from '@mui/icons-material/BarChart'
@@ -94,7 +103,7 @@ const ROWS: NavRow[] = [
     icon: <CheckroomIcon />,
     badge: BETA,
     area: GEAR_AREA_VIEWS,
-    opens: loadGearTab
+    opens: loadGearTab,
   },
   { view: 'maps', icon: <MapIcon /> },
   { view: 'bosses', icon: <EmojiEventsIcon /> },
@@ -104,7 +113,7 @@ const ROWS: NavRow[] = [
   { view: 'buffs', icon: <AutoFixHighIcon /> },
   // Respawn clocks (JOS-194) sit beside Buffs because both tabs are the same shape of answer —
   // a list of things counting down — and a player checking one is usually checking the other.
-  { view: 'timers', icon: <TimerIcon /> }
+  { view: 'timers', icon: <TimerIcon /> },
 ]
 
 /** Bottom-aligned, outside ROWS — it is not a feature view and never moves. */
@@ -114,7 +123,7 @@ const PREFERENCES: NavRow = { view: 'preferences', icon: <SettingsIcon /> }
 function NavRowButton({
   row,
   view,
-  onSelect
+  onSelect,
 }: {
   row: NavRow
   view: View
@@ -146,7 +155,7 @@ export default function NavDrawer({
   view,
   onSelect,
   onSendFeedback,
-  prefs
+  prefs,
 }: {
   view: View
   onSelect: (v: View) => void
@@ -170,8 +179,8 @@ export default function NavDrawer({
           boxSizing: 'border-box',
           position: 'relative',
           height: '100%',
-          borderTop: 'none'
-        }
+          borderTop: 'none',
+        },
       }}
     >
       <List>
@@ -209,7 +218,7 @@ export default function NavDrawer({
                   color="warning"
                   sx={{ height: 18, fontSize: 10, '& .MuiChip-label': { px: 0.75 } }}
                 />
-              )
+              ),
             }}
             view={view}
             onSelect={onSelect}

@@ -33,7 +33,7 @@ import {
   dumpArtifacts,
   failures,
   note,
-  reportRun
+  reportRun,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture } from './logFixture.mjs'
@@ -62,7 +62,7 @@ const bridge = (page: Page): Promise<PackPrefs> =>
 function textOf(page: Page, selector: string): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText.trim() ?? '',
-    selector
+    selector,
   )
 }
 
@@ -85,7 +85,7 @@ async function stepSilentIsVisible(page: Page): Promise<void> {
   check(
     'with no pack installed, every alert row SAYS it cannot play - it does not just sit there',
     notices === rows,
-    `${notices} notice(s) on ${rows} row(s)`
+    `${notices} notice(s) on ${rows} row(s)`,
   )
   const said = (await textOf(page, NOTICE)).replace(/\s+/g, ' ')
   check('…and it says what is wrong in words a user can act on', /silent/i.test(said), said)
@@ -97,13 +97,17 @@ async function stepChoose(page: Page): Promise<void> {
   check(
     'a fresh install has no preference at all (the shipped pack is what "default" means)',
     before.defaultPackId === undefined,
-    JSON.stringify(before)
+    JSON.stringify(before),
   )
   const after = await page.evaluate(
     (id) => (window as unknown as { eq: Bridge }).eq.setDefaultSoundPack(id),
-    CHOSEN
+    CHOSEN,
   )
-  check('setting a default answers with what was stored', after.defaultPackId === CHOSEN, JSON.stringify(after))
+  check(
+    'setting a default answers with what was stored',
+    after.defaultPackId === CHOSEN,
+    JSON.stringify(after),
+  )
 }
 
 /** The whole ticket, in one assertion: it is still there after the process died. */
@@ -112,7 +116,7 @@ async function stepPersisted(page: Page): Promise<void> {
   check(
     'THE PREFERENCE SURVIVED A RESTART - nothing in this launch has set it',
     prefs.defaultPackId === CHOSEN,
-    JSON.stringify(prefs)
+    JSON.stringify(prefs),
   )
 }
 
@@ -128,7 +132,11 @@ async function stepMissingIsNamed(page: Page): Promise<void> {
   await page.waitForSelector(DEFAULT_ROW, { timeout: 20_000 })
   const said = (await textOf(page, DEFAULT_ROW)).replace(/\s+/g, ' ')
   check('the pack browser names the pack the user chose', said.includes(CHOSEN), said)
-  check('…and says it is not installed, rather than pretending otherwise', /not installed/i.test(said), said)
+  check(
+    '…and says it is not installed, rather than pretending otherwise',
+    /not installed/i.test(said),
+    said,
+  )
 }
 
 async function main(): Promise<void> {
@@ -172,9 +180,15 @@ async function main(): Promise<void> {
   }
 
   // A missing IPC handler shows up here first (`invoke` rejects into an unhandled rejection).
-  check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+  check(
+    'no renderer console errors',
+    consoleErrors.length === 0,
+    consoleErrors.slice(0, 3).join(' | '),
+  )
   if (consoleErrors.length === 0) {
-    note('two real launches over one userData dir - the persistence claim is a restart, not a reload')
+    note(
+      'two real launches over one userData dir - the persistence claim is a restart, not a reload',
+    )
   }
 
   reportRun()

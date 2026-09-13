@@ -60,7 +60,7 @@ export class SongFold {
 
   constructor(
     private readonly db: SpellDb | undefined,
-    private readonly sink: SongSink
+    private readonly sink: SongSink,
   ) {
     this.pulses = new SongPulses((pulse) => {
       this.filePulse(pulse)
@@ -134,7 +134,12 @@ export class SongFold {
   onEmote(mobDisplay: string, ts: number, candidates: readonly string[] | undefined): boolean {
     if (!candidates || candidates.length === 0) return false
     const mob = this.sink.keyOf(mobDisplay)
-    const songKey = resolveSongEmote(this.db, candidates, this.namedFor(mob), this.sink.casterLevel())
+    const songKey = resolveSongEmote(
+      this.db,
+      candidates,
+      this.namedFor(mob),
+      this.sink.casterLevel(),
+    )
     if (songKey === null) {
       // Either not a song, or two songs share the sentence and nothing separates them. Pooling two
       // songs would smear their resist adjusts together, so an ambiguous pulse is refused.

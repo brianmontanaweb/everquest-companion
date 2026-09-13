@@ -65,7 +65,7 @@ import type {
   FireMessage,
   PerfBudgetsResult,
   PerfSnapshotResult,
-  PerfTimelineResult
+  PerfTimelineResult,
 } from '../../shared/dataServer/protocol.generated'
 // THE AUDIO CUTOVER (JOS-491). It owns its own flag and its own gate; this file simply offers it
 // every fire and prints what it decided. A launch that turned it off (`EQC_ENGINE_ALERTS=0`, or
@@ -93,11 +93,7 @@ import { installMirrors, noteMirrorChanged, primeMirrors, resetMirrors } from '.
 // THE WIKI-MISS FETCH (JOS-499 item 1, boundary verdict 5). The engine has no network stack, so it
 // announces a name it could not answer and this app looks it up on the queue it has always owned.
 // The leaf is electron-free and takes its capabilities here — see its header.
-import {
-  asKnowledgeRecord,
-  installKnowledgeMissFetch,
-  onKnowledgeMiss
-} from './knowledgeMissFetch'
+import { asKnowledgeRecord, installKnowledgeMissFetch, onKnowledgeMiss } from './knowledgeMissFetch'
 import { lookupItem } from '../itemLookup'
 import { noteEngineEdge } from '../telemetry/breadcrumbs'
 import { lookupMob } from '../mobLookup'
@@ -296,18 +292,24 @@ export function onEngineReady(info: ReadyEngine | null): void {
     token: info.token,
     debug: (note) => {
       debug(`data-server client: ${note}`)
-    }
+    },
   })
   live = { engine: info, client, attachedTo: null }
   void openConnection(mine, info, client)
 }
 
-async function openConnection(mine: number, info: ReadyEngine, client: EngineClient): Promise<void> {
+async function openConnection(
+  mine: number,
+  info: ReadyEngine,
+  client: EngineClient,
+): Promise<void> {
   let channel: ByteChannel
   try {
     channel = await connectToEngine(info.port, CONNECT_TIMEOUT_MS)
   } catch (err) {
-    debug(`data-server client: could not reach the engine on port ${String(info.port)} (${describeErr(err)})`)
+    debug(
+      `data-server client: could not reach the engine on port ${String(info.port)} (${describeErr(err)})`,
+    )
     return
   }
   if (gen !== mine) {
@@ -526,7 +528,7 @@ function noteFire(fire: FireMessage): void {
   const outcome = playEngineFire(fire) ? 'PLAYED from the engine' : 'logged, not played'
   debug(
     `data-server fire: ${fire.rule} [${fire.sound}] at ${String(fire.at)} — ` +
-      `${fire.message} (fires this launch: ${String(firesHeard)}; ${outcome})`
+      `${fire.message} (fires this launch: ${String(firesHeard)}; ${outcome})`,
   )
 }
 
@@ -588,7 +590,7 @@ async function sendAttach(mine: number, l: LiveEngine, logPath: string): Promise
     // sent only by a connected client, and this process folds nothing to persist.
     serving: true,
     userData: () => app.getPath('userData'),
-    note: debug
+    note: debug,
   })
   // READ FRESH, HERE (JOS-536). A respawn is a launch and the offset is a function of the date, so
   // a hint computed anywhere but at the attach is wrong across a DST transition.
@@ -596,13 +598,13 @@ async function sendAttach(mine: number, l: LiveEngine, logPath: string): Promise
   try {
     const result = await l.client.request(
       'session.attach',
-      stateDir === undefined ? { logPath, clock } : { logPath, stateDir, clock }
+      stateDir === undefined ? { logPath, clock } : { logPath, stateDir, clock },
     )
     if (gen !== mine) return null
     l.attachedTo = logPath
     debug(
       `data-server engine attached: ${logPath} (epoch ${String(result.epoch)}, ` +
-        `accepted ${String(result.accepted)})`
+        `accepted ${String(result.accepted)})`,
     )
     // A HISTORICAL FOLD HAS JUST STARTED (JOS-503) — the earliest instant that is true, and the
     // only place in the product that knows it. Gated on `accepted`, because `false` means this
@@ -754,7 +756,7 @@ async function waitForFoldHere(mine: number, l: LiveEngine): Promise<FoldHealth 
       sawHealth(l, health)
     },
     note: debug,
-    logSize: () => lastFoldLogSize
+    logSize: () => lastFoldLogSize,
   })
 }
 
@@ -895,7 +897,7 @@ export function engineConnectedReadiness(): Readiness {
  */
 export async function engineRequest<O extends RequestOp>(
   op: O,
-  params: ParamsFor<O>
+  params: ParamsFor<O>,
 ): Promise<ResultFor<O>> {
   const l = live
   if (l === null) throw new EngineError('unavailable', 'there is no engine on this launch')
@@ -933,7 +935,7 @@ export function installEngineClient(): void {
       const r = await engineRequest('module.snapshot', { module })
       return { module: r.module, seq: r.seq, state: r.state }
     },
-    note: debug
+    note: debug,
   })
   // THE WIKI-MISS FETCHER'S CAPABILITIES (JOS-499 item 1), by the same one-slot rule. The two
   // lookups are handed over rather than imported by the leaf because both of them load `electron`
@@ -946,7 +948,7 @@ export function installEngineClient(): void {
     define: async (params) => {
       await engineRequest('knowledge.define', params)
     },
-    note: debug
+    note: debug,
   })
 }
 

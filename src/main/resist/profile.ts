@@ -121,10 +121,20 @@ function clampFit(est: ResistEstimate): ResistEstimate {
     lo: Math.max(0, est.lo),
     hi: Math.max(0, est.hi),
     baselineFit: est.baselineFit
-      ? { ...est.baselineFit, R: Math.max(0, est.baselineFit.R), lo: Math.max(0, est.baselineFit.lo), hi: Math.max(0, est.baselineFit.hi) }
+      ? {
+          ...est.baselineFit,
+          R: Math.max(0, est.baselineFit.R),
+          lo: Math.max(0, est.baselineFit.lo),
+          hi: Math.max(0, est.baselineFit.hi),
+        }
       : null,
     userFit: est.userFit
-      ? { ...est.userFit, R: Math.max(0, est.userFit.R), lo: Math.max(0, est.userFit.lo), hi: Math.max(0, est.userFit.hi) }
+      ? {
+          ...est.userFit,
+          R: Math.max(0, est.userFit.R),
+          lo: Math.max(0, est.userFit.lo),
+          hi: Math.max(0, est.userFit.hi),
+        }
       : null,
   }
 }
@@ -171,7 +181,7 @@ function axisRow(
   rows: readonly ResistRow[],
   spells: SpellResistTable,
   axis: ResistAxis,
-  ctx: AxisCtx
+  ctx: AxisCtx,
 ): MobResistAxis {
   const est = clampFit(
     estimate(rows, spells, {
@@ -181,7 +191,7 @@ function axisRow(
       modes: ctx.modes,
       includeNpcCasters: ctx.includeNpcCasters,
       newestWeek: ctx.newestWeek,
-    })
+    }),
   )
   // A PINNED FIT PRINTS NO NUMBER AND NO TAG (owner review, 2026-08-16). The posterior slid to an
   // edge of the grid, which means no R this game can express explains what was observed — and the
@@ -218,7 +228,14 @@ export function mobResistProfile(displayName: string, deps: ProfileDeps): MobRes
     ? RESIST_AXES.map((axis) => axisRow(rows, spells, axis, ctx))
     : RESIST_AXES.map(
         (axis) =>
-          ({ axis, estimate: null, tag: null, benchmark: null, n: 0, nInformative: 0 }) satisfies MobResistAxis
+          ({
+            axis,
+            estimate: null,
+            tag: null,
+            benchmark: null,
+            n: 0,
+            nInformative: 0,
+          }) satisfies MobResistAxis,
       )
   return {
     mobKey: key,
@@ -238,7 +255,7 @@ export function mobResistProfile(displayName: string, deps: ProfileDeps): MobRes
 export function mobResistCell(
   displayName: string,
   axis: ResistAxis,
-  deps: ProfileDeps
+  deps: ProfileDeps,
 ): MobResistCell | null {
   const spells = deps.spells()
   if (!spells) return null
@@ -253,7 +270,7 @@ export function mobResistCell(
       modes: deps.damageModes(),
       includeNpcCasters: deps.includeNpcCasters(),
       newestWeek: deps.newestWeek(),
-    })
+    }),
   )
   const keep = rows.filter((r) => spells[r.spellKey]?.axis === axis)
   return { mobKey: key, axis, estimate: est, rows: keep }

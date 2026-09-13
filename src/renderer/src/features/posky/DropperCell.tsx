@@ -40,7 +40,7 @@ import {
   killTargetFacts,
   killTargetLabel,
   type DropperMob,
-  type KillTarget
+  type KillTarget,
 } from './poskyDroppers'
 import type { MobTarget } from '../mobs/mobTarget'
 
@@ -55,7 +55,7 @@ function dropperRoster(droppers: readonly DropperMob[]): string {
  *  second copy of the click/keyboard handling would be a second thing to keep in step. */
 export function DropperName({
   mob,
-  onOpenMob
+  onOpenMob,
 }: {
   mob: DropperMob
   onOpenMob: (t: MobTarget) => void
@@ -81,7 +81,11 @@ export function DropperName({
         textDecoration: 'underline dotted',
         textUnderlineOffset: 2,
         '&:hover': { color: 'primary.main' },
-        '&:focus-visible': { outline: '1px solid', outlineColor: 'primary.main', borderRadius: 0.5 }
+        '&:focus-visible': {
+          outline: '1px solid',
+          outlineColor: 'primary.main',
+          borderRadius: 0.5,
+        },
       }}
     >
       {mob.name}
@@ -98,7 +102,12 @@ export interface DropperCellProps {
   onOpenMob: (t: MobTarget) => void
 }
 
-export function DropperCell({ droppers, who, where, onOpenMob }: DropperCellProps): JSX.Element | null {
+export function DropperCell({
+  droppers,
+  who,
+  where,
+  onOpenMob,
+}: DropperCellProps): JSX.Element | null {
   // "which mob AND ISLAND, at a top level without needing to mouse over" (owner) — so the island
   // is part of the line, not part of the hover. Absent unless posky states one; "Plane of Sky"
   // (the wind runes' honest "anywhere") states none, and the `who` fallback below already says so.
@@ -143,7 +152,11 @@ export function DropperCell({ droppers, who, where, onOpenMob }: DropperCellProp
  * whose items are honestly a random drop — stays silent here and lets the item rows carry posky's
  * own wording. The native title carries the full roster, each with its own island.
  */
-export function KillTargetCaption({ targets }: { targets: readonly KillTarget[] }): JSX.Element | null {
+export function KillTargetCaption({
+  targets,
+}: {
+  targets: readonly KillTarget[]
+}): JSX.Element | null {
   const label = killTargetLabel(targets)
   if (label === '') return null
   return (

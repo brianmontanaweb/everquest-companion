@@ -24,7 +24,11 @@ import assert from 'node:assert/strict'
 import { annotateDrop, annotateDropEras } from '../src/main/mobDropEra'
 import { knowledgeFromCatalog, localMobEntry } from '../src/main/mobLookupLocal'
 import { parseMobWikitext } from '../src/main/mobLookupParse'
-import { dropEraSubject, outOfEraLabel, splitDropsByEra } from '../src/renderer/src/features/mobs/dropEra'
+import {
+  dropEraSubject,
+  outOfEraLabel,
+  splitDropsByEra,
+} from '../src/renderer/src/features/mobs/dropEra'
 import { donorEra } from '../src/renderer/src/features/planner/plannerData'
 import { eraBadge } from '../src/shared/planner/era'
 import type { MobDrop, MobKnowledge } from '../src/shared/types'
@@ -37,7 +41,7 @@ const REVAMP_TABLE = [
   'Eye of Cazic Thule',
   'Halo of the Enlightened',
   'Pauldrons of Ferocity',
-  'Robe of Inspiration'
+  'Robe of Inspiration',
 ]
 
 /** The committed catalog's Cazic Thule, as `lookupMob` builds it before the annotation. */

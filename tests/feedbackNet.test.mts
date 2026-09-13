@@ -15,7 +15,12 @@ import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import * as net from '../src/main/feedback/net'
-import { allowedUploadUrl, allowedUploadUrlFor, feedbackEndpointConfigured, uploadEndpoints } from '../src/main/feedback/net'
+import {
+  allowedUploadUrl,
+  allowedUploadUrlFor,
+  feedbackEndpointConfigured,
+  uploadEndpoints,
+} from '../src/main/feedback/net'
 
 /** A realistic deployed name: `eqcompanion-logs-<random_id hex>` (§7.3). */
 const BUCKET = 'eqcompanion-logs-9f3a2c17'
@@ -144,7 +149,10 @@ test('a malformed bucket or region can never produce a match', () => {
   assert.equal(allowedUploadUrlFor('https://a.b.s3.us-east-1.amazonaws.com/', 'a.b', REGION), null)
   assert.equal(allowedUploadUrlFor('https://S3.us-east-1.amazonaws.com/X', 'X', REGION), null) // uppercase bucket
   assert.equal(allowedUploadUrlFor('https://b.s3.us-east-1.amazonaws.com/', 'b', REGION), null) // too short
-  assert.equal(allowedUploadUrlFor('https://ok-bucket.s3.evil.amazonaws.com/', 'ok-bucket', 'evil'), null)
+  assert.equal(
+    allowedUploadUrlFor('https://ok-bucket.s3.evil.amazonaws.com/', 'ok-bucket', 'evil'),
+    null,
+  )
   assert.equal(allowedUploadUrlFor('https://ok-bucket.s3..amazonaws.com/', 'ok-bucket', ''), null)
 })
 
@@ -174,11 +182,14 @@ test('the BOUND allowedUploadUrl accepts our bucket and refuses every other host
   assert.equal(allowedUploadUrl(`https://${virtualHost}/`), `https://${virtualHost}/`)
   assert.equal(
     allowedUploadUrl(`https://${pathHost}/${net.FEEDBACK_S3_BUCKET}`),
-    `https://${pathHost}/${net.FEEDBACK_S3_BUCKET}`
+    `https://${pathHost}/${net.FEEDBACK_S3_BUCKET}`,
   )
   // The suffix attack, against the REAL name this build ships with.
   assert.equal(allowedUploadUrl(`https://${virtualHost}.evil.com/`), null)
-  assert.equal(allowedUploadUrl('https://eqcompanion-logs-9f3a2c17.s3.us-east-1.amazonaws.com/'), null)
+  assert.equal(
+    allowedUploadUrl('https://eqcompanion-logs-9f3a2c17.s3.us-east-1.amazonaws.com/'),
+    null,
+  )
   assert.equal(allowedUploadUrl('http://127.0.0.1:8477/devstack/upload/x'), null)
 })
 
@@ -220,23 +231,37 @@ test('the dev gate opens for an unpackaged Electron process with a loopback url'
   assert.equal(net.devEndpointFor(facts()), DEV_URL)
   // Electron's own isPackaged definition is per-platform: bare `electron` off win32.
   assert.equal(
-    net.devEndpointFor(facts({ platform: 'linux', execPath: '/repo/node_modules/electron/dist/electron' })),
-    DEV_URL
+    net.devEndpointFor(
+      facts({ platform: 'linux', execPath: '/repo/node_modules/electron/dist/electron' }),
+    ),
+    DEV_URL,
   )
-  assert.equal(net.devEndpointFor(facts({ url: 'http://[::1]:8477/v1/feedback' })), 'http://[::1]:8477/v1/feedback')
+  assert.equal(
+    net.devEndpointFor(facts({ url: 'http://[::1]:8477/v1/feedback' })),
+    'http://[::1]:8477/v1/feedback',
+  )
 })
 
 test('THE PACKAGED PROOF: the gate is shut, and the env var does nothing at all', () => {
   // The packaged case as a VALUE — a real installed build's exe, everything else identical.
-  const packaged = facts({ execPath: 'C:\\Users\\me\\AppData\\Local\\Programs\\everquest-companion\\EQ Legends Companion.exe' })
+  const packaged = facts({
+    execPath:
+      'C:\\Users\\me\\AppData\\Local\\Programs\\everquest-companion\\EQ Legends Companion.exe',
+  })
   assert.equal(net.devUnlocked(packaged), false)
   assert.equal(net.devEndpointFor(packaged), '')
   // ...and with the gate shut, `allowedUploadUrlFor` is the function it was before the dev
   // parameter existed: same answers, on the shipped bucket, for every shape.
   const { virtualHost } = uploadEndpoints(BUCKET, REGION)
   assert.equal(allowedUploadUrlFor(DEV_URL, BUCKET, REGION, net.devEndpointFor(packaged)), null)
-  assert.equal(allowedUploadUrlFor('http://127.0.0.1:8477/devstack/upload/x', BUCKET, REGION, ''), null)
-  assert.equal(allowedUploadUrlFor(`https://${virtualHost}/`, BUCKET, REGION, ''), `https://${virtualHost}/`)
+  assert.equal(
+    allowedUploadUrlFor('http://127.0.0.1:8477/devstack/upload/x', BUCKET, REGION, ''),
+    null,
+  )
+  assert.equal(
+    allowedUploadUrlFor(`https://${virtualHost}/`, BUCKET, REGION, ''),
+    `https://${virtualHost}/`,
+  )
   // Not Electron at all (a script, the Lambda, this test runner): shut.
   assert.equal(net.devEndpointFor(facts({ electron: undefined })), '')
   assert.equal(net.devEndpointFor(facts({ electron: '' })), '')
@@ -271,7 +296,10 @@ test('the dev endpoint is LOOPBACK-ONLY — that is what makes it not an exfil p
 test('under the OPEN gate the extra accepted origin is exactly the dev endpoint, nothing else', () => {
   const origin = new URL(DEV_URL).origin
   const ok = (raw: string): string | null => allowedUploadUrlFor(raw, BUCKET, REGION, origin)
-  assert.equal(ok('http://127.0.0.1:8477/devstack/upload/01J8ZQ'), 'http://127.0.0.1:8477/devstack/upload/01J8ZQ')
+  assert.equal(
+    ok('http://127.0.0.1:8477/devstack/upload/01J8ZQ'),
+    'http://127.0.0.1:8477/devstack/upload/01J8ZQ',
+  )
   // A different port, a different host, or anything clever attached is still refused.
   assert.equal(ok('http://127.0.0.1:9999/devstack/upload/x'), null)
   assert.equal(ok('http://[::1]:8477/devstack/upload/x'), null)

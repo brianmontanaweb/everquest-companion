@@ -75,7 +75,12 @@ function sliceBy(rows: readonly PerfRow[], dim: (r: PerfRow) => string): TriageP
     if (r.stallBucket >= HEAVY_BUCKET) stalls.set(key, (stalls.get(key) ?? 0) + r.n)
   }
   return [...reports.entries()]
-    .map(([id, n]) => ({ id, reports: n, stalls: stalls.get(id) ?? 0, rate: ratio(stalls.get(id) ?? 0, n) }))
+    .map(([id, n]) => ({
+      id,
+      reports: n,
+      stalls: stalls.get(id) ?? 0,
+      rate: ratio(stalls.get(id) ?? 0, n),
+    }))
     .sort((a, b) => b.reports - a.reports || a.id.localeCompare(b.id))
 }
 
@@ -94,6 +99,6 @@ export function buildPerfCube(rows: readonly PerfRow[]): TriageAnalyticsPerf {
     stallLabel: HEAVY_STALL_LABEL,
     byWindowMode: sliceBy(rows, (r) => r.windowMode),
     byMachineClass: sliceBy(rows, (r) => r.machineClass),
-    byLocked: sliceBy(rows, (r) => lockedLabel(r.locked))
+    byLocked: sliceBy(rows, (r) => lockedLabel(r.locked)),
   }
 }

@@ -52,7 +52,7 @@ import {
   settleCount,
   settleGone,
   settleStable,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture, stamp } from './logFixture.mjs'
@@ -69,7 +69,10 @@ const GROW_MS = 150
 /** One real line from a real log, repeated. Only its BYTES matter to the detector. */
 const GROW_LINE = 'You crush a fire giant warrior for 37 points of damage.'
 /** Lines that MOVE A MODULE — the character module's zone — so the live dot has to light. */
-const ZONES = ['You have entered The Ruins of Old Guk.', 'You have entered Innothule Swamp.'] as const
+const ZONES = [
+  'You have entered The Ruins of Old Guk.',
+  'You have entered Innothule Swamp.',
+] as const
 
 const NUDGE = '[data-testid="log-switch-nudge"]'
 const SWITCH_BUTTON = '[data-testid="log-switch-nudge-switch"]'
@@ -122,14 +125,16 @@ function nudgesSeen(page: Page): Promise<number> {
 function cardText(page: Page): Promise<string> {
   return page.evaluate(
     (sel) => document.querySelector(sel)?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
-    NUDGE
+    NUDGE,
   )
 }
 
 /** Who main says it is tailing right now. */
 function tailedName(page: Page): Promise<string> {
   return page.evaluate(async () => {
-    const bridge = window as unknown as { eq: { getCharacter: () => Promise<{ name?: string } | null> } }
+    const bridge = window as unknown as {
+      eq: { getCharacter: () => Promise<{ name?: string } | null> }
+    }
     return (await bridge.eq.getCharacter())?.name ?? ''
   })
 }
@@ -138,10 +143,16 @@ function tailedName(page: Page): Promise<string> {
 async function switchTo(page: Page, logPath: string): Promise<string> {
   await page.evaluate(
     (p) =>
-      (window as unknown as { eq: { setCharacter: (x: string) => Promise<unknown> } }).eq.setCharacter(p),
-    logPath
+      (
+        window as unknown as { eq: { setCharacter: (x: string) => Promise<unknown> } }
+      ).eq.setCharacter(p),
+    logPath,
   )
-  return settle(() => tailedName(page), (n) => n !== '', { timeoutMs: 60_000 })
+  return settle(
+    () => tailedName(page),
+    (n) => n !== '',
+    { timeoutMs: 60_000 },
+  )
 }
 
 /**
@@ -159,13 +170,15 @@ function settledCount(page: Page): Promise<number> {
 async function run(): Promise<void> {
   buildIfStale()
 
-  console.log('launch: hidden Electron (EQ_E2E=1), three characters staged, quiet threshold compressed…')
+  console.log(
+    'launch: hidden Electron (EQ_E2E=1), three characters staged, quiet threshold compressed…',
+  )
   const { app, close, log } = await launchOnFixture('e2e-toast.log', {
     others: { [OTHER]: 'e2e-toast.log', [THIRD]: 'e2e-toast.log' },
     env: {
       EQ_QUIET_SWITCH_MS: String(QUIET_MS),
-      EQ_QUIET_SWITCH_POLL_MS: String(POLL_MS)
-    }
+      EQ_QUIET_SWITCH_POLL_MS: String(POLL_MS),
+    },
   })
 
   let win: Page | null = null
@@ -189,7 +202,7 @@ async function run(): Promise<void> {
       !check(
         `two more characters (${OTHER}, ${THIRD}) are staged beside Primitive`,
         typeof otherPath === 'string' && typeof thirdPath === 'string',
-        `${String(otherPath)} · ${String(thirdPath)}`
+        `${String(otherPath)} · ${String(thirdPath)}`,
       )
     ) {
       return
@@ -206,31 +219,41 @@ async function run(): Promise<void> {
     stops.push(stopOther)
 
     const appeared = await settleCount(page, NUDGE, 1, { timeoutMs: 25_000, pollMs: 150 })
-    check(`a quiet log + a growing ${OTHER} log offers a switch`, appeared === 1, `${String(appeared)} card(s)`)
+    check(
+      `a quiet log + a growing ${OTHER} log offers a switch`,
+      appeared === 1,
+      `${String(appeared)} card(s)`,
+    )
     const text = await cardText(page)
     check(
       '…and the card names both characters: the quiet one, and the one to switch to',
       text.includes('Primitive') && text.includes(OTHER),
-      text
+      text,
     )
-    check('…and it offers exactly one switch button', (await page.locator(SWITCH_BUTTON).count()) === 1)
+    check(
+      '…and it offers exactly one switch button',
+      (await page.locator(SWITCH_BUTTON).count()) === 1,
+    )
 
     // ── NEVER SPAM, part 1: the sibling keeps growing and nothing else is ever shown ──────────
     const afterGrowth = await settledCount(page)
     check(
       `${OTHER} keeps being played for seconds — still exactly ONE card, ever`,
       afterGrowth === 1,
-      `${String(afterGrowth)} card(s) seen`
+      `${String(afterGrowth)} card(s) seen`,
     )
 
     // ── NEVER SPAM, part 2: dismissing it is remembered ───────────────────────────────────────
     await page.click(DISMISS_BUTTON)
-    check('dismissing the card takes it off screen', await settleGone(page, NUDGE, { timeoutMs: 8_000 }))
+    check(
+      'dismissing the card takes it off screen',
+      await settleGone(page, NUDGE, { timeoutMs: 8_000 }),
+    )
     const afterDismiss = await settledCount(page)
     check(
       '…and it never comes back while that log keeps growing — no timer re-fire, no re-show',
       afterDismiss === 1,
-      `${String(afterDismiss)} card(s) seen`
+      `${String(afterDismiss)} card(s) seen`,
     )
 
     // ── NEVER SPAM, part 3: a FRESH quiet stretch does not un-spend the answer ────────────────
@@ -238,29 +261,33 @@ async function run(): Promise<void> {
     log.append(...ZONES)
     check(
       'Primitive playing again lights the live dot',
-      (await settleCount(page, LIVE_DOT, 1, { timeoutMs: 20_000, pollMs: 150 })) === 1
+      (await settleCount(page, LIVE_DOT, 1, { timeoutMs: 20_000, pollMs: 150 })) === 1,
     )
     const afterRevival = await settledCount(page)
     check(
       'going quiet a SECOND time does not re-ask about a character we already asked about',
       afterRevival === 1,
-      `${String(afterRevival)} card(s) seen`
+      `${String(afterRevival)} card(s) seen`,
     )
 
     // ── THE ONE THING THAT MAY ASK AGAIN: a DIFFERENT sibling starts being played ─────────────
     const stopThird = keepGrowing(thirdPath)
     stops.push(stopThird)
-    const second = await settle(() => nudgesSeen(page), (n) => n >= 2, { timeoutMs: 25_000, pollMs: 150 })
+    const second = await settle(
+      () => nudgesSeen(page),
+      (n) => n >= 2,
+      { timeoutMs: 25_000, pollMs: 150 },
+    )
     check(
       `a DIFFERENT sibling (${THIRD}) starting up is a genuinely new situation and may ask`,
       second === 2,
-      `${String(second)} card(s) seen`
+      `${String(second)} card(s) seen`,
     )
     const secondText = await cardText(page)
     check(
       `…and that card is about ${THIRD}, not ${OTHER}`,
       secondText.includes(THIRD) && !secondText.includes(OTHER),
-      secondText
+      secondText,
     )
 
     // ── THE CLICK: the app switches only because the user said so ─────────────────────────────
@@ -268,17 +295,24 @@ async function run(): Promise<void> {
     // spec writes on purpose rather than about a driver still running in the background.
     stopThird()
     await page.click(SWITCH_BUTTON)
-    const tailing = await settle(() => tailedName(page), (n) => n === THIRD, { timeoutMs: 60_000 })
+    const tailing = await settle(
+      () => tailedName(page),
+      (n) => n === THIRD,
+      { timeoutMs: 60_000 },
+    )
     check(`clicking Switch re-tails to ${THIRD}`, tailing === THIRD, tailing)
 
     // …and the dot lights on that character's next line. It goes dark on the rebuild (App.tsx sets
     // `live` false on every `log:character`), which is exactly the state the reporter was staring
     // at — so this is the assertion that taking the offer fixes what they were looking at.
-    check('the dot goes dark across the rebuild', await settleGone(page, LIVE_DOT, { timeoutMs: 10_000 }))
+    check(
+      'the dot goes dark across the rebuild',
+      await settleGone(page, LIVE_DOT, { timeoutMs: 10_000 }),
+    )
     appendTo(thirdPath, ...ZONES)
     check(
       `…and lights again on ${THIRD}'s next line`,
-      (await settleCount(page, LIVE_DOT, 1, { timeoutMs: 20_000, pollMs: 150 })) === 1
+      (await settleCount(page, LIVE_DOT, 1, { timeoutMs: 20_000, pollMs: 150 })) === 1,
     )
 
     // ── THE ALTERNATION BOUND: at most one ask per LOG, whichever way the pair alternates ─────
@@ -287,11 +321,15 @@ async function run(): Promise<void> {
     check(
       `${THIRD} going quiet while ${OTHER} is still being played asks NOTHING — both logs are spent`,
       afterAlternation === 2,
-      `${String(afterAlternation)} card(s) seen`
+      `${String(afterAlternation)} card(s) seen`,
     )
     check('no card is on screen at the end', (await page.locator(NUDGE).count()) === 0)
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     if (failures.length) await dumpArtifacts(page, 'log-switch-nudge-FAIL')
   } finally {
     for (const stop of stops) stop()

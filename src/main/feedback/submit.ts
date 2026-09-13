@@ -31,7 +31,7 @@ import {
   type LogSliceMeta,
   type PresignedUpload,
   type SubmitErrorCode,
-  type SubmitRequest
+  type SubmitRequest,
 } from '../../shared/feedback'
 import { CHANNEL } from '../channel'
 import { E2E } from '../e2e'
@@ -44,13 +44,13 @@ import {
   buildInventoryAttachment,
   inventoryMeta,
   type InventoryAttachment,
-  type InventoryResult
+  type InventoryResult,
 } from './inventory'
 import {
   achievementsMeta,
   buildAchievementsAttachment,
   type AchievementsAttachment,
-  type AchievementsResult
+  type AchievementsResult,
 } from './achievements'
 import { feedbackPerfBlock } from './perf'
 import { buildSlice, sliceMeta, type FeedbackSlice } from './slice'
@@ -79,7 +79,7 @@ export type SubmitResult =
 const failure = (
   error: SubmitErrorCode,
   message: string,
-  extra: { queued?: boolean; field?: string; retryAfterSec?: number } = {}
+  extra: { queued?: boolean; field?: string; retryAfterSec?: number } = {},
 ): SubmitResult => ({ ok: false, error, message, queued: false, ...extra })
 
 // ---- environment ---------------------------------------------------------------------------
@@ -111,7 +111,7 @@ export async function feedbackEnv(): Promise<FeedbackEnv> {
     node: process.versions.node,
     // OMITTED, not null, when the rings are empty — an empty attachment is not an attachment
     // (slice.ts's rule, one artifact over), and absent is the spelling the validator reads.
-    ...(perf === null ? {} : { perf })
+    ...(perf === null ? {} : { perf }),
   }
 }
 
@@ -219,7 +219,12 @@ function asUpload(raw: unknown): PresignedUpload | null {
   if (typeof o.url !== 'string' || fields === null || typeof o.key !== 'string') return null
   const flat: Record<string, string> = {}
   for (const [k, v] of Object.entries(fields)) if (typeof v === 'string') flat[k] = v
-  return { url: o.url, fields: flat, key: o.key, expiresInSec: typeof o.expiresInSec === 'number' ? o.expiresInSec : 0 }
+  return {
+    url: o.url,
+    fields: flat,
+    key: o.key,
+    expiresInSec: typeof o.expiresInSec === 'number' ? o.expiresInSec : 0,
+  }
 }
 
 /**
@@ -232,11 +237,13 @@ function asUpload(raw: unknown): PresignedUpload | null {
 async function uploadGz(
   upload: PresignedUpload,
   gz: Buffer,
-  what: { field: string; fileName: string }
+  what: { field: string; fileName: string },
 ): Promise<boolean> {
   const url = allowedUploadUrl(upload.url)
   if (url === null) {
-    logError('main:feedback', { message: `refused an upload URL outside our bucket: ${upload.url}` })
+    logError('main:feedback', {
+      message: `refused an upload URL outside our bucket: ${upload.url}`,
+    })
     return false
   }
   const form = new FormData()
@@ -250,7 +257,7 @@ async function uploadGz(
   if (res.status < 200 || res.status >= 300) {
     logError('main:feedback', {
       message: `${what.field} upload failed (${res.status})`,
-      err: res.networkError
+      err: res.networkError,
     })
     return false
   }
@@ -285,7 +292,7 @@ function uploadAchievements(upload: PresignedUpload, gz: Buffer): Promise<boolea
  */
 async function uploadLegs(
   body: Record<string, unknown>,
-  gz: Attachments
+  gz: Attachments,
 ): Promise<{
   logUploaded: boolean
   inventoryUploaded: boolean
@@ -294,7 +301,7 @@ async function uploadLegs(
   const leg = async (
     raw: unknown,
     bytes: Buffer | null,
-    send: (u: PresignedUpload, b: Buffer) => Promise<boolean>
+    send: (u: PresignedUpload, b: Buffer) => Promise<boolean>,
   ): Promise<boolean> => {
     const upload = asUpload(raw)
     return upload !== null && bytes !== null ? await send(upload, bytes) : false
@@ -302,7 +309,7 @@ async function uploadLegs(
   return {
     logUploaded: await leg(body.upload, gz.log, uploadSlice),
     inventoryUploaded: await leg(body.inventoryUpload, gz.inventory, uploadInventory),
-    achievementsUploaded: await leg(body.achievementsUpload, gz.achievements, uploadAchievements)
+    achievementsUploaded: await leg(body.achievementsUpload, gz.achievements, uploadAchievements),
   }
 }
 
@@ -312,18 +319,22 @@ const STATUS_ERROR: Readonly<Record<number, SubmitErrorCode>> = {
   403: 'blocked',
   413: 'too_large',
   429: 'quota_exceeded',
-  503: 'closed'
+  503: 'closed',
 }
 
 /** Map a non-2xx response onto a typed error, preferring the server's own words. */
-function errorFor(status: number, body: Record<string, unknown> | null): {
+function errorFor(
+  status: number,
+  body: Record<string, unknown> | null,
+): {
   error: SubmitErrorCode
   message: string
   field?: string
   retryAfterSec?: number
 } {
   const code = typeof body?.error === 'string' ? (body.error as SubmitErrorCode) : null
-  const message = typeof body?.message === 'string' ? body.message : `The server returned ${status}.`
+  const message =
+    typeof body?.message === 'string' ? body.message : `The server returned ${status}.`
   const field = typeof body?.field === 'string' ? body.field : undefined
   const retryAfterSec = typeof body?.retryAfterSec === 'number' ? body.retryAfterSec : undefined
   return { error: code ?? STATUS_ERROR[status] ?? 'internal', message, field, retryAfterSec }
@@ -359,7 +370,7 @@ export const NO_ATTACHMENTS: Attachments = { log: null, inventory: null, achieve
  */
 export async function sendReport(
   req: SubmitRequest,
-  gz: Attachments
+  gz: Attachments,
 ): Promise<SubmitResult & { retry?: boolean }> {
   const json = JSON.stringify(req)
   if (Buffer.byteLength(json, 'utf8') > MAX_BODY_BYTES) {
@@ -367,11 +378,19 @@ export async function sendReport(
   }
   const res = await postJson(FEEDBACK_API_URL, req)
   const body = asRecord(res.body)
-  if (res.status >= 200 && res.status < 300 && body?.ok === true && typeof body.reportId === 'string') {
+  if (
+    res.status >= 200 &&
+    res.status < 300 &&
+    body?.ok === true &&
+    typeof body.reportId === 'string'
+  ) {
     return { ok: true, reportId: body.reportId, ...(await uploadLegs(body, gz)) }
   }
   const mapped = errorFor(res.status, body)
-  return { ...failure(mapped.error, mapped.message, mapped), retry: retryable(res.status, mapped.error) }
+  return {
+    ...failure(mapped.error, mapped.message, mapped),
+    retry: retryable(res.status, mapped.error),
+  }
 }
 
 // ---- the public submit --------------------------------------------------------------------------
@@ -380,7 +399,7 @@ export async function sendReport(
 async function requestFor(
   draft: FeedbackDraft,
   meta: AttachmentMeta,
-  clientReportId: string
+  clientReportId: string,
 ): Promise<SubmitRequest> {
   return {
     v: 1,
@@ -391,7 +410,7 @@ async function requestFor(
     clientTs: Date.now(),
     log: meta.log,
     inventory: meta.inventory,
-    achievements: meta.achievements
+    achievements: meta.achievements,
   }
 }
 
@@ -414,7 +433,7 @@ function queueEntry(req: SubmitRequest): QueuedReport {
     attempts: 1,
     // The first retry waits out the normal backoff; the periodic drain picks it up.
     nextAttemptAt: Date.now() + 5 * 60 * 1000,
-    queuedAt: Date.now()
+    queuedAt: Date.now(),
   }
 }
 
@@ -422,7 +441,7 @@ function queueEntry(req: SubmitRequest): QueuedReport {
  *  errors, so reaching the catch means a BUG — which must still not reject an IPC call. */
 async function attemptSend(
   req: SubmitRequest,
-  gz: Attachments
+  gz: Attachments,
 ): Promise<SubmitResult & { retry?: boolean }> {
   try {
     return await sendReport(req, gz)
@@ -443,7 +462,7 @@ function queueFailure(res: SubmitFailure, req: SubmitRequest, gz: Attachments): 
     queued,
     message: queued
       ? "Saved - we'll send it next time you're online."
-      : 'There are already 10 reports waiting to send. Please try again later.'
+      : 'There are already 10 reports waiting to send. Please try again later.',
   }
 }
 
@@ -468,22 +487,22 @@ async function buildAttachments(opts: {
 }): Promise<{ gz: Attachments; meta: AttachmentMeta }> {
   const slice = opts.attachLog ? await cachedSlice(opts.windowMinutes) : null
   const attached = packaged<InventoryAttachment>(
-    opts.attachInventory ? await currentInventory() : null
+    opts.attachInventory ? await currentInventory() : null,
   )
   const achAttached = packaged<AchievementsAttachment>(
-    opts.attachAchievements ? await currentAchievements() : null
+    opts.attachAchievements ? await currentAchievements() : null,
   )
   return {
     gz: {
       log: slice === null ? null : slice.gz,
       inventory: attached === null ? null : attached.gz,
-      achievements: achAttached === null ? null : achAttached.gz
+      achievements: achAttached === null ? null : achAttached.gz,
     },
     meta: {
       log: slice === null ? null : sliceMeta(slice),
       inventory: attached === null ? null : inventoryMeta(attached),
-      achievements: achAttached === null ? null : achievementsMeta(achAttached)
-    }
+      achievements: achAttached === null ? null : achievementsMeta(achAttached),
+    },
   }
 }
 
@@ -503,11 +522,14 @@ export async function submitFeedback(
     windowMinutes: number
     attachInventory: boolean
     attachAchievements: boolean
-  }
+  },
 ): Promise<SubmitResult> {
   if (E2E) return failure('internal', 'disabled in e2e')
   if (FEEDBACK_API_URL === '') {
-    return failure('internal', 'This build has no feedback endpoint. Please update to a newer version.')
+    return failure(
+      'internal',
+      'This build has no feedback endpoint. Please update to a newer version.',
+    )
   }
   const valid = validateDraft(draft)
   if (!valid.ok) return failure('invalid_payload', valid.message, { field: valid.field })
@@ -521,14 +543,14 @@ export async function submitFeedback(
       `[everquest-companion] feedback sent: ${res.reportId} ` +
         `(log ${res.logUploaded ? 'uploaded' : 'not uploaded'}, ` +
         `inventory ${res.inventoryUploaded ? 'uploaded' : 'not uploaded'}, ` +
-        `achievements ${res.achievementsUploaded ? 'uploaded' : 'not uploaded'})`
+        `achievements ${res.achievementsUploaded ? 'uploaded' : 'not uploaded'})`,
     )
     return {
       ok: true,
       reportId: res.reportId,
       logUploaded: res.logUploaded,
       inventoryUploaded: res.inventoryUploaded,
-      achievementsUploaded: res.achievementsUploaded
+      achievementsUploaded: res.achievementsUploaded,
     }
   }
   return res.retry === true ? queueFailure(res, req, built.gz) : { ...res, queued: false }

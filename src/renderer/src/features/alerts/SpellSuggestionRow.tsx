@@ -33,7 +33,7 @@ import {
   suggestionCoverageId,
   suggestionsFor,
   type Suggestion,
-  type TemplateKind
+  type TemplateKind,
 } from './suggestions'
 import { classLevelChips, type ClassLevelChip } from './lineIntel'
 import { Tooltip } from '../../lib/Tooltip'
@@ -69,7 +69,7 @@ export const ROW_CHIP_SX = {
   // un-clipped nowrap flex box — kept drawing past its edge and over the template chips beside it.
   // They hold their size now; what gives is the NAME, which ellipsizes, and then the row wraps.
   flexShrink: 0,
-  '& .MuiChip-label': { px: 0.6, fontSize: '0.68rem' }
+  '& .MuiChip-label': { px: 0.6, fontSize: '0.68rem' },
 } as const
 const CHIP_SX = ROW_CHIP_SX
 
@@ -100,7 +100,7 @@ export const SUGGEST_ROW_SX = {
   py: 0.125,
   minHeight: 26,
   borderRadius: 1,
-  '&:hover': { bgcolor: 'action.hover' }
+  '&:hover': { bgcolor: 'action.hover' },
 } as const
 
 /**
@@ -117,7 +117,7 @@ export const SUGGEST_ROW_FACTS_SX = {
   gap: 0.5,
   minWidth: 0,
   flexGrow: 1,
-  overflow: 'hidden'
+  overflow: 'hidden',
 } as const
 
 /**
@@ -136,7 +136,7 @@ export const SUGGEST_ROW_ACTIONS_SX = {
   flexWrap: 'wrap',
   justifyContent: 'flex-end',
   gap: 0.5,
-  minWidth: 0
+  minWidth: 0,
 } as const
 
 /** Coarse relative-time label for the usage tooltip's "last seen" (Task #45 recency hint). */
@@ -169,7 +169,13 @@ function LevelChip({ chip }: { chip: ClassLevelChip }): JSX.Element {
 }
 
 /** The class-level chips, resolved-first, with the overflow named in a "+N" tooltip. */
-function LevelChips({ entry, resolved }: { entry: SpellCatalogEntry; resolved: ClassAbbr[] }): JSX.Element | null {
+function LevelChips({
+  entry,
+  resolved,
+}: {
+  entry: SpellCatalogEntry
+  resolved: ClassAbbr[]
+}): JSX.Element | null {
   const chips = useMemo(() => classLevelChips(entry, resolved), [entry, resolved])
   if (chips.length === 0) return null
   const shown = chips.slice(0, MAX_LEVEL_CHIPS)
@@ -218,7 +224,7 @@ function chipLabel(s: Suggestion): string {
 export function TemplateChip({
   label,
   created,
-  onClick
+  onClick,
 }: {
   label: string
   created: boolean
@@ -247,7 +253,7 @@ function SpellRow({
   existingIds,
   onCreate,
   ctx,
-  showType = false
+  showType = false,
 }: {
   entry: SpellCatalogEntry
   existingIds: Set<string>
@@ -259,12 +265,15 @@ function SpellRow({
   const isDebuff = entry.spellType === 'Detrimental'
   // The rank the one-click chips target: the MOST RECENTLY CAST rank of this line (the owner's
   // rule), falling back to the highest rank known when the line has never been observed.
-  const rank = useMemo(() => preferredRank(ctx.lines.get(entry.key)?.ranks ?? []), [ctx.lines, entry.key])
+  const rank = useMemo(
+    () => preferredRank(ctx.lines.get(entry.key)?.ranks ?? []),
+    [ctx.lines, entry.key],
+  )
   // Building the AlertDefs is the row's heaviest work, and it depends only on the entry and the
   // rank — so a re-render that changes neither (a parent re-render, a hover) does none of it.
   const suggestions = useMemo(
     () => suggestionsFor(entry, rank, ctx.defaultPackId),
-    [entry, rank, ctx.defaultPackId]
+    [entry, rank, ctx.defaultPackId],
   )
   return (
     <Box sx={SUGGEST_ROW_SX} data-testid="suggest-row">

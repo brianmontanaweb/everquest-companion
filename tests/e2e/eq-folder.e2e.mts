@@ -42,8 +42,14 @@ interface EqConfig {
 
 /** One separator style, no trailing slash, case-folded — the way `logIsUnderLogsDir` compares. */
 const samePath = (a: string, b: string): boolean =>
-  a.replace(/[\\/]+/g, '\\').replace(/\\+$/, '').toLowerCase() ===
-  b.replace(/[\\/]+/g, '\\').replace(/\\+$/, '').toLowerCase()
+  a
+    .replace(/[\\/]+/g, '\\')
+    .replace(/\\+$/, '')
+    .toLowerCase() ===
+  b
+    .replace(/[\\/]+/g, '\\')
+    .replace(/\\+$/, '')
+    .toLowerCase()
 
 /** Save an override through the very channel the folder picker's result flows into. */
 function setEqDir(page: Page, dir: string | undefined): Promise<EqConfig> {
@@ -52,7 +58,7 @@ function setEqDir(page: Page, dir: string | undefined): Promise<EqConfig> {
       (
         window as unknown as { eq: { setEqDir: (x: string | undefined) => Promise<EqConfig> } }
       ).eq.setEqDir(d),
-    dir
+    dir,
   )
 }
 
@@ -67,7 +73,9 @@ function characterCount(page: Page): Promise<number> {
 /** The name of the character the app is actually TAILING (null when it is idle). */
 function attachedCharacter(page: Page): Promise<string | null> {
   return page.evaluate(async () => {
-    const eq = (window as unknown as { eq: { getCharacter: () => Promise<{ name: string } | null> } }).eq
+    const eq = (
+      window as unknown as { eq: { getCharacter: () => Promise<{ name: string } | null> } }
+    ).eq
     return (await eq.getCharacter())?.name ?? null
   })
 }
@@ -81,41 +89,47 @@ async function checkShape(
   page: Page,
   label: string,
   picked: string,
-  install: { root: string; logsDir: string }
+  install: { root: string; logsDir: string },
 ): Promise<void> {
   const config = await setEqDir(page, picked)
   check(
     `${label}: the app reports the INSTALL as the effective folder`,
     samePath(config.root, install.root),
-    `root=${config.root}`
+    `root=${config.root}`,
   )
   check(
     `${label}: …and reads the real Logs dir, not one joined onto the pick`,
     samePath(config.logsDir, install.logsDir),
-    `logsDir=${config.logsDir}`
+    `logsDir=${config.logsDir}`,
   )
   check(
     `${label}: …it is still a MANUAL override (normalizing is not auto-detecting)`,
     config.source === 'manual' && config.overridden,
-    `source=${config.source} overridden=${String(config.overridden)}`
+    `source=${config.source} overridden=${String(config.overridden)}`,
   )
   check(
     `${label}: THE REPORTED SYMPTOM IS GONE — the character log is detected`,
     config.characterCount === 1,
-    `characterCount=${String(config.characterCount)}`
+    `characterCount=${String(config.characterCount)}`,
   )
   check(
     `${label}: …and the read itself is reported as having SUCCEEDED (JOS-82)`,
     config.readable === 'ok',
-    `readable=${config.readable}`
+    `readable=${config.readable}`,
   )
-  const listed = await settle(() => characterCount(page), (n) => n === 1)
+  const listed = await settle(
+    () => characterCount(page),
+    (n) => n === 1,
+  )
   check(`${label}: …the character selector lists it`, listed === 1, `listed=${String(listed)}`)
-  const tailing = await settle(() => attachedCharacter(page), (n) => n === 'Primitive')
+  const tailing = await settle(
+    () => attachedCharacter(page),
+    (n) => n === 'Primitive',
+  )
   check(
     `${label}: …and the app is tailing it, not merely counting it`,
     tailing === 'Primitive',
-    `attached=${tailing ?? 'none'}`
+    `attached=${tailing ?? 'none'}`,
   )
 }
 
@@ -133,7 +147,7 @@ async function openFolderCard(page: Page): Promise<void> {
  * the verdict sentence, and whether the log-FILE picker is offered at all.
  */
 async function readFolderCard(
-  page: Page
+  page: Page,
 ): Promise<{ path: string; logsPath: string; verdict: string; hasFilePicker: boolean }> {
   // No local function declarations inside `evaluate`: tsx compiles the spec with esbuild, which
   // injects a `__name` helper around named arrows — and that helper does not exist in the page.
@@ -142,7 +156,7 @@ async function readFolderCard(
     logsPath:
       document.querySelector('[data-testid="eq-folder-logs-path"]')?.textContent?.trim() ?? '',
     verdict: document.querySelector('[data-testid="eq-folder-check"]')?.textContent?.trim() ?? '',
-    hasFilePicker: document.querySelector('[data-testid="eq-folder-pick-file"]') !== null
+    hasFilePicker: document.querySelector('[data-testid="eq-folder-pick-file"]') !== null,
   }))
 }
 
@@ -174,12 +188,12 @@ async function main(): Promise<void> {
     check(
       'the Game card stops saying "no logs" and states the find',
       /Found 1 character log/.test(card.verdict),
-      `verdict=${card.verdict}`
+      `verdict=${card.verdict}`,
     )
     check(
       '…and shows the folder it actually resolved, not the raw pick',
       samePath(card.path, install.root),
-      `shown=${card.path}`
+      `shown=${card.path}`,
     )
     // JOS-82. The card used to print the install ROOT alone. Pick `…\Logs` and normalization
     // correctly answers with its PARENT — so the one path on screen was not the path the user
@@ -189,7 +203,7 @@ async function main(): Promise<void> {
     check(
       'THE CARD NAMES THE FOLDER IT READS, not just the install root (JOS-82)',
       samePath(card.logsPath, install.logsDir),
-      `logsShown=${card.logsPath} want=${install.logsDir}`
+      `logsShown=${card.logsPath} want=${install.logsDir}`,
     )
     // The affordance whose absence is the other half of the report: Windows' folder dialog
     // lists ONLY folders, and a real Logs dir has no subfolders — so the user hunting for the
@@ -198,7 +212,7 @@ async function main(): Promise<void> {
     check(
       'a log-FILE picker is offered, not only a folder picker (JOS-82)',
       card.hasFilePicker,
-      `eq-folder-pick-file present=${String(card.hasFilePicker)}`
+      `eq-folder-pick-file present=${String(card.hasFilePicker)}`,
     )
 
     // 6. HONEST FAILURE SURVIVES. Normalizing must not turn a wrong path into a hopeful guess:
@@ -207,7 +221,7 @@ async function main(): Promise<void> {
     check(
       'a folder with no install still honestly reports zero',
       bogus.characterCount === 0 && bogus.source === 'manual',
-      `count=${String(bogus.characterCount)} source=${bogus.source}`
+      `count=${String(bogus.characterCount)} source=${bogus.source}`,
     )
     // …and it says WHICH kind of nothing. `characterCount === 0` used to be the whole story,
     // so the card told a user whose folder could not be read to go turn `/log on` — advice
@@ -215,18 +229,18 @@ async function main(): Promise<void> {
     check(
       'a nonexistent folder is reported as MISSING, not as an empty one (JOS-82)',
       bogus.readable === 'missing',
-      `readable=${bogus.readable}`
+      `readable=${bogus.readable}`,
     )
     // The card is push-updated (`eqconfig:changed`), so wait for the verdict to arrive rather
     // than race it.
     const bogusVerdict = await settle(
       async () => (await readFolderCard(page)).verdict,
-      (v) => /doesn.t exist/i.test(v)
+      (v) => /doesn.t exist/i.test(v),
     )
     check(
       '…and the card stops telling that user to enable logging',
       /doesn.t exist/i.test(bogusVerdict) && !/log on/.test(bogusVerdict),
-      `verdict=${bogusVerdict}`
+      `verdict=${bogusVerdict}`,
     )
 
     // 7. Back to a good install, so the run ends on the state the app should be in.

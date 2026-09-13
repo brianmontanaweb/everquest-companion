@@ -90,7 +90,7 @@ function PlainView({
   viewKey,
   routing,
   onOpenVoicePrefs,
-  onOpenOverlayPrefs
+  onOpenOverlayPrefs,
 }: {
   view: View
   viewKey: string
@@ -152,7 +152,9 @@ function PlainView({
           whole contract, since the watch list lives in the store and the clocks are re-derived
           by the fold the character switch kicks off. */}
       {view === 'timers' && <TimersView key={viewKey} />}
-      {view === 'alerts' && <AlertsView key={viewKey} {...{ onOpenVoicePrefs, onOpenOverlayPrefs }} />}
+      {view === 'alerts' && (
+        <AlertsView key={viewKey} {...{ onOpenVoicePrefs, onOpenOverlayPrefs }} />
+      )}
       {/* CHARACTER (JOS-45, released JOS-327). It sits HERE, below the no-characters gate, and not
           beside the triage branch: unlike triage this tab reads the game log (name, level, loadout)
           and the character's own inventory dump, so a machine with no EverQuest install has nothing
@@ -177,7 +179,7 @@ function ViewContent({
   onOpenPreferences,
   onOpenLeveling,
   onSendFeedback,
-  prefs
+  prefs,
 }: {
   view: View
   hasCharacters: boolean
@@ -201,7 +203,11 @@ function ViewContent({
   const onOpenOverlayPrefs = useCallback(() => openSection('overlays'), [openSection])
   if (view === 'preferences') {
     return (
-      <PreferencesView key={prefs.section ?? 'prefs'} onSendFeedback={onSendFeedback} section={prefs.section} />
+      <PreferencesView
+        key={prefs.section ?? 'prefs'}
+        onSendFeedback={onSendFeedback}
+        section={prefs.section}
+      />
     )
   }
   // OWNER-ONLY (`OWNER_TOOLS` = DEV **and** `EQ_OWNER_TOOLS=1`, JOS-72), and ABOVE the
@@ -328,7 +334,7 @@ function BottomStrips({ prefs }: { prefs: PrefsRouting }): JSX.Element {
  */
 async function selectCharacter(
   logPath: string,
-  applied: (character: CharacterRef) => void
+  applied: (character: CharacterRef) => void,
 ): Promise<void> {
   const res = await window.eq.setCharacter(logPath)
   if (res.ok && res.character) applied(res.character)
@@ -475,7 +481,7 @@ export default function App(): JSX.Element {
       void window.eq.listCharacters().then(setCharacters)
     })
     const offFocus = window.eq.onFocusView((focus) =>
-      applyDeepLink(focus, { openMob, openQuest, openLeveling, selectView })
+      applyDeepLink(focus, { openMob, openQuest, openLeveling, selectView }),
     )
     const offPrefs = keepPrefsSnapshotCurrent()
     return () => {
@@ -521,7 +527,12 @@ export default function App(): JSX.Element {
         {/* …and it takes the prefs router the way `BottomStrips` does (JOS-254): the patch-notes
             icon beside the version number in the chip at its foot opens a Preferences SECTION,
             which is not a view, so the destination travels as the router rather than as a tab. */}
-        <NavDrawer view={view} onSelect={selectView} prefs={prefsRouting} onSendFeedback={() => feedback.openFeedback()} />
+        <NavDrawer
+          view={view}
+          onSelect={selectView}
+          prefs={prefsRouting}
+          onSendFeedback={() => feedback.openFeedback()}
+        />
 
         <MainColumn view={view} onSelect={selectView} onReport={feedback.openFeedback}>
           <ViewContentMemo

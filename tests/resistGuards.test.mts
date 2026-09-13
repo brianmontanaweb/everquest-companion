@@ -21,11 +21,20 @@
 
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { ALL_RESISTED_MIN_N, ALL_RESISTED_SHARE, damageRefKey, estimate } from '../src/shared/resistModel'
-import { OVERCHANNEL_PER_CASTER_CLASS, OVERCHANNEL_RESIST_ADJ, RANK_RESIST_ADJ, levelMod } from '../src/shared/resistFormula'
+import {
+  ALL_RESISTED_MIN_N,
+  ALL_RESISTED_SHARE,
+  damageRefKey,
+  estimate,
+} from '../src/shared/resistModel'
+import {
+  OVERCHANNEL_PER_CASTER_CLASS,
+  OVERCHANNEL_RESIST_ADJ,
+  RANK_RESIST_ADJ,
+  levelMod,
+} from '../src/shared/resistFormula'
 import { FULL_DAMAGE, LANDS_ELSEWHERE, SPELLS, blank, playAon, rng } from './resistFixtures.mts'
 import type { ResistRow } from '../src/shared/resistTypes'
-
 
 test('THE POINT IS THE POSTERIOR MEDIAN, so a PLATEAU reports its middle and not its weakest edge', () => {
   // CASE B, a dracoliche's disease. Thirty observations, every one of them a resist, at a caster
@@ -35,9 +44,18 @@ test('THE POINT IS THE POSTERIOR MEDIAN, so a PLATEAU reports its middle and not
   // allowed as though it were the estimate (`R 60 (46-600) resistant`).
   const mobLevel = 58
   const est = estimate(
-    [blank({ spellKey: 'test hold', family: 'cast', casterLevel: 39, mobLevel, resist: 30, land: 0 })],
+    [
+      blank({
+        spellKey: 'test hold',
+        family: 'cast',
+        casterLevel: 39,
+        mobLevel,
+        resist: 30,
+        land: 0,
+      }),
+    ],
     SPELLS,
-    { axis: 'magic', mobLevel, unobservable: LANDS_ELSEWHERE }
+    { axis: 'magic', mobLevel, unobservable: LANDS_ELSEWHERE },
   )
   assert.equal(est.n, 30)
   assert.equal(levelMod(39, mobLevel), 180)
@@ -60,30 +78,55 @@ test('THE HARD DATA RULE: 90% resisted is the top band whatever the fitter says'
   assert.equal(ALL_RESISTED_MIN_N, 10)
   assert.equal(ALL_RESISTED_SHARE, 0.9)
   const opts = { axis: 'magic' as const, mobLevel: 50, unobservable: LANDS_ELSEWHERE }
-  const allResisted = estimate([blank({ spellKey: 'test hold', family: 'cast', resist: 30, land: 0 })], SPELLS, opts)
+  const allResisted = estimate(
+    [blank({ spellKey: 'test hold', family: 'cast', resist: 30, land: 0 })],
+    SPELLS,
+    opts,
+  )
   assert.equal(allResisted.resistsAlmostEverything, true)
   assert.deepEqual(allResisted.empirical, { total: 30, resisted: 30 })
 
   // Nine in ten is the line, and it is a line about the OBSERVATIONS: a cell that fell just short
   // of it is left to the model.
-  const mostly = estimate([blank({ spellKey: 'test hold', family: 'cast', resist: 27, land: 3 })], SPELLS, opts)
+  const mostly = estimate(
+    [blank({ spellKey: 'test hold', family: 'cast', resist: 27, land: 3 })],
+    SPELLS,
+    opts,
+  )
   assert.equal(mostly.resistsAlmostEverything, true, '27 of 30 is exactly 90%')
-  const short = estimate([blank({ spellKey: 'test hold', family: 'cast', resist: 26, land: 4 })], SPELLS, opts)
+  const short = estimate(
+    [blank({ spellKey: 'test hold', family: 'cast', resist: 26, land: 4 })],
+    SPELLS,
+    opts,
+  )
   assert.equal(short.resistsAlmostEverything, false)
 
   // THIN EVIDENCE NEVER TRIGGERS IT. Nine resists out of nine is not a fact about a creature.
-  const thin = estimate([blank({ spellKey: 'test hold', family: 'cast', resist: 9, land: 0 })], SPELLS, opts)
+  const thin = estimate(
+    [blank({ spellKey: 'test hold', family: 'cast', resist: 9, land: 0 })],
+    SPELLS,
+    opts,
+  )
   assert.equal(thin.resistsAlmostEverything, false)
 
   // AND A DAMAGE SPELL COUNTS ITS PARTIALS AS RESISTS for this rule: a silently reduced hit is the
   // roll going against you on a spell that cannot be refused outright. The reference comes from the
   // whole ledger, so it is stated here rather than re-derived from a cell that is almost all
   // partials (which is exactly the shape `fullDamageRefs` must not read a base out of).
-  const refs = new Map([[damageRefKey('test nuke', 50), { value: FULL_DAMAGE, allOrNothing: false }]])
+  const refs = new Map([
+    [damageRefKey('test nuke', 50), { value: FULL_DAMAGE, allOrNothing: false }],
+  ])
   const dd = estimate(
-    [blank({ spellKey: 'test nuke', family: 'cast', resist: 10, dmg: { '150': 2, '40': 20, '30': 8 } })],
+    [
+      blank({
+        spellKey: 'test nuke',
+        family: 'cast',
+        resist: 10,
+        dmg: { '150': 2, '40': 20, '30': 8 },
+      }),
+    ],
     SPELLS,
-    { ...opts, modes: refs }
+    { ...opts, modes: refs },
   )
   assert.equal(dd.resistsAlmostEverything, true, '10 resists and 28 partials out of 40')
 })
@@ -106,9 +149,13 @@ test('THE PINNED-FIT GUARD: the Eye of Veeshan does not fit, and a weak mob stil
       }),
     ],
     SPELLS,
-    { axis: 'magic', mobLevel: 70, unobservable: LANDS_ELSEWHERE }
+    { axis: 'magic', mobLevel: 70, unobservable: LANDS_ELSEWHERE },
   )
-  assert.equal(eye.pinned, true, 'no resistance this game can express explains 31 of 59 at that gap')
+  assert.equal(
+    eye.pinned,
+    true,
+    'no resistance this game can express explains 31 of 59 at that gap',
+  )
   assert.deepEqual(eye.empirical, { total: 59, resisted: 31 })
   // …and the cell is npc-only, which is the caveat the row wears beside the sentence.
   assert.equal(eye.npcOnly, true)
@@ -116,11 +163,15 @@ test('THE PINNED-FIT GUARD: the Eye of Veeshan does not fit, and a weak mob stil
   // A MOB THAT SIMPLY NEVER RESISTS ANYTHING IS NOT A FAILURE. Its fit is negative too — that is how
   // the model spells "nothing you cast is ever refused" — and refusing to print a number for it
   // would blank twenty-one cells of the shipped baseline that are answering correctly.
-  const weak = estimate([blank({ spellKey: 'test hold', family: 'cast', resist: 0, land: 40 })], SPELLS, {
-    axis: 'magic',
-    mobLevel: 50,
-    unobservable: LANDS_ELSEWHERE,
-  })
+  const weak = estimate(
+    [blank({ spellKey: 'test hold', family: 'cast', resist: 0, land: 40 })],
+    SPELLS,
+    {
+      axis: 'magic',
+      mobLevel: 50,
+      unobservable: LANDS_ELSEWHERE,
+    },
+  )
   assert.equal(weak.pinned, false)
   assert.deepEqual(weak.empirical, { total: 40, resisted: 0 })
 
@@ -141,7 +192,7 @@ test('a cell standing only on pets and other creatures says so', () => {
   const npcOnly = estimate(
     [blank({ spellKey: 'test hold', family: 'cast', casterKind: 'npc', resist: 20, land: 30 })],
     SPELLS,
-    opts
+    opts,
   )
   assert.equal(npcOnly.npcOnly, true)
   // One of your own casts is enough to make it no longer true: the caveat is about the whole cell.
@@ -151,7 +202,7 @@ test('a cell standing only on pets and other creatures says so', () => {
       blank({ spellKey: 'test hold', family: 'cast', casterKind: 'self', resist: 1, land: 1 }),
     ],
     SPELLS,
-    opts
+    opts,
   )
   assert.equal(mixed.npcOnly, false)
 })
@@ -176,11 +227,21 @@ test('SYNTHETIC ROLLS: the same mob hit at rank 0 and rank 6, in and out of over
     blank({ spellKey: 'test hold', family: 'cast', ...plain }),
     blank({ spellKey: 'test hold', family: 'cast', rank: 6, ...ranked }),
     blank({ spellKey: 'test hold', family: 'cast', overchannel: true, casterClasses: 2, ...over }),
-    blank({ spellKey: 'test hold', family: 'cast', rank: 6, overchannel: true, casterClasses: 2, ...both }),
+    blank({
+      spellKey: 'test hold',
+      family: 'cast',
+      rank: 6,
+      overchannel: true,
+      casterClasses: 2,
+      ...both,
+    }),
   ]
   const est = estimate(rows, SPELLS, { axis: 'magic', mobLevel: 50, unobservable: LANDS_ELSEWHERE })
   assert.equal(est.n, 1600)
-  assert.ok(R >= est.lo && R <= est.hi, `interval [${String(est.lo)},${String(est.hi)}] must contain ${String(R)}`)
+  assert.ok(
+    R >= est.lo && R <= est.hi,
+    `interval [${String(est.lo)},${String(est.hi)}] must contain ${String(R)}`,
+  )
   assert.ok(Math.abs(est.R - R) <= 12, `R=${String(est.R)} for a true ${String(R)}`)
 
   // AND THE DRILLDOWN SAYS SO, which is the acceptance the ticket words as "visible in the evidence
@@ -210,9 +271,18 @@ test('an unknown invocation is COUNTED and never weighed', () => {
   // A CREATURE'S NULL IS A DIFFERENT NULL and must not delete the npc family: nothing states an
   // NPC's invocation and nothing ever will, so those rows are weighed exactly as JOS-385 shipped.
   const npc = estimate(
-    [blank({ spellKey: 'test hold', family: 'cast', casterKind: 'npc', overchannel: null, resist: 20, land: 20 })],
+    [
+      blank({
+        spellKey: 'test hold',
+        family: 'cast',
+        casterKind: 'npc',
+        overchannel: null,
+        resist: 20,
+        land: 20,
+      }),
+    ],
     SPELLS,
-    { axis: 'magic', mobLevel: 50, unobservable: LANDS_ELSEWHERE }
+    { axis: 'magic', mobLevel: 50, unobservable: LANDS_ELSEWHERE },
   )
   assert.equal(npc.n, 40)
   assert.equal(npc.droppedUnknownInvocation, 0)

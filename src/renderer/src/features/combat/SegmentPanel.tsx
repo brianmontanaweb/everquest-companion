@@ -15,7 +15,13 @@ import { Box, Paper, ToggleButton, ToggleButtonGroup, Typography } from '@mui/ma
 import { TargetSkillBars } from './CombatDashboard'
 import { DefensePanel } from './DefensePanel'
 import { segmented } from './segmented'
-import { meterDrill, skillsForTarget, type Drill, type MeterMode, type TargetDetail } from './dashboardData'
+import {
+  meterDrill,
+  skillsForTarget,
+  type Drill,
+  type MeterMode,
+  type TargetDetail,
+} from './dashboardData'
 import { HealBody } from './HealPanel'
 import { DrillCrumb, MeterRows, crumbOf } from './MeterRows'
 import { SegmentHeader } from './SegmentHeader'
@@ -41,7 +47,11 @@ function IncomingHeals({ seg }: { seg: SegmentView }): React.JSX.Element | null 
         Heals received: {fmt(seg.incomingHealTotal)}
       </Typography>
       {top.map((h) => (
-        <Typography key={h.name} variant="caption" sx={{ display: 'block', color: 'text.secondary', pl: 1 }}>
+        <Typography
+          key={h.name}
+          variant="caption"
+          sx={{ display: 'block', color: 'text.secondary', pl: 1 }}
+        >
           {h.name} · {fmt(h.total)} ({h.count})
         </Typography>
       ))}
@@ -69,7 +79,13 @@ type MeterTab = 'damage' | 'mitigation'
  * the app (the gear area, Plane of Sky) but they are PAGE-level chrome with a full-width rule
  * under them, which is not what a 22px-row card wants across its top.
  */
-function MeterTabs({ tab, setTab }: { tab: MeterTab; setTab: (t: MeterTab) => void }): React.JSX.Element {
+function MeterTabs({
+  tab,
+  setTab,
+}: {
+  tab: MeterTab
+  setTab: (t: MeterTab) => void
+}): React.JSX.Element {
   return (
     <Box sx={{ mb: 0.75, flexShrink: 0 }}>
       <ToggleButtonGroup
@@ -104,14 +120,19 @@ interface DrillState {
  * MOB drill, which is this surface's alone: it reads the timeline's ring, and goes stale the same
  * way when the ring disappears.
  */
-function useDrillState(panel: MeterPanel, tl: TimelineView | null, drill: Drill | null): DrillState {
+function useDrillState(
+  panel: MeterPanel,
+  tl: TimelineView | null,
+  drill: Drill | null,
+): DrillState {
   const targetName = drill?.kind === 'target' ? drill.target : null
   const targetDetail = useMemo(
     () => (tl && targetName ? skillsForTarget(tl, targetName) : null),
-    [tl, targetName]
+    [tl, targetName],
   )
   const source = crumbOf(panel)
-  const target = targetDetail && targetName ? { crumb: targetName, parent: null, isTarget: true } : null
+  const target =
+    targetDetail && targetName ? { crumb: targetName, parent: null, isTarget: true } : null
   return { targetName, targetDetail, crumb: source ?? target }
 }
 
@@ -142,7 +163,7 @@ function DamageRows({
   mode,
   panel,
   d,
-  setDrill
+  setDrill,
 }: {
   seg: SegmentView
   mode: MeterMode
@@ -161,7 +182,11 @@ function DamageRows({
       // The Incoming direction has no drill: its rows fall back to EntityRow's own inline
       // expansion, exactly as they did before this body was shared.
       setDrill={mode === 'out' ? setDrill : null}
-      empty={mode === 'out' ? 'No outgoing damage in this segment.' : 'No incoming damage in this segment.'}
+      empty={
+        mode === 'out'
+          ? 'No outgoing damage in this segment.'
+          : 'No incoming damage in this segment.'
+      }
     />
   )
 }
@@ -176,7 +201,7 @@ function SegmentContent({
   d,
   drill,
   setDrill,
-  tab
+  tab,
 }: {
   seg: SegmentView
   mode: MeterMode
@@ -198,7 +223,13 @@ function SegmentContent({
   if (mode === 'heal') {
     return (
       <Box data-testid="meter-body" sx={{ overflow: 'auto', flexGrow: 1, minHeight: 0 }}>
-        <HealBody healing={seg.healing} scope={scope} roster={roster} drill={drill} setDrill={setDrill} />
+        <HealBody
+          healing={seg.healing}
+          scope={scope}
+          roster={roster}
+          drill={drill}
+          setDrill={setDrill}
+        />
       </Box>
     )
   }
@@ -241,7 +272,8 @@ function dimension(seg: SegmentView, mode: MeterMode): Dimension {
   if (mode === 'heal') {
     return { rows: [], total: seg.healing.total, dps: seg.healing.hps, activeDps: seg.healing.hps }
   }
-  if (mode === 'in') return { rows: seg.incoming, total: seg.inTotal, dps: seg.inDps, activeDps: seg.inDps }
+  if (mode === 'in')
+    return { rows: seg.incoming, total: seg.inTotal, dps: seg.inDps, activeDps: seg.inDps }
   return { rows: seg.entities, total: seg.outTotal, dps: seg.outDps, activeDps: seg.activeDps }
 }
 
@@ -257,14 +289,19 @@ function dimension(seg: SegmentView, mode: MeterMode): Dimension {
  * belongs to (`outDps` divides by elapsed time, `activeDps` by active seconds) — the same pair of
  * calls DpsCard's `scopedView` makes, so the glance card and this panel scale identically.
  */
-function scopedDimension(seg: SegmentView, mode: MeterMode, scope: MeterScope, roster: RosterSnap): Dimension {
+function scopedDimension(
+  seg: SegmentView,
+  mode: MeterMode,
+  scope: MeterScope,
+  roster: RosterSnap,
+): Dimension {
   const base = dimension(seg, mode)
   if (mode !== 'out') return base
   const rows = scopeSources(base.rows, scope, roster)
   return {
     rows,
     ...scopeTotals(base.rows, rows, base.total, base.dps),
-    activeDps: scopeTotals(base.rows, rows, base.total, base.activeDps).dps
+    activeDps: scopeTotals(base.rows, rows, base.total, base.activeDps).dps,
   }
 }
 
@@ -276,7 +313,10 @@ function scopedDimension(seg: SegmentView, mode: MeterMode, scope: MeterScope, r
  * Without it the header stated the fight while the rows stated the subject, and flipping the pet
  * preference under an open You drill moved the rows and left the number where it was.
  */
-function headline(panel: MeterPanel, dim: Dimension): { total: number; dps: number; activeDps: number } {
+function headline(
+  panel: MeterPanel,
+  dim: Dimension,
+): { total: number; dps: number; activeDps: number } {
   const { total, dps } = panelTotals(panel, dim.total, dim.dps)
   return { total, dps, activeDps: panelTotals(panel, dim.total, dim.activeDps).dps }
 }
@@ -288,7 +328,7 @@ export function SegmentBody({
   scope,
   roster,
   drill,
-  setDrill
+  setDrill,
 }: {
   seg: SegmentView
   tl: TimelineView | null
@@ -371,7 +411,7 @@ export function SegmentBody({
         minHeight: 0,
         overflow: 'hidden',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
       }}
     >
       <SegmentHeader

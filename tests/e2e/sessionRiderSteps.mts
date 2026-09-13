@@ -60,7 +60,9 @@ export function stepStartupReading(userData: string): void {
   const path = join(userData, 'telemetry.json')
   let events: { ev: Record<string, unknown> }[]
   try {
-    events = (JSON.parse(readFileSync(path, 'utf8')) as { events?: { ev: Record<string, unknown> }[] }).events ?? []
+    events =
+      (JSON.parse(readFileSync(path, 'utf8')) as { events?: { ev: Record<string, unknown> }[] })
+        .events ?? []
   } catch (err) {
     check('the session ring reached disk', false, String(err))
     return
@@ -84,7 +86,7 @@ export function stepStartupReading(userData: string): void {
     !check(
       'a session report reached the ring on disk — the carrier the startup reading used to ride',
       events.length > 0 && kinds.includes('sessionEnd'),
-      `${String(events.length)} event(s): ${kinds.join(', ')}`
+      `${String(events.length)} event(s): ${kinds.join(', ')}`,
     )
   ) {
     return
@@ -95,10 +97,9 @@ export function stepStartupReading(userData: string): void {
   check(
     'no launch claims a replay it never ran — the reading is absent, not zeroed',
     events.every((r) => r.ev.startup === undefined),
-    JSON.stringify(events.find((r) => r.ev.startup !== undefined)?.ev.startup ?? 'absent')
+    JSON.stringify(events.find((r) => r.ev.startup !== undefined)?.ev.startup ?? 'absent'),
   )
 }
-
 
 /**
  * SHAPE, NOT VALUES. How late this machine's timers ran while it replayed a fixture is a property
@@ -111,7 +112,8 @@ export function stepStartupReading(userData: string): void {
 export function stepLiveRiders(userData: string): void {
   let events: { ev: Record<string, unknown> }[]
   try {
-    events = (JSON.parse(readFileSync(join(userData, 'telemetry.json'), 'utf8')) as Ring).events ?? []
+    events =
+      (JSON.parse(readFileSync(join(userData, 'telemetry.json'), 'utf8')) as Ring).events ?? []
   } catch (err) {
     check('the live stall reading reached the ring on disk', false, String(err))
     return
@@ -121,7 +123,7 @@ export function stepLiveRiders(userData: string): void {
     !check(
       'the live stall reading reached the ring on disk, on a session report',
       carriers.length >= 1,
-      `${String(carriers.length)} carrier(s) among ${String(events.length)}: ${[...new Set(events.map((r) => String(r.ev.t)))].join(', ')}`
+      `${String(carriers.length)} carrier(s) among ${String(events.length)}: ${[...new Set(events.map((r) => String(r.ev.t)))].join(', ')}`,
     )
   ) {
     return
@@ -135,7 +137,7 @@ export function stepLiveRiders(userData: string): void {
   check(
     '…and the report carrying them would be ACCEPTED by the ingest validator, unaltered',
     validated.ok,
-    validated.ok ? '' : `${validated.field}: ${validated.message}`
+    validated.ok ? '' : `${validated.field}: ${validated.message}`,
   )
 }
 
@@ -143,11 +145,11 @@ function liveShape(live: Record<string, unknown>): void {
   check(
     '…with samples from a probe that really ran, and percentiles that are BUCKET INDICES',
     ['samples', 'p95Bucket', 'maxBucket', 'over100', 'over500'].every(
-      (k) => typeof live[k] === 'number'
+      (k) => typeof live[k] === 'number',
     ) &&
       (live.samples as number) > 0 &&
       (live.p95Bucket as number) <= 8,
-    JSON.stringify(live)
+    JSON.stringify(live),
   )
   // AND THE SECOND THREAD ANSWERED. This is the assertion the whole ticket rests on and the one
   // no unit test can make: a `coincident` of any value means `perfProbeWorker.js` was emitted as
@@ -159,7 +161,7 @@ function liveShape(live: Record<string, unknown>): void {
     typeof live.coincident === 'number',
     // The detail prints on pass as well as fail (the harness's shape), so it states the VALUE and
     // lets the check's own sentence carry the claim — `undefined` here reads as "never spoke".
-    `coincident=${JSON.stringify(live.coincident)}`
+    `coincident=${JSON.stringify(live.coincident)}`,
   )
 }
 
@@ -168,10 +170,10 @@ function stateShape(state: Record<string, unknown> | undefined): void {
     '…and the state rider beside it: two window counts, two flags, two memory buckets',
     state !== undefined &&
       ['overlaysOpen', 'overlaysLocked', 'freeMemBucket', 'workingSetBucket'].every(
-        (k) => typeof state[k] === 'number'
+        (k) => typeof state[k] === 'number',
       ) &&
       typeof state.presenceOn === 'boolean' &&
       typeof state.ringOn === 'boolean',
-    JSON.stringify(state)
+    JSON.stringify(state),
   )
 }

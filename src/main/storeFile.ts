@@ -73,7 +73,7 @@ import {
   isPlainObject,
   migrateStoreData,
   type MigrationOutcome,
-  type StoreData
+  type StoreData,
 } from './storeMigrations'
 
 export interface MigrationHooks {
@@ -122,7 +122,7 @@ const startsCurrent = (): MigrationOutcome => ({
   to: CURRENT_SCHEMA_VERSION,
   applied: [],
   data: {},
-  changed: false
+  changed: false,
 })
 
 /** How every failure path below names a thrown value. One spelling, so the logged text of a
@@ -130,7 +130,8 @@ const startsCurrent = (): MigrationOutcome => ({
 const errText = (err: unknown): string => (err instanceof Error ? err.message : String(err))
 
 /** Either the file's bytes, or the finished outcome the caller must return unchanged. */
-type ReadStoreStep = { raw: string; result?: undefined } | { raw?: undefined; result: StoreFileMigration }
+type ReadStoreStep =
+  { raw: string; result?: undefined } | { raw?: undefined; result: StoreFileMigration }
 
 /** Read the store bytes. A missing file is a fresh install; any other read failure leaves the
  *  file untouched and unstamped (a file we could not read is a file we must not describe). */
@@ -143,7 +144,15 @@ function readStoreBytes(storePath: string, hooks: MigrationHooks): ReadStoreStep
     }
     const message = errText(err)
     hooks.error?.(`store schema: cannot read ${storePath} (${message}); leaving it untouched`)
-    return { result: { ...startsCurrent(), path: storePath, wrote: false, fileMissing: false, readError: message } }
+    return {
+      result: {
+        ...startsCurrent(),
+        path: storePath,
+        wrote: false,
+        fileMissing: false,
+        readError: message,
+      },
+    }
   }
 }
 
@@ -233,7 +242,11 @@ function salvageStore(storePath: string, raw: string): Salvage | undefined {
   if (torn) {
     const residue = torn.residue > 0 ? `, ${torn.residue} stale trailing bytes discarded` : ''
     const count = Object.keys(torn.data).length
-    return { data: torn.data, from: 'torn-bytes', detail: `${count} settings out of the torn file${residue}` }
+    return {
+      data: torn.data,
+      from: 'torn-bytes',
+      detail: `${count} settings out of the torn file${residue}`,
+    }
   }
   for (const candidate of backupCandidates(storePath)) {
     let bytes: string
@@ -245,7 +258,11 @@ function salvageStore(storePath: string, raw: string): Salvage | undefined {
     const backup = salvageBytes(bytes)
     if (backup) {
       const count = Object.keys(backup.data).length
-      return { data: backup.data, from: 'backup', detail: `${count} settings out of the v${candidate.v} backup` }
+      return {
+        data: backup.data,
+        from: 'backup',
+        detail: `${count} settings out of the v${candidate.v} backup`,
+      }
     }
   }
   return undefined
@@ -272,8 +289,16 @@ function quarantineStore(storePath: string, hooks: MigrationHooks): string | Sto
     return quarantine
   } catch (err) {
     const message = errText(err)
-    hooks.error?.(`store schema: ${storePath} is not valid JSON and could not be moved aside (${message})`)
-    return { ...startsCurrent(), path: storePath, wrote: false, fileMissing: false, readError: message }
+    hooks.error?.(
+      `store schema: ${storePath} is not valid JSON and could not be moved aside (${message})`,
+    )
+    return {
+      ...startsCurrent(),
+      path: storePath,
+      wrote: false,
+      fileMissing: false,
+      readError: message,
+    }
   }
 }
 
@@ -290,7 +315,7 @@ function writeBackupOnce(
   storePath: string,
   raw: string,
   fromVersion: number,
-  hooks: MigrationHooks
+  hooks: MigrationHooks,
 ): string | undefined {
   const backup = backupPathFor(storePath, fromVersion)
   try {
@@ -309,18 +334,20 @@ function writeMigrated(
   storePath: string,
   outcome: MigrationOutcome,
   result: StoreFileMigration,
-  hooks: MigrationHooks
+  hooks: MigrationHooks,
 ): void {
   try {
     writeStoreFile(storePath, outcome.data)
     result.wrote = true
     hooks.info?.(
       `store schema: v${outcome.from} → v${outcome.to} (${outcome.applied.join(', ') || 'no steps'}); ` +
-        `backup ${result.backupPath ?? 'none'}`
+        `backup ${result.backupPath ?? 'none'}`,
     )
   } catch (err) {
     const message = errText(err)
-    hooks.error?.(`store schema: v${outcome.from} → v${outcome.to} could not be written (${message}); will retry next launch`)
+    hooks.error?.(
+      `store schema: v${outcome.from} → v${outcome.to} could not be written (${message}); will retry next launch`,
+    )
     result.wrote = false
     // Nothing persisted ⇒ nothing may be stamped, or the failed steps would be skipped forever.
     result.to = outcome.from
@@ -336,7 +363,7 @@ function restoreSalvaged(
   storePath: string,
   data: StoreData,
   result: StoreFileMigration,
-  hooks: MigrationHooks
+  hooks: MigrationHooks,
 ): void {
   try {
     writeStoreFile(storePath, data)
@@ -344,7 +371,7 @@ function restoreSalvaged(
     hooks.info?.(`store schema: salvaged store written back to ${storePath}`)
   } catch (err) {
     hooks.error?.(
-      `store schema: the salvaged store could not be written to ${storePath} (${errText(err)}); starting from defaults`
+      `store schema: the salvaged store could not be written to ${storePath} (${errText(err)}); starting from defaults`,
     )
     result.fileMissing = true
   }
@@ -363,9 +390,18 @@ interface StoreSource {
 
 /** Run the chain over one source, back it up and write the result. The whole of the old
  *  `migrateStoreFile` below the parse, unchanged except for the salvage write-backs. */
-function runMigration(storePath: string, source: StoreSource, hooks: MigrationHooks): StoreFileMigration {
+function runMigration(
+  storePath: string,
+  source: StoreSource,
+  hooks: MigrationHooks,
+): StoreFileMigration {
   const outcome = migrateStoreData(source.data)
-  const result: StoreFileMigration = { ...outcome, path: storePath, wrote: false, fileMissing: false }
+  const result: StoreFileMigration = {
+    ...outcome,
+    path: storePath,
+    wrote: false,
+    fileMissing: false,
+  }
   if (source.quarantinedPath !== undefined) result.quarantinedPath = source.quarantinedPath
   if (source.salvagedFrom !== undefined) result.salvagedFrom = source.salvagedFrom
   const salvaged = source.salvagedFrom !== undefined
@@ -381,7 +417,7 @@ function runMigration(storePath: string, source: StoreSource, hooks: MigrationHo
   if (outcome.status === 'future') {
     hooks.error?.(
       `store schema: ${storePath} is at v${outcome.from} but this build only knows v${CURRENT_SCHEMA_VERSION}. ` +
-        'Leaving it untouched and running best-effort - a downgrade never rewrites a newer store.'
+        'Leaving it untouched and running best-effort - a downgrade never rewrites a newer store.',
     )
     // …except when there is nothing left on disk to leave untouched: a salvaged newer store still
     // has to be put back, verbatim, or the "downgrade never rewrites" promise costs the user the file.
@@ -393,7 +429,7 @@ function runMigration(storePath: string, source: StoreSource, hooks: MigrationHo
   if (outcome.status === 'partial' && outcome.failed) {
     hooks.error?.(
       `store schema: migration to v${outcome.failed.to} failed (${outcome.failed.error}); ` +
-        `store left at v${result.to}, retrying next launch`
+        `store left at v${result.to}, retrying next launch`,
     )
   }
   return result
@@ -403,7 +439,10 @@ function runMigration(storePath: string, source: StoreSource, hooks: MigrationHo
  * Read the store file, run the chain, back it up, write it back. Call ONCE at startup,
  * before electron-store is constructed. Never throws.
  */
-export function migrateStoreFile(storePath: string, hooks: MigrationHooks = {}): StoreFileMigration {
+export function migrateStoreFile(
+  storePath: string,
+  hooks: MigrationHooks = {},
+): StoreFileMigration {
   const read = readStoreBytes(storePath, hooks)
   if (read.result) return read.result
   const raw = read.raw
@@ -431,7 +470,13 @@ export function migrateStoreFile(storePath: string, hooks: MigrationHooks = {}):
   const line = `store schema: the store file is not valid JSON, ${verdict} - ${storePath} was moved to ${quarantine}`
   if (!salvage) {
     hooks.error?.(line)
-    return { ...startsCurrent(), path: storePath, wrote: false, fileMissing: true, quarantinedPath: quarantine }
+    return {
+      ...startsCurrent(),
+      path: storePath,
+      wrote: false,
+      fileMissing: true,
+      quarantinedPath: quarantine,
+    }
   }
   hooks.error?.(line)
   return runMigration(
@@ -440,8 +485,8 @@ export function migrateStoreFile(storePath: string, hooks: MigrationHooks = {}):
       data: salvage.data,
       raw: JSON.stringify(salvage.data, undefined, '\t'),
       quarantinedPath: quarantine,
-      salvagedFrom: salvage.from
+      salvagedFrom: salvage.from,
     },
-    hooks
+    hooks,
   )
 }

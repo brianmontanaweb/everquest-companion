@@ -18,7 +18,7 @@ import assert from 'node:assert/strict'
 import {
   SKY_MOB_ISLANDS,
   mobIslands,
-  skyMobIslandFor
+  skyMobIslandFor,
 } from '../src/renderer/src/features/posky/skyMobIslands'
 import {
   islandNumber,
@@ -26,7 +26,7 @@ import {
   killTargetFacts,
   questKillTargets,
   skyDroppersFor,
-  type KillTargetItem
+  type KillTargetItem,
 } from '../src/renderer/src/features/posky/poskyDroppers'
 import poskyRaw from '../src/renderer/src/data/eqlegends/posky.json' with { type: 'json' }
 import type { PoskyQuest } from '../src/shared/types'
@@ -39,7 +39,7 @@ const questRows = (q: PoskyQuest): KillTargetItem[] =>
     need: it.count > 0 ? it.count : 1,
     have: 0,
     where: it.where,
-    droppers: skyDroppersFor(it.name, it.who)
+    droppers: skyDroppersFor(it.name, it.who),
   }))
 
 /** One item row folded into the accumulator — deduped by page, the questKillTargets rule. */
@@ -84,7 +84,7 @@ test('every entry is well formed and names a mob page exactly once', () => {
     // Island 2 + Island 7), and the row still earns its keep by trimming the wrong half.
     assert.ok(
       !(e.derived.length === 1 && e.derived[0] === e.island),
-      `${e.page}: derived already agrees — drop the entry`
+      `${e.page}: derived already agrees — drop the entry`,
     )
     assert.ok(e.evidence.length > 40, `${e.page}: evidence must say how it was checked`)
   }
@@ -102,7 +102,7 @@ test('the committed scrape still produces the island each entry says it produces
     assert.deepEqual(
       sorted(got),
       [...e.derived],
-      `${e.page}: the join now says something else. Re-verify before keeping this row.`
+      `${e.page}: the join now says something else. Re-verify before keeping this row.`,
     )
   }
 })

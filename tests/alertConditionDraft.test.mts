@@ -48,7 +48,7 @@ import {
   draftFromPrimitive,
   primitiveFromDraft,
   triggerBadge,
-  type ConditionDraft
+  type ConditionDraft,
 } from '../src/renderer/src/features/alerts/conditionDraft'
 import type { AlertTriggerPrimitive } from '../src/shared/types'
 
@@ -57,7 +57,13 @@ const src = (rel: string): string =>
 
 /** The condition the report was trying to author: a mote, by item name, as a regex. */
 function moteDraft(): ConditionDraft {
-  return { ...blankCondition(), ttype: 'event', kind: 'loot', fieldKey: 'item', fieldVal: '/^Mote of /' }
+  return {
+    ...blankCondition(),
+    ttype: 'event',
+    kind: 'loot',
+    fieldKey: 'item',
+    fieldVal: '/^Mote of /',
+  }
 }
 
 // ── 1. the round trip ─────────────────────────────────────────────────────────────────
@@ -84,7 +90,7 @@ test('surrounding whitespace is trimmed off the pair, never out of the pattern',
     kind: 'loot',
     // The space BEFORE the closing slash is part of the regex and survives; the ones outside
     // the slashes are typing noise and do not.
-    where: { item: '/^Mote of /' }
+    where: { item: '/^Mote of /' },
   })
 })
 

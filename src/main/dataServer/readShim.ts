@@ -98,7 +98,7 @@ const REASON_PHRASE: Record<FallbackReason, string> = {
   notLive: 'the engine is still folding',
   refused: 'the engine refused',
   timedOut: 'the engine did not answer in time',
-  guess: 'the engine’s answer would have been a guess'
+  guess: 'the engine’s answer would have been a guess',
 }
 
 /** Is the engine in a state where its answers may be this app's answers? */
@@ -153,7 +153,7 @@ export interface ReadShim {
     op: O,
     params: ParamsFor<O>,
     project: (result: ResultFor<O>) => T | null,
-    own: () => T
+    own: () => T,
   ) => Promise<T>
   /**
    * THE ENGINE ARM ALONE — no fallback, no note. It exists for the e2e's parity seam, which must be
@@ -163,7 +163,7 @@ export interface ReadShim {
   ask: <O extends RequestOp, T>(
     op: O,
     params: ParamsFor<O>,
-    project: (result: ResultFor<O>) => T | null
+    project: (result: ResultFor<O>) => T | null,
   ) => Promise<ServeOutcome<T>>
   /** Print whatever the tally is holding, now. Called at teardown and by the unit. */
   flushNotes: () => void
@@ -217,7 +217,7 @@ function flush(deps: ShimDeps, tally: NoteTally): void {
   const total = Array.from(tally.counts.values()).reduce((a, b) => a + b, 0)
   deps.note(
     `data-server shim: ${String(total)} unserved read${total === 1 ? '' : 's'} ` +
-      `answered with the empty shape — ${parts.join(', ')}`
+      `answered with the empty shape — ${parts.join(', ')}`,
   )
   tally.counts.clear()
   tally.lastAt = deps.now()
@@ -244,7 +244,7 @@ export function createReadShim(deps: ShimDeps): ReadShim {
   const ask = async <O extends RequestOp, T>(
     op: O,
     params: ParamsFor<O>,
-    project: (result: ResultFor<O>) => T | null
+    project: (result: ResultFor<O>) => T | null,
   ): Promise<ServeOutcome<T>> => {
     // READINESS FIRST, and it costs nothing: three field reads against a live connection. A request
     // put on a wire that is not there would come back as `refused` anyway, but it would come back
@@ -269,7 +269,7 @@ export function createReadShim(deps: ShimDeps): ReadShim {
     op: O,
     params: ParamsFor<O>,
     project: (result: ResultFor<O>) => T | null,
-    own: () => T
+    own: () => T,
   ): Promise<T> => {
     const outcome = await ask(op, params, project)
     if (outcome.served) return outcome.value
@@ -282,6 +282,6 @@ export function createReadShim(deps: ShimDeps): ReadShim {
     ask,
     flushNotes: (): void => {
       flush(deps, tally)
-    }
+    },
   }
 }

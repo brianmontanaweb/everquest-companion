@@ -273,7 +273,7 @@ function componentRow(
   category: string,
   achievement: string,
   status: AchievementStatus,
-  fields: string[]
+  fields: string[],
 ): AchievementRow | null {
   if (fields.length > 4 || fields[1] !== '' || fields[2] === '') return null
   const progress = fields.length === 4 && fields[3] !== '' ? fields[3] : undefined
@@ -282,13 +282,13 @@ function componentRow(
     achievement,
     component: fields[2],
     status,
-    ...(progress === undefined ? {} : { progress })
+    ...(progress === undefined ? {} : { progress }),
   }
 }
 
 const STATUS: Record<string, AchievementStatus | undefined> = {
   C: 'complete',
-  I: 'incomplete'
+  I: 'incomplete',
 }
 
 /** The class this row is about, or null when the row is not a class-unlock achievement's. */

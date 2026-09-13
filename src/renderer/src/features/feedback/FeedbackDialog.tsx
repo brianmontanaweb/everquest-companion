@@ -32,7 +32,7 @@ import {
   TextField,
   ToggleButton,
   ToggleButtonGroup,
-  Typography
+  Typography,
 } from '@mui/material'
 import BugReportIcon from '@mui/icons-material/BugReport'
 import LightbulbIcon from '@mui/icons-material/Lightbulb'
@@ -49,7 +49,7 @@ import {
   type FeedbackContext,
   type FeedbackOutcome,
   type FeedbackPrefill,
-  type FeedbackState
+  type FeedbackState,
 } from './useFeedback'
 
 /**
@@ -87,7 +87,7 @@ const ACHIEVEMENTS_DISCLOSURE =
 /** Feature request | Bug report. The entry point picks the default; this is the override. */
 function TypeToggle({
   value,
-  onChange
+  onChange,
 }: {
   value: FeedbackType
   onChange: (t: FeedbackType) => void
@@ -147,7 +147,7 @@ function DraftFieldsBlock({ state }: { state: FeedbackState }): JSX.Element {
 /** 15 / 30 / 60 minutes, ending at the last line in your log (not at the wall clock). */
 function WindowChoice({
   value,
-  onChange
+  onChange,
 }: {
   value: number
   onChange: (m: number) => void
@@ -234,7 +234,7 @@ function AttachLogSection({ state }: { state: FeedbackState }): JSX.Element | nu
  */
 function AttachInventorySection({
   state,
-  ctx
+  ctx,
 }: {
   state: FeedbackState
   ctx: FeedbackContext | null
@@ -294,7 +294,7 @@ function AttachInventorySection({
  */
 function AttachAchievementsSection({
   state,
-  ctx
+  ctx,
 }: {
   state: FeedbackState
   ctx: FeedbackContext | null
@@ -359,13 +359,17 @@ const OUTCOME_SEVERITY: Record<FeedbackOutcome['kind'], 'success' | 'info' | 'wa
   sent: 'success',
   queued: 'info',
   closed: 'info',
-  error: 'warning'
+  error: 'warning',
 }
 
 /** The done phase: one quiet statement of what actually happened, plus the id if there is one. */
 function OutcomeView({ outcome }: { outcome: FeedbackOutcome }): JSX.Element {
   return (
-    <Alert severity={OUTCOME_SEVERITY[outcome.kind]} variant="standard" data-testid="feedback-outcome">
+    <Alert
+      severity={OUTCOME_SEVERITY[outcome.kind]}
+      variant="standard"
+      data-testid="feedback-outcome"
+    >
       <Stack spacing={0.5}>
         <Typography variant="body2">{outcome.message}</Typography>
         {outcome.reportId && (
@@ -385,7 +389,11 @@ export interface FeedbackDialogProps {
   prefill?: FeedbackPrefill
 }
 
-export default function FeedbackDialog({ open, onClose, prefill }: FeedbackDialogProps): JSX.Element {
+export default function FeedbackDialog({
+  open,
+  onClose,
+  prefill,
+}: FeedbackDialogProps): JSX.Element {
   const ctx = useFeedbackContext(open)
   const state = useFeedback(open, prefill)
   const { phase, outcome, problem, send } = state

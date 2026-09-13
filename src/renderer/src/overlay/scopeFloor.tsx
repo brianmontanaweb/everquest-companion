@@ -88,7 +88,7 @@ export function ScopeFloor({ label }: ScopeFloorText): JSX.Element {
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
-        color: 'rgba(255,255,255,0.22)'
+        color: 'rgba(255,255,255,0.22)',
       }}
     >
       {label}
@@ -114,7 +114,7 @@ export function MeterPane({
   locked,
   capture,
   notice,
-  children
+  children,
 }: {
   textScale: number
   scope: ScopeFloorText
@@ -143,7 +143,7 @@ export function MeterPane({
         minHeight: 0,
         // The reserved floor (see FLOOR_H): the pane stops here, so the scroller's last row and
         // the watermark can never share a pixel.
-        paddingBottom: FLOOR_H
+        paddingBottom: FLOOR_H,
       }}
     >
       <OverlayContent textScale={textScale} testId="overlay-bars" locked={locked} capture={capture}>

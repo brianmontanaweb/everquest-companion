@@ -31,7 +31,7 @@ import {
   isUnstatedLane,
   laneAmount,
   spellStat,
-  spellTitle
+  spellTitle,
 } from './healRows'
 import { formatNum as fmt } from '../../lib/formatRate'
 import { scopeHealing } from './meterScope'
@@ -49,7 +49,7 @@ const HEAL_KIND_COLOR: Record<string, string> = {
   you: '#7fd1a0',
   pet: '#6fb3d2',
   other: '#a98fe0',
-  enemy: '#cf6679'
+  enemy: '#cf6679',
 }
 const MIT_COLOR = '#8fb8d8'
 
@@ -57,7 +57,7 @@ const MIT_COLOR = '#8fb8d8'
 function HealerBar({
   h,
   rank,
-  onDrill
+  onDrill,
 }: {
   h: HealSourceView
   rank: number
@@ -78,11 +78,17 @@ function HealerBar({
             <>
               {h.name}
               {h.kind === 'pet' ? ' ·pet' : h.kind === 'enemy' ? ' ·enemy' : ''}
-              <Typography component="span" variant="caption" sx={{ ml: 0.75, color: 'text.secondary', fontWeight: 400 }}>
+              <Typography
+                component="span"
+                variant="caption"
+                sx={{ ml: 0.75, color: 'text.secondary', fontWeight: 400 }}
+              >
                 {healerStat(h)}
               </Typography>
               {onDrill && (
-                <ChevronRightIcon sx={{ fontSize: 13, ml: 0.25, mb: '-2px', color: 'text.disabled' }} />
+                <ChevronRightIcon
+                  sx={{ fontSize: 13, ml: 0.25, mb: '-2px', color: 'text.disabled' }}
+                />
               )}
             </>
           }
@@ -95,7 +101,7 @@ function HealerBar({
 
 /** One lane inside a healer's drill: a heal spell, or the absorption lane. */
 function SpellBar({ s, healerKind }: { s: HealSpellView; healerKind: string }): JSX.Element {
-  const color = isAbsorbLane(s) ? MIT_COLOR : HEAL_KIND_COLOR[healerKind] ?? '#888'
+  const color = isAbsorbLane(s) ? MIT_COLOR : (HEAL_KIND_COLOR[healerKind] ?? '#888')
   return (
     <Tooltip title={spellTitle(s)}>
       <Box>
@@ -109,7 +115,11 @@ function SpellBar({ s, healerKind }: { s: HealSpellView; healerKind: string }): 
               {/* Heal lines that named no spell get an explicit, labeled lane — never folded
                   silently into a real spell's numbers. */}
               {s.name === 'Unspecified' && (
-                <Typography component="span" variant="caption" sx={{ color: 'text.disabled', fontWeight: 400 }}>
+                <Typography
+                  component="span"
+                  variant="caption"
+                  sx={{ color: 'text.disabled', fontWeight: 400 }}
+                >
                   {' '}
                   ~no spell named
                 </Typography>
@@ -117,7 +127,11 @@ function SpellBar({ s, healerKind }: { s: HealSpellView; healerKind: string }): 
               {/* The classification as a plain suffix, the same convention the overlay uses —
                   never a badge, which would compete with the name for the row's width. */}
               {isAbsorbLane(s) && (
-                <Typography component="span" variant="caption" sx={{ color: 'text.secondary', fontWeight: 400 }}>
+                <Typography
+                  component="span"
+                  variant="caption"
+                  sx={{ color: 'text.secondary', fontWeight: 400 }}
+                >
                   {' '}
                   ·absorbed
                 </Typography>
@@ -126,12 +140,20 @@ function SpellBar({ s, healerKind }: { s: HealSpellView; healerKind: string }): 
                   an amount (Mend). The suffix is what stops the ZERO-length bar beside it from
                   reading as a heal that did nothing. */}
               {isUnstatedLane(s) && (
-                <Typography component="span" variant="caption" sx={{ color: 'text.secondary', fontWeight: 400 }}>
+                <Typography
+                  component="span"
+                  variant="caption"
+                  sx={{ color: 'text.secondary', fontWeight: 400 }}
+                >
                   {' '}
                   ·{UNSTATED_AMOUNT}
                 </Typography>
               )}
-              <Typography component="span" variant="caption" sx={{ ml: 0.75, color: 'text.secondary', fontWeight: 400 }}>
+              <Typography
+                component="span"
+                variant="caption"
+                sx={{ ml: 0.75, color: 'text.secondary', fontWeight: 400 }}
+              >
                 {spellStat(s)}
               </Typography>
             </>
@@ -153,7 +175,7 @@ function AbsorbCounts({ mit }: { mit: MitigationView | null }): JSX.Element | nu
   if (!hasAbsorbCounts(mit) || !mit) return null
   const bits = [
     mit.absorbedSwings > 0 ? `${mit.absorbedSwings} swings absorbed` : '',
-    mit.absorbedDamageShields > 0 ? `${mit.absorbedDamageShields} damage shields absorbed` : ''
+    mit.absorbedDamageShields > 0 ? `${mit.absorbedDamageShields} damage shields absorbed` : '',
   ].filter(Boolean)
   return (
     <Tooltip title="The log records these as events with no amount, so they are shown as counts and enter no total.">
@@ -170,11 +192,20 @@ function AbsorbCounts({ mit }: { mit: MitigationView | null }): JSX.Element | nu
 
 /** Counter-healing is an ANNOTATION on your damage, not part of your sustain, so it never enters
  *  the ranking above — it gets one honest line. */
-function EnemyHealedLine({ enemy }: { enemy: { total: number; healers: HealSourceView[] } }): JSX.Element | null {
+function EnemyHealedLine({
+  enemy,
+}: {
+  enemy: { total: number; healers: HealSourceView[] }
+}): JSX.Element | null {
   if (enemy.total <= 0) return null
-  const top = enemy.healers.slice(0, 3).map((h) => `${h.name} ${fmt(h.total)}`).join(', ')
+  const top = enemy.healers
+    .slice(0, 3)
+    .map((h) => `${h.name} ${fmt(h.total)}`)
+    .join(', ')
   return (
-    <Tooltip title={`Healing that landed on mobs you were engaged with - it undid this much of your damage. Top: ${top}`}>
+    <Tooltip
+      title={`Healing that landed on mobs you were engaged with - it undid this much of your damage. Top: ${top}`}
+    >
       <Typography variant="caption" sx={{ display: 'block', mt: 0.75, color: 'text.secondary' }}>
         enemies healed {fmt(enemy.total)}
       </Typography>
@@ -183,7 +214,13 @@ function EnemyHealedLine({ enemy }: { enemy: { total: number; healers: HealSourc
 }
 
 /** The drill breadcrumb — one level deep, because the heal model has exactly two (see healRows). */
-function HealCrumb({ name, setDrill }: { name: string; setDrill: (d: Drill | null) => void }): JSX.Element {
+function HealCrumb({
+  name,
+  setDrill,
+}: {
+  name: string
+  setDrill: (d: Drill | null) => void
+}): JSX.Element {
   return (
     <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.75, flexShrink: 0 }}>
       <Button
@@ -196,7 +233,13 @@ function HealCrumb({ name, setDrill }: { name: string; setDrill: (d: Drill | nul
         Back
       </Button>
       <Breadcrumbs separator="›" sx={{ fontSize: 12 }}>
-        <Link component="button" underline="hover" color="inherit" onClick={() => setDrill(null)} sx={{ fontSize: 12 }}>
+        <Link
+          component="button"
+          underline="hover"
+          color="inherit"
+          onClick={() => setDrill(null)}
+          sx={{ fontSize: 12 }}
+        >
           All
         </Link>
         <Typography variant="caption" color="text.primary">
@@ -227,7 +270,7 @@ export function HealBody({
   scope,
   roster,
   drill,
-  setDrill
+  setDrill,
 }: {
   healing: HealingView | undefined
   scope: MeterScope
@@ -242,7 +285,10 @@ export function HealBody({
   //
   // Through the SHARED filter, in front of the SHARED builder — this surface does not reach into
   // the model itself, for the same reason it does not re-fold it (healRows.test.mts).
-  const panel = healPanel(scopeHealing(healing, scope, roster), drill?.kind === 'entity' ? drill.entityId : null)
+  const panel = healPanel(
+    scopeHealing(healing, scope, roster),
+    drill?.kind === 'entity' ? drill.entityId : null,
+  )
 
   if (panel.level === 2) {
     return (

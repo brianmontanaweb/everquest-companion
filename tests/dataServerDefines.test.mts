@@ -25,7 +25,7 @@ import {
   pushLogDir,
   setAppKnowledgePusher,
   setLogDirPusher,
-  type DefineOp
+  type DefineOp,
 } from '../src/main/dataServer/definePush'
 import {
   clientTurns,
@@ -34,12 +34,12 @@ import {
   flush,
   openView,
   rig,
-  shakeHands
+  shakeHands,
 } from './dataServerRig.mjs'
 import type {
   ClientMessage,
   DefineAck,
-  FireMessage
+  FireMessage,
 } from '../src/shared/dataServer/protocol.generated'
 
 const MOMENT = '07-defines-and-fires.json'
@@ -77,13 +77,13 @@ test('THE APP PUSHES ALL FIVE FAMILIES and each answer narrows through the op re
     assert.deepEqual(
       sent,
       { ...push, id: (sent as { id: number }).id },
-      `${op} did not reach the wire as the fixture spells it`
+      `${op} did not reach the wire as the fixture spells it`,
     )
     r.deliver({
       kind: 'reply',
       id: (sent as { id: number }).id,
       ok: true,
-      result: answerTo(push.id as number)
+      result: answerTo(push.id as number),
     })
     acks.push((await pending) as DefineAck)
   }
@@ -100,7 +100,7 @@ test('THE APP PUSHES ALL FIVE FAMILIES and each answer narrows through the op re
   // counts what it took, an OBJECT family has nothing to count.
   assert.deepEqual(
     acks.map((a) => a.count),
-    [2, undefined, undefined, 1, 1]
+    [2, undefined, undefined, 1, 1],
   )
   assert.ok(acks.every((a) => a.applied))
 })
@@ -112,7 +112,7 @@ test('THE OP LIST AND THE WIRE CANNOT DRIFT — every family the app knows is a 
   const fromSchema = new Set(
     clientTurns(fixture(MOMENT))
       .filter((m) => 'op' in m && m.op.endsWith('.define'))
-      .map((m) => (m as { op: string }).op)
+      .map((m) => (m as { op: string }).op),
   )
   assert.deepEqual(new Set(DEFINE_OPS), fromSchema)
 })
@@ -141,17 +141,25 @@ test('A FIRE TOUCHES NO WINDOW AND NO EPOCH — it is a thing that happened, not
   const r = rig()
   shakeHands(r)
   const view = openView(r, { source: 'loot.ledger' })
-  r.deliver({ kind: 'reply', id: view.id, ok: true, result: { subscription: view.id, subscribed: true } })
+  r.deliver({
+    kind: 'reply',
+    id: view.id,
+    ok: true,
+    result: { subscription: view.id, subscribed: true },
+  })
   r.deliver({
     kind: 'reset',
     id: view.id,
     epoch: 3,
     total: 1,
-    rows: [{ key: 'loot:1', cells: { item: 'Cloak of Flames' } }]
+    rows: [{ key: 'loot:1', cells: { item: 'Cloak of Flames' } }],
   })
   await flush()
   const before = view.states[view.states.length - 1]
-  assert.deepEqual(before.rows?.map((row) => row.key), ['loot:1'])
+  assert.deepEqual(
+    before.rows?.map((row) => row.key),
+    ['loot:1'],
+  )
   assert.equal(r.client.epoch, 3)
 
   const framesBefore = view.states.length
@@ -160,7 +168,7 @@ test('A FIRE TOUCHES NO WINDOW AND NO EPOCH — it is a thing that happened, not
     at: 1787181707000,
     rule: 'Charm break',
     sound: 'classic/bell',
-    message: 'Your charm spell has worn off.'
+    message: 'Your charm spell has worn off.',
   })
 
   assert.equal(view.states.length, framesBefore, 'no subscription was disturbed')
@@ -176,7 +184,7 @@ test('A FIRE WITH NOBODY LISTENING IS DROPPED IN SILENCE — an alert is not a t
     at: 1,
     rule: 'Charm break',
     sound: 'classic/bell',
-    message: 'x'
+    message: 'x',
   })
   assert.deepEqual(r.notes, [])
   assert.equal(r.client.state, 'ready')
@@ -192,7 +200,7 @@ test('a listener can let go, and stops hearing', () => {
     at: 1,
     rule: 'Charm break',
     sound: 'classic/bell',
-    message: 'x'
+    message: 'x',
   }
   r.deliver(frame)
   stop()
@@ -245,7 +253,7 @@ test('THE LOG-DIRECTORY SLOT IS ITS OWN SLOT, and it is not a sixth define (JOS-
   assert.equal(
     (DEFINE_OPS as readonly string[]).includes('logs.setDir'),
     false,
-    'logs.setDir is not a member of the define family'
+    'logs.setDir is not a member of the define family',
   )
 
   // SILENT WITH NO ENGINE, exactly as `pushAppKnowledge` is: a launch that armed no client pays one

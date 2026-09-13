@@ -20,7 +20,7 @@ import {
   scopeHealers,
   scopeHealing,
   scopeSources,
-  scopeTotals
+  scopeTotals,
 } from '../src/renderer/src/features/combat/meterScope'
 import { EMPTY_ROSTER, type RosterSnap } from '../src/shared/roster'
 import type { HealSourceView, SourceView } from '../src/shared/combat'
@@ -34,10 +34,10 @@ const roster = (...keys: string[]): RosterSnap => ({
     source: 'joined' as const,
     sinceTs: 0,
     lastConfirmedTs: 0,
-    stale: false
+    stale: false,
   })),
   seen: true,
-  lastSignalTs: 1
+  lastSignalTs: 1,
 })
 
 /** A roster module that has SEEN signals but currently holds nobody — "the group ended", which
@@ -63,7 +63,7 @@ function src(id: string, kind: SourceView['kind'], total: number, pct = 100): So
     resists: 0,
     resistPct: 0,
     skills: [],
-    categories: []
+    categories: [],
   }
 }
 
@@ -83,7 +83,7 @@ function healer(id: string, kind: HealSourceView['kind'], total: number): HealSo
     overheal: 0,
     overhealPct: 0,
     fullOverheal: 0,
-    spells: []
+    spells: [],
   } as HealSourceView
 }
 
@@ -96,21 +96,27 @@ const ROWS: SourceView[] = [
   src('pet:fluffy#1', 'pet', 400, 40),
   src('member:rykkerr', 'member', 600, 60),
   src('member:dranix', 'member', 200, 20),
-  src('member:scooba', 'other', 300, 30)
+  src('member:scooba', 'other', 300, 30),
 ]
 
 // ── the allowlist ─────────────────────────────────────────────────────────────────────
 
 test('You scope keeps you and your pets, and nothing else', () => {
   const kept = scopeSources(ROWS, 'you', roster('rykkerr', 'dranix'))
-  assert.deepEqual(kept.map((r) => r.id), ['you', 'pet:fluffy#1'])
+  assert.deepEqual(
+    kept.map((r) => r.id),
+    ['you', 'pet:fluffy#1'],
+  )
 })
 
 test('Group scope keeps the members the roster names, and drops the ones it does not', () => {
   // Dranix left the group (or the user removed him). His damage is still RECORDED — it is
   // simply not in this scope's answer, and Everyone below still shows it.
   const kept = scopeSources(ROWS, 'group', roster('rykkerr'))
-  assert.deepEqual(kept.map((r) => r.id), ['you', 'pet:fluffy#1', 'member:rykkerr'])
+  assert.deepEqual(
+    kept.map((r) => r.id),
+    ['you', 'pet:fluffy#1', 'member:rykkerr'],
+  )
 })
 
 test('Everyone keeps every recorded source, including ex-members', () => {
@@ -128,7 +134,10 @@ test('LAW 1: Group with no roster shows EVERYONE rather than hiding people', () 
 test('…but a roster that has SEEN signals and holds nobody really does filter', () => {
   // The other side of `seen`: the group ended, we were told so, and Group now means "you".
   const kept = scopeSources(ROWS, 'group', emptySeenRoster)
-  assert.deepEqual(kept.map((r) => r.id), ['you', 'pet:fluffy#1'])
+  assert.deepEqual(
+    kept.map((r) => r.id),
+    ['you', 'pet:fluffy#1'],
+  )
 })
 
 // ── the headline (law 5: no aggregate that no visible row explains) ────────────────────
@@ -144,7 +153,7 @@ test('the headline is re-summed from the rows that SURVIVED, never carried over'
   assert.equal(dps, 140)
 })
 
-test('an unfiltered list keeps the engine\'s own totals, to the bit', () => {
+test("an unfiltered list keeps the engine's own totals, to the bit", () => {
   // THE SOLO INVARIANT. Most sessions have no group at all, and they must come back byte-for
   // byte identical — same array, same numbers, no re-ranking and no rounding drift.
   const kept = scopeSources(ROWS, 'everyone', roster('rykkerr', 'dranix'))
@@ -166,7 +175,10 @@ test('bar widths are re-based on the surviving maximum', () => {
 test('a zero-total scope cannot divide by zero', () => {
   const empty = scopeSources([src('member:rykkerr', 'member', 0)], 'you', roster('rykkerr'))
   assert.deepEqual(empty, [])
-  assert.deepEqual(scopeTotals([src('member:rykkerr', 'member', 0)], empty, 0, 0), { total: 0, dps: 0 })
+  assert.deepEqual(scopeTotals([src('member:rykkerr', 'member', 0)], empty, 0, 0), {
+    total: 0,
+    dps: 0,
+  })
 })
 
 // ── healers ───────────────────────────────────────────────────────────────────────────
@@ -175,16 +187,19 @@ const HEALERS: HealSourceView[] = [
   healer('you', 'you', 900),
   healer('heal:fluffy', 'pet', 100),
   healer('heal:rykkerr', 'other', 500),
-  healer('heal:stranger', 'other', 50)
+  healer('heal:stranger', 'other', 50),
 ]
 
 test('healers scope by the same roster the damage rows do', () => {
   assert.deepEqual(
     scopeHealers(HEALERS, 'group', roster('rykkerr')).map((h) => h.id),
     ['you', 'heal:fluffy', 'heal:rykkerr'],
-    'the passing stranger who topped you up is not in your group'
+    'the passing stranger who topped you up is not in your group',
   )
-  assert.deepEqual(scopeHealers(HEALERS, 'you', roster('rykkerr')).map((h) => h.id), ['you', 'heal:fluffy'])
+  assert.deepEqual(
+    scopeHealers(HEALERS, 'you', roster('rykkerr')).map((h) => h.id),
+    ['you', 'heal:fluffy'],
+  )
   assert.equal(scopeHealers(HEALERS, 'everyone', roster('rykkerr')), HEALERS)
 })
 
@@ -192,9 +207,16 @@ test('scopeHealing filters the model in ONE place, and by reference when it chan
   // The one-builder rule (tests/healRows.test.mts) applies to the filter too: both heal
   // surfaces call THIS, so neither reaches into `healing.healers` on its own.
   const model = { healers: HEALERS, total: 1550 }
-  assert.equal(scopeHealing(model, 'everyone', roster('rykkerr')), model, 'same object when nothing went')
+  assert.equal(
+    scopeHealing(model, 'everyone', roster('rykkerr')),
+    model,
+    'same object when nothing went',
+  )
   const scoped = scopeHealing(model, 'you', roster('rykkerr'))
-  assert.deepEqual(scoped?.healers.map((h) => h.id), ['you', 'heal:fluffy'])
+  assert.deepEqual(
+    scoped?.healers.map((h) => h.id),
+    ['you', 'heal:fluffy'],
+  )
   assert.equal(scoped?.total, 1550, 'the rest of the model rides along untouched')
   assert.equal(scopeHealing(undefined, 'group', roster('rykkerr')), undefined)
 })
@@ -224,6 +246,6 @@ test('shared/roster.ts ScopeKind still spells the same set as shared/combat.ts S
   }
   assert.deepEqual(
     union(src('../src/shared/roster.ts'), 'ScopeKind'),
-    union(src('../src/shared/combat.ts'), 'SourceKind')
+    union(src('../src/shared/combat.ts'), 'SourceKind'),
   )
 })

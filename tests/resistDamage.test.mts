@@ -30,7 +30,7 @@ import {
   damageKind,
   damageRefKey,
   fullDamageRefs,
-  splitDamage
+  splitDamage,
 } from '../src/shared/resistDamage'
 import type { ResistLedger, ResistRow, SpellResistInfo } from '../src/shared/resistTypes'
 
@@ -41,7 +41,13 @@ const REFS = fullDamageRefs(ROWS)
 const refOf = (spell: string, level: number | null): number | undefined =>
   REFS.get(damageRefKey(spell, level))?.value
 
-const NUKE: SpellResistInfo = { axis: 'magic', resistAdj: 0, castMs: 3000, targetType: 5, hpSlot: { base: -110, max: 394, calc: 103 } }
+const NUKE: SpellResistInfo = {
+  axis: 'magic',
+  resistAdj: 0,
+  castMs: 3000,
+  targetType: 5,
+  hpSlot: { base: -110, max: 394, calc: 103 },
+}
 const PROC: SpellResistInfo = { axis: 'magic', resistAdj: -250, castMs: 0, targetType: 5 }
 
 function row(spec: Partial<ResistRow> & Pick<ResistRow, 'spellKey'>): ResistRow {
@@ -59,7 +65,7 @@ function row(spec: Partial<ResistRow> & Pick<ResistRow, 'spellKey'>): ResistRow 
     dmg: {},
     firstTs: 0,
     lastTs: 0,
-    ...spec
+    ...spec,
   }
 }
 
@@ -95,7 +101,7 @@ test('THE ANCHOR IS THE TALLEST BAR OF ITS OWN BAND, which is what picks the bas
     [458, 14],
     [502, 20],
     [519, 22],
-    [528, 14]
+    [528, 14],
   ])
   assert.equal(clusterBase(focused), 394)
   assert.equal(FOCUS_BAND_TOP, 1.35)
@@ -108,7 +114,7 @@ test('A FOCUSED HIT IS A FULL HIT, which is the whole defect', () => {
   // and called the other six partials.
   const princess = row({
     spellKey: 'discordant mind',
-    dmg: { '80': 1, '165': 1, '168': 1, '453': 1, '471': 1, '476': 1, '524': 1 }
+    dmg: { '80': 1, '165': 1, '168': 1, '453': 1, '471': 1, '476': 1, '524': 1 },
   })
   const split = splitDamage(princess, 394)
   assert.equal(split.total, 7)
@@ -124,7 +130,10 @@ test('A FOCUSED HIT IS A FULL HIT, which is the whole defect', () => {
 
 test('the full band starts just below the reference, and nothing else is in it', () => {
   assert.equal(FULL_AT_LEAST, 0.97)
-  const r = row({ spellKey: 'test nuke', dmg: { '400': 1, '394': 1, '383': 1, '382': 1, '300': 1 } })
+  const r = row({
+    spellKey: 'test nuke',
+    dmg: { '400': 1, '394': 1, '383': 1, '382': 1, '300': 1 },
+  })
   const split = splitDamage(r, 394)
   // 400 (focused), 394 (base) and 383 (the rounding slack) are full; 382 is below the band.
   assert.equal(split.full, 3)
@@ -133,12 +142,18 @@ test('the full band starts just below the reference, and nothing else is in it',
 
 test('a histogram with no cluster names no reference at all', () => {
   // A proc's damage range: six values spread wide enough that no focus band covers 60% of them.
-  const spread = row({ spellKey: 'test proc', dmg: { '100': 12, '160': 11, '220': 12, '300': 11, '400': 12, '540': 11 } })
+  const spread = row({
+    spellKey: 'test proc',
+    dmg: { '100': 12, '160': 11, '220': 12, '300': 11, '400': 12, '540': 11 },
+  })
   assert.equal(fullDamageRefs([spread]).get(damageRefKey('test proc', 50)), undefined)
   // …and a spell with no hitpoint slot in the client data is variable whatever its histogram says.
   assert.equal(
-    damageKind(row({ spellKey: 'test proc', dmg: { '100': 99 } }), PROC, { value: 100, allOrNothing: false }),
-    'ddVar'
+    damageKind(row({ spellKey: 'test proc', dmg: { '100': 99 } }), PROC, {
+      value: 100,
+      allOrNothing: false,
+    }),
+    'ddVar',
   )
 })
 
@@ -172,8 +187,16 @@ test('the reference is POOLED OVER MOBS, so a four-hit cell inherits what the le
   // establishing anything on its own - and it does not have to, because the same nuke has hundreds
   // of hits elsewhere. Scoped per mob, the four hits below would name 300 as "full" and read the
   // other three as a mob eating three quarters of every cast.
-  const many = row({ spellKey: 'test nuke', mobKey: 'a well known mob', dmg: { '394': 200, '300': 5 } })
-  const few = row({ spellKey: 'test nuke', mobKey: 'a rare mob', dmg: { '300': 1, '250': 1, '200': 1, '150': 1 } })
+  const many = row({
+    spellKey: 'test nuke',
+    mobKey: 'a well known mob',
+    dmg: { '394': 200, '300': 5 },
+  })
+  const few = row({
+    spellKey: 'test nuke',
+    mobKey: 'a rare mob',
+    dmg: { '300': 1, '250': 1, '200': 1, '150': 1 },
+  })
   const pooled = fullDamageRefs([many, few])
   assert.equal(pooled.get(damageRefKey('test nuke', 50))?.value, 394)
   const split = splitDamage(few, pooled.get(damageRefKey('test nuke', 50))?.value)
@@ -191,16 +214,22 @@ test('the three ways a row is VARIABLE, which is the safe direction every time',
   assert.equal(damageKind(fixed, NUKE, fixedRef), 'ddFix')
   // 1. No hitpoint slot in the client data: not a damage spell in the modelled sense.
   assert.equal(
-    damageKind(row({ spellKey: 'test proc', dmg: { '392': 20, '388': 20 } }), PROC, { value: 392, allOrNothing: true }),
-    'ddVar'
+    damageKind(row({ spellKey: 'test proc', dmg: { '392': 20, '388': 20 } }), PROC, {
+      value: 392,
+      allOrNothing: true,
+    }),
+    'ddVar',
   )
   // 2. No reference (the case above this one).
   assert.equal(damageKind(fixed, NUKE, undefined), 'ddVar')
   // 3. The row gave up on its own histogram past MAX_DISTINCT_DAMAGE_VALUES, so there is nothing
   //    left to read partials out of.
   assert.equal(
-    damageKind(row({ spellKey: 'test nuke', variable: true, land: 500 }), NUKE, { value: 150, allOrNothing: false }),
-    'ddVar'
+    damageKind(row({ spellKey: 'test nuke', variable: true, land: 500 }), NUKE, {
+      value: 150,
+      allOrNothing: false,
+    }),
+    'ddVar',
   )
 })
 

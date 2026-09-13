@@ -137,12 +137,17 @@ function labelRow(hit: MapSearchHit): CrossZoneRow {
     zoneName: zoneLabel(zone),
     at: { x: point.x, y: point.y },
     note: null,
-    score: hit.score
+    score: hit.score,
   }
 }
 
 /** What this catalog row can say about ONE of the zones its page names. */
-function mobRow(entry: MobEntry, zoneRaw: string, score: number, installed: ReadonlySet<ZoneShort>): CrossZoneRow {
+function mobRow(
+  entry: MobEntry,
+  zoneRaw: string,
+  score: number,
+  installed: ReadonlySet<ZoneShort>,
+): CrossZoneRow {
   const stem = zoneShortNameFromCatalog(zoneRaw)
   const zone = stem != null && (installed.size === 0 || installed.has(stem)) ? stem : null
   const zoneCount = entry.zones?.length ?? 0
@@ -159,7 +164,7 @@ function mobRow(entry: MobEntry, zoneRaw: string, score: number, installed: Read
     zoneName: stem == null ? zoneRaw : zoneLabel(stem),
     at: zone == null || !first ? null : { x: first.x, y: first.y },
     note: mobNote(entry, stem, zone, zoneCount),
-    score
+    score,
   }
 }
 
@@ -170,7 +175,12 @@ function mobRow(entry: MobEntry, zoneRaw: string, score: number, installed: Read
  * moot. The two no-position reasons stay DIFFERENT sentences (the pane's own rule): a page that
  * stated nothing and a page whose statement cannot be attributed are not the same missing thing.
  */
-function mobNote(entry: MobEntry, stem: ZoneShort | null, zone: ZoneShort | null, zoneCount: number): string | null {
+function mobNote(
+  entry: MobEntry,
+  stem: ZoneShort | null,
+  zone: ZoneShort | null,
+  zoneCount: number,
+): string | null {
   if (stem == null) return 'no map is named that'
   if (zone == null) return 'no map installed for this zone'
   if (zoneCount > 1) return `position stated, but the page lists ${String(zoneCount)} zones`

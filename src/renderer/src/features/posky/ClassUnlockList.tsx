@@ -45,7 +45,7 @@ function unlockLabel(row: ClassUnlockRow): { text: string; color: 'success' | 'd
 function ClassStarButton({
   starred,
   className,
-  onToggle
+  onToggle,
 }: {
   starred: boolean
   className: string
@@ -86,7 +86,7 @@ function ClassRow({
   row,
   starred,
   onToggleStar,
-  onOpen
+  onOpen,
 }: {
   row: ClassUnlockRow
   starred: boolean
@@ -130,7 +130,7 @@ function ClassRow({
         borderRadius: 1,
         cursor: 'pointer',
         '&:hover': { bgcolor: 'action.hover' },
-        '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main' }
+        '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main' },
       }}
     >
       <ClassStarButton starred={starred} className={row.className} onToggle={onToggleStar} />
@@ -171,16 +171,16 @@ function SourceNote({ rows }: { rows: readonly ClassUnlockRow[] }): JSX.Element 
     <Typography variant="body2" color="text.secondary" data-testid="class-unlock-note">
       Fewest tests left first. Click a class to see its quests. Star a class to pin it to the top.{' '}
       {observed} unlocked by a line in your log, {derived} read from a complete set of turn-ins.
-      Turning in a Sky test prints
-      nothing about unlocking, so a complete set is our reading and not the game saying so; a class
-      can also unlock at level 11 or from a token, which is why a logged unlock outranks the count.
+      Turning in a Sky test prints nothing about unlocking, so a complete set is our reading and not
+      the game saying so; a class can also unlock at level 11 or from a token, which is why a logged
+      unlock outranks the count.
     </Typography>
   )
 }
 
 export default function ClassUnlockList({
   quests,
-  onOpenClass
+  onOpenClass,
 }: {
   quests: QuestProgress[]
   /** a class name → the Quests tab filtered to it (JOS-157). PoskyView hands this to the list. */
@@ -192,9 +192,9 @@ export default function ClassUnlockList({
   const rows = useMemo(
     () =>
       orderClassUnlockRows(classUnlockRows(quests, observed), (r) =>
-        stars.has(r.className) ? 1 : 0
+        stars.has(r.className) ? 1 : 0,
       ),
-    [quests, observed, stars]
+    [quests, observed, stars],
   )
 
   if (rows.length === 0) {

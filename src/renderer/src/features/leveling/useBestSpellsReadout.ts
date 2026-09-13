@@ -21,7 +21,7 @@ import {
   type BestSpellColumn,
   type BestSpellSort,
   type BestSpells,
-  type BestSpellTab
+  type BestSpellTab,
 } from '@shared/bestSpells'
 import { searchBestSpells, EMPTY_BEST_SPELL_SEARCH } from '@shared/bestSpellsSearch'
 import { tokenizeSpellQuery } from '@shared/spellSearch'
@@ -97,7 +97,7 @@ export function useReadout(viewed: ViewedLevel): Readout {
   // the tabs you are not looking at are part of what the panel says.
   const best = useMemo(
     () => bestSpellsAt(data, combo, level, { sorts, observed: ranks, simulate, focus }),
-    [data, combo, level, sorts, ranks, simulate, focus]
+    [data, combo, level, sorts, ranks, simulate, focus],
   )
   // UNTIL SOMEBODY PICKS, THE PANEL PICKS THE FIRST TAB THAT HAS ANYTHING IN IT. `dd` is the owner's
   // first-named tab and the right default for the caster this readout was written for, but a cleric
@@ -120,10 +120,10 @@ export function useReadout(viewed: ViewedLevel): Readout {
             simulate,
             // JOS-452 — the results wear the same gear the ranked table does, because the marker
             // over them is drawn once in the header above BOTH bodies.
-            focus
+            focus,
           })
         : EMPTY_BEST_SPELL_SEARCH,
-    [searching, data, query, best.classes, level, tab, sorts, ranks, simulate, focus]
+    [searching, data, query, best.classes, level, tab, sorts, ranks, simulate, focus],
   )
   // The loadout set the result chips are filled against: a class you could be running, at a glance.
   const loadout = useMemo(() => new Set<string>(best.classes), [best.classes])
@@ -139,13 +139,13 @@ export function useReadout(viewed: ViewedLevel): Readout {
     (next: BestSpellSort) => {
       setSorts((prev) => ({ ...prev, [tab]: next }))
     },
-    [tab]
+    [tab],
   )
   const onLevel = useCallback(
     (n: number | null) => {
       viewed.pick(n)
     },
-    [viewed]
+    [viewed],
   )
   const onOpenTypes = useCallback(() => {
     setTouched(true)
@@ -162,13 +162,33 @@ export function useReadout(viewed: ViewedLevel): Readout {
       // EMPTY IS EVERY CLASS on the wire — the show-all toggle, and the reading the schema states.
       classes: scoped ? best.classes : [],
       // Enough to fill the column without a second page; the engine clamps and echoes what it used.
-      limit: TOP_N * 5
+      limit: TOP_N * 5,
     },
-    touched || filtering
+    touched || filtering,
   )
   return {
-    level, best, tab, setPicked, results, loadout, columns, sort: sorts[tab], ranks,
-    simulate, setSimulate, query, setQuery, searching, category, setCategory, filtering,
-    scoped, setScoped, catalogue, onSort, onLevel, onOpenTypes
+    level,
+    best,
+    tab,
+    setPicked,
+    results,
+    loadout,
+    columns,
+    sort: sorts[tab],
+    ranks,
+    simulate,
+    setSimulate,
+    query,
+    setQuery,
+    searching,
+    category,
+    setCategory,
+    filtering,
+    scoped,
+    setScoped,
+    catalogue,
+    onSort,
+    onLevel,
+    onOpenTypes,
   }
 }

@@ -43,7 +43,12 @@ import { createInterface } from 'node:readline'
 import { join } from 'node:path'
 import { createGunzip } from 'node:zlib'
 import type { Clients, Row } from '../src/main/triage/store'
-import { EXPORT_TABLES, readManifest, type ExportTable, type ManifestEntry } from './analyticsExport.mjs'
+import {
+  EXPORT_TABLES,
+  readManifest,
+  type ExportTable,
+  type ManifestEntry,
+} from './analyticsExport.mjs'
 import type { AnalyticsCtx } from './triageAnalytics.mjs'
 
 /**
@@ -87,7 +92,9 @@ const SHARDED: Record<string, ImportTarget> = {
 /** The CLOSED set of names this command will write to — every one of them reaches SQL as an
  *  identifier, so a manifest cannot name a table nobody designed for. */
 export const IMPORT_TARGETS: Readonly<Record<string, ImportTarget>> = {
-  ...Object.fromEntries(EXPORT_TABLES.map((t: ExportTable) => [t.table, { table: t.table, key: t.key }])),
+  ...Object.fromEntries(
+    EXPORT_TABLES.map((t: ExportTable) => [t.table, { table: t.table, key: t.key }]),
+  ),
   ...SHARDED,
 }
 

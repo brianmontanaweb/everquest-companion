@@ -85,7 +85,10 @@ export class LineDecoder {
     }
     if (this.buffer.length > this.maxLineChars) {
       this.buffer = ''
-      throw new TransportError('frameTooLarge', `a frame exceeded ${String(this.maxLineChars)} characters`)
+      throw new TransportError(
+        'frameTooLarge',
+        `a frame exceeded ${String(this.maxLineChars)} characters`,
+      )
     }
     return lines
   }
@@ -153,7 +156,9 @@ export function createNdjsonTransport<Out, In>(channel: ByteChannel): Transport<
         // question, not the codec's.
         onMessage?.(decodeLine(line) as In)
       } catch (e) {
-        fail(e instanceof TransportError ? e : new TransportError('decode', 'a frame was refused', e))
+        fail(
+          e instanceof TransportError ? e : new TransportError('decode', 'a frame was refused', e),
+        )
         return
       }
     }
@@ -187,6 +192,6 @@ export function createNdjsonTransport<Out, In>(channel: ByteChannel): Transport<
     },
     get closed() {
       return closed
-    }
+    },
   }
 }

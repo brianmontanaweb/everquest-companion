@@ -18,7 +18,11 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { EQUIP_LOCATIONS, walkEntries } from '../src/shared/outputs/inventory'
 import { parseInventoryDump } from '../src/main/outputs/inventoryParse'
-import { ANY_CELL_LOCATIONS, SLOT_OF_LOCATION, equippedHosts } from '../src/shared/planner/inventorySlots'
+import {
+  ANY_CELL_LOCATIONS,
+  SLOT_OF_LOCATION,
+  equippedHosts,
+} from '../src/shared/planner/inventorySlots'
 import {
   ANY_CELLS,
   cellsForSlot,
@@ -28,12 +32,12 @@ import {
   isAnyCell,
   PAIRED_SLOTS,
   PLAN_SLOTS,
-  planSlotLabel
+  planSlotLabel,
 } from '../src/shared/planner/types'
 
 const REAL_DUMP = readFileSync(
   join(import.meta.dirname, 'fixtures', 'Primitive_freeport-Inventory.txt'),
-  'utf8'
+  'utf8',
 )
 const dump = parseInventoryDump(REAL_DUMP)
 const hosts = equippedHosts(dump)
@@ -43,14 +47,19 @@ test('the join is TOTAL over the client tokens, and lands only on real planner s
   for (const token of EQUIP_LOCATIONS) {
     assert.ok(token in SLOT_OF_LOCATION, `no decision recorded for the client token ${token}`)
     const slot = SLOT_OF_LOCATION[token]
-    if (slot !== null) assert.ok(slots.has(slot), `${token} maps to ${slot}, which is not a planner slot`)
+    if (slot !== null)
+      assert.ok(slots.has(slot), `${token} maps to ${slot}, which is not a planner slot`)
   }
   // The two deliberate nulls, stated so a future edit has to argue with them: `Any Slot` is a real
   // place to wear something that the wiki vocabulary does not have, and `Held` does not say which
   // hand. Neither may be guessed into a slot.
   assert.equal(SLOT_OF_LOCATION['Any Slot'], null)
   assert.equal(SLOT_OF_LOCATION.Held, null)
-  assert.equal(SLOT_OF_LOCATION.Fingers, 'FINGER', 'the plural is the whole reason this table exists')
+  assert.equal(
+    SLOT_OF_LOCATION.Fingers,
+    'FINGER',
+    'the plural is the whole reason this table exists',
+  )
 
   // …and JOS-104 is the difference between "names no slot" and "goes nowhere". `Any Slot` names no
   // slot AND has a cell; `Held` names no slot and has none, because an any-cell would be a claim
@@ -72,7 +81,10 @@ test('the real dump yields one host per CELL, top-level and non-empty only', () 
     seen.add(h.slot)
     assert.ok(h.name.length > 0)
     assert.ok(!h.name.endsWith('(Exaltation)'), 'a socketed exaltation is not the item being worn')
-    assert.ok(!/ \+\d+$/.test(h.name), 'the merge tier is split off into `tier`, never left in the name')
+    assert.ok(
+      !/ \+\d+$/.test(h.name),
+      'the merge tier is split off into `tier`, never left in the name',
+    )
   }
 })
 
@@ -86,10 +98,10 @@ test('BOTH of a paired slot fill, in file order — the dump never says which ea
   for (const [token, slot] of [
     ['Ear', 'EAR'],
     ['Wrist', 'WRIST'],
-    ['Fingers', 'FINGER']
+    ['Fingers', 'FINGER'],
   ] as const) {
     const rows = [...walkEntries(dump.items)].filter(
-      (e) => e.path.length === 0 && e.place.raw === token && !e.empty
+      (e) => e.path.length === 0 && e.place.raw === token && !e.empty,
     )
     assert.equal(rows.length, 2, `the fixture is expected to carry two equipped ${token} rows`)
     // File order, and nothing else: there is no left/right column, which is exactly why the cells
@@ -112,7 +124,8 @@ test('BOTH of a paired slot fill, in file order — the dump never says which ea
   for (const raw of doubled) counts.set(raw, (counts.get(raw) ?? 0) + 1)
   const repeated = [...counts].filter(([, n]) => n > 1).map(([raw]) => raw)
   assert.deepEqual(repeated.sort(), ['Any Slot', 'Ear', 'Fingers', 'Wrist'])
-  for (const [raw, n] of counts) assert.ok(n <= 2, `${raw} appears ${String(n)} times — no cell is tripled`)
+  for (const [raw, n] of counts)
+    assert.ok(n <= 2, `${raw} appears ${String(n)} times — no cell is tripled`)
 })
 
 test('BOTH any-slots fill, from a dump wearing three chest items at once (JOS-104)', () => {
@@ -121,7 +134,7 @@ test('BOTH any-slots fill, from a dump wearing three chest items at once (JOS-10
   // `Chest` row — and the corpus states all three occupants as CHEST items. Three chest-slot items
   // worn at once is what makes these EXTRA PLACES rather than another spelling of an existing slot.
   const rows = [...walkEntries(dump.items)].filter(
-    (e) => e.path.length === 0 && e.place.raw === 'Any Slot' && !e.empty
+    (e) => e.path.length === 0 && e.place.raw === 'Any Slot' && !e.empty,
   )
   assert.equal(rows.length, 2, 'the fixture is expected to carry two equipped Any Slot rows')
   assert.equal(hosts.find((h) => h.slot === 'ANY1')?.name, rows[0].parsedName.base)
@@ -140,8 +153,13 @@ test('BOTH any-slots fill, from a dump wearing three chest items at once (JOS-10
   // same shape it prints under `Face` (where one of them holds a `(Exaltation)`). No wiki or patch
   // note states whether an any-slot item can host exaltations; this is the game saying it does, and
   // it is the entire basis for these cells planning what every other cell plans.
-  const sockets = [...walkEntries(dump.items)].filter((e) => e.place.raw === 'Any Slot' && e.path.length > 0)
-  assert.ok(sockets.length > 0, 'both any-slot rows are expected to print exaltation socket children')
+  const sockets = [...walkEntries(dump.items)].filter(
+    (e) => e.place.raw === 'Any Slot' && e.path.length > 0,
+  )
+  assert.ok(
+    sockets.length > 0,
+    'both any-slot rows are expected to print exaltation socket children',
+  )
 })
 
 test('a cell maps back to the equip slot R2 is really about — or to none at all', () => {
@@ -192,12 +210,18 @@ test('bag contents and exaltation sockets are never mistaken for equipment', () 
   // socketed effect (or a stack of bandages) forward as the host item of a slot.
   const children = [...walkEntries(dump.items)].filter((e) => e.path.length > 0 && !e.empty)
   assert.ok(children.length > 0, 'the fixture is expected to carry bag contents and sockets')
-  assert.ok(hosts.length < children.length, 'the hosts must be the small top-level set, not the walk')
+  assert.ok(
+    hosts.length < children.length,
+    'the hosts must be the small top-level set, not the walk',
+  )
 })
 
 test('the tier rides beside the name: `+N` is stated or it is unknown, never 0', () => {
   for (const h of hosts) {
     if (h.tier === undefined) continue
-    assert.ok(Number.isInteger(h.tier) && h.tier > 0, `${h.name} has a nonsense tier ${String(h.tier)}`)
+    assert.ok(
+      Number.isInteger(h.tier) && h.tier > 0,
+      `${h.name} has a nonsense tier ${String(h.tier)}`,
+    )
   }
 })

@@ -179,7 +179,9 @@ async function readTable(client: PgClient, table: ExportTable): Promise<SqlRow[]
     if (codeOf(err) !== UNDEFINED_TABLE) throw err
     return null
   }
-  throw new Error(`${table.table} has more than ${String(MAX_ROWS)} rows — refusing to page further`)
+  throw new Error(
+    `${table.table} has more than ${String(MAX_ROWS)} rows — refusing to page further`,
+  )
 }
 
 /**
@@ -299,7 +301,11 @@ export async function runExport(nowMs: number): Promise<RunResult> {
       day: utcDay(nowMs),
       nowMs,
     }
-    const analytics = await exportPrefix(run, 'exports', EXPORT_TABLES.filter((t) => !isBacklog(t)))
+    const analytics = await exportPrefix(
+      run,
+      'exports',
+      EXPORT_TABLES.filter((t) => !isBacklog(t)),
+    )
     const backlog = await exportPrefix(run, 'backlog', EXPORT_TABLES.filter(isBacklog))
     const both = [...analytics.tables, ...backlog.tables]
     return {
@@ -334,7 +340,13 @@ export async function handler(): Promise<RunResult> {
       ],
       started,
     )
-    log({ msg: 'export.ok', day: out.day, tables: out.tables, rows: out.rows, missing: out.missing })
+    log({
+      msg: 'export.ok',
+      day: out.day,
+      tables: out.tables,
+      rows: out.rows,
+      missing: out.missing,
+    })
     return out
   } catch (err) {
     // The loss signal. `ExportFailed >= 1` alarms immediately: a missed night is a night whose

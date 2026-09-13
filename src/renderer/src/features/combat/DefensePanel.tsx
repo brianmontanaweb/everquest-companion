@@ -49,20 +49,39 @@ export function DefensePanel({ d }: { d: DefenseView }): React.JSX.Element {
     // No bottom rule any more: the border existed to separate this block from the attacker rows
     // it used to sit on top of, and inside its own tab there is nothing below it to separate from.
     <Box data-testid="defense-panel">
-      <Stack direction="row" justifyContent="space-between" alignItems="baseline" spacing={1} sx={{ mb: 0.5 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="baseline"
+        spacing={1}
+        sx={{ mb: 0.5 }}
+      >
         <Typography
           variant="caption"
           noWrap
-          sx={{ fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'text.secondary' }}
+          sx={{
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            color: 'text.secondary',
+          }}
         >
           Your defence
         </Typography>
-        <Typography variant="caption" color="text.secondary" data-testid="defense-headline" noWrap sx={{ minWidth: 0 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          data-testid="defense-headline"
+          noWrap
+          sx={{ minWidth: 0 }}
+        >
           {defenseHeadline(d)}
         </Typography>
       </Stack>
       {d.swings === 0 ? (
-        <QuietNote>Nothing has swung at you in this segment - no defensive rate to state yet.</QuietNote>
+        <QuietNote>
+          Nothing has swung at you in this segment - no defensive rate to state yet.
+        </QuietNote>
       ) : (
         rows.map((r) => (
           <Tooltip key={r.key} title={`${r.hint} ${r.count} of ${d.swings} swings aimed at you.`}>

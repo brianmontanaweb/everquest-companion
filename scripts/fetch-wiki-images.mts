@@ -60,7 +60,7 @@ import {
   sniffImageMime,
   urlCacheHash,
   wikiItemIconUrl,
-  type EqImgRequest
+  type EqImgRequest,
 } from '../src/main/imageCache'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -101,7 +101,7 @@ function itemIconIds(): number[] {
 /** Every boss portrait URL in the committed raid-target list, in file order. */
 function bossImageUrls(): string[] {
   const db = JSON.parse(
-    readFileSync(join(root, 'src', 'renderer', 'src', 'data', 'eqlegends', 'bosses.json'), 'utf8')
+    readFileSync(join(root, 'src', 'renderer', 'src', 'data', 'eqlegends', 'bosses.json'), 'utf8'),
   ) as { targets: { image?: string }[] }
   const urls: string[] = []
   for (const t of db.targets) {
@@ -118,7 +118,11 @@ function bossImageUrls(): string[] {
 function buildWanted(): Wanted[] {
   const wanted: Wanted[] = []
   for (const id of itemIconIds()) {
-    wanted.push({ req: { kind: 'item', id: String(id) }, url: wikiItemIconUrl(String(id)), kind: 'item' })
+    wanted.push({
+      req: { kind: 'item', id: String(id) },
+      url: wikiItemIconUrl(String(id)),
+      kind: 'item',
+    })
   }
   for (const raw of bossImageUrls()) {
     const url = normalizeUpstreamImageUrl(raw)
@@ -182,10 +186,14 @@ async function fetchWithBackoff(url: string): Promise<Response> {
   for (let attempt = 1; ; attempt++) {
     let res: Response | null = null
     try {
-      res = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'image/png,image/*;q=0.8,*/*;q=0.5' } })
+      res = await fetch(url, {
+        headers: { 'User-Agent': UA, Accept: 'image/png,image/*;q=0.8,*/*;q=0.5' },
+      })
       if (res.ok) return res
-      if (res.status < 500 && res.status !== 429) throw new Error(`GET ${url} -> ${res.status} ${res.statusText}`)
-      if (attempt >= MAX_ATTEMPTS) throw new Error(`GET ${url} -> ${res.status} after ${attempt} attempts`)
+      if (res.status < 500 && res.status !== 429)
+        throw new Error(`GET ${url} -> ${res.status} ${res.statusText}`)
+      if (attempt >= MAX_ATTEMPTS)
+        throw new Error(`GET ${url} -> ${res.status} after ${attempt} attempts`)
     } catch (err) {
       if (attempt >= MAX_ATTEMPTS) throw err
     }
@@ -267,7 +275,7 @@ function buildManifest(wanted: Wanted[]): Manifest {
       url: w.url,
       kind: w.kind,
       bytes: bytes.length,
-      sha256: createHash('sha256').update(bytes).digest('hex')
+      sha256: createHash('sha256').update(bytes).digest('hex'),
     })
   }
   images.sort((a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : 0))
@@ -278,7 +286,7 @@ function buildManifest(wanted: Wanted[]): Manifest {
       'exact upstream URL it came from. Regenerate with `npm run fetch:images`.',
     sources: ['https://eqlwiki.com/', 'https://wiki.project1999.com/'],
     totals: { files: images.length, bytes: images.reduce((n, i) => n + i.bytes, 0) },
-    images
+    images,
   }
 }
 
@@ -303,30 +311,43 @@ async function main(): Promise<void> {
   mkdirSync(outDir, { recursive: true })
   const wanted = buildWanted()
   const items = wanted.filter((w) => w.kind === 'item').length
-  console.log(`[fetch-wiki-images] want ${wanted.length} images (${items} item icons, ${wanted.length - items} boss portraits)`)
+  console.log(
+    `[fetch-wiki-images] want ${wanted.length} images (${items} item icons, ${wanted.length - items} boss portraits)`,
+  )
 
   if (seed !== null) {
     const taken = seedFrom(seed, wanted)
-    console.log(`[fetch-wiki-images] seeded ${taken} file(s) from ${seed} (already-downloaded bytes; no network)`)
+    console.log(
+      `[fetch-wiki-images] seeded ${taken} file(s) from ${seed} (already-downloaded bytes; no network)`,
+    )
   }
 
   const missing = wanted.filter((w) => !presentFile(outDir, w.req))
-  console.log(`[fetch-wiki-images] ${wanted.length - missing.length} present, ${missing.length} to fetch`)
+  console.log(
+    `[fetch-wiki-images] ${wanted.length - missing.length} present, ${missing.length} to fetch`,
+  )
 
   if (!dryRun) await fetchMissing(missing, limit)
 
   const manifest = buildManifest(wanted)
   if (!dryRun) writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
 
-  const itemBytes = manifest.images.filter((i) => i.kind === 'item').reduce((n, i) => n + i.bytes, 0)
+  const itemBytes = manifest.images
+    .filter((i) => i.kind === 'item')
+    .reduce((n, i) => n + i.bytes, 0)
   const bossBytes = manifest.totals.bytes - itemBytes
   const itemFiles = manifest.images.filter((i) => i.kind === 'item').length
   console.log('')
   console.log(`[fetch-wiki-images] MEASURED — item icons : ${itemFiles} files, ${mb(itemBytes)}`)
-  console.log(`[fetch-wiki-images] MEASURED — portraits  : ${manifest.totals.files - itemFiles} files, ${mb(bossBytes)}`)
-  console.log(`[fetch-wiki-images] MEASURED — TOTAL      : ${manifest.totals.files} files, ${mb(manifest.totals.bytes)}`)
+  console.log(
+    `[fetch-wiki-images] MEASURED — portraits  : ${manifest.totals.files - itemFiles} files, ${mb(bossBytes)}`,
+  )
+  console.log(
+    `[fetch-wiki-images] MEASURED — TOTAL      : ${manifest.totals.files} files, ${mb(manifest.totals.bytes)}`,
+  )
   const missingNow = wanted.length - manifest.totals.files
-  if (missingNow > 0) console.log(`[fetch-wiki-images] still missing: ${missingNow} (re-run to resume)`)
+  if (missingNow > 0)
+    console.log(`[fetch-wiki-images] still missing: ${missingNow} (re-run to resume)`)
 }
 
 // Deliberately NOT importable: this module runs on load. The test that pins the manifest

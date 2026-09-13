@@ -31,7 +31,7 @@ export class TransportError extends Error {
   constructor(
     readonly code: 'encode' | 'decode' | 'io' | 'frameTooLarge' | 'closed',
     message: string,
-    readonly cause?: unknown
+    readonly cause?: unknown,
   ) {
     super(message)
     this.name = 'TransportError'

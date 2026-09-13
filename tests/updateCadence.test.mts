@@ -30,7 +30,7 @@ import {
   nextCheckDelayMs,
   shouldRetryCheck,
   updateChipLine,
-  updateChipState
+  updateChipState,
 } from '../src/shared/update'
 import type { UpdateStatus } from '../src/shared/types'
 import { formatAge } from '../src/renderer/src/lib/formatDate'
@@ -45,10 +45,7 @@ const seq = (...vals: number[]): (() => number) => {
 
 test('startup check lands in idle time, never during the log replay', () => {
   assert.equal(nextCheckDelayMs({ phase: 'startup' }, seq(0)), STARTUP_DELAY_MS)
-  assert.equal(
-    nextCheckDelayMs({ phase: 'startup' }, seq(1)),
-    STARTUP_DELAY_MS + STARTUP_JITTER_MS
-  )
+  assert.equal(nextCheckDelayMs({ phase: 'startup' }, seq(1)), STARTUP_DELAY_MS + STARTUP_JITTER_MS)
   // The whole point of moving off the old 10s: the startup replay (~6s of
   // `hydrating` on the real log) plus paint must be long past.
   assert.ok(STARTUP_DELAY_MS >= 30_000, 'startup delay must clear the hydration window')
@@ -76,7 +73,8 @@ test('jitter spreads periodic checks +/- JITTER_FRACTION and never inverts', () 
 })
 
 test('failed checks back off exponentially and CAP at the healthy interval', () => {
-  const at = (fails: number): number => nextCheckDelayMs({ phase: 'periodic', consecutiveFailures: fails }, seq(0.5))
+  const at = (fails: number): number =>
+    nextCheckDelayMs({ phase: 'periodic', consecutiveFailures: fails }, seq(0.5))
   assert.equal(at(0), CHECK_INTERVAL_MS)
   assert.equal(at(1), BACKOFF_BASE_MS)
   assert.equal(at(2), BACKOFF_BASE_MS * 2)
@@ -163,7 +161,10 @@ test('UPDATED-AWAY: a ready/downloading status naming the version we RUN is demo
     const ready = updateChipState({ state: 'ready', version: v }, CURRENT)
     assert.equal(ready.kind, 'quiet', `ready @ ${v} must be quiet on ${CURRENT}`)
     assert.equal(ready.kind === 'quiet' && ready.failed, false, 'stale is not an error')
-    assert.equal(updateChipState({ state: 'downloading', version: v, percent: 50 }, CURRENT).kind, 'quiet')
+    assert.equal(
+      updateChipState({ state: 'downloading', version: v, percent: 50 }, CURRENT).kind,
+      'quiet',
+    )
     assert.equal(updateChipState({ state: 'available', version: v }, CURRENT).kind, 'quiet')
   }
 })
@@ -197,7 +198,10 @@ test('downloading clamps + rounds percent into a renderable 0..100', () => {
 })
 
 test('an ERROR is quiet, never loud — the message survives for Preferences', () => {
-  const s = updateChipState({ state: 'error', message: 'getaddrinfo ENOTFOUND', checkedAt: 9 }, CURRENT)
+  const s = updateChipState(
+    { state: 'error', message: 'getaddrinfo ENOTFOUND', checkedAt: 9 },
+    CURRENT,
+  )
   assert.equal(s.kind, 'quiet')
   assert.equal(s.kind === 'quiet' && s.failed, true)
   assert.equal(s.kind === 'quiet' && s.message, 'getaddrinfo ENOTFOUND')
@@ -214,7 +218,14 @@ test('checking + available are transient "working" one-liners; idle is quiet', (
 })
 
 test('checkedAt rides through EVERY state (the chip line never blanks mid-download)', () => {
-  const states: UpdateStatus['state'][] = ['idle', 'checking', 'available', 'downloading', 'ready', 'error']
+  const states: UpdateStatus['state'][] = [
+    'idle',
+    'checking',
+    'available',
+    'downloading',
+    'ready',
+    'error',
+  ]
   for (const state of states) {
     const s = updateChipState({ state, version: '9.9.9', percent: 10, checkedAt: 1234 }, CURRENT)
     assert.equal(s.checkedAt, 1234, `${state} must carry checkedAt`)
@@ -258,7 +269,7 @@ const BAD_BODIES: Record<string, string> = {
   'truncated JSON body': '{"tag_name":"v0.22.0","assets":[{"name":"latest.y',
   // A CDN/captive-portal error page served under a json content-type.
   'non-JSON body (HTML error page)':
-    '<!DOCTYPE html><html><head><title>503 Service Unavailable</title></head><body><h1>Error</h1></body></html>'
+    '<!DOCTYPE html><html><head><title>503 Service Unavailable</title></head><body><h1>Error</h1></body></html>',
 }
 
 for (const [label, body] of Object.entries(BAD_BODIES)) {
@@ -287,12 +298,18 @@ test('electron-updater WRAPS some parse failures — those are the same failure'
   // The wrapped shapes, verbatim from electron-updater@6.8.9. Their messages embed a
   // whole atom feed / a stack trace, so even when they parse they must never be the
   // caption: a Preferences line is not a place to print 7 kB of XML.
-  const feed = Object.assign(new Error('Cannot parse releases feed: SyntaxError: x,\nXML:\n<feed>…</feed>'), {
-    code: 'ERR_UPDATER_INVALID_RELEASE_FEED'
-  })
-  const info = Object.assign(new Error('Cannot parse update info from latest.yml …: rawData: null'), {
-    code: 'ERR_UPDATER_INVALID_UPDATE_INFO'
-  })
+  const feed = Object.assign(
+    new Error('Cannot parse releases feed: SyntaxError: x,\nXML:\n<feed>…</feed>'),
+    {
+      code: 'ERR_UPDATER_INVALID_RELEASE_FEED',
+    },
+  )
+  const info = Object.assign(
+    new Error('Cannot parse update info from latest.yml …: rawData: null'),
+    {
+      code: 'ERR_UPDATER_INVALID_UPDATE_INFO',
+    },
+  )
   for (const err of [feed, info]) {
     assert.ok(isFeedParseError(err))
     assert.equal(describeUpdateFailure(err), FEED_PARSE_MESSAGE)
@@ -300,12 +317,14 @@ test('electron-updater WRAPS some parse failures — those are the same failure'
   // getLatestTagName's wrapper covers BOTH a parse failure and a repo with no release,
   // so the code alone cannot decide — the interpolated text does.
   const parsed = Object.assign(
-    new Error('Unable to find latest version on GitHub (…): SyntaxError: Unexpected end of JSON input'),
-    { code: 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND' }
+    new Error(
+      'Unable to find latest version on GitHub (…): SyntaxError: Unexpected end of JSON input',
+    ),
+    { code: 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND' },
   )
   const missing = Object.assign(
     new Error('Unable to find latest version on GitHub (…): HttpError: 404 Not Found'),
-    { code: 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND' }
+    { code: 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND' },
   )
   assert.ok(isFeedParseError(parsed), 'a parse failure inside the wrapper is still a parse failure')
   assert.ok(!isFeedParseError(missing), 'a genuine 404 must keep its own message')
@@ -341,7 +360,7 @@ const blockedParseFailure = (): unknown => {
 const blockedCommandFailure = (): unknown => {
   const cmd =
     'set "PSModulePath=" & chcp 65001 >NUL & powershell.exe -NoProfile -NonInteractive ' +
-    '-InputFormat None -Command "Get-AuthenticodeSignature -LiteralPath \'C:\\x\\installer.exe\'' +
+    "-InputFormat None -Command \"Get-AuthenticodeSignature -LiteralPath 'C:\\x\\installer.exe'" +
     ' | ConvertTo-Json -Compress"'
   return Object.assign(new Error(`Command failed: ${cmd}\n`), { cmd, code: 1 })
 }
@@ -375,7 +394,10 @@ test('a blocked PowerShell is NEVER given the feed retry — a re-check re-downl
 })
 
 test('a blocked PowerShell still renders as the QUIET chip state (product rule)', () => {
-  const s = updateChipState({ state: 'error', message: SIGNATURE_BLOCKED_MESSAGE, checkedAt: 7 }, CURRENT)
+  const s = updateChipState(
+    { state: 'error', message: SIGNATURE_BLOCKED_MESSAGE, checkedAt: 7 },
+    CURRENT,
+  )
   assert.equal(s.kind, 'quiet')
   assert.equal(s.kind === 'quiet' && s.failed, true)
   assert.equal(s.kind === 'quiet' && s.message, SIGNATURE_BLOCKED_MESSAGE)
@@ -388,7 +410,7 @@ test('a failure that NAMES something actionable keeps its own words', () => {
   for (const text of [
     'getaddrinfo ENOTFOUND github.com',
     'net::ERR_INTERNET_DISCONNECTED',
-    'sha512 checksum mismatch'
+    'sha512 checksum mismatch',
   ]) {
     const err = new Error(text)
     assert.equal(isFeedParseError(err), false, `${text} is not a parse failure`)
@@ -398,7 +420,9 @@ test('a failure that NAMES something actionable keeps its own words', () => {
 })
 
 test('every message is ONE bounded line — no stacks, no feed dumps in a caption', () => {
-  const stacky = new Error(`Cannot check for updates: boom\n    at doCheckForUpdates (AppUpdater.js:1:1)`)
+  const stacky = new Error(
+    `Cannot check for updates: boom\n    at doCheckForUpdates (AppUpdater.js:1:1)`,
+  )
   assert.equal(describeUpdateFailure(stacky), 'Cannot check for updates: boom')
 
   const huge = new Error(`HttpError: 503 ${'x'.repeat(5_000)}`)
@@ -462,12 +486,15 @@ test('a WAKE IGNORES the backoff, and does not clear it either', () => {
   // we have. But the backoff is not RESET here — if the feed really is unhappy, the short check
   // fails and the ordinary exponential spacing re-forms from `consecutiveFailures`.
   for (const fails of [0, 1, 5, 50]) {
-    assert.equal(nextCheckDelayMs({ phase: 'resume', consecutiveFailures: fails }, seq(0)), RESUME_DELAY_MS)
+    assert.equal(
+      nextCheckDelayMs({ phase: 'resume', consecutiveFailures: fails }, seq(0)),
+      RESUME_DELAY_MS,
+    )
   }
   assert.equal(
     nextCheckDelayMs({ phase: 'periodic', consecutiveFailures: 3 }, seq(0.5)),
     BACKOFF_BASE_MS * 4,
-    'the periodic phase still reads the same counter'
+    'the periodic phase still reads the same counter',
   )
 })
 
@@ -476,13 +503,13 @@ test('a WAKE IGNORES the backoff, and does not clear it either', () => {
 /** The chip line for a status, at a fixed clock. */
 const line = (
   status: UpdateStatus,
-  ctx?: Partial<{ version: string; age: string | null; busy: boolean; cooldown: boolean }>
+  ctx?: Partial<{ version: string; age: string | null; busy: boolean; cooldown: boolean }>,
 ): { label: string; tip: string; failed: boolean } =>
   updateChipLine(updateChipState(status, CURRENT), {
     version: ctx?.version ?? CURRENT,
     age: ctx?.age === undefined ? '2h ago' : ctx.age,
     busy: ctx?.busy ?? false,
-    cooldown: ctx?.cooldown ?? false
+    cooldown: ctx?.cooldown ?? false,
   })
 
 test('A FAILED CHECK SAYS SO — the sentence, not just the tooltip', () => {
@@ -506,7 +533,10 @@ test('A FAILED CHECK SAYS SO — the sentence, not just the tooltip', () => {
 test('THE COOLDOWN LINE cannot claim a check that failed', () => {
   // The worst shape of the old bug, and the one a user would actually notice: click the chip, the
   // check fails, and for ten seconds the line reads "checked just now".
-  const after = line({ state: 'error', message: 'boom', checkedAt: 7 }, { cooldown: true, age: 'just now' })
+  const after = line(
+    { state: 'error', message: 'boom', checkedAt: 7 },
+    { cooldown: true, age: 'just now' },
+  )
   assert.equal(after.label, `v${CURRENT} · update check failed`)
   // A successful manual check still gets its answer — that behaviour is unchanged.
   const ok = line({ state: 'idle', checkedAt: 7 }, { cooldown: true, age: 'just now' })

@@ -67,14 +67,14 @@ import {
   type TelemetryBatch,
   type TelemetryEnvelope,
   type TelemetryFlipKind,
-  type TelemetryPrefs
+  type TelemetryPrefs,
 } from '../../shared/telemetry'
 import {
   TELEMETRY_API_URL,
   postTelemetryBatch,
   telemetryCollectEnabled,
   telemetryFlushEnabled,
-  telemetryPermanentRefusal
+  telemetryPermanentRefusal,
 } from './net'
 import { flipNoticeBatch, flipNoticeKind, telemetryFlipNoticeEnabled } from './optOut'
 import {
@@ -89,7 +89,7 @@ import {
   setTelemetryEnabled,
   takeLinesParsed,
   takeStartupReplay,
-  viewsVisited
+  viewsVisited,
 } from './collector'
 import { markFunnelStep } from './funnels'
 import { armSetupSnapshotOnOptIn } from './setupSnapshot'
@@ -111,7 +111,7 @@ import {
   isHeartbeatTick,
   nominalMs,
   retryDelayMs,
-  type TickSchedule
+  type TickSchedule,
 } from './schedule'
 
 // The two cadences are SCHEDULE facts and are declared beside the grid they space; they are
@@ -174,7 +174,7 @@ function retireBatch(batch: TelemetryBatch, accepted: boolean): TelemetryBatch |
   writeRing({
     ...ring,
     events: ring.events.slice(batch.events.length),
-    lastBatch: accepted ? batch : ring.lastBatch
+    lastBatch: accepted ? batch : ring.lastBatch,
   })
   return accepted ? batch : null
 }
@@ -342,7 +342,7 @@ function recordHeartbeat(): void {
     // whether they went late together, what the tail's reads cost, and what was switched on
     // while both were measured. Drained here on the same terms as the line delta above — one
     // interval is reported once, by whichever of these two events gets to it first.
-    ...liveRiderFields()
+    ...liveRiderFields(),
   })
   reportHealth()
   reportErrors()
@@ -368,7 +368,10 @@ async function runFlush(attempt: number): Promise<void> {
   if (outcome !== 'retry' || sched === null) return
   const toNextTick = nominalMs(sched) - elapsed()
   if (toNextTick <= 0) return
-  retry = setTimeout(() => void runFlush(attempt + 1), Math.max(1, retryDelayMs(attempt, toNextTick)))
+  retry = setTimeout(
+    () => void runFlush(attempt + 1),
+    Math.max(1, retryDelayMs(attempt, toNextTick)),
+  )
   retry.unref()
 }
 
@@ -444,14 +447,14 @@ export function pauseTelemetry(): void {
 export async function sendFlipNotice(
   kind: TelemetryFlipKind,
   env: TelemetryEnvelope,
-  prefs: TelemetryPrefs
+  prefs: TelemetryPrefs,
 ): Promise<boolean> {
   if (!telemetryFlipNoticeEnabled(E2E, TELEMETRY_API_URL, prefs)) return false
   const { status } = await postTelemetryBatch(flipNoticeBatch(kind, env, Date.now()))
   const accepted = status >= 200 && status < 300
   logInfo(
     `[everquest-companion] telemetry: ${kind} notice ${accepted ? 'sent' : 'not delivered'}` +
-      (accepted ? '' : ' (not retried - see telemetry/optOut.ts)')
+      (accepted ? '' : ' (not retried - see telemetry/optOut.ts)'),
   )
   return accepted
 }
@@ -515,7 +518,7 @@ export function stopTelemetry(): void {
       // sessions end before a heartbeat ever fires, so without this drain the stall numbers would
       // describe only the sessions that lasted ten minutes — a population selected against
       // precisely the short, bad session this measurement exists to catch.
-      ...liveRiderFields()
+      ...liveRiderFields(),
     })
     // The tail of the health deltas, on the same terms as the line delta beside it. Inside the
     // `uptime > 0` guard deliberately: a process that never started collecting has no session to

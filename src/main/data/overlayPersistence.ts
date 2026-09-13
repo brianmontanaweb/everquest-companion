@@ -36,7 +36,7 @@ import {
   BASELINE_SOURCE,
   persistableSources,
   type OverlayRegister,
-  type OverlaySourceCounts
+  type OverlaySourceCounts,
 } from './messageOverlay'
 // Inlined committed baseline (bundled into the main build, like spells.json).
 import baselineJson from './messageOverlay.baseline.json'
@@ -105,7 +105,7 @@ function overlayFile(register: OverlayRegister): string {
   const file: OverlayRegisterFile = {
     version: OVERLAY_REGISTER_VERSION,
     updatedAt: register.updatedAt,
-    sources: persistableSources(register)
+    sources: persistableSources(register),
   }
   return JSON.stringify(file)
 }

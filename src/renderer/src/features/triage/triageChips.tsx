@@ -18,14 +18,14 @@ const STATUS_COLOR: Record<ReportStatus, ChipColor> = {
   shipped: 'success',
   wontfix: 'default',
   duplicate: 'warning',
-  spam: 'error'
+  spam: 'error',
 }
 
 const SEVERITY_COLOR: Record<Severity, ChipColor> = {
   p0: 'error',
   p1: 'warning',
   p2: 'info',
-  p3: 'default'
+  p3: 'default',
 }
 
 const CHIP_SX = { height: 18, fontSize: 10, '& .MuiChip-label': { px: 0.75 } } as const
@@ -45,7 +45,13 @@ export function StatusChip({ status }: { status: ReportStatus }): JSX.Element {
 export function SeverityChip({ severity }: { severity?: Severity }): JSX.Element | null {
   if (!severity) return null
   return (
-    <Chip size="small" label={severity} color={SEVERITY_COLOR[severity]} variant="outlined" sx={CHIP_SX} />
+    <Chip
+      size="small"
+      label={severity}
+      color={SEVERITY_COLOR[severity]}
+      variant="outlined"
+      sx={CHIP_SX}
+    />
   )
 }
 
@@ -59,9 +65,17 @@ export function SeverityChip({ severity }: { severity?: Severity }): JSX.Element
 export function LogChip({ state }: { state: TriageLogState }): JSX.Element | null {
   if (state === 'none') return null
   const spec = {
-    declared: { label: 'log', color: 'default' as ChipColor, title: 'A log slice is attached to this report.' },
-    present: { label: 'log ✔', color: 'success' as ChipColor, title: 'The slice is in the bucket.' },
-    missing: { label: 'log ✗', color: 'error' as ChipColor, title: 'Declared but never landed.' }
+    declared: {
+      label: 'log',
+      color: 'default' as ChipColor,
+      title: 'A log slice is attached to this report.',
+    },
+    present: {
+      label: 'log ✔',
+      color: 'success' as ChipColor,
+      title: 'The slice is in the bucket.',
+    },
+    missing: { label: 'log ✗', color: 'error' as ChipColor, title: 'Declared but never landed.' },
   }[state]
   return (
     <Tooltip title={spec.title}>

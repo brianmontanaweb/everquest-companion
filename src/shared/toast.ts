@@ -65,7 +65,7 @@ export const DEFAULT_TOAST_DURATION_MS = 6000
 
 export const DEFAULT_TOAST_CONFIG: ToastOverlayConfig = {
   durationMs: DEFAULT_TOAST_DURATION_MS,
-  introduced: false
+  introduced: false,
 }
 
 const asRecord = (v: unknown): Record<string, unknown> =>
@@ -87,7 +87,7 @@ export function normalizeToastConfig(v: unknown): ToastOverlayConfig {
     // Only a literal `true` counts. Anything else — absent, a string, a hand-edited 1 — leaves the
     // introduction owed, because showing one extra card is a smaller failure than never explaining
     // the window at all.
-    introduced: o.introduced === true
+    introduced: o.introduced === true,
   }
 }
 
@@ -202,7 +202,7 @@ export function introToastPayload(): ToastPayload {
     kind: 'intro',
     title: 'EQ Legends Companion - celebration overlay',
     subtitle: 'Boss kills, Sky quest completions and level-ups will appear here.',
-    durationMs: TOAST_INTRO_MS
+    durationMs: TOAST_INTRO_MS,
   }
 }
 
@@ -291,9 +291,10 @@ export function validateToastRequest(input: unknown): ToastRequest | null {
   const o = input as Record<string, unknown>
   const id = cappedText(o.id)
   const title = cappedText(o.title)
-  const kind = typeof o.kind === 'string' && (TOAST_KINDS as string[]).includes(o.kind)
-    ? (o.kind as ToastKind)
-    : null
+  const kind =
+    typeof o.kind === 'string' && (TOAST_KINDS as string[]).includes(o.kind)
+      ? (o.kind as ToastKind)
+      : null
   if (!id || !title || !kind) return null
   const durationMs = positiveInt(o.durationMs)
   const out: ToastRequest = { id, kind, title }
@@ -349,7 +350,8 @@ function statsLine(b: ItemStatBlock): string | undefined {
 function effectLine(b: ItemStatBlock): string | undefined {
   const e = b.effects[0]
   if (!e) return undefined
-  const kind = e.kind === 'effect' ? 'Effect' : `${e.kind[0].toUpperCase()}${e.kind.slice(1)} Effect`
+  const kind =
+    e.kind === 'effect' ? 'Effect' : `${e.kind[0].toUpperCase()}${e.kind.slice(1)} Effect`
   return `${kind}: ${e.name}`
 }
 

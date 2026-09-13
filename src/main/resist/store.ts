@@ -32,7 +32,7 @@ import {
   createLedgerWriter,
   loadUserLedgerFile,
   type LedgerSource,
-  type LedgerWriteOutcome
+  type LedgerWriteOutcome,
 } from './ledgerFile'
 /**
  * THE SEAM, DECLARED WHERE IT IS BUILT (JOS-499). It lived in `resist/module.ts` — the fold plug —
@@ -112,7 +112,10 @@ function saveUserSources(store: ResistLedgerStore): void {
  *  version, character for character — see the fingerprint note below. */
 function reportWriteOutcome(out: LedgerWriteOutcome): void {
   if (out.status === 'written') {
-    if (out.recovered === true) logInfo('[everquest-companion] resist-ledger.json is writable again; the ledger was persisted')
+    if (out.recovered === true)
+      logInfo(
+        '[everquest-companion] resist-ledger.json is writable again; the ledger was persisted',
+      )
     return
   }
   if (out.status !== 'failed') return
@@ -120,9 +123,10 @@ function reportWriteOutcome(out: LedgerWriteOutcome): void {
   // store aggregates on the message plus the frames, so keeping this string exact keeps the fix's
   // occurrences aggregating with the ones that motivated it instead of splitting the family in two.
   // Everything that varies per occurrence — the pause, the count — goes to the console.
-  if (out.report === true) logError('main:resistLedger', { message: 'resist-ledger.json write failed', err: out.err })
+  if (out.report === true)
+    logError('main:resistLedger', { message: 'resist-ledger.json write failed', err: out.err })
   logInfo(
-    `[everquest-companion] resist-ledger.json is unwritable; pausing the ledger's writes for ${Math.round((out.delayMs ?? 0) / 1000)}s`
+    `[everquest-companion] resist-ledger.json is unwritable; pausing the ledger's writes for ${Math.round((out.delayMs ?? 0) / 1000)}s`,
   )
 }
 
@@ -189,7 +193,7 @@ export function resistLedgerSeam(): ResistLedgerSeam {
       let rows = 0
       for (const src of ledger.toLedger().sources) rows += src.rows.length
       return { rows, mobs: ledger.mobKeys().size }
-    }
+    },
   }
 }
 

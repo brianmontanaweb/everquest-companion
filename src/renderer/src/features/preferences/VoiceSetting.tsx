@@ -37,7 +37,7 @@ import {
   Select,
   Slider,
   Stack,
-  Typography
+  Typography,
 } from '@mui/material'
 import DownloadIcon from '@mui/icons-material/Download'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
@@ -46,14 +46,14 @@ import {
   MAX_SPEECH_RATE,
   MIN_SPEECH_RATE,
   SPEECH_ENGINES,
-  normalizeVoicePrefs
+  normalizeVoicePrefs,
 } from '@shared/speechText'
 import {
   applyVoicePrefs,
   clearSpeechEngineFault,
   forgetSystemVoices,
   speak,
-  SPEECH_SETUP_NOTES
+  SPEECH_SETUP_NOTES,
 } from '../../lib/speech'
 import { useSpeechEngineFault, useVoiceOptions } from '../../lib/useVoices'
 import { trackFeature } from '../../lib/telemetry'
@@ -62,7 +62,7 @@ import { recordPref, usePrefsSeed } from './prefsHydration'
 /** What each tier is, in one line. The size lives on the download button, where it is actionable. */
 const ENGINE_LABELS: Record<SpeechEngine, string> = {
   system: 'Windows voices (built in)',
-  kokoro: 'Natural voice (downloaded)'
+  kokoro: 'Natural voice (downloaded)',
 }
 
 /** The sentence the ▶ preview speaks. Fixed on purpose: it is an ALERT-shaped utterance. */
@@ -267,7 +267,12 @@ function KokoroInstall({ install }: { install: KokoroInstallState }): JSX.Elemen
   const running = busy || (progress !== null && progress.phase !== 'failed')
   return (
     <Box sx={{ mt: 0.5 }}>
-      <Typography variant="caption" color="warning.main" display="block" data-testid="pref-voice-not-installed">
+      <Typography
+        variant="caption"
+        color="warning.main"
+        display="block"
+        data-testid="pref-voice-not-installed"
+      >
         Not installed yet - alerts speak with a Windows voice until it is.
       </Typography>
       {progress && <InstallProgress prog={progress} />}
@@ -292,7 +297,7 @@ function EngineRow({
   prefs,
   installed,
   install,
-  onChange
+  onChange,
 }: {
   prefs: VoicePrefs
   installed: boolean
@@ -309,7 +314,9 @@ function EngineRow({
         fullWidth
         data-testid="pref-voice-engine"
         value={prefs.engine}
-        onChange={(e) => onChange({ ...prefs, engine: e.target.value as SpeechEngine, voiceId: null })}
+        onChange={(e) =>
+          onChange({ ...prefs, engine: e.target.value as SpeechEngine, voiceId: null })
+        }
       >
         {SPEECH_ENGINES.map((engine) => (
           <MenuItem key={engine} value={engine}>
@@ -358,7 +365,7 @@ function EngineFaultNote(): JSX.Element | null {
 function VoicePickerRow({
   prefs,
   voices,
-  onChange
+  onChange,
 }: {
   prefs: VoicePrefs
   voices: { id: string; label: string }[]
@@ -375,12 +382,10 @@ function VoicePickerRow({
           fullWidth
           displayEmpty
           data-testid="pref-voice-picker"
-          value={voices.some((v) => v.id === prefs.voiceId) ? prefs.voiceId ?? '' : ''}
+          value={voices.some((v) => v.id === prefs.voiceId) ? (prefs.voiceId ?? '') : ''}
           onChange={(e) => onChange({ ...prefs, voiceId: e.target.value || null })}
         >
-          <MenuItem value="">
-            {voices.length ? 'Default voice' : 'No voices available'}
-          </MenuItem>
+          <MenuItem value="">{voices.length ? 'Default voice' : 'No voices available'}</MenuItem>
           {voices.map((v) => (
             <MenuItem key={v.id} value={v.id}>
               {v.label}
@@ -414,7 +419,13 @@ function VoicePickerRow({
 }
 
 /** Rate + volume. Both are applied on top of the alerts module's own master volume. */
-function RateVolumeRow({ prefs, onChange }: { prefs: VoicePrefs; onChange: (p: VoicePrefs) => void }): JSX.Element {
+function RateVolumeRow({
+  prefs,
+  onChange,
+}: {
+  prefs: VoicePrefs
+  onChange: (p: VoicePrefs) => void
+}): JSX.Element {
   return (
     <Stack direction="row" spacing={3} alignItems="center" flexWrap="wrap" useFlexGap>
       <Stack sx={{ minWidth: 180 }}>

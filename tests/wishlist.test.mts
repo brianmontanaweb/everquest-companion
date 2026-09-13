@@ -31,7 +31,7 @@ import {
   seedWishes,
   type PlannedWish,
   type WishEntry,
-  type WishList
+  type WishList,
 } from '../src/shared/planner/wishlist'
 
 const T0 = 1_700_000_000_000
@@ -41,7 +41,15 @@ function gearWish(key: string, at = T0): WishEntry {
 }
 
 function donorWish(key: string, effect: string, at = T0): WishEntry {
-  return { itemKey: key, name: key, kind: 'donor', effect, socket: 'proc', addedAt: at, source: 'user' }
+  return {
+    itemKey: key,
+    name: key,
+    kind: 'donor',
+    effect,
+    socket: 'proc',
+    addedAt: at,
+    source: 'user',
+  }
 }
 
 /** A planned socket as the seed's caller decorates it. */
@@ -63,8 +71,15 @@ test('the FIRST line wins — a re-add rewrites neither addedAt nor source', () 
   const first = gearWish('batfang headband', T0)
   let list = addWish(EMPTY_WISHLIST, first)
   const before = list
-  list = addWish(list, { ...donorWish('batfang headband', 'Bat Fang', T0 + 60_000), source: 'planImport' })
-  assert.equal(list, before, 'an add that changes nothing must return the SAME object (no write, no re-render)')
+  list = addWish(list, {
+    ...donorWish('batfang headband', 'Bat Fang', T0 + 60_000),
+    source: 'planImport',
+  })
+  assert.equal(
+    list,
+    before,
+    'an add that changes nothing must return the SAME object (no write, no re-render)',
+  )
   assert.equal(list.entries[0].addedAt, T0)
   assert.equal(list.entries[0].source, 'user')
   assert.equal(list.entries[0].kind, 'gear')
@@ -85,7 +100,11 @@ test('a remove drops the entry AND its dismissal — no tombstone survives the r
 
   list = removeWish(list, 'rusty short sword')
   assert.deepEqual(list.entries, [])
-  assert.deepEqual(list.clearedDone, [], 'a cleared id outliving its row would swallow the wish on re-add')
+  assert.deepEqual(
+    list.clearedDone,
+    [],
+    'a cleared id outliving its row would swallow the wish on re-add',
+  )
 
   // …and re-adding it is a wish that DRAWS, which is the failure the assertion above prevents.
   list = addWish(list, gearWish('rusty short sword'))
@@ -122,13 +141,19 @@ test('the flag is set even when the seed imported NOTHING — "we looked" is the
   assert.equal(list.seededFromPlans, true)
   assert.deepEqual(list.entries, [])
   // A set planned AFTER the seed ran must not be silently imported later.
-  const later = applySeed(list, seedWishes([planned('glowing bone collar', 'Bone')], T0 + 86_400_000))
+  const later = applySeed(
+    list,
+    seedWishes([planned('glowing bone collar', 'Bone')], T0 + 86_400_000),
+  )
   assert.deepEqual(later.entries, [])
 })
 
 test('a hand-typed wish survives the seed with its own label and instant', () => {
   const mine = gearWish('batfang headband', T0)
-  const list = applySeed(addWish(EMPTY_WISHLIST, mine), seedWishes([planned('batfang headband', 'Bat Fang')], T0 + 1))
+  const list = applySeed(
+    addWish(EMPTY_WISHLIST, mine),
+    seedWishes([planned('batfang headband', 'Bat Fang')], T0 + 1),
+  )
   assert.equal(list.entries.length, 1)
   assert.equal(list.entries[0].source, 'user')
   assert.equal(list.entries[0].addedAt, T0)
@@ -139,11 +164,11 @@ test('a hand-typed wish survives the seed with its own label and instant', () =>
 test('the seed imports UNMET sockets only — finished work is not a wish', () => {
   const seeds = seedWishes(
     [planned('batfang headband', 'Bat Fang', false), planned('glowing bone collar', 'Bone', true)],
-    T0
+    T0,
   )
   assert.deepEqual(
     seeds.map((s) => s.itemKey),
-    ['batfang headband']
+    ['batfang headband'],
   )
 })
 
@@ -164,13 +189,13 @@ test('the seed DEDUPES by item — one donor socketed into three cells is one th
       planned('batfang headband', 'Bat Fang'),
       planned('batfang headband', 'Bat Fang'),
       planned('batfang headband', 'Some Other Effect'),
-      planned('glowing bone collar', 'Bone')
+      planned('glowing bone collar', 'Bone'),
     ],
-    T0
+    T0,
   )
   assert.deepEqual(
     seeds.map((s) => s.itemKey),
-    ['batfang headband', 'glowing bone collar']
+    ['batfang headband', 'glowing bone collar'],
   )
   // The FIRST occurrence keeps its effect context, so the walk order is the choice.
   assert.equal(seeds[0].effect, 'Bat Fang')

@@ -36,7 +36,7 @@ import {
   type ClientHpFacts,
   type HpLine,
   type SpellMetrics,
-  type SpellMetricsInput
+  type SpellMetricsInput,
 } from '../src/shared/spellMetrics.ts'
 
 const FILE = spellsJson as unknown as SpellDbFile
@@ -76,14 +76,18 @@ test('R1 the nine pinned shapes read to the right magnitude at a stated level', 
     amount: 100,
     direction: 'down',
     perTick: false,
-    flat: true
+    flat: true,
   })
-  assert.equal(read('Decrease Hitpoints by 1 (L1) to 51 (L100)', 50).flat, undefined, 'a ramp is not flat')
+  assert.equal(
+    read('Decrease Hitpoints by 1 (L1) to 51 (L100)', 50).flat,
+    undefined,
+    'a ramp is not flat',
+  )
   assert.equal(read('Decrease Hitpoints by 7 to 12', 1).flat, undefined, 'a range is not flat')
   assert.equal(
     read('Increase Hitpoints between 165 and 190 for two additional ticks.', 50).flat,
     undefined,
-    'between/and is not flat'
+    'between/and is not flat',
   )
 
   // 2. the two-point ramp (161 rows) — linear inside, clamped outside
@@ -100,7 +104,7 @@ test('R1 the nine pinned shapes read to the right magnitude at a stated level', 
     amount: 10,
     direction: 'down',
     perTick: true,
-    flat: true
+    flat: true,
   })
 
   // 4. the per-tick ramp with the marker OUTSIDE the range clause (17 rows; Blood of Pain)
@@ -123,7 +127,7 @@ test('R1 the nine pinned shapes read to the right magnitude at a stated level', 
     amount: 1,
     direction: 'up',
     perTick: true,
-    flat: true
+    flat: true,
   })
 
   // 7. the increase-side per-tick ramp (Chloroplast)
@@ -133,7 +137,8 @@ test('R1 the nine pinned shapes read to the right magnitude at a stated level', 
   assert.equal(read(hotRamp, 39).direction, 'up')
 
   // 8. per-tick INSIDE the range clause, with a trailing parenthetical (Sebilite Pox)
-  const inside = 'Increase Hitpoints by 1 per tick (L1) to 22 per tick (L65) (effect decreases over time)'
+  const inside =
+    'Increase Hitpoints by 1 per tick (L1) to 22 per tick (L65) (effect decreases over time)'
   assert.equal(amount(inside, 65), 22)
   assert.equal(read(inside, 65).perTick, true)
 
@@ -142,7 +147,7 @@ test('R1 the nine pinned shapes read to the right magnitude at a stated level', 
     amount: 177.5,
     direction: 'up',
     perTick: true,
-    statedTicks: 2
+    statedTicks: 2,
   })
 })
 
@@ -162,7 +167,7 @@ test('R2 the casing and spelling variants the thirteen scrape passes left behind
     direction: 'up',
     perTick: false,
     flat: true,
-    statedTicks: 4
+    statedTicks: 4,
   })
   assert.equal(read('Increase Hitpoints by 5000 after three ticks.', 1).perTick, false)
 })
@@ -177,8 +182,13 @@ test('R3 ticks come from the duration, and a rate with no duration states no tot
   // A per-tick line on an instant spell contributes nothing: the catalog stated a rate and not
   // how long it runs, and multiplying by a guess would invent the total.
   const rateOnly = spellMetricsAt(
-    { effects: ['Decrease Hitpoints by 10 per tick'], mana: 50, castTimeMs: 2000, durationMs: null },
-    30
+    {
+      effects: ['Decrease Hitpoints by 10 per tick'],
+      mana: 50,
+      castTimeMs: 2000,
+      durationMs: null,
+    },
+    30,
   )
   assert.equal(rateOnly, undefined)
 })
@@ -191,13 +201,18 @@ test('R4 the metrics arithmetic — damage, dps and per mana, on the real rows',
     damage: 288,
     damagePerMana: 2.9,
     dps: 57.6,
-    recastMs: 1500
+    recastMs: 1500,
   })
 
   // Blood of Pain: 56 (L41) to 65 (L50) per tick over its stated duration. 650 / (3 + 60) = 10.3
   const dot = metrics(
-    { effects: ['Decrease Hitpoints by 56 (L41) to 65 (L50) per tick'], mana: 100, castTimeMs: 3000, durationMs: 60_000 },
-    50
+    {
+      effects: ['Decrease Hitpoints by 56 (L41) to 65 (L50) per tick'],
+      mana: 100,
+      castTimeMs: 3000,
+      durationMs: 60_000,
+    },
+    50,
   )
   assert.deepEqual(dot, { damage: 650, damagePerMana: 6.5, dps: 10.3, dot: true, overSec: 60 })
 
@@ -211,7 +226,7 @@ test('R4 the metrics arithmetic — damage, dps and per mana, on the real rows',
     hps: 2.7,
     hot: true,
     overSec: 960,
-    recastMs: 1500
+    recastMs: 1500,
   })
 })
 
@@ -228,13 +243,21 @@ test('R6 a lifetap is damage, and max-HP / HP-when-cast lines are not hit points
   // Siphon: `Decrease Hitpoints by 80` + `Increase Hitpoints by 80 (Self)`, targetType Lifetap.
   const siphon = metrics(entry('Siphon'), 30)
   assert.equal(siphon.damage, 80)
-  assert.equal(siphon.heal, undefined, 'the increase side is the same 80 written from the other end')
+  assert.equal(
+    siphon.heal,
+    undefined,
+    'the increase side is the same 80 written from the other end',
+  )
 
   // The same two lines WITHOUT the Lifetap target type still read as both — the exclusion is a
   // claim about the catalog's own filing, not a guess from the strings.
   const notATap = metrics(
-    { effects: ['Decrease Hitpoints by 80', 'Increase Hitpoints by 80'], mana: 40, castTimeMs: 1000 },
-    30
+    {
+      effects: ['Decrease Hitpoints by 80', 'Increase Hitpoints by 80'],
+      mana: 40,
+      castTimeMs: 1000,
+    },
+    30,
   )
   assert.equal(notATap.damage, 80)
   assert.equal(notATap.heal, 80)
@@ -248,7 +271,10 @@ test('R6 a lifetap is damage, and max-HP / HP-when-cast lines are not hit points
   assert.equal(parseHpLine('Increase HP when cast by 202 (L34) to 225 (L42)', 42), null)
   assert.equal(parseHpLine('Decrease HP when cast by 50', 42), null)
   // Neither of these is an effect magnitude at all.
-  assert.equal(parseHpLine("Stacking: Block new spell if slot 3 is effect 'Max Hitpoints' and < 1100", 1), null)
+  assert.equal(
+    parseHpLine("Stacking: Block new spell if slot 3 is effect 'Max Hitpoints' and < 1100", 1),
+    null,
+  )
   assert.equal(parseHpLine('UNKNOWN CALC 118 base 406 max 446 attrib Max Hitpoints', 1), null)
   assert.equal(parseHpLine('Charm (up to L37)', 1), null)
 })
@@ -298,7 +324,7 @@ test('R7 the whole committed catalog reads without producing a number nobody can
     assert.match(
       shape,
       /max\s+hit\s?points?|Stacking:|UNKNOWN CALC|\(pet_level\)/i,
-      `unread hitpoint shape: ${shape}`
+      `unread hitpoint shape: ${shape}`,
     )
   }
 })
@@ -308,19 +334,36 @@ test('R8 the row parts read the way the panel prints them, with no em dash', () 
   assert.deepEqual(dmg, ['dmg 143', 'dps 48', '2.1 dmg/mana'])
   const heal = spellMetricsParts({ heal: 250, hps: 83, healPerMana: 3.6 })
   assert.deepEqual(heal, ['heal 250', 'hps 83', '3.6 heal/mana'])
-  const dot = spellMetricsParts({ damage: 650, dps: 10.3, damagePerMana: 6.5, dot: true, overSec: 60 })
+  const dot = spellMetricsParts({
+    damage: 650,
+    dps: 10.3,
+    damagePerMana: 6.5,
+    dot: true,
+    overSec: 60,
+  })
   assert.equal(dot[dot.length - 1], 'over 60s')
   // THE RECAST PART GOES LAST, and only when the timer is the spell's own rather than the game's
   // 1.5s global cooldown (JOS-444).
   const slow = spellMetricsParts({ damage: 500, dps: 55.6, recastMs: 6000 })
   assert.deepEqual(slow, ['dmg 500', 'dps 56', 'recast 6s'])
-  assert.deepEqual(spellMetricsParts({ damage: 500, dps: 55.6, recastMs: 1500 }), ['dmg 500', 'dps 56'])
-  assert.equal(spellMetricsParts({ damage: 1, recastMs: 2000 }).at(-1), 'recast 2s', 'the floor is inclusive')
-  assert.equal(spellMetricsParts({ damage: 1, recastMs: 2250 }).at(-1), 'recast 2.3s', 'one decimal')
+  assert.deepEqual(spellMetricsParts({ damage: 500, dps: 55.6, recastMs: 1500 }), [
+    'dmg 500',
+    'dps 56',
+  ])
+  assert.equal(
+    spellMetricsParts({ damage: 1, recastMs: 2000 }).at(-1),
+    'recast 2s',
+    'the floor is inclusive',
+  )
+  assert.equal(
+    spellMetricsParts({ damage: 1, recastMs: 2250 }).at(-1),
+    'recast 2.3s',
+    'one decimal',
+  )
   assert.equal(
     spellMetricsParts({ damage: 650, dps: 10.3, dot: true, overSec: 60, recastMs: 12_000 }).at(-1),
     'recast 12s',
-    'after the over-time window, never before it'
+    'after the over-time window, never before it',
   )
   for (const p of [...dmg, ...heal, ...dot, ...slow]) assert.ok(!/[—–]/.test(p), p)
   // Nothing at all for a spell with no hitpoint line.
@@ -337,7 +380,7 @@ test('R8 the row parts read the way the panel prints them, with no em dash', () 
 /** Odium, id 4093: slot 2 is `0|-217|0|103|325`, duration formula 7 capped at 5 ticks. */
 const ODIUM_CLIENT: ClientHpFacts = {
   hp: [{ base: -217, max: 325, calc: 103, perTick: true }],
-  hpDuration: { formula: 7, value: 5 }
+  hpDuration: { formula: 7, value: 5 },
 }
 /** What the wiki page states for Odium — one curse-counter line and no hitpoint line at all. */
 const ODIUM_WIKI: SpellMetricsInput = {
@@ -345,7 +388,7 @@ const ODIUM_WIKI: SpellMetricsInput = {
   mana: 409,
   castTimeMs: 3000,
   recastMs: 6000,
-  durationMs: 30_000
+  durationMs: 30_000,
 }
 
 test('R9 a client magnitude is |base| + step x level, capped — and Odium is the pin', () => {
@@ -356,7 +399,11 @@ test('R9 a client magnitude is |base| + step x level, capped — and Odium is th
   assert.deepEqual(clientHpMagnitudeAt(odium, 43), { amount: 303, formulaUnknown: false })
   assert.deepEqual(clientHpMagnitudeAt(odium, 50), { amount: 317, formulaUnknown: false })
   assert.deepEqual(clientHpMagnitudeAt(odium, 54), { amount: 325, formulaUnknown: false })
-  assert.deepEqual(clientHpMagnitudeAt(odium, 60), { amount: 325, formulaUnknown: false }, 'capped at max')
+  assert.deepEqual(
+    clientHpMagnitudeAt(odium, 60),
+    { amount: 325, formulaUnknown: false },
+    'capped at max',
+  )
 
   // calc 100 is flat at every level (Bolt of Karana, `1|0|-200|0|100|200`).
   const flat = { base: -200, max: 200, calc: 100, perTick: false }
@@ -373,7 +420,7 @@ test('R9 a client magnitude is |base| + step x level, capped — and Odium is th
   // (Soul Bond, `3|0|1|0|4005|0` — the one such spell in the committed catalog).
   assert.deepEqual(clientHpMagnitudeAt({ base: 1, max: 0, calc: 4005, perTick: true }, 60), {
     amount: 1,
-    formulaUnknown: true
+    formulaUnknown: true,
   })
 })
 
@@ -411,14 +458,14 @@ test('R11 THE TICKET: Odium reads off the client and prints the way the row does
     dot: true,
     overSec: 30,
     recastMs: 6000,
-    source: 'client'
+    source: 'client',
   })
   assert.deepEqual(spellMetricsParts(m ?? {}), [
     'dmg 1515',
     'dps 46',
     '3.7 dmg/mana',
     'over 30s',
-    'recast 6s'
+    'recast 6s',
   ])
   // The ramp is read at the evaluation level like every other figure in this file.
   assert.equal(spellMetricsAt(ODIUM_WIKI, 50, ODIUM_CLIENT)?.damage, 1585)
@@ -443,21 +490,26 @@ test('R13 the client fold: a flat nuke, a heal, an unknown formula, and a rate w
   const bolt = spellMetricsAt(
     { effects: ['Decrease HP when cast by 200'], mana: 0, castTimeMs: 15_000 },
     1,
-    { hp: [{ base: -200, max: 200, calc: 100, perTick: false }] }
+    { hp: [{ base: -200, max: 200, calc: 100, perTick: false }] },
   )
   assert.deepEqual(bolt, { damage: 200, dps: 13.3, source: 'client' })
 
   // A HEAL — Envenomed Heal, `2|0|173|0|100|0`. A POSITIVE base lands on the heal side.
   const heal = spellMetricsAt({ effects: ['Increase HP when cast by 150'] }, 1, {
-    hp: [{ base: 173, max: 0, calc: 100, perTick: false }]
+    hp: [{ base: 173, max: 0, calc: 100, perTick: false }],
   })
   assert.deepEqual(heal, { heal: 173, source: 'client' })
 
   // AN UNKNOWN FORMULA still produces a figure — the base — and flags itself (Soul Bond).
   const bond = spellMetricsAt(
-    { effects: ['Ticks in order 5,10,15,20,25,30 (total 105)'], mana: 360, castTimeMs: 7000, targetType: 'Lifetap' },
+    {
+      effects: ['Ticks in order 5,10,15,20,25,30 (total 105)'],
+      mana: 360,
+      castTimeMs: 7000,
+      targetType: 'Lifetap',
+    },
     1,
-    { hp: [{ base: 1, max: 0, calc: 4005, perTick: true }], hpDuration: { formula: 2, value: 5 } }
+    { hp: [{ base: 1, max: 0, calc: 4005, perTick: true }], hpDuration: { formula: 2, value: 5 } },
   )
   assert.equal(bond?.formulaUnknown, true)
   assert.equal(bond?.damage, 5, 'base 1 a tick over the five ticks the client states')
@@ -471,7 +523,7 @@ test('R13 the client fold: a flat nuke, a heal, an unknown formula, and a rate w
   // what keeps the twelve shapeshift self-buffs out of the fifteen.
   const lich = spellMetricsAt({ effects: ['Increase Mana by 10'], mana: 0, castTimeMs: 6000 }, 49, {
     hp: [{ base: -22, max: 0, calc: 100, perTick: true }],
-    hpDuration: { formula: 50, value: 0 }
+    hpDuration: { formula: 50, value: 0 },
   })
   assert.equal(lich, undefined)
 })
@@ -510,9 +562,9 @@ test('R15 the window is cast plus the LONGER of the duration and the recast', ()
         mana: 100,
         castTimeMs: 2000,
         durationMs: 30_000,
-        ...(recastMs === undefined ? {} : { recastMs })
+        ...(recastMs === undefined ? {} : { recastMs }),
       },
-      50
+      50,
     )
   // 500 damage over five ticks. With no recast at all the window is cast + duration = 32s.
   assert.equal(dot(undefined).dps, 15.6)
@@ -535,7 +587,7 @@ test('R16 a spell no source states a recast for is unchanged, figure for figure'
   const silent: SpellMetricsInput = {
     effects: ['Decrease Hitpoints by 300'],
     mana: 100,
-    castTimeMs: 3000
+    castTimeMs: 3000,
   }
   assert.deepEqual(metrics(silent, 50), { damage: 300, damagePerMana: 3, dps: 100 })
   // …and the client's own field 10 answers for exactly that spell, when the install has a row for

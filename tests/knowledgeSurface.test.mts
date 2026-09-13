@@ -27,7 +27,7 @@ import type {
   KnowledgeMissMessage,
   Reply,
   KnowledgeResult,
-  KnowledgeSearchResult
+  KnowledgeSearchResult,
 } from '../src/shared/dataServer/protocol.generated'
 
 test('THE RENAME TABLE IS EMPTY, and the engine index depends on it being empty', () => {
@@ -39,7 +39,7 @@ test('THE RENAME TABLE IS EMPTY, and the engine index depends on it being empty'
   assert.equal(
     ITEM_RENAMES.length,
     0,
-    'a rename landed app-side and the engine cannot read it — see engine/crates/knowledge/src/names.rs'
+    'a rename landed app-side and the engine cannot read it — see engine/crates/knowledge/src/names.rs',
   )
 })
 
@@ -52,7 +52,7 @@ test('a knowledge miss reaches a listener, carrying no id and no epoch', () => {
   // THE COMMITTED FRAME, verbatim off the fixture — not one composed here, so this suite and the
   // Rust one are reading the same bytes.
   const committed = engineTurns(fixture('08-knowledge.json')).find(
-    (m) => m.kind === 'knowledgeMiss'
+    (m) => m.kind === 'knowledgeMiss',
   )
   assert.ok(committed, 'the moment carries a miss')
   r.deliver(committed)
@@ -76,7 +76,7 @@ test('THE COMMITTED CONVERSATION reads back through the registry the client answ
   shakeHands(r)
 
   const replies = engineTurns(fixture('08-knowledge.json')).filter(
-    (m): m is Reply => m.kind === 'reply'
+    (m): m is Reply => m.kind === 'reply',
   )
   const miss = replies.find((m) => (m.result as KnowledgeResult).found === false)
   assert.ok(miss, 'the moment carries a miss reply')

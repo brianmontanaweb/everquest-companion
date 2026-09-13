@@ -43,7 +43,7 @@ function CountsLine({
   totalQuests,
   filteredCount,
   countSource,
-  overrides
+  overrides,
 }: {
   questCount: number
   totalQuests: number
@@ -52,11 +52,7 @@ function CountsLine({
   overrides: readonly ItemCountOverride[]
 }): JSX.Element {
   if (questCount === 0) {
-    return (
-      <Alert severity="info">
-        No Plane of Sky data available.
-      </Alert>
-    )
+    return <Alert severity="info">No Plane of Sky data available.</Alert>
   }
   if (totalQuests === 0) {
     // Data exists, it is all ignored — say so, and point at the tab that undoes it.
@@ -75,7 +71,6 @@ function CountsLine({
     </Typography>
   )
 }
-
 
 /**
  * The Ready tab's ONE control (JOS-155): show only the quests you have never handed in.
@@ -176,7 +171,12 @@ function ReadyList(props: ReadyListProps): JSX.Element {
         </Typography>
       ) : (
         <>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }} data-testid="posky-ready-count">
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 1 }}
+            data-testid="posky-ready-count"
+          >
             {n} quest{n === 1 ? '' : 's'} you are holding every item for
             {readyFirstTimeOnly ? ' and have never turned in' : ''}.
             {readyFirstTimeOnly && readyRefarmCount > 0
@@ -186,7 +186,9 @@ function ReadyList(props: ReadyListProps): JSX.Element {
                 nagged forever, because nothing in a log or a dump records a destruction — so the
                 sentence points at the control that fixes it rather than at a dismiss button this
                 tab deliberately does not have (questCompletion.readyQuests). */}
-            {' Holding something you no longer have? Expand the quest and correct the count beside the item.'}
+            {
+              ' Holding something you no longer have? Expand the quest and correct the count beside the item.'
+            }
             {runeNote}
           </Typography>
           <QuestList {...props} />
@@ -211,7 +213,13 @@ function ReadyList(props: ReadyListProps): JSX.Element {
  * all, it is the cleanup model's own row count, and the view computes it once above both this bar
  * and the pane so the tab and its rows cannot disagree.
  */
-function PoskyTabs({ list, cleanupCount }: { list: QuestListState; cleanupCount: number }): JSX.Element {
+function PoskyTabs({
+  list,
+  cleanupCount,
+}: {
+  list: QuestListState
+  cleanupCount: number
+}): JSX.Element {
   return (
     <Tabs
       value={list.tab}
@@ -270,7 +278,7 @@ function PoskyTabs({ list, cleanupCount }: { list: QuestListState; cleanupCount:
 function useQuestAnchor(
   quests: QuestProgress[],
   list: QuestListState,
-  focus: { quest: string | null; nonce: number; onConsumed?: () => void }
+  focus: { quest: string | null; nonce: number; onConsumed?: () => void },
 ): QuestAnchor | null {
   const [pending, setPending] = useState<QuestAnchor | null>(null)
   const [anchor, setAnchor] = useState<QuestAnchor | null>(null)
@@ -443,7 +451,7 @@ export default function PoskyView({
   onOpenLoot,
   focusQuest = null,
   focusNonce = 0,
-  onFocusConsumed
+  onFocusConsumed,
 }: {
   onOpenMob: (t: MobTarget) => void
   /** an item name → the Loot tab's drill-down (App's `openLoot`); optional so the pane stands alone */
@@ -474,7 +482,7 @@ export default function PoskyView({
     inventoryInfo,
     achievementsInfo,
     sharedItems,
-    ambiguousQuestNames
+    ambiguousQuestNames,
   } = useProgress({ onQuestComplete })
   const list = useQuestList(quests)
   /**
@@ -493,7 +501,7 @@ export default function PoskyView({
   const anchor = useQuestAnchor(quests, list, {
     quest: focusQuest,
     nonce: focusNonce,
-    onConsumed: onFocusConsumed
+    onConsumed: onFocusConsumed,
   })
 
   // Everything a quest ROW needs except which quests to draw. Both tabs that draw rows pass the
@@ -507,7 +515,7 @@ export default function PoskyView({
     undoTurnIn,
     setItemCount: setItemOverride,
     onOpenMob,
-    onOpenLoot
+    onOpenLoot,
   }
 
   return (

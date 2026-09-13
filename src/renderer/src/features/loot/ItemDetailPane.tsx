@@ -51,7 +51,7 @@ export interface ItemDetailPaneProps extends ItemDetailProps {
 function Breadcrumb({
   item,
   isQuestItem,
-  onList
+  onList,
 }: {
   item: string
   isQuestItem: boolean
@@ -71,10 +71,16 @@ function Breadcrumb({
         Loot
       </Link>
       <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-        <Typography data-testid="loot-detail-title" noWrap sx={{ color: EQ_ITEM_COLORS.name, minWidth: 0 }}>
+        <Typography
+          data-testid="loot-detail-title"
+          noWrap
+          sx={{ color: EQ_ITEM_COLORS.name, minWidth: 0 }}
+        >
           {item}
         </Typography>
-        {isQuestItem && <Chip size="small" color="primary" variant="outlined" label="Plane of Sky" />}
+        {isQuestItem && (
+          <Chip size="small" color="primary" variant="outlined" label="Plane of Sky" />
+        )}
       </Stack>
     </Breadcrumbs>
   )
@@ -95,7 +101,14 @@ export function ItemDetailPane(props: ItemDetailPaneProps): JSX.Element {
       {/* The pane owns its own scroll for the same reason every panel in this app does: the
           content area must never grow the document (AGENTS.md's fixed-height law). */}
       <Box sx={{ flexGrow: 1, minHeight: 0, overflow: 'auto', pr: 0.5 }}>
-        <ItemDetailContent item={item} events={events} stats={stats} active slice={slice} owned={owned} />
+        <ItemDetailContent
+          item={item}
+          events={events}
+          stats={stats}
+          active
+          slice={slice}
+          owned={owned}
+        />
       </Box>
     </Stack>
   )

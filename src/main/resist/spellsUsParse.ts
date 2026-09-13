@@ -76,7 +76,14 @@
 // the con card are reading, for no gain: neither a HoT nor a bard pulse is a spell the estimator
 // fits a resist from.
 
-import { axisFromResistType, type ResistAxis, type ResistDebuffSlot, type SpellHpSlot, type SpellResistInfo, type SpellResistTable } from '../../shared/resistTypes'
+import {
+  axisFromResistType,
+  type ResistAxis,
+  type ResistDebuffSlot,
+  type SpellHpSlot,
+  type SpellResistInfo,
+  type SpellResistTable,
+} from '../../shared/resistTypes'
 import { spellCanonKey } from '../../shared/spellKey'
 
 const F_ID = 0
@@ -284,7 +291,10 @@ function rowInfo(f: readonly string[]): SpellResistInfo {
  * `spellCanonKey`, so the file order decides — with one override: a row NO class can cast is a
  * mob's or an item's copy, and loses to a row a player can actually learn.
  */
-function prefer(existing: { info: SpellResistInfo; playable: boolean }, playable: boolean): boolean {
+function prefer(
+  existing: { info: SpellResistInfo; playable: boolean },
+  playable: boolean,
+): boolean {
   return !existing.playable && playable
 }
 

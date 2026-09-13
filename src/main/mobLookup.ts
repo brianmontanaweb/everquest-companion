@@ -99,7 +99,8 @@ const RETRY_AFTER_FALLBACK_MS = 60_000
 
 async function apiFetch(params: Record<string, string>): Promise<unknown> {
   if (Date.now() < cooldownUntil) return null // server asked for quiet — stay quiet
-  const url = API + '?' + new URLSearchParams({ format: 'json', formatversion: '2', ...params }).toString()
+  const url =
+    API + '?' + new URLSearchParams({ format: 'json', formatversion: '2', ...params }).toString()
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS)
   try {
@@ -122,9 +123,12 @@ async function apiFetch(params: Record<string, string>): Promise<unknown> {
 
 /** Fetch a page's raw wikitext. '' when the page doesn't exist, null on network error. */
 async function fetchWikitext(title: string): Promise<string | null> {
-  const j = (await apiFetch({ action: 'parse', page: title, prop: 'wikitext', redirects: '1' })) as
-    | { parse?: { wikitext?: string }; error?: { code?: string } }
-    | null
+  const j = (await apiFetch({
+    action: 'parse',
+    page: title,
+    prop: 'wikitext',
+    redirects: '1',
+  })) as { parse?: { wikitext?: string }; error?: { code?: string } } | null
   if (j === null) return null
   if (j.error) return ''
   return j.parse?.wikitext ?? ''
@@ -142,15 +146,13 @@ async function fetchWikitext(title: string): Promise<string | null> {
  * exactly the kind of invention law 1 forbids.
  */
 type ResolveResult =
-  | { status: 'ok'; title: string; exact: boolean }
-  | { status: 'none' }
-  | { status: 'offline' }
+  { status: 'ok'; title: string; exact: boolean } | { status: 'none' } | { status: 'offline' }
 async function resolvePage(id: MobIdentity): Promise<ResolveResult> {
   const j = (await apiFetch({
     action: 'query',
     list: 'search',
     srsearch: id.canonical,
-    srlimit: '8'
+    srlimit: '8',
   })) as { query?: { search?: { title: string }[] } } | null
   if (j === null) return { status: 'offline' }
   const hits = j.query?.search ?? []
@@ -247,7 +249,11 @@ function scheduleSave(): void {
     const entries: Record<string, CacheEntry> = {}
     for (const [k, v] of (mem ?? new Map<string, CacheEntry>()).entries()) entries[k] = v
     const path = cacheFilePath()
-    void writeFileDurableAsync(dirname(path), path, JSON.stringify({ version: CACHE_VERSION, entries } satisfies CacheFile))
+    void writeFileDurableAsync(
+      dirname(path),
+      path,
+      JSON.stringify({ version: CACHE_VERSION, entries } satisfies CacheFile),
+    )
       .catch((err: unknown) => {
         logError('main:mobLookup', { message: 'failed writing mob-knowledge cache', err })
       })
@@ -353,14 +359,15 @@ export async function lookupMob(name: string): Promise<MobKnowledge> {
     // mob. Search happily returns a cousin for a name it doesn't have, and hanging that
     // cousin's drop table off this mob would be inventing loot (law 1). "Is this mob" now spans
     // the roster's stated spellings, which for an unaliased name is the one key it always was.
-    if (!res.exact && !identityMatches(id, facts.pageName ?? res.title)) return finish({ notFound: true })
+    if (!res.exact && !identityMatches(id, facts.pageName ?? res.title))
+      return finish({ notFound: true })
     return finish({ page: res.title, ...facts })
   })
 
   // Keep the queue serialized + spaced regardless of this call's outcome.
   queue = run.then(
     () => new Promise((r) => setTimeout(r, REQUEST_SPACING_MS)),
-    () => new Promise((r) => setTimeout(r, REQUEST_SPACING_MS))
+    () => new Promise((r) => setTimeout(r, REQUEST_SPACING_MS)),
   )
 
   try {

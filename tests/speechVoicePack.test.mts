@@ -20,18 +20,18 @@
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { KOKORO_DEFAULT_VOICE, kokoroVoiceLang, kokoroVoicesFor } from '../src/main/speech/pinned'
 import {
-  KOKORO_DEFAULT_VOICE,
-  kokoroVoiceLang,
-  kokoroVoicesFor
-} from '../src/main/speech/pinned'
-import { normalizeEspeakPhonemes, phonemeCount, tokenizePhonemes } from '../src/main/speech/phonemes'
+  normalizeEspeakPhonemes,
+  phonemeCount,
+  tokenizePhonemes,
+} from '../src/main/speech/phonemes'
 import {
   STYLE_DIM,
   decodeNpyFloat32,
   parseVoicePack,
   scanVoiceIds,
-  styleVectorFor
+  styleVectorFor,
 } from '../src/main/speech/voicePack'
 import { resolveKokoroVoice } from '../src/main/speech/engine'
 
@@ -71,10 +71,10 @@ function fakeNpz(voices: Record<string, Float32Array>): Buffer {
     header.write(
       `{'descr': '<f4', 'fortran_order': False, 'shape': (${data.length / STYLE_DIM}, 1, ${STYLE_DIM}), }`.padEnd(
         118,
-        ' '
+        ' ',
       ),
       10,
-      'latin1'
+      'latin1',
     )
     const body = Buffer.from(data.buffer, data.byteOffset, data.byteLength)
     const payload = Buffer.concat([header, body])
@@ -108,7 +108,7 @@ test('the voice pack reader walks ZIP64 stored entries (the real file shape)', (
   const entries = parseVoicePack(pack)
   assert.deepEqual(
     entries.map((e) => e.id),
-    ['af_heart', 'bm_george']
+    ['af_heart', 'bm_george'],
   )
   const decoded = decodeNpyFloat32(pack, entries[1])
   assert.ok(decoded)
@@ -139,7 +139,7 @@ test('scanVoiceIds walks a whole pack through header-sized windows', async () =>
   // one-entry pack passes either way.
   const rows = 2
   const voices = Object.fromEntries(
-    ['af_heart', 'bm_george', 'jf_alpha'].map((id) => [id, new Float32Array(rows * STYLE_DIM)])
+    ['af_heart', 'bm_george', 'jf_alpha'].map((id) => [id, new Float32Array(rows * STYLE_DIM)]),
   )
   const pack = fakeNpz(voices)
   let reads = 0
@@ -156,7 +156,7 @@ test('scanVoiceIds terminates on a malformed pack instead of spinning', async ()
   const zeros = Buffer.alloc(4096)
   const ids = await scanVoiceIds(
     (offset, length) => Promise.resolve(zeros.subarray(offset, offset + length)),
-    1_000_000_000
+    1_000_000_000,
   )
   assert.equal(ids.size, 0)
 })
@@ -173,7 +173,10 @@ test('the pinned roster only offers voices the English phonemizer can drive', ()
 
 test('kokoroVoicesFor reports only what the installed pack actually contains', () => {
   const voices = kokoroVoicesFor(new Set(['bm_george', 'af_heart', 'jf_alpha', 'nope']))
-  assert.deepEqual(voices.map((v) => v.id), ['af_heart', 'bm_george'])
+  assert.deepEqual(
+    voices.map((v) => v.id),
+    ['af_heart', 'bm_george'],
+  )
   assert.ok(voices.every((v) => v.engine === 'kokoro'))
   assert.equal(voices[0].lang, 'en-US')
   assert.deepEqual(kokoroVoicesFor(new Set()), [])
@@ -186,4 +189,3 @@ test('a voice id from the other tier resolves to a voice that exists', () => {
   assert.equal(resolveKokoroVoice(null), KOKORO_DEFAULT_VOICE)
   assert.equal(resolveKokoroVoice('bf_emma'), 'bf_emma')
 })
-

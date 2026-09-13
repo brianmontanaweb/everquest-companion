@@ -64,7 +64,7 @@ function spellVerdicts(file: PageEraFile): Record<string, boolean> {
  */
 export function applySpellEra(
   spells: readonly SpellEntry[],
-  file: PageEraFile = pageEraJson as PageEraFile
+  file: PageEraFile = pageEraJson as PageEraFile,
 ): { spells: SpellEntry[]; report: SpellEraReport } {
   const verdicts = spellVerdicts(file)
   const report: SpellEraReport = { marked: 0, silent: 0, table: Object.keys(verdicts).length }

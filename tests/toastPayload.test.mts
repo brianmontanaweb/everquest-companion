@@ -26,7 +26,7 @@ import {
   normalizeToastConfig,
   toastActionLabel,
   toastItemCard,
-  validateToastRequest
+  validateToastRequest,
 } from '../src/shared/toast'
 import { parseStatsBlock } from '../src/shared/itemStats'
 import type { ItemKnowledge } from '../src/shared/types'
@@ -35,7 +35,7 @@ const boss = {
   id: 'boss:Lord Nagafen:1',
   kind: 'bossKill',
   title: 'Lord Nagafen defeated',
-  subtitle: 'D2 · Adaptive · Nagafen’s Lair'
+  subtitle: 'D2 · Adaptive · Nagafen’s Lair',
 }
 
 test('a well-formed boss request survives verbatim', () => {
@@ -58,7 +58,7 @@ test('unknown properties are STRIPPED, not passed through to a window that draws
     ...boss,
     html: '<img src=x onerror=alert(1)>',
     item: { name: 'forged', lines: ['fake'] },
-    focus: { view: 'mobs', mob: 'Lord Nagafen' }
+    focus: { view: 'mobs', mob: 'Lord Nagafen' },
   })
   assert.ok(out)
   assert.deepEqual(Object.keys(out).sort(), ['focus', 'id', 'kind', 'subtitle', 'title'])
@@ -77,11 +77,16 @@ test('text is capped, so no payload can push the card off the screen', () => {
 test('focus is a CLOSED union — an unlisted view is dropped, not forwarded', () => {
   assert.equal(validateToastRequest({ ...boss, focus: { view: 'triage' } })?.focus, undefined)
   assert.equal(validateToastRequest({ ...boss, focus: 'posky' })?.focus, undefined)
-  assert.deepEqual(validateToastRequest({ ...boss, focus: { view: 'posky' } })?.focus, { view: 'posky' })
-  assert.deepEqual(validateToastRequest({ ...boss, focus: { view: 'mobs', mob: 'a bat' } })?.focus, {
-    view: 'mobs',
-    mob: 'a bat'
+  assert.deepEqual(validateToastRequest({ ...boss, focus: { view: 'posky' } })?.focus, {
+    view: 'posky',
   })
+  assert.deepEqual(
+    validateToastRequest({ ...boss, focus: { view: 'mobs', mob: 'a bat' } })?.focus,
+    {
+      view: 'mobs',
+      mob: 'a bat',
+    },
+  )
 })
 
 // ---- the level-up kind + its anchors (docs/plans/levelup-whats-new.md §2) --------------
@@ -90,7 +95,7 @@ const ding = {
   id: 'level:24:1754300000000',
   kind: 'levelUp',
   title: 'Level 24!',
-  subtitle: '3 new spells · 2 new skills'
+  subtitle: '3 new spells · 2 new skills',
 }
 
 test('a level-up request is a first-class kind, carried verbatim', () => {
@@ -106,19 +111,27 @@ test('a level-up carries NO item — a level is not a reward you can hold', () =
 })
 
 test('the leveling anchor is a small positive integer, or it is dropped', () => {
-  assert.deepEqual(validateToastRequest({ ...ding, focus: { view: 'leveling', level: 24 } })?.focus, {
-    view: 'leveling',
-    level: 24
-  })
+  assert.deepEqual(
+    validateToastRequest({ ...ding, focus: { view: 'leveling', level: 24 } })?.focus,
+    {
+      view: 'leveling',
+      level: 24,
+    },
+  )
   // No level ⇒ the tab itself, which is a legitimate destination.
-  assert.deepEqual(validateToastRequest({ ...ding, focus: { view: 'leveling' } })?.focus, { view: 'leveling' })
+  assert.deepEqual(validateToastRequest({ ...ding, focus: { view: 'leveling' } })?.focus, {
+    view: 'leveling',
+  })
   for (const level of [0, -3, 9999, '24', null]) {
     const focus = validateToastRequest({ ...ding, focus: { view: 'leveling', level } })?.focus
     assert.deepEqual(focus, { view: 'leveling' }, `level ${String(level)} must not survive`)
   }
   // A fractional level FLOORS rather than being dropped — the same coercion `durationMs` gets
   // from the same helper. There is no level 24.5, and 24 is the honest reading of one.
-  assert.equal(validateToastRequest({ ...ding, focus: { view: 'leveling', level: 24.5 } })?.focus?.level, 24)
+  assert.equal(
+    validateToastRequest({ ...ding, focus: { view: 'leveling', level: 24.5 } })?.focus?.level,
+    24,
+  )
 })
 
 // ---- the card's call to action (JOS-334) ---------------------------------------------
@@ -149,16 +162,26 @@ test('…and printing NOTHING for a destination it cannot name, rather than inve
 
 test('the per-quest anchor rides the posky focus as capped text', () => {
   assert.deepEqual(
-    validateToastRequest({ ...boss, focus: { view: 'posky', quest: 'Paladin::Test of Sacrifice' } })?.focus,
-    { view: 'posky', quest: 'Paladin::Test of Sacrifice' }
+    validateToastRequest({ ...boss, focus: { view: 'posky', quest: 'Paladin::Test of Sacrifice' } })
+      ?.focus,
+    { view: 'posky', quest: 'Paladin::Test of Sacrifice' },
   )
-  const long = validateToastRequest({ ...boss, focus: { view: 'posky', quest: 'q'.repeat(5000) } })?.focus
+  const long = validateToastRequest({
+    ...boss,
+    focus: { view: 'posky', quest: 'q'.repeat(5000) },
+  })?.focus
   assert.equal(long?.quest?.length, TOAST_MAX_TEXT)
-  assert.equal(validateToastRequest({ ...boss, focus: { view: 'posky', quest: 42 } })?.focus?.quest, undefined)
+  assert.equal(
+    validateToastRequest({ ...boss, focus: { view: 'posky', quest: 42 } })?.focus?.quest,
+    undefined,
+  )
 })
 
 test('duration is clamped into a sane window (and a bad one falls back to the config’s)', () => {
-  assert.equal(validateToastRequest({ ...boss, durationMs: 9_000_000 })?.durationMs, TOAST_MAX_DURATION_MS)
+  assert.equal(
+    validateToastRequest({ ...boss, durationMs: 9_000_000 })?.durationMs,
+    TOAST_MAX_DURATION_MS,
+  )
   assert.equal(validateToastRequest({ ...boss, durationMs: 1 })?.durationMs, 1000)
   assert.equal(validateToastRequest({ ...boss, durationMs: -5 })?.durationMs, undefined)
   assert.equal(validateToastRequest({ ...boss, durationMs: 'long' })?.durationMs, undefined)
@@ -170,7 +193,7 @@ test('a Sky request carries the reward by NAME — main resolves the card', () =
     kind: 'skyQuestComplete',
     title: 'Quest complete: Test of Sacrifice',
     itemName: 'Shining Metallic Robes',
-    focus: { view: 'posky' }
+    focus: { view: 'posky' },
   })
   assert.equal(out?.itemName, 'Shining Metallic Robes')
 })
@@ -197,7 +220,7 @@ function knowledge(over: Partial<ItemKnowledge> = {}): ItemKnowledge {
     statsBlock: RING,
     stats: parseStatsBlock(RING),
     iconId: 1234,
-    ...over
+    ...over,
   }
 }
 
@@ -210,7 +233,7 @@ test('the reward card is pre-formatted: flags+slot, then the numbers, capped', (
   assert.match(card.lines[0], /Slot: FINGER/)
   assert.ok(
     card.lines.some((l) => l.includes('AGI') && l.includes('HP')),
-    `the attribute line is missing: ${JSON.stringify(card.lines)}`
+    `the attribute line is missing: ${JSON.stringify(card.lines)}`,
   )
 })
 
@@ -228,7 +251,7 @@ test('an item we know nothing about still draws — as its NAME, with no invente
     quest: false,
     questUses: [],
     cached: false,
-    notFound: true
+    notFound: true,
   })
   assert.equal(card.name, 'Some Unknown Thing')
   assert.deepEqual(card.lines, [])
@@ -257,7 +280,7 @@ test('a stored config is normalized: the duration is clamped, retired keys are d
   const stored = normalizeToastConfig({
     sound: { packId: 'alan-rickman', soundId: 'boss' },
     volume: 0.4,
-    durationMs: 7000
+    durationMs: 7000,
   })
   assert.deepEqual(stored, { durationMs: 7000, introduced: false })
 })

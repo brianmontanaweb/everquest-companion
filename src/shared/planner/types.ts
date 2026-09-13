@@ -74,7 +74,7 @@ export const EQUIP_SLOTS: readonly EquipSlot[] = [
   'PRIMARY',
   'SECONDARY',
   'RANGE',
-  'AMMO'
+  'AMMO',
 ]
 
 // ---- how many of each you actually WEAR (JOS-67) ---------------------------------------
@@ -216,14 +216,14 @@ export const PLAN_SLOTS: readonly PlanSlotId[] = [
   'RANGE',
   'AMMO',
   'ANY1',
-  'ANY2'
+  'ANY2',
 ]
 
 /** `EAR2` → `EAR`. The table, not a suffix strip: three facts beat a regex over a key space. */
 const EQUIP_OF_CELL: Record<SecondCell, PairedSlot> = {
   EAR2: 'EAR',
   WRIST2: 'WRIST',
-  FINGER2: 'FINGER'
+  FINGER2: 'FINGER',
 }
 
 /**

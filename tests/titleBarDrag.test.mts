@@ -50,7 +50,7 @@ function el(parent: FakeEl | null = null, noDrag = false): FakeEl {
       assert.equal(selector, NO_DRAG, 'the predicate asked for a selector this fake does not model')
       for (let n: FakeEl | null = node; n; n = n.parent) if (n.noDrag) return n
       return null
-    }
+    },
   }
   return node
 }

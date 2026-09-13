@@ -28,16 +28,11 @@ import {
   FormControlLabel,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'
 import ContentPasteIcon from '@mui/icons-material/ContentPaste'
-import type {
-  SharePreview,
-  ShareApplyResult,
-  AlertMergeItem,
-  ScalarChange
-} from '@shared/profiles'
+import type { SharePreview, ShareApplyResult, AlertMergeItem, ScalarChange } from '@shared/profiles'
 import { describeTrigger } from '@shared/profiles'
 import { formatDateTime } from '../../lib/formatDate'
 import { readUiPrefs, writeUiPrefs } from '../../lib/uiPrefs'
@@ -55,7 +50,7 @@ export interface ShareImportDialogProps {
 const ACTION_CHIP: Record<string, { label: string; color: 'success' | 'info' | 'default' }> = {
   add: { label: 'add', color: 'success' },
   rekey: { label: 'add (new id)', color: 'info' },
-  skip: { label: 'already have', color: 'default' }
+  skip: { label: 'already have', color: 'default' },
 }
 
 /**
@@ -66,7 +61,7 @@ const ACTION_CHIP: Record<string, { label: string; color: 'success' | 'info' | '
 function AlertPreviewRow({
   item,
   checked,
-  onToggle
+  onToggle,
 }: {
   item: AlertMergeItem
   checked: boolean
@@ -84,7 +79,7 @@ function AlertPreviewRow({
         py: 0.4,
         borderRadius: 1,
         opacity: disabled ? 0.55 : 1,
-        '&:hover': { bgcolor: 'action.hover' }
+        '&:hover': { bgcolor: 'action.hover' },
       }}
     >
       <Checkbox
@@ -107,7 +102,12 @@ function AlertPreviewRow({
           />
           {item.missingPackId && !disabled && (
             <Tooltip title="This alert's sound pack isn't installed here">
-              <Chip size="small" color="warning" variant="outlined" label={`needs ${item.missingPackId}`} />
+              <Chip
+                size="small"
+                color="warning"
+                variant="outlined"
+                label={`needs ${item.missingPackId}`}
+              />
             </Tooltip>
           )}
         </Stack>
@@ -131,7 +131,7 @@ function AlertPreviewRow({
 function AlertsSection({
   alerts,
   selected,
-  onToggle
+  onToggle,
 }: {
   alerts: AlertMergeItem[]
   selected: Set<string>
@@ -164,7 +164,7 @@ function AlertsSection({
 function ScalarsSection({
   scalars,
   selected,
-  onToggle
+  onToggle,
 }: {
   scalars: ScalarChange[]
   selected: Set<string>
@@ -195,7 +195,13 @@ function ScalarsSection({
                 <Typography variant="body2">
                   {s.label}
                   {s.merge === 'union' && (
-                    <Chip size="small" variant="outlined" color="success" label="adds only" sx={{ ml: 0.75 }} />
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      color="success"
+                      label="adds only"
+                      sx={{ ml: 0.75 }}
+                    />
                   )}
                 </Typography>
                 <Typography
@@ -315,7 +321,7 @@ function useShareImport(props: ShareImportDialogProps): {
         setBusy(false)
       }
     },
-    [adopt]
+    [adopt],
   )
 
   const openFile = useCallback(async () => {
@@ -334,7 +340,7 @@ function useShareImport(props: ShareImportDialogProps): {
     try {
       const res = await window.eq.applyShare(preview.text, readUiPrefs(), {
         alertIds: [...alertSel],
-        scalarIds: [...scalarSel]
+        scalarIds: [...scalarSel],
       })
       // Main can't touch localStorage; it hands back the merged values for us to write.
       if (res.ok) writeUiPrefs(res.ui)
@@ -357,7 +363,7 @@ function useShareImport(props: ShareImportDialogProps): {
     openFile,
     apply,
     toggleAlert: (id) => setAlertSel((s) => toggled(s, id)),
-    toggleScalar: (id) => setScalarSel((s) => toggled(s, id))
+    toggleScalar: (id) => setScalarSel((s) => toggled(s, id)),
   }
 }
 
@@ -375,7 +381,7 @@ export default function ShareImportDialog(props: ShareImportDialogProps): JSX.El
     openFile,
     apply,
     toggleAlert,
-    toggleScalar
+    toggleScalar,
   } = useShareImport(props)
 
   return (
@@ -397,7 +403,9 @@ export default function ShareImportDialog(props: ShareImportDialogProps): JSX.El
             onChange={(e) => setText(e.target.value)}
             onBlur={() => void runPreview(text)}
             slotProps={{
-              htmlInput: { style: { fontFamily: 'monospace', fontSize: 12, wordBreak: 'break-all' } }
+              htmlInput: {
+                style: { fontFamily: 'monospace', fontSize: 12, wordBreak: 'break-all' },
+              },
             }}
           />
           <Stack direction="row" spacing={1} alignItems="center">
@@ -433,7 +441,11 @@ export default function ShareImportDialog(props: ShareImportDialogProps): JSX.El
             <>
               <MissingPacksNotice packs={preview.missingPacks} />
               <AlertsSection alerts={preview.alerts} selected={alertSel} onToggle={toggleAlert} />
-              <ScalarsSection scalars={preview.scalars} selected={scalarSel} onToggle={toggleScalar} />
+              <ScalarsSection
+                scalars={preview.scalars}
+                selected={scalarSel}
+                onToggle={toggleScalar}
+              />
             </>
           )}
         </Stack>

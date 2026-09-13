@@ -71,7 +71,7 @@ export function audioChoiceOf(def: AudioDef): AudioChoice {
     packId: def.sound.packId,
     soundId: def.sound.soundId,
     mode: def.speech?.mode ?? 'alertName',
-    phrase: def.speech?.phrase ?? ''
+    phrase: def.speech?.phrase ?? '',
   }
 }
 
@@ -126,7 +126,7 @@ export function displayedChoice(choice: AudioChoice, pack: SoundPack | undefined
   return {
     ...choice,
     packId: pack?.id ?? '',
-    soundId: pack?.sounds[choice.soundId] ? choice.soundId : soundIds[0] ?? ''
+    soundId: pack?.sounds[choice.soundId] ? choice.soundId : (soundIds[0] ?? ''),
   }
 }
 
@@ -158,7 +158,7 @@ export function writeBase(choice: AudioChoice, pack: SoundPack | undefined): Aud
 export function soundNotice(
   choice: AudioChoice,
   packs: readonly SoundPack[],
-  fallback: SoundFallback
+  fallback: SoundFallback,
 ): string | null {
   // A spoken-only alert plays no pack sound at all, so its pack being gone is not a fact about
   // anything the user can hear.
@@ -166,7 +166,7 @@ export function soundNotice(
   const resolved = resolveSoundRef(
     { packId: choice.packId, soundId: choice.soundId },
     packs,
-    fallback
+    fallback,
   )
   if (resolved.status === 'exact') return null
   if (resolved.status === 'missing') {
@@ -191,12 +191,12 @@ export function soundNotice(
 export function withOutput(
   choice: AudioChoice,
   value: string,
-  packs: readonly SoundPack[]
+  packs: readonly SoundPack[],
 ): AudioChoice {
   if (value === OUTPUT_SPEECH) return { ...choice, audio: 'speech' }
   const pack = packs.find((p) => p.id === value)
   if (!pack) return { ...choice, audio: 'sound', packId: value }
-  const soundId = pack.sounds[choice.soundId] ? choice.soundId : Object.keys(pack.sounds)[0] ?? ''
+  const soundId = pack.sounds[choice.soundId] ? choice.soundId : (Object.keys(pack.sounds)[0] ?? '')
   return { ...choice, audio: 'sound', packId: value, soundId }
 }
 
@@ -226,5 +226,7 @@ export function withSpeechMode(choice: AudioChoice, mode: SpeechMode): AudioChoi
  */
 export function withPhrase(choice: AudioChoice, phrase: string): AudioChoice {
   const text = phrase.trim().slice(0, MAX_SPEECH_CHARS)
-  return text ? { ...choice, mode: 'custom', phrase: text } : { ...choice, mode: 'alertName', phrase: '' }
+  return text
+    ? { ...choice, mode: 'custom', phrase: text }
+    : { ...choice, mode: 'alertName', phrase: '' }
 }

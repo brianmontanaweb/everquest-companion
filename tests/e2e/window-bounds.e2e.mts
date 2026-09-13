@@ -88,7 +88,10 @@ function mainPlacement(app: ElectronApplication): Promise<Placement> {
     const onScreen = screen.getAllDisplays().some((d) => {
       const a = d.workArea
       return (
-        b.x >= a.x && b.y >= a.y && b.x + b.width <= a.x + a.width && b.y + b.height <= a.y + a.height
+        b.x >= a.x &&
+        b.y >= a.y &&
+        b.x + b.width <= a.x + a.width &&
+        b.y + b.height <= a.y + a.height
       )
     })
     return { bounds: b, onScreen }
@@ -142,12 +145,16 @@ async function main(): Promise<void> {
     check(
       `a fresh install opens at today's default size, exactly — ${String(DEFAULT_SIZE.width)}x${String(DEFAULT_SIZE.height)}`,
       fresh.bounds?.width === DEFAULT_SIZE.width && fresh.bounds.height === DEFAULT_SIZE.height,
-      key(fresh.bounds)
+      key(fresh.bounds),
     )
     await placeMainWindow(first.app, CHOSEN)
-    const moved = await settle(() => mainPlacement(first.app), (p) => same(p.bounds, CHOSEN), {
-      timeoutMs: 10_000
-    })
+    const moved = await settle(
+      () => mainPlacement(first.app),
+      (p) => same(p.bounds, CHOSEN),
+      {
+        timeoutMs: 10_000,
+      },
+    )
     check('the window can be put somewhere else', same(moved.bounds, CHOSEN), key(moved.bounds))
     // The user's own exit: closing the window is what flushes the debounced save (and `app.quit()`
     // — the path Playwright's own close takes — is covered by the `before-quit` flush beside it).
@@ -157,15 +164,11 @@ async function main(): Promise<void> {
   }
 
   const written = storedBounds(userData)
-  check(
-    'closing the window writes down where it was left',
-    same(written, CHOSEN),
-    key(written)
-  )
+  check('closing the window writes down where it was left', same(written, CHOSEN), key(written))
   check(
     '…and an ordinary window is remembered without a maximized flag',
     written?.maximized === undefined,
-    String(written?.maximized)
+    String(written?.maximized),
   )
 
   console.log('launch 2: same userData — does the window come back where it was…')
@@ -176,7 +179,7 @@ async function main(): Promise<void> {
     check(
       'a relaunch opens at the remembered size AND position — nothing in this spec has moved it',
       same(arrived.bounds, CHOSEN),
-      key(arrived.bounds)
+      key(arrived.bounds),
     )
     await closeWindows(second.app)
   } finally {
@@ -185,7 +188,7 @@ async function main(): Promise<void> {
   check(
     'a launch that never touched the window leaves the remembered rectangle alone',
     same(storedBounds(userData), CHOSEN),
-    key(storedBounds(userData))
+    key(storedBounds(userData)),
   )
 
   // ── the lost monitor ───────────────────────────────────────────────────────────────────────
@@ -198,12 +201,12 @@ async function main(): Promise<void> {
     check(
       'a window remembered on a monitor that no longer exists comes up ON a display that does',
       rescued.onScreen,
-      key(rescued.bounds)
+      key(rescued.bounds),
     )
     check(
       '…at the size the user chose — only the position had to be overruled',
       rescued.bounds?.width === LOST_MONITOR.width && rescued.bounds.height === LOST_MONITOR.height,
-      key(rescued.bounds)
+      key(rescued.bounds),
     )
     await closeWindows(third.app)
   } finally {
@@ -213,12 +216,14 @@ async function main(): Promise<void> {
   check(
     'the clamp is what is SHOWN, never what is STORED — plugging the monitor back in restores it',
     same(kept, LOST_MONITOR),
-    key(kept)
+    key(kept),
   )
 
   await removeUserData(userData)
   await log.dispose()
-  note('three real launches over one userData dir — the persistence claims are restarts, not reloads')
+  note(
+    'three real launches over one userData dir — the persistence claims are restarts, not reloads',
+  )
   reportRun()
 }
 

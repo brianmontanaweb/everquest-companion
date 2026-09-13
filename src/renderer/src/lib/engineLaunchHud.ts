@@ -23,7 +23,12 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { EngineLaunchSay, FoldReadout, FoldRing } from '../../../shared/engineLaunch'
-import { ENGINE_LAUNCH_STARTING, NEW_FOLD_RING, foldReadout, pushFold } from '../../../shared/engineLaunch'
+import {
+  ENGINE_LAUNCH_STARTING,
+  NEW_FOLD_RING,
+  foldReadout,
+  pushFold,
+} from '../../../shared/engineLaunch'
 
 /** What the banner draws from: main's answer, and the estimate derived from a run of them. */
 export interface EngineLaunchView {

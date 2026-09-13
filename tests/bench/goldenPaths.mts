@@ -79,8 +79,10 @@ export function characterOf(slice: SliceRef): { name: string; server: string; lo
  * never baked in, because a machine that has never seen the owner's slices has to be able to run
  * what it can.
  */
-export const eventsPath = (name: string, dir = GOLDENS_DIR): string => join(dir, `${name}.events.ndjson`)
-export const snapshotsPath = (name: string, dir = GOLDENS_DIR): string => join(dir, `${name}.snapshots.json`)
+export const eventsPath = (name: string, dir = GOLDENS_DIR): string =>
+  join(dir, `${name}.events.ndjson`)
+export const snapshotsPath = (name: string, dir = GOLDENS_DIR): string =>
+  join(dir, `${name}.snapshots.json`)
 
 /**
  * THE ONE NORMALIZATION BOTH SIDES OF A COMPARISON APPLY.

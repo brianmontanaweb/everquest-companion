@@ -117,9 +117,22 @@
  * Run: `npm run test:e2e -- sky-inventory-autoload`.
  */
 import type { Page } from 'playwright-core'
-import { buildIfStale, check, countOf, dumpArtifacts, failures, reportRun, settle } from './appHarness.mjs'
+import {
+  buildIfStale,
+  check,
+  countOf,
+  dumpArtifacts,
+  failures,
+  reportRun,
+  settle,
+} from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
-import { launchOnFixture, stageFixture, writeInventoryDump, type FixtureLog } from './logFixture.mjs'
+import {
+  launchOnFixture,
+  stageFixture,
+  writeInventoryDump,
+  type FixtureLog,
+} from './logFixture.mjs'
 // JOS-431's two acts live next door because this file is AT the repo max-lines budget and the rule
 // is to SPLIT, never ratchet. The selectors and the `slot` reader they share come back with them,
 // so there is still exactly one spelling of each.
@@ -131,7 +144,7 @@ import {
   slot,
   stepRefreshRereads,
   stepReplacedNotOverwritten,
-  type Slot
+  type Slot,
 } from './inventoryRewriteSteps.mjs'
 
 const NAV_SKY = '[data-testid="nav-posky"]'
@@ -199,17 +212,17 @@ function layout(page: Page, lineSel: string = FRESH): Promise<Layout> {
         counts: counts ? Math.round(counts.getBoundingClientRect().top) : null,
         select: select ? Math.round(select.getBoundingClientRect().bottom) : null,
         line: line ? Math.round(line.getBoundingClientRect().top) : null,
-        lineBottom: line ? Math.round(line.getBoundingClientRect().bottom) : null
+        lineBottom: line ? Math.round(line.getBoundingClientRect().bottom) : null,
       }
     },
-    { counts: COUNTS, select: COUNT_SOURCE, line: lineSel }
+    { counts: COUNTS, select: COUNT_SOURCE, line: lineSel },
   )
 }
 
 function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
   return page.waitForSelector(sel, { timeout: ms }).then(
     () => true,
-    () => false
+    () => false,
   )
 }
 
@@ -217,8 +230,12 @@ function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
 async function openSky(page: Page): Promise<boolean> {
   if (!check('the app lands on the nav', await appears(page, NAV_OVERVIEW, 60_000))) return false
   await page.click(NAV_SKY, { timeout: 30_000 })
-  if (!check('the Sky tab opens on its filter bar', await appears(page, SEARCH, 60_000))) return false
-  return check('…with the counts line under it to measure against', await appears(page, COUNTS, 30_000))
+  if (!check('the Sky tab opens on its filter bar', await appears(page, SEARCH, 60_000)))
+    return false
+  return check(
+    '…with the counts line under it to measure against',
+    await appears(page, COUNTS, 30_000),
+  )
 }
 
 /**
@@ -234,7 +251,7 @@ async function setCountSource(page: Page, value: string): Promise<boolean> {
   const stored = await settle(
     () => page.evaluate((k) => localStorage.getItem(k), COUNT_SOURCE_KEY),
     (v) => v === value,
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
   return check(`the count source is set to ${value}`, stored === value, `stored ${String(stored)}`)
 }
@@ -262,16 +279,22 @@ async function stepDefaultCountsTheDump(page: Page): Promise<void> {
   check('nothing has ever chosen a count source on this install', stored === null, String(stored))
   const source = await page.evaluate(
     (s) => (document.querySelector(s) as HTMLElement | null)?.innerText.trim() ?? '',
-    COUNT_SOURCE_VALUE
+    COUNT_SOURCE_VALUE,
   )
   check(
     'a fresh install counts the inventory export by default',
     source === 'Both (higher of the two)',
-    source
+    source,
   )
-  check('…so the freshness line is up without anyone touching the dropdown', (await countOf(page, FRESH)) === 1)
+  check(
+    '…so the freshness line is up without anyone touching the dropdown',
+    (await countOf(page, FRESH)) === 1,
+  )
   // CONSTRAINT 4, as one number. The control is not disabled, not hidden: it does not exist.
-  check('…and the Reload inventory button is gone from the tab', (await countOf(page, RELOAD)) === 0)
+  check(
+    '…and the Reload inventory button is gone from the tab',
+    (await countOf(page, RELOAD)) === 0,
+  )
 }
 
 /**
@@ -284,11 +307,15 @@ async function stepDefaultCountsTheDump(page: Page): Promise<void> {
  */
 async function stepLogSaysNothingWithNoDump(page: Page): Promise<Layout> {
   if (!(await setCountSource(page, 'log'))) return layout(page)
-  const gone = await settle(() => countOf(page, FRESH), (n) => n === 0, { timeoutMs: 10_000 })
+  const gone = await settle(
+    () => countOf(page, FRESH),
+    (n) => n === 0,
+    { timeoutMs: 10_000 },
+  )
   check('picking the log source takes the freshness line away', gone === 0, `lines=${String(gone)}`)
   check(
     '…and with no dump on the machine it says nothing at all — there is nothing to ignore',
-    (await countOf(page, IGNORED)) === 0
+    (await countOf(page, IGNORED)) === 0,
   )
   return layout(page)
 }
@@ -303,22 +330,23 @@ async function stepLogSaysNothingWithNoDump(page: Page): Promise<Layout> {
  */
 async function stepInventorySourceRevealsIt(page: Page, before: Layout): Promise<void> {
   if (!(await setCountSource(page, 'inventory'))) return
-  if (!check('picking an inventory source brings the line up', await appears(page, FRESH, 20_000))) return
+  if (!check('picking an inventory source brings the line up', await appears(page, FRESH, 20_000)))
+    return
   const after = await layout(page)
   check(
     '…and the row below the bar has not moved a pixel (the line is out of flow)',
     after.counts !== null && after.counts === before.counts,
-    `counts top was ${String(before.counts)}, now ${String(after.counts)}`
+    `counts top was ${String(before.counts)}, now ${String(after.counts)}`,
   )
   check(
     '…the bar itself is the same height it was',
     after.select !== null && after.select === before.select,
-    `dropdown bottom was ${String(before.select)}, now ${String(after.select)}`
+    `dropdown bottom was ${String(before.select)}, now ${String(after.select)}`,
   )
   check(
     '…and the line hangs BELOW the dropdown it belongs to',
     after.line !== null && after.select !== null && after.line >= after.select,
-    `line top=${String(after.line)} dropdown bottom=${String(after.select)}`
+    `line top=${String(after.line)} dropdown bottom=${String(after.select)}`,
   )
   // …and it FITS in the gap the bar already leaves. Out of flow is not a licence to land on top of
   // the row below: the whole reason the quiet chrome compresses its line-height is that the caption
@@ -326,7 +354,7 @@ async function stepInventorySourceRevealsIt(page: Page, before: Layout): Promise
   check(
     '…and it fits in the gap rather than landing on the row below',
     after.lineBottom !== null && after.counts !== null && after.lineBottom <= after.counts,
-    `line bottom=${String(after.lineBottom)} counts top=${String(after.counts)}`
+    `line bottom=${String(after.lineBottom)} counts top=${String(after.counts)}`,
   )
   check('…the Reload button did not come back with it', (await countOf(page, RELOAD)) === 0)
 }
@@ -353,23 +381,34 @@ async function stepItIsUnderstated(page: Page): Promise<void> {
         border: box.borderTopWidth,
         fill: box.backgroundColor,
         commandSize: getComputedStyle(command).fontSize,
-        ageSize: getComputedStyle(age).fontSize
+        ageSize: getComputedStyle(age).fontSize,
       }
     },
-    { line: FRESH, command: COMMAND, age: AGE }
+    { line: FRESH, command: COMMAND, age: AGE },
   )
   if (!check('the quiet line can be measured', style !== null) || !style) return
-  check('the command is no louder than the timestamp beside it', style.commandSize === style.ageSize, `${style.commandSize} vs ${style.ageSize}`)
+  check(
+    'the command is no louder than the timestamp beside it',
+    style.commandSize === style.ageSize,
+    `${style.commandSize} vs ${style.ageSize}`,
+  )
   check('…the line wears no card border', style.border === '0px', style.border)
-  check('…and no fill of its own — it sits on the panel', style.fill === 'rgba(0, 0, 0, 0)', style.fill)
+  check(
+    '…and no fill of its own — it sits on the panel',
+    style.fill === 'rgba(0, 0, 0, 0)',
+    style.fill,
+  )
   // The two affordances, read the same way: sentence-cased words, no louder than the stamps they
   // sit beside. The second one is JOS-431's, and it is held to this constraint rather than exempted
   // from it — the JOS-268 button was a control BESIDE the dropdown, this is one word INSIDE the
   // caption row, and `RELOAD`'s continued absence three steps up is the other half of that claim.
-  for (const [sel, word] of [[HOW, 'How'], [REFRESH, 'Refresh']] as const) {
+  for (const [sel, word] of [
+    [HOW, 'How'],
+    [REFRESH, 'Refresh'],
+  ] as const) {
     const label = await page.evaluate(
       (s) => (document.querySelector(s) as HTMLElement | null)?.innerText.trim() ?? '',
-      sel
+      sel,
     )
     check(`…and the ${word} affordance is there, in a quiet voice`, label === word, label)
   }
@@ -388,20 +427,20 @@ async function stepAskingHowMovesNothing(page: Page, before: Layout): Promise<vo
   const steps = await settle(
     () => countOf(page, STEPS),
     (n) => n === 1,
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
   if (!check('the HOW affordance opens the steps', steps === 1, `panels=${String(steps)}`)) return
   const after = await layout(page)
   check(
     '…over the rows below, not through them (nothing moved)',
     after.counts !== null && after.counts === before.counts,
-    `counts top was ${String(before.counts)}, now ${String(after.counts)}`
+    `counts top was ${String(before.counts)}, now ${String(after.counts)}`,
   )
   await page.click(HOW, { timeout: 15_000 })
   const closed = await settle(
     () => countOf(page, STEPS),
     (n) => n === 0,
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
   check('…and the same affordance closes them again', closed === 0, `panels=${String(closed)}`)
 }
@@ -410,10 +449,22 @@ async function stepAskingHowMovesNothing(page: Page, before: Layout): Promise<vo
 async function stepNeverRun(page: Page): Promise<void> {
   const age = await slot(page, AGE)
   const loaded = await slot(page, LOADED)
-  check('with no dump on the machine, the file slot says the command was never run', age.text === 'not yet run', age.text)
-  check('…and the load slot says so in its own words — a different fact', loaded.text === 'not loaded yet', loaded.text)
+  check(
+    'with no dump on the machine, the file slot says the command was never run',
+    age.text === 'not yet run',
+    age.text,
+  )
+  check(
+    '…and the load slot says so in its own words — a different fact',
+    loaded.text === 'not loaded yet',
+    loaded.text,
+  )
   // Neither can claim an instant it does not have, so neither carries an exact clock.
-  check('…neither slot offers a clock time it does not have', age.title === '' && loaded.title === '', `${age.title} | ${loaded.title}`)
+  check(
+    '…neither slot offers a clock time it does not have',
+    age.title === '' && loaded.title === '',
+    `${age.title} | ${loaded.title}`,
+  )
 }
 
 /**
@@ -429,26 +480,40 @@ async function stepAutoLoads(page: Page, installDir: string): Promise<Slot | nul
   const age = await settle(
     () => slot(page, AGE),
     (s) => s.text !== 'not yet run',
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
-  if (!check('a dump written while the app is up is picked up with NO click', age.text !== 'not yet run', age.text)) {
+  if (
+    !check(
+      'a dump written while the app is up is picked up with NO click',
+      age.text !== 'not yet run',
+      age.text,
+    )
+  ) {
     return null
   }
-  check('…and the file slot dates it from the file itself', age.text === 'updated just now', age.text)
+  check(
+    '…and the file slot dates it from the file itself',
+    age.text === 'updated just now',
+    age.text,
+  )
   check('…with the exact write time one hover away', age.title.length > 0, age.title)
 
   const loaded = await settle(
     () => slot(page, LOADED),
     (s) => s.text !== 'not loaded yet',
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
-  check('…and the load slot stops saying we have never read one', loaded.text === 'loaded just now', loaded.text)
+  check(
+    '…and the load slot stops saying we have never read one',
+    loaded.text === 'loaded just now',
+    loaded.text,
+  )
   check('…carrying the instant WE read it', loaded.title.length > 0, loaded.title)
   // A load that just happened is never behind the file it just read.
   check(
     '…and a fresh load is not flagged stale (same colour as the slot beside it)',
     loaded.color === age.color,
-    `loaded=${loaded.color} age=${age.color}`
+    `loaded=${loaded.color} age=${age.color}`,
   )
   return loaded
 }
@@ -462,13 +527,21 @@ async function stepAutoLoads(page: Page, installDir: string): Promise<Slot | nul
  */
 async function stepItLeavesWithoutMoving(page: Page, before: Layout): Promise<void> {
   if (!(await setCountSource(page, 'log'))) return
-  const gone = await settle(() => countOf(page, FRESH), (n) => n === 0, { timeoutMs: 10_000 })
-  check('going back to the log source takes the line away again', gone === 0, `lines=${String(gone)}`)
+  const gone = await settle(
+    () => countOf(page, FRESH),
+    (n) => n === 0,
+    { timeoutMs: 10_000 },
+  )
+  check(
+    'going back to the log source takes the line away again',
+    gone === 0,
+    `lines=${String(gone)}`,
+  )
   const after = await layout(page)
   check(
     '…and the row below the bar is still where it always was',
     after.counts !== null && after.counts === before.counts,
-    `counts top was ${String(before.counts)}, now ${String(after.counts)}`
+    `counts top was ${String(before.counts)}, now ${String(after.counts)}`,
   )
 }
 
@@ -488,20 +561,30 @@ async function stepItLeavesWithoutMoving(page: Page, before: Layout): Promise<vo
  * down exactly the way JOS-268 refused.
  */
 async function stepLogSaysTheDumpIsIgnored(page: Page, before: Layout): Promise<void> {
-  const up = await settle(() => countOf(page, IGNORED), (n) => n === 1, { timeoutMs: 10_000 })
-  if (!check('with a dump loaded, the log source finally says it is not counting it', up === 1, `lines=${String(up)}`)) {
+  const up = await settle(
+    () => countOf(page, IGNORED),
+    (n) => n === 1,
+    { timeoutMs: 10_000 },
+  )
+  if (
+    !check(
+      'with a dump loaded, the log source finally says it is not counting it',
+      up === 1,
+      `lines=${String(up)}`,
+    )
+  ) {
     return
   }
   const text = await page.evaluate(
     (s) => (document.querySelector(s) as HTMLElement | null)?.innerText.trim() ?? '',
-    IGNORED
+    IGNORED,
   )
   check('…in words that name the way out, not just the problem', text === IGNORED_TEXT, text)
   const after = await layout(page, IGNORED)
   check(
     '…and it moved nothing either (the slot has one geometry, whichever line is in it)',
     after.counts !== null && after.counts === before.counts,
-    `counts top was ${String(before.counts)}, now ${String(after.counts)}`
+    `counts top was ${String(before.counts)}, now ${String(after.counts)}`,
   )
   check(
     '…hanging below the dropdown and fitting above the row under it',
@@ -511,7 +594,7 @@ async function stepLogSaysTheDumpIsIgnored(page: Page, before: Layout): Promise<
       after.counts !== null &&
       after.line >= after.select &&
       after.lineBottom <= after.counts,
-    `select bottom=${String(after.select)} line=${String(after.line)}-${String(after.lineBottom)} counts top=${String(after.counts)}`
+    `select bottom=${String(after.select)} line=${String(after.line)}-${String(after.lineBottom)} counts top=${String(after.counts)}`,
   )
 }
 
@@ -537,10 +620,10 @@ function readyLayout(page: Page, lineSel: string): Promise<ReadyLayout> {
         select: select ? Math.round(select.getBoundingClientRect().bottom) : null,
         line: line ? Math.round(line.getBoundingClientRect().top) : null,
         lineBottom: line ? Math.round(line.getBoundingClientRect().bottom) : null,
-        next: next ? Math.round(next.getBoundingClientRect().top) : null
+        next: next ? Math.round(next.getBoundingClientRect().top) : null,
       }
     },
-    { ready: READY, select: COUNT_SOURCE, line: lineSel }
+    { ready: READY, select: COUNT_SOURCE, line: lineSel },
   )
 }
 
@@ -562,15 +645,32 @@ function readyLayout(page: Page, lineSel: string): Promise<ReadyLayout> {
 async function stepReadyTabCarriesTheSource(page: Page): Promise<void> {
   await page.click(TAB_READY, { timeout: 15_000 })
   if (!check('the Ready tab opens', await appears(page, READY, 20_000))) return
-  check('…carrying the count-source control itself, not only a caption', (await countOf(page, COUNT_SOURCE)) === 1)
+  check(
+    '…carrying the count-source control itself, not only a caption',
+    (await countOf(page, COUNT_SOURCE)) === 1,
+  )
   const source = await page.evaluate(
     (s) => (document.querySelector(s) as HTMLElement | null)?.innerText.trim() ?? '',
-    COUNT_SOURCE_VALUE
+    COUNT_SOURCE_VALUE,
   )
-  check('…showing the pick made on the Quests tab (one stored source, two surfaces)', source === 'Log only (ever looted)', source)
+  check(
+    '…showing the pick made on the Quests tab (one stored source, two surfaces)',
+    source === 'Log only (ever looted)',
+    source,
+  )
 
-  const shown = await settle(() => countOf(page, IGNORED), (n) => n === 1, { timeoutMs: 10_000 })
-  if (check('…and saying, HERE, that the loaded dump is not being counted', shown === 1, `lines=${String(shown)}`)) {
+  const shown = await settle(
+    () => countOf(page, IGNORED),
+    (n) => n === 1,
+    { timeoutMs: 10_000 },
+  )
+  if (
+    check(
+      '…and saying, HERE, that the loaded dump is not being counted',
+      shown === 1,
+      `lines=${String(shown)}`,
+    )
+  ) {
     const box = await readyLayout(page, IGNORED)
     check(
       '…as a caption under the control that fits above the tab body',
@@ -580,14 +680,22 @@ async function stepReadyTabCarriesTheSource(page: Page): Promise<void> {
         box.next !== null &&
         box.line >= box.select &&
         box.lineBottom <= box.next,
-      `select bottom=${String(box.select)} line=${String(box.line)}-${String(box.lineBottom)} next=${String(box.next)}`
+      `select bottom=${String(box.select)} line=${String(box.line)}-${String(box.lineBottom)} next=${String(box.next)}`,
     )
   }
 
   // THE WAY OUT, taken from the tab it was needed on.
   if (!(await setCountSource(page, 'both'))) return
-  const fresh = await settle(() => countOf(page, FRESH), (n) => n === 1, { timeoutMs: 10_000 })
-  check('picking Both from the Ready tab counts the dump without leaving the tab', fresh === 1, `lines=${String(fresh)}`)
+  const fresh = await settle(
+    () => countOf(page, FRESH),
+    (n) => n === 1,
+    { timeoutMs: 10_000 },
+  )
+  check(
+    'picking Both from the Ready tab counts the dump without leaving the tab',
+    fresh === 1,
+    `lines=${String(fresh)}`,
+  )
   check('…and the not-counted sentence goes with it', (await countOf(page, IGNORED)) === 0)
 }
 
@@ -603,18 +711,21 @@ async function stepStartupRead(page: Page, before: Slot): Promise<void> {
   const loaded = await settle(
     () => slot(page, LOADED),
     (s) => s.title.length > 0 && s.title !== before.title,
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
   check(
     'a dump rewritten while the app was closed is read at startup, not left for a click',
     loaded.title !== '' && loaded.title !== before.title,
-    `launch 1 read at ${before.title} · launch 2 read at ${loaded.title}`
+    `launch 1 read at ${before.title} · launch 2 read at ${loaded.title}`,
   )
   const age = await slot(page, AGE)
-  check('…so the app is not showing a copy older than the file (no stale flag)', loaded.color === age.color, `loaded=${loaded.color} age=${age.color}`)
+  check(
+    '…so the app is not showing a copy older than the file (no stale flag)',
+    loaded.color === age.color,
+    `loaded=${loaded.color} age=${age.color}`,
+  )
   check('…and the file is dated from disk, as it always was', age.title.length > 0, age.title)
 }
-
 
 /**
  * ONE LAUNCH, WITH ITS CONSOLE WATCHED AND ITS ARTIFACTS DROPPED — the boilerplate both launches
@@ -626,7 +737,7 @@ async function launch(
   log: FixtureLog,
   userData: string,
   tag: string,
-  run: (page: Page) => Promise<void>
+  run: (page: Page) => Promise<void>,
 ): Promise<void> {
   const app = await launchOnFixture(log, { userData })
   try {
@@ -639,7 +750,11 @@ async function launch(
 
     await run(page)
 
-    check(`no renderer console errors (${tag})`, consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      `no renderer console errors (${tag})`,
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     await dumpArtifacts(page, failures.length ? `${tag}-FAIL` : `${tag}-pass`)
   } finally {
     await app.close()
@@ -690,7 +805,8 @@ async function main(): Promise<void> {
         // same act a returning player performs, and the freshness it then shows is the startup read
         // this act is about.
         if (!(await setCountSource(page, 'inventory'))) return
-        if (!check('the line comes back with the source', await appears(page, FRESH, 20_000))) return
+        if (!check('the line comes back with the source', await appears(page, FRESH, 20_000)))
+          return
         await stepStartupRead(page, before)
         // …and the affordance the second report asked for, pressed for real (JOS-431). It goes
         // last because it needs the app to have been up a while — see the step's own header.

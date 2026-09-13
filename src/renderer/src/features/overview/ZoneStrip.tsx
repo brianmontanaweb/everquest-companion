@@ -31,7 +31,12 @@ export function ZoneStrip(): JSX.Element {
     <Box sx={{ px: 1.25, py: 0.75, flexShrink: 0, borderRadius: 1, bgcolor: 'background.paper' }}>
       <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
         <PlaceIcon sx={{ fontSize: 16, color: 'text.disabled', flexShrink: 0 }} />
-        <Typography variant="body2" noWrap data-testid="overview-zone" sx={{ fontWeight: 600, minWidth: 0 }}>
+        <Typography
+          variant="body2"
+          noWrap
+          data-testid="overview-zone"
+          sx={{ fontWeight: 600, minWidth: 0 }}
+        >
           {/* A zone we have not seen a line for is left UNSAID, never guessed. */}
           {who?.zone ?? '-'}
         </Typography>

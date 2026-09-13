@@ -41,7 +41,7 @@ import type { CountSource, PoskyQuest } from '../src/shared/types'
 
 const REPORT_DUMP = readFileSync(
   join(import.meta.dirname, 'fixtures', 'jos66-sky-keyring-Inventory.txt'),
-  'utf8'
+  'utf8',
 )
 
 const quests = (poskyRaw as { quests: PoskyQuest[] }).quests
@@ -69,11 +69,11 @@ test('both reported items ARE in the committed posky quest-item cells', () => {
   const cells = quests.flatMap((q) => q.items.map((it) => [q.name, it.name] as const))
   assert.deepEqual(
     cells.filter(([, n]) => n === 'Light Woolen Mask'),
-    [['Bard Test of Tone', 'Light Woolen Mask']]
+    [['Bard Test of Tone', 'Light Woolen Mask']],
   )
   assert.deepEqual(
     cells.filter(([, n]) => n === 'Light Woolen Mantle'),
-    [['Bard Test of Voice', 'Light Woolen Mantle']]
+    [['Bard Test of Voice', 'Light Woolen Mantle']],
   )
   // The scrape spells them exactly as the dump does — no case or whitespace difference to
   // chase, which is the other thing the report could have been.
@@ -97,14 +97,14 @@ test("the reporter's six lines parse as KeyRing rows — no Count column, no Loc
       ['Equipment', 'Bracelet of Cessation +4', 12804],
       ['Equipment', 'Bracelet of Quiescence +2', 12806],
       ['Equipment', 'Light Woolen Mantle +1', 20823],
-      ['Equipment', 'Black Silk Cape', 20783]
-    ]
+      ['Equipment', 'Black Silk Cape', 20783],
+    ],
   )
   // Neither reported item is anywhere in the item table — the keyring is the only place they
   // are, which is why the tab could read zero off a file that plainly contains them.
   assert.deepEqual(
     [...walkEntries(dump.items)].map((e) => e.name),
-    ['Brigandine Tunic +1', 'Empty']
+    ['Brigandine Tunic +1', 'Empty'],
   )
 })
 
@@ -112,7 +112,12 @@ test('JOS-66: the Sky view finds both items — the suffixed one and the unsuffi
   // THE SYMPTOM, reproduced: with the keyring dropped (the pre-fix rule), both read zero.
   const dropped = heldCountsFromDump({ ...parseInventoryDump(REPORT_DUMP), keyRing: [] })
   const before = reconcile({
-    log: {}, inv: dropped, lootNames: {}, countSource: 'inventory', turnIns: {}, quests
+    log: {},
+    inv: dropped,
+    lootNames: {},
+    countSource: 'inventory',
+    turnIns: {},
+    quests,
   }).net
   assert.equal(have('Bard Test of Tone', 'Light Woolen Mask', before), 0, 'the report, exactly')
   assert.equal(have('Bard Test of Voice', 'Light Woolen Mantle', before), 0)
@@ -124,7 +129,7 @@ test('JOS-66: the Sky view finds both items — the suffixed one and the unsuffi
     assert.equal(
       have('Bard Test of Voice', 'Light Woolen Mantle', net),
       1,
-      `mantle (+1 folded onto the base counting key), source=${source}`
+      `mantle (+1 folded onto the base counting key), source=${source}`,
     )
     // The third Sky item in his paste comes along for free.
     assert.equal(have('Necromancer Test of Power', 'Black Silk Cape', net), 1)
@@ -140,11 +145,16 @@ test('the keyring never invents a count: one row is one copy, and the item table
     'bracelet of cessation +4': 1,
     'bracelet of quiescence +2': 1,
     'light woolen mantle +1': 1,
-    'black silk cape': 1
+    'black silk cape': 1,
   })
   // Keys stay RAW here (law 2): `+N` folds downstream at the counting boundary, not before.
   const rows = reconcile({
-    log: {}, inv: counts, lootNames: {}, countSource: 'inventory', turnIns: {}, quests
+    log: {},
+    inv: counts,
+    lootNames: {},
+    countSource: 'inventory',
+    turnIns: {},
+    quests,
   }).rows
   const mantle = rows.find((r) => r.key === 'light woolen mantle')
   assert.ok(mantle)

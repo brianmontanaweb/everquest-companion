@@ -19,12 +19,7 @@
 // rendered in a local window; it is never written to a file the app publishes, never put in an
 // issue body, and only ever exists in a build that has the dev flag compiled in.
 
-import type {
-  AppChannelTag,
-  FeedbackType,
-  ReportStatus,
-  Severity
-} from './feedback'
+import type { AppChannelTag, FeedbackType, ReportStatus, Severity } from './feedback'
 import type { FeedbackPerf } from './feedbackPerf'
 
 // ---- filters --------------------------------------------------------------------------
@@ -48,7 +43,7 @@ export const TRIAGE_LIMIT_MAX = 500
 export const TRIAGE_DEFAULT_QUERY: TriageListQuery = {
   channel: 'all',
   since: '30d',
-  limit: 200
+  limit: 200,
 }
 
 // ---- rows -----------------------------------------------------------------------------

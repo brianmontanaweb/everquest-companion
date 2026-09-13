@@ -41,12 +41,12 @@ import {
   funnelStepMark,
   normalizeTelemetryPrefs,
   tzOffsetBucket,
-  type TelemetryEvent
+  type TelemetryEvent,
 } from '../src/shared/telemetry'
 import {
   validateEnvelope,
   validateTelemetryBatch,
-  validateTelemetryEvent
+  validateTelemetryEvent,
 } from '../src/shared/telemetryValidate'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -75,7 +75,7 @@ test('an event carrying extra properties comes back WITHOUT them — the value i
     ms: 5_000,
     characterName: 'Primitive',
     zone: 'The Plane of Sky',
-    raw: "[Sun Aug 03] Primitive tells the group, 'inc'"
+    raw: "[Sun Aug 03] Primitive tells the group, 'inc'",
   }
   const out = valid(smuggled)
   assert.deepEqual(out, { t: 'viewDwell', view: 'combat', ms: 5_000 })
@@ -118,15 +118,15 @@ test('EVERY string-valued field in every event is a member of a closed set', () 
     'checksum',
     'disk',
     'timeout',
-    'other'
+    'other',
   ])
   // Flattened to one loop: every string anywhere in every sample, with the path that found it.
   const strings = SAMPLES.filter((ev) => ev.t !== 'errorReport').flatMap((ev) =>
     Object.entries(ev).flatMap(([key, v]) =>
       (Array.isArray(v) ? (v as unknown[]) : [v])
         .filter((x): x is string => typeof x === 'string')
-        .map((value) => ({ where: `${ev.t}.${key}`, value }))
-    )
+        .map((value) => ({ where: `${ev.t}.${key}`, value })),
+    ),
   )
   assert.ok(strings.length > SAMPLES.length, 'the samples must actually contain strings')
   for (const { where, value } of strings) {
@@ -153,7 +153,7 @@ const SAMPLES: TelemetryEvent[] = [
     autoHide: true,
     voiceEngine: 'kokoro',
     soundPackCount: 2,
-    updateChannel: 'main'
+    updateChannel: 'main',
   },
   { t: 'funnelStep', funnel: 'voice-install', step: 'downloadStarted' },
   {
@@ -162,7 +162,7 @@ const SAMPLES: TelemetryEvent[] = [
     mainErrorLogLines: 7,
     parserStalls: 0,
     presenceRestarts: 1,
-    speechFailures: 0
+    speechFailures: 0,
   },
   { t: 'updateOutcome', step: 'download', ok: false, failureClass: 'network' },
   {
@@ -179,20 +179,20 @@ const SAMPLES: TelemetryEvent[] = [
     view: 'combat',
     sessionAgeBucket: 2,
     mode: 'live',
-    count: 1
+    count: 1,
   },
   // JOS-109. Their round-trip below is the strongest assertion in this list precisely because
   // there is so little of it: `valid({t:'optOut'})` must deep-equal `{t:'optOut'}`, so a future
   // edit that gave either of these a field would fail here before it could reach the wire.
   { t: 'optOut' },
-  { t: 'optIn' }
+  { t: 'optIn' },
 ]
 
 test('every kind in the union has a sample, and every sample round-trips unchanged', () => {
   assert.deepEqual(
     SAMPLES.map((s) => s.t).sort(),
     [...TELEMETRY_EVENT_KINDS].sort(),
-    'a new event kind needs a sample here — that is how it gets its privacy assertion'
+    'a new event kind needs a sample here — that is how it gets its privacy assertion',
   )
   for (const ev of SAMPLES) assert.deepEqual(valid(ev), ev, `${ev.t} must round-trip`)
 })
@@ -223,7 +223,7 @@ test('a funnel step is checked against ITS OWN funnel, never the union of all st
   assert.deepEqual(valid({ t: 'funnelStep', funnel: 'feedback', step: 'sendFinished' }), {
     t: 'funnelStep',
     funnel: 'feedback',
-    step: 'sendFinished'
+    step: 'sendFinished',
   })
   invalid({ t: 'funnelStep', funnel: 'feedback', step: 'sendFinished', outcome: 'sent' }, 'outcome')
 })
@@ -233,7 +233,7 @@ test('overlaysEnabled is a SET of closed kinds — deduped, canonically ordered'
   // overlays open produce a byte-identical field.
   const out = valid({
     ...SAMPLES[7],
-    overlaysEnabled: ['events', 'fight', 'fight']
+    overlaysEnabled: ['events', 'fight', 'fight'],
   }) as Extract<TelemetryEvent, { t: 'setupSnapshot' }>
   assert.deepEqual(out.overlaysEnabled, ['fight', 'events'])
   invalid({ ...SAMPLES[7], overlaysEnabled: ['fight', 'raid'] }, 'overlaysEnabled[]')
@@ -302,7 +302,7 @@ test('the view list is the SAME set the app can render', () => {
   if (gated === null) {
     assert.ok(
       !/import\s*\{[^}]*\bUNRELEASED\b[^}]*\}\s*from\s*'\.\/devFlags'/.test(src),
-      'appViews.ts imports UNRELEASED but its gated-view spread did not parse'
+      'appViews.ts imports UNRELEASED but its gated-view spread did not parse',
     )
   } else {
     assert.ok(gated.length > 0, 'the UNRELEASED spread is there and empty — delete it or fill it')
@@ -339,7 +339,7 @@ test('the view list is the SAME set the app can render', () => {
   for (const view of drills) {
     assert.ok(
       !(TELEMETRY_VIEWS as readonly string[]).includes(view),
-      `'${view}' is a link-only drill but is already in TELEMETRY_VIEWS`
+      `'${view}' is a link-only drill but is already in TELEMETRY_VIEWS`,
     )
   }
 
@@ -349,7 +349,7 @@ test('the view list is the SAME set the app can render', () => {
   for (const view of unreleased) {
     assert.ok(
       !(TELEMETRY_VIEWS as readonly string[]).includes(view),
-      `'${view}' is gated behind UNRELEASED but is already in TELEMETRY_VIEWS`
+      `'${view}' is gated behind UNRELEASED but is already in TELEMETRY_VIEWS`,
     )
   }
 })
@@ -371,7 +371,10 @@ test('a bucket FIELD holds an index, not a value — the raw number can never ar
   // The point of a bucket is that the revealing number stays on the machine. A field that
   // accepted 104857600 "because it is a valid integer" would defeat the whole mechanism.
   valid({ t: 'sessionStart', coldStartMsBucket: COLD_START_MS_EDGES.length })
-  invalid({ t: 'sessionStart', coldStartMsBucket: COLD_START_MS_EDGES.length + 1 }, 'coldStartMsBucket')
+  invalid(
+    { t: 'sessionStart', coldStartMsBucket: COLD_START_MS_EDGES.length + 1 },
+    'coldStartMsBucket',
+  )
   invalid({ t: 'sessionStart', coldStartMsBucket: 4_200 }, 'coldStartMsBucket')
   invalid({ ...SAMPLES[7], logSizeBucket: 104_857_600 }, 'logSizeBucket')
   invalid({ ...SAMPLES[7], charCountBucket: -1 }, 'charCountBucket')
@@ -390,18 +393,27 @@ test('bucketOf lands every value in the range the doc prints for it', () => {
     [25, 4],
     [49, 4],
     [50, 5],
-    [10_000, 5]
+    [10_000, 5],
   ]
   for (const [value, want] of cases) {
     assert.equal(bucketOf(value, ALERT_COUNT_EDGES), want, `${String(value)} alerts`)
   }
   // Every bucket index is in range, and the ranges tile the number line with no gap or overlap.
-  for (const edges of [COLD_START_MS_EDGES, CHAR_COUNT_EDGES, LOG_SIZE_BYTES_EDGES, ALERT_COUNT_EDGES]) {
-    assert.ok([...edges].every((e, i) => i === 0 || e > (edges[i - 1] as number)), 'edges ascend')
+  for (const edges of [
+    COLD_START_MS_EDGES,
+    CHAR_COUNT_EDGES,
+    LOG_SIZE_BYTES_EDGES,
+    ALERT_COUNT_EDGES,
+  ]) {
+    assert.ok(
+      [...edges].every((e, i) => i === 0 || e > (edges[i - 1] as number)),
+      'edges ascend',
+    )
     for (let i = 0; i <= edges.length; i++) {
       const { lo, hi } = bucketRange(edges, i)
       assert.equal(bucketOf(lo, edges), i, `the low end of bucket ${String(i)} is in it`)
-      if (hi !== null) assert.equal(bucketOf(hi, edges), i + 1, 'the top edge belongs to the NEXT bucket')
+      if (hi !== null)
+        assert.equal(bucketOf(hi, edges), i + 1, 'the top edge belongs to the NEXT bucket')
     }
   }
   assert.equal(bucketOf(Number.NaN, ALERT_COUNT_EDGES), 0, 'a broken number is not a big number')
@@ -418,7 +430,13 @@ test('tzOffsetBucket rounds to whole hours and clamps to the real range of offse
 // ---- the envelope and the batch ------------------------------------------------------------
 
 test('the envelope accepts only a UUID id, a semver version, and closed channel/platform', () => {
-  const base = { analyticsId: ID, appVersion: '0.2.0', channel: 'prod', platform: 'win32', tzOffsetBucket: -5 }
+  const base = {
+    analyticsId: ID,
+    appVersion: '0.2.0',
+    channel: 'prod',
+    platform: 'win32',
+    tzOffsetBucket: -5,
+  }
   assert.deepEqual(validateEnvelope(base), { ok: true, value: base })
   assert.deepEqual(validateEnvelope({ ...base, appVersion: '0.2.0-main.41' }).ok, true)
 
@@ -438,7 +456,13 @@ test('the envelope accepts only a UUID id, a semver version, and closed channel/
 })
 
 test('a batch is version-pinned, size-capped, and rejects on its first bad record', () => {
-  const env = { analyticsId: ID, appVersion: '1.0.0', channel: 'dev', platform: 'linux', tzOffsetBucket: 0 }
+  const env = {
+    analyticsId: ID,
+    appVersion: '1.0.0',
+    channel: 'dev',
+    platform: 'linux',
+    tzOffsetBucket: 0,
+  }
   const rec = (ev: TelemetryEvent): unknown => ({ ts: 1_754_000_000_000, ev })
 
   const good = validateTelemetryBatch({ v: TELEMETRY_API_VERSION, env, events: SAMPLES.map(rec) })
@@ -459,8 +483,12 @@ test('a batch is version-pinned, size-capped, and rejects on its first bad recor
   bad({ v: TELEMETRY_API_VERSION, env, events: [{ ts: 1, ev: { t: 'nope' } }] }, 't')
   bad({ v: TELEMETRY_API_VERSION, env, events: [{ ev: SAMPLES[0] }] }, 'ts')
   bad(
-    { v: TELEMETRY_API_VERSION, env, events: Array.from({ length: MAX_BATCH_EVENTS + 1 }, () => rec(SAMPLES[0] as TelemetryEvent)) },
-    'events'
+    {
+      v: TELEMETRY_API_VERSION,
+      env,
+      events: Array.from({ length: MAX_BATCH_EVENTS + 1 }, () => rec(SAMPLES[0] as TelemetryEvent)),
+    },
+    'events',
   )
   assert.equal(MAX_BATCH_EVENTS, TELEMETRY_BUFFER_CAP, 'a full ring must fit in one batch')
 })
@@ -477,7 +505,7 @@ test('the prefs default to OPT-OUT with the notice unshown and no id yet', () =>
     enabled: true,
     noticeShown: false,
     analyticsId: null,
-    funnelsDone: []
+    funnelsDone: [],
   })
   assert.deepEqual(normalizeTelemetryPrefs(undefined), DEFAULT_TELEMETRY_PREFS)
   for (const junk of [null, 42, 'yes', [], { nested: true }]) {
@@ -488,15 +516,22 @@ test('the prefs default to OPT-OUT with the notice unshown and no id yet', () =>
 test('a stored analyticsId that is not a UUID is DROPPED, never repaired into one', () => {
   assert.equal(normalizeTelemetryPrefs({ analyticsId: ID }).analyticsId, ID)
   for (const junk of ['Primitive', '', 0, {}, `${ID} `]) {
-    assert.equal(normalizeTelemetryPrefs({ analyticsId: junk }).analyticsId, null, JSON.stringify(junk))
+    assert.equal(
+      normalizeTelemetryPrefs({ analyticsId: junk }).analyticsId,
+      null,
+      JSON.stringify(junk),
+    )
   }
   // A user's own choices survive field by field; a broken neighbour does not take them with it.
-  assert.deepEqual(normalizeTelemetryPrefs({ enabled: false, noticeShown: true, analyticsId: 'x' }), {
-    enabled: false,
-    noticeShown: true,
-    analyticsId: null,
-    funnelsDone: []
-  })
+  assert.deepEqual(
+    normalizeTelemetryPrefs({ enabled: false, noticeShown: true, analyticsId: 'x' }),
+    {
+      enabled: false,
+      noticeShown: true,
+      analyticsId: null,
+      funnelsDone: [],
+    },
+  )
 })
 
 test('the once-ever funnel marks are ALLOWLISTED from the schema, deduped and ordered', () => {
@@ -515,8 +550,8 @@ test('the once-ever funnel marks are ALLOWLISTED from the schema, deduped and or
       'first-run:installed',
       'first-run:downloadStarted',
       'made-up:step',
-      42
-    ]
+      42,
+    ],
   }).funnelsDone
   // Deduped, junk-free, and in the schema's own order — so two installs that reached the same
   // steps hold byte-identical lists whatever order they got there in.

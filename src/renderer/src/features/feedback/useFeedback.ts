@@ -21,7 +21,7 @@ import {
   MAX_DESCRIPTION,
   validateDraft,
   type FeedbackDraft,
-  type FeedbackType
+  type FeedbackType,
 } from '@shared/feedback'
 import type { TelemetryEvent } from '@shared/telemetry'
 import { CRASH_REPORT_KEY } from '../../lib/ErrorBoundary'
@@ -75,7 +75,7 @@ const EMPTY: DraftFields = { type: 'feature', description: '' }
 export function toDraft(f: DraftFields): FeedbackDraft {
   return {
     type: f.type,
-    description: f.description.trim()
+    description: f.description.trim(),
   }
 }
 
@@ -264,12 +264,12 @@ export function achievementsProblem(reason: FeedbackInventoryPreview['unavailabl
 export function sentMessage(
   logUploaded: boolean,
   inventoryUploaded: boolean,
-  achievementsUploaded: boolean
+  achievementsUploaded: boolean,
 ): string {
   const parts = [
     ...(logUploaded ? ['its log slice'] : []),
     ...(inventoryUploaded ? ['your inventory export'] : []),
-    ...(achievementsUploaded ? ['your achievements export'] : [])
+    ...(achievementsUploaded ? ['your achievements export'] : []),
   ]
   if (parts.length === 0) return 'Thanks - your report is in.'
   if (parts.length === 1) return `Thanks - your report and ${parts[0]} are in.`
@@ -283,7 +283,7 @@ export function toOutcome(res: SubmitResult): FeedbackOutcome {
     return {
       kind: 'sent',
       reportId: res.reportId,
-      message: sentMessage(res.logUploaded, res.inventoryUploaded, res.achievementsUploaded)
+      message: sentMessage(res.logUploaded, res.inventoryUploaded, res.achievementsUploaded),
     }
   }
   if (res.queued) {
@@ -313,7 +313,7 @@ export function sendFinishedStep(outcome: FeedbackOutcome): TelemetryEvent | nul
     t: 'funnelStep',
     funnel: 'feedback',
     step: 'sendFinished',
-    outcome: outcome.kind === 'sent' ? 'ok' : 'queued'
+    outcome: outcome.kind === 'sent' ? 'ok' : 'queued',
   }
 }
 
@@ -348,8 +348,8 @@ function readCrashPrefill(): FeedbackPrefill | null {
     type: 'bug',
     description: `The app hit a render error and I reloaded it.\n\n${message}\n\n${stack}`.slice(
       0,
-      MAX_DESCRIPTION
-    )
+      MAX_DESCRIPTION,
+    ),
   }
 }
 
@@ -430,7 +430,7 @@ export function useFeedback(open: boolean, prefill?: FeedbackPrefill): FeedbackS
     setFields({
       ...EMPTY,
       type,
-      description: prefill?.description ?? ''
+      description: prefill?.description ?? '',
     })
     // Bug reports attach the log BY DEFAULT — it is the whole point of a bug report.
     setAttachLog(type === 'bug')
@@ -452,7 +452,7 @@ export function useFeedback(open: boolean, prefill?: FeedbackPrefill): FeedbackS
     <K extends keyof DraftFields>(key: K, value: DraftFields[K]): void => {
       setFields((f) => ({ ...f, [key]: value }))
     },
-    []
+    [],
   )
 
   // A type switch re-arms the attachment default rather than remembering the last answer:
@@ -480,7 +480,7 @@ export function useFeedback(open: boolean, prefill?: FeedbackPrefill): FeedbackS
         attachLog: attach,
         windowMinutes,
         attachInventory: attachInv,
-        attachAchievements: attachAch
+        attachAchievements: attachAch,
       })
       .then((res) => {
         const ending = toOutcome(res)
@@ -513,6 +513,6 @@ export function useFeedback(open: boolean, prefill?: FeedbackPrefill): FeedbackS
     problem,
     phase,
     outcome,
-    send
+    send,
   }
 }

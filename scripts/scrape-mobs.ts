@@ -116,10 +116,13 @@ async function categoryMembers(title: string): Promise<Member[]> {
       action: 'query',
       list: 'categorymembers',
       cmtitle: title,
-      cmlimit: '500'
+      cmlimit: '500',
     }
     if (cont) params.cmcontinue = cont
-    const j = await api<{ query?: { categorymembers?: Member[] }; continue?: { cmcontinue?: string } }>(params)
+    const j = await api<{
+      query?: { categorymembers?: Member[] }
+      continue?: { cmcontinue?: string }
+    }>(params)
     out.push(...(j.query?.categorymembers ?? []))
     cont = j.continue?.cmcontinue
     if (!cont) break
@@ -137,10 +140,12 @@ async function embeddedIn(template: string): Promise<Member[]> {
       list: 'embeddedin',
       eititle: template,
       einamespace: '0',
-      eilimit: '500'
+      eilimit: '500',
     }
     if (cont) params.eicontinue = cont
-    const j = await api<{ query?: { embeddedin?: Member[] }; continue?: { eicontinue?: string } }>(params)
+    const j = await api<{ query?: { embeddedin?: Member[] }; continue?: { eicontinue?: string } }>(
+      params,
+    )
     out.push(...(j.query?.embeddedin ?? []))
     cont = j.continue?.eicontinue
     if (!cont) break
@@ -204,7 +209,9 @@ function writePrefetched(pages: readonly PrefetchedPage[]): void {
 }
 
 async function prefetchWikitexts(pages: Member[]): Promise<void> {
-  const missing = pages.filter((p) => refresh || !existsSync(cachePath(`page-${p.pageid}.wikitext`)))
+  const missing = pages.filter(
+    (p) => refresh || !existsSync(cachePath(`page-${p.pageid}.wikitext`)),
+  )
   if (missing.length === 0) return
   const batches = Math.ceil(missing.length / BATCH)
   console.log(`Prefetching ${missing.length} pages in ${batches} batches of ${BATCH}…`)
@@ -215,7 +222,7 @@ async function prefetchWikitexts(pages: Member[]): Promise<void> {
       prop: 'revisions',
       rvprop: 'content',
       rvslots: 'main',
-      pageids: slice.map((p) => p.pageid).join('|')
+      pageids: slice.map((p) => p.pageid).join('|'),
     })
     writePrefetched(j.query?.pages ?? [])
     if ((i + 1) % 25 === 0 || i + 1 === batches) console.log(`  batch ${i + 1}/${batches}`)
@@ -233,7 +240,7 @@ async function fetchWikitext(pageid: number): Promise<string | null> {
     action: 'parse',
     pageid: String(pageid),
     prop: 'wikitext',
-    redirects: '1'
+    redirects: '1',
   })
   const wt = j.parse?.wikitext
   if (j.error || wt == null) return null
@@ -250,7 +257,7 @@ const MOB_CATEGORIES = [
   'Category:NPCs',
   'Category:Named Mobs',
   'Category:Merchants',
-  'Category:Raid Encounters'
+  'Category:Raid Encounters',
 ]
 const MOB_TEMPLATES = ['Template:Namedmobpage', 'Template:MerchantPage']
 
@@ -329,11 +336,11 @@ function printSummary(s: RunSummary): void {
   const mins = ((Date.now() - s.startedAt) / 60000).toFixed(1)
   console.log(`\nWrote ${s.mobs.length} mobs → ${OUT_PATH}  (${mins} min)`)
   console.log(
-    `  pages enumerated: ${s.pageCount}   parsed as mobs: ${s.mobs.length}   not a mob page: ${s.notMob}   skipped: ${s.skipped.length}`
+    `  pages enumerated: ${s.pageCount}   parsed as mobs: ${s.mobs.length}   not a mob page: ${s.notMob}   skipped: ${s.skipped.length}`,
   )
   console.log(
     `  drop edges: ${dropEdges} across ${withDrops.length} mobs (${distinctItems.size} distinct items)  ` +
-      `levels: ${s.mobs.filter((m) => m.level).length}  zones: ${s.mobs.filter((m) => m.zones?.length).length}`
+      `levels: ${s.mobs.filter((m) => m.level).length}  zones: ${s.mobs.filter((m) => m.zones?.length).length}`,
   )
   if (s.skipped.length) {
     console.log(`\nSkipped ${s.skipped.length} pages:`)
@@ -366,7 +373,7 @@ async function main(): Promise<void> {
     scrapedAt: new Date().toISOString(),
     source:
       'eqlwiki.com — Category:NPCs/Named Mobs/Merchants/Raid Encounters ∪ embeddedin Template:Namedmobpage/MerchantPage, filtered to pages opening a mob template',
-    mobs
+    mobs,
   }
   mkdirSync(dirname(OUT_PATH), { recursive: true })
   writeFileSync(OUT_PATH, JSON.stringify(out, null, 2))

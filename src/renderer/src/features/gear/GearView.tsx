@@ -142,9 +142,15 @@ import {
   controlsVisible,
   inertFilters,
   toggleColumn,
-  toggleControl
+  toggleControl,
 } from './gearPrefs'
-import { PICKABLE_COLUMNS, columnLabel, columnsFor, sortWithin, type GearColumn } from './gearColumns'
+import {
+  PICKABLE_COLUMNS,
+  columnLabel,
+  columnsFor,
+  sortWithin,
+  type GearColumn,
+} from './gearColumns'
 import {
   useEraHidden,
   useGearClasses,
@@ -152,7 +158,7 @@ import {
   useGearIndex,
   useGearOwnership,
   useOwnedOrLooted,
-  useUpgradeState
+  useUpgradeState,
 } from './gearData'
 import { uncountedNote, type GearOwnershipMap } from './gearOwnership'
 import {
@@ -163,7 +169,7 @@ import {
   type GearFilterDeps,
   type GearFilters,
   type GearSort,
-  type GearSortKey
+  type GearSortKey,
 } from './gearFilter'
 
 /** The plus-state as one primitive, so `useDeferredValue` has something it can actually compare. */
@@ -213,7 +219,7 @@ function useTableRows(
   rows: readonly GearRow[],
   state: ItemUpgradeState,
   filters: GearFilters,
-  opts: { sort: GearSort; deps: GearFilterDeps; chosen: GearSortKey[] | null }
+  opts: { sort: GearSort; deps: GearFilterDeps; chosen: GearSortKey[] | null },
 ): TableState {
   const { sort, deps, chosen } = opts
   const scaled = useMemo(() => scaleAll(rows, state), [rows, state])
@@ -231,11 +237,12 @@ function useTableRows(
   // Each costs one extra pass, and only at the moment there is nothing else to draw.
   const hidden = useMemo(() => {
     if (sorted.length > 0) return { hiddenByEra: 0, hiddenByOwned: 0, hiddenByClasses: 0 }
-    const count = (over: Partial<GearFilters>): number => filterGearRows(scaled, { ...filters, ...over }, deps).length
+    const count = (over: Partial<GearFilters>): number =>
+      filterGearRows(scaled, { ...filters, ...over }, deps).length
     return {
       hiddenByEra: filters.eraOnly ? count({ eraOnly: false }) : 0,
       hiddenByOwned: filters.ownedOnly ? count({ ownedOnly: false }) : 0,
-      hiddenByClasses: filters.classes.length > 0 ? count({ classes: [] }) : 0
+      hiddenByClasses: filters.classes.length > 0 ? count({ classes: [] }) : 0,
     }
   }, [sorted.length, scaled, filters, deps])
   return { rows: sorted, columns, sort: inForce, ...hidden }
@@ -252,7 +259,8 @@ function useTableRows(
  * that would come back, and the control that is holding it.
  */
 function emptyText(ready: boolean, refused: boolean, table: TableState): string {
-  if (refused) return 'This build cannot read the gear index it was served - it states a newer version.'
+  if (refused)
+    return 'This build cannot read the gear index it was served - it states a newer version.'
   if (!ready) return 'Reading the item database…'
   if (table.hiddenByOwned > 0) {
     return `Nothing here is owned or looted - ${String(table.hiddenByOwned)} items match the other filters. Ownership is read from your newest /outputfile inventory dump plus this character's loot history.`
@@ -286,7 +294,13 @@ function ownedHint(map: GearOwnershipMap | null, uncounted: string | null): stri
  * nothing is chosen shows exactly the columns on screen ticked, and the first click promotes that
  * list rather than replacing it.
  */
-function ShapePickers({ prefs, columns }: { prefs: GearPrefs; columns: readonly GearColumn[] }): JSX.Element {
+function ShapePickers({
+  prefs,
+  columns,
+}: {
+  prefs: GearPrefs
+  columns: readonly GearColumn[]
+}): JSX.Element {
   const seed = useMemo(() => columns.map((c) => c.key), [columns])
   return (
     <>
@@ -331,7 +345,7 @@ function CountLine({
   scrapedAt,
   ownership,
   prefs,
-  columns
+  columns,
 }: {
   counts: { shown: number; total: number }
   scrapedAt: string | null
@@ -402,7 +416,7 @@ function useGearWishes(): {
       if (wasWished) remove(row.key)
       else add(wishFromGear(row, Date.now()))
     },
-    [add, remove]
+    [add, remove],
   )
   return { wished, onToggleWish: wishlist.ready ? onToggleWish : undefined }
 }
@@ -452,10 +466,10 @@ export default function GearView({ onOpenLoot }: GearViewProps = {}): JSX.Elemen
         weaponTypes: next.weaponTypes,
         effect: next.effect,
         eraOnly: next.eraOnly,
-        ownedOnly: next.ownedOnly
+        ownedOnly: next.ownedOnly,
       })
     },
-    [setForm]
+    [setForm],
   )
 
   // Both deferrals, and nothing else deferred: the two controls whose every movement re-derives
@@ -466,7 +480,7 @@ export default function GearView({ onOpenLoot }: GearViewProps = {}): JSX.Elemen
   // NO SLIDER, NO SIMULATION: the corpus reads at base when the control that moves it is hidden.
   const state = useMemo(
     () => (visible.has('upgrade') ? parseStateKey(deferredState) : ITEM_UPGRADE_BASE),
-    [deferredState, visible]
+    [deferredState, visible],
   )
 
   // The class trio lives in its own hook (it FOLLOWS detection until pinned), so it is merged in
@@ -474,7 +488,7 @@ export default function GearView({ onOpenLoot }: GearViewProps = {}): JSX.Elemen
   // `inertFilters` is LAST, so a hidden control's field cannot survive into the filter memo.
   const filters = useMemo(
     () => inertFilters({ ...own, text: deferredText, classes: classes.classes }, visible),
-    [own, deferredText, classes.classes, visible]
+    [own, deferredText, classes.classes, visible],
   )
   // The two injected verdicts the pure filter cannot answer for itself, merged into one stable
   // object so `filterGearRows`' memo re-runs when either MOVES and never merely because it rendered.
@@ -491,11 +505,14 @@ export default function GearView({ onOpenLoot }: GearViewProps = {}): JSX.Elemen
   const win = useWindowedRows({ count: table.rows.length, rowHeight: ROW_HEIGHT, scrollRef })
   const hint = useMemo(
     () => ownedHint(ownership.map, uncountedNote(ownership.payload.uncounted)),
-    [ownership.map, ownership.payload.uncounted]
+    [ownership.map, ownership.payload.uncounted],
   )
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }} data-testid="gear-view">
+    <Box
+      sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}
+      data-testid="gear-view"
+    >
       <GearFilterBar
         filters={filters}
         setFilters={setOwn}
@@ -529,7 +546,7 @@ export default function GearView({ onOpenLoot }: GearViewProps = {}): JSX.Elemen
           overflow: 'auto',
           border: 1,
           borderColor: 'divider',
-          borderRadius: 1
+          borderRadius: 1,
         }}
       >
         <GearTable

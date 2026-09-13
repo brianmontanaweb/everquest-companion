@@ -50,9 +50,15 @@ import {
   writeFileDurable,
   writeFileDurableAsync,
   type AsyncDurableIo,
-  type DurableIo
+  type DurableIo,
 } from '../telemetry/durableWrite'
-import { balancedObjectSequence, parseIf, quarantinePathFor, salvageJsonObject, stripTornPadding } from '../tornJson'
+import {
+  balancedObjectSequence,
+  parseIf,
+  quarantinePathFor,
+  salvageJsonObject,
+  stripTornPadding,
+} from '../tornJson'
 import { BASELINE_SOURCE_KEY, type ResistRow } from '../../shared/resistTypes'
 
 /** One character's bucket as it sits in the file. */
@@ -138,11 +144,17 @@ function salvageLedger(raw: string, version: number): { sources: LedgerSource[];
   if (whole !== undefined) {
     const sources = usableSources(whole.value, version)
     const residue = whole.residue > 0 ? `, ${whole.residue} stale trailing bytes discarded` : ''
-    return { sources, detail: `salvaged ${sources.length} character buckets out of the torn file${residue}` }
+    return {
+      sources,
+      detail: `salvaged ${sources.length} character buckets out of the torn file${residue}`,
+    }
   }
   const partial = salvageTruncated(stripTornPadding(raw), version)
   if (partial.length > 0) {
-    return { sources: partial, detail: `salvaged the first ${partial.length} whole character buckets of a truncated file` }
+    return {
+      sources: partial,
+      detail: `salvaged the first ${partial.length} whole character buckets of a truncated file`,
+    }
   }
   return { sources: [], detail: 'nothing whole could be recovered, starting empty' }
 }
@@ -168,7 +180,10 @@ export function loadUserLedgerFile(path: string, version: number): LedgerLoad {
     raw = readFileSync(path, 'utf8')
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return { sources: [] }
-    return { sources: [], notice: `resist-ledger.json could not be read (${errText(err)}); starting empty` }
+    return {
+      sources: [],
+      notice: `resist-ledger.json could not be read (${errText(err)}); starting empty`,
+    }
   }
 
   let parsed: unknown
@@ -179,8 +194,14 @@ export function loadUserLedgerFile(path: string, version: number): LedgerLoad {
     // the next snapshot; a file that does not is evidence, and evidence is kept.
     const salvage = salvageLedger(raw, version)
     const kept = preserve(path)
-    const where = kept.at === undefined ? `it could not be moved aside (${kept.why ?? 'unknown'})` : `moved to ${kept.at}`
-    const load: LedgerLoad = { sources: salvage.sources, notice: `resist-ledger.json is not valid JSON, ${salvage.detail} - ${where}` }
+    const where =
+      kept.at === undefined
+        ? `it could not be moved aside (${kept.why ?? 'unknown'})`
+        : `moved to ${kept.at}`
+    const load: LedgerLoad = {
+      sources: salvage.sources,
+      notice: `resist-ledger.json is not valid JSON, ${salvage.detail} - ${where}`,
+    }
     if (kept.at !== undefined) load.quarantinedPath = kept.at
     return load
   }
@@ -251,7 +272,10 @@ export interface LedgerWriter {
  * writer out of the first one's scratch file. A skipped tick costs one snapshot of changed counts
  * and nothing durable: the in-memory ledger is unaffected and the next tick writes.
  */
-export function createLedgerWriter(io: DurableIo = nodeIo, ioAsync: AsyncDurableIo = nodeIoAsync): LedgerWriter {
+export function createLedgerWriter(
+  io: DurableIo = nodeIo,
+  ioAsync: AsyncDurableIo = nodeIoAsync,
+): LedgerWriter {
   const gate = createWriteGate()
   let lastWritten: string | null = null
   let reported = false
@@ -315,6 +339,6 @@ export function createLedgerWriter(io: DurableIo = nodeIo, ioAsync: AsyncDurable
       lastWritten = null
       reported = false
       writing = false
-    }
+    },
   }
 }

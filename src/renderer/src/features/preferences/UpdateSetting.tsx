@@ -26,7 +26,7 @@ const STATE_CHIP: Record<UpdateStatus['state'], ChipLook> = {
   available: { label: 'update available', color: 'info' },
   downloading: { label: 'downloading', color: 'info' },
   ready: { label: 'update ready', color: 'success' },
-  error: { label: 'check failed', color: 'warning' }
+  error: { label: 'check failed', color: 'warning' },
 }
 
 /**
@@ -60,7 +60,7 @@ export function useUpdateStatus(): UpdateStatus {
  */
 export function VersionSetting({
   version,
-  onWhatsNew
+  onWhatsNew,
 }: {
   version: string
   onWhatsNew: () => void
@@ -70,7 +70,13 @@ export function VersionSetting({
       <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
         {version ? `v${version}` : '-'}
       </Typography>
-      <Link component="button" type="button" variant="caption" data-testid="pref-version-whats-new" onClick={onWhatsNew}>
+      <Link
+        component="button"
+        type="button"
+        variant="caption"
+        data-testid="pref-version-whats-new"
+        onClick={onWhatsNew}
+      >
         What&rsquo;s new
       </Link>
     </Stack>
@@ -94,7 +100,7 @@ function chipLook(status: UpdateStatus, ui: UpdateChipState): ChipLook {
 function UpdateHeadline({
   status,
   chip,
-  busy
+  busy,
 }: {
   status: UpdateStatus
   chip: ChipLook
@@ -118,7 +124,7 @@ function UpdateHeadline({
 /** Background download progress — nothing at all unless a download is actually running. */
 function UpdateProgress({
   status,
-  downloading
+  downloading,
 }: {
   status: UpdateStatus
   downloading: boolean
@@ -165,7 +171,7 @@ function UpdateActions({
   ready,
   busy,
   cooldown,
-  onCheck
+  onCheck,
 }: {
   status: UpdateStatus
   ui: UpdateChipState
@@ -203,7 +209,7 @@ function UpdateActions({
 
 export function UpdateSetting({
   status,
-  version
+  version,
 }: {
   status: UpdateStatus
   version: string

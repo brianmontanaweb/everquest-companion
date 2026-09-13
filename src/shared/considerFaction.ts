@@ -51,7 +51,7 @@ export const CONSIDER_FACTION_RUNGS: readonly { phrase: string; faction: Conside
   { phrase: 'looks your way apprehensively', faction: 'apprehensive' },
   { phrase: 'glowers at you dubiously', faction: 'dubious' },
   { phrase: 'glares at you threateningly', faction: 'threatening' },
-  { phrase: 'scowls at you, ready to attack', faction: 'scowls' }
+  { phrase: 'scowls at you, ready to attack', faction: 'scowls' },
 ]
 
 /** Short, glanceable rung label for a chip/badge. */
@@ -64,7 +64,7 @@ export const CONSIDER_FACTION_LABEL: Record<ConsiderFaction, string> = {
   apprehensive: 'apprehensive',
   dubious: 'dubious',
   threatening: 'threatening',
-  scowls: 'KOS'
+  scowls: 'KOS',
 }
 
 /**
@@ -82,7 +82,7 @@ export const CONSIDER_FACTION_COLOR: Record<ConsiderFaction, string> = {
   apprehensive: '#c9c65a',
   dubious: '#d6a94a',
   threatening: '#e08b45',
-  scowls: '#e05c5c'
+  scowls: '#e05c5c',
 }
 
 /**
@@ -102,7 +102,7 @@ const CONSIDER_DIFFICULTY_SHORT: Record<string, string> = {
   'looks kind of risky, but you might win.': 'might win',
   'looks kind of risky... you might win.': 'might win',
   'you could probably win this fight.': 'likely win',
-  'looks like a reasonably safe opponent.': 'safe'
+  'looks like a reasonably safe opponent.': 'safe',
 }
 
 /**

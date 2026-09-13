@@ -17,7 +17,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { mountHook } from './hookHost.mjs'
-import { createModuleStore, scheduleFrame, type ModuleBridge } from '../src/renderer/src/lib/moduleStore'
+import {
+  createModuleStore,
+  scheduleFrame,
+  type ModuleBridge,
+} from '../src/renderer/src/lib/moduleStore'
 import type { ModuleChanged, ModuleSnapshot } from '../src/shared/types'
 import { MODULE_WORLD_CHANGED } from '../src/shared/types'
 
@@ -81,7 +85,7 @@ function spyBridge(): Spy {
       return (): void => {
         charCbs = charCbs.filter((x) => x !== cb)
       }
-    }
+    },
   } as unknown as ModuleBridge
 
   return {
@@ -105,7 +109,7 @@ function spyBridge(): Spy {
       armed = []
       for (const run of due) run()
     },
-    frames: () => armed.length
+    frames: () => armed.length,
   }
 }
 
@@ -126,7 +130,7 @@ test('THREE READERS OF ONE MODULE COST ONE FETCH, AND ARE HANDED THE SAME OBJECT
   const offs = seen.map((_, i) =>
     store.subscribe('character', () => {
       seen[i] += 1
-    })
+    }),
   )
 
   assert.deepEqual(spy.fetches, ['character'], 'three readers opened three round trips')
@@ -138,7 +142,7 @@ test('THREE READERS OF ONE MODULE COST ONE FETCH, AND ARE HANDED THE SAME OBJECT
   assert.equal(
     store.getSnapshot('character'),
     store.getSnapshot('character'),
-    'two reads of one module returned different objects — reference equality is the guarantee'
+    'two reads of one module returned different objects — reference equality is the guarantee',
   )
   for (const off of offs) off()
 })
@@ -233,7 +237,7 @@ test('SUBSCRIBE BEFORE HYDRATE: the listener is installed before the first fetch
       const reply = spy.bridge.getModuleSnapshot(moduleId)
       spy.push(moduleId, 9)
       return reply
-    }
+    },
   } as unknown as ModuleBridge
   const store = createModuleStore({ bridge: talkative, schedule: spy.schedule })
 
@@ -338,7 +342,11 @@ test('UNSUBSCRIBE CLEANUP: the last reader takes the bridge listeners with it', 
 
   // …and nothing cached survives that gap, because nothing could have recorded it going stale.
   const c = store.subscribe('loot', () => undefined)
-  assert.equal(store.getSnapshot('loot'), null, 'a cache was served across a closed invalidation channel')
+  assert.equal(
+    store.getSnapshot('loot'),
+    null,
+    'a cache was served across a closed invalidation channel',
+  )
   assert.equal(spy.fetchesOf('loot'), 2, 'the fresh reader did not hydrate')
   c()
 })
@@ -475,5 +483,9 @@ test('THE REAL HOOK: two instances share one fetch, one object, and one bridge l
   a.unmount()
   assert.equal(hookSpy.listeners(), 2, 'one unmount took the whole window-s listeners off')
   b.unmount()
-  assert.equal(hookSpy.listeners(), 0, 'unmounting the last hook left the bridge listeners installed')
+  assert.equal(
+    hookSpy.listeners(),
+    0,
+    'unmounting the last hook left the bridge listeners installed',
+  )
 })

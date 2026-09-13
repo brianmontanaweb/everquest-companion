@@ -85,7 +85,7 @@ const round1 = (n: number): number => Math.round(n * 10) / 10
 export function foldDataWeight(
   rows: readonly DataWeightRow[],
   rendererOnly: readonly string[],
-  heapAfterDataMb?: number
+  heapAfterDataMb?: number,
 ): DataWeightLedger {
   const sorted = [...rows].sort((a, b) => b.bytes - a.bytes)
   return {
@@ -94,7 +94,7 @@ export function foldDataWeight(
     totalHeapMb: round1(sorted.reduce((n, r) => n + r.heapMb, 0)),
     totalParseMs: round1(sorted.reduce((n, r) => n + r.parseMs, 0)),
     rendererOnly: [...rendererOnly].sort(),
-    ...(heapAfterDataMb === undefined ? {} : { heapAfterDataMb: round1(heapAfterDataMb) })
+    ...(heapAfterDataMb === undefined ? {} : { heapAfterDataMb: round1(heapAfterDataMb) }),
   }
 }
 
@@ -102,7 +102,9 @@ export function foldDataWeight(
  *  decimals — the exact byte count is in the row beside it. */
 export function formatBytes(bytes: number): string {
   const b = Math.max(0, bytes)
-  return b >= 1_048_576 ? `${String(round1(b / 1_048_576))} MB` : `${String(Math.round(b / 1024))} kB`
+  return b >= 1_048_576
+    ? `${String(round1(b / 1_048_576))} MB`
+    : `${String(Math.round(b / 1024))} kB`
 }
 
 /**
@@ -121,7 +123,7 @@ export function formatDataWeight(ledger: DataWeightLedger): string {
   const parts = [
     `data ${formatBytes(ledger.totalBytes)} in ${String(ledger.rows.length)} files`,
     top + (rest > 0 ? ` · +${String(rest)} more` : ''),
-    `ref parse ${String(ledger.totalParseMs)}ms / retained ${String(ledger.totalHeapMb)} MB`
+    `ref parse ${String(ledger.totalParseMs)}ms / retained ${String(ledger.totalHeapMb)} MB`,
   ]
   if (ledger.heapAfterDataMb !== undefined) {
     parts.push(`heap after dataLoaded ${String(ledger.heapAfterDataMb)} MB (this launch)`)

@@ -40,7 +40,7 @@ const DAYBREAK_SUBPATHS = [
   'Program Files (x86)\\Daybreak Game Company\\Installed Games\\EverQuest Legends',
   // Legacy Sony Online Entertainment layout (pre-Daybreak rename), just in case.
   'Users\\Public\\Sony Online Entertainment\\Installed Games\\EverQuest Legends',
-  'Program Files (x86)\\Sony Online Entertainment\\Installed Games\\EverQuest Legends'
+  'Program Files (x86)\\Sony Online Entertainment\\Installed Games\\EverQuest Legends',
 ]
 
 // ---------------------------------------------------------------------------
@@ -250,7 +250,7 @@ export function realOverrideProbes(): OverrideProbes {
   return {
     isDir: (p) => stat(p)?.isDirectory() ?? false,
     isFile: (p) => stat(p)?.isFile() ?? false,
-    hasCharacterLogs: dirHasCharacterLogs
+    hasCharacterLogs: dirHasCharacterLogs,
   }
 }
 
@@ -260,7 +260,10 @@ export function realOverrideProbes(): OverrideProbes {
  * reach us from three different sources — the store, a folder picker, readdir).
  */
 function normPath(p: string): string {
-  return p.replace(/[\\/]+/g, '\\').replace(/\\+$/, '').toLowerCase()
+  return p
+    .replace(/[\\/]+/g, '\\')
+    .replace(/\\+$/, '')
+    .toLowerCase()
 }
 
 /** Is `logPath` a file sitting DIRECTLY in `logsDir` (not merely existing somewhere)? */
@@ -284,7 +287,7 @@ export function logIsUnderLogsDir(logPath: string, logsDir: string): boolean {
 export function tailSurvivesRootChange(
   logPath: string | null | undefined,
   logsDir: string,
-  exists: (p: string) => boolean
+  exists: (p: string) => boolean,
 ): boolean {
   if (!logPath) return false
   return logIsUnderLogsDir(logPath, logsDir) && exists(logPath)
@@ -539,7 +542,7 @@ const INSTALL_PATH_KEYS: readonly { hive: 'HKLM' | 'HKCU'; path: string }[] = [
   { hive: 'HKLM', path: 'SOFTWARE\\WOW6432Node\\Daybreak Game Company' },
   { hive: 'HKCU', path: 'SOFTWARE\\Daybreak Game Company' },
   { hive: 'HKLM', path: 'SOFTWARE\\WOW6432Node\\Sony Online Entertainment' },
-  { hive: 'HKCU', path: 'SOFTWARE\\Sony Online Entertainment' }
+  { hive: 'HKCU', path: 'SOFTWARE\\Sony Online Entertainment' },
 ]
 
 /**
@@ -576,7 +579,11 @@ export function eqInstallPathValue(value: unknown): string | null {
 }
 
 /** Open a key defensively — a missing key, a denied ACL and a malformed path are all `null`. */
-function openKey(reg: typeof NativeReg, parent: NativeReg.HKEY, path: string): NativeReg.HKEY | null {
+function openKey(
+  reg: typeof NativeReg,
+  parent: NativeReg.HKEY,
+  path: string,
+): NativeReg.HKEY | null {
   try {
     // KEY_READ plus the 64-bit view: every path above spells out WOW6432Node when it wants the
     // 32-bit one, which is what `reg.exe` from this (x64) process resolved to as well.
@@ -590,7 +597,7 @@ function openKey(reg: typeof NativeReg, parent: NativeReg.HKEY, path: string): N
 function enumValueNames(
   reg: typeof NativeReg,
   parent: NativeReg.HKEY,
-  path: string
+  path: string,
 ): string[] | null {
   const key = openKey(reg, parent, path)
   if (!key) return null
@@ -604,7 +611,11 @@ function enumValueNames(
 }
 
 /** Enumerate a key's subkey names, or null if the key cannot be opened/read. */
-function enumKeyNames(reg: typeof NativeReg, parent: NativeReg.HKEY, path: string): string[] | null {
+function enumKeyNames(
+  reg: typeof NativeReg,
+  parent: NativeReg.HKEY,
+  path: string,
+): string[] | null {
   const key = openKey(reg, parent, path)
   if (!key) return null
   try {

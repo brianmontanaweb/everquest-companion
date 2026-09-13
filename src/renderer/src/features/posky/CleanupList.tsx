@@ -45,7 +45,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  Typography
+  Typography,
 } from '@mui/material'
 import type { CountSource } from '@shared/types'
 import { InventorySource } from './QuestFilterBar'
@@ -65,7 +65,7 @@ import {
   turnInHeading,
   type CleanupRow,
   type CleanupTurnIn,
-  type DumpLocations
+  type DumpLocations,
 } from './cleanup'
 
 /** Nothing anywhere claims to know where an item is. Module-scope so it is identity-stable. */
@@ -84,7 +84,7 @@ export interface CleanupListProps {
 function TurnInLine({
   t,
   tier,
-  onOpenLoot
+  onOpenLoot,
 }: {
   t: CleanupTurnIn
   tier: number | undefined
@@ -129,7 +129,7 @@ function TurnInLine({
 function CleanupItemRow({
   row,
   tierOf,
-  onOpenLoot
+  onOpenLoot,
 }: {
   row: CleanupRow
   tierOf: (reward: string | undefined) => number | undefined
@@ -175,7 +175,7 @@ export default function CleanupList({
   countSource,
   onCountSource,
   inventoryLoadedAt,
-  onOpenLoot
+  onOpenLoot,
 }: CleanupListProps): JSX.Element {
   const { sheet } = useCharacterSheet()
   const tiers = useItemTiers()
@@ -184,7 +184,7 @@ export default function CleanupList({
   const rows = useMemo(() => cleanupRowsFor(quests, locations), [quests, locations])
   const tierOf = useCallback(
     (reward: string | undefined) => (reward ? observedTierOf(tiers, reward) : undefined),
-    [tiers]
+    [tiers],
   )
 
   return (
@@ -230,12 +230,7 @@ export default function CleanupList({
               </TableHead>
               <TableBody>
                 {rows.map((row) => (
-                  <CleanupItemRow
-                    key={row.key}
-                    row={row}
-                    tierOf={tierOf}
-                    onOpenLoot={onOpenLoot}
-                  />
+                  <CleanupItemRow key={row.key} row={row} tierOf={tierOf} onOpenLoot={onOpenLoot} />
                 ))}
               </TableBody>
             </Table>

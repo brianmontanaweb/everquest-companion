@@ -18,14 +18,14 @@ export const SPELLS: SpellResistTable = {
     resistAdj: 0,
     castMs: 3000,
     targetType: 5,
-    hpSlot: { base: -110, max: FULL_DAMAGE, calc: 103 }
+    hpSlot: { base: -110, max: FULL_DAMAGE, calc: 103 },
   },
   'test lure': {
     axis: 'fire',
     resistAdj: -200,
     castMs: 3000,
     targetType: 5,
-    hpSlot: { base: -110, max: FULL_DAMAGE, calc: 103 }
+    hpSlot: { base: -110, max: FULL_DAMAGE, calc: 103 },
   },
   'test hold': { axis: 'magic', resistAdj: 0, castMs: 3000, targetType: 5 },
   'test proc': { axis: 'magic', resistAdj: -250, castMs: 0, targetType: 5 },
@@ -36,8 +36,8 @@ export const SPELLS: SpellResistTable = {
     resistAdj: 0,
     castMs: 3000,
     targetType: 5,
-    debuffSlots: [{ axis: 'all', base: -20, calc: 101, max: 40 }]
-  }
+    debuffSlots: [{ axis: 'all', base: -20, calc: 101, max: 40 }],
+  },
 }
 
 /**
@@ -60,7 +60,9 @@ export function rng(seed: number): () => number {
 
 const roll = (next: () => number): number => 1 + Math.floor(next() * 200)
 
-export function blank(spec: Partial<ResistRow> & Pick<ResistRow, 'spellKey' | 'family'>): ResistRow {
+export function blank(
+  spec: Partial<ResistRow> & Pick<ResistRow, 'spellKey' | 'family'>,
+): ResistRow {
   return {
     mobKey: 'a test mob',
     casterKind: 'self',
@@ -74,7 +76,7 @@ export function blank(spec: Partial<ResistRow> & Pick<ResistRow, 'spellKey' | 'f
     dmg: {},
     firstTs: 0,
     lastTs: 0,
-    ...spec
+    ...spec,
   }
 }
 
@@ -83,7 +85,7 @@ export function playAon(
   R: number,
   offset: number,
   n: number,
-  next: () => number
+  next: () => number,
 ): { resist: number; land: number } {
   const rc = R + offset
   let resist = 0
@@ -98,7 +100,7 @@ export function playDd(
   R: number,
   offset: number,
   n: number,
-  next: () => number
+  next: () => number,
 ): { resist: number; dmg: Record<string, number> } {
   const rc = R + offset
   let resist = 0

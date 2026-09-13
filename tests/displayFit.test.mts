@@ -43,19 +43,19 @@ import {
   fitToDisplays,
   intersectArea,
   type DisplayArea,
-  type Rect
+  type Rect,
 } from '../src/main/displayFit'
 
 /** A display with no taskbar: work area == physical screen. */
 const full = (x: number, y: number, width: number, height: number): DisplayArea => ({
   bounds: { x, y, width, height },
-  workArea: { x, y, width, height }
+  workArea: { x, y, width, height },
 })
 
 /** A 1080p display with a 40px taskbar along the bottom — the ordinary Windows desktop. */
 const withTaskbar = (x: number, y: number): DisplayArea => ({
   bounds: { x, y, width: 1920, height: 1080 },
-  workArea: { x, y, width: 1920, height: 1040 }
+  workArea: { x, y, width: 1920, height: 1040 },
 })
 
 /** THE REPORT'S OWN SETUP: two 1080p monitors side by side, the second to the right. */
@@ -77,7 +77,10 @@ test('…including one parked over the TASKBAR, which is a placement someone cho
   // always-on-top; sitting over the taskbar is a normal thing to want, and testing coverage against
   // the work area would haul this window up by 40px on every single launch.
   const overTaskbar: Rect = { x: 200, y: 760, width: 380, height: 320 }
-  assert.ok(overTaskbar.y + overTaskbar.height > SINGLE[0].workArea.height, 'the fixture must overlap the taskbar')
+  assert.ok(
+    overTaskbar.y + overTaskbar.height > SINGLE[0].workArea.height,
+    'the fixture must overlap the taskbar',
+  )
   assert.deepEqual(fitToDisplays(overTaskbar, SINGLE), overTaskbar)
 })
 
@@ -96,7 +99,7 @@ const alongTheBottom = (x: number, over: number): Rect => ({
   x,
   y: 1080 - 320 + over,
   width: 380,
-  height: 320
+  height: 320,
 })
 
 test('JOS-433: a meter parked along the bottom edge survives, one pixel over or forty', () => {
@@ -107,7 +110,7 @@ test('JOS-433: a meter parked along the bottom edge survives, one pixel over or 
       assert.deepEqual(
         fitToDisplays(parked, SINGLE),
         parked,
-        `${over}px over the bottom edge at x=${x} was moved`
+        `${over}px over the bottom edge at x=${x} was moved`,
       )
     }
   }
@@ -160,12 +163,19 @@ test('JOS-433: a correction is never a drift — the metrics come back, so does 
   const stored: Rect = { x: 1500, y: 740, width: 380, height: 320 }
   assert.deepEqual(fitToDisplays(stored, SINGLE), stored, 'untouched at the desktop resolution')
   const shrunken: DisplayArea[] = [
-    { bounds: { x: 0, y: 0, width: 1600, height: 900 }, workArea: { x: 0, y: 0, width: 1600, height: 860 } }
+    {
+      bounds: { x: 0, y: 0, width: 1600, height: 900 },
+      workArea: { x: 0, y: 0, width: 1600, height: 860 },
+    },
   ]
   const temporary = fitToDisplays(stored, shrunken)
   assert.ok(temporary && inside(temporary, shrunken[0].bounds), 'moved onto the smaller screen')
   assert.notDeepEqual(temporary, stored)
-  assert.deepEqual(fitToDisplays(stored, SINGLE), stored, 'and the stored rectangle is given back whole')
+  assert.deepEqual(
+    fitToDisplays(stored, SINGLE),
+    stored,
+    'and the stored rectangle is given back whole',
+  )
 })
 
 test('…and one SPANNING two monitors, which is the other', () => {
@@ -212,7 +222,10 @@ test('…into the WORK AREA instead when the caller says it is not an overlay', 
   // keeps its pre-JOS-433 landing spot.
   const hanging: Rect = { x: 1700, y: 900, width: 380, height: 320 }
   const fitted = fitToDisplays(hanging, SINGLE, { clampTo: 'workArea' })
-  assert.ok(fitted && inside(fitted, SINGLE[0].workArea), `not inside the work area: ${JSON.stringify(fitted)}`)
+  assert.ok(
+    fitted && inside(fitted, SINGLE[0].workArea),
+    `not inside the work area: ${JSON.stringify(fitted)}`,
+  )
   assert.equal(fitted.y, 1040 - 320, 'above the taskbar')
 })
 
@@ -220,7 +233,10 @@ test('the display it overlaps MOST is the one it lands on', () => {
   // Straddling the seam, but mostly on the right-hand monitor: it must not be dragged onto the left.
   const mostlyRight: Rect = { x: 1850, y: 1000, width: 380, height: 320 }
   const fitted = fitToDisplays(mostlyRight, DUAL)
-  assert.ok(fitted && inside(fitted, DUAL[1].bounds), `${JSON.stringify(fitted)} should be on the second display`)
+  assert.ok(
+    fitted && inside(fitted, DUAL[1].bounds),
+    `${JSON.stringify(fitted)} should be on the second display`,
+  )
 })
 
 test('a window on NO display answers null — the module refuses to guess', () => {
@@ -233,7 +249,7 @@ test('a window on NO display answers null — the module refuses to guess', () =
     x: -1800,
     y: 0,
     width: 380,
-    height: 320
+    height: 320,
   })
 })
 
@@ -258,13 +274,13 @@ test('clampInto and centerIn are the two placements, and both stay inside', () =
     x: 100,
     y: 100,
     width: 200,
-    height: 100
+    height: 100,
   })
   assert.deepEqual(centerIn({ width: 200, height: 100 }, area), {
     x: 400,
     y: 350,
     width: 200,
-    height: 100
+    height: 100,
   })
   // Both shrink rather than overflow.
   assert.deepEqual(clampInto({ x: -50, y: -50, width: 2000, height: 2000 }, area), area)
@@ -273,7 +289,11 @@ test('clampInto and centerIn are the two placements, and both stay inside', () =
 
 test('intersectArea is zero for rectangles that only touch', () => {
   const a: Rect = { x: 0, y: 0, width: 100, height: 100 }
-  assert.equal(intersectArea(a, { x: 100, y: 0, width: 100, height: 100 }), 0, 'edge to edge is not overlap')
+  assert.equal(
+    intersectArea(a, { x: 100, y: 0, width: 100, height: 100 }),
+    0,
+    'edge to edge is not overlap',
+  )
   assert.equal(intersectArea(a, { x: 50, y: 50, width: 100, height: 100 }), 2500)
   assert.equal(intersectArea(a, a), 10_000)
 })

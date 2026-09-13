@@ -93,7 +93,7 @@ function zero(): TailIoSummary {
     maxStatMs: 0,
     over100: 0,
     over500: 0,
-    byReason: { reused: 0, first: 0, replaced: 0, shrunk: 0, error: 0 }
+    byReason: { reused: 0, first: 0, replaced: 0, shrunk: 0, error: 0 },
   }
 }
 
@@ -117,7 +117,7 @@ export function noteTailRead(sample: TailIoSample): void {
     readMs: ms(sample.readMs),
     bytes: Math.max(0, Math.trunc(sample.bytes)),
     slices: Math.max(0, Math.trunc(sample.slices)),
-    reason: sample.reason
+    reason: sample.reason,
   }
   ring.push(s)
   if (ring.length > TAIL_IO_RING) ring.splice(0, ring.length - TAIL_IO_RING)
@@ -181,6 +181,6 @@ export function formatTailIoSummary(s: TailIoSummary): string {
     `readMs total=${s.readMs.toFixed(1)} max=${s.maxReadMs.toFixed(1)}`,
     `statMs total=${s.statMs.toFixed(1)} max=${s.maxStatMs.toFixed(1)}`,
     `openMs total=${s.openMs.toFixed(1)}`,
-    `over100=${String(s.over100)} over500=${String(s.over500)}`
+    `over100=${String(s.over100)} over500=${String(s.over500)}`,
   ].join(' · ')
 }

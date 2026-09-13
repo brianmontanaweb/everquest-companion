@@ -82,7 +82,11 @@ test('THE APP NO LONGER ASKS PERMISSION TO SPLIT — the refusal arm was a secon
   const markAt = mod.indexOf('addSessionMark(marks, at)')
   assert.ok(serveAt >= 0 && markAt >= 0)
   // …and no early exit sits BETWEEN the two, which is where a dropped split would hide.
-  assert.doesNotMatch(mod.slice(serveAt, markAt), /return/, 'nothing may bail out between the halves')
+  assert.doesNotMatch(
+    mod.slice(serveAt, markAt),
+    /return/,
+    'nothing may bail out between the halves',
+  )
 })
 
 test('THE PRESS CARRIES NO PAYLOAD — a renderer cannot supply an instant, so it cannot supply a bad one', () => {
@@ -93,7 +97,7 @@ test('THE PRESS CARRIES NO PAYLOAD — a renderer cannot supply an instant, so i
     assert.match(
       code(bridge),
       /addSessionMark: \(\): Promise<number\[\]> => ipcRenderer\.invoke\(IPC\.sessionMarkAdd\)/,
-      `${bridge} lets a renderer name the instant`
+      `${bridge} lets a renderer name the instant`,
     )
   }
 })
@@ -103,7 +107,11 @@ test('THE PRESS CARRIES NO PAYLOAD — a renderer cannot supply an instant, so i
 test('MAIN OWNS IT, EPHEMERALLY: no store, no migration, no persisted key', () => {
   const mod = code('../src/main/sessionMarks.ts')
   assert.doesNotMatch(mod, /from '\.\/store'/, 'the marks grew a persisted home')
-  assert.doesNotMatch(mod, /electron-store|storeMigrations|storeFile/, 'the marks reached the store')
+  assert.doesNotMatch(
+    mod,
+    /electron-store|storeMigrations|storeFile/,
+    'the marks reached the store',
+  )
   // The initializer IS the reset: module scope, empty, every launch.
   assert.match(mod, /let marks: number\[] = \[]/)
 })
@@ -113,12 +121,20 @@ test('the DEDUPE is the shared one, and length is deliberately not the test', ()
   // silently stop broadcasting the moment a heavy session filled the ring.
   const full = Array.from({ length: MAX_SESSION_MARKS }, (_v, i) => i + 1)
   const grown = addSessionMark(full, 10_000)
-  assert.equal(grown.length, full.length, 'the ring is full, so the length cannot say what happened')
+  assert.equal(
+    grown.length,
+    full.length,
+    'the ring is full, so the length cannot say what happened',
+  )
   assert.equal(grown[grown.length - 1], 10_000, 'but the newest instant can')
   assert.deepEqual(addSessionMark(full, 1), full, 'a mark at or before the newest is dropped')
 
   const mod = code('../src/main/sessionMarks.ts')
-  assert.match(mod, /next\[next\.length - 1] !== at/, 'the press must test the INSTANT, never the length')
+  assert.match(
+    mod,
+    /next\[next\.length - 1] !== at/,
+    'the press must test the INSTANT, never the length',
+  )
 })
 
 // ── 3. one hook, both bundles ──────────────────────────────────────────────────────────
@@ -152,8 +168,16 @@ test('useTimeslice no longer keeps its OWN list — the per-process second copy 
 test('the renderer store writes THROUGH and never guesses the instant', () => {
   const mod = code('../src/renderer/src/features/timeslice/useSessionMarks.ts')
   assert.doesNotMatch(mod, /Date\.now\(\)/, 'an optimistic instant is a DIFFERENT instant')
-  assert.match(mod, /useSyncExternalStore/, 'one store per window, so every consumer moves together')
-  assert.match(mod, /bridge\.onSessionMarks\(adopt\)/, 'a press in another window has to reach this one')
+  assert.match(
+    mod,
+    /useSyncExternalStore/,
+    'one store per window, so every consumer moves together',
+  )
+  assert.match(
+    mod,
+    /bridge\.onSessionMarks\(adopt\)/,
+    'a press in another window has to reach this one',
+  )
   assert.match(mod, /wiredTo === bridge/, 'the subscription is per bridge, not per consumer')
 })
 
@@ -161,7 +185,11 @@ test('the renderer store writes THROUGH and never guesses the instant', () => {
 
 test('the ZONE meter carries the button; the FIGHT meter carries nothing new', () => {
   const mod = code('../src/renderer/src/overlay/OverlayMeter.tsx')
-  assert.match(mod, /useSessionMarks\(window\.eqOverlay\)/, 'the overlay presses the same app-wide mark')
+  assert.match(
+    mod,
+    /useSessionMarks\(window\.eqOverlay\)/,
+    'the overlay presses the same app-wide mark',
+  )
   assert.match(mod, /if \(isFight\) return undefined/, 'a fight meter has no Overall to restart')
   assert.match(mod, /action=\{newSession\}/, 'and the zone meter hands it to the header')
 })
@@ -174,7 +202,7 @@ test('the button is CHROME: aria-labelled, one glyph, and unlocked-only', () => 
   assert.match(
     header,
     /<IconButton label=\{action\.label\} onClick=\{action\.onClick\}/,
-    'the action must be an IconButton, not hand-rolled chrome'
+    'the action must be an IconButton, not hand-rolled chrome',
   )
   const button = code('../src/renderer/src/overlay/IconButton.tsx')
   assert.match(button, /aria-label=\{label\}/)
@@ -189,7 +217,11 @@ test('the header action is a NARROW shape, not an open slot', () => {
   const header = src('../src/renderer/src/overlay/OverlayHeader.tsx')
   const decl = /export interface OverlayHeaderAction \{[\s\S]*?\n\}/.exec(header)
   assert.ok(decl, 'OverlayHeaderAction is gone')
-  assert.doesNotMatch(decl[0], /ReactNode|JSX\.Element/, 'the title bar grew an arbitrary-chrome slot')
+  assert.doesNotMatch(
+    decl[0],
+    /ReactNode|JSX\.Element/,
+    'the title bar grew an arbitrary-chrome slot',
+  )
   assert.match(decl[0], /label: string/)
   assert.match(decl[0], /glyph: string/)
 })

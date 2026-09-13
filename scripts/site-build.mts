@@ -31,7 +31,7 @@ function typecheckClean(): { ok: boolean; out: string } {
   for (const project of ['tsconfig.node.json', 'tsconfig.web.json']) {
     const res = spawnSync(process.execPath, [tsc, '--noEmit', '-p', join(ROOT, project)], {
       cwd: ROOT,
-      encoding: 'utf8'
+      encoding: 'utf8',
     })
     out += `${res.stdout ?? ''}${res.stderr ?? ''}`
     if (res.status !== 0) return { ok: false, out }
@@ -57,7 +57,9 @@ export function waitForTypecheck(log: (msg: string) => void): boolean {
       log(res.out.split('\n').slice(0, 12).join('\n'))
       return false
     }
-    log(`typecheck: failing (a sibling agent is mid-edit) — retrying in ${TYPECHECK_POLL_MS / 1000}s`)
+    log(
+      `typecheck: failing (a sibling agent is mid-edit) — retrying in ${TYPECHECK_POLL_MS / 1000}s`,
+    )
     spawnSync(process.execPath, ['-e', `setTimeout(()=>{}, ${TYPECHECK_POLL_MS})`])
   }
 }
@@ -80,7 +82,7 @@ export function buildIfStale(log: (msg: string) => void): void {
   }
   const srcMs = Math.max(
     newestMtime(join(ROOT, 'src')),
-    statSync(join(ROOT, 'electron.vite.config.ts')).mtimeMs
+    statSync(join(ROOT, 'electron.vite.config.ts')).mtimeMs,
   )
   if (outMs > srcMs) {
     log('build: out-e2e/ is fresh — reusing it')
@@ -92,9 +94,9 @@ export function buildIfStale(log: (msg: string) => void): void {
     [
       join(ROOT, 'node_modules', 'electron-vite', 'bin', 'electron-vite.js'),
       'build',
-      `--outDir=${OUT_DIR.replace(/\\/g, '/')}`
+      `--outDir=${OUT_DIR.replace(/\\/g, '/')}`,
     ],
-    { cwd: ROOT, stdio: 'inherit' }
+    { cwd: ROOT, stdio: 'inherit' },
   )
   if (res.status !== 0) throw new Error(`electron-vite build failed (exit ${res.status})`)
 }

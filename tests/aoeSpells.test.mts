@@ -18,7 +18,7 @@ import {
   aeHits,
   aeMaxTargets,
   aoeAssumptionLabel,
-  isAeTargetType
+  isAeTargetType,
 } from '../src/shared/aoeSpells'
 
 // ---- the shape test --------------------------------------------------------------------------
@@ -34,7 +34,16 @@ test('a single-target shape is NOT an area shape, and neither is silence', () =>
   // Every one of these is a real `target_type` in the committed catalog. `Line of Sight` and `Bolt`
   // are the near-misses worth naming: both can strike more than one creature in flight and neither
   // states a target count anywhere, so a tab whose premise is a stated maximum cannot figure them.
-  for (const t of ['Single', 'Self', 'Group', 'Lifetap', 'Undead', 'Line of Sight', 'Bolt', 'Animal']) {
+  for (const t of [
+    'Single',
+    'Self',
+    'Group',
+    'Lifetap',
+    'Undead',
+    'Line of Sight',
+    'Bolt',
+    'Animal',
+  ]) {
     assert.equal(isAeTargetType(t), false, t)
   }
   assert.equal(isAeTargetType(undefined), false)
@@ -48,7 +57,11 @@ test('the default cap is four, and a stated cap wins over it', () => {
   assert.equal(aeMaxTargets(undefined), 4, 'no client install: the stated default answers')
   assert.equal(aeMaxTargets(null), 4)
   assert.equal(aeMaxTargets(8), 8, "the client's PB AE cap")
-  assert.equal(aeMaxTargets(5), 5, "Denon's Desperate Dirge, where the client and the page disagree")
+  assert.equal(
+    aeMaxTargets(5),
+    5,
+    "Denon's Desperate Dirge, where the client and the page disagree",
+  )
   // A zero in the client's column is what a single-target row says; it is not a cap of nothing.
   assert.equal(aeMaxTargets(0), 4)
   assert.equal(aeMaxTargets(-3), 4)

@@ -157,7 +157,7 @@ export const TARGET_FIELD_BY_KIND: Partial<Record<ParsedKind, TargetField>> = {
   poisonProc: { field: 'target' },
   spellEmote: { field: 'subject' },
   damage: { field: 'target' },
-  miss: { field: 'target' }
+  miss: { field: 'target' },
 }
 
 /**
@@ -171,7 +171,7 @@ export const TARGET_FIELD_EXCLUDED_KINDS: Partial<Record<ParsedKind, string>> = 
   itemMergeFailed: 'the field names an ITEM being merged, not an entity',
   // `/con` sizes a mob up. It is an entity, and no spell is affecting it — the token means "who
   // this spell is on", and a consider line is about nothing but your own curiosity.
-  consider: 'a con names a mob no spell is touching'
+  consider: 'a con names a mob no spell is touching',
 }
 
 /**
@@ -188,7 +188,7 @@ export const TARGET_FIELD_EXCLUDED_KINDS: Partial<Record<ParsedKind, string>> = 
  */
 const SENTINEL_SPEECH: Record<string, string> = {
   self: 'you',
-  pet: 'your pet'
+  pet: 'your pet',
 }
 
 /**

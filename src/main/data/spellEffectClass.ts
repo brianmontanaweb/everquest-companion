@@ -98,7 +98,7 @@ const EFFECT_RULES: readonly EffectRule[] = [
   {
     klass: 'charm',
     test: /^charm\b/i,
-    note: 'Both phrasings: "Charm up to level 25" (17 rows) and "Charm (up to L37)" (7). 24 rows, 23 names, and it is the JOS-250 audit roster exactly.'
+    note: 'Both phrasings: "Charm up to level 25" (17 rows) and "Charm (up to L37)" (7). 24 rows, 23 names, and it is the JOS-250 audit roster exactly.',
   },
   {
     klass: 'summonPet',
@@ -116,67 +116,67 @@ const EFFECT_RULES: readonly EffectRule[] = [
     // nothing), `Pet Power Increase`, `Decrease Pet Size by 50%` (Tiny Companion) and the whole
     // `Summon Item` head, which is 141 rows away from anything with a name of its own.
     test: /^summon (pet|spectre pet|skeleton pet)\b/i,
-    note: '104 rows / 102 canonical names; 101 of the rows (99 names) are player-castable. Both the Self forms and the one Single form (Flaming Sword of Xuzl) count - a summon is a summon whoever the wiki says it targets.'
+    note: '104 rows / 102 canonical names; 101 of the rows (99 names) are player-castable. Both the Self forms and the one Single form (Flaming Sword of Xuzl) count - a summon is a summon whoever the wiki says it targets.',
   },
   {
     klass: 'mez',
     test: /^mesmeriz/i,
-    note: '"Mesmerize (2/55)" (the enchanter/necro form) and "Mesmerize (up to L45)" (the bard form). 16 spells.'
+    note: '"Mesmerize (2/55)" (the enchanter/necro form) and "Mesmerize (up to L45)" (the bard form). 16 spells.',
   },
   {
     klass: 'root',
     test: /^root\b/i,
-    note: 'The bare word, always. 24 rows — three of them BENEFICIAL Self forms (Treeform, Spirit of Oak, Illusion: Tree) that root the CASTER, which is why the target-side helpers below gate on targetType.'
+    note: 'The bare word, always. 24 rows — three of them BENEFICIAL Self forms (Treeform, Spirit of Oak, Illusion: Tree) that root the CASTER, which is why the target-side helpers below gate on targetType.',
   },
   {
     klass: 'snare',
     test: /^decrease movement speed\b/i,
-    note: '"Decrease Movement Speed by 40%" and its level formulas. 36 spells.'
+    note: '"Decrease Movement Speed by 40%" and its level formulas. 36 spells.',
   },
   {
     klass: 'slow',
     test: /^decrease attack speed\b/i,
-    note: '"Decrease Attack Speed by 30%". 36 spells — the effect-line twin of shared/alertGroups.ts SLOW_SPELLS, which is a hand-written name list.'
+    note: '"Decrease Attack Speed by 30%". 36 spells — the effect-line twin of shared/alertGroups.ts SLOW_SPELLS, which is a hand-written name list.',
   },
   {
     klass: 'haste',
     test: /^increase (attack speed|melee haste)\b/i,
-    note: 'The wiki writes the player-cast family as "Increase Attack Speed by 60%" and a handful of item/song effects as "Increase Melee Haste by 10%". 50 spells.'
+    note: 'The wiki writes the player-cast family as "Increase Attack Speed by 60%" and a handful of item/song effects as "Increase Melee Haste by 10%". 50 spells.',
   },
   {
     klass: 'fear',
     test: /^fear\b(?! immunity)/i,
-    note: '"Fear(1)" and "Fear (up to L52)". The one exclusion is literal: `Fear Immunity` is the opposite effect and shares the head.'
+    note: '"Fear(1)" and "Fear (up to L52)". The one exclusion is literal: `Fear Immunity` is the opposite effect and shares the head.',
   },
   {
     klass: 'stun',
     test: /^(spin)?stun\b/i,
-    note: '"Stun for 8.0 seconds", "Stun (1.00 sec/55)", "SpinStun". 96 spells. The anchor is what keeps `Add Melee Proc: Stunning Strike` out — that line adds a proc, it does not stun.'
+    note: '"Stun for 8.0 seconds", "Stun (1.00 sec/55)", "SpinStun". 96 spells. The anchor is what keeps `Add Melee Proc: Stunning Strike` out — that line adds a proc, it does not stun.',
   },
   {
     klass: 'blind',
     test: /^blind(ness)?\b/i,
-    note: '"Blindness(-1)", "Blindness", "Blind". 14 spells.'
+    note: '"Blindness(-1)", "Blindness", "Blind". 14 spells.',
   },
   {
     klass: 'pacify',
     test: /^(pacify|lull|reaction radius)\b/i,
-    note: 'The lull line writes itself three ways; `Reaction Radius (10/50)` is the same mechanic under its engine name. 12 spells, and they are exactly the family spellDb.ts CALM_LANDING_MESSAGES reaches by landing sentence.'
+    note: 'The lull line writes itself three ways; `Reaction Radius (10/50)` is the same mechanic under its engine name. 12 spells, and they are exactly the family spellDb.ts CALM_LANDING_MESSAGES reaches by landing sentence.',
   },
   {
     klass: 'memblur',
     test: /^memblur\b/i,
-    note: '"Memblur(20%)". 17 spells. Named as the wiki names it rather than "memory blur", because the string is the evidence.'
+    note: '"Memblur(20%)". 17 spells. Named as the wiki names it rather than "memory blur", because the string is the evidence.',
   },
   {
     klass: 'invisibility',
     test: /^(improved )?invisibility\b/i,
-    note: '"Invisibility", "Invisibility versus Undead", "Improved Invisibility". 21 spells. `See Invisible(1)` is the DETECTION effect and the anchor excludes it.'
+    note: '"Invisibility", "Invisibility versus Undead", "Improved Invisibility". 21 spells. `See Invisible(1)` is the DETECTION effect and the anchor excludes it.',
   },
   {
     klass: 'feignDeath',
     test: /^feign death\b/i,
-    note: 'Two spells (Death Peace, Feign Death). Kept because it is unambiguous, not because anything reads it yet.'
+    note: 'Two spells (Death Peace, Feign Death). Kept because it is unambiguous, not because anything reads it yet.',
   },
   {
     klass: 'healOverTime',
@@ -206,8 +206,8 @@ const EFFECT_RULES: readonly EffectRule[] = [
     // <Spell>.` tick for (1,732,267 lines, 2026-08-14) this reads 18. The one miss is `Harm Touch`,
     // which is not in spells.json at all and so cannot be in any roster derived from it.
     test: /^increase\s+(?:current\s+)?hit\s?points?\b.*\b(?:per\s+tick|additional\s+ticks)\b/i,
-    note: 'Two heads: "Increase Hitpoints by N per tick" (the regen/HoT family, incl. the "Current Hit Points"/"Hitpoints v2" spellings) and "Increase Hitpoints between N and N for two additional ticks." (the cleric Echo family). 67 rows, 66 canonical names. Decrease-headed DoT lines and mana regen are excluded by the anchor.'
-  }
+    note: 'Two heads: "Increase Hitpoints by N per tick" (the regen/HoT family, incl. the "Current Hit Points"/"Hitpoints v2" spellings) and "Increase Hitpoints between N and N for two additional ticks." (the cleric Echo family). 67 rows, 66 canonical names. Decrease-headed DoT lines and mana regen are excluded by the anchor.',
+  },
 ]
 
 /** The rule table, exported so the audit test can re-derive membership rather than restate it. */
@@ -283,7 +283,7 @@ export interface RosterOptions {
 export function effectRoster(
   spells: readonly SpellEntry[],
   klass: SpellEffectClass,
-  opts: RosterOptions = {}
+  opts: RosterOptions = {},
 ): Set<string> {
   const castableOnly = opts.castableOnly ?? true
   const targetOnly = opts.targetOnly ?? true

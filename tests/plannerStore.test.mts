@@ -51,10 +51,10 @@ const prePlannerStore = {
       inventory: { 'rusty short sword': 2 },
       completedQuests: ['ROG::Test of Stealth'],
       inventorySource: { path: 'C:/eq/Primitive-Inventory.txt', loadedAt: '2026-08-01T10:00:00Z' },
-      combo: { corrections: [] }
-    }
+      combo: { corrections: [] },
+    },
   },
-  activeLogPath: 'C:/eq/Logs/eqlog_Primitive_freeport.txt'
+  activeLogPath: 'C:/eq/Logs/eqlog_Primitive_freeport.txt',
 }
 
 /** A fully-populated, VALID plan — the fixed point the round trip must not touch. */
@@ -70,8 +70,8 @@ const goodPlan: ExaltPlan = {
       hostName: 'Ghoulbane',
       sockets: {
         proc: { effect: 'Nullify Undead', donorKey: 'ghoulbane' },
-        focus: { effect: 'Improved Healing I', donorKey: 'emissary mask' }
-      }
+        focus: { effect: 'Improved Healing I', donorKey: 'emissary mask' },
+      },
     },
     FINGER: { hostKey: 'ring of the shissar', sockets: {} },
     // JOS-67 — the SECOND ring, keyed by a cell that is not an equip-slot name. It is in the
@@ -81,7 +81,7 @@ const goodPlan: ExaltPlan = {
     FINGER2: {
       hostKey: 'ring of pureblood',
       hostName: 'Ring of Pureblood',
-      sockets: { focus: { effect: 'Improved Healing II', donorKey: 'ring of pureblood' } }
+      sockets: { focus: { effect: 'Improved Healing II', donorKey: 'ring of pureblood' } },
     },
     // JOS-104 — an ANY SLOT, the other cell key that is not an equip-slot name, and here for the
     // same reason: the widening is additive in both directions, so a plan naming a place the
@@ -90,9 +90,9 @@ const goodPlan: ExaltPlan = {
     ANY1: {
       hostKey: 'brigandine tunic',
       hostName: 'Brigandine Tunic',
-      sockets: { worn: { effect: 'Improved Healing III', donorKey: 'brigandine tunic' } }
-    }
-  }
+      sockets: { worn: { effect: 'Improved Healing III', donorKey: 'brigandine tunic' } },
+    },
+  },
 }
 
 // ------------------------------------------------------------------ additive key
@@ -117,9 +117,9 @@ test('a store WITH plans survives a build that has never heard of them', () => {
     byCharacter: {
       primitive_freeport: {
         ...prePlannerStore.byCharacter.primitive_freeport,
-        exaltPlans: [goodPlan]
-      }
-    }
+        exaltPlans: [goodPlan],
+      },
+    },
   }
   withStore(withPlans, (path, before) => {
     const result = migrateStoreFile(path)
@@ -129,7 +129,7 @@ test('a store WITH plans survives a build that has never heard of them', () => {
     assert.deepEqual(
       sanitizeExaltPlans(reread.byCharacter.primitive_freeport.exaltPlans),
       [goodPlan],
-      'the stored plan must read back exactly as written'
+      'the stored plan must read back exactly as written',
     )
   })
 })
@@ -164,25 +164,29 @@ test('malformed input is STRIPPED field by field, never thrown and never wholesa
               proc: { effect: 'Nullify Undead', donorKey: 'ghoulbane' },
               ornament: { effect: 'Sparkles', donorKey: 'x' }, // not one of the four (R5)
               worn: { effect: 'Strength' }, // no donor → unfarmable, dropped
-              click: { donorKey: 'ghoulbane' } // no effect → says nothing, dropped
-            }
+              click: { donorKey: 'ghoulbane' }, // no effect → says nothing, dropped
+            },
           },
           CHARM: { hostKey: 'nope', sockets: {} }, // not a slot in this corpus
           BOOTS: { hostKey: 'nope', sockets: {} }, // never a slot name at all
           HEAD2: { hostKey: 'nope', sockets: {} }, // JOS-67: only EAR/WRIST/FINGER have a second
           ANY3: { hostKey: 'nope', sockets: {} }, // JOS-104: the game gives exactly two any-slots
-          FEET: { sockets: {} } // empty cell: no host, no sockets
-        }
-      }
+          FEET: { sockets: {} }, // empty cell: no host, no sockets
+        },
+      },
     ],
-    now
+    now,
   )
 
   assert.equal(cleaned.length, 1, 'only the entry with an id survives')
   const plan = cleaned[0]
   assert.equal(plan.id, 'plan-2')
   assert.equal(plan.name, 'Untitled set')
-  assert.deepEqual(plan.classes, ['PAL', 'ROG', 'CLR'], 'unknown dropped, dupes folded, capped at 3')
+  assert.deepEqual(
+    plan.classes,
+    ['PAL', 'ROG', 'CLR'],
+    'unknown dropped, dupes folded, capped at 3',
+  )
   assert.equal(plan.createdAt, now)
   assert.equal(plan.updatedAt, now, 'a NaN stamp falls back rather than poisoning every sort')
   assert.deepEqual(Object.keys(plan.slots), ['PRIMARY'])
@@ -201,19 +205,25 @@ test('classesProvenance survives when stated and stays ABSENT when it is not (V2
   assert.equal('classesProvenance' in sanitizeExaltPlans([goodPlan])[0], false)
 
   for (const value of ['detected', 'user'] as const) {
-    assert.equal(sanitizeExaltPlans([{ ...goodPlan, classesProvenance: value }])[0].classesProvenance, value)
+    assert.equal(
+      sanitizeExaltPlans([{ ...goodPlan, classesProvenance: value }])[0].classesProvenance,
+      value,
+    )
   }
   // Anything else is not repaired into a guess about where the trio came from — it is dropped
   // back to the documented default.
   for (const bad of ['who', '', 42, null, {}]) {
-    assert.equal('classesProvenance' in sanitizeExaltPlans([{ ...goodPlan, classesProvenance: bad }])[0], false)
+    assert.equal(
+      'classesProvenance' in sanitizeExaltPlans([{ ...goodPlan, classesProvenance: bad }])[0],
+      false,
+    )
   }
 })
 
 test('duplicate plan ids keep the first, and the batch is bounded', () => {
   const dupes = sanitizeExaltPlans([
     { ...goodPlan, name: 'first' },
-    { ...goodPlan, name: 'second' }
+    { ...goodPlan, name: 'second' },
   ])
   assert.equal(dupes.length, 1)
   assert.equal(dupes[0].name, 'first')

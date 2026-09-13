@@ -146,7 +146,7 @@ const NOT_DOMAIN_MODULES = [
   'src/shared/devRestart.ts',
   'src/shared/perf.ts',
   // committed CONTENT rather than folded data: the changelog the What's New panel renders
-  'src/shared/releaseNotes.ts'
+  'src/shared/releaseNotes.ts',
 ]
 
 /**
@@ -230,14 +230,14 @@ const noDomainMunging = {
     type: 'problem',
     docs: {
       description:
-        'Owner ruling 4: the renderer never filters, sorts or aggregates domain data — views arrive render-ready.'
+        'Owner ruling 4: the renderer never filters, sorts or aggregates domain data — views arrive render-ready.',
     },
     schema: [
       {
         type: 'object',
         properties: { requireReason: { type: 'boolean' } },
-        additionalProperties: false
-      }
+        additionalProperties: false,
+      },
     ],
     messages: {
       munged:
@@ -246,8 +246,8 @@ const noDomainMunging = {
         '`// eslint-disable-next-line eqc/no-domain-munging -- JOS-NNN: why`.',
       reasonless:
         'An exemption from ruling 4 must SAY WHY. Write `-- JOS-NNN: <reason>` after the rule name; a silent ' +
-        'exemption is the thing this law exists to prevent.'
-    }
+        'exemption is the thing this law exists to prevent.',
+    },
   },
 
   create(context) {
@@ -282,11 +282,11 @@ const noDomainMunging = {
         context.report({
           node: callee.property,
           messageId: 'munged',
-          data: { method, what: name.length > 60 ? `${name.slice(0, 57)}…` : name }
+          data: { method, what: name.length > 60 ? `${name.slice(0, 57)}…` : name },
         })
-      }
+      },
     }
-  }
+  },
 }
 
 /**
@@ -305,8 +305,8 @@ const exemptionsStateAReason = {
     messages: {
       reasonless:
         'An exemption from ruling 4 must SAY WHY: `// eslint-disable-next-line eqc/no-domain-munging -- ' +
-        'JOS-NNN: <reason>`. Zero silent exemptions is the whole design.'
-    }
+        'JOS-NNN: <reason>`. Zero silent exemptions is the whole design.',
+    },
   },
   create(context) {
     return {
@@ -320,16 +320,16 @@ const exemptionsStateAReason = {
           if (said.length >= 8) continue
           context.report({ loc: comment.loc, messageId: 'reasonless' })
         }
-      }
+      },
     }
-  }
+  },
 }
 
 export const domainMungingPlugin = {
   rules: {
     'no-domain-munging': noDomainMunging,
-    'munging-exemptions-state-a-reason': exemptionsStateAReason
-  }
+    'munging-exemptions-state-a-reason': exemptionsStateAReason,
+  },
 }
 
 export { DOMAIN_MODULES, NOT_DOMAIN_MODULES, NOT_DOMAIN_TYPES, MUNGERS }

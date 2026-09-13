@@ -81,7 +81,10 @@ export interface HookHost<T> {
 }
 
 const sameDeps = (a: Deps, b: Deps): boolean =>
-  a !== undefined && b !== undefined && a.length === b.length && a.every((v, i) => Object.is(v, b[i]))
+  a !== undefined &&
+  b !== undefined &&
+  a.length === b.length &&
+  a.every((v, i) => Object.is(v, b[i]))
 
 /** Mount `hook` and drive it. `hook` is called like a component body: hooks in a stable order. */
 export function mountHook<T>(hook: () => T): HookHost<T> {
@@ -102,7 +105,7 @@ export function mountHook<T>(hook: () => T): HookHost<T> {
   const useState = <S,>(initial: S | (() => S)): [S, (next: S | ((prev: S) => S)) => void] => {
     const slot = slotAt<StateSlot>(() => ({
       kind: 'state',
-      value: typeof initial === 'function' ? (initial as () => S)() : initial
+      value: typeof initial === 'function' ? (initial as () => S)() : initial,
     }))
     const set = (next: S | ((prev: S) => S)): void => {
       const resolved = typeof next === 'function' ? (next as (prev: S) => S)(slot.value as S) : next
@@ -124,24 +127,27 @@ export function mountHook<T>(hook: () => T): HookHost<T> {
     return slot.value as S
   }
 
-  const useEffectLike = (layout: boolean) => (create: () => Destructor, deps: Deps): void => {
-    const slot = slotAt<EffectSlot>(() => ({
-      kind: 'effect',
-      layout,
-      deps: undefined,
-      cleanup: undefined,
-      pending: null
-    }))
-    // No dependency array ⇒ every commit. Otherwise only when the array actually moved.
-    if (slot.pending === null && (deps === undefined || !sameDeps(slot.deps, deps))) {
-      slot.pending = create
+  const useEffectLike =
+    (layout: boolean) =>
+    (create: () => Destructor, deps: Deps): void => {
+      const slot = slotAt<EffectSlot>(() => ({
+        kind: 'effect',
+        layout,
+        deps: undefined,
+        cleanup: undefined,
+        pending: null,
+      }))
+      // No dependency array ⇒ every commit. Otherwise only when the array actually moved.
+      if (slot.pending === null && (deps === undefined || !sameDeps(slot.deps, deps))) {
+        slot.pending = create
+      }
+      slot.deps = deps
     }
-    slot.deps = deps
-  }
 
   const dispatcher = {
     useState,
-    useRef: <S,>(initial: S) => slotAt<RefSlot>(() => ({ kind: 'ref', ref: { current: initial } })).ref,
+    useRef: <S,>(initial: S) =>
+      slotAt<RefSlot>(() => ({ kind: 'ref', ref: { current: initial } })).ref,
     useMemo: useMemoLike,
     useCallback: <F,>(fn: F, deps: Deps): F => useMemoLike(() => fn, deps),
     useEffect: useEffectLike(false),
@@ -150,7 +156,7 @@ export function mountHook<T>(hook: () => T): HookHost<T> {
     useDebugValue: (): void => undefined,
     useContext: (): never => {
       throw new Error('hookHost: useContext is out of scope — see the header')
-    }
+    },
   }
 
   const commit = (): void => {
@@ -183,7 +189,8 @@ export function mountHook<T>(hook: () => T): HookHost<T> {
       dirty = false
       renderOnce()
       guard += 1
-      if (guard > 50) throw new Error('hookHost: the hook never settled — 50 renders and still dirty')
+      if (guard > 50)
+        throw new Error('hookHost: the hook never settled — 50 renders and still dirty')
     } while (dirty)
     return value
   }
@@ -207,6 +214,6 @@ export function mountHook<T>(hook: () => T): HookHost<T> {
         slot.cleanup?.()
         slot.cleanup = undefined
       }
-    }
+    },
   }
 }

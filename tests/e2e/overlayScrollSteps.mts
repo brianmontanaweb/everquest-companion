@@ -44,7 +44,7 @@ interface Bounds {
 function fightBounds(app: ElectronApplication): Promise<Bounds | null> {
   return app.evaluate(({ BrowserWindow }) => {
     const w = BrowserWindow.getAllWindows().find((win) =>
-      win.webContents.getURL().includes('kind=fight')
+      win.webContents.getURL().includes('kind=fight'),
     )
     return w ? w.getBounds() : null
   })
@@ -53,7 +53,7 @@ function fightBounds(app: ElectronApplication): Promise<Bounds | null> {
 async function setFightBounds(app: ElectronApplication, bounds: Bounds): Promise<void> {
   await app.evaluate(({ BrowserWindow }, b) => {
     const w = BrowserWindow.getAllWindows().find((win) =>
-      win.webContents.getURL().includes('kind=fight')
+      win.webContents.getURL().includes('kind=fight'),
     )
     if (w) w.setBounds(b)
   }, bounds)
@@ -66,7 +66,7 @@ const PANE = '[data-testid="overlay-bars"]'
 function gripState(overlay: Page): Promise<string> {
   return overlay.evaluate(
     (sel) => document.querySelector(sel)?.getAttribute('data-scroll-grip') ?? '(absent)',
-    PANE
+    PANE,
   )
 }
 
@@ -78,7 +78,7 @@ function paneScroll(overlay: Page): Promise<{ over: number; top: number; w: numb
     return {
       over: el.scrollHeight - el.clientHeight,
       top: el.scrollTop,
-      w: el.getBoundingClientRect().width
+      w: el.getBoundingClientRect().width,
     }
   }, PANE)
 }
@@ -134,10 +134,18 @@ const MIN_OVERLAY_H = 90
  * Returns the overflow it managed to produce; a run that cannot reach one is a `note`, and the
  * region half is asserted either way.
  */
-async function makeItOverflow(app: ElectronApplication, overlay: Page, was: Bounds): Promise<number> {
+async function makeItOverflow(
+  app: ElectronApplication,
+  overlay: Page,
+  was: Bounds,
+): Promise<number> {
   await setTextScale(overlay, 2)
   await setFightBounds(app, { ...was, width: MIN_OVERLAY_W, height: MIN_OVERLAY_H })
-  const read = await settle(() => paneScroll(overlay), (s) => s.over > 1, { timeoutMs: 8_000 })
+  const read = await settle(
+    () => paneScroll(overlay),
+    (s) => s.over > 1,
+    { timeoutMs: 8_000 },
+  )
   return read.over
 }
 
@@ -156,7 +164,7 @@ async function checkBodyStillPassesThrough(overlay: Page): Promise<void> {
   check(
     '…and no chrome reveals, so main was never asked to stop ignoring the mouse',
     controls === 0,
-    `${controls} control(s)`
+    `${controls} control(s)`,
   )
 }
 
@@ -164,13 +172,21 @@ async function checkBodyStillPassesThrough(overlay: Page): Promise<void> {
 async function checkGripTakesTheMouse(overlay: Page): Promise<void> {
   const fx = await gripFraction(overlay)
   if (!check('the pane right edge can be pointed at', await hoverAt(overlay, PANE, fx, 0.5))) return
-  const grip = await settle(() => gripState(overlay), (g) => g === 'held', { timeoutMs: 4_000 })
+  const grip = await settle(
+    () => gripState(overlay),
+    (g) => g === 'held',
+    { timeoutMs: 4_000 },
+  )
   check('the pointer at the pane RIGHT EDGE takes the scroll grip', grip === 'held', grip)
-  const controls = await settle(() => controlCount(overlay), (n) => n > 0, { timeoutMs: 8_000 })
+  const controls = await settle(
+    () => controlCount(overlay),
+    (n) => n > 0,
+    { timeoutMs: 8_000 },
+  )
   check(
     '…and the capture really crossed into main — the locked overlay reveals its controls',
     controls > 0,
-    `${controls} control(s)`
+    `${controls} control(s)`,
   )
 }
 
@@ -178,13 +194,25 @@ async function checkGripTakesTheMouse(overlay: Page): Promise<void> {
 async function checkWheelScrolls(overlay: Page): Promise<void> {
   const before = (await paneScroll(overlay)).top
   await overlay.mouse.wheel(0, 200)
-  const after = await settle(async () => (await paneScroll(overlay)).top, (t) => t > before, {
-    timeoutMs: 6_000
-  })
-  check('A WHEEL NOTCH OVER THE GRIP SCROLLS THE PINNED METER', after > before, `${before} → ${after}`)
+  const after = await settle(
+    async () => (await paneScroll(overlay)).top,
+    (t) => t > before,
+    {
+      timeoutMs: 6_000,
+    },
+  )
+  check(
+    'A WHEEL NOTCH OVER THE GRIP SCROLLS THE PINNED METER',
+    after > before,
+    `${before} → ${after}`,
+  )
   // …and back up, because a scroller that only ever goes one way is a scroller with a stuck row.
   await overlay.mouse.wheel(0, -400)
-  const back = await settle(async () => (await paneScroll(overlay)).top, (t) => t < after, { timeoutMs: 6_000 })
+  const back = await settle(
+    async () => (await paneScroll(overlay)).top,
+    (t) => t < after,
+    { timeoutMs: 6_000 },
+  )
   check('…and back up again', back < after, `${after} → ${back}`)
 }
 
@@ -195,13 +223,13 @@ async function checkWheelScrolls(overlay: Page): Promise<void> {
 export async function stepPinnedScroll(
   app: ElectronApplication,
   overlay: Page,
-  setLocked: SetLocked
+  setLocked: SetLocked,
 ): Promise<void> {
   await setLocked(overlay, false)
   check(
     'an INTERACTIVE pane arms no grip — it already owns the mouse',
     (await gripState(overlay)) === '(absent)',
-    await gripState(overlay)
+    await gripState(overlay),
   )
 
   await setLocked(overlay, true)
@@ -214,15 +242,23 @@ export async function stepPinnedScroll(
   const over = await makeItOverflow(app, overlay, was as Bounds)
   if (over > 1) {
     note(
-      `the pinned pane has ${over.toFixed(0)}px more rows than room at the ${MIN_OVERLAY_W}x${MIN_OVERLAY_H} floor, text size 2.0`
+      `the pinned pane has ${over.toFixed(0)}px more rows than room at the ${MIN_OVERLAY_W}x${MIN_OVERLAY_H} floor, text size 2.0`,
     )
     await checkGripTakesTheMouse(overlay)
     await checkWheelScrolls(overlay)
     // The grip is held for exactly as long as the pointer is in the strip: leaving releases it,
     // and the body is click-through again the moment it does.
     await hoverAt(overlay, PANE, 0.5, 0.5)
-    const released = await settle(() => gripState(overlay), (g) => g === 'idle', { timeoutMs: 4_000 })
-    check('leaving the strip releases the grip — the body is click-through again', released === 'idle', released)
+    const released = await settle(
+      () => gripState(overlay),
+      (g) => g === 'idle',
+      { timeoutMs: 4_000 },
+    )
+    check(
+      'leaving the strip releases the grip — the body is click-through again',
+      released === 'idle',
+      released,
+    )
   } else {
     note('the meter fits even at the minimum window size and text size 2.0 — nothing to scroll')
   }

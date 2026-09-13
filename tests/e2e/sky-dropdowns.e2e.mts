@@ -80,7 +80,7 @@ import {
   note,
   reportRun,
   settleCount,
-  settleStable
+  settleStable,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -107,7 +107,7 @@ const KILL_TARGET = '[data-testid="posky-kill-target"]'
 const CONTROLS = [
   [SORT, 'Sort'],
   [COUNT_SOURCE, 'Count items from'],
-  [ISLAND, 'island filter']
+  [ISLAND, 'island filter'],
 ] as const
 
 /**
@@ -123,7 +123,10 @@ function whatCovers(page: Page, sel: string): Promise<{ tag: string; inside: boo
     const el = document.querySelector(s)
     if (!el) return { tag: 'none', inside: false }
     const r = el.getBoundingClientRect()
-    const hit = document.elementFromPoint(Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2))
+    const hit = document.elementFromPoint(
+      Math.round(r.left + r.width / 2),
+      Math.round(r.top + r.height / 2),
+    )
     if (!hit) return { tag: 'none', inside: false }
     return { tag: hit.tagName.toLowerCase(), inside: el.contains(hit) || hit === el }
   }, sel)
@@ -164,10 +167,10 @@ function cardFacts(page: Page, anchor: string): Promise<CardFacts | null> {
         anchorTop: el.getBoundingClientRect().top,
         barBottom,
         pointerEvents: getComputedStyle(p).pointerEvents,
-        text: (p as HTMLElement).innerText
+        text: (p as HTMLElement).innerText,
       }
     },
-    { popper: POPPER, anchor, controls: CONTROLS.map(([sel]) => sel) }
+    { popper: POPPER, anchor, controls: CONTROLS.map(([sel]) => sel) },
   )
 }
 
@@ -175,14 +178,14 @@ function cardFacts(page: Page, anchor: string): Promise<CardFacts | null> {
 function selectValue(page: Page, sel: string): Promise<string> {
   return page.evaluate(
     (s) => (document.querySelector(s) as HTMLElement | null)?.innerText.trim() ?? '',
-    combo(sel)
+    combo(sel),
   )
 }
 
 function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
   return page.waitForSelector(sel, { timeout: ms }).then(
     () => true,
-    () => false
+    () => false,
   )
 }
 
@@ -206,7 +209,11 @@ async function stepReady(page: Page): Promise<void> {
     throw new Error('no Sky toolbar — nothing below can be asserted')
   }
   const rows = await settleCount(page, ITEM_CHIP, 1, { timeoutMs: 20_000 })
-  check('…with quest rows under it, carrying required-item chips', rows > 0, `chips=${String(rows)}`)
+  check(
+    '…with quest rows under it, carrying required-item chips',
+    rows > 0,
+    `chips=${String(rows)}`,
+  )
 }
 
 /** Park the pointer where nothing is hoverable and let any open card go. */
@@ -223,7 +230,12 @@ async function pointerAway(page: Page): Promise<void> {
  * reported: it is the second line of the collapsed summary of the TOP row, so a card that opens
  * upward from it lands on QuestFilterBar itself.
  */
-async function stepCardIsHarmless(page: Page, sel: string, what: string, expectCard: boolean): Promise<void> {
+async function stepCardIsHarmless(
+  page: Page,
+  sel: string,
+  what: string,
+  expectCard: boolean,
+): Promise<void> {
   if ((await countOf(page, sel)) === 0) {
     note(`no ${what} in this run — that anchor could not be hovered`)
     return
@@ -237,10 +249,17 @@ async function stepCardIsHarmless(page: Page, sel: string, what: string, expectC
     // The kill-target caption names MOBS, not items, and carries its roster as a native title —
     // no DOM node, no hit area. It is on this tab and it stays that way (JOS-143's rule survives
     // everywhere the answer is a sentence rather than an item).
-    check(`hovering the ${what} opens no popper at all`, poppers === 0, `poppers=${String(poppers)}`)
+    check(
+      `hovering the ${what} opens no popper at all`,
+      poppers === 0,
+      `poppers=${String(poppers)}`,
+    )
     return
   }
-  if (!check(`hovering the ${what} opens its item card`, poppers === 1, `poppers=${String(poppers)}`)) return
+  if (
+    !check(`hovering the ${what} opens its item card`, poppers === 1, `poppers=${String(poppers)}`)
+  )
+    return
 
   const facts = await cardFacts(page, sel)
   if (!check(`…and the ${what}'s card can be measured`, facts != null) || !facts) return
@@ -248,18 +267,18 @@ async function stepCardIsHarmless(page: Page, sel: string, what: string, expectC
   check(
     `…the card opens BELOW the ${what}, never up over the toolbar`,
     facts.top >= facts.anchorTop,
-    `card top=${facts.top.toFixed(0)} anchor top=${facts.anchorTop.toFixed(0)}`
+    `card top=${facts.top.toFixed(0)} anchor top=${facts.anchorTop.toFixed(0)}`,
   )
   check(
     '…and its top edge is below the whole filter bar',
     facts.top >= facts.barBottom,
-    `card top=${facts.top.toFixed(0)} bar bottom=${facts.barBottom.toFixed(0)}`
+    `card top=${facts.top.toFixed(0)} bar bottom=${facts.barBottom.toFixed(0)}`,
   )
   // TRIPWIRE 2 — it holds no pointer events. This is the property the 0.15.0 card lacked.
   check(
     '…the card takes no pointer events at all',
     facts.pointerEvents === 'none',
-    `computed pointer-events=${facts.pointerEvents}`
+    `computed pointer-events=${facts.pointerEvents}`,
   )
   // …and the statement of what the user is owed, at this window width.
   for (const [control, name] of CONTROLS) {
@@ -267,7 +286,7 @@ async function stepCardIsHarmless(page: Page, sel: string, what: string, expectC
     check(
       `…and ${name} is still the topmost thing at its own centre (${what} hovered)`,
       cover.inside,
-      `elementFromPoint hit <${cover.tag}>`
+      `elementFromPoint hit <${cover.tag}>`,
     )
   }
 }
@@ -286,13 +305,18 @@ async function stepCardNamesTheDropper(page: Page): Promise<void> {
     return
   }
   const drops = await settleCount(page, CARD_DROPS, 1, { timeoutMs: 6000 })
-  if (!check('the hovered item card carries a drop block', drops > 0, `blocks=${String(drops)}`)) return
+  if (!check('the hovered item card carries a drop block', drops > 0, `blocks=${String(drops)}`))
+    return
   const text = await page.evaluate(
     (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
-    CARD_DROPS
+    CARD_DROPS,
   )
   // The 0.16.0 shape, pinned as what this must never be again: an island and nothing else.
-  check('…it is not an island and nothing else (the 0.16.0 shape)', !/^Island \d+$/.test(text.trim()), text)
+  check(
+    '…it is not an island and nothing else (the 0.16.0 shape)',
+    !/^Island \d+$/.test(text.trim()),
+    text,
+  )
   check('…it says WHO drops the item', text.includes('Dropped by:'), text.replace(/\n/g, ' / '))
   // `Plane of Sky` is the zone every resolved Sky mob states, so a roster carrying it names a mob
   // rather than a wind rune's "random drop — any Plane of Sky mob" (which states no island at all).
@@ -324,24 +348,44 @@ async function stepSelectChanges(page: Page, sel: string, what: string): Promise
   if (!check(`the ${what} control has a box to press`, at != null) || !at) return
   await page.mouse.move(at.x, at.y)
   const upAtPress = await countOf(page, POPPER)
-  check(`a card is still open as the pointer reaches ${what}`, upAtPress > 0, `poppers=${String(upAtPress)}`)
+  check(
+    `a card is still open as the pointer reaches ${what}`,
+    upAtPress > 0,
+    `poppers=${String(upAtPress)}`,
+  )
   await page.mouse.down()
   await page.mouse.up()
 
   const options = await settleCount(page, OPTION, 2, { timeoutMs: 10_000 })
-  if (!check(`ONE click on ${what} opens its menu, card and all`, options >= 2, `options=${String(options)}`)) {
+  if (
+    !check(
+      `ONE click on ${what} opens its menu, card and all`,
+      options >= 2,
+      `options=${String(options)}`,
+    )
+  ) {
     return
   }
   // …and the card let go the moment the pointer went down, rather than floating over the options.
   const stillUp = await settleStable(() => countOf(page, POPPER), { timeoutMs: 3000 })
-  check(`…and the card is gone by the time ${what}'s options are up`, stillUp === 0, `poppers=${String(stillUp)}`)
+  check(
+    `…and the card is gone by the time ${what}'s options are up`,
+    stillUp === 0,
+    `poppers=${String(stillUp)}`,
+  )
 
   const labels = await page.evaluate(
     (s) => [...document.querySelectorAll(s)].map((o) => (o as HTMLElement).innerText.trim()),
-    OPTION
+    OPTION,
   )
   const other = labels.find((l) => l !== before)
-  if (!check(`…offering a value other than the one already chosen (${what})`, other != null, labels.join(' | '))) {
+  if (
+    !check(
+      `…offering a value other than the one already chosen (${what})`,
+      other != null,
+      labels.join(' | '),
+    )
+  ) {
     return
   }
 
@@ -365,11 +409,19 @@ async function stepChipSelectOpens(page: Page): Promise<void> {
   if (!check('the island chip-select has a box to press', at != null) || !at) return
   await page.mouse.move(at.x, at.y)
   const upAtPress = await countOf(page, POPPER)
-  check('a card is still open as the pointer reaches the island filter', upAtPress > 0, `poppers=${String(upAtPress)}`)
+  check(
+    'a card is still open as the pointer reaches the island filter',
+    upAtPress > 0,
+    `poppers=${String(upAtPress)}`,
+  )
   await page.mouse.down()
   await page.mouse.up()
   const options = await settleCount(page, OPTION, 1, { timeoutMs: 10_000 })
-  check('the island chip-select opens its list on that one click', options > 0, `options=${String(options)}`)
+  check(
+    'the island chip-select opens its list on that one click',
+    options > 0,
+    `options=${String(options)}`,
+  )
   await page.keyboard.press('Escape')
   await pointerAway(page)
 }
@@ -399,7 +451,11 @@ async function main(): Promise<void> {
     await stepSelectChanges(page, COUNT_SOURCE, 'Count items from')
     await stepChipSelectOpens(page)
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
 
     await dumpArtifacts(page, failures.length ? 'sky-dropdowns-FAIL' : 'sky-dropdowns-pass')
   } finally {

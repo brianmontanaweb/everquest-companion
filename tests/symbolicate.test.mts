@@ -30,7 +30,7 @@ import {
   loadMap,
   lookup,
   symbolicateFrames,
-  type Frame
+  type Frame,
 } from '../scripts/symbolicate.mts'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -43,7 +43,7 @@ const OUT = join(ROOT, 'out')
 test('a single segment decodes to its five fields', () => {
   // `AAAAA` is five zeroes: generated column 0, source 0, line 0, column 0, name 0.
   assert.deepEqual(decodeMappings('AAAAA'), [
-    [{ genCol: 0, srcIndex: 0, srcLine: 0, srcCol: 0, nameIndex: 0 }]
+    [{ genCol: 0, srcIndex: 0, srcLine: 0, srcCol: 0, nameIndex: 0 }],
   ])
 })
 
@@ -59,8 +59,14 @@ test('THE TRAP: only the generated column resets per line — the other four acc
   // …and the generated column DOES reset: `IAAA,IAAA` on one line is 4 then 8, but the same
   // text after a `;` starts from 4 again.
   const cols = decodeMappings('IAAA,IAAA;IAAA')
-  assert.deepEqual(cols[0].map((s) => s.genCol), [4, 8])
-  assert.deepEqual(cols[1].map((s) => s.genCol), [4])
+  assert.deepEqual(
+    cols[0].map((s) => s.genCol),
+    [4, 8],
+  )
+  assert.deepEqual(
+    cols[1].map((s) => s.genCol),
+    [4],
+  )
 })
 
 test('the sign bit is bit 0, so negative deltas decode — and the FIELD ORDER is fixed', () => {
@@ -89,7 +95,7 @@ test('a one-field segment is generated code with NO original position', () => {
 
 test('lookup is NEAREST-AT-OR-BEFORE, and refuses to guess before the first mapping', () => {
   const map = loadMap(
-    JSON.stringify({ version: 3, sources: ['a.ts'], names: [], mappings: 'IAAA,IAAA' })
+    JSON.stringify({ version: 3, sources: ['a.ts'], names: [], mappings: 'IAAA,IAAA' }),
   )
   // segments at generated columns 4 and 8
   assert.equal(lookup(map, 1, 3), null, 'before the first mapping is unmapped, never segment 0')
@@ -139,7 +145,7 @@ test('ROUND TRIP: a real generated position resolves to a file that exists in th
 
   const [r] = symbolicateFrames(
     [{ file: built.file, line: probe.line, col: probe.col, func: 'probe' }],
-    OUT
+    OUT,
   )
   assert.ok(r.source !== null, `a mapped position must resolve: ${JSON.stringify(r)}`)
   assert.ok(r.sourceLine >= 1, 'source lines are 1-based for humans, 0-based in the format')
@@ -149,7 +155,7 @@ test('ROUND TRIP: a real generated position resolves to a file that exists in th
   const rel = (r.source ?? '').replace(/^(?:\.\.\/)+/, '')
   assert.ok(
     existsSync(join(ROOT, rel)) || rel.includes('node_modules'),
-    `symbolicated to a path that does not exist: ${String(r.source)}`
+    `symbolicated to a path that does not exist: ${String(r.source)}`,
   )
   assert.match(formatFrame(r), /:\d+:\d+\)$/)
 })
@@ -162,26 +168,30 @@ test('THE MAPS ARE EMITTED, AND THE MAPS DO NOT SHIP — both halves, read off t
   assert.equal(
     (vite.match(/sourcemap: true/g) ?? []).length,
     3,
-    'main, preload and renderer must all emit maps — a missing one is half a stack nobody can read'
+    'main, preload and renderer must all emit maps — a missing one is half a stack nobody can read',
   )
   const builder = readFileSync(join(ROOT, 'electron-builder.yml'), 'utf8')
   assert.match(
     builder,
     /'!\*\*\/\*\.\{o,obj,map,ts,tsx\}'/,
-    'electron-builder must keep excluding *.map — it is what keeps the maps out of the installer'
+    'electron-builder must keep excluding *.map — it is what keeps the maps out of the installer',
   )
   // …and CI keeps them, privately, keyed by version. A release asset would publish them.
   const ci = readFileSync(join(ROOT, '.github', 'workflows', 'build.yml'), 'utf8')
   assert.equal(
     (ci.match(/name: sourcemaps-/g) ?? []).length,
     2,
-    'both jobs upload a sourcemap artifact'
+    'both jobs upload a sourcemap artifact',
   )
-  assert.match(ci, /name: sourcemaps-\$\{\{ github\.ref_name \}\}/, 'the release one is keyed by TAG')
+  assert.match(
+    ci,
+    /name: sourcemaps-\$\{\{ github\.ref_name \}\}/,
+    'the release one is keyed by TAG',
+  )
   assert.equal(
     /gh release upload[^\n]*\.map/.test(ci),
     false,
-    'sourcemaps must never become a public release asset'
+    'sourcemaps must never become a public release asset',
   )
 })
 
@@ -195,7 +205,7 @@ test('ROUND TRIP: every emitted bundle has a map beside it', (t) => {
   // unreadable — the exact failure this feature exists to prevent.
   for (const [dir, name] of [
     ['main', 'index.js'],
-    ['preload', 'index.js']
+    ['preload', 'index.js'],
   ] as const) {
     assert.ok(existsSync(join(OUT, dir, `${name}.map`)), `out/${dir}/${name}.map is missing`)
   }
@@ -219,7 +229,7 @@ test('ROUND TRIP: every emitted bundle has a map beside it', (t) => {
     if (existsSync(join(assets, `${f}.map`))) continue
     assert.ok(
       statSync(join(assets, f)).mtimeMs < newestMap,
-      `out/renderer/assets/${f}.map is missing and the bundle is newer than the newest map — the sourcemap flag was dropped`
+      `out/renderer/assets/${f}.map is missing and the bundle is newer than the newest map — the sourcemap flag was dropped`,
     )
   }
 })

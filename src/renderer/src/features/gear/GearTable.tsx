@@ -67,7 +67,16 @@
 // The control itself is `features/wishlist/WishToggle.tsx` now; nothing about it is decided here.
 
 import { type JSX, memo, useMemo } from 'react'
-import { Box, Stack, Table, TableBody, TableCell, TableHead, TableRow, TableSortLabel } from '@mui/material'
+import {
+  Box,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TableSortLabel,
+} from '@mui/material'
 import type { GearRow } from '@shared/planner/gear'
 import type { WindowedRows } from '../../lib/useWindowedRows'
 import { EraChip, DonorName } from '../planner/PlannerChips'
@@ -93,8 +102,8 @@ const FIXED_ROW = {
     maxHeight: ROW_HEIGHT,
     whiteSpace: 'nowrap',
     overflow: 'hidden',
-    textOverflow: 'ellipsis'
-  }
+    textOverflow: 'ellipsis',
+  },
 } as const
 
 /**
@@ -192,7 +201,7 @@ export interface GearTableProps {
 function WishButton({
   row,
   wished,
-  onToggleWish
+  onToggleWish,
 }: {
   row: GearRow
   wished: boolean
@@ -230,7 +239,7 @@ const GearLine = memo(function GearLine({
   ownership,
   wished,
   compare,
-  on
+  on,
 }: {
   row: GearRow
   columns: readonly GearColumn[]
@@ -262,7 +271,12 @@ const GearLine = memo(function GearLine({
             costs, so it is a fixed target on this surface too. The `Stack` was always what let the
             name share this cell with the era chip, and the FIXED_ROW contract above is what keeps
             all three one clipped line rather than two. */}
-        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexWrap: 'nowrap', minWidth: 0 }}>
+        <Stack
+          direction="row"
+          spacing={0.5}
+          alignItems="center"
+          sx={{ flexWrap: 'nowrap', minWidth: 0 }}
+        >
           <DonorName name={row.name} onOpen={on.openLoot} />
           {/* THE ONE CHIP A SEARCH ROW WEARS, and it is a POINTER rather than a verdict: the era
               join's (out of era / era?), which explains a row you can SEE.
@@ -304,7 +318,9 @@ const GearLine = memo(function GearLine({
   // placement read the one edge of a full-width row that is off the screen, and drew the card 3px
   // inside a 1268px window — present in the DOM, invisible to a human. `GearCompareCard.tsx`'s
   // header carries the measurement and the new law; nothing here had to move for it.
-  return compare === undefined ? line : (
+  return compare === undefined ? (
+    line
+  ) : (
     <GearRowCompare row={row} data={compare}>
       {line}
     </GearRowCompare>
@@ -317,7 +333,7 @@ function SortHeader({
   sort,
   width,
   align,
-  onSort
+  onSort,
 }: {
   column: { key: GearSortKey; label: string }
   sort: GearSort
@@ -327,7 +343,10 @@ function SortHeader({
 }): JSX.Element {
   const active = sort.key === column.key
   return (
-    <TableCell align={align} sx={{ ...(width === undefined ? {} : { width }), ...(align === 'right' ? NUMERIC_PAD : {}) }}>
+    <TableCell
+      align={align}
+      sx={{ ...(width === undefined ? {} : { width }), ...(align === 'right' ? NUMERIC_PAD : {}) }}
+    >
       <TableSortLabel
         active={active}
         direction={active ? sort.dir : 'desc'}
@@ -351,7 +370,7 @@ export default function GearTable({
   onOpenLoot,
   onToggleWish,
   wished,
-  compare
+  compare,
 }: GearTableProps): JSX.Element {
   const span = columns.length + (ownership === null ? 3 : 4)
   const layout = gearTableLayout(columns.length, ownership !== null)
@@ -359,7 +378,10 @@ export default function GearTable({
   // `memo`'d and a fresh literal per render would defeat it on every keystroke. It held two until
   // JOS-325 retired the `+`, and holds two again since JOS-335 — which is exactly why it stayed an
   // object through the year it held one: the wrapper is what the memo depends on.
-  const handlers = useMemo(() => ({ openLoot: onOpenLoot, wish: onToggleWish }), [onOpenLoot, onToggleWish])
+  const handlers = useMemo(
+    () => ({ openLoot: onOpenLoot, wish: onToggleWish }),
+    [onOpenLoot, onToggleWish],
+  )
   return (
     <Table
       size="small"
@@ -375,18 +397,34 @@ export default function GearTable({
           {/* In percentage mode the item NAME states no width and takes whatever the stated columns
               leave (LootTables.tsx); in pixel mode every column is stated, because the SUM is what
               makes the table wider than the pane. */}
-          <SortHeader column={{ key: 'name', label: 'Item' }} sort={sort} width={layout.name} onSort={onSort} />
+          <SortHeader
+            column={{ key: 'name', label: 'Item' }}
+            sort={sort}
+            width={layout.name}
+            onSort={onSort}
+          />
           <TableCell sx={{ width: layout.slot }}>Slot</TableCell>
           <TableCell sx={{ width: layout.classes }}>Classes</TableCell>
           {columns.map((c) => (
-            <SortHeader key={c.key} column={c} sort={sort} width={layout.numeric} align="right" onSort={onSort} />
+            <SortHeader
+              key={c.key}
+              column={c}
+              sort={sort}
+              width={layout.numeric}
+              align="right"
+              onSort={onSort}
+            />
           ))}
           {/* The one column that is not a number and not sortable: it reports a live file, and the
               header carries the two things a reader has to know about it — that a `+N` is its own
               copy, and which key rings the fold left out. It stays LAST whatever the picker shows
               (JOS-297): the numerics are what an item reads, this is what you have. */}
           {ownership !== null && (
-            <TableCell sx={{ width: layout.owned }} title={ownedHint} data-testid="gear-owned-header">
+            <TableCell
+              sx={{ width: layout.owned }}
+              title={ownedHint}
+              data-testid="gear-owned-header"
+            >
               Owned
             </TableCell>
           )}

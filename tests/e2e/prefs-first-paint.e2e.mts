@@ -50,7 +50,7 @@ import {
   failures,
   note,
   reportRun,
-  settleGone
+  settleGone,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture } from './logFixture.mjs'
@@ -63,7 +63,7 @@ import {
   resetRecorder,
   setSwitch,
   storedAutoHide,
-  storedScale
+  storedScale,
 } from './prefsFirstPaintSteps.mjs'
 import { uiScalePercent } from '../../src/shared/uiScale'
 
@@ -121,7 +121,7 @@ async function stepArrange(page: Page): Promise<void> {
   check(
     'main stored the pair as clicked, so the expectations below are about DISK and not about the UI',
     !stored.hideWhenNotRunning && stored.hideWhenUnfocused,
-    JSON.stringify(stored)
+    JSON.stringify(stored),
   )
   const scale = await storedScale(page)
   check('…and stored the text size off the default rung', scale === CHOSEN_SCALE, String(scale))
@@ -145,19 +145,19 @@ async function stepSectionSwitch(page: Page): Promise<void> {
     seen,
     'pref-hide-when-not-running',
     'off',
-    'a stored-OFF switch whose DEFAULT is on paints OFF on its first frame, and never anything else'
+    'a stored-OFF switch whose DEFAULT is on paints OFF on its first frame, and never anything else',
   )
   checkFirstPaint(
     seen,
     'pref-hide-when-unfocused',
     'on',
-    '…and a stored-ON switch whose default is off paints ON, so the fix is not a flipped default'
+    '…and a stored-ON switch whose default is off paints ON, so the fix is not a flipped default',
   )
   checkFirstPaint(
     seen,
     'pref-banner-enabled',
     'on',
-    'the alert banner switch, an overlay OPEN-STATE stored ON against its shipped OFF, is born ON (the 2026-08-16 regression)'
+    'the alert banner switch, an overlay OPEN-STATE stored ON against its shipped OFF, is born ON (the 2026-08-16 regression)',
   )
 
   await resetRecorder(page)
@@ -167,13 +167,13 @@ async function stepSectionSwitch(page: Page): Promise<void> {
     appearance,
     'pref-text-size-value',
     CHOSEN_LABEL,
-    'the in-app stepper prints the STORED rung first, never 100% (the non-boolean half)'
+    'the in-app stepper prints the STORED rung first, never 100% (the non-boolean half)',
   )
   checkFirstPaint(
     appearance,
     'pref-overlay-independent',
     'on',
-    '…and the overlays’ switch is born ON, so the card mounts as the twelve rows rather than swapping shape'
+    '…and the overlays’ switch is born ON, so the card mounts as the twelve rows rather than swapping shape',
   )
 }
 
@@ -200,18 +200,18 @@ async function stepColdRenderer(page: Page): Promise<void> {
     seen,
     'pref-hide-when-not-running',
     'off',
-    'after a RELOAD, with nothing cached, the stored-OFF switch is still born OFF'
+    'after a RELOAD, with nothing cached, the stored-OFF switch is still born OFF',
   )
+  checkFirstPaint(seen, 'pref-hide-when-unfocused', 'on', '…and the stored-ON one is still born ON')
   checkFirstPaint(
     seen,
-    'pref-hide-when-unfocused',
+    'pref-banner-enabled',
     'on',
-    '…and the stored-ON one is still born ON'
+    '…and so is the alert banner switch, from a cold cache',
   )
-  checkFirstPaint(seen, 'pref-banner-enabled', 'on', '…and so is the alert banner switch, from a cold cache')
   check(
     'the pane hydrated rather than giving up: its unreadable-settings ending never appeared',
-    (await countOf(page, '[data-testid="prefs-unreadable"]')) === 0
+    (await countOf(page, '[data-testid="prefs-unreadable"]')) === 0,
   )
 }
 
@@ -249,9 +249,15 @@ async function main(): Promise<void> {
     await log.dispose()
   }
 
-  check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+  check(
+    'no renderer console errors',
+    consoleErrors.length === 0,
+    consoleErrors.slice(0, 3).join(' | '),
+  )
   if (failures.length === 0) {
-    note('every claim here is a RECORDED SEQUENCE, not a settled read - a settled read of this defect is green on the broken build')
+    note(
+      'every claim here is a RECORDED SEQUENCE, not a settled read - a settled read of this defect is green on the broken build',
+    )
   }
 
   reportRun()

@@ -46,7 +46,7 @@ import {
   spellCorrectionsReport,
   spellPlaceholdersReport,
   spellRemovalsReport,
-  type SpellDb
+  type SpellDb,
 } from './data/spellDb'
 import { MessageOverlayMiner } from './data/messageOverlay'
 import { baselineOverlay, loadUserSources } from './data/overlayPersistence'
@@ -118,39 +118,39 @@ export const DATA_READY_MS = performance.now()
 export function logSpellDbSummary(): void {
   const db = appSpellDb()
   logInfo(
-    `[everquest-companion] Message overlay: applied ${cachedCorrections} cast-message corrections over the wiki DB.`
+    `[everquest-companion] Message overlay: applied ${cachedCorrections} cast-message corrections over the wiki DB.`,
   )
   const c = spellCorrectionsReport()
   if (c) {
     logInfo(
-      `[everquest-companion] Spell corrections: ${c.applied} applied, ${c.satisfied} already correct upstream, ${c.stale.length} stale.`
+      `[everquest-companion] Spell corrections: ${c.applied} applied, ${c.satisfied} already correct upstream, ${c.stale.length} stale.`,
     )
   }
   const r = spellRemovalsReport()
   if (r) {
     const tombstones = r.satisfied.length > 0 ? ` Tombstones: ${r.satisfied.join(', ')}.` : ''
     logInfo(
-      `[everquest-companion] Spell removals: ${r.removed} row${r.removed === 1 ? '' : 's'} dropped (absent from EQ Legends), ${r.satisfied.length} already absent upstream.${tombstones}`
+      `[everquest-companion] Spell removals: ${r.removed} row${r.removed === 1 ? '' : 's'} dropped (absent from EQ Legends), ${r.satisfied.length} already absent upstream.${tombstones}`,
     )
   }
   const p = spellPlaceholdersReport()
   if (p) {
     const which = p.rows.map((row) => `${row.spell}/${row.field}`).join(', ')
     logInfo(
-      `[everquest-companion] Spell placeholders: ${p.nulled} stub message${p.nulled === 1 ? '' : 's'} read as absent${which ? ` (${which})` : ''}.`
+      `[everquest-companion] Spell placeholders: ${p.nulled} stub message${p.nulled === 1 ? '' : 's'} read as absent${which ? ` (${which})` : ''}.`,
     )
   }
   const e = spellEraReport()
   if (e) {
     logInfo(
-      `[everquest-companion] Spell era: ${e.marked} row${e.marked === 1 ? '' : 's'} the wiki badges out of era, ${e.silent} with no verdict (of ${e.table} in the sidecar).`
+      `[everquest-companion] Spell era: ${e.marked} row${e.marked === 1 ? '' : 's'} the wiki badges out of era, ${e.silent} with no verdict (of ${e.table} in the sidecar).`,
     )
   }
   const a = auditSpellSubjects(db.spells)
   logInfo(
-    `[everquest-companion] Spell subjects: ${a.unreachable.length} spell${a.unreachable.length === 1 ? '' : 's'} unreachable by their landing sentence (${a.wrongSubject} rows with the wrong subject placeholder, ${a.noSubject} with none, ${a.firstPerson.length} first-person fields naming a third party).`
+    `[everquest-companion] Spell subjects: ${a.unreachable.length} spell${a.unreachable.length === 1 ? '' : 's'} unreachable by their landing sentence (${a.wrongSubject} rows with the wrong subject placeholder, ${a.noSubject} with none, ${a.firstPerson.length} first-person fields naming a third party).`,
   )
   logInfo(
-    `[everquest-companion] Spell DB: ${db.spells.length} spells (${db.castOnYou.size} unique cast-on-you msgs).`
+    `[everquest-companion] Spell DB: ${db.spells.length} spells (${db.castOnYou.size} unique cast-on-you msgs).`,
   )
 }

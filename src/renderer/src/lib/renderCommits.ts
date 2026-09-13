@@ -104,7 +104,7 @@ export function createRing(now: number, capacity: number = RENDER_RING_CAPACITY)
     next: 0,
     live: 0,
     offered: 0,
-    since: now
+    since: now,
   }
 }
 
@@ -145,7 +145,7 @@ function rowOf(id: string, tally: Tally, spanMs: number): SurfaceCommits {
     id,
     commits: tally.commits,
     perSecond: rate(tally.commits, spanMs),
-    worstMs: tally.worstMs
+    worstMs: tally.worstMs,
   }
 }
 
@@ -164,7 +164,7 @@ function rowOf(id: string, tally: Tally, spanMs: number): SurfaceCommits {
 export function summarizeCommits(
   ring: CommitRing,
   now: number,
-  options: { rootId: string; windowMs?: number }
+  options: { rootId: string; windowMs?: number },
 ): RenderCommitSample {
   const windowMs = options.windowMs ?? RENDER_WINDOW_MS
   const floor = now - windowMs
@@ -187,7 +187,11 @@ export function summarizeCommits(
     if (tally.worstMs === null || duration > tally.worstMs) tally.worstMs = duration
   }
 
-  const root = rowOf(options.rootId, byId.get(options.rootId) ?? { commits: 0, worstMs: null }, spanMs)
+  const root = rowOf(
+    options.rootId,
+    byId.get(options.rootId) ?? { commits: 0, worstMs: null },
+    spanMs,
+  )
   const surfaces = [...byId.entries()]
     .filter(([id]) => id !== options.rootId)
     .map(([id, tally]) => rowOf(id, tally, spanMs))
@@ -200,6 +204,6 @@ export function summarizeCommits(
     surfaces,
     // The ring is full AND its oldest surviving record is still inside the window, so a record that
     // belonged in this count has already been overwritten.
-    saturated: ring.live === capacity && oldestInWindow
+    saturated: ring.live === capacity && oldestInWindow,
   }
 }

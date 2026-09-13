@@ -46,7 +46,12 @@ export function MeterScopeSetting(): JSX.Element {
         sx={{ alignSelf: 'flex-start' }}
       >
         {METER_SCOPES.map((s) => (
-          <ToggleButton key={s} value={s} data-testid={`pref-meter-scope-${s}`} sx={{ px: 1.5, py: 0.25 }}>
+          <ToggleButton
+            key={s}
+            value={s}
+            data-testid={`pref-meter-scope-${s}`}
+            sx={{ px: 1.5, py: 0.25 }}
+          >
             {SCOPE_LABEL[s]}
           </ToggleButton>
         ))}

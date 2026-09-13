@@ -42,7 +42,15 @@
  * Run: `npm run test:e2e -- sky-turnin`.
  */
 import type { Page } from 'playwright-core'
-import { buildIfStale, check, countOf, dumpArtifacts, failures, reportRun, settle } from './appHarness.mjs'
+import {
+  buildIfStale,
+  check,
+  countOf,
+  dumpArtifacts,
+  failures,
+  reportRun,
+  settle,
+} from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture, type FixtureLog } from './logFixture.mjs'
 
@@ -68,10 +76,13 @@ const GIVER = 'Animist Kratho'
 const ITEMS = ['Azarack Skin', 'Wind Rune Heda'] as const
 const LOOT = [
   `--You have looted an ${ITEMS[0]} from Protector of Sky's corpse.--`,
-  `--You have looted a ${ITEMS[1]} from an azarack's corpse.--`
+  `--You have looted a ${ITEMS[1]} from an azarack's corpse.--`,
 ]
 /** One completed trade: an offer per item, then the line that closes the group. */
-const TURN_IN = [...ITEMS.map((i) => `You offered 1 ${i} to ${GIVER}.`), `You complete the trade with ${GIVER}.`]
+const TURN_IN = [
+  ...ITEMS.map((i) => `You offered 1 ${i} to ${GIVER}.`),
+  `You complete the trade with ${GIVER}.`,
+]
 
 /** How many turn-ins the badge claims. `null` when there is no badge — never confused with 0. */
 function badgeCount(page: Page): Promise<number | null> {
@@ -116,7 +127,7 @@ function readyHasQuest(page: Page): Promise<boolean | null> {
       const el = document.querySelector(sel)
       return el ? (el.textContent ?? '').includes(quest) : null
     },
-    [READY, QUEST] as const
+    [READY, QUEST] as const,
   )
 }
 
@@ -152,31 +163,50 @@ async function openQuest(page: Page): Promise<boolean> {
   await page.click(NAV_SKY, { timeout: 30_000 })
   const shown = await page.waitForSelector(SEARCH, { timeout: 60_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!shown) return false
   await page.fill(`${SEARCH} input`, QUEST)
-  const only = await settle(() => filteredCount(page), (n) => n === 1, { timeoutMs: 15_000 })
-  return check(`the search narrows the tab to ${QUEST} alone`, only === 1, `filtered=${String(only)}`)
+  const only = await settle(
+    () => filteredCount(page),
+    (n) => n === 1,
+    { timeoutMs: 15_000 },
+  )
+  return check(
+    `the search narrows the tab to ${QUEST} alone`,
+    only === 1,
+    `filtered=${String(only)}`,
+  )
 }
 
 /** A fresh install has never handed this in: no badge, nothing held, and the mobs still to kill. */
 async function stepBefore(page: Page): Promise<void> {
   check('a quest never turned in shows NO badge', (await countOf(page, BADGE)) === 0)
-  const held = await settle(() => itemsHeld(page), (v) => v !== null, { timeoutMs: 15_000 })
+  const held = await settle(
+    () => itemsHeld(page),
+    (v) => v !== null,
+    { timeoutMs: 15_000 },
+  )
   check('…and reads 0 of the 2 items it needs', held === '0/2', `held=${String(held)}`)
 }
 
 /** Loot both items, live, and watch the row fill up. */
 async function stepLoot(page: Page, log: FixtureLog, at: Date): Promise<void> {
   log.appendAt(at, ...LOOT)
-  const held = await settle(() => itemsHeld(page), (v) => v === '2/2', { timeoutMs: 30_000 })
-  if (!check('looting both items live fills the quest to 2/2', held === '2/2', `held=${String(held)}`)) return
+  const held = await settle(
+    () => itemsHeld(page),
+    (v) => v === '2/2',
+    { timeoutMs: 30_000 },
+  )
+  if (
+    !check('looting both items live fills the quest to 2/2', held === '2/2', `held=${String(held)}`)
+  )
+    return
   check(
     '…and the row says it is ready to hand in',
     (await page.evaluate((sel) => document.querySelector(sel)?.textContent ?? '', ROW)).includes(
-      'Ready to turn in'
-    )
+      'Ready to turn in',
+    ),
   )
 }
 
@@ -199,23 +229,33 @@ async function stepLoot(page: Page, log: FixtureLog, at: Date): Promise<void> {
 /** Before any loot: the tab is mounted, this quest is not on it, and it says something either way. */
 async function stepReadyBefore(page: Page): Promise<void> {
   await page.click(TAB_READY, { timeout: 15_000 })
-  const has = await settle(() => readyHasQuest(page), (v) => v !== null, { timeoutMs: 20_000 })
-  check('a quest holding none of its items is NOT on the Ready tab', has === false, `has=${String(has)}`)
+  const has = await settle(
+    () => readyHasQuest(page),
+    (v) => v !== null,
+    { timeoutMs: 20_000 },
+  )
+  check(
+    'a quest holding none of its items is NOT on the Ready tab',
+    has === false,
+    `has=${String(has)}`,
+  )
   // JOS-155's default, read off a userData dir that has never held the key: an ABSENT stored value
   // means ON here, which is the one inverted flag on this tab, so a fresh install must show it
   // ticked without anybody having ticked it.
   check(
     'the first-time-only box is TICKED on a fresh install, with nothing stored',
-    (await firstTimeTicked(page)) === true
+    (await firstTimeTicked(page)) === true,
   )
   // The empty state is COPY, so it is asserted where it can actually appear — and the fixture's own
   // loot decides which of the two states that is, so both are stated rather than guessed at.
   const text = await readyText(page)
   const counted = /\d+ quests? you are holding every item for/.test(text)
   check(
-    counted ? 'a non-empty Ready tab counts what is on it' : 'an empty Ready tab says what would put a quest on it',
+    counted
+      ? 'a non-empty Ready tab counts what is on it'
+      : 'an empty Ready tab says what would put a quest on it',
     counted || text.includes('Nothing is ready to turn in'),
-    text.slice(0, 200)
+    text.slice(0, 200),
   )
   await page.click(TAB_QUESTS, { timeout: 15_000 })
 }
@@ -233,20 +273,51 @@ async function stepReadyBefore(page: Page): Promise<void> {
  */
 async function stepReadyHolding(page: Page): Promise<void> {
   await page.click(TAB_READY, { timeout: 15_000 })
-  const on = await settle(() => readyHasQuest(page), (v) => v === true, { timeoutMs: 20_000 })
-  if (!check('COLLECTING THE LAST ITEM PUTS THE QUEST ON THE READY TAB', on === true, `has=${String(on)}`)) return
+  const on = await settle(
+    () => readyHasQuest(page),
+    (v) => v === true,
+    { timeoutMs: 20_000 },
+  )
+  if (
+    !check(
+      'COLLECTING THE LAST ITEM PUTS THE QUEST ON THE READY TAB',
+      on === true,
+      `has=${String(on)}`,
+    )
+  )
+    return
 
   await page.click(TAB_QUESTS, { timeout: 15_000 })
   await page.click(HIDE_COMPLETED, { timeout: 15_000 })
-  const gone = await settle(() => filteredCount(page), (n) => n === 0, { timeoutMs: 8_000 })
-  check('"hide completed" empties the QUESTS tab of it, as it always has', gone === 0, `filtered=${String(gone)}`)
+  const gone = await settle(
+    () => filteredCount(page),
+    (n) => n === 0,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    '"hide completed" empties the QUESTS tab of it, as it always has',
+    gone === 0,
+    `filtered=${String(gone)}`,
+  )
   await page.click(TAB_READY, { timeout: 15_000 })
-  const kept = await settle(() => readyHasQuest(page), (v) => v !== null, { timeoutMs: 8_000 })
-  check('…AND THE READY TAB KEEPS IT: the hide-boxes do not reach this tab', kept === true, `has=${String(kept)}`)
+  const kept = await settle(
+    () => readyHasQuest(page),
+    (v) => v !== null,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    '…AND THE READY TAB KEEPS IT: the hide-boxes do not reach this tab',
+    kept === true,
+    `has=${String(kept)}`,
+  )
 
   await page.click(TAB_QUESTS, { timeout: 15_000 })
   await page.click(HIDE_COMPLETED, { timeout: 15_000 })
-  await settle(() => filteredCount(page), (n) => n === 1, { timeoutMs: 8_000 })
+  await settle(
+    () => filteredCount(page),
+    (n) => n === 1,
+    { timeoutMs: 8_000 },
+  )
 }
 
 /**
@@ -258,8 +329,16 @@ async function stepReadyHolding(page: Page): Promise<void> {
  */
 async function stepReadyAfterTurnIn(page: Page): Promise<void> {
   await page.click(TAB_READY, { timeout: 15_000 })
-  const off = await settle(() => readyHasQuest(page), (v) => v === false, { timeoutMs: 20_000 })
-  check('A TURN-IN TAKES THE QUEST OFF THE READY TAB — the items it needed are gone', off === false, `has=${String(off)}`)
+  const off = await settle(
+    () => readyHasQuest(page),
+    (v) => v === false,
+    { timeoutMs: 20_000 },
+  )
+  check(
+    'A TURN-IN TAKES THE QUEST OFF THE READY TAB — the items it needed are gone',
+    off === false,
+    `has=${String(off)}`,
+  )
   await page.click(TAB_QUESTS, { timeout: 15_000 })
 }
 
@@ -283,40 +362,69 @@ async function stepReadyRefarm(page: Page, log: FixtureLog, at: Date): Promise<v
   log.appendAt(at, ...LOOT)
   // The Quests tab is what is mounted here, and its row is the evidence the refarm actually
   // landed — wait for THAT, so an absence on the Ready tab below can only mean the toggle.
-  const held = await settle(() => itemsHeld(page), (v) => v === '2/2', { timeoutMs: 30_000 })
-  if (!check('refarming both items fills the quest to 2/2 again', held === '2/2', `held=${String(held)}`)) return
+  const held = await settle(
+    () => itemsHeld(page),
+    (v) => v === '2/2',
+    { timeoutMs: 30_000 },
+  )
+  if (
+    !check(
+      'refarming both items fills the quest to 2/2 again',
+      held === '2/2',
+      `held=${String(held)}`,
+    )
+  )
+    return
 
   await page.click(TAB_READY, { timeout: 15_000 })
-  const hidden = await settle(() => readyHasQuest(page), (v) => v === false, { timeoutMs: 20_000 })
+  const hidden = await settle(
+    () => readyHasQuest(page),
+    (v) => v === false,
+    { timeoutMs: 20_000 },
+  )
   check(
     'A REFARMED QUEST IS ABSENT UNDER THE DEFAULT — first-time turn-ins is what the tab shows',
     hidden === false,
-    `has=${String(hidden)}`
+    `has=${String(hidden)}`,
   )
   const hiddenCount = await readyTabCount(page)
 
   await page.click(READY_FIRST_TIME, { timeout: 15_000 })
-  const back = await settle(() => readyHasQuest(page), (v) => v === true, { timeoutMs: 20_000 })
+  const back = await settle(
+    () => readyHasQuest(page),
+    (v) => v === true,
+    { timeoutMs: 20_000 },
+  )
   check(
     '…AND PRESENT THE MOMENT THE BOX IS UNTICKED — membership is the predicate, not a one-way flag',
     back === true,
-    `has=${String(back)}`
+    `has=${String(back)}`,
   )
   const shownCount = await settle(
     () => readyTabCount(page),
     (n) => n !== null && hiddenCount !== null && n > hiddenCount,
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
   check(
     'THE TAB COUNT FOLLOWS THE TOGGLE: the refarm is in the number as well as in the list',
     shownCount !== null && hiddenCount !== null && shownCount === hiddenCount + 1,
-    `ticked=${String(hiddenCount)} unticked=${String(shownCount)}`
+    `ticked=${String(hiddenCount)} unticked=${String(shownCount)}`,
   )
 
   await page.click(READY_FIRST_TIME, { timeout: 15_000 })
-  const again = await settle(() => readyHasQuest(page), (v) => v === false, { timeoutMs: 8_000 })
-  check('…and re-ticking hides it again, so the box is a toggle and not a one-shot', again === false)
-  check('…leaving the stored preference as this spec found it', (await firstTimeTicked(page)) === true)
+  const again = await settle(
+    () => readyHasQuest(page),
+    (v) => v === false,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    '…and re-ticking hides it again, so the box is a toggle and not a one-shot',
+    again === false,
+  )
+  check(
+    '…leaving the stored preference as this spec found it',
+    (await firstTimeTicked(page)) === true,
+  )
   await page.click(TAB_QUESTS, { timeout: 15_000 })
 }
 
@@ -326,14 +434,25 @@ async function stepReadyRefarm(page: Page, log: FixtureLog, at: Date): Promise<v
  */
 async function stepTurnIn(page: Page, log: FixtureLog, at: Date): Promise<void> {
   log.appendAt(at, ...TURN_IN)
-  const count = await settle(() => badgeCount(page), (n) => n === 1, { timeoutMs: 30_000 })
-  if (!check('a turn-in in the log puts a badge on the quest', count === 1, `count=${String(count)}`)) return
+  const count = await settle(
+    () => badgeCount(page),
+    (n) => n === 1,
+    { timeoutMs: 30_000 },
+  )
+  if (
+    !check('a turn-in in the log puts a badge on the quest', count === 1, `count=${String(count)}`)
+  )
+    return
   check('…reading "Turned in"', (await badgeLabel(page)) === 'Turned in')
-  const held = await settle(() => itemsHeld(page), (v) => v === '0/2', { timeoutMs: 15_000 })
+  const held = await settle(
+    () => itemsHeld(page),
+    (v) => v === '0/2',
+    { timeoutMs: 15_000 },
+  )
   check(
     'THE TURN-IN SUBTRACTS WHAT IT CONSUMED — the quest is back at 0/2 and can be farmed again',
     held === '0/2',
-    `held=${String(held)}`
+    `held=${String(held)}`,
   )
 }
 
@@ -352,45 +471,76 @@ async function stepTurnIn(page: Page, log: FixtureLog, at: Date): Promise<void> 
  */
 async function stepHideBoxes(page: Page): Promise<void> {
   await page.click(HIDE_COMPLETED, { timeout: 15_000 })
-  const still = await settle(() => filteredCount(page), (n) => n !== null, { timeoutMs: 8_000 })
+  const still = await settle(
+    () => filteredCount(page),
+    (n) => n !== null,
+    { timeoutMs: 8_000 },
+  )
   check(
     'HIDE COMPLETED KEEPS A TURNED-IN QUEST YOU ARE REFARMING — it is work left, not work done',
     still === 1,
-    `filtered=${String(still)}`
+    `filtered=${String(still)}`,
   )
   check('…and its badge is still there beside it', (await badgeCount(page)) === 1)
   await page.click(HIDE_COMPLETED, { timeout: 15_000 })
-  await settle(() => filteredCount(page), (n) => n === 1, { timeoutMs: 8_000 })
+  await settle(
+    () => filteredCount(page),
+    (n) => n === 1,
+    { timeoutMs: 8_000 },
+  )
 
   await page.click(HIDE_TURNED_IN, { timeout: 15_000 })
-  const gone = await settle(() => filteredCount(page), (n) => n === 0, { timeoutMs: 8_000 })
+  const gone = await settle(
+    () => filteredCount(page),
+    (n) => n === 0,
+    { timeoutMs: 8_000 },
+  )
   check(
     'HIDE TURNED IN TAKES THE SAME QUEST OFF THE LIST — the other reading, on its own box',
     gone === 0,
-    `filtered=${String(gone)}`
+    `filtered=${String(gone)}`,
   )
-  check('…so its row is gone from the list too, not merely uncounted', (await countOf(page, ROW)) === 0)
+  check(
+    '…so its row is gone from the list too, not merely uncounted',
+    (await countOf(page, ROW)) === 0,
+  )
   await page.click(HIDE_TURNED_IN, { timeout: 15_000 })
-  const back = await settle(() => filteredCount(page), (n) => n === 1, { timeoutMs: 8_000 })
+  const back = await settle(
+    () => filteredCount(page),
+    (n) => n === 1,
+    { timeoutMs: 8_000 },
+  )
   check('…and un-ticking brings it straight back', back === 1, `filtered=${String(back)}`)
 }
 
 /** Multiple turn-ins are the default: hand it in again, and the badge counts. */
 async function stepAgain(page: Page, log: FixtureLog, at: Date): Promise<void> {
   log.appendAt(at, ...TURN_IN)
-  const count = await settle(() => badgeCount(page), (n) => n === 2, { timeoutMs: 30_000 })
+  const count = await settle(
+    () => badgeCount(page),
+    (n) => n === 2,
+    { timeoutMs: 30_000 },
+  )
   if (!check('A SECOND TURN-IN COUNTS ITSELF', count === 2, `count=${String(count)}`)) return
-  check('…and the badge says so in words', (await badgeLabel(page)) === 'Turned in x2', await badgeLabel(page))
+  check(
+    '…and the badge says so in words',
+    (await badgeLabel(page)) === 'Turned in x2',
+    await badgeLabel(page),
+  )
 }
 
 /** THE STORE, not the log: a fresh log with none of those lines, and the count is still 2. */
 async function stepRemembered(page: Page): Promise<void> {
   if (!(await openQuest(page))) return
-  const count = await settle(() => badgeCount(page), (n) => n !== null, { timeoutMs: 30_000 })
+  const count = await settle(
+    () => badgeCount(page),
+    (n) => n !== null,
+    { timeoutMs: 30_000 },
+  )
   check(
     'THE TURN-INS SURVIVE A RESTART ON A LOG THAT NO LONGER SHOWS THEM',
     count === 2,
-    `count=${String(count)}`
+    `count=${String(count)}`,
   )
 }
 

@@ -45,7 +45,12 @@ export interface MapLocFieldProps {
   onClear: () => void
 }
 
-export default function MapLocField({ marker, onPlace, onShow, onClear }: MapLocFieldProps): JSX.Element {
+export default function MapLocField({
+  marker,
+  onPlace,
+  onShow,
+  onClear,
+}: MapLocFieldProps): JSX.Element {
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -67,7 +72,14 @@ export default function MapLocField({ marker, onPlace, onShow, onClear }: MapLoc
   }
 
   return (
-    <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap data-testid="maps-loc">
+    <Stack
+      direction="row"
+      spacing={0.5}
+      alignItems="center"
+      flexWrap="wrap"
+      useFlexGap
+      data-testid="maps-loc"
+    >
       <TextField
         size="small"
         label="/loc marker"
@@ -77,7 +89,10 @@ export default function MapLocField({ marker, onPlace, onShow, onClear }: MapLoc
         data-testid="maps-loc-field"
         title="Type /loc in game and paste the line here - north/south, west/east, elevation."
         slotProps={{
-          htmlInput: { 'data-testid': 'maps-loc-input', 'aria-label': 'Place a marker from a /loc' }
+          htmlInput: {
+            'data-testid': 'maps-loc-input',
+            'aria-label': 'Place a marker from a /loc',
+          },
         }}
         onChange={(e) => {
           setText(e.target.value)
@@ -119,7 +134,12 @@ export default function MapLocField({ marker, onPlace, onShow, onClear }: MapLoc
         />
       )}
       {error != null && (
-        <Typography variant="caption" color="error" data-testid="maps-loc-error" sx={{ maxWidth: 420 }}>
+        <Typography
+          variant="caption"
+          color="error"
+          data-testid="maps-loc-error"
+          sx={{ maxWidth: 420 }}
+        >
           {error}
         </Typography>
       )}

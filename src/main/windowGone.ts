@@ -81,7 +81,10 @@ export interface RenderGoneReport {
 }
 
 export function renderGoneReport(details: unknown): RenderGoneReport {
-  const d = (typeof details === 'object' && details !== null ? details : {}) as Record<string, unknown>
+  const d = (typeof details === 'object' && details !== null ? details : {}) as Record<
+    string,
+    unknown
+  >
   const reason = shaped(d.reason, REASON_RE)
   const exitCode = numericOr(d.exitCode)
   return {
@@ -89,7 +92,7 @@ export function renderGoneReport(details: unknown): RenderGoneReport {
     message: `render process gone: reason=${reason}, exitCode=${String(exitCode)}`,
     code: exitCode,
     reason,
-    exitCode
+    exitCode,
   }
 }
 
@@ -101,7 +104,11 @@ export function renderGoneReport(details: unknown): RenderGoneReport {
  * fleet would receive four characters of nothing where a reader wanted the reason. It stays in the
  * payload — `errors.log` on the affected machine holds it in full, which is where it is useful.
  */
-export function didFailLoadMessage(errorDescription: unknown, errorCode: unknown, isMainFrame: unknown): string {
+export function didFailLoadMessage(
+  errorDescription: unknown,
+  errorCode: unknown,
+  isMainFrame: unknown,
+): string {
   const description = shaped(errorDescription, NET_ERROR_RE)
   const code = numericOr(errorCode)
   return `load failed: ${description} (errorCode=${String(code)}, mainFrame=${String(isMainFrame === true)})`

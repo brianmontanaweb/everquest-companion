@@ -29,7 +29,15 @@
  * Run: `npm run test:e2e -- sky-targets`.
  */
 import type { Page } from 'playwright-core'
-import { buildIfStale, check, countOf, dumpArtifacts, failures, reportRun, settle } from './appHarness.mjs'
+import {
+  buildIfStale,
+  check,
+  countOf,
+  dumpArtifacts,
+  failures,
+  reportRun,
+  settle,
+} from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture, stageFixture, type FixtureLog } from './logFixture.mjs'
 
@@ -57,11 +65,11 @@ const GIVER = 'Animist Kratho'
 const ITEMS = ['Azarack Skin', 'Wind Rune Heda'] as const
 const LOOT = [
   `--You have looted an ${ITEMS[0]} from Protector of Sky's corpse.--`,
-  `--You have looted a ${ITEMS[1]} from an azarack's corpse.--`
+  `--You have looted a ${ITEMS[1]} from an azarack's corpse.--`,
 ]
 const TURN_IN = [
   ...ITEMS.map((i) => `You offered 1 ${i} to ${GIVER}.`),
-  `You complete the trade with ${GIVER}.`
+  `You complete the trade with ${GIVER}.`,
 ]
 /** The item whose presence tracks the Beastlord quest's contribution: it is needed by that quest
  *  alone, so it appears and disappears with it (Wind Rune Heda is shared and would not). */
@@ -95,30 +103,37 @@ async function openTargets(page: Page): Promise<boolean> {
   await page.click(TAB_TARGETS, { timeout: 15_000 })
   const shown = await page.waitForSelector(PANE, { timeout: 30_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   return check('the Targets tab opens onto its own pane', shown)
 }
 
 /** Rows, the derived statement, and the one agreement that matters: label count = row count. */
 async function stepPane(page: Page): Promise<void> {
-  const rows = await settle(() => countOf(page, ROW), (n) => n > 0, { timeoutMs: 30_000 })
+  const rows = await settle(
+    () => countOf(page, ROW),
+    (n) => n > 0,
+    { timeoutMs: 30_000 },
+  )
   check('the fixture leaves mobs still worth killing', rows > 0, `rows=${String(rows)}`)
   const count = await page.evaluate((sel) => document.querySelector(sel)?.textContent ?? '', COUNT)
   check(
     'the pane states its ordering rule - state, never process',
     count.includes('island by island'),
-    count.slice(0, 200)
+    count.slice(0, 200),
   )
   const label = await labelCount(page)
   check(
     'THE TAB LABEL COUNTS THE MOB CARDS - the same array the pane draws',
     label === rows,
-    `label=${String(label)} rows=${String(rows)}`
+    `label=${String(label)} rows=${String(rows)}`,
   )
   const covered = await page.evaluate(
-    (sel) => [...document.querySelectorAll(sel)].every((el) => Number(el.getAttribute('data-covers')) >= 1),
-    ROW
+    (sel) =>
+      [...document.querySelectorAll(sel)].every(
+        (el) => Number(el.getAttribute('data-covers')) >= 1,
+      ),
+    ROW,
   )
   check('every row says how many needed items its mob covers', covered)
 }
@@ -136,9 +151,15 @@ async function stepPane(page: Page): Promise<void> {
 async function stepIslandOrder(page: Page): Promise<void> {
   const islands = await page.evaluate(
     (sel) => [...document.querySelectorAll(sel)].map((el) => el.getAttribute('data-island') ?? ''),
-    ISLAND
+    ISLAND,
   )
-  if (!check('the mob cards are grouped under island headings', islands.length > 0, `groups=${islands.join(',')}`)) {
+  if (
+    !check(
+      'the mob cards are grouped under island headings',
+      islands.length > 0,
+      `groups=${islands.join(',')}`,
+    )
+  ) {
     return
   }
   const numbered = islands.filter((i) => i !== 'none').map(Number)
@@ -148,19 +169,27 @@ async function stepIslandOrder(page: Page): Promise<void> {
   check(
     'a mob the data places nowhere is LAST, never folded into a guessed island',
     noneAt === -1 || noneAt === islands.length - 1,
-    `groups=${islands.join(',')}`
+    `groups=${islands.join(',')}`,
   )
   if (noneAt !== -1) {
     const title = await page.evaluate(
       (sel) => [...document.querySelectorAll(sel)].at(-1)?.textContent ?? '',
-      `${ISLAND} [data-testid="sky-target-island-title"]`
+      `${ISLAND} [data-testid="sky-target-island-title"]`,
     )
-    check('…and its heading says so in words rather than showing a number', title.includes('not stated'), title)
+    check(
+      '…and its heading says so in words rather than showing a number',
+      title.includes('not stated'),
+      title,
+    )
   }
   // Every card is under a heading: the grouping is a re-cut of the whole list, not a filter.
   const rows = await countOf(page, ROW)
   const grouped = await countOf(page, `${ISLAND} ${ROW}`)
-  check('every mob card sits inside an island group', grouped === rows, `grouped=${String(grouped)} rows=${String(rows)}`)
+  check(
+    'every mob card sits inside an island group',
+    grouped === rows,
+    `grouped=${String(grouped)} rows=${String(rows)}`,
+  )
 }
 
 /**
@@ -170,8 +199,13 @@ async function stepIslandOrder(page: Page): Promise<void> {
  * this pane with nothing reloaded.
  */
 async function stepIgnoreRemoves(page: Page): Promise<void> {
-  const before = await settle(() => paneText(page), (t) => t.includes(MARKER), { timeoutMs: 20_000 })
-  if (!check('the marker item is on the pane before anything is flagged', before.includes(MARKER))) return
+  const before = await settle(
+    () => paneText(page),
+    (t) => t.includes(MARKER),
+    { timeoutMs: 20_000 },
+  )
+  if (!check('the marker item is on the pane before anything is flagged', before.includes(MARKER)))
+    return
 
   await page.click(TAB_QUESTS, { timeout: 15_000 })
   await page.waitForSelector(COUNTS, { timeout: 15_000 })
@@ -182,7 +216,11 @@ async function stepIgnoreRemoves(page: Page): Promise<void> {
 
   await page.click(TAB_TARGETS, { timeout: 15_000 })
   await page.waitForSelector(PANE, { timeout: 15_000 })
-  const gone = await settle(() => paneText(page), (t) => !t.includes(MARKER), { timeoutMs: 20_000 })
+  const gone = await settle(
+    () => paneText(page),
+    (t) => !t.includes(MARKER),
+    { timeoutMs: 20_000 },
+  )
   check('IGNORING THE QUEST TAKES ITS ITEM OFF THE KILL LIST, LIVE', !gone.includes(MARKER))
 
   await page.click(TAB_IGNORED, { timeout: 15_000 })
@@ -190,7 +228,11 @@ async function stepIgnoreRemoves(page: Page): Promise<void> {
   await page.click(UNIGNORE, { timeout: 15_000 })
   await page.click(TAB_TARGETS, { timeout: 15_000 })
   await page.waitForSelector(PANE, { timeout: 15_000 })
-  const back = await settle(() => paneText(page), (t) => t.includes(MARKER), { timeoutMs: 20_000 })
+  const back = await settle(
+    () => paneText(page),
+    (t) => t.includes(MARKER),
+    { timeoutMs: 20_000 },
+  )
   check('…and un-ignoring on the Ignored tab puts it straight back', back.includes(MARKER))
 }
 
@@ -202,11 +244,19 @@ async function stepIgnoreRemoves(page: Page): Promise<void> {
  */
 async function stepLiveArc(page: Page, log: FixtureLog, at: Date): Promise<void> {
   const before = await paneText(page)
-  if (!check('the marker item is back on the pane before the live arc', before.includes(MARKER))) return
+  if (!check('the marker item is back on the pane before the live arc', before.includes(MARKER)))
+    return
 
   log.appendAt(at, ...LOOT)
-  const looted = await settle(() => paneText(page), (t) => !t.includes(MARKER), { timeoutMs: 30_000 })
-  check('LOOTING THE LAST ITEMS TAKES THE QUEST OFF THE LIST - nothing left to grind', !looted.includes(MARKER))
+  const looted = await settle(
+    () => paneText(page),
+    (t) => !t.includes(MARKER),
+    { timeoutMs: 30_000 },
+  )
+  check(
+    'LOOTING THE LAST ITEMS TAKES THE QUEST OFF THE LIST - nothing left to grind',
+    !looted.includes(MARKER),
+  )
 
   log.appendAt(new Date(at.getTime() + 30_000), ...TURN_IN)
   // The turn-in spends the items AND counts the quest as run. "Keeps it off" can only be
@@ -219,7 +269,7 @@ async function stepLiveArc(page: Page, log: FixtureLog, at: Date): Promise<void>
   const badge = await settle(
     () => countOf(page, '[data-testid="posky-turned-in"]'),
     (c) => c > 0,
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
   if (!check('the trade landed: the quest wears its turned-in badge', badge > 0)) return
   await page.fill(SEARCH, '', { timeout: 15_000 })
@@ -228,7 +278,10 @@ async function stepLiveArc(page: Page, log: FixtureLog, at: Date): Promise<void>
   // The spent items would read as needed again under hasEveryItem - the first-time need set is
   // what keeps a run quest out, and this is the assertion that proves it, post-evidence.
   const settled = await paneText(page)
-  check('…AND THE TURN-IN KEEPS IT OFF: a run quest never rejoins the first-time need set', !settled.includes(MARKER))
+  check(
+    '…AND THE TURN-IN KEEPS IT OFF: a run quest never rejoins the first-time need set',
+    !settled.includes(MARKER),
+  )
 }
 
 /**
@@ -241,20 +294,24 @@ async function stepLiveArc(page: Page, log: FixtureLog, at: Date): Promise<void>
 async function stepQuestDoor(page: Page): Promise<void> {
   const name = await page.evaluate(
     (sel) => document.querySelector(sel)?.textContent ?? '',
-    QUEST_LINK
+    QUEST_LINK,
   )
   if (!check('an item line names a quest to open', name.trim() !== '', `name=${name}`)) return
   await page.click(QUEST_LINK, { timeout: 15_000 })
   await page.waitForSelector(COUNTS, { timeout: 15_000 })
   const typed = await settle(
-    () => page.evaluate((sel) => (document.querySelector(sel) as HTMLInputElement | null)?.value ?? '', SEARCH),
+    () =>
+      page.evaluate(
+        (sel) => (document.querySelector(sel) as HTMLInputElement | null)?.value ?? '',
+        SEARCH,
+      ),
     (v) => v !== '',
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   check(
     'CLICKING A QUEST NAME OPENS IT ON THE QUESTS TAB, filters cleared',
     typed.trim() === name.trim(),
-    `search=${typed} link=${name}`
+    `search=${typed} link=${name}`,
   )
   await page.fill(SEARCH, '', { timeout: 15_000 })
   await page.click(TAB_TARGETS, { timeout: 15_000 })
@@ -270,16 +327,35 @@ async function stepQuestDoor(page: Page): Promise<void> {
  */
 async function stepRefarmToggle(page: Page): Promise<void> {
   const ticked = await firstTimeTicked(page)
-  if (!check('the first-time box is drawn and starts ticked', ticked === true, `ticked=${String(ticked)}`)) return
+  if (
+    !check(
+      'the first-time box is drawn and starts ticked',
+      ticked === true,
+      `ticked=${String(ticked)}`,
+    )
+  )
+    return
   const before = await paneText(page)
-  if (!check('the run quest is off the list while the box is ticked', !before.includes(MARKER))) return
+  if (!check('the run quest is off the list while the box is ticked', !before.includes(MARKER)))
+    return
 
   await page.click(FIRST_TIME, { timeout: 15_000 })
-  const wide = await settle(() => paneText(page), (t) => t.includes(MARKER), { timeoutMs: 20_000 })
-  check('UNTICKING THE BOX READMITS THE REFARM - its items were spent, so it wants them again', wide.includes(MARKER))
+  const wide = await settle(
+    () => paneText(page),
+    (t) => t.includes(MARKER),
+    { timeoutMs: 20_000 },
+  )
+  check(
+    'UNTICKING THE BOX READMITS THE REFARM - its items were spent, so it wants them again',
+    wide.includes(MARKER),
+  )
 
   await page.click(FIRST_TIME, { timeout: 15_000 })
-  const narrow = await settle(() => paneText(page), (t) => !t.includes(MARKER), { timeoutMs: 20_000 })
+  const narrow = await settle(
+    () => paneText(page),
+    (t) => !t.includes(MARKER),
+    { timeoutMs: 20_000 },
+  )
   check('…and re-ticking it puts the first-time reading back', !narrow.includes(MARKER))
 }
 

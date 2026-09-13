@@ -59,7 +59,11 @@
 // this file without a DOM.
 
 import { CLASS_ABBRS, MAX_COMBO_SLOTS, type ClassAbbr } from '../../../../shared/classCombo'
-import { ITEM_UPGRADE_BASE, normalizeUpgradeState, type ItemUpgradeState } from '../../../../shared/itemUpgrade'
+import {
+  ITEM_UPGRADE_BASE,
+  normalizeUpgradeState,
+  type ItemUpgradeState,
+} from '../../../../shared/itemUpgrade'
 import { EQUIP_SLOTS, type EquipSlot, type SocketType } from '../../../../shared/planner/types'
 import { WEAPON_PICKS, type WeaponPick } from '../../../../shared/planner/weaponType'
 import { PICKABLE_COLUMNS } from './gearColumns'
@@ -69,7 +73,7 @@ import {
   type EffectFilter,
   type GearFilters,
   type GearSort,
-  type GearSortKey
+  type GearSortKey,
 } from './gearFilter'
 
 // ---- the tier table ---------------------------------------------------------------------------
@@ -111,7 +115,7 @@ export const AREA_FORM_TIER = {
   // ---- the Wish list tab ----
   'eq.wishlist.search': 'session',
   // ---- the Character tab ----
-  'eq.character.search': 'session'
+  'eq.character.search': 'session',
 } as const satisfies Record<string, MemoryTier>
 
 /** A key this area knows how to remember. Anything else is a typo, caught at compile time. */
@@ -162,7 +166,9 @@ function sanitizeList<T extends string>(raw: unknown, vocab: readonly T[], max =
 
 /** A stored object, or `null` for anything that is not one (arrays included — those are lists). */
 function asRecord(raw: unknown): Record<string, unknown> | null {
-  return typeof raw === 'object' && raw !== null && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null
+  return typeof raw === 'object' && raw !== null && !Array.isArray(raw)
+    ? (raw as Record<string, unknown>)
+    : null
 }
 
 /** One member of a closed vocabulary, or the caller's default. */
@@ -194,7 +200,10 @@ function sanitizeSlot(raw: unknown, fallback: EquipSlot | null): EquipSlot | nul
  * fields over it on every render, so writing them here would persist a value that is overwritten
  * before anything reads it.
  */
-export type GearFormMemory = Pick<GearFilters, 'slots' | 'weaponTypes' | 'effect' | 'eraOnly' | 'ownedOnly'>
+export type GearFormMemory = Pick<
+  GearFilters,
+  'slots' | 'weaponTypes' | 'effect' | 'eraOnly' | 'ownedOnly'
+>
 
 /** What the bar opens on when nothing is stored — the shipped defaults, projected. */
 export const DEFAULT_GEAR_FORM: GearFormMemory = {
@@ -202,7 +211,7 @@ export const DEFAULT_GEAR_FORM: GearFormMemory = {
   weaponTypes: DEFAULT_GEAR_FILTERS.weaponTypes,
   effect: DEFAULT_GEAR_FILTERS.effect,
   eraOnly: DEFAULT_GEAR_FILTERS.eraOnly,
-  ownedOnly: DEFAULT_GEAR_FILTERS.ownedOnly
+  ownedOnly: DEFAULT_GEAR_FILTERS.ownedOnly,
 }
 
 const EFFECT_FILTERS: readonly EffectFilter[] = ['any', 'has', 'proc', 'worn', 'focus', 'click']
@@ -222,7 +231,7 @@ export function sanitizeGearForm(raw: unknown): GearFormMemory {
     // Era ships ON, so an unreadable value must come back ON — `sanitizeFlag`'s fallback, never a
     // bare `=== true`, which would silently turn the default filter off for a corrupted store.
     eraOnly: sanitizeFlag(o.eraOnly, DEFAULT_GEAR_FORM.eraOnly),
-    ownedOnly: sanitizeFlag(o.ownedOnly, DEFAULT_GEAR_FORM.ownedOnly)
+    ownedOnly: sanitizeFlag(o.ownedOnly, DEFAULT_GEAR_FORM.ownedOnly),
   }
 }
 
@@ -238,7 +247,7 @@ export function sanitizeGearSort(raw: unknown): GearSort {
   if (o === null) return DEFAULT_GEAR_SORT
   return {
     key: sanitizeOne<GearSortKey>(o.key, SORT_KEYS, DEFAULT_GEAR_SORT.key),
-    dir: sanitizeOne<'asc' | 'desc'>(o.dir, ['asc', 'desc'], DEFAULT_GEAR_SORT.dir)
+    dir: sanitizeOne<'asc' | 'desc'>(o.dir, ['asc', 'desc'], DEFAULT_GEAR_SORT.dir),
   }
 }
 
@@ -289,7 +298,8 @@ export function sanitizeGearClasses(raw: unknown): ClassAbbr[] | null {
  */
 export function sanitizeUpgrade(raw: unknown): ItemUpgradeState {
   const o = asRecord(raw)
-  if (o === null || typeof o.full !== 'number' || typeof o.fraction !== 'number') return ITEM_UPGRADE_BASE
+  if (o === null || typeof o.full !== 'number' || typeof o.fraction !== 'number')
+    return ITEM_UPGRADE_BASE
   if (!Number.isFinite(o.full) || !Number.isFinite(o.fraction)) return ITEM_UPGRADE_BASE
   return normalizeUpgradeState({ full: o.full, fraction: o.fraction })
 }
@@ -323,7 +333,7 @@ export function sanitizeBrowseForm(raw: unknown, fallback: BrowseFormMemory): Br
   return {
     socket: sanitizeOne<SocketType>(o.socket, SOCKETS, fallback.socket),
     slot: sanitizeSlot(o.slot, fallback.slot),
-    trioOnly: sanitizeFlag(o.trioOnly, fallback.trioOnly)
+    trioOnly: sanitizeFlag(o.trioOnly, fallback.trioOnly),
   }
 }
 
@@ -362,7 +372,7 @@ export function sanitizeItemFocus(raw: unknown): ItemFocusMemory | null {
     // Both empties are legal and mean "unknown, which filters nothing" (plannerPreset.ItemFocus) —
     // so an unrecognised slot or class DROPS OUT and the narrowing widens, never errors.
     slots: sanitizeList<EquipSlot>(o.slots, EQUIP_SLOTS),
-    classes: sanitizeList<ClassAbbr>(o.classes, CLASS_ABBRS)
+    classes: sanitizeList<ClassAbbr>(o.classes, CLASS_ABBRS),
   }
 }
 

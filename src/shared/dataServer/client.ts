@@ -67,7 +67,7 @@ import {
   type ReplyResult,
   type RequestId,
   type ResetMessage,
-  type ViewDescriptor
+  type ViewDescriptor,
 } from './protocol.generated'
 import { createBroadcasts, deliver, listen, type Broadcasts } from './broadcasts'
 // THE PER-REQUEST DEADLINE's timer and its number, in the one module that touches a clock — see
@@ -235,7 +235,7 @@ function sendNow(s: ClientState, message: ClientMessage): void {
   } catch (error) {
     failConnection(
       s,
-      new EngineError('unavailable', 'the transport refused a message', undefined, error)
+      new EngineError('unavailable', 'the transport refused a message', undefined, error),
     )
   }
 }
@@ -320,8 +320,8 @@ function onHelloReply(s: ClientState, reply: HelloReply): void {
       s,
       new EngineError(
         'protocolMismatch',
-        `the engine speaks protocol ${reply.protocolVersion}, this build speaks ${PROTOCOL_VERSION}`
-      )
+        `the engine speaks protocol ${reply.protocolVersion}, this build speaks ${PROTOCOL_VERSION}`,
+      ),
     )
     return
   }
@@ -340,7 +340,7 @@ function onHelloReply(s: ClientState, reply: HelloReply): void {
 async function request<O extends RequestOp>(
   s: ClientState,
   op: O,
-  params: ParamsFor<O>
+  params: ParamsFor<O>,
 ): Promise<ResultFor<O>> {
   if (s.state === 'closed' || s.state === 'failed') {
     throw new EngineError('unavailable', `the connection is ${s.state}`)
@@ -355,7 +355,7 @@ function sendRequest<O extends RequestOp>(
   s: ClientState,
   id: RequestId,
   op: O,
-  params: ParamsFor<O>
+  params: ParamsFor<O>,
 ): Promise<ReplyResult> {
   return new Promise<ReplyResult>((resolve, reject) => {
     const deadline = armDeadline(() => {
@@ -396,7 +396,11 @@ function onReply(s: ClientState, reply: Reply): void {
   }
   if (!RESULT_GUARDS[pending.op](reply.result)) {
     pending.reject(
-      new EngineError('internal', `the reply to ${pending.op} carries another op's result`, reply.id)
+      new EngineError(
+        'internal',
+        `the reply to ${pending.op} carries another op's result`,
+        reply.id,
+      ),
     )
     return
   }
@@ -414,17 +418,13 @@ function onErrorReply(s: ClientState, reply: ErrorReply): void {
 
 // ---- subscriptions ------------------------------------------------------------------------------
 
-function subscribe(
-  s: ClientState,
-  descriptor: ViewDescriptor,
-  listener: ViewListener
-): ViewHandle {
+function subscribe(s: ClientState, descriptor: ViewDescriptor, listener: ViewListener): ViewHandle {
   const sub: LiveSubscription = {
     id: nextRequestId(s),
     descriptor,
     listener,
     view: LOADING,
-    closed: false
+    closed: false,
   }
   s.subs.set(sub.id, sub)
   if (s.state === 'ready') openOnWire(s, sub)
@@ -441,7 +441,7 @@ function subscribe(
       sendRequest(s, id, 'view.unsubscribe', { subscription: sub.id }).catch((error: unknown) => {
         s.debug(`unsubscribing ${sub.id} was refused: ${String(error)}`)
       })
-    }
+    },
   }
 }
 
@@ -455,7 +455,8 @@ function openOnWire(s: ClientState, sub: LiveSubscription): void {
     // failed under a subscription that was still being acknowledged, and rows a user is reading are
     // not blanked by a socket (see `failConnection`) — the drop belongs to the reconnect.
     if (sub.closed) return
-    const failure = error instanceof EngineError ? error : new EngineError('internal', String(error))
+    const failure =
+      error instanceof EngineError ? error : new EngineError('internal', String(error))
     emit(sub, { ...sub.view, loading: false, error: failure })
   })
 }
@@ -525,7 +526,7 @@ function onReset(s: ClientState, message: ResetMessage): void {
     total: message.total,
     epoch: message.epoch,
     loading: false,
-    error: null
+    error: null,
   })
 }
 
@@ -543,7 +544,7 @@ function onDiff(s: ClientState, message: DiffMessage): void {
     total: message.total ?? sub.view.total,
     epoch: message.epoch,
     loading: false,
-    error: null
+    error: null,
   })
 }
 
@@ -576,7 +577,7 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
     subs: new Map(),
     stateListeners: new Set(),
     progressListeners: new Set(),
-    broadcasts: createBroadcasts()
+    broadcasts: createBroadcasts(),
   }
   return {
     get state() {
@@ -615,6 +616,6 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
       setConnectionState(s, 'closed')
       s.transport?.close()
       rejectAllPending(s, new EngineError('unavailable', 'the client was closed'))
-    }
+    },
   }
 }

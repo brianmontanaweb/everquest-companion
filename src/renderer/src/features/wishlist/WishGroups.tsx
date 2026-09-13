@@ -30,7 +30,14 @@ import { Tooltip } from '../../lib/Tooltip'
 import { DonorName, EraChip, MismatchChip, NoSlotChip, StateChip } from '../planner/PlannerChips'
 import { classesMismatch } from '../planner/plannerClasses'
 import { CURRENT_ERA_LABEL } from '../planner/plannerData'
-import { campText, costText, type FarmGroup, type FarmNeed, type FarmRow, type FarmZone } from '../planner/plannerFarm'
+import {
+  campText,
+  costText,
+  type FarmGroup,
+  type FarmNeed,
+  type FarmRow,
+  type FarmZone,
+} from '../planner/plannerFarm'
 import type { ClassAbbr } from '@shared/classCombo'
 
 const KIND_HINT: Record<FarmGroup['kind'], string> = {
@@ -38,7 +45,7 @@ const KIND_HINT: Record<FarmGroup['kind'], string> = {
   quest: 'These come from a quest, not a camp.',
   crafted: 'These are made, not dropped.',
   unstated: 'The catalog states no home zone for these.',
-  unknown: 'Nothing says where these come from.'
+  unknown: 'Nothing says where these come from.',
 }
 
 /**
@@ -176,7 +183,7 @@ function Group({
   classes,
   importedKeys,
   onRemove,
-  onOpenLoot
+  onOpenLoot,
 }: {
   group: FarmGroup
   classes: readonly ClassAbbr[]
@@ -246,7 +253,7 @@ export default function WishGroups({
   classes,
   importedKeys,
   onRemove,
-  onOpenLoot
+  onOpenLoot,
 }: WishGroupsProps): JSX.Element {
   return (
     <>
@@ -281,7 +288,11 @@ export interface DoneStripProps {
 export function DoneStrip({ rows, onClear, onOpenLoot }: DoneStripProps): JSX.Element | null {
   if (rows.length === 0) return null
   return (
-    <Paper variant="outlined" data-testid="wishlist-done" sx={{ mb: 1, borderColor: 'success.main' }}>
+    <Paper
+      variant="outlined"
+      data-testid="wishlist-done"
+      sx={{ mb: 1, borderColor: 'success.main' }}
+    >
       <Stack
         direction="row"
         spacing={1}
@@ -318,7 +329,11 @@ export function DoneStrip({ rows, onClear, onOpenLoot }: DoneStripProps): JSX.El
           <Typography variant="body2" component="div" noWrap sx={{ minWidth: 0, flexShrink: 1 }}>
             <DonorName name={row.name} onOpen={onOpenLoot} />
           </Typography>
-          <Typography variant="caption" noWrap sx={{ color: 'text.secondary', minWidth: 0, flexShrink: 1 }}>
+          <Typography
+            variant="caption"
+            noWrap
+            sx={{ color: 'text.secondary', minWidth: 0, flexShrink: 1 }}
+          >
             {row.effect ?? 'gear'}
           </Typography>
           <Box sx={{ flexGrow: 1, minWidth: 4 }} />
@@ -334,7 +349,7 @@ export function WishEraBar({
   eraOnly,
   setEraOnly,
   hidden,
-  outstanding
+  outstanding,
 }: {
   eraOnly: boolean
   setEraOnly: (v: boolean) => void

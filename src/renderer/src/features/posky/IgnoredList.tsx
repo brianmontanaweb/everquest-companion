@@ -18,7 +18,7 @@ import type { QuestProgress } from './useProgress'
 // untouched.
 export function IgnoredList({
   quests,
-  onUnignore
+  onUnignore,
 }: {
   quests: QuestProgress[]
   onUnignore: (questKey: string) => void
@@ -33,7 +33,8 @@ export function IgnoredList({
   return (
     <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-        {quests.length} quest{quests.length === 1 ? '' : 's'} hidden from the list, filters and counts.
+        {quests.length} quest{quests.length === 1 ? '' : 's'} hidden from the list, filters and
+        counts.
       </Typography>
       <Stack spacing={0.5}>
         {quests.map((q) => (
@@ -45,7 +46,13 @@ export function IgnoredList({
             sx={{ px: 1, py: 0.5, borderRadius: 1, '&:hover': { bgcolor: 'action.hover' } }}
           >
             <QuestIgnoreButton ignored onToggle={() => onUnignore(q.key)} />
-            <Chip label={q.className} size="small" color="secondary" variant="outlined" sx={{ minWidth: 92 }} />
+            <Chip
+              label={q.className}
+              size="small"
+              color="secondary"
+              variant="outlined"
+              sx={{ minWidth: 92 }}
+            />
             <Typography variant="subtitle2" sx={{ minWidth: 220 }}>
               {q.name}
             </Typography>

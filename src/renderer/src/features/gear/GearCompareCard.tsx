@@ -107,7 +107,14 @@ import { scaleGearRow } from '@shared/planner/gearScale'
 import { ITEM_MAX_TIER } from '@shared/itemStats'
 import { percentLabel } from '@shared/itemUpgrade'
 import { outputKind } from '@shared/outputs/kinds'
-import { CARD_LABEL, CARD_MONO, CARD_TEXT, LABEL_STYLE, MoreLine, TEXT_STYLE } from '../../lib/hoverCards'
+import {
+  CARD_LABEL,
+  CARD_MONO,
+  CARD_TEXT,
+  LABEL_STYLE,
+  MoreLine,
+  TEXT_STYLE,
+} from '../../lib/hoverCards'
 import { Tooltip } from '../../lib/Tooltip'
 import {
   compareStats,
@@ -117,7 +124,7 @@ import {
   equippedState,
   hostText,
   statPairText,
-  type EquippedCell
+  type EquippedCell,
 } from './gearCompare'
 import type { GearCompareData } from './gearData'
 
@@ -154,7 +161,7 @@ const PAIR_STYLE: React.CSSProperties = {
   flexWrap: 'nowrap',
   alignItems: 'flex-start',
   gap: 8,
-  maxWidth: 'calc(100vw - 24px)'
+  maxWidth: 'calc(100vw - 24px)',
 }
 
 /** One card's surface. Same geometry both sides; only the accent and the tint differ. */
@@ -169,7 +176,7 @@ function cardSurface(accent: string, tint: string): React.CSSProperties {
     padding: 8,
     fontFamily: CARD_MONO,
     color: CARD_TEXT,
-    boxShadow: '0 6px 20px rgba(0,0,0,0.6)'
+    boxShadow: '0 6px 20px rgba(0,0,0,0.6)',
   }
 }
 
@@ -195,7 +202,8 @@ function SimulatedLine({ data }: { data: GearCompareData }): JSX.Element | null 
   return (
     <div style={{ ...LABEL_STYLE, marginTop: 2 }} data-testid="gear-compare-simulated">
       simulated at Tier {full}
-      {denominator > 0 && ` · ${String(fraction)}/${String(denominator)}`} · {percentLabel(data.state)}
+      {denominator > 0 && ` · ${String(fraction)}/${String(denominator)}`} ·{' '}
+      {percentLabel(data.state)}
     </div>
   )
 }
@@ -204,7 +212,9 @@ function SimulatedLine({ data }: { data: GearCompareData }): JSX.Element | null 
 function ItemStats({ row }: { row: GearRow }): JSX.Element | null {
   // `compareStats(…, null)` states every key the page states and nothing else, so the `flatMap` is
   // the compiler's proof rather than a filter: an entry with no `item` cannot reach `statPairText`.
-  const stated = compareStats(row.stats, null).flatMap((s) => (s.item === undefined ? [] : [statPairText(s.key, s.item)]))
+  const stated = compareStats(row.stats, null).flatMap((s) =>
+    s.item === undefined ? [] : [statPairText(s.key, s.item)],
+  )
   if (stated.length === 0) return null
   return (
     <>
@@ -226,14 +236,24 @@ function ItemStats({ row }: { row: GearRow }): JSX.Element | null {
  * line. The dump names nothing ⇒ that place is EMPTY, which is a fact the client's own file states
  * (gearCompare.ts, decision 2) and the best news a gear planner can give you.
  */
-function EquippedRow({ cell, row, data }: { cell: EquippedCell; row: GearRow; data: GearCompareData }): JSX.Element {
+function EquippedRow({
+  cell,
+  row,
+  data,
+}: {
+  cell: EquippedCell
+  row: GearRow
+  data: GearCompareData
+}): JSX.Element {
   const host = cell.host
   const worn = host === null ? undefined : data.byKey.get(host.key)
   // The worn copy is scaled at ITS OWN `+N` before the subtraction — comparing a candidate against
   // a base-tier reading of something you have already merged five times is the wrong answer, and
   // `equippedState` is where the fraction the dump does not state is priced (gearCompare.ts).
   const changes =
-    host === null || worn === undefined ? [] : compareStats(row.stats, scaleGearRow(worn, equippedState(host)).stats)
+    host === null || worn === undefined
+      ? []
+      : compareStats(row.stats, scaleGearRow(worn, equippedState(host)).stats)
   return (
     <div
       style={{ marginTop: 3 }}
@@ -269,7 +289,13 @@ function EquippedRow({ cell, row, data }: { cell: EquippedCell; row: GearRow; da
 }
 
 /** The left card: the thing the pointer is on. */
-export function GearCompareCard({ row, data }: { row: GearRow; data: GearCompareData }): JSX.Element {
+export function GearCompareCard({
+  row,
+  data,
+}: {
+  row: GearRow
+  data: GearCompareData
+}): JSX.Element {
   return (
     <div data-testid="gear-compare-card" data-item-key={row.key} style={ITEM_SURFACE}>
       <div style={{ color: ITEM_ACCENT, fontSize: 12, fontWeight: 700 }}>{row.name}</div>
@@ -295,18 +321,27 @@ export function GearCompareCard({ row, data }: { row: GearRow; data: GearCompare
  * something true: the age is a property of the claim this card makes and of nothing on the other
  * one.
  */
-export function EquippedCompareCard({ row, data }: { row: GearRow; data: GearCompareData }): JSX.Element | null {
+export function EquippedCompareCard({
+  row,
+  data,
+}: {
+  row: GearRow
+  data: GearCompareData
+}): JSX.Element | null {
   if (!data.ready) return null
   const cells = data.hasDump ? equippedCells(data.equipped, row.slots) : []
   return (
     <div data-testid="gear-compare-equipped-card" style={EQUIPPED_SURFACE}>
-      <div style={{ color: EQUIPPED_ACCENT, fontSize: 12, fontWeight: 700 }}>Currently equipped</div>
+      <div style={{ color: EQUIPPED_ACCENT, fontSize: 12, fontWeight: 700 }}>
+        Currently equipped
+      </div>
       {data.hasDump ? (
         cells.map((cell) => <EquippedRow key={cell.cell} cell={cell} row={row} data={data} />)
       ) : (
         <div style={{ ...TEXT_STYLE, marginTop: 3 }} data-testid="gear-compare-nodump">
-          No inventory dump for this character yet. Type <span style={{ color: EQUIPPED_ACCENT }}>{INVENTORY_COMMAND}</span> in
-          game and this card fills itself.
+          No inventory dump for this character yet. Type{' '}
+          <span style={{ color: EQUIPPED_ACCENT }}>{INVENTORY_COMMAND}</span> in game and this card
+          fills itself.
         </div>
       )}
       <div style={{ ...LABEL_STYLE, marginTop: 4 }} data-testid="gear-compare-freshness">
@@ -322,7 +357,13 @@ export function EquippedCompareCard({ row, data }: { row: GearRow; data: GearCom
  * Exported for any surface that draws the comparison somewhere other than this tooltip, and it is
  * what `GearRowCompare` hands MUI as the tooltip's `title`.
  */
-export function GearComparePair({ row, data }: { row: GearRow; data: GearCompareData }): JSX.Element {
+export function GearComparePair({
+  row,
+  data,
+}: {
+  row: GearRow
+  data: GearCompareData
+}): JSX.Element {
   return (
     <div data-testid="gear-compare-pair" style={PAIR_STYLE}>
       <GearCompareCard row={row} data={data} />
@@ -343,7 +384,7 @@ export function GearComparePair({ row, data }: { row: GearRow; data: GearCompare
  */
 const CLAMP_SIDEWAYS_NEVER_UPWARD = [
   { name: 'flip', enabled: false },
-  { name: 'preventOverflow', options: { mainAxis: true, altAxis: false, padding: 8 } }
+  { name: 'preventOverflow', options: { mainAxis: true, altAxis: false, padding: 8 } },
 ]
 
 /**
@@ -357,7 +398,7 @@ const CLAMP_SIDEWAYS_NEVER_UPWARD = [
  */
 const COMPARE_SLOT_PROPS = {
   popper: { modifiers: CLAMP_SIDEWAYS_NEVER_UPWARD, sx: { pointerEvents: 'none' } },
-  tooltip: { sx: { p: 0, bgcolor: 'transparent', maxWidth: 'none' } }
+  tooltip: { sx: { p: 0, bgcolor: 'transparent', maxWidth: 'none' } },
 } as const
 
 /**

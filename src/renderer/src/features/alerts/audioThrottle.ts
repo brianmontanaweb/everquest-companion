@@ -153,7 +153,7 @@ export function coalesceAudio(
   def: ThrottledDef,
   now: number,
   window: AudioWindow | null,
-  opts: CoalesceOptions = {}
+  opts: CoalesceOptions = {},
 ): ThrottleDecision {
   const heard = opts.heard ?? ''
   if (opts.allAlwaysPlay === true || def.alwaysPlay === true) return { play: true, window }

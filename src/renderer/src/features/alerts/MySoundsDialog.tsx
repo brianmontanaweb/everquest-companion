@@ -28,7 +28,7 @@ import {
   IconButton,
   Paper,
   Stack,
-  Typography
+  Typography,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
@@ -39,7 +39,7 @@ import {
   MAX_IMPORT_MB,
   USER_SOUNDS_PACK_ID,
   USER_SOUND_EXTENSIONS,
-  USER_SOUNDS_PACK_NAME
+  USER_SOUNDS_PACK_NAME,
 } from '@shared/userSounds'
 import { currentPrefs } from './player'
 import { invalidateSoundCaches, playSound } from './soundCache'
@@ -50,7 +50,10 @@ function alertsUsing(alerts: readonly AlertDef[], soundId: string): AlertDef[] {
 }
 
 /** The imported-sounds list, plus the two writes that change it. */
-function useUserSounds(open: boolean, onChanged: () => void): {
+function useUserSounds(
+  open: boolean,
+  onChanged: () => void,
+): {
   sounds: UserSound[]
   rejected: UserSoundRejection[]
   busy: boolean
@@ -94,7 +97,7 @@ function useUserSounds(open: boolean, onChanged: () => void): {
         onChanged()
       }
     },
-    [onChanged]
+    [onChanged],
   )
 
   return { sounds, rejected, busy, addSounds, removeSound }
@@ -104,7 +107,7 @@ function useUserSounds(open: boolean, onChanged: () => void): {
 function SoundRow({
   sound,
   onPlay,
-  onRemove
+  onRemove,
 }: {
   sound: UserSound
   onPlay: (soundId: string) => void
@@ -116,7 +119,16 @@ function SoundRow({
         <IconButton size="small" title="Play" onClick={() => onPlay(sound.soundId)}>
           <PlayArrowIcon fontSize="small" />
         </IconButton>
-        <Typography variant="body2" sx={{ flexGrow: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <Typography
+          variant="body2"
+          sx={{
+            flexGrow: 1,
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {sound.label}
         </Typography>
         <IconButton size="small" title="Remove" onClick={() => onRemove(sound)}>
@@ -136,7 +148,7 @@ function ConfirmRemoveDialog({
   target,
   users,
   onCancel,
-  onConfirm
+  onConfirm,
 }: {
   target: UserSound | null
   users: AlertDef[]
@@ -149,8 +161,8 @@ function ConfirmRemoveDialog({
       <DialogContent>
         <Typography variant="body2" color="text.secondary">
           {users.length === 1 ? 'One alert plays it' : `${users.length} alerts play it`}:{' '}
-          {users.map((a) => a.name).join(', ')}. They keep firing on the default alert line
-          until you point them at another sound. Import the file again to get it back.
+          {users.map((a) => a.name).join(', ')}. They keep firing on the default alert line until
+          you point them at another sound. Import the file again to get it back.
         </Typography>
       </DialogContent>
       <DialogActions>
@@ -167,7 +179,7 @@ export default function MySoundsDialog({
   open,
   alerts,
   onClose,
-  onChanged
+  onChanged,
 }: {
   open: boolean
   /** Read-only: which alerts reference a sound, so a removal can name them. */

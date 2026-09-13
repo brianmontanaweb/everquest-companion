@@ -15,7 +15,11 @@
 // a round trip through a build that has never heard of it. tests/skyItemOverrides.test.mts pins
 // both halves.
 
-import { applyItemOverride, clearItemOverride, sanitizeItemOverrides } from '../shared/itemOverrides'
+import {
+  applyItemOverride,
+  clearItemOverride,
+  sanitizeItemOverrides,
+} from '../shared/itemOverrides'
 import { getProgress, setProgress } from './store'
 import type { ItemCountOverride } from '../shared/itemOverrides'
 import type { ProgressState } from '../shared/types'
@@ -40,7 +44,7 @@ export function setItemOverride(
   charId: string,
   key: string,
   name: string,
-  count: number | null
+  count: number | null,
 ): ProgressState {
   const p = getProgress(charId)
   const list = sanitizeItemOverrides(p.itemOverrides)

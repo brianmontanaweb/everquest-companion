@@ -107,7 +107,7 @@ export function toggleZoneScope(stored: ZoneScope | undefined | null): ZoneScope
  *  window's footer; the caption beside it is where the sentence lives. */
 export const ZONE_SCOPE_LABEL: Record<ZoneScope, string> = {
   allTiers: 'every tier',
-  exactTier: 'this tier'
+  exactTier: 'this tier',
 }
 
 /**
@@ -133,7 +133,7 @@ export const ZONE_SCOPE_TITLE: Record<ZoneScope, string> = {
     'into the zone name are folded away.',
   exactTier:
     'The numbers count only the tier you are standing in - visits to the same camp under any other ' +
-    'spelling of the zone name are left out.'
+    'spelling of the zone name are left out.',
 }
 
 /**
@@ -148,7 +148,7 @@ export const ZONE_SCOPE_TITLE: Record<ZoneScope, string> = {
  */
 export const ZONE_SCOPE_PHRASE: Record<ZoneScope, string> = {
   allTiers: 'every tier',
-  exactTier: 'this tier only'
+  exactTier: 'this tier only',
 }
 
 /**

@@ -30,7 +30,7 @@ import {
   zoneEntryFor,
   zoneKey,
   zoneShortName,
-  zoneShortNameFromCatalog
+  zoneShortNameFromCatalog,
 } from '../src/shared/zones'
 // Tests may cross layers; the shipped modules may not. This is the ONLY place the two folds meet.
 import { zoneKey as mobZoneKey } from '../src/renderer/src/features/mobs/mobZone'
@@ -116,7 +116,7 @@ const OBSERVED: readonly (readonly [string, string | null])[] = [
   ['The Temple of Solusek Ro', 'soltemple'],
   ['Toxxulia Forest', 'tox'],
   ['West Commonlands', 'commons'],
-  ['West Freeport', 'freportw']
+  ['West Freeport', 'freportw'],
 ]
 
 // ---- the table's own invariants -------------------------------------------------------------
@@ -130,7 +130,10 @@ test('every short is a lowercase stem the IPC allowlist would accept', () => {
     // The three traversal shapes the allowlist exists to refuse, spelled out so a future widening
     // of the table can never smuggle one in.
     assert.ok(!e.short.includes('..'), `${e.name}: stem must not contain ..`)
-    assert.ok(!e.short.includes('/') && !e.short.includes('\\'), `${e.name}: stem must be one path segment`)
+    assert.ok(
+      !e.short.includes('/') && !e.short.includes('\\'),
+      `${e.name}: stem must be one path segment`,
+    )
     assert.ok(!e.short.includes(':'), `${e.name}: stem must not contain a drive/ADS separator`)
   }
 })
@@ -143,7 +146,11 @@ test('no two entries collide on zoneKey — one folded name, one place', () => {
       const key = zoneKey(long)
       assert.notEqual(key, '', `${e.short}: "${long}" folds to nothing`)
       const prior = seen.get(key)
-      assert.equal(prior, undefined, `"${long}" (${e.short}) collides with ${String(prior)} on key "${key}"`)
+      assert.equal(
+        prior,
+        undefined,
+        `"${long}" (${e.short}) collides with ${String(prior)} on key "${key}"`,
+      )
       seen.set(key, e.short)
     }
   }
@@ -153,7 +160,11 @@ test('aliases are never redundant — an alias that folds onto its own name is d
   for (const e of ZONES) {
     const nameKey = zoneKey(e.name)
     for (const alias of e.aliases ?? []) {
-      assert.notEqual(zoneKey(alias), nameKey, `${e.short}: alias "${alias}" folds onto its own name`)
+      assert.notEqual(
+        zoneKey(alias),
+        nameKey,
+        `${e.short}: alias "${alias}" folds onto its own name`,
+      )
     }
   }
 })
@@ -165,7 +176,11 @@ test('mobCatalogNames only ever carry spellings the fold cannot already reach', 
   for (const e of ZONES) {
     for (const cat of e.mobCatalogNames ?? []) {
       assert.ok(cat.trim().length > 0, `${e.short}: blank catalog name`)
-      assert.notEqual(zoneKey(cat), zoneKey(e.name), `${e.short}: "${cat}" folds onto the zone's own name`)
+      assert.notEqual(
+        zoneKey(cat),
+        zoneKey(e.name),
+        `${e.short}: "${cat}" folds onto the zone's own name`,
+      )
     }
   }
 })
@@ -208,7 +223,7 @@ test('the fold agrees with the mobs tab, name for name', () => {
     'The Plane of Sky 1 (Awakened)',
     "Nagafen's Lair - Group 3 (Fused)",
     'The Oasis of Marr',
-    'West Commonlands'
+    'West Commonlands',
   ]
   for (const raw of REAL) assert.equal(zoneKey(raw), mobZoneKey(raw), `folds disagree on "${raw}"`)
   // Including the degenerate inputs, where a mismatch would be easiest to miss.
@@ -227,7 +242,11 @@ test('every zone the live log has printed resolves to its map stem', () => {
   assert.equal(resolved, OBSERVED.length - 1, 'exactly one observed zone is deliberately unmapped')
   assert.ok(resolved >= 61, `expected the observed corpus to resolve, got ${String(resolved)}`)
   const stems = new Set(OBSERVED.map(([, s]) => s).filter((s): s is string => s !== null))
-  assert.equal(stems.size, 49, 'the 50 resolvable log names cover 49 stems (permafrost carries two)')
+  assert.equal(
+    stems.size,
+    49,
+    'the 50 resolvable log names cover 49 stems (permafrost carries two)',
+  )
 })
 
 test('an unknown zone returns null — never a nearest guess', () => {
@@ -242,7 +261,15 @@ test('an unknown zone returns null — never a nearest guess', () => {
   assert.equal(zoneShortName('an area where levitation effects do not function'), null)
   // AMBIGUOUS names — each of these is 2-3 different map files, so "close enough" would draw the
   // wrong place. The catalog really does spell zones this way, which is why they are called out.
-  for (const ambiguous of ['Freeport', 'Kaladim', 'Neriak', 'Qeynos', 'Felwithe', 'Guk', 'Karana']) {
+  for (const ambiguous of [
+    'Freeport',
+    'Kaladim',
+    'Neriak',
+    'Qeynos',
+    'Felwithe',
+    'Guk',
+    'Karana',
+  ]) {
     assert.equal(zoneShortName(ambiguous), null, `"${ambiguous}" is ambiguous and must not resolve`)
   }
   // A substring of a real zone is not that zone.
@@ -331,7 +358,7 @@ test('…and it refuses exactly what the log-side lookup refuses', () => {
     'Most starting zones',
     'Everfrost PeaksLake Rathetear',
     'West Freeport OR East Freeport',
-    ''
+    '',
   ]) {
     assert.equal(zoneShortNameFromCatalog(raw), null, raw)
   }
@@ -386,7 +413,7 @@ test('no mobCatalogName can hijack another zone’s own name — the two indexes
       const owner = byName.get(zoneKey(cat))
       assert.ok(
         owner === undefined || owner === e.short,
-        `${e.short}: catalog name "${cat}" is already ${String(owner)}'s own name`
+        `${e.short}: catalog name "${cat}" is already ${String(owner)}'s own name`,
       )
     }
   }

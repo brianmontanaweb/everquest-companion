@@ -128,7 +128,7 @@ export const ERA_LABEL: Record<Era, string> = {
   classic: 'Classic',
   kunark: 'Kunark',
   velious: 'Velious',
-  luclin: 'Luclin'
+  luclin: 'Luclin',
 }
 
 /** Release rank of an era; lower ships earlier. `ERA_ORDER.indexOf` with a name. */
@@ -154,7 +154,11 @@ function index(): Map<string, ZoneEntry> {
   if (INDEX) return INDEX
   const m = new Map<string, ZoneEntry>()
   for (const entry of ZONES) {
-    for (const spelling of [entry.name, ...(entry.aliases ?? []), ...(entry.mobCatalogNames ?? [])]) {
+    for (const spelling of [
+      entry.name,
+      ...(entry.aliases ?? []),
+      ...(entry.mobCatalogNames ?? []),
+    ]) {
       const key = zoneKey(spelling)
       // First writer wins, matching zones.ts's own index. `tests/plannerEra.test.mts` proves the
       // three surfaces never collide across rows, so this guard never actually fires.
@@ -191,7 +195,8 @@ export type EraVerdict = 'in-era' | 'out-of-era' | 'unknown'
 // the builder that writes it — and `era.ts` is already the file all three import for era words.
 
 /** Which stated edge decided an item's era. See the module header in `main/planner/eraDerive.ts`. */
-export type EraDerivationBasis = 'drop-mob' | 'component' | 'yield' | 'page' | 'quest' | 'component-zone'
+export type EraDerivationBasis =
+  'drop-mob' | 'component' | 'yield' | 'page' | 'quest' | 'component-zone'
 
 /**
  * ONE named reason an item with no era claim of its own nevertheless has one: the stated way you
@@ -319,7 +324,7 @@ const TAG_ERA: Readonly<Record<string, Era | null>> = {
   'chardok revamp': 'kunark',
   velious: 'velious',
   luclin: 'luclin',
-  unknown: null
+  unknown: null,
 }
 
 /**
@@ -383,7 +388,7 @@ const PAGE_ERA: Readonly<Record<string, 'in' | 'out'>> = {
   paineel: 'in',
   epics: 'out',
   epicquests: 'out',
-  unknown: 'out'
+  unknown: 'out',
 }
 
 /** The register's two answers: whether the wiki draws the red `Out of Era` badge on the page. */
@@ -392,7 +397,10 @@ export type EraBadge = 'in' | 'out'
 /** The register's key fold: lowercased, spaces and underscores removed. One definition, because
  *  `eraBadge` and `namesEra` must agree on what "the same token" means. */
 function registerKey(tag: string): string {
-  return tag.trim().toLowerCase().replace(/[\s_]+/g, '')
+  return tag
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, '')
 }
 
 /**
@@ -477,7 +485,7 @@ export function eraBadgeOverrides(tag: string | undefined, era: Era): boolean {
 export function layeredVerdictAt(
   zoneNames: readonly string[],
   tag: string | undefined,
-  era: Era
+  era: Era,
 ): EraVerdict {
   if (eraBadgeOverrides(tag, era)) return 'out-of-era'
   const byZone = eraVerdictAt(zoneNames, era)

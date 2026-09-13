@@ -22,7 +22,7 @@ import type { ItemKnowledge, LootEvent } from '../src/shared/types'
 import {
   DROP_FEED_CAP,
   buildDropRows,
-  isHighlighted
+  isHighlighted,
 } from '../src/renderer/src/features/overview/overviewData'
 
 /** A loot line, as the loot module serves it (oldest→newest). */
@@ -39,7 +39,7 @@ function knowledge(over: Partial<ItemKnowledge> = {}): ItemKnowledge {
 const TRADESKILL_ONLY = knowledge({
   name: 'Spider Legs',
   quest: true,
-  recipes: [{ recipe: 'Spider Silk Net', tradeskill: 'Tailoring', trivial: 21 }]
+  recipes: [{ recipe: 'Spider Silk Net', tradeskill: 'Tailoring', trivial: 21 }],
 })
 
 /** A genuinely notable item: LORE, which no recipe carve-out may ever suppress. */
@@ -111,7 +111,7 @@ test('a QUEST-ITEM-flagged tradeskill-only component does NOT highlight but IS r
   const rows = buildDropRows(
     [loot(1, 'Spider Legs')],
     NO_POSKY,
-    new Map([['spider legs', TRADESKILL_ONLY]])
+    new Map([['spider legs', TRADESKILL_ONLY]]),
   )
   assert.equal(rows.length, 1, 'the ledger row still shows — only the highlight is withheld')
   assert.equal(rows[0].knowledge?.quest, true, 'the page really does carry the QUEST ITEM flag')
@@ -129,7 +129,7 @@ test('a quest USE (not just the flag) highlights, which is what rescues real que
     name: 'Rubicite Ore',
     quest: true,
     questUses: [{ source: 'wiki', quest: 'The Smith of Highpass', role: 'required' }],
-    recipes: [{ recipe: 'Rubicite Bar', tradeskill: 'Smithing' }]
+    recipes: [{ recipe: 'Rubicite Bar', tradeskill: 'Smithing' }],
   })
   // A recipe consumes it AND a quest requires it — the carve-out must not fire.
   assert.equal(isHighlighted(false, used), true)
@@ -143,7 +143,7 @@ test('a `+N` variant resolves knowledge through itemCountKey', () => {
   const rows = buildDropRows(
     [loot(1, 'Shiny Brass Idol +2')],
     NO_POSKY,
-    new Map([['shiny brass idol', LORE_ITEM]])
+    new Map([['shiny brass idol', LORE_ITEM]]),
   )
   assert.equal(rows[0].item, 'Shiny Brass Idol +2')
   assert.equal(rows[0].highlighted, true)

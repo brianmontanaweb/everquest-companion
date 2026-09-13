@@ -96,7 +96,7 @@ export function isHighlighted(posky: boolean, k?: ItemKnowledge): boolean {
 export function buildDropRows(
   history: readonly LootEvent[],
   poskyKeys: ReadonlySet<string>,
-  knowledgeByKey: ReadonlyMap<string, ItemKnowledge>
+  knowledgeByKey: ReadonlyMap<string, ItemKnowledge>,
 ): DropRow[] {
   const first = Math.max(0, history.length - DROP_FEED_CAP)
   const rows: DropRow[] = []
@@ -123,7 +123,7 @@ export function buildDropRows(
       disposition: e.disposition,
       posky,
       knowledge,
-      highlighted: isHighlighted(posky, knowledge)
+      highlighted: isHighlighted(posky, knowledge),
     })
   }
   return rows

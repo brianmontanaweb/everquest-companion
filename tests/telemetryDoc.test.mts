@@ -42,19 +42,19 @@ import {
   TELEMETRY_OVERLAY_KINDS,
   TELEMETRY_VIEWS,
   TOTAL_MEM_GB_EDGES,
-  bucketRange
+  bucketRange,
 } from '../src/shared/telemetry'
 import {
   FREE_MEM_GB_EDGES,
   LIVE_STALL_MS_EDGES,
-  WORKING_SET_MB_EDGES
+  WORKING_SET_MB_EDGES,
 } from '../src/shared/telemetryLive'
 import {
   DOC_EVENT_KINDS,
   TELEMETRY_DOC_BUCKETS,
   TELEMETRY_DOC_EVENTS,
   docCoversSchema,
-  renderTelemetryDoc
+  renderTelemetryDoc,
 } from '../src/shared/telemetryDoc'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -87,7 +87,7 @@ test('PARITY: the committed TELEMETRY.md is exactly what the schema renders toda
   assert.equal(
     committed(),
     renderTelemetryDoc(),
-    'TELEMETRY.md is out of date — run `npm run gen:telemetry-doc` and commit the result'
+    'TELEMETRY.md is out of date — run `npm run gen:telemetry-doc` and commit the result',
   )
 })
 
@@ -104,7 +104,7 @@ test('SUBSTANCE: the page names every enum member the schema can emit', () => {
     // feature of this app, which is exactly why the page has to spell every member they can hold.
     ...TELEMETRY_GPU_VENDORS,
     ...TELEMETRY_GPU_COMPOSITING,
-    ...TELEMETRY_EQ_WINDOW_MODES
+    ...TELEMETRY_EQ_WINDOW_MODES,
   ]
   for (const value of closed) {
     assert.ok(md.includes(`\`${value}\``), `TELEMETRY.md never mentions \`${value}\``)
@@ -143,7 +143,7 @@ test('SUBSTANCE: the page prints every bucket RANGE, from the schema’s own edg
     LIVE_STALL_MS_EDGES,
     NEW_BYTES_EDGES,
     FREE_MEM_GB_EDGES,
-    WORKING_SET_MB_EDGES
+    WORKING_SET_MB_EDGES,
   ]
   assert.equal(TELEMETRY_DOC_BUCKETS.length, edgeSets.length, 'every bucket field is documented')
   for (const b of TELEMETRY_DOC_BUCKETS) {
@@ -164,7 +164,11 @@ test('THE LIT-BUILD SENTENCE is on the page, with the three facts that make it d
   // something was — the same forcing function SECURITY.md and README got.
   const md = committed()
   assert.match(md, /this build does send/i)
-  assert.match(md, /nothing is\s+sent before the notice/i, 'the consent gate is stated, not implied')
+  assert.match(
+    md,
+    /nothing is\s+sent before the notice/i,
+    'the consent gate is stated, not implied',
+  )
   assert.match(md, /turning this off deletes/i, 'opt-out is total: the buffer AND the id')
   assert.match(md, /Preferences/)
   assert.doesNotMatch(md, /no build sends anything at all/i)

@@ -47,5 +47,5 @@ export const devBridge = {
    * 'refused' means nothing happened. Nothing should be sequenced after this promise — in two
    * of the three cases the process dies while it is in flight.
    */
-  restartApp: (): Promise<DevRestartResult> => ipcRenderer.invoke(IPC.devRestart)
+  restartApp: (): Promise<DevRestartResult> => ipcRenderer.invoke(IPC.devRestart),
 }

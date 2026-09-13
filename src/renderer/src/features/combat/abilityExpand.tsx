@@ -30,7 +30,7 @@ const Ctx = createContext<AbilityExpand | null>(null)
 
 export function AbilityExpandProvider({
   value,
-  children
+  children,
 }: {
   value: AbilityExpand
   children: ReactNode
@@ -51,7 +51,11 @@ export function AbilityExpandProvider({
  * all. Reporting it closed is the degrade, and it keeps the check in one place instead of once per
  * use of the pair.
  */
-export function useAbilityExpand(category: string, name: string, expandable: boolean): [boolean, () => void] {
+export function useAbilityExpand(
+  category: string,
+  name: string,
+  expandable: boolean,
+): [boolean, () => void] {
   const ctx = useContext(Ctx)
   const [local, setLocal] = useState(false)
   const stored = ctx ? ctx.isOpen(category, name) : local

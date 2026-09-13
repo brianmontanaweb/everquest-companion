@@ -38,14 +38,16 @@ import {
   setYieldToGame,
   type PriorityOs,
   type PriorityWebContents,
-  type PriorityWindow
+  type PriorityWindow,
 } from '../src/main/processPriority'
 
 const NORMAL = 0
 const BELOW_NORMAL = 10
 
 /** A stand-in for `node:os`, recording every call and able to refuse or lie on demand. */
-function stubOs(opts: { refuse?: (pid: number) => string; reports?: (pid: number) => number } = {}): PriorityOs & {
+function stubOs(
+  opts: { refuse?: (pid: number) => string; reports?: (pid: number) => number } = {},
+): PriorityOs & {
   sets: { pid: number; priority: number }[]
 } {
   const sets: { pid: number; priority: number }[] = []
@@ -62,7 +64,7 @@ function stubOs(opts: { refuse?: (pid: number) => string; reports?: (pid: number
     getPriority(pid) {
       if (opts.reports) return opts.reports(pid)
       return current.get(pid) ?? NORMAL
-    }
+    },
   }
 }
 
@@ -72,21 +74,29 @@ test('the pid list is main plus every live renderer, deduped, with the unspawned
   assert.deepEqual(
     selectPriorityPids({ mainPid: 100, rendererPids: [200, 300, 200, 100] }),
     [100, 200, 300],
-    'main first, each pid once - two webContents can share one renderer process'
+    'main first, each pid once - two webContents can share one renderer process',
   )
   assert.deepEqual(
     // 0 is what `getOSProcessId()` answers for a webContents whose process does not exist yet;
     // on some platforms `setPriority(0, …)` means "the caller's group", which is not what any of
     // this is asking for.
     selectPriorityPids({ mainPid: 100, rendererPids: [0, -1, 1.5, Number.NaN, 400] }),
-    [100, 400]
+    [100, 400],
   )
-  assert.deepEqual(selectPriorityPids({ mainPid: 0, rendererPids: [] }), [], 'nothing to do is a valid answer')
+  assert.deepEqual(
+    selectPriorityPids({ mainPid: 0, rendererPids: [] }),
+    [],
+    'nothing to do is a valid answer',
+  )
 })
 
 test('Windows only, and never under the e2e harness', () => {
   assert.equal(priorityIsSupported({ platform: 'win32', e2e: false }), true)
-  assert.equal(priorityIsSupported({ platform: 'win32', e2e: true }), false, 'a test must not reprioritise its own machine')
+  assert.equal(
+    priorityIsSupported({ platform: 'win32', e2e: true }),
+    false,
+    'a test must not reprioritise its own machine',
+  )
   // `os.setPriority` exists on both, but it means NICENESS there - a different mechanism with
   // different semantics, and one an unprivileged process cannot undo.
   assert.equal(priorityIsSupported({ platform: 'darwin', e2e: false }), false)
@@ -97,7 +107,12 @@ test('Windows only, and never under the e2e harness', () => {
 
 test('EPERM and ESRCH are reported, never thrown - the app keeps the priority it had', () => {
   const os = stubOs({
-    refuse: (pid) => (pid === 200 ? 'EPERM: operation not permitted' : pid === 300 ? 'ESRCH: no such process' : undefined)
+    refuse: (pid) =>
+      pid === 200
+        ? 'EPERM: operation not permitted'
+        : pid === 300
+          ? 'ESRCH: no such process'
+          : undefined,
   })
   const out = applyPriority([100, 200, 300], BELOW_NORMAL, os)
 
@@ -106,14 +121,18 @@ test('EPERM and ESRCH are reported, never thrown - the app keeps the priority it
   assert.equal(out[0]?.readBack, BELOW_NORMAL)
   assert.match(out[1]?.error ?? '', /EPERM/)
   assert.match(out[2]?.error ?? '', /ESRCH/)
-  assert.deepEqual(os.sets, [{ pid: 100, priority: BELOW_NORMAL }], 'only the pid that accepted was set')
+  assert.deepEqual(
+    os.sets,
+    [{ pid: 100, priority: BELOW_NORMAL }],
+    'only the pid that accepted was set',
+  )
 })
 
 test('a pid that dies between the set and the read-back is a set, not a failure', () => {
   const os = stubOs({
     reports: () => {
       throw new Error('ESRCH: no such process')
-    }
+    },
   })
   const out = applyPriority([100], BELOW_NORMAL, os)
   assert.equal(out[0]?.error, undefined, 'the set succeeded; only the confirmation was lost')
@@ -134,7 +153,9 @@ test('a class that does not stick reads as the disagreement it is', () => {
 // ---- 4. the wiring ----------------------------------------------------------------------
 
 /** A stand-in for Electron's `WebContents`: one pid, and the two events the module subscribes to. */
-function stubContents(pid: number): PriorityWebContents & { fire: (event: string) => void; kill: () => void } {
+function stubContents(
+  pid: number,
+): PriorityWebContents & { fire: (event: string) => void; kill: () => void } {
   const listeners = new Map<string, (() => void)[]>()
   let destroyed = false
   return {
@@ -150,7 +171,7 @@ function stubContents(pid: number): PriorityWebContents & { fire: (event: string
     kill() {
       destroyed = true
       for (const l of listeners.get('destroyed') ?? []) l()
-    }
+    },
   }
 }
 
@@ -165,7 +186,7 @@ function stubWindow(wc: PriorityWebContents): PriorityWindow & { show: () => voi
     },
     show() {
       for (const l of shown) l()
-    }
+    },
   }
 }
 
@@ -193,20 +214,24 @@ function wire(enabled: boolean, os = stubOs()): Wired {
     onError: (err) => errors.push(err),
     os,
     platform: 'win32',
-    e2e: false
+    e2e: false,
   })
   return {
     os,
     addContents: (wc) => (onWc as ((wc: PriorityWebContents) => void) | null)?.(wc),
     addWindow: (win) => (onWin as ((win: PriorityWindow) => void) | null)?.(win),
     errors,
-    lines
+    lines,
   }
 }
 
 test('the main process is lowered at startup, and every renderer as it appears', () => {
   const w = wire(true)
-  assert.deepEqual(w.os.sets, [{ pid: 100, priority: BELOW_NORMAL }], 'main is the one pid that exists already')
+  assert.deepEqual(
+    w.os.sets,
+    [{ pid: 100, priority: BELOW_NORMAL }],
+    'main is the one pid that exists already',
+  )
 
   const wc = stubContents(200)
   w.addContents(wc)
@@ -218,7 +243,7 @@ test('the main process is lowered at startup, and every renderer as it appears',
   wc.fire('did-finish-load')
   assert.deepEqual(w.os.sets, [
     { pid: 100, priority: BELOW_NORMAL },
-    { pid: 200, priority: BELOW_NORMAL }
+    { pid: 200, priority: BELOW_NORMAL },
   ])
 
   // …and a window becoming visible, which is what makes Chromium raise the class in the first
@@ -229,7 +254,7 @@ test('the main process is lowered at startup, and every renderer as it appears',
   win.show()
   assert.deepEqual(w.os.sets, [
     { pid: 100, priority: BELOW_NORMAL },
-    { pid: 200, priority: BELOW_NORMAL }
+    { pid: 200, priority: BELOW_NORMAL },
   ])
 
   // A dead renderer leaves the set rather than accumulating for the life of the session.
@@ -245,16 +270,20 @@ test('switching it off puts every process back to NORMAL, in the same call', () 
   w.os.sets.length = 0
 
   setYieldToGame(false)
-  assert.deepEqual(w.os.sets, [
-    { pid: 100, priority: NORMAL },
-    { pid: 200, priority: NORMAL }
-  ], 'off means restored, not "lowered until you relaunch"')
+  assert.deepEqual(
+    w.os.sets,
+    [
+      { pid: 100, priority: NORMAL },
+      { pid: 200, priority: NORMAL },
+    ],
+    'off means restored, not "lowered until you relaunch"',
+  )
 
   w.os.sets.length = 0
   setYieldToGame(true)
   assert.deepEqual(w.os.sets, [
     { pid: 100, priority: BELOW_NORMAL },
-    { pid: 200, priority: BELOW_NORMAL }
+    { pid: 200, priority: BELOW_NORMAL },
   ])
   resetProcessPriorityForTests()
 })
@@ -276,7 +305,11 @@ test('THE ENGINE JOINS THE SET, and a respawn is a new pid rather than a stale o
   // The supervisor's `onPid`, both edges. Applied IMMEDIATELY rather than at the next window event:
   // this session's processes must never disagree with what the setting says.
   setEnginePid(7000)
-  assert.deepEqual(w.os.sets.at(-1), { pid: 7000, priority: BELOW_NORMAL }, 'the plan: below-normal')
+  assert.deepEqual(
+    w.os.sets.at(-1),
+    { pid: 7000, priority: BELOW_NORMAL },
+    'the plan: below-normal',
+  )
   // A crash. The old pid must not survive its process — a pid is reused by the OS, and lowering a
   // stranger's process is the one outcome this module must never produce.
   setEnginePid(null)
@@ -285,7 +318,7 @@ test('THE ENGINE JOINS THE SET, and a respawn is a new pid rather than a stale o
   assert.deepEqual(
     w.os.sets.slice(afterGone).map((s) => s.pid),
     [100],
-    'with no engine, the set is main again'
+    'with no engine, the set is main again',
   )
   setEnginePid(7001)
   assert.deepEqual(w.os.sets.at(-1), { pid: 7001, priority: BELOW_NORMAL })
@@ -302,7 +335,7 @@ test('the engine follows the SAME switch as the rest of the app', () => {
   const back = w.os.sets.slice(-2)
   assert.deepEqual(back, [
     { pid: 100, priority: NORMAL },
-    { pid: 7100, priority: NORMAL }
+    { pid: 7100, priority: NORMAL },
   ])
   resetProcessPriorityForTests()
 })
@@ -323,11 +356,11 @@ test('an engine pid known before the module is wired is still lowered when it is
     onWindowCreated: () => undefined,
     os,
     platform: 'win32',
-    e2e: false
+    e2e: false,
   })
   assert.deepEqual(os.sets, [
     { pid: 100, priority: BELOW_NORMAL },
-    { pid: 7200, priority: BELOW_NORMAL }
+    { pid: 7200, priority: BELOW_NORMAL },
   ])
   // And a nonsense pid is dropped rather than handed to the OS — `setPriority(0, …)` means "the
   // caller's group" on some platforms, which is the whole process tree of the session.
@@ -336,7 +369,7 @@ test('an engine pid known before the module is wired is still lowered when it is
   assert.deepEqual(
     os.sets.slice(before).map((s) => s.pid),
     [100],
-    'zero is not a pid; the engine simply leaves the set'
+    'zero is not a pid; the engine simply leaves the set',
   )
   resetProcessPriorityForTests()
 })
@@ -345,9 +378,13 @@ test('the pid list carries child processes after main and the renderers', () => 
   assert.deepEqual(
     selectPriorityPids({ mainPid: 100, rendererPids: [200], childPids: [7000, 200, 0] }),
     [100, 200, 7000],
-    'deduped against the renderers, and a zero pid is still dropped'
+    'deduped against the renderers, and a zero pid is still dropped',
   )
-  assert.deepEqual(selectPriorityPids({ mainPid: 100, rendererPids: [] }), [100], 'absent means none')
+  assert.deepEqual(
+    selectPriorityPids({ mainPid: 100, rendererPids: [] }),
+    [100],
+    'absent means none',
+  )
 })
 
 test('an unsupported platform subscribes to nothing at all', () => {
@@ -361,7 +398,7 @@ test('an unsupported platform subscribes to nothing at all', () => {
     onWindowCreated: () => subscribed++,
     os,
     platform: 'linux',
-    e2e: false
+    e2e: false,
   })
   assert.equal(subscribed, 0, 'no listeners, so nothing can be re-applied later either')
   assert.equal(os.sets.length, 0)

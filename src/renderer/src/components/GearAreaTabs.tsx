@@ -34,7 +34,7 @@ import { GEAR_AREA_VIEWS, VIEW_LABELS, type View } from '../appViews'
  */
 export default function GearAreaTabs({
   view,
-  onSelect
+  onSelect,
 }: {
   view: View
   onSelect: (v: View) => void
@@ -51,7 +51,7 @@ export default function GearAreaTabs({
         borderBottom: 1,
         borderColor: 'divider',
         flexShrink: 0,
-        '& .MuiTab-root': { minHeight: 40, py: 0, textTransform: 'none' }
+        '& .MuiTab-root': { minHeight: 40, py: 0, textTransform: 'none' },
       }}
     >
       {GEAR_AREA_VIEWS.map((v) => (

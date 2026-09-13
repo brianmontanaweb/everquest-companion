@@ -23,7 +23,7 @@ import { settingsStore } from './store'
 import {
   mergeCloseToTray,
   normalizeCloseToTray,
-  type CloseToTrayPrefs
+  type CloseToTrayPrefs,
 } from '../shared/closeToTray'
 
 /** The stored blob, defaulted. Never throws, never returns a partial. */

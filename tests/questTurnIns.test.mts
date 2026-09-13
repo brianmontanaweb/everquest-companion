@@ -50,13 +50,13 @@ import {
   sanitizeTurnInOffered,
   turnInBadgeLabel,
   turnInOfferedToPersist,
-  turnInsToPersist
+  turnInsToPersist,
 } from '../src/shared/questTurnIns'
 import {
   everTurnedIn,
   firstTimeReady,
   hasEveryItem,
-  readyQuests
+  readyQuests,
 } from '../src/renderer/src/features/posky/questCompletion'
 import type { QuestProgress } from '../src/renderer/src/features/posky/useProgress'
 import { reconcile } from '../src/renderer/src/features/inventory/reconcile'
@@ -72,8 +72,8 @@ const CLAW: PoskyQuest = {
   giver: 'Gorgalosk',
   items: [
     { name: 'Sphinx Claw', count: 2, who: [], where: 'Island 4' },
-    { name: 'Wind Rune Geza', count: 1, who: [], where: 'Island 1' }
-  ]
+    { name: 'Wind Rune Geza', count: 1, who: [], where: 'Island 1' },
+  ],
 }
 const CLAW_KEY = questKey(CLAW)
 const QUESTS = [CLAW]
@@ -81,7 +81,7 @@ const QUESTS = [CLAW]
 const progress = (p: Partial<ProgressState>): ProgressState => ({
   inventory: {},
   completedQuests: [],
-  ...p
+  ...p,
 })
 
 // =============================================================================
@@ -91,13 +91,13 @@ const progress = (p: Partial<ProgressState>): ProgressState => ({
 test('sanitize keeps whole non-negative instants, sorted and deduped, and drops the rest', () => {
   assert.deepEqual(
     sanitizeTurnInInstants([3000, 1000, 3000, -5, Number.NaN, 'x', null, 2000.7]),
-    [1000, 2000, 3000]
+    [1000, 2000, 3000],
   )
   assert.deepEqual(sanitizeTurnInInstants('not a list'), [])
   assert.equal(
     sanitizeTurnInInstants(Array.from({ length: 500 }, (_, i) => i + 1)).length,
     MAX_TURN_INS_PER_QUEST,
-    'a renderer-supplied list is capped at the boundary, not trusted'
+    'a renderer-supplied list is capped at the boundary, not trusted',
   )
 })
 
@@ -115,7 +115,7 @@ test('THE MERGE: a stored turn-in re-detected in the log is ONE event, not two',
   assert.equal(
     resolveTurnIns(stored, detectedAgain).all[CLAW_KEY],
     1,
-    'the identical instant is why this is a list of instants and not a tally'
+    'the identical instant is why this is a list of instants and not a tally',
   )
 })
 
@@ -128,7 +128,11 @@ test('a SECOND turn-in of a quest already stored counts twice', () => {
 
 test('a pre-JOS-131 store floors at one turn-in', () => {
   const legacy = progress({ completedQuests: [CLAW_KEY] })
-  assert.equal(resolveTurnIns(legacy, {}).all[CLAW_KEY], 1, 'the old flag is one real, undated turn-in')
+  assert.equal(
+    resolveTurnIns(legacy, {}).all[CLAW_KEY],
+    1,
+    'the old flag is one real, undated turn-in',
+  )
 })
 
 test('the ledger answers ONE count, all time — there is no since-the-dump count (JOS-141)', () => {
@@ -139,15 +143,19 @@ test('the ledger answers ONE count, all time — there is no since-the-dump coun
   assert.equal(
     resolveTurnIns.length,
     2,
-    'and no baseline instant is passed in: the window is by source now, not by time'
+    'and no baseline instant is passed in: the window is by source now, not by time',
   )
 })
 
 test('only the turn-ins the store is missing are written back', () => {
   const stored = progress({ questTurnIns: { [CLAW_KEY]: [1000] } })
-  assert.deepEqual(turnInsToPersist(stored, { [CLAW_KEY]: [1000] }), [], 'settles, so no write loop')
+  assert.deepEqual(
+    turnInsToPersist(stored, { [CLAW_KEY]: [1000] }),
+    [],
+    'settles, so no write loop',
+  )
   assert.deepEqual(turnInsToPersist(stored, { [CLAW_KEY]: [1000, 2000] }), [
-    { key: CLAW_KEY, instants: [1000, 2000] }
+    { key: CLAW_KEY, instants: [1000, 2000] },
   ])
 })
 
@@ -170,11 +178,11 @@ test('sanitize keeps whole positive instants keying whole positive quantities, a
         '-5': { 'wind rune geza': 1 },
         1000.5: { 'wind rune geza': 1 },
         2000: 'junk',
-        3000: { 'wind rune geza': 0, 'sphinx claw': -1, junk: Number.NaN, ok: 'nope' }
+        3000: { 'wind rune geza': 0, 'sphinx claw': -1, junk: Number.NaN, ok: 'nope' },
       },
-      empty: { 1000: { junk: 0 } }
+      empty: { 1000: { junk: 0 } },
     }),
-    { [CLAW_KEY]: { 1000: { 'wind rune geza': 2 } } }
+    { [CLAW_KEY]: { 1000: { 'wind rune geza': 2 } } },
   )
   for (const bad of ['not an object', undefined]) assert.deepEqual(sanitizeTurnInOffered(bad), {})
 })
@@ -188,7 +196,10 @@ test('the offered ledger caps in the SAME direction as sanitizeTurnInInstants �
   for (let i = 0; i < 500; i++) many[i] = { 'wind rune geza': 2 }
   const cleaned = sanitizeTurnInOffered({ [CLAW_KEY]: many })[CLAW_KEY]
   assert.equal(Object.keys(cleaned ?? {}).length, MAX_TURN_INS_PER_QUEST)
-  assert.ok(0 in (cleaned ?? {}), 'the oldest instants survive the cap, matching the sibling ledger')
+  assert.ok(
+    0 in (cleaned ?? {}),
+    'the oldest instants survive the cap, matching the sibling ledger',
+  )
   assert.ok(!(499 in (cleaned ?? {})), 'the newest are the ones dropped')
 })
 
@@ -210,13 +221,13 @@ test('only the offered data the store is missing is written back', () => {
   assert.deepEqual(
     turnInOfferedToPersist(stored, { [CLAW_KEY]: { 1000: { 'wind rune geza': 2 } } }),
     [],
-    'settles, so no write loop'
+    'settles, so no write loop',
   )
   assert.deepEqual(
     turnInOfferedToPersist(stored, {
-      [CLAW_KEY]: { 1000: { 'wind rune geza': 2 }, 2000: { 'sphinx claw': 3 } }
+      [CLAW_KEY]: { 1000: { 'wind rune geza': 2 }, 2000: { 'sphinx claw': 3 } },
     }),
-    [{ key: CLAW_KEY, offered: { 1000: { 'wind rune geza': 2 }, 2000: { 'sphinx claw': 3 } } }]
+    [{ key: CLAW_KEY, offered: { 1000: { 'wind rune geza': 2 }, 2000: { 'sphinx claw': 3 } } }],
   )
 })
 
@@ -239,13 +250,16 @@ function questItem(itemName: string, net: Record<string, number>): { have: numbe
 
 /** The same clamp over every required item, which is what `missing` and `hasEveryItem` read. */
 function missingItems(net: Record<string, number>): string[] {
-  return CLAW.items.filter((it) => questItem(it.name, net).have < questItem(it.name, net).need).map(
-    (it) => it.name
-  )
+  return CLAW.items
+    .filter((it) => questItem(it.name, net).have < questItem(it.name, net).need)
+    .map((it) => it.name)
 }
 
 /** What the tab shows for one item, through the REAL reconcile. */
-function have(itemName: string, input: Parameters<typeof reconcile>[0]): { have: number; need: number } {
+function have(
+  itemName: string,
+  input: Parameters<typeof reconcile>[0],
+): { have: number; need: number } {
   return questItem(itemName, reconcile(input).net)
 }
 
@@ -253,7 +267,7 @@ const LOG_ONLY = {
   inv: {},
   lootNames: { 'sphinx claw': 'Sphinx Claw' },
   countSource: 'log' as const,
-  quests: QUESTS
+  quests: QUESTS,
 }
 
 test('THE HEADLINE: a turn-in subtracts what it consumed, so the quest reads 0 again', () => {
@@ -276,12 +290,16 @@ test('TWO turn-ins eat twice as much, and the row says which quest ate it, with 
   const { rows, net } = reconcile({
     ...LOG_ONLY,
     log: { 'sphinx claw': 5, 'wind rune geza': 2 },
-    turnIns: { [CLAW_KEY]: 2 }
+    turnIns: { [CLAW_KEY]: 2 },
   })
   const claw = rows.find((r) => r.key === 'sphinx claw')
   assert.ok(claw)
   assert.equal(claw.consumed, 4, '2 required x 2 turn-ins')
-  assert.deepEqual(claw.consumedBy, ['Test of Claw x2'], 'a -4 row is traceable to one quest run twice')
+  assert.deepEqual(
+    claw.consumedBy,
+    ['Test of Claw x2'],
+    'a -4 row is traceable to one quest run twice',
+  )
   assert.equal(net['sphinx claw'], 1)
   assert.equal(net['wind rune geza'], 0, 'never negative: 2 held, 2 consumed')
 })
@@ -306,7 +324,7 @@ test('THE WINDOW: a DUMP already reflects the turn-ins made BEFORE it, so those 
     inv: { 'sphinx claw': 1 },
     lootNames: { 'sphinx claw': 'Sphinx Claw' },
     quests: QUESTS,
-    turnIns: { [CLAW_KEY]: 1 }
+    turnIns: { [CLAW_KEY]: 1 },
   }
   for (const countSource of ['inventory', 'both', 'log'] as const) {
     const { net } = reconcile({ ...shared, countSource })
@@ -317,7 +335,11 @@ test('THE WINDOW: a DUMP already reflects the turn-ins made BEFORE it, so those 
   const claw = rows.find((r) => r.key === 'sphinx claw')
   assert.ok(claw)
   assert.deepEqual([claw.base, claw.consumed, claw.net], [1, 0, 1])
-  assert.deepEqual(claw.consumedBy, [], 'nothing was taken off this row, so nothing is blamed for it')
+  assert.deepEqual(
+    claw.consumedBy,
+    [],
+    'nothing was taken off this row, so nothing is blamed for it',
+  )
 })
 
 test("…and a DUMP is a floor under 'both' that the log's turn-ins cannot dig through", () => {
@@ -329,7 +351,7 @@ test("…and a DUMP is a floor under 'both' that the log's turn-ins cannot dig t
     lootNames: {},
     countSource: 'both',
     quests: QUESTS,
-    turnIns: { [CLAW_KEY]: 1 }
+    turnIns: { [CLAW_KEY]: 1 },
   })
   assert.equal(net['sphinx claw'], 4)
   const claw = rows.find((r) => r.key === 'sphinx claw')
@@ -343,12 +365,12 @@ test('the combined count is MONOTONE in your own loot — one more claw never lo
     lootNames: {},
     countSource: 'both' as const,
     quests: QUESTS,
-    turnIns: { [CLAW_KEY]: 1 }
+    turnIns: { [CLAW_KEY]: 1 },
   }
   // This is why the log witness is discounted BEFORE the maximum rather than after: with
   // max-then-subtract, the answer here walks 5, 5, then 3 as the log passes the dump.
   const seen = [2, 4, 5, 6, 8].map(
-    (looted) => reconcile({ ...base, log: { 'sphinx claw': looted } }).net['sphinx claw'] ?? 0
+    (looted) => reconcile({ ...base, log: { 'sphinx claw': looted } }).net['sphinx claw'] ?? 0,
   )
   assert.deepEqual(seen, [5, 5, 5, 5, 6])
   for (let i = 1; i < seen.length; i++) {
@@ -365,12 +387,12 @@ test('"hide completed" means HAS EVERY ITEM NOW, never has-ever-turned-in', () =
   assert.equal(
     hasEveryItem({ needCount: 3, missing: ['Sphinx Claw'] }),
     false,
-    'a quest you are refarming is work left, whatever its turn-in count says'
+    'a quest you are refarming is work left, whatever its turn-in count says',
   )
   assert.equal(
     hasEveryItem({ needCount: 0, missing: [] }),
     false,
-    'a quest that requires nothing is missing data, not finished'
+    'a quest that requires nothing is missing data, not finished',
   )
 })
 
@@ -382,7 +404,7 @@ test('a turned-in quest is NOT hidden once its items are spent — the refarm st
   assert.equal(
     hasEveryItem({ needCount, missing: missingItems(ready) }),
     true,
-    'holding everything: "hide completed" takes it off the list'
+    'holding everything: "hide completed" takes it off the list',
   )
 
   const spent = reconcile({ ...LOG_ONLY, log, turnIns: { [CLAW_KEY]: 1 } }).net
@@ -390,7 +412,7 @@ test('a turned-in quest is NOT hidden once its items are spent — the refarm st
   assert.equal(
     hasEveryItem({ needCount, missing: missingItems(spent) }),
     false,
-    'so it comes straight back onto the list, turn-in badge and all, by design'
+    'so it comes straight back onto the list, turn-in badge and all, by design',
   )
 })
 
@@ -420,12 +442,12 @@ test('a refarmable turned-in quest hides under the NEW box and NOT under the old
   assert.equal(
     hasEveryItem(quest),
     false,
-    'the OLD box leaves it on the list: every item it needs is gone from your bags'
+    'the OLD box leaves it on the list: every item it needs is gone from your bags',
   )
   assert.equal(
     everTurnedIn(quest),
     true,
-    'the NEW box takes it off: you have run this quest, which is the question it asks'
+    'the NEW box takes it off: you have run this quest, which is the question it asks',
   )
 })
 
@@ -452,14 +474,14 @@ test('the two hide-boxes never read each other: all four combinations are a plai
       shown(q, false, false),
       shown(q, true, false),
       shown(q, false, true),
-      shown(q, true, true)
+      shown(q, true, true),
     ]),
     [
       [true, false, true, false],
       [true, false, false, false],
       [true, true, false, false],
-      [true, true, true, true]
-    ]
+      [true, true, true, true],
+    ],
   )
 })
 
@@ -491,7 +513,7 @@ function questRow(p: {
     missing: p.missing,
     turnIns: p.turnIns ?? 0,
     logTurnIns: 0,
-    completed: (p.turnIns ?? 0) >= 1
+    completed: (p.turnIns ?? 0) >= 1,
   }
 }
 
@@ -501,24 +523,30 @@ const READY_SET = [
   // Ready AND handed in twice already — a full refarm, which is the row this tab exists for.
   questRow({ className: 'Beastlord', name: 'Test of Claw', needCount: 2, missing: [], turnIns: 2 }),
   // Handed in, items spent: work left, not work ready.
-  questRow({ className: 'Bard', name: 'Test of Pitch', needCount: 2, missing: ['Caza'], turnIns: 1 }),
+  questRow({
+    className: 'Bard',
+    name: 'Test of Pitch',
+    needCount: 2,
+    missing: ['Caza'],
+    turnIns: 1,
+  }),
   // Halfway there.
   questRow({ className: 'Magician', name: 'Test of Wind', needCount: 4, missing: ['Hazy Opal'] }),
   // Requires nothing at all: missing DATA, not a finished quest (the hasEveryItem rule above).
-  questRow({ className: 'Cleric', name: 'Test of Nothing', needCount: 0, missing: [] })
+  questRow({ className: 'Cleric', name: 'Test of Nothing', needCount: 0, missing: [] }),
 ]
 
 test('THE READY TAB IS THE PREDICATE: exactly the quests you hold every item for', () => {
   assert.deepEqual(
     readyQuests(READY_SET).map((q) => q.name),
     ['Test of Claw', 'Test of Blood'],
-    'class then name, and nothing else in the list'
+    'class then name, and nothing else in the list',
   )
   // Stated as an identity rather than as a list, because the identity is the actual promise: the
   // tab can never disagree with the predicate the "hide completed" box is made of.
   assert.deepEqual(
     readyQuests(READY_SET),
-    READY_SET.filter(hasEveryItem).sort((a, b) => a.className.localeCompare(b.className))
+    READY_SET.filter(hasEveryItem).sort((a, b) => a.className.localeCompare(b.className)),
   )
 })
 
@@ -528,7 +556,11 @@ test('…a turn-in takes a quest OFF it and refarming puts it back, with no stat
   // The arc from tests/e2e/sky-turnin.e2e.mts, as a set-membership question.
   assert.deepEqual(readyQuests([claw(['Sphinx Claw'], 0)]), [], 'still farming')
   assert.equal(readyQuests([claw([], 0)]).length, 1, 'the last item lands: ready')
-  assert.deepEqual(readyQuests([claw(['Sphinx Claw', 'Wind Rune Geza'], 1)]), [], 'handed over: gone')
+  assert.deepEqual(
+    readyQuests([claw(['Sphinx Claw', 'Wind Rune Geza'], 1)]),
+    [],
+    'handed over: gone',
+  )
   assert.equal(readyQuests([claw([], 1)]).length, 1, 'refarmed to full: back, turn-in and all')
 })
 
@@ -542,7 +574,11 @@ test('the two hide-boxes cannot reach the Ready tab, which is the point of it', 
   // it acts on; the Quests tab's two boxes still reach nothing here. A control's reach is the
   // claim being pinned, never the predicate it happens to share.
   const ready = readyQuests(READY_SET)
-  assert.deepEqual(ready.filter((q) => !hasEveryItem(q)), [], 'hide-completed would leave nothing')
+  assert.deepEqual(
+    ready.filter((q) => !hasEveryItem(q)),
+    [],
+    'hide-completed would leave nothing',
+  )
   assert.ok(ready.some(everTurnedIn), 'hide-turned-in would remove a quest that is ready right now')
 })
 
@@ -551,13 +587,20 @@ test('THE FIRST-TIME READING (JOS-155): the ready set minus everything you have 
   assert.deepEqual(
     firstTimeReady(ready).map((q) => q.name),
     ['Test of Blood'],
-    'the refarmed Beastlord quest is exactly what the default hides'
+    'the refarmed Beastlord quest is exactly what the default hides',
   )
   // The composition, as the identity the toggle rests on: this NARROWS the membership rule, so
   // every quest it keeps is still one you are holding every item for, and unticking the box gets
   // the whole set back untouched. A filter that could add a row would be a second membership rule.
-  assert.deepEqual(firstTimeReady(ready), ready.filter((q) => !everTurnedIn(q)))
-  assert.deepEqual(firstTimeReady(ready).filter((q) => !hasEveryItem(q)), [], 'still every item held')
+  assert.deepEqual(
+    firstTimeReady(ready),
+    ready.filter((q) => !everTurnedIn(q)),
+  )
+  assert.deepEqual(
+    firstTimeReady(ready).filter((q) => !hasEveryItem(q)),
+    [],
+    'still every item held',
+  )
   assert.deepEqual(readyQuests(READY_SET), ready, 'unticked, the tab is the membership rule again')
 })
 
@@ -580,7 +623,7 @@ test('an ignored quest never reaches it: the caller passes the shown half', () =
   assert.deepEqual(
     readyQuests(shown).map((q) => q.name),
     ['Test of Blood'],
-    'the ignored quest is simply not in the input, so it cannot be in the output'
+    'the ignored quest is simply not in the input, so it cannot be in the output',
   )
 })
 

@@ -21,7 +21,15 @@
 // the whole wiki bestiary (crossZone.ts), so "which zone is Ambassador D`Vinn in?" is answerable
 // from the state where nothing is open — which is exactly the state that question gets asked in.
 
-import { useCallback, useEffect, useMemo, useState, type JSX, type ReactNode, type RefObject } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type JSX,
+  type ReactNode,
+  type RefObject,
+} from 'react'
 import { Box, IconButton, Stack } from '@mui/material'
 import ViewSidebarIcon from '@mui/icons-material/ViewSidebar'
 import type { MapData, ZoneShort } from '@shared/maps'
@@ -85,7 +93,7 @@ export function useSearchJump(args: {
       centerOn(x, y, zoomedIn ? undefined : view.scale * JUMP_ZOOM)
       setMarker({ x, y, at: Date.now() })
     },
-    [centerOn, zoomedIn, view.scale]
+    [centerOn, zoomedIn, view.scale],
   )
 
   const onJump = useCallback(
@@ -98,7 +106,7 @@ export function useSearchJump(args: {
       // Nothing to park when the row states no position: the zone change IS the whole jump.
       setPending(to.at ? to : null)
     },
-    [zone, jump, pick]
+    [zone, jump, pick],
   )
 
   useEffect(() => {
@@ -125,7 +133,7 @@ export function useSearchJump(args: {
 function MarkerRing({
   at,
   size,
-  testId
+  testId,
 }: {
   at: { px: number; py: number }
   size: number
@@ -144,7 +152,7 @@ function MarkerRing({
         borderRadius: '50%',
         border: '2px solid',
         borderColor: 'warning.main',
-        pointerEvents: 'none'
+        pointerEvents: 'none',
       }}
     />
   )
@@ -163,7 +171,7 @@ function MapSurface({
   floor,
   marker,
   locMarker,
-  pane
+  pane,
 }: {
   data: MapData
   vp: MapViewport
@@ -201,7 +209,7 @@ function MapSurface({
         borderRadius: 1,
         bgcolor: 'background.paper',
         touchAction: 'none',
-        cursor: vp.dragging ? 'grabbing' : 'grab'
+        cursor: vp.dragging ? 'grabbing' : 'grab',
       }}
     >
       <MapCanvas lines={data.lines} vp={vp} layers={layers} zBand={zBand} />
@@ -231,7 +239,7 @@ function PaneReopen({ onOpen }: { onOpen: () => void }): JSX.Element {
           zIndex: 2,
           bgcolor: 'background.paper',
           border: '1px solid',
-          borderColor: 'divider'
+          borderColor: 'divider',
         }}
       >
         <ViewSidebarIcon fontSize="small" />

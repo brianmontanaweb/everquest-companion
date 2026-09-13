@@ -56,7 +56,7 @@ test('the cursor-ring preload pins its own window at zoom 1', () => {
   assert.match(
     CURSOR_PRELOAD,
     /webFrame\.setZoomLevel\(0\)/,
-    'the ring window has to hold zoom 1 or main is sending it coordinates in the wrong unit'
+    'the ring window has to hold zoom 1 or main is sending it coordinates in the wrong unit',
   )
   assert.match(CURSOR_PRELOAD, /import \{[^}]*\bwebFrame\b[^}]*\} from 'electron'/)
 })
@@ -68,14 +68,14 @@ test('…with webFrame, which is the ONE zoom API that is not the shared host en
   assert.doesNotMatch(
     CURSOR_PRELOAD,
     /webContents\.setZoom/,
-    'the ring must never reach for the host-level setter'
+    'the ring must never reach for the host-level setter',
   )
   // `webPreferences: { zoomFactor: 1 }` is inert against an existing host entry (measured), which
   // is exactly the case that matters — the ring window is created long after the setting is made.
   assert.doesNotMatch(
     ringWindowOptions(),
     /zoomFactor/,
-    'a zoomFactor on the ring window would be a second, ineffective opinion'
+    'a zoomFactor on the ring window would be a second, ineffective opinion',
   )
 })
 
@@ -111,5 +111,8 @@ test('the ring centres on the point it is sent, by subtracting half its own widt
   // DIPs — which is what the pin guarantees. Pinned here so a "simplification" that drops the
   // radius (or starts scaling it) has to be a deliberate edit.
   assert.match(RING, /radius = cfg\.sizePx \/ 2/)
-  assert.match(RING, /translate3d\(\$\{Math\.round\(latest\.x - radius\)\}px, \$\{Math\.round\(latest\.y - radius\)\}px, 0\)/)
+  assert.match(
+    RING,
+    /translate3d\(\$\{Math\.round\(latest\.x - radius\)\}px, \$\{Math\.round\(latest\.y - radius\)\}px, 0\)/,
+  )
 })

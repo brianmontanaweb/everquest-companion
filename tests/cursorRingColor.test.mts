@@ -36,7 +36,7 @@ import {
   RING_STROKE_ALPHA,
   normalizeCursorRing,
   normalizeRingColor,
-  ringStrokeColor
+  ringStrokeColor,
 } from '../src/shared/presencePrefs'
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -45,7 +45,11 @@ test('white is the default, and the default is what the ring has always been', (
   assert.equal(DEFAULT_RING_COLOR, '#ffffff')
   assert.equal(DEFAULT_CURSOR_RING.colorHex, DEFAULT_RING_COLOR)
   assert.equal(ringStrokeColor(DEFAULT_RING_COLOR), 'rgba(255, 255, 255, 0.9)')
-  assert.equal(RING_STROKE_ALPHA, 0.9, 'the alpha is fixed: a colour choice is not a contrast choice')
+  assert.equal(
+    RING_STROKE_ALPHA,
+    0.9,
+    'the alpha is fixed: a colour choice is not a contrast choice',
+  )
 })
 
 test("cursor.html's first-frame colour is the same colour the shared seam answers with", () => {
@@ -57,7 +61,7 @@ test("cursor.html's first-frame colour is the same colour the shared seam answer
   assert.equal(
     declared,
     ringStrokeColor(DEFAULT_RING_COLOR),
-    'cursor.html paints a different default than the code that replaces it'
+    'cursor.html paints a different default than the code that replaces it',
   )
 })
 
@@ -65,7 +69,11 @@ test('a hex colour is accepted in either length and answered in one shape', () =
   assert.equal(normalizeRingColor('#ff8800'), '#ff8800')
   assert.equal(normalizeRingColor('#FF8800'), '#ff8800', 'case is not a difference')
   assert.equal(normalizeRingColor('  #ff8800  '), '#ff8800', 'a hand-edited file may have spaces')
-  assert.equal(normalizeRingColor('#f80'), '#ff8800', 'the short form expands, so consumers see one shape')
+  assert.equal(
+    normalizeRingColor('#f80'),
+    '#ff8800',
+    'the short form expands, so consumers see one shape',
+  )
   assert.equal(normalizeRingColor('#000'), '#000000')
 })
 
@@ -86,7 +94,7 @@ test('ANYTHING THAT IS NOT A HEX COLOUR IS REFUSED, and the refusal is the bound
     '#gggggg',
     'ff8800',
     '#ff88008800',
-    ''
+    '',
   ]
   for (const junk of refused) {
     assert.equal(normalizeRingColor(junk), DEFAULT_RING_COLOR, `${junk} must not survive`)
@@ -105,7 +113,11 @@ test('ringStrokeColor can only ever emit an rgba() built from three numbers', ()
   assert.equal(ringStrokeColor('#000000'), 'rgba(0, 0, 0, 0.9)')
   assert.equal(ringStrokeColor('#ff8800'), 'rgba(255, 136, 0, 0.9)')
   assert.equal(ringStrokeColor('#0a1e28'), 'rgba(10, 30, 40, 0.9)')
-  assert.equal(ringStrokeColor('#f80'), 'rgba(255, 136, 0, 0.9)', 'the short form is expanded first')
+  assert.equal(
+    ringStrokeColor('#f80'),
+    'rgba(255, 136, 0, 0.9)',
+    'the short form is expanded first',
+  )
   for (const junk of ['red', 'var(--x)', '#fff; content: "x"', '']) {
     assert.match(ringStrokeColor(junk), /^rgba\(\d{1,3}, \d{1,3}, \d{1,3}, 0\.9\)$/)
   }
@@ -118,15 +130,21 @@ test('the colour rides the existing ring blob, defaulted field by field like eve
     enabled: true,
     sizePx: 60,
     thicknessPx: 5,
-    colorHex: DEFAULT_RING_COLOR
+    colorHex: DEFAULT_RING_COLOR,
   })
-  assert.deepEqual(normalizeCursorRing({ enabled: true, sizePx: 60, thicknessPx: 5, colorHex: '#00E5FF' }), {
-    enabled: true,
-    sizePx: 60,
-    thicknessPx: 5,
-    colorHex: '#00e5ff'
-  })
+  assert.deepEqual(
+    normalizeCursorRing({ enabled: true, sizePx: 60, thicknessPx: 5, colorHex: '#00E5FF' }),
+    {
+      enabled: true,
+      sizePx: 60,
+      thicknessPx: 5,
+      colorHex: '#00e5ff',
+    },
+  )
   // A bad colour never costs the user the rest of their settings.
   assert.equal(normalizeCursorRing({ sizePx: 120, colorHex: 'chartreuse' }).sizePx, 120)
-  assert.equal(normalizeCursorRing({ sizePx: 120, colorHex: 'chartreuse' }).colorHex, DEFAULT_RING_COLOR)
+  assert.equal(
+    normalizeCursorRing({ sizePx: 120, colorHex: 'chartreuse' }).colorHex,
+    DEFAULT_RING_COLOR,
+  )
 })

@@ -33,7 +33,7 @@ const LIVE_FIELDS: DocField[] = [
   {
     name: 'live.samples',
     type: OPT_COUNT,
-    note: 'How many times the app checked its own clock since the last one of these.'
+    note: 'How many times the app checked its own clock since the last one of these.',
   },
   {
     name: 'live.p95Bucket',
@@ -41,17 +41,17 @@ const LIVE_FIELDS: DocField[] = [
     note:
       'The app sets a timer for a quarter second, over and over, and notes how late each one ' +
       'actually arrived. This is the lateness only one check in twenty exceeded, as a RANGE ' +
-      '(see below) - a reading about the computer, never about anything you did.'
+      '(see below) - a reading about the computer, never about anything you did.',
   },
   {
     name: 'live.maxBucket',
     type: OPT_BUCKET,
-    note: 'The worst single one of those, as a range - the moment you would have felt.'
+    note: 'The worst single one of those, as a range - the moment you would have felt.',
   },
   {
     name: 'live.over100',
     type: OPT_COUNT,
-    note: 'How many of those checks were more than a tenth of a second late.'
+    note: 'How many of those checks were more than a tenth of a second late.',
   },
   { name: 'live.over500', type: OPT_COUNT, note: 'How many were more than half a second late.' },
   {
@@ -61,8 +61,8 @@ const LIVE_FIELDS: DocField[] = [
       'The app runs the same clock check on a second thread that does nothing else. This counts ' +
       'the moments BOTH went late at once - which means the whole computer paused (memory, a ' +
       'driver, a disk), not this app. It is how a freeze can be blamed correctly instead of ' +
-      'guessed at. Not sent when that second check was not running.'
-  }
+      'guessed at. Not sent when that second check was not running.',
+  },
 ]
 
 /** The tail group — the app's own file reads, and the only place a LOG is mentioned at all, which
@@ -71,12 +71,12 @@ const TAIL_FIELDS: DocField[] = [
   {
     name: 'tail.reads',
     type: OPT_COUNT,
-    note: 'How many times the app read new lines from your log since the last one of these.'
+    note: 'How many times the app read new lines from your log since the last one of these.',
   },
   {
     name: 'tail.reopens',
     type: OPT_COUNT,
-    note: 'How many of those had to re-open the file (normally none).'
+    note: 'How many of those had to re-open the file (normally none).',
   },
   {
     name: 'tail.p95Bucket',
@@ -84,7 +84,7 @@ const TAIL_FIELDS: DocField[] = [
     note:
       'How long those reads took, at their worse end - the same ranges as the clock check above, ' +
       'so the two can be compared. The game writes to that same file, so this is how much of its ' +
-      'time the app could be taking.'
+      'time the app could be taking.',
   },
   { name: 'tail.maxBucket', type: OPT_BUCKET, note: 'The slowest single read, as a range.' },
   { name: 'tail.over100', type: OPT_COUNT, note: 'Reads that took more than a tenth of a second.' },
@@ -94,13 +94,13 @@ const TAIL_FIELDS: DocField[] = [
     type: OPT_BUCKET,
     note:
       'The biggest single chunk of new log read at once - a RANGE (see below), never the amount ' +
-      'itself, and never any part of what was in it.'
+      'itself, and never any part of what was in it.',
   },
   {
     name: 'tail.logSizeBucket',
     type: OPT_BUCKET,
-    note: 'How big that log is now - a range, never the size itself.'
-  }
+    note: 'How big that log is now - a range, never the size itself.',
+  },
 ]
 
 /** The state group. Flags about this app's own windows and switches, sent so a slow moment can be
@@ -112,26 +112,30 @@ const STATE_FIELDS: DocField[] = [
     type: OPT_COUNT,
     note:
       'How many of those were locked (click-through). Locking makes Windows route mouse events ' +
-      'through this app, so it is the setting most likely to explain a stutter.'
+      'through this app, so it is the setting most likely to explain a stutter.',
   },
   {
     name: 'state.presenceOn',
     type: 'true / false (optional)',
-    note: 'Whether the app was watching for the game window (needed by auto-hide and the ring).'
+    note: 'Whether the app was watching for the game window (needed by auto-hide and the ring).',
   },
-  { name: 'state.ringOn', type: 'true / false (optional)', note: 'Whether the cursor ring was on.' },
+  {
+    name: 'state.ringOn',
+    type: 'true / false (optional)',
+    note: 'Whether the cursor ring was on.',
+  },
   {
     name: 'state.freeMemBucket',
     type: OPT_BUCKET,
     note:
       'How much free memory the computer had, as a RANGE - a machine with none left pauses ' +
-      'everything, including the game.'
+      'everything, including the game.',
   },
   {
     name: 'state.workingSetBucket',
     type: OPT_BUCKET,
-    note: 'How much memory THIS APP was using, as a range. The honesty half of the row above.'
-  }
+    note: 'How much memory THIS APP was using, as a range. The honesty half of the row above.',
+  },
 ]
 
 /**
@@ -146,30 +150,30 @@ const GC_FIELDS: DocField[] = [
     note:
       'How many times the app stopped briefly to tidy up its own memory. This is normal and ' +
       'constant in every program; it is counted because a long one is a leading suspect for a ' +
-      'freeze you would notice.'
+      'freeze you would notice.',
   },
   {
     name: 'gc.majorPauses',
     type: OPT_COUNT,
-    note: 'How many of those were the big kind - the ones long enough to be worth suspecting.'
+    note: 'How many of those were the big kind - the ones long enough to be worth suspecting.',
   },
   {
     name: 'gc.maxBucket',
     type: OPT_BUCKET,
     note:
       'The longest single one of those pauses, as a RANGE (see below) - the same ranges the clock ' +
-      'check above uses, so the two can be laid against each other and one can explain the other.'
+      'check above uses, so the two can be laid against each other and one can explain the other.',
   },
   {
     name: 'gc.totalBucket',
     type: OPT_BUCKET,
-    note: 'How long all of them added up to, as a range.'
+    note: 'How long all of them added up to, as a range.',
   },
   {
     name: 'gc.over100',
     type: OPT_COUNT,
-    note: 'How many were longer than a tenth of a second.'
-  }
+    note: 'How many were longer than a tenth of a second.',
+  },
 ]
 
 /**
@@ -187,20 +191,20 @@ const SEAM_FIELDS: DocField[] = [
       'combat model, pushing pending updates, reading your inventory dump, reading your ' +
       'achievements dump, and telling its windows to reload. This is how many times one of them ' +
       'ran. The six names are fixed and built into the app: nothing from your game, your files ' +
-      'or your log can ever appear as one.'
+      'or your log can ever appear as one.',
   },
   {
     name: 'seams.<step>.maxBucket',
     type: OPT_BUCKET,
     note:
       'The longest single run of that step, as a RANGE - so a slow moment can be blamed on the ' +
-      'step that actually caused it instead of guessed at.'
+      'step that actually caused it instead of guessed at.',
   },
   {
     name: 'seams.<step>.over100',
     type: OPT_COUNT,
-    note: 'How many runs of that step took more than a tenth of a second.'
-  }
+    note: 'How many runs of that step took more than a tenth of a second.',
+  },
 ]
 
 /** All five groups, in reading order, spread onto both session reports. */
@@ -209,7 +213,7 @@ export const LIVE_RIDER_FIELDS: readonly DocField[] = [
   ...TAIL_FIELDS,
   ...STATE_FIELDS,
   ...GC_FIELDS,
-  ...SEAM_FIELDS
+  ...SEAM_FIELDS,
 ]
 
 /** Why the groups are there and when they appear — said once, printed on both events. */

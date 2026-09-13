@@ -30,7 +30,7 @@ import {
   TELEMETRY_FUNNEL_STEPS,
   type TelemetryEvent,
   type TelemetryFailureClass,
-  type TelemetryFunnel
+  type TelemetryFunnel,
 } from '../../shared/telemetry'
 import { getTelemetryPrefs, setTelemetryPrefs } from '../store'
 import { recordEvent } from './collector'
@@ -66,7 +66,7 @@ export function markFunnelStep(funnel: TelemetryFunnel, step: string): boolean {
 export function recordFunnelFailure(
   funnel: TelemetryFunnel,
   step: string,
-  failureClass: TelemetryFailureClass
+  failureClass: TelemetryFailureClass,
 ): void {
   if (!declared(funnel, step)) return
   recordEvent({ t: 'funnelStep', funnel, step, outcome: 'failed', failureClass })

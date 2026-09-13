@@ -97,7 +97,7 @@ export function EngineProvider({ children }: { children: ReactNode }): JSX.Eleme
       },
       () => {
         askAgain()
-      }
+      },
     )
     return (): void => {
       live = false

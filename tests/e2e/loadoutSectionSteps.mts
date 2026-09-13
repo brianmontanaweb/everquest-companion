@@ -47,11 +47,11 @@ function loadoutView(page: Page): Promise<{ headers: HeaderFact[]; cards: number
       headers: [...document.querySelectorAll(sel.header)].map((h) => ({
         kind: h.getAttribute('data-loadout') ?? '',
         chips: h.querySelectorAll('.MuiChip-root').length,
-        text: (h.textContent ?? '').trim()
+        text: (h.textContent ?? '').trim(),
       })),
-      cards: document.querySelectorAll(sel.card).length
+      cards: document.querySelectorAll(sel.card).length,
     }),
-    { header: HEADER, card: CARD }
+    { header: HEADER, card: CARD },
   )
 }
 
@@ -68,7 +68,13 @@ function byLoadoutOn(page: Page): Promise<boolean | null> {
 async function setByLoadout(page: Page, on: boolean): Promise<boolean> {
   if ((await byLoadoutOn(page)) === on) return true
   await page.click(BY_LOADOUT, { timeout: 15_000 })
-  return (await settle(() => byLoadoutOn(page), (v) => v === on, { timeoutMs: 8_000 })) === on
+  return (
+    (await settle(
+      () => byLoadoutOn(page),
+      (v) => v === on,
+      { timeoutMs: 8_000 },
+    )) === on
+  )
 }
 
 export async function stepLoadoutSectionsAreHonest(page: Page): Promise<void> {
@@ -82,32 +88,36 @@ export async function stepLoadoutSectionsAreHonest(page: Page): Promise<void> {
   check(
     'THE BY-LOADOUT VIEW MOUNTS - it had never been driven before this',
     view.headers.length > 0,
-    `${String(view.headers.length)} headers`
+    `${String(view.headers.length)} headers`,
   )
   check(
     'every header is one of the three sentences and nothing else',
     view.headers.every((h) => h.kind === 'named' || h.kind === 'mixed' || h.kind === 'unknown'),
-    view.headers.map((h) => h.kind).join(',')
+    view.headers.map((h) => h.kind).join(','),
   )
   const mixed = view.headers.filter((h) => h.kind === 'mixed')
   check(
     'A HEADER THAT CANNOT NAME THE LOADOUT NAMES NO CLASSES',
     mixed.every((h) => h.chips === 0 && h.text.includes('Mixed loadouts')),
-    mixed.map((h) => `${String(h.chips)} chips: ${h.text}`).join(' | ')
+    mixed.map((h) => `${String(h.chips)} chips: ${h.text}`).join(' | '),
   )
   check(
     '…and a header that DOES name one still draws its chips',
-    view.headers.filter((h) => h.kind === 'named').every((h) => h.chips > 0)
+    view.headers.filter((h) => h.kind === 'named').every((h) => h.chips > 0),
   )
   if (mixed.length === 0) {
     note(
-      'bosses-week: nothing on this log is currently gated, so the unresolved header is structurally covered only'
+      'bosses-week: nothing on this log is currently gated, so the unresolved header is structurally covered only',
     )
   }
   check('the cards are still under the headers, not dropped', view.cards > 0, String(view.cards))
 
   // …and the switch is a DISPLAY choice: the progression grouping comes back untouched.
   if (!(await setByLoadout(page, false))) return
-  const back = await settle(() => countOf(page, HEADER), (n) => n === 0, { timeoutMs: 15_000 })
+  const back = await settle(
+    () => countOf(page, HEADER),
+    (n) => n === 0,
+    { timeoutMs: 15_000 },
+  )
   check('…and turning it off gives the progression categories back', back === 0, String(back))
 }

@@ -23,7 +23,8 @@ export const respawnBridge = {
    * a mob you start watching gets a row from its next death — and, if it already died during this
    * fold, from the death already in the model.
    */
-  setRespawn: (prefs: RespawnPrefs): Promise<RespawnPrefs> => ipcRenderer.invoke(IPC.respawnSet, prefs),
+  setRespawn: (prefs: RespawnPrefs): Promise<RespawnPrefs> =>
+    ipcRenderer.invoke(IPC.respawnSet, prefs),
   /**
    * "That sighting was the spawn — start this row's clock from it" (owner ruling, round 3).
    *
@@ -41,5 +42,5 @@ export const respawnBridge = {
    * entry, each of which knows one mob, and the handler is the only thing that rewrites the list.
    * Resolves to whether anything was watching that name; false is a no-op, not an error.
    */
-  unwatchRespawn: (key: string): Promise<boolean> => ipcRenderer.invoke(IPC.respawnUnwatch, key)
+  unwatchRespawn: (key: string): Promise<boolean> => ipcRenderer.invoke(IPC.respawnUnwatch, key),
 }

@@ -57,7 +57,7 @@ import {
   clearDone,
   removeWish,
   type WishEntry,
-  type WishList
+  type WishList,
 } from '@shared/planner/wishlist'
 
 export interface WishlistApi {
@@ -210,8 +210,5 @@ export function useWishlist(): WishlistApi {
     watch()
     load()
   }, [])
-  return useMemo(
-    () => ({ list: snap.list, ready: snap.ready, add, remove, dismiss, seed }),
-    [snap]
-  )
+  return useMemo(() => ({ list: snap.list, ready: snap.ready, add, remove, dismiss, seed }), [snap])
 }

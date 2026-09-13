@@ -100,7 +100,8 @@ const CONNECTION_RE = /^to\s/i
 /** `…_(Named)` / `…_(Hunter)` — a mob worth walking to. 1,885 `(Hunter)` in the same sample. */
 const NAMED_RE = /\((named|hunter)\)\s*$/i
 /** Bankers, merchants, guild masters, tradeskill containers, parcels — the service tier. */
-const SERVICE_RE = /\b(merchant|banker|bank|parcel|guild\s*master|tradeskill|forge|cultural|\(gm\b)/i
+const SERVICE_RE =
+  /\b(merchant|banker|bank|parcel|guild\s*master|tradeskill|forge|cultural|\(gm\b)/i
 
 /**
  * Classify a label from its DISPLAY text (underscores already spaces).
@@ -221,10 +222,7 @@ export interface LabelLayoutOpts {
  * the layer renders the array directly, and reordering the DOM on every pan would churn React's
  * keyed reconciliation for no visual gain.
  */
-export function layoutLabels(
-  items: readonly LabelItem[],
-  opts: LabelLayoutOpts = {}
-): LabelSlot[] {
+export function layoutLabels(items: readonly LabelItem[], opts: LabelLayoutOpts = {}): LabelSlot[] {
   const pad = opts.pad ?? PAD_PX
   const grid: Grid = new Map()
   const slots = new Map<number, LabelSlot>()
@@ -234,7 +232,7 @@ export function layoutLabels(
       x0: item.px - w / 2 - pad,
       x1: item.px + w / 2 + pad,
       y0: item.py - h / 2 - pad,
-      y1: item.py + h / 2 + pad
+      y1: item.py + h / 2 + pad,
     }
     // Out-of-band points never compete and never BLOCK: they are dots, and dots may overlap.
     const shown = item.inBand && !collides(grid, box)

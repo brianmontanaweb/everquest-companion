@@ -37,7 +37,10 @@ import { ITEM_UPGRADE_BASE, normalizeUpgradeState } from '../src/shared/itemUpgr
 import { ITEM_MAX_TIER } from '../src/shared/itemStats'
 import { EQUIP_SLOTS } from '../src/shared/planner/types'
 import { WEAPON_PICKS } from '../src/shared/planner/weaponType'
-import { DEFAULT_GEAR_FILTERS, DEFAULT_GEAR_SORT } from '../src/renderer/src/features/gear/gearFilter'
+import {
+  DEFAULT_GEAR_FILTERS,
+  DEFAULT_GEAR_SORT,
+} from '../src/renderer/src/features/gear/gearFilter'
 import { PICKABLE_COLUMNS } from '../src/renderer/src/features/gear/gearColumns'
 import {
   AREA_FORM_TIER,
@@ -55,7 +58,7 @@ import {
   sanitizeUpgrade,
   tierOf,
   type AreaFormKey,
-  type BrowseFormMemory
+  type BrowseFormMemory,
 } from '../src/renderer/src/features/gear/areaMemory'
 
 /**
@@ -85,7 +88,7 @@ const GARBAGE: readonly unknown[] = [
   { unrelated: 'key' },
   { length: 3 },
   [[]],
-  [{}]
+  [{}],
 ]
 
 /** The browse form's fallback, spelled here rather than imported: `plannerData` is a React module. */
@@ -97,7 +100,11 @@ const BROWSE_FALLBACK: BrowseFormMemory = { socket: 'proc', slot: null, trioOnly
 
 test('the restart split is a table, and every key in it is on one of exactly two tiers', () => {
   const keys = Object.keys(AREA_FORM_TIER) as AreaFormKey[]
-  assert.equal(keys.length, 11, 'eleven fields were added by JOS-329 — update this test when a twelfth is')
+  assert.equal(
+    keys.length,
+    11,
+    'eleven fields were added by JOS-329 — update this test when a twelfth is',
+  )
   for (const key of keys) {
     const tier = tierOf(key)
     assert.ok(tier === 'restart' || tier === 'session', `${key} is on an unknown tier ${tier}`)
@@ -109,9 +116,10 @@ test('WHAT YOU TYPED IS SESSION-SCOPED — every search box, on all four tabs', 
     'eq.gear.search',
     'eq.planner.search',
     'eq.wishlist.search',
-    'eq.character.search'
+    'eq.character.search',
   ]
-  for (const key of typed) assert.equal(tierOf(key), 'session', `${key} must not outlive the session`)
+  for (const key of typed)
+    assert.equal(tierOf(key), 'session', `${key} must not outlive the session`)
   // …and the two narrowings that are reached BY typing ride with them (areaMemory's header argues
   // the item picker; the expanded set is ephemeral navigation state).
   assert.equal(tierOf('eq.planner.item'), 'session')
@@ -124,7 +132,7 @@ test('WHAT YOU CHOSE IS RESTART-SCOPED — including the slider, whose old law s
     'eq.gear.sort',
     'eq.gear.classes',
     'eq.gear.upgrade',
-    'eq.planner.filters'
+    'eq.planner.filters',
   ]
   for (const key of chosen) assert.equal(tierOf(key), 'restart', `${key} must survive a restart`)
 })
@@ -168,12 +176,16 @@ const READERS: Reader[] = [
   { key: 'eq.gear.classes', read: sanitizeGearClasses, fallback: null },
   { key: 'eq.gear.upgrade', read: sanitizeUpgrade, fallback: ITEM_UPGRADE_BASE },
   { key: 'eq.gear.search', read: sanitizeSearch, fallback: '', legal: anyString },
-  { key: 'eq.planner.filters', read: (r) => sanitizeBrowseForm(r, BROWSE_FALLBACK), fallback: BROWSE_FALLBACK },
+  {
+    key: 'eq.planner.filters',
+    read: (r) => sanitizeBrowseForm(r, BROWSE_FALLBACK),
+    fallback: BROWSE_FALLBACK,
+  },
   { key: 'eq.planner.item', read: sanitizeItemFocus, fallback: null },
   { key: 'eq.planner.open', read: sanitizeOpenGroups, fallback: [], legal: anyIdList },
   { key: 'eq.planner.search', read: sanitizeSearch, fallback: '', legal: anyString },
   { key: 'eq.wishlist.search', read: sanitizeSearch, fallback: '', legal: anyString },
-  { key: 'eq.character.search', read: sanitizeSearch, fallback: '', legal: anyString }
+  { key: 'eq.character.search', read: sanitizeSearch, fallback: '', legal: anyString },
 ]
 
 test('every stored key has a reader in this file — a new key cannot be covered by being forgotten', () => {
@@ -206,7 +218,7 @@ test('…and the readers with a closed vocabulary take NO exemptions from that s
     'eq.gear.search',
     'eq.planner.open',
     'eq.planner.search',
-    'eq.wishlist.search'
+    'eq.wishlist.search',
   ])
 })
 
@@ -220,10 +232,14 @@ test('a well-formed gear form round-trips, and unknown members drop out rather t
     weaponTypes: [WEAPON_PICKS[0], 'imaginary'],
     effect: 'proc',
     eraOnly: false,
-    ownedOnly: true
+    ownedOnly: true,
   }
   const got = sanitizeGearForm(stored)
-  assert.deepEqual(got.slots, ['PRIMARY', 'SECONDARY'], 'unknown slot dropped, duplicate dropped, order kept')
+  assert.deepEqual(
+    got.slots,
+    ['PRIMARY', 'SECONDARY'],
+    'unknown slot dropped, duplicate dropped, order kept',
+  )
   assert.deepEqual(got.weaponTypes, [WEAPON_PICKS[0]])
   assert.equal(got.effect, 'proc')
   assert.equal(got.eraOnly, false)
@@ -245,13 +261,16 @@ test('a stored sort round-trips, and each half defaults independently of the oth
   // A key this build dropped must not leave a lit header on a column that is not drawn.
   assert.deepEqual(sanitizeGearSort({ key: 'RETIRED_STAT', dir: 'asc' }), {
     key: DEFAULT_GEAR_SORT.key,
-    dir: 'asc'
+    dir: 'asc',
   })
   assert.deepEqual(sanitizeGearSort({ key, dir: 'sideways' }), { key, dir: DEFAULT_GEAR_SORT.dir })
 })
 
 test('a stored browse form round-trips, including the socket tab and the trio toggle', () => {
-  const got = sanitizeBrowseForm({ socket: 'focus', slot: 'HEAD', trioOnly: false }, BROWSE_FALLBACK)
+  const got = sanitizeBrowseForm(
+    { socket: 'focus', slot: 'HEAD', trioOnly: false },
+    BROWSE_FALLBACK,
+  )
   assert.deepEqual(got, { socket: 'focus', slot: 'HEAD', trioOnly: false })
 })
 
@@ -260,13 +279,13 @@ test('a stored item narrowing round-trips, and unknown slots or classes widen it
     key: 'batfang headband',
     name: 'Batfang Headband',
     slots: ['HEAD', 'NOT_A_SLOT'],
-    classes: [CLASS_ABBRS[0], 'XYZ']
+    classes: [CLASS_ABBRS[0], 'XYZ'],
   })
   assert.deepEqual(got, {
     key: 'batfang headband',
     name: 'Batfang Headband',
     slots: ['HEAD'],
-    classes: [CLASS_ABBRS[0]]
+    classes: [CLASS_ABBRS[0]],
   })
   // A focus with no key or no name is not a narrowing anybody can see or clear — it is dropped.
   assert.equal(sanitizeItemFocus({ key: '', name: 'x' }), null)
@@ -284,7 +303,10 @@ test('a search string survives and is bounded — the one field with no vocabula
   assert.equal(sanitizeSearch('thelvorn'), 'thelvorn')
   // Whitespace is NOT trimmed: the box echoes what was typed, and the filter does its own trimming.
   assert.equal(sanitizeSearch('  spaced  '), '  spaced  ')
-  assert.equal(sanitizeSearch('x'.repeat(MAX_REMEMBERED_SEARCH + 500)).length, MAX_REMEMBERED_SEARCH)
+  assert.equal(
+    sanitizeSearch('x'.repeat(MAX_REMEMBERED_SEARCH + 500)).length,
+    MAX_REMEMBERED_SEARCH,
+  )
 })
 
 // ============================================================================================
@@ -309,17 +331,31 @@ test('…and a pinned trio is filtered to the closed allowlist and capped at the
 
 test('`null` IS AN ANSWER on the browse slot — "All slots", not a failure to parse', () => {
   const withSlot: BrowseFormMemory = { socket: 'proc', slot: 'HEAD', trioOnly: true }
-  assert.equal(sanitizeBrowseForm({ socket: 'proc', slot: null, trioOnly: true }, withSlot).slot, null)
+  assert.equal(
+    sanitizeBrowseForm({ socket: 'proc', slot: null, trioOnly: true }, withSlot).slot,
+    null,
+  )
   // …while an unrecognised slot falls back to whatever the caller had, rather than to `null`.
-  assert.equal(sanitizeBrowseForm({ socket: 'proc', slot: 'ELBOW', trioOnly: true }, withSlot).slot, 'HEAD')
+  assert.equal(
+    sanitizeBrowseForm({ socket: 'proc', slot: 'ELBOW', trioOnly: true }, withSlot).slot,
+    'HEAD',
+  )
   assert.ok(EQUIP_SLOTS.includes('HEAD'), 'the fixture slot is a real one')
 })
 
 test('ERA DEFAULTS ON — an unreadable toggle must not silently unfilter the corpus', () => {
   assert.equal(DEFAULT_GEAR_FILTERS.eraOnly, true, 'the shipped default this claim rests on')
-  assert.equal(sanitizeGearForm({ eraOnly: 'true' }).eraOnly, true, 'a string is not a boolean, so: default')
+  assert.equal(
+    sanitizeGearForm({ eraOnly: 'true' }).eraOnly,
+    true,
+    'a string is not a boolean, so: default',
+  )
   assert.equal(sanitizeGearForm({ eraOnly: 1 }).eraOnly, true)
-  assert.equal(sanitizeGearForm({ eraOnly: false }).eraOnly, false, 'and a real `false` is still honoured')
+  assert.equal(
+    sanitizeGearForm({ eraOnly: false }).eraOnly,
+    false,
+    'and a real `false` is still honoured',
+  )
   // The primitive itself, both directions — `sanitizeFlag` is the only reason era and owned can
   // have opposite defaults and share one reader.
   assert.equal(sanitizeFlag(undefined, true), true)
@@ -345,7 +381,11 @@ test('a stored plus-state comes back as a REACHABLE state, whatever the store sa
   // here — `normalizeUpgradeState`'s `|| 0` handles NaN but not Infinity, so this file handles it.
   assert.deepEqual(sanitizeUpgrade({ full: Infinity, fraction: 0 }), ITEM_UPGRADE_BASE)
   assert.deepEqual(sanitizeUpgrade({ full: 2, fraction: NaN }), ITEM_UPGRADE_BASE)
-  assert.deepEqual(sanitizeUpgrade({ full: '2', fraction: '3' }), ITEM_UPGRADE_BASE, 'strings are not a state')
+  assert.deepEqual(
+    sanitizeUpgrade({ full: '2', fraction: '3' }),
+    ITEM_UPGRADE_BASE,
+    'strings are not a state',
+  )
 })
 
 test('…and the sanitizer is `normalizeUpgradeState` rather than a second opinion about tiers', () => {
@@ -356,7 +396,7 @@ test('…and the sanitizer is `normalizeUpgradeState` rather than a second opini
       assert.deepEqual(
         sanitizeUpgrade({ full, fraction }),
         normalizeUpgradeState({ full, fraction }),
-        `tier ${String(full)} + ${String(fraction)}`
+        `tier ${String(full)} + ${String(fraction)}`,
       )
     }
   }

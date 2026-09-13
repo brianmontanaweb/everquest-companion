@@ -22,13 +22,13 @@ import { clampTextScale } from '@shared/types'
 import {
   DEFAULT_OVERLAY_TEXT_SIZE,
   effectiveOverlayTextScale,
-  type OverlayTextSizePrefs
+  type OverlayTextSizePrefs,
 } from '@shared/overlayTextScale'
 import {
   DEFAULT_OVERLAY_BG_ALPHA,
   clampBgAlpha,
   effectiveOverlayBgAlpha,
-  type OverlayBgAlphaPrefs
+  type OverlayBgAlphaPrefs,
 } from '@shared/overlayBgAlpha'
 import { onOverlayPointerExit, overlayPointerExited } from './pointerExit'
 
@@ -326,6 +326,6 @@ export function useOverlayChrome(): OverlayChrome {
     onEnter: () => capture('window', true),
     onLeave: () => capture('window', false),
     dragRegion: !locked ? ({ WebkitAppRegion: 'drag' } as React.CSSProperties) : {},
-    noDrag: { WebkitAppRegion: 'no-drag' } as React.CSSProperties
+    noDrag: { WebkitAppRegion: 'no-drag' } as React.CSSProperties,
   }
 }

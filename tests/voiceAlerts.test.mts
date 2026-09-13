@@ -40,14 +40,14 @@ import {
   voiceIdOf,
   SPEECH_SETUP_NOTES,
   type SpeechEngineFault,
-  type SpeechSetupGap
+  type SpeechSetupGap,
 } from '../src/renderer/src/lib/speech'
 import {
   AUDIO_COALESCE_MS,
   AUDIO_DISTINCT_CAP,
   audioIdentity,
   coalesceAudio,
-  type AudioWindow
+  type AudioWindow,
 } from '../src/renderer/src/features/alerts/audioThrottle'
 
 function def(over: Partial<AlertDef> = {}): AlertDef {
@@ -57,7 +57,7 @@ function def(over: Partial<AlertDef> = {}): AlertDef {
     enabled: true,
     trigger: { type: 'event', kind: 'uncharm' },
     sound: { packId: 'alan-rickman', soundId: 'attention' },
-    ...over
+    ...over,
   }
 }
 
@@ -79,12 +79,16 @@ test('JOS-362: a firing is ONE channel — a plan can never carry a sound and an
   // rather than about one def: the player has one branch, and nothing can queue speech behind a
   // sound any more.
   for (const audio of ['sound', 'speech'] as const) {
-    const plan = speechPlan(def({ audio, speech: { mode: 'custom', phrase: 'Charm break' } }), null, false)
+    const plan = speechPlan(
+      def({ audio, speech: { mode: 'custom', phrase: 'Charm break' } }),
+      null,
+      false,
+    )
     assert.equal('after' in plan, false, 'the sound-then-speech continuation is retired')
     assert.equal(
       plan.sound && plan.speak !== null,
       false,
-      `audio:'${audio}' must resolve to a sound OR an utterance, never both`
+      `audio:'${audio}' must resolve to a sound OR an utterance, never both`,
     )
   }
 })
@@ -95,7 +99,11 @@ test("JOS-362: a def still STORING 'both' resolves — the phrase decides which 
   // rather than rewritten, and it resolves toward the most specific thing the def says: somebody
   // wrote those words for this alert, so the words win. With no phrase there is nothing specific
   // to honour and it keeps the channel it was always guaranteed to be audible on.
-  const spoken = speechPlan(def({ audio: 'both', speech: { mode: 'custom', phrase: 'Charm broke' } }), null, false)
+  const spoken = speechPlan(
+    def({ audio: 'both', speech: { mode: 'custom', phrase: 'Charm broke' } }),
+    null,
+    false,
+  )
   assert.deepEqual(spoken, { sound: false, speak: 'Charm broke' }, 'a phrase ⇒ spoken')
   const played = speechPlan(def({ audio: 'both' }), null, false)
   assert.deepEqual(played, { sound: true, speak: null }, 'no phrase ⇒ the pack sound')
@@ -111,7 +119,7 @@ test('the alerts master MUTE silences speech too — mute is a promise about noi
     assert.deepEqual(
       speechPlan(def({ audio }), null, true),
       { sound: false, speak: null },
-      `audio:'${audio}' must be silent while muted`
+      `audio:'${audio}' must be silent while muted`,
     )
   }
 })
@@ -183,9 +191,11 @@ test('the window expires — the next burst is heard', () => {
   assert.equal(first.play, true)
   assert.equal(
     coalesceAudio(def(), t0 + AUDIO_COALESCE_MS - 1, first.window, { heard: heardAs(def()) }).play,
-    false
+    false,
   )
-  const later = coalesceAudio(def(), t0 + AUDIO_COALESCE_MS, first.window, { heard: heardAs(def()) })
+  const later = coalesceAudio(def(), t0 + AUDIO_COALESCE_MS, first.window, {
+    heard: heardAs(def()),
+  })
   assert.equal(later.play, true)
   assert.equal(later.window?.at, t0 + AUDIO_COALESCE_MS)
   assert.deepEqual(later.window?.heard, [heardAs(def())], 'a reopened window starts empty')
@@ -233,7 +243,9 @@ test('a distinct line is heard ONCE inside its window, not once per firing', () 
   const d = def({ audio: 'speech', speech: { mode: 'custom', phrase: 'Frost resisted' } })
   const other = def({ audio: 'speech', speech: { mode: 'custom', phrase: 'Flame resisted' } })
   const first = coalesceAudio(d, 0, null, { heard: heardAs(d, 'Frost resisted') })
-  const second = coalesceAudio(other, 100, first.window, { heard: heardAs(other, 'Flame resisted') })
+  const second = coalesceAudio(other, 100, first.window, {
+    heard: heardAs(other, 'Flame resisted'),
+  })
   const repeat = coalesceAudio(d, 200, second.window, { heard: heardAs(d, 'Frost resisted') })
   assert.deepEqual([first.play, second.play, repeat.play], [true, true, false])
 })
@@ -280,7 +292,7 @@ test('the global preference STARTS OFF — an omitted options bag throttles exac
   // …and an empty bag is the same answer, not a different code path.
   assert.deepEqual(coalesceAudio(def(), t0 + 10, first.window, {}), {
     play: false,
-    window: first.window
+    window: first.window,
   })
 })
 
@@ -301,13 +313,16 @@ test('the global preference is the SAME branch as the per-alert opt-out, not a s
   // It bypasses an already-open window and leaves it exactly as it found it — the property that
   // makes the per-alert opt-out safe, asserted for the global one so the two cannot drift.
   const opened = coalesceAudio(def(), 500, null, { heard: heardAs(def()) })
-  const gate = coalesceAudio(def(), 510, opened.window, { allAlwaysPlay: true, heard: heardAs(def()) })
+  const gate = coalesceAudio(def(), 510, opened.window, {
+    allAlwaysPlay: true,
+    heard: heardAs(def()),
+  })
   assert.deepEqual(gate, { play: true, window: opened.window })
   // And it is a bypass laid OVER the defs, never a rewrite of them: a def that already opted out
   // reads identically with the preference on or off.
   assert.deepEqual(
     coalesceAudio(def({ alwaysPlay: true }), 510, opened.window, { allAlwaysPlay: true }),
-    coalesceAudio(def({ alwaysPlay: true }), 510, opened.window, { allAlwaysPlay: false })
+    coalesceAudio(def({ alwaysPlay: true }), 510, opened.window, { allAlwaysPlay: false }),
   )
 })
 
@@ -326,7 +341,7 @@ test('a firing is ONE occupancy, whatever channel it came out on', () => {
 const VOICES = [
   { name: 'Microsoft David Desktop', voiceURI: 'urn:sapi:David?en-US', lang: 'en-US' },
   { name: 'Microsoft Zira Desktop', voiceURI: 'urn:sapi:Zira?en-US', lang: 'en-US' },
-  { name: 'Google UK English Male', lang: 'en-GB' }
+  { name: 'Google UK English Male', lang: 'en-GB' },
 ]
 
 test('a stored voice id matches by URI, then by name, then case-insensitively', () => {
@@ -381,7 +396,12 @@ test('a setup state is NOT a fault — "not downloaded" is already said everywhe
 })
 
 test('every gap the UI can render has a note, and the unloadable one names its remedy', () => {
-  const gaps: SpeechSetupGap[] = ['engine-not-installed', 'no-voices', 'engine-failed', 'engine-unloadable']
+  const gaps: SpeechSetupGap[] = [
+    'engine-not-installed',
+    'no-voices',
+    'engine-failed',
+    'engine-unloadable',
+  ]
   for (const gap of gaps) assert.ok(SPEECH_SETUP_NOTES[gap].length > 0, gap)
   // The two engine faults must never send a user off to re-download a model they already have —
   // which is precisely what the old 'engine-not-installed' answer did say to them.

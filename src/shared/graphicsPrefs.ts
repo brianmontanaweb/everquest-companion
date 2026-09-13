@@ -124,7 +124,7 @@ export function normalizeGraphicsPrefs(value: unknown): GraphicsPrefs {
   const v = isPlainObject(value) ? value : {}
   return {
     safeMode: switchOf(v.safeMode, DEFAULT_GRAPHICS_PREFS.safeMode),
-    opaqueOverlays: switchOf(v.opaqueOverlays, DEFAULT_GRAPHICS_PREFS.opaqueOverlays)
+    opaqueOverlays: switchOf(v.opaqueOverlays, DEFAULT_GRAPHICS_PREFS.opaqueOverlays),
   }
 }
 
@@ -180,11 +180,11 @@ export function resolveGraphicsSwitch(pref: GraphicsSwitch, auto: boolean): Reso
 /** Both switches, resolved against one environment recommendation. */
 export function resolveGraphics(
   prefs: GraphicsPrefs,
-  auto: GraphicsAuto = NO_GRAPHICS_AUTO
+  auto: GraphicsAuto = NO_GRAPHICS_AUTO,
 ): ResolvedGraphics {
   return {
     safeMode: resolveGraphicsSwitch(prefs.safeMode, auto.safeMode),
-    opaqueOverlays: resolveGraphicsSwitch(prefs.opaqueOverlays, auto.opaqueOverlays)
+    opaqueOverlays: resolveGraphicsSwitch(prefs.opaqueOverlays, auto.opaqueOverlays),
   }
 }
 

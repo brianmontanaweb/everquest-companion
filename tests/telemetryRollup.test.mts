@@ -32,13 +32,13 @@ import {
   SESSION_MS_EDGES,
   USAGE_METRICS,
   utcDay,
-  type RollupContext
+  type RollupContext,
 } from '../src/shared/telemetryRollup'
 import {
   MAX_TELEMETRY_BODY_BYTES,
   type TelemetryBatch,
   type TelemetryEvent,
-  type TelemetryRecord
+  type TelemetryRecord,
 } from '../src/shared/telemetry'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -53,7 +53,7 @@ const ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301'
 const batchOf = (events: TelemetryEvent[], appVersion = '0.2.0'): TelemetryBatch => ({
   v: 1,
   env: { analyticsId: ID, appVersion, channel: 'prod', platform: 'win32', tzOffsetBucket: -7 },
-  events: events.map((ev, i): TelemetryRecord => ({ ts: 1_000 + i, ev }))
+  events: events.map((ev, i): TelemetryRecord => ({ ts: 1_000 + i, ev })),
 })
 
 const FIRST: RollupContext = { firstOfDay: true, newInstall: false, upgraded: false }
@@ -73,8 +73,8 @@ test('counts and durations are SUMMED per (metric, dim); repeats do not create r
       { t: 'viewDwell', view: 'combat', ms: 6_000 },
       { t: 'viewDwell', view: 'maps', ms: 1_000 },
       { t: 'featureUse', feature: 'mapOpen', count: 2 },
-      { t: 'featureUse', feature: 'mapOpen', count: 3 }
-    ])
+      { t: 'featureUse', feature: 'mapOpen', count: 3 },
+    ]),
   )
   assert.equal(c.get(`${USAGE_METRICS.viewDwellMs} combat`), 10_000)
   assert.equal(c.get(`${USAGE_METRICS.viewVisits} combat`), 2)
@@ -96,8 +96,8 @@ test('an overlay toggle splits on OPEN vs CLOSE — the mix is opens, not events
     batchOf([
       { t: 'overlayToggle', kind: 'fight', open: true },
       { t: 'overlayToggle', kind: 'fight', open: false },
-      { t: 'overlayToggle', kind: 'events', open: true }
-    ])
+      { t: 'overlayToggle', kind: 'events', open: true },
+    ]),
   )
   assert.equal(c.get(`${USAGE_METRICS.overlayOpen} fight`), 1)
   assert.equal(c.get(`${USAGE_METRICS.overlayClose} fight`), 1)
@@ -117,9 +117,9 @@ test('a setup snapshot becomes one row per FIELD, each dim a bucket index or an 
         autoHide: false,
         voiceEngine: 'kokoro',
         soundPackCount: 4,
-        updateChannel: 'main'
-      }
-    ])
+        updateChannel: 'main',
+      },
+    ]),
   )
   assert.equal(c.get(`${USAGE_METRICS.setups} ${DIM_NONE}`), 1)
   assert.equal(c.get(`${USAGE_METRICS.setupChars} 2`), 1)
@@ -158,9 +158,9 @@ test('THE MACHINE CLASS folds to one row per field — bucket index or enum memb
         safeMode: true,
         displayCountBucket: 2,
         primaryScaleBucket: 3,
-        eqWindowMode: 'fullscreen'
-      }
-    ])
+        eqWindowMode: 'fullscreen',
+      },
+    ]),
   )
   assert.equal(c.get(`${USAGE_METRICS.setupCpu} 4`), 1)
   assert.equal(c.get(`${USAGE_METRICS.setupMem} 6`), 1)
@@ -178,7 +178,7 @@ const HEALTH: TelemetryEvent = {
   mainErrorLogLines: 12,
   parserStalls: 0,
   presenceRestarts: 2,
-  speechFailures: 0
+  speechFailures: 0,
 }
 
 test('health counters are dimmed <version>:<field>, so an error class is a row PER BUILD', () => {
@@ -222,8 +222,8 @@ test('an update outcome carries its own ok/failed dim, and the failure CLASS is 
   const c = counters(
     batchOf([
       { t: 'updateOutcome', step: 'download', ok: false, failureClass: 'network' },
-      { t: 'updateOutcome', step: 'apply', ok: true }
-    ])
+      { t: 'updateOutcome', step: 'apply', ok: true },
+    ]),
   )
   assert.equal(c.get(`${USAGE_METRICS.update} download:failed`), 1)
   assert.equal(c.get(`${USAGE_METRICS.update} apply:ok`), 1)
@@ -239,22 +239,25 @@ test('funnel steps go to their OWN table, keyed with the outcome and the app ver
         { t: 'funnelStep', funnel: 'voice-install', step: 'engineSelected' },
         { t: 'funnelStep', funnel: 'voice-install', step: 'downloadStarted' },
         { t: 'funnelStep', funnel: 'voice-install', step: 'downloadStarted' },
-        { t: 'funnelStep', funnel: 'feedback', step: 'sendFinished', outcome: 'ok' }
+        { t: 'funnelStep', funnel: 'feedback', step: 'sendFinished', outcome: 'ok' },
       ],
-      '0.3.1'
+      '0.3.1',
     ),
-    LATER
+    LATER,
   )
   assert.deepEqual(
     roll.funnels.map((f) => [f.funnel, f.step, f.outcome, f.appVersion, f.n]),
     [
       ['feedback', 'sendFinished', 'ok', '0.3.1', 1],
       ['voice-install', 'downloadStarted', DIM_NONE, '0.3.1', 2],
-      ['voice-install', 'engineSelected', DIM_NONE, '0.3.1', 1]
-    ]
+      ['voice-install', 'engineSelected', DIM_NONE, '0.3.1', 1],
+    ],
   )
   // An absent outcome is the SENTINEL, never NULL: the column is part of the primary key.
-  assert.equal(roll.funnels.every((f) => f.outcome.length > 0), true)
+  assert.equal(
+    roll.funnels.every((f) => f.outcome.length > 0),
+    true,
+  )
 })
 
 test('a funnel failure CLASS lands in usage_daily — the funnel key has no column for it', () => {
@@ -265,9 +268,9 @@ test('a funnel failure CLASS lands in usage_daily — the funnel key has no colu
         funnel: 'voice-install',
         step: 'downloadCompleted',
         outcome: 'failed',
-        failureClass: 'checksum'
-      }
-    ])
+        failureClass: 'checksum',
+      },
+    ]),
   )
   assert.equal(c.get(`${USAGE_METRICS.funnelFailure} voice-install:downloadCompleted:checksum`), 1)
 })
@@ -294,7 +297,10 @@ test('a NEW install is counted once, and only alongside its first-of-day batch',
   const events: TelemetryEvent[] = [{ t: 'sessionStart', coldStartMsBucket: 1 }]
   const fresh = counters(batchOf(events), { firstOfDay: true, newInstall: true, upgraded: false })
   assert.equal(fresh.get(`${USAGE_METRICS.newInstalls} ${DIM_NONE}`), 1)
-  assert.equal(counters(batchOf(events), FIRST).has(`${USAGE_METRICS.newInstalls} ${DIM_NONE}`), false)
+  assert.equal(
+    counters(batchOf(events), FIRST).has(`${USAGE_METRICS.newInstalls} ${DIM_NONE}`),
+    false,
+  )
 })
 
 test('an UPGRADE is counted once, from a fact only the ingest path can know', () => {
@@ -305,7 +311,7 @@ test('an UPGRADE is counted once, from a fact only the ingest path can know', ()
   const key = `${USAGE_METRICS.upgrades} ${DIM_NONE}`
   assert.equal(
     counters(batchOf(events), { firstOfDay: false, newInstall: false, upgraded: true }).get(key),
-    1
+    1,
   )
   // NOT counted on any batch that reports the version the row already held…
   assert.equal(counters(batchOf(events), LATER).has(key), false)
@@ -326,9 +332,9 @@ test('THE ANALYTICS ID REACHES NO COUNTER — not as a metric, not as a dim', ()
   const roll = rollupBatch(
     batchOf([
       { t: 'viewDwell', view: 'maps', ms: 10 },
-      { t: 'funnelStep', funnel: 'first-run', step: 'installed' }
+      { t: 'funnelStep', funnel: 'first-run', step: 'installed' },
     ]),
-    FIRST
+    FIRST,
   )
   const text = JSON.stringify(roll)
   assert.equal(text.includes(ID), false)
@@ -341,13 +347,16 @@ test('the same batch always yields the same rows in the same order', () => {
     { t: 'featureUse', feature: 'questFavorite', count: 1 },
     { t: 'viewDwell', view: 'loot', ms: 5 },
     { t: 'alertFired', count: 3, spokenCount: 1 },
-    { t: 'featureUse', feature: 'mapOpen', count: 1 }
+    { t: 'featureUse', feature: 'mapOpen', count: 1 },
   ])
   const a = rollupBatch(batch, FIRST)
   const b = rollupBatch(batch, FIRST)
   assert.deepEqual(a, b)
   const metrics = a.counters.map((c) => `${c.metric} ${c.dim}`)
-  assert.deepEqual([...metrics].sort((x, y) => x.localeCompare(y)), metrics)
+  assert.deepEqual(
+    [...metrics].sort((x, y) => x.localeCompare(y)),
+    metrics,
+  )
 })
 
 test('an EMPTY batch rolls up to nothing at all — no envelope row, no funnel row', () => {
@@ -355,8 +364,14 @@ test('an EMPTY batch rolls up to nothing at all — no envelope row, no funnel r
   // The handler refuses an empty batch before it reaches the database (its "first batch today"
   // inference assumes events > 0), and the rollup agrees rather than inventing an active day.
   assert.deepEqual(roll.funnels, [])
-  assert.equal(roll.counters.some((c) => c.metric === USAGE_METRICS.activeInstalls), true)
-  assert.equal(roll.counters.some((c) => c.metric === USAGE_METRICS.heartbeats), false)
+  assert.equal(
+    roll.counters.some((c) => c.metric === USAGE_METRICS.activeInstalls),
+    true,
+  )
+  assert.equal(
+    roll.counters.some((c) => c.metric === USAGE_METRICS.heartbeats),
+    false,
+  )
 })
 
 // ---- buckets and labels ---------------------------------------------------------------------
@@ -392,7 +407,10 @@ test('the day key is the ARRIVAL day in UTC — never the client clock', () => {
 
 test('the ingest handler runs the SHARED validator and the SHARED rollup', () => {
   const src = readFileSync(join(ROOT, 'infra', 'lambda', 'telemetry.ts'), 'utf8')
-  assert.match(src, /import \{ validateTelemetryBatch \} from '\.\.\/\.\.\/src\/shared\/telemetryValidate'/)
+  assert.match(
+    src,
+    /import \{ validateTelemetryBatch \} from '\.\.\/\.\.\/src\/shared\/telemetryValidate'/,
+  )
   assert.match(src, /rollupBatch/)
   // The size cap is the shared constant, checked BEFORE the parse.
   assert.match(src, /MAX_TELEMETRY_BODY_BYTES/)
@@ -400,7 +418,7 @@ test('the ingest handler runs the SHARED validator and the SHARED rollup', () =>
   // the imports, and a pin that a comment can satisfy is not a pin.
   assert.ok(
     src.lastIndexOf('MAX_TELEMETRY_BODY_BYTES') < src.lastIndexOf('JSON.parse'),
-    'the size cap must be checked before JSON.parse — it is the one step a hostile body cannot make expensive'
+    'the size cap must be checked before JSON.parse — it is the one step a hostile body cannot make expensive',
   )
 })
 
@@ -462,16 +480,13 @@ test('THE FIVE TABLES, AND NO SIXTH: the handler writes exactly the plan’s sto
   // information about the sender (the test below pins that).
   const src = readFileSync(join(ROOT, 'infra', 'lambda', 'telemetry.ts'), 'utf8')
   const tables = [...src.matchAll(/INSERT INTO (\w+)/g)].map((m) => m[1])
-  assert.deepEqual(
-    [...new Set(tables)].sort(),
-    [
-      'analytics_install',
-      'error_report',
-      'perf_daily_sharded',
-      'usage_daily_sharded',
-      'usage_funnel_daily'
-    ]
-  )
+  assert.deepEqual([...new Set(tables)].sort(), [
+    'analytics_install',
+    'error_report',
+    'perf_daily_sharded',
+    'usage_daily_sharded',
+    'usage_funnel_daily',
+  ])
   // The cube's CONFLICT TARGET and the schema's PRIMARY KEY have to agree, or the UPSERT
   // resolves against nothing (42P10, on a cluster, weeks later) — the pin the cohort test above
   // makes for the two counter tables, made for the fifth.
@@ -481,7 +496,9 @@ test('THE FIVE TABLES, AND NO SIXTH: the handler writes exactly the plan’s sto
   // a key that only matches because of where the source happens to wrap is not a pin.
   const joined = src.replace(/' \+\s+'/g, '')
   assert.ok(joined.includes(`ON CONFLICT (${cubeKey})`))
-  assert.ok(readFileSync(join(ROOT, 'infra', 'schema.sql'), 'utf8').includes(`PRIMARY KEY (${cubeKey})`))
+  assert.ok(
+    readFileSync(join(ROOT, 'infra', 'schema.sql'), 'utf8').includes(`PRIMARY KEY (${cubeKey})`),
+  )
   // The cube carries no id either, and the two install-level dims it needs live on the row that
   // already exists rather than in a table of their own.
   assert.equal(/perf_daily[^;]*analytics_id/.test(src), false, 'no id may reach the perf cube')
@@ -516,7 +533,10 @@ test('schema.sql declares the three tables, the kill switch and a role that cann
   // is older than the brief and wins, and this assertion is what keeps that decision visible.
   assert.match(sql, /exemplar {4}text/)
   // Seeded CLOSED, and guarded so a re-run cannot re-close a switch somebody opened.
-  assert.match(sql, /SET telemetry_accepting = false\n WHERE id = 'FEEDBACK' AND telemetry_accepting IS NULL/)
+  assert.match(
+    sql,
+    /SET telemetry_accepting = false\n WHERE id = 'FEEDBACK' AND telemetry_accepting IS NULL/,
+  )
   assert.match(sql, /CREATE ROLE telemetry_ingest WITH LOGIN/)
   // THE GRANT LIST IS THE PROMISE (§8.5). No privilege on `report`, and no DELETE anywhere.
   const grants = [...sql.matchAll(/GRANT ([^;]+) TO telemetry_ingest/g)].map((m) => m[1])
@@ -525,10 +545,22 @@ test('schema.sql declares the three tables, the kill switch and a role that cann
   // JOS-100: `error_report` IS granted and is a different table, and `\breport\b` does not
   // match inside it because `_` is a word character. Spelled out so a future reader does not
   // "fix" this regex into one that passes a grant on the backlog.
-  assert.equal(grants.some((g) => /\breport\b/.test(g)), false)
-  assert.ok(grants.some((g) => /error_report/.test(g)), 'the error store IS granted')
-  assert.equal(grants.some((g) => /DELETE/.test(g)), false)
-  assert.equal(grants.some((g) => /install_profile/.test(g)), false)
+  assert.equal(
+    grants.some((g) => /\breport\b/.test(g)),
+    false,
+  )
+  assert.ok(
+    grants.some((g) => /error_report/.test(g)),
+    'the error store IS granted',
+  )
+  assert.equal(
+    grants.some((g) => /DELETE/.test(g)),
+    false,
+  )
+  assert.equal(
+    grants.some((g) => /install_profile/.test(g)),
+    false,
+  )
 })
 
 test('every statement in schema.sql still ends on its own line — the splitter law', () => {

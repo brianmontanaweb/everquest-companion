@@ -63,7 +63,7 @@ export default function GearPicker<T extends string>({
   resetLabel,
   toggle,
   onChange,
-  testId
+  testId,
 }: GearPickerProps<T>): JSX.Element {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const current = chosen ?? fallback
@@ -103,7 +103,13 @@ export default function GearPicker<T extends string>({
             data-testid={`${testId}-option-${option}`}
             onClick={() => onChange(toggle(current, option))}
           >
-            <Checkbox size="small" checked={on.has(option)} tabIndex={-1} disableRipple sx={{ p: 0.25, mr: 1 }} />
+            <Checkbox
+              size="small"
+              checked={on.has(option)}
+              tabIndex={-1}
+              disableRipple
+              sx={{ p: 0.25, mr: 1 }}
+            />
             <Typography variant="body2">{optionLabel(option)}</Typography>
           </MenuItem>
         ))}

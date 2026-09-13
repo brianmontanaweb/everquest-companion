@@ -36,18 +36,22 @@ const T0 = 1_700_000_000_000
 const LEVELS: LevelPoint[] = [
   { ts: T0, level: 30 },
   { ts: T0 + 2 * HOUR, level: 31 },
-  { ts: T0 + 5 * HOUR, level: 12 }
+  { ts: T0 + 5 * HOUR, level: 12 },
 ]
 
 const AAS: AAEvent[] = [
   { ts: T0 + HOUR, amount: 1, nowHave: 4 } as AAEvent,
-  { ts: T0 + 6 * HOUR, amount: 2, nowHave: 6 } as AAEvent
+  { ts: T0 + 6 * HOUR, amount: 2, nowHave: 6 } as AAEvent,
 ]
 
 test('the feed is newest first, with both series interleaved', () => {
   const feed = buildFeed(LEVELS, AAS)
   const ts = feed.map((f) => f.ts)
-  assert.deepEqual(ts, [...ts].sort((a, b) => b - a), 'rows are not in descending ts order')
+  assert.deepEqual(
+    ts,
+    [...ts].sort((a, b) => b - a),
+    'rows are not in descending ts order',
+  )
   // The interleave itself: the newest row is an AA gain that falls BETWEEN nothing and the swap,
   // and the second row is the swap ding — a per-series sort could not produce this order.
   assert.equal(feed[0].kind, 'aa')
@@ -76,6 +80,9 @@ test('the first ding states no elapsed time, and a later one states its own', ()
 })
 
 test('the feed is uncut - every input row comes out', () => {
-  const many: LevelPoint[] = Array.from({ length: 80 }, (_, i) => ({ ts: T0 + i * HOUR, level: 10 + i }))
+  const many: LevelPoint[] = Array.from({ length: 80 }, (_, i) => ({
+    ts: T0 + i * HOUR,
+    level: 10 + i,
+  }))
   assert.equal(buildFeed(many, AAS).length, many.length + AAS.length)
 })

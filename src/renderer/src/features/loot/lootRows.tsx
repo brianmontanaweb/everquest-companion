@@ -30,8 +30,8 @@ const FIXED_ROW = {
     maxHeight: ROW_HEIGHT,
     whiteSpace: 'nowrap',
     overflow: 'hidden',
-    textOverflow: 'ellipsis'
-  }
+    textOverflow: 'ellipsis',
+  },
 } as const
 
 function fmtTime(ts: number): string {
@@ -48,7 +48,15 @@ function DispositionChip({ disposition }: { disposition?: LootDisposition }): JS
   if (!disposition) return null
   const sx = { height: 18, fontSize: 11 } as const
   if (disposition === 'sold') {
-    return <Chip size="small" variant="outlined" color="default" label="sold" sx={{ ...sx, opacity: 0.7 }} />
+    return (
+      <Chip
+        size="small"
+        variant="outlined"
+        color="default"
+        label="sold"
+        sx={{ ...sx, opacity: 0.7 }}
+      />
+    )
   }
   if (disposition === 'destroyed') {
     return <Chip size="small" variant="outlined" color="warning" label="destroyed" sx={sx} />
@@ -82,7 +90,12 @@ function DispositionChip({ disposition }: { disposition?: LootDisposition }): JS
  * its own evidence.
  */
 const InventoryEstimate = memo(function InventoryEstimate({ n }: { n: number }): JSX.Element {
-  if (n <= 0) return <Box component="span" sx={{ color: 'text.disabled' }}>-</Box>
+  if (n <= 0)
+    return (
+      <Box component="span" sx={{ color: 'text.disabled' }}>
+        -
+      </Box>
+    )
   return (
     <Chip
       size="small"
@@ -114,7 +127,7 @@ export const GroupedRow = memo(function GroupedRow({
   g,
   knowledge,
   inv,
-  onSelect
+  onSelect,
 }: {
   g: GroupRow
   knowledge?: ItemKnowledge
@@ -224,7 +237,7 @@ const DISPOSITIONS: readonly LootDisposition[] = [
   'hoard',
   'depot',
   'combined',
-  'destroyed'
+  'destroyed',
 ]
 
 function asDisposition(value: string | null): LootDisposition | undefined {
@@ -234,7 +247,7 @@ function asDisposition(value: string | null): LootDisposition | undefined {
 export const EngineFlatRow = memo(function EngineFlatRow({
   cells,
   knowledge,
-  onSelect
+  onSelect,
 }: {
   cells: Cells
   knowledge?: ItemKnowledge
@@ -282,7 +295,7 @@ export const EngineFlatRow = memo(function EngineFlatRow({
 export const FlatRow = memo(function FlatRow({
   e,
   knowledge,
-  onSelect
+  onSelect,
 }: {
   e: LootEvent
   knowledge?: ItemKnowledge

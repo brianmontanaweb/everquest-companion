@@ -80,7 +80,7 @@ export const SKY_QUEST_REWARDS: readonly SkyQuestReward[] = [
       'Effect: Healing (Must Equip, Casting Time: Instant) at Level 45',
       'WT: 0.1 Size: TINY',
       'Class: BRD',
-      'Race: ALL'
+      'Race: ALL',
     ].join('\n'),
     verified: '2026-08-20',
     evidence:
@@ -89,8 +89,8 @@ export const SKY_QUEST_REWARDS: readonly SkyQuestReward[] = [
       'no Fae Amulet. items.json carries both pages: Fae Amulet AC 5 with questUses Bard Test of ' +
       'Wind, Amulet of the Fae AC 8 STR +5 with the identical NECK/BRD/4-charge-Healing profile, ' +
       'the same icon 1043, and no source of its own stated anywhere. Each page asks in its own ' +
-      'summary whether the other is the upgraded version; the bag settles it.'
-  }
+      'summary whether the other is the upgraded version; the bag settles it.',
+  },
 ]
 
 /** The minimum a quest record must have for the overlay to key on it and rewrite it. */
@@ -106,7 +106,7 @@ const questIdentity = (className: string, name: string): string =>
   `${className.toLowerCase()}${name.toLowerCase()}`
 
 const BY_QUEST: ReadonlyMap<string, SkyQuestReward> = new Map(
-  SKY_QUEST_REWARDS.map((e) => [questIdentity(e.className, e.questName), e])
+  SKY_QUEST_REWARDS.map((e) => [questIdentity(e.className, e.questName), e]),
 )
 
 /** The overlay row for one quest, or undefined. Exported for the audit test and the seam. */

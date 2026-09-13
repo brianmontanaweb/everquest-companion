@@ -59,6 +59,6 @@ export function normalizeResistPrefs(value: unknown): ResistPrefs {
     includeNpcCasters:
       typeof v.includeNpcCasters === 'boolean'
         ? v.includeNpcCasters
-        : DEFAULT_RESIST_PREFS.includeNpcCasters
+        : DEFAULT_RESIST_PREFS.includeNpcCasters,
   }
 }

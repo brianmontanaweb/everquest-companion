@@ -203,7 +203,10 @@ function partialFree(hist: Histogram, value: number): boolean {
 }
 
 /** One row's damage, split against the reference. `full` counts focused hits too. */
-export function splitDamage(row: ResistRow, ref: number | undefined): { total: number; full: number; partial: number } {
+export function splitDamage(
+  row: ResistRow,
+  ref: number | undefined,
+): { total: number; full: number; partial: number } {
   let total = 0
   let full = 0
   if (ref === undefined) {
@@ -230,7 +233,11 @@ export function splitDamage(row: ResistRow, ref: number | undefined): { total: n
  *          MAX_DISTINCT_DAMAGE_VALUES), the client's spell data shows no hitpoint slot, or the
  *          pooled histogram has no focus band tall enough to anchor a reference.
  */
-export function damageKind(row: ResistRow, info: SpellResistInfo, ref: DamageRef | undefined): 'aon' | 'ddFix' | 'ddVar' {
+export function damageKind(
+  row: ResistRow,
+  info: SpellResistInfo,
+  ref: DamageRef | undefined,
+): 'aon' | 'ddFix' | 'ddVar' {
   if (row.variable) return 'ddVar'
   if (!info.hpSlot) return 'ddVar'
   if (ref === undefined) return 'ddVar'

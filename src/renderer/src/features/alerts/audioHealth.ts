@@ -29,7 +29,7 @@
 import {
   audioFailureMessage,
   shouldReportAudioFailure,
-  type AudioFailureKind
+  type AudioFailureKind,
 } from '../../../../shared/audioFailureLog'
 
 interface ThrottleCell {
@@ -90,7 +90,7 @@ export function reportAudioFailure(
   kind: AudioFailureKind,
   key: string,
   err: unknown,
-  now: number = Date.now()
+  now: number = Date.now(),
 ): boolean {
   const name = errorName(err)
   const cell = throttle.get(`${kind}:${key}`)

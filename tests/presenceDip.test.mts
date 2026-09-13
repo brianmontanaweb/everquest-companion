@@ -50,7 +50,7 @@ test('a 150% monitor: physical x=3840 is DIP x=2560, and 3840 wide is 2560 wide'
     x: 2560,
     y: 0,
     width: 2560,
-    height: 1440
+    height: 1440,
   })
 })
 
@@ -62,13 +62,13 @@ test('a monitor LEFT of the primary keeps its negative origin', () => {
     x: -1920,
     y: -180,
     width: 1920,
-    height: 1080
+    height: 1080,
   })
   assert.deepEqual(eqBoundsInDip({ x: -2880, y: -270, width: 2880, height: 1620 }, atScale(1.5)), {
     x: -1920,
     y: -180,
     width: 1920,
-    height: 1080
+    height: 1080,
   })
 })
 
@@ -79,7 +79,7 @@ test('the result is whole pixels — a window rectangle is not a fraction', () =
     x: 801,
     y: 801,
     width: 801,
-    height: 801
+    height: 801,
   })
   const negative = eqBoundsInDip({ x: -2881, y: 0, width: 100, height: 100 }, atScale(1.5))
   assert.equal(negative.x, -1921, 'nearest, on the signed side too')

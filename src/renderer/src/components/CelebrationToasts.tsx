@@ -19,7 +19,7 @@ export default function CelebrationToasts({
   defeatToast,
   questToast,
   onDismissDefeat,
-  onDismissQuest
+  onDismissQuest,
 }: {
   defeatToast: TargetStatus | null
   questToast: string | null

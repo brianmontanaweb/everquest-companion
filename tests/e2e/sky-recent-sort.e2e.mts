@@ -72,10 +72,8 @@ const STARRED_QUEST = 'Warrior Test of Think'
 function rowNames(page: Page): Promise<string[]> {
   return page.evaluate(
     ([row, name]) =>
-      [...document.querySelectorAll(row)].map(
-        (a) => a.querySelector(name)?.textContent ?? ''
-      ),
-    [ROW, ROW_NAME]
+      [...document.querySelectorAll(row)].map((a) => a.querySelector(name)?.textContent ?? ''),
+    [ROW, ROW_NAME],
   )
 }
 
@@ -102,7 +100,7 @@ async function openSky(page: Page): Promise<boolean> {
   await page.click(NAV_SKY, { timeout: 30_000 })
   return page.waitForSelector(SEARCH, { timeout: 60_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
 }
 
@@ -110,30 +108,43 @@ async function openSky(page: Page): Promise<boolean> {
 async function setSort(page: Page, value: string): Promise<boolean> {
   await page.click(SORT, { timeout: 15_000 })
   await page.click(`li[role="option"][data-value="${value}"]`, { timeout: 15_000 })
-  const stored = await settle(() => storedValue(page, SORT_KEY), (v) => v === value, {
-    timeoutMs: 8_000
-  })
+  const stored = await settle(
+    () => storedValue(page, SORT_KEY),
+    (v) => v === value,
+    {
+      timeoutMs: 8_000,
+    },
+  )
   return check(`the sort order is set to ${value}`, stored === value, `stored ${String(stored)}`)
 }
 
 /** Narrow to one quest by name, star it through its own button, then clear the search. */
 async function starQuest(page: Page, name: string): Promise<boolean> {
   await page.fill(`${SEARCH} input`, name)
-  const only = await settle(() => filteredCount(page), (n) => n === 1, { timeoutMs: 20_000 })
-  if (!check(`the search narrows to ${name} alone`, only === 1, `filtered=${String(only)}`)) return false
+  const only = await settle(
+    () => filteredCount(page),
+    (n) => n === 1,
+    { timeoutMs: 20_000 },
+  )
+  if (!check(`the search narrows to ${name} alone`, only === 1, `filtered=${String(only)}`))
+    return false
   await page.click(STAR, { timeout: 15_000 })
   const stored = await settle(
     () => storedValue(page, FAVORITES_KEY),
     (v) => (v ?? '').includes(name.toLowerCase()),
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
   const ok = check(
     `starring ${name} writes it to ${FAVORITES_KEY}`,
     (stored ?? '').includes(name.toLowerCase()),
-    String(stored)
+    String(stored),
   )
   await page.fill(`${SEARCH} input`, '')
-  await settle(() => filteredCount(page), (n) => n !== null && n > 1, { timeoutMs: 20_000 })
+  await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n > 1,
+    { timeoutMs: 20_000 },
+  )
   return ok
 }
 
@@ -142,14 +153,26 @@ async function starQuest(page: Page, name: string): Promise<boolean> {
  * by name. Returns what is on top, so the steps below can prove the star did or did not move it.
  */
 async function stepBefore(page: Page): Promise<string> {
-  const stored = await settle(() => storedValue(page, SORT_KEY), (v) => v !== null, { timeoutMs: 15_000 })
-  check(`a fresh install opens the Sky tab sorted by most recently looted`, stored === 'recent', String(stored))
-  const top = await settle(() => firstRow(page), (v) => v !== '', { timeoutMs: 30_000 })
+  const stored = await settle(
+    () => storedValue(page, SORT_KEY),
+    (v) => v !== null,
+    { timeoutMs: 15_000 },
+  )
+  check(
+    `a fresh install opens the Sky tab sorted by most recently looted`,
+    stored === 'recent',
+    String(stored),
+  )
+  const top = await settle(
+    () => firstRow(page),
+    (v) => v !== '',
+    { timeoutMs: 30_000 },
+  )
   check('the quest list renders rows to read an order off', top !== '', top)
   check(
     `…and with no loot in the log yet, ${STARRED_QUEST} is not one of them on merit`,
     top !== STARRED_QUEST,
-    top
+    top,
   )
   return top
 }
@@ -161,22 +184,30 @@ async function stepBefore(page: Page): Promise<string> {
  */
 async function stepStarDoesNotPin(page: Page, before: string): Promise<void> {
   if (!(await starQuest(page, STARRED_QUEST))) return
-  const top = await settle(() => firstRow(page), (v) => v !== '', { timeoutMs: 20_000 })
+  const top = await settle(
+    () => firstRow(page),
+    (v) => v !== '',
+    { timeoutMs: 20_000 },
+  )
   check(
     'STARRING A QUEST DOES NOT MOVE IT TO THE TOP OF "MOST RECENTLY LOOTED"',
     top === before,
-    `${before} -> ${top}`
+    `${before} -> ${top}`,
   )
 }
 
 /** …and the star is not broken, only bounded: every other order still pins it. */
 async function stepStarStillPinsElsewhere(page: Page): Promise<void> {
   if (!(await setSort(page, 'closest'))) return
-  const top = await settle(() => firstRow(page), (v) => v === STARRED_QUEST, { timeoutMs: 20_000 })
+  const top = await settle(
+    () => firstRow(page),
+    (v) => v === STARRED_QUEST,
+    { timeoutMs: 20_000 },
+  )
   check(
     'THE STAR STILL PINS TO THE TOP OF EVERY STANDING-PROPERTY ORDER — here, closest to done',
     top === STARRED_QUEST,
-    top
+    top,
   )
 }
 
@@ -190,12 +221,16 @@ async function stepStarStillPinsElsewhere(page: Page): Promise<void> {
 async function stepLootWins(page: Page, log: FixtureLog, at: Date): Promise<void> {
   if (!(await setSort(page, 'recent'))) return
   log.appendAt(at, LOOT)
-  const top = await settle(() => firstRow(page), (v) => v === LOOTED_QUEST, { timeoutMs: 45_000 })
+  const top = await settle(
+    () => firstRow(page),
+    (v) => v === LOOTED_QUEST,
+    { timeoutMs: 45_000 },
+  )
   if (
     !check(
       `LOOTING FOR ${LOOTED_QUEST} PUTS IT ON TOP, PAST THE STARRED QUEST`,
       top === LOOTED_QUEST,
-      `top=${top}`
+      `top=${top}`,
     )
   ) {
     return
@@ -204,11 +239,11 @@ async function stepLootWins(page: Page, log: FixtureLog, at: Date): Promise<void
   check(
     `…and ${STARRED_QUEST} is somewhere below it rather than above`,
     names.indexOf(STARRED_QUEST) !== 0,
-    `index=${String(names.indexOf(STARRED_QUEST))}`
+    `index=${String(names.indexOf(STARRED_QUEST))}`,
   )
   check(
     '…with its star still set: the pin was SKIPPED for this order, not cleared',
-    ((await storedValue(page, FAVORITES_KEY)) ?? '').includes(STARRED_QUEST.toLowerCase())
+    ((await storedValue(page, FAVORITES_KEY)) ?? '').includes(STARRED_QUEST.toLowerCase()),
   )
 }
 

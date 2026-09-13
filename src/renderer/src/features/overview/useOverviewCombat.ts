@@ -40,7 +40,7 @@ export function useOverviewCombat(): CombatSnapshot | null {
     const tick = async (): Promise<void> => {
       const s = await window.eq.getCombatSnapshot({
         timeline: true,
-        maxSegments: 1
+        maxSegments: 1,
       })
       if (alive) setSnap(s)
     }

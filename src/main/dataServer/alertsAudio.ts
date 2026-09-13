@@ -172,7 +172,7 @@ export function playEngineFire(fire: FireMessage): boolean {
     unplaceable += 1
     note(
       `data-server alerts: nothing in the store answers to "${fire.rule}" — ` +
-        `the fire is dropped (unplaceable this launch: ${String(unplaceable)})`
+        `the fire is dropped (unplaceable this launch: ${String(unplaceable)})`,
     )
     return false
   }

@@ -35,7 +35,7 @@ import {
   ITEMS_RESEARCH,
   knowledgeWithResearch,
   type ItemResearchFile,
-  type ResearchedKnowledge
+  type ResearchedKnowledge,
 } from '../itemsResearch'
 import { COMMITTED_SPELL_FACTS, slotsOf, type SpellFactsIndex } from './effectIndex'
 import { buildEraDerivations } from './eraDerive'
@@ -44,7 +44,7 @@ import {
   normalizeClasses,
   normalizeSlotTokens,
   parseFocusEffect,
-  socketTypeOf
+  socketTypeOf,
 } from '../../shared/planner/normalize'
 import { extractionTier } from '../../shared/planner/rules'
 import { statInteger } from '../../shared/characterSheet'
@@ -57,7 +57,7 @@ import {
   type GearEffect,
   type GearIndexPayload,
   type GearRow,
-  type GearStats
+  type GearStats,
 } from '../../shared/planner/gear'
 import type { ItemEffect, ItemStat, ItemStatBlock } from '../../shared/itemStats'
 import type { ItemUpgradeState } from '../../shared/itemUpgrade'
@@ -72,7 +72,7 @@ const EMPTY_BLOCK: ItemStatBlock = {
   saves: [],
   effects: [],
   exaltationSlots: [],
-  extras: []
+  extras: [],
 }
 
 // ---- reading a number out of the corpus ---------------------------------------------------
@@ -185,7 +185,13 @@ function foldStructural(block: ItemStatBlock, out: GearStatReading): void {
 }
 
 export function readGearStats(block: ItemStatBlock): GearStatReading {
-  const out: GearStatReading = { stats: {}, integers: 0, percents: 0, unindexed: {}, unreadable: {} }
+  const out: GearStatReading = {
+    stats: {},
+    integers: 0,
+    percents: 0,
+    unindexed: {},
+    unreadable: {},
+  }
   foldStatRows([...block.stats, ...block.saves], out)
   foldStructural(block, out)
   return out
@@ -227,8 +233,8 @@ function newAcc(derived: ReadonlyMap<string, EraDerivation>): Acc {
       eraDerivedRows: 0,
       statValues: 0,
       percentValues: 0,
-      rangeTexts: 0
-    }
+      rangeTexts: 0,
+    },
   }
 }
 
@@ -263,7 +269,7 @@ function gearEffect(effect: ItemEffect, spells: SpellFactsIndex, acc: Acc): Gear
     kind: effect.kind,
     ...(socket === null ? {} : { socket, tierRequired: extractionTier(socket) }),
     ...(isHasteEffect(effect.name, effect.detail) ? { hasteLocked: true as const } : {}),
-    ...(rank === null ? {} : { family: rank.family, familyTier: rank.tier })
+    ...(rank === null ? {} : { family: rank.family, familyTier: rank.tier }),
   }
 }
 
@@ -271,7 +277,10 @@ function gearEffect(effect: ItemEffect, spells: SpellFactsIndex, acc: Acc): Gear
 function normalizeRaces(races: readonly string[] | undefined): string[] {
   const out: string[] = []
   for (const raw of races ?? []) {
-    const token = raw.trim().replace(/[,.;:]+$/, '').toUpperCase()
+    const token = raw
+      .trim()
+      .replace(/[,.;:]+$/, '')
+      .toUpperCase()
     if (token !== '' && !out.includes(token)) out.push(token)
   }
   return out
@@ -287,7 +296,7 @@ function optionalFields(
   k: ResearchedKnowledge,
   read: GearStatReading | null,
   voidSynth: boolean,
-  derived: EraDerivation | undefined
+  derived: EraDerivation | undefined,
 ): Partial<GearRow> {
   return {
     ...(k.iconId === undefined ? {} : { iconId: k.iconId }),
@@ -298,7 +307,7 @@ function optionalFields(
     ...(voidSynth ? { voidSynth: true as const } : {}),
     // Copied per row (donors do the same) so a consumer never needs a second index to answer
     // "where does this drop".
-    ...(k.dropsFrom === undefined ? {} : { wikiSources: k.dropsFrom.map((s) => ({ ...s })) })
+    ...(k.dropsFrom === undefined ? {} : { wikiSources: k.dropsFrom.map((s) => ({ ...s })) }),
   }
 }
 
@@ -325,7 +334,7 @@ function pageRow(
   entry: ItemDbEntry,
   research: ItemResearchFile,
   spells: SpellFactsIndex,
-  acc: Acc
+  acc: Acc,
 ): GearRow | null {
   const k = knowledgeWithResearch(entry, research)
   // One committed page states no stats block at all. Defaulting it here rather than threading an
@@ -354,7 +363,12 @@ function pageRow(
     playerCrafted: k.playerCrafted === true,
     stats: read.stats,
     effects: block.effects.map((e) => gearEffect(e, spells, acc)),
-    ...optionalFields(k, read, synthesizesVoidSave(block, ANY_UPGRADED), acc.derived.get(itemKey(entry.page)))
+    ...optionalFields(
+      k,
+      read,
+      synthesizesVoidSave(block, ANY_UPGRADED),
+      acc.derived.get(itemKey(entry.page)),
+    ),
   }
   return row
 }
@@ -373,7 +387,12 @@ function remember(acc: Acc, entry: ItemDbEntry, row: GearRow): void {
   if (canonical) acc.fromCanonical.add(row.key)
 }
 
-function addPage(acc: Acc, entry: ItemDbEntry, research: ItemResearchFile, spells: SpellFactsIndex): void {
+function addPage(
+  acc: Acc,
+  entry: ItemDbEntry,
+  research: ItemResearchFile,
+  spells: SpellFactsIndex,
+): void {
   if (acc.seenPages.has(entry.page)) {
     acc.stats.aliasKeys++
     return
@@ -395,12 +414,13 @@ function addPage(acc: Acc, entry: ItemDbEntry, research: ItemResearchFile, spell
 export function buildGearIndex(
   file: ItemDbFile,
   research: ItemResearchFile = ITEMS_RESEARCH,
-  spells: SpellFactsIndex = COMMITTED_SPELL_FACTS
+  spells: SpellFactsIndex = COMMITTED_SPELL_FACTS,
 ): GearIndexPayload {
   const acc = newAcc(buildEraDerivations(file))
   // Through the rename overlay (JOS-415) — same reasoning as `buildPlannerIndex`: a gear row is a
   // DISPLAYED name, and `addPage`'s page dedupe already absorbs the alias key.
-  for (const entry of Object.values(renamedItems(file.items ?? {}))) addPage(acc, entry, research, spells)
+  for (const entry of Object.values(renamedItems(file.items ?? {})))
+    addPage(acc, entry, research, spells)
   // The census is taken from the KEPT rows, after dedupe (see `countRow`).
   for (const row of acc.rows.values()) countRow(acc, row)
   return {
@@ -411,7 +431,7 @@ export function buildGearIndex(
       ...acc.stats,
       unindexedStatKeys: Object.fromEntries([...acc.unindexed].sort((a, b) => b[1] - a[1])),
       unreadableStatKeys: Object.fromEntries([...acc.unreadable].sort((a, b) => b[1] - a[1])),
-      unknownSlotTokens: [...acc.unknownSlots]
-    }
+      unknownSlotTokens: [...acc.unknownSlots],
+    },
   }
 }

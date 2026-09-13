@@ -29,14 +29,21 @@ import {
   xOf,
   yOf,
   type AaPoint,
-  type ChartScale
+  type ChartScale,
 } from './levelChartGeometry'
 // THE FRACTIONAL CURVE (JOS-292) and the spans it refuses to draw. This file draws what that
 // one derives and adds no arithmetic of its own — the y mapping is the only maths left here.
 import { gapRect, runArea, runPolyline, type CurveRefusal, type LevelCurve } from './levelCurve'
 import { LevelHoverLayer } from './LevelHoverLayer'
 import { formatTime } from '../../lib/formatDate'
-import { BAND_PAD, PAD_X, bandRects, bandStripStyle, type ZoneBand, type ZoneLegend } from './zoneBands'
+import {
+  BAND_PAD,
+  PAD_X,
+  bandRects,
+  bandStripStyle,
+  type ZoneBand,
+  type ZoneLegend,
+} from './zoneBands'
 import type { ChartSelection, SelectionPointerHandlers } from './useChartSelection'
 import type { DraftStore } from './selectionDraft'
 
@@ -105,8 +112,20 @@ const CRISP = 'non-scaling-stroke'
  * that a structural impossibility rather than a promise. The edge tick labels sit inside the
  * band's own edges, so nothing legitimate is clipped.
  */
-const SEL_LAYER: CSSProperties = { position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden' }
-const TICK: CSSProperties = { position: 'absolute', bottom: 0, fontSize: 9, lineHeight: '11px', whiteSpace: 'nowrap' }
+const SEL_LAYER: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  pointerEvents: 'none',
+  zIndex: 1,
+  overflow: 'hidden',
+}
+const TICK: CSSProperties = {
+  position: 'absolute',
+  bottom: 0,
+  fontSize: 9,
+  lineHeight: '11px',
+  whiteSpace: 'nowrap',
+}
 
 /**
  * The zone strip: which zone you were in, along the top of the plot.
@@ -115,7 +134,13 @@ const TICK: CSSProperties = { position: 'absolute', bottom: 0, fontSize: 9, line
  * native browser tooltip would race its card — one owner, per the plan's §6.2 arbitration.
  * Identification without hover is the legend's job (ZoneLegendStrip below).
  */
-function ZoneBandStrip({ bands, scale }: { bands: readonly ZoneBand[]; scale: ChartScale }): JSX.Element | null {
+function ZoneBandStrip({
+  bands,
+  scale,
+}: {
+  bands: readonly ZoneBand[]
+  scale: ChartScale
+}): JSX.Element | null {
   const rects = bandRects(bands, scale)
   if (rects.length === 0) return null
   // The strip's weight is a function of whether it is telling anything apart (JOS-339,
@@ -160,7 +185,12 @@ function ZoneBandStrip({ bands, scale }: { bands: readonly ZoneBand[]; scale: Ch
  * all — the SVG's `height` attribute equals the viewBox height, so one user unit IS one CSS pixel
  * vertically, which is the same 1:1 that lets the hover layer skip an inverse for Y.
  */
-const AXIS_LAYER: CSSProperties = { position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }
+const AXIS_LAYER: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  pointerEvents: 'none',
+  zIndex: 0,
+}
 /** `translateY(-100%)` puts the box's BOTTOM on `top`, which is where an SVG `y` puts a baseline —
  *  so a mark reads at the same height it did as a `<text>`, only unsmeared. */
 const AXIS_TEXT: CSSProperties = {
@@ -170,7 +200,7 @@ const AXIS_TEXT: CSSProperties = {
   lineHeight: '11px',
   whiteSpace: 'nowrap',
   opacity: 0.7,
-  transform: 'translateY(-100%)'
+  transform: 'translateY(-100%)',
 }
 
 /** One value marked on the y axis: what it says, and the user unit (== CSS pixel) it says it at. */
@@ -179,12 +209,22 @@ interface AxisMark {
   y: number
 }
 
-function AxisLabels({ marks, color }: { marks: readonly AxisMark[]; color: string }): JSX.Element | null {
+function AxisLabels({
+  marks,
+  color,
+}: {
+  marks: readonly AxisMark[]
+  color: string
+}): JSX.Element | null {
   if (marks.length === 0) return null
   return (
     <div style={AXIS_LAYER} data-testid="leveling-axis-labels">
       {marks.map((m) => (
-        <div key={m.text} data-testid="leveling-axis-label" style={{ ...AXIS_TEXT, top: m.y, color }}>
+        <div
+          key={m.text}
+          data-testid="leveling-axis-label"
+          style={{ ...AXIS_TEXT, top: m.y, color }}
+        >
           {m.text}
         </div>
       ))}
@@ -210,7 +250,7 @@ function SelectionBand({
   scale,
   committed,
   draft,
-  color
+  color,
 }: {
   scale: ChartScale
   committed: ChartSelection | null
@@ -222,15 +262,32 @@ function SelectionBand({
   if (!range) return null
   const l = (xOf(scale, range.t0) / scale.w) * 100
   const r = (xOf(scale, range.t1) / scale.w) * 100
-  const edge: CSSProperties = { position: 'absolute', top: 0, bottom: 0, width: 1, background: color, opacity: 0.75 }
+  const edge: CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 1,
+    background: color,
+    opacity: 0.75,
+  }
   return (
     <div style={SEL_LAYER}>
       <div
-        style={{ position: 'absolute', left: `${l}%`, width: `${Math.max(0, r - l)}%`, top: 0, bottom: 0, background: color, opacity: 0.14 }}
+        style={{
+          position: 'absolute',
+          left: `${l}%`,
+          width: `${Math.max(0, r - l)}%`,
+          top: 0,
+          bottom: 0,
+          background: color,
+          opacity: 0.14,
+        }}
       />
       <div style={{ ...edge, left: `${l}%` }} />
       <div style={{ ...edge, left: `${r}%` }} />
-      <div style={{ ...TICK, left: `${l}%`, color, transform: 'translateX(2px)' }}>{formatTime(range.t0)}</div>
+      <div style={{ ...TICK, left: `${l}%`, color, transform: 'translateX(2px)' }}>
+        {formatTime(range.t0)}
+      </div>
       <div style={{ ...TICK, left: `${r}%`, color, transform: 'translateX(calc(-100% - 2px))' }}>
         {formatTime(range.t1)}
       </div>
@@ -248,7 +305,7 @@ const LEGEND_STYLE: CSSProperties = {
   // as the visible zone mix changes. Pushing the column around is now free (the page scrolls), and
   // a legend is an INDEX of what was drawn: half of it hidden behind a 40px scroller made it a
   // worse answer than the hover it exists to be independent of. It wraps as far as it needs.
-  opacity: 0.85
+  opacity: 0.85,
 }
 const SWATCH: CSSProperties = { width: 9, height: 9, borderRadius: 2, flexShrink: 0 }
 const LEGEND_ITEM: CSSProperties = { display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }
@@ -260,7 +317,7 @@ const LEGEND_ITEM: CSSProperties = { display: 'flex', alignItems: 'center', gap:
  */
 export function ZoneLegendStrip({
   legend,
-  fmtDuration
+  fmtDuration,
 }: {
   legend: ZoneLegend
   /** the view's duration formatter, injected so there is no second one in this feature. */
@@ -298,7 +355,7 @@ export function ZoneLegendStrip({
 export function AreaChart({
   points,
   color,
-  chrome
+  chrome,
 }: {
   points: AaPoint[]
   color: string
@@ -332,14 +389,27 @@ export function AreaChart({
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none">
         <ZoneBandStrip bands={chrome.bands} scale={scale} />
         <polygon points={area} fill={color} opacity={0.18} />
-        <polyline points={`${line} ${tail}`} fill="none" stroke={color} strokeWidth={2} vectorEffect={CRISP} />
+        <polyline
+          points={`${line} ${tail}`}
+          fill="none"
+          stroke={color}
+          strokeWidth={2}
+          vectorEffect={CRISP}
+        />
       </svg>
       {/* Drawn exactly when the floor is NOT zero, which is exactly when it needs stating: a
           windowed view whose baseline is the total you already had. Marked at the values' OWN
           heights now that the domain has air around them — the labels are the axis, not corners. */}
       <AxisLabels
         color={color}
-        marks={base > 0 ? [{ text: top.toLocaleString(), y: y(top) }, { text: base.toLocaleString(), y: y(base) }] : []}
+        marks={
+          base > 0
+            ? [
+                { text: top.toLocaleString(), y: y(top) },
+                { text: base.toLocaleString(), y: y(base) },
+              ]
+            : []
+        }
       />
       <SelectionBand scale={scale} committed={chrome.range} draft={chrome.draft} color={color} />
       <LevelHoverLayer
@@ -440,7 +510,7 @@ export function LevelStepChart({
   curve,
   color,
   aaPoints,
-  chrome
+  chrome,
 }: {
   segments: LevelSegment[]
   /** The drawn curve — already windowed and down-sampled by the view (levelCurve.ts). */
@@ -466,10 +536,14 @@ export function LevelStepChart({
   // chart prints are unchanged; the bottom one is now where it says it is instead of a level high.
   // An empty curve keeps its own extent out of it: `loY`/`hiY` are 0 there, not "level zero".
   const drawn = curve.runs.length > 0 || curve.dings.length > 0
-  const axis = levelAxis(drawn ? Math.min(lo, curve.loY) : lo, drawn ? Math.max(hi, curve.hiY) : hi, {
-    top: PAD_TOP,
-    bottom: H - PAD_BOTTOM
-  })
+  const axis = levelAxis(
+    drawn ? Math.min(lo, curve.loY) : lo,
+    drawn ? Math.max(hi, curve.hiY) : hi,
+    {
+      top: PAD_TOP,
+      bottom: H - PAD_BOTTOM,
+    },
+  )
   const y = (v: number): number => yOf(axis, v)
   const floor = axis.bottom
 
@@ -522,7 +596,13 @@ export function LevelStepChart({
                 />
               </>
             ) : (
-              <circle data-testid="leveling-level-ding" cx={xOf(scale, d.ts)} cy={y(d.level)} r={2.5} fill={color} />
+              <circle
+                data-testid="leveling-level-ding"
+                cx={xOf(scale, d.ts)}
+                cy={y(d.level)}
+                r={2.5}
+                fill={color}
+              />
             )}
           </g>
         ))}
@@ -533,7 +613,13 @@ export function LevelStepChart({
           the two bounds always differ by construction and both of them mean something: the level
           you are in, and the one you are filling toward. Same integers, honest positions, and out
           of the stretched SVG so they read as numbers rather than smears. */}
-      <AxisLabels color={color} marks={[{ text: String(axis.hi), y: y(axis.hi) }, { text: String(axis.lo), y: y(axis.lo) }]} />
+      <AxisLabels
+        color={color}
+        marks={[
+          { text: String(axis.hi), y: y(axis.hi) },
+          { text: String(axis.lo), y: y(axis.lo) },
+        ]}
+      />
       <SelectionBand scale={scale} committed={chrome.range} draft={chrome.draft} color={color} />
       <LevelHoverLayer
         scale={scale}

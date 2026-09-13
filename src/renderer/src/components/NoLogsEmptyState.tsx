@@ -17,7 +17,7 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import TravelExploreIcon from '@mui/icons-material/TravelExplore'
 
 export default function NoLogsEmptyState({
-  onOpenPreferences
+  onOpenPreferences,
 }: {
   onOpenPreferences: () => void
 }): JSX.Element {
@@ -31,7 +31,7 @@ export default function NoLogsEmptyState({
         justifyContent: 'center',
         textAlign: 'center',
         gap: 1.5,
-        color: 'text.secondary'
+        color: 'text.secondary',
       }}
     >
       <TravelExploreIcon sx={{ fontSize: 48, opacity: 0.6 }} />
@@ -43,7 +43,12 @@ export default function NoLogsEmptyState({
         character logs. Make sure logging is on in-game (type <code>/log on</code>), or point us at
         your install folder.
       </Typography>
-      <Button variant="contained" startIcon={<SettingsIcon />} onClick={onOpenPreferences} sx={{ mt: 1 }}>
+      <Button
+        variant="contained"
+        startIcon={<SettingsIcon />}
+        onClick={onOpenPreferences}
+        sx={{ mt: 1 }}
+      >
         Open preferences
       </Button>
     </Box>

@@ -43,7 +43,7 @@ import {
   LIVE_TIMELINE_MS,
   type LiveLateSample,
   type LiveProbeMessage,
-  type LiveStallFold
+  type LiveStallFold,
 } from '../shared/perfLive'
 import { peekTailIoTimeline } from './log/tailIoStats'
 
@@ -216,7 +216,7 @@ export function peekLiveTimeline(now = Date.now()): LiveTimeline {
     worker: workerRing.filter((s) => s.at >= cutoff),
     tail: peekTailIoTimeline()
       .filter((s) => s.at >= cutoff)
-      .map((s) => ({ at: s.at, readMs: s.readMs }))
+      .map((s) => ({ at: s.at, readMs: s.readMs })),
   }
 }
 
@@ -239,7 +239,7 @@ export function resetLiveProbe(): void {
  */
 export function noteLiveProbeSamples(
   main: readonly LiveLateSample[],
-  fromWorker: readonly LiveLateSample[] | null
+  fromWorker: readonly LiveLateSample[] | null,
 ): void {
   for (const s of main) noteMain(s.lateMs, s.at)
   if (fromWorker === null) return

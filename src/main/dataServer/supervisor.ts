@@ -66,7 +66,7 @@ import type { EngineHealth } from './engineHealth'
 import {
   createLaunchHealthWatch,
   type HealthWatchDeps,
-  type LaunchHealthWatch
+  type LaunchHealthWatch,
 } from './supervisorHealth'
 import {
   ENGINE_ANNOUNCE_TIMEOUT_MS,
@@ -89,7 +89,7 @@ import {
   type EngineHealthVerdict,
   type EnginePowerHandlers,
   type EngineServedTrail,
-  type HealthFailure
+  type HealthFailure,
 } from './engineProtocol'
 
 // THE CHILD, STRUCTURALLY, LIVES NEXT DOOR NOW (JOS-503) — `supervisorChild.ts`, split out at the
@@ -280,7 +280,14 @@ export class EngineSupervisor {
     this.protocolVersion = deps.protocolVersion ?? PROTOCOL_VERSION
     this.announceTimeoutMs = deps.announceTimeoutMs ?? ENGINE_ANNOUNCE_TIMEOUT_MS
     this.stopGraceMs = deps.stopGraceMs ?? ENGINE_STOP_GRACE_MS
-    deps.powerEvents?.({ suspend: () => { this.onSuspend() }, resume: () => { this.onResume() } })
+    deps.powerEvents?.({
+      suspend: () => {
+        this.onSuspend()
+      },
+      resume: () => {
+        this.onResume()
+      },
+    })
   }
 
   // ------------------------------------------------------------------ the public four
@@ -394,7 +401,9 @@ export class EngineSupervisor {
       // packaging change lands "no engine here" is the ORDINARY state of every build that is not a
       // developer's own cargo tree. The app runs without it.
       this.status = 'absent'
-      this.deps.debug('data-server engine: no engine binary found; the supervisor is idle (phase 3)')
+      this.deps.debug(
+        'data-server engine: no engine binary found; the supervisor is idle (phase 3)',
+      )
       // …AND SOMEBODY IS TOLD (JOS-503). The paragraph above is still true — this is not an error
       // and not a retry — but it stopped being true that nobody needs to know: post-cutover there is
       // no fold to fall back to, so this condition IS a permanently empty app, and the one thing it
@@ -415,7 +424,7 @@ export class EngineSupervisor {
         exitCode: null,
         signal: null,
         lifetimeMs: 0,
-        detail: boundedDetail(`${bin}: ${describeErr(err)}`)
+        detail: boundedDetail(`${bin}: ${describeErr(err)}`),
       })
       this.scheduleRestart()
       return
@@ -438,7 +447,7 @@ export class EngineSupervisor {
       killed: false,
       cancelAnnounce: null,
       health: null,
-      cancelGrace: null
+      cancelGrace: null,
     }
     // The engine must never be the reason a quitting app stays alive (`presence.ts`'s `w.unref()`,
     // the same promise for a process instead of a thread). `stop()` is what actually ends it.
@@ -475,7 +484,10 @@ export class EngineSupervisor {
   private writeToken(l: Launch, token: string): void {
     const stdin = l.child.stdin
     if (!stdin) {
-      this.endLaunch(l, 'spawn-failed', { detail: 'the child has no stdin for the token', alive: true })
+      this.endLaunch(l, 'spawn-failed', {
+        detail: 'the child has no stdin for the token',
+        alive: true,
+      })
       return
     }
     // EPIPE arrives ASYNCHRONOUSLY when the child dies before reading, and an unhandled `error` on
@@ -512,7 +524,7 @@ export class EngineSupervisor {
     l.cancelAnnounce?.()
     l.cancelAnnounce = null
     this.deps.debug(
-      `data-server engine announced port ${String(announce.port)} protocol ${String(announce.protocolVersion)}`
+      `data-server engine announced port ${String(announce.port)} protocol ${String(announce.protocolVersion)}`,
     )
     this.beginHealth(l, announce)
   }
@@ -539,7 +551,7 @@ export class EngineSupervisor {
       // escalation is already narrated where it happens.
       if (code !== 0 && !l.killed) {
         this.deps.report(
-          engineShutdownExitLog(code, signal, Math.max(0, this.deps.now() - l.startedAt))
+          engineShutdownExitLog(code, signal, Math.max(0, this.deps.now() - l.startedAt)),
         )
       }
       return
@@ -554,9 +566,15 @@ export class EngineSupervisor {
   private beginHealth(l: Launch, announce: EngineAnnounce): void {
     const target = { port: announce.port, token: l.token, protocolVersion: this.protocolVersion }
     l.health = createLaunchHealthWatch(this.deps, target, {
-      onHealthy: (health, first) => { if (first) this.reachedReady(l, announce, health) },
-      onUnhealthy: (reasons, err) => { this.unhealthy(l, reasons, err) },
-      onLocalSocket: (tries, err) => { this.localSocket(l, tries, err) }
+      onHealthy: (health, first) => {
+        if (first) this.reachedReady(l, announce, health)
+      },
+      onUnhealthy: (reasons, err) => {
+        this.unhealthy(l, reasons, err)
+      },
+      onLocalSocket: (tries, err) => {
+        this.localSocket(l, tries, err)
+      },
     })
   }
 
@@ -564,7 +582,11 @@ export class EngineSupervisor {
    *  engine is bound and serving, and a respawn cannot supply a local port. */
   private localSocket(l: Launch, tries: number, err: unknown): void {
     this.deps.report(
-      engineLocalSocketLog(tries, Math.max(0, this.deps.now() - l.startedAt), boundedDetail(describeErr(err)))
+      engineLocalSocketLog(
+        tries,
+        Math.max(0, this.deps.now() - l.startedAt),
+        boundedDetail(describeErr(err)),
+      ),
     )
   }
 
@@ -580,7 +602,7 @@ export class EngineSupervisor {
     this.endLaunch(l, 'unhealthy', {
       detail: describeErr(err),
       alive: true,
-      health: { healthReasons: reasons, resumedAgoMs }
+      health: { healthReasons: reasons, resumedAgoMs },
     })
   }
 
@@ -616,7 +638,7 @@ export class EngineSupervisor {
     this.deps.debug(
       `data-server engine ready: pid ${String(l.child.pid ?? 0)}, port ${String(announce.port)}, ` +
         `protocol ${String(announce.protocolVersion)}, engine ${health.engineVersion || 'unknown'}, ` +
-        `status ${health.status}`
+        `status ${health.status}`,
     )
     // THE HANDOVER, AFTER THE NARRATION on purpose: whatever the client does with this — connect,
     // hello, attach — is caused by the ready line, so the ready line has to be in the log ABOVE it.
@@ -627,7 +649,7 @@ export class EngineSupervisor {
       token: l.token,
       protocolVersion: announce.protocolVersion,
       engineVersion: health.engineVersion,
-      epoch: health.epoch
+      epoch: health.epoch,
     })
   }
 
@@ -652,7 +674,7 @@ export class EngineSupervisor {
       signal: info.signal ?? null,
       lifetimeMs: Math.max(0, this.deps.now() - l.startedAt),
       detail: boundedDetail(info.detail) ?? l.lastStderr,
-      ...info.health
+      ...info.health,
     }
     this.fold(cause)
     // The child may still be running (a timeout, a bad announce, a failed health probe). Retiring it
@@ -682,13 +704,15 @@ export class EngineSupervisor {
     this.servedTrail = step.trail
     this.deps.onServedExit?.()
     this.deps.debug(
-      `data-server engine: a serving engine died (${String(step.trail.cycles)} this session)`
+      `data-server engine: a serving engine died (${String(step.trail.cycles)} this session)`,
     )
     if (step.log) this.deps.report(step.log)
   }
 
   /** Count the failure, fold it into the trail, report what the fold says to report. */
-  private fold(cause: Omit<EngineExitCause, 'attempt' | 'failure'> & { failure: LaunchFailure }): void {
+  private fold(
+    cause: Omit<EngineExitCause, 'attempt' | 'failure'> & { failure: LaunchFailure },
+  ): void {
     this.failures += 1
     const step = engineExitStep(this.trail, { ...cause, attempt: this.failures })
     const collapsing = !this.trail.collapsed && step.trail.collapsed
@@ -700,7 +724,11 @@ export class EngineSupervisor {
     // shape that only a condition which is not clearing can produce. The retry backoff keeps running
     // underneath — a card is not a surrender — but the sentence has stopped changing, so it is said.
     if (collapsing) {
-      this.deps.onFault?.({ kind: cause.failure, attempts: step.trail.streak, detail: cause.detail })
+      this.deps.onFault?.({
+        kind: cause.failure,
+        attempts: step.trail.streak,
+        detail: cause.detail,
+      })
     }
   }
 
@@ -709,7 +737,9 @@ export class EngineSupervisor {
     if (this.cancelRestart || this.stopping) return
     const delay = engineRestartDelayMs(this.failures)
     this.status = 'backoff'
-    this.deps.debug(`data-server engine: restarting in ${String(delay)} ms (failure ${String(this.failures)})`)
+    this.deps.debug(
+      `data-server engine: restarting in ${String(delay)} ms (failure ${String(this.failures)})`,
+    )
     this.cancelRestart = this.deps.timer(() => {
       this.cancelRestart = null
       if (this.stopping || this.launch) return

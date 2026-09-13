@@ -26,7 +26,7 @@ import {
   abilityExpandable,
   abilityMultiAttack,
   abilityRiposte,
-  lanesForAbility
+  lanesForAbility,
 } from '../src/renderer/src/features/combat/abilityStats'
 import type { FlatSkill } from '../src/renderer/src/features/combat/dashboardData'
 import type {
@@ -35,14 +35,26 @@ import type {
   RoundLaneView,
   SkillView,
   SourceRoundsView,
-  SourceView
+  SourceView,
 } from '../src/shared/combat'
 
 function skill(name: string, total: number, over: Partial<SkillView> = {}): SkillView {
-  return { name, total, pct: 0, hits: Math.max(1, Math.round(total / 100)), crits: 0, max: total, ...over }
+  return {
+    name,
+    total,
+    pct: 0,
+    hits: Math.max(1, Math.round(total / 100)),
+    crits: 0,
+    max: total,
+    ...over,
+  }
 }
 
-function category(cat: DamageCategory, skills: SkillView[], over: Partial<CategoryView> = {}): CategoryView {
+function category(
+  cat: DamageCategory,
+  skills: SkillView[],
+  over: Partial<CategoryView> = {},
+): CategoryView {
   const total = skills.reduce((n, s) => n + s.total, 0)
   const hits = skills.reduce((n, s) => n + s.hits, 0)
   const crits = skills.reduce((n, s) => n + s.crits, 0)
@@ -57,11 +69,16 @@ function category(cat: DamageCategory, skills: SkillView[], over: Partial<Catego
     resists: 0,
     resistPct: 0,
     skills,
-    ...over
+    ...over,
   }
 }
 
-function lane(verb: string, label: string, buckets: number[], over: Partial<RoundLaneView> = {}): RoundLaneView {
+function lane(
+  verb: string,
+  label: string,
+  buckets: number[],
+  over: Partial<RoundLaneView> = {},
+): RoundLaneView {
   const rounds = buckets.reduce((n, v) => n + v, 0)
   const multi = buckets.slice(1).reduce((n, v) => n + v, 0)
   return {
@@ -73,7 +90,7 @@ function lane(verb: string, label: string, buckets: number[], over: Partial<Roun
     multiPct: rounds > 0 ? (multi / rounds) * 100 : 0,
     fannedRounds: 0,
     confidence: 'aggregate',
-    ...over
+    ...over,
   }
 }
 
@@ -90,7 +107,7 @@ function rounds(lanes: RoundLaneView[], over: Partial<SourceRoundsView> = {}): S
     rampagesTaken: 0,
     flurries: 0,
     flurryPct: 0,
-    ...over
+    ...over,
   }
 }
 
@@ -114,7 +131,7 @@ function source(over: Partial<SourceView> = {}): SourceView {
     resistPct: 0,
     skills: [],
     categories: [],
-    ...over
+    ...over,
   } as SourceView
 }
 
@@ -128,29 +145,42 @@ function row(name: string, category: DamageCategory, over: Partial<SkillView> = 
  * "Melee" for (so their lanes are titled after the VERB), a NAMED special-attack lane that IS a
  * skill row (Bash), a Slay Undead proc row named after that same weapon skill, and a spell.
  */
-const MELEE = category('melee', [skill('Melee', 5000, { hits: 40, crits: 6 }), skill('Bash', 1200, { hits: 12 })], {
-  critPct: 11.5,
-  max: 512
-})
+const MELEE = category(
+  'melee',
+  [skill('Melee', 5000, { hits: 40, crits: 6 }), skill('Bash', 1200, { hits: 12 })],
+  {
+    critPct: 11.5,
+    max: 512,
+  },
+)
 const SLAY = category('slay', [skill('Bash', 800, { hits: 4 })])
-const SPELL = category('spell', [skill('Smiting Strike', 2000, { hits: 10 })], { resists: 3, resistPct: 23 })
+const SPELL = category('spell', [skill('Smiting Strike', 2000, { hits: 10 })], {
+  resists: 3,
+  resistPct: 23,
+})
 const ROUNDS = rounds(
   [
     lane('slash', 'Slash', [18, 10, 5, 2]),
     lane('crush', 'Crush', [12, 4, 1, 0]),
-    lane('bash', 'Bash', [9, 1, 0, 0], { confidence: 'perEvent' })
+    lane('bash', 'Bash', [9, 1, 0, 0], { confidence: 'perEvent' }),
   ],
-  { flurries: 12, flurryPct: 2.1, modifiers: [{ name: 'Flurry', count: 12, avoided: 0 }] }
+  { flurries: 12, flurryPct: 2.1, modifiers: [{ name: 'Flurry', count: 12, avoided: 0 }] },
 )
 const PALADIN = source({ categories: [MELEE, SLAY, SPELL], roundStats: ROUNDS })
 
 test('A BARE WEAPON VERB IS THE AUTO-ATTACK ABILITY’S: slash/crush belong to "Melee", not to a lane of their own', () => {
   // The parser answers "Melee" for slash / crush / pierce / hit alike, so `roundLaneLabel` titles
   // those lanes after the VERB and no skill row is called "Slash". They are auto-attack swings.
-  assert.deepEqual(lanesForAbility(PALADIN, 'Melee', 'melee').map((l) => l.verb), ['slash', 'crush'])
+  assert.deepEqual(
+    lanesForAbility(PALADIN, 'Melee', 'melee').map((l) => l.verb),
+    ['slash', 'crush'],
+  )
   // A NAMED special lane is its OWN ability, filed to the first-wins category — melee wins the
   // Bash tie, so the melee Bash ability owns the "Bash" lane and the slay Bash proc owns none.
-  assert.deepEqual(lanesForAbility(PALADIN, 'Bash', 'melee').map((l) => l.verb), ['bash'])
+  assert.deepEqual(
+    lanesForAbility(PALADIN, 'Bash', 'melee').map((l) => l.verb),
+    ['bash'],
+  )
   assert.deepEqual(lanesForAbility(PALADIN, 'Bash', 'slay'), [])
 })
 
@@ -161,7 +191,11 @@ test('THE AUTO-ATTACK ABILITY POOLS ITS WEAPON VERBS — double/triple over the 
   // 14 of 52 doubled, 6 tripled, 2 quad+. The percentages are over ROUNDS, the shown denominator.
   assert.equal(m.text, '27% doubled · 12% tripled · 4% quad+')
   assert.equal(Math.round(m.doubledPct), 27)
-  assert.equal(m.estimated, true, 'a dual-wieldable weapon verb reads in aggregate — the one est. marker')
+  assert.equal(
+    m.estimated,
+    true,
+    'a dual-wieldable weapon verb reads in aggregate — the one est. marker',
+  )
 })
 
 test('A NAMED SPECIAL IS ITS OWN LANE, and the ROUND is the swing that opened it (melee Bash, not the slay proc)', () => {
@@ -179,7 +213,10 @@ test('FLURRY RIDES THE AUTO-ATTACK ABILITY ALONE — stated once, never split pe
   // Not the named special, not the proc — the log never says which verb a flurried swing was.
   assert.equal(abilityMultiAttack(PALADIN, 'Bash', 'melee')?.flurry, null)
   // Nothing flurried ⇒ no line for anyone, even the auto-attack ability.
-  const quiet = source({ categories: [MELEE], roundStats: rounds([lane('slash', 'Slash', [4, 1])]) })
+  const quiet = source({
+    categories: [MELEE],
+    roundStats: rounds([lane('slash', 'Slash', [4, 1])]),
+  })
   assert.equal(abilityMultiAttack(quiet, 'Melee', 'melee')?.flurry, null)
 })
 
@@ -191,8 +228,8 @@ test('RIPOSTE DAMAGE RIDES THE AUTO-ATTACK ABILITY, and is a SHARE of the swing 
     roundStats: rounds([lane('slash', 'Slash', [18, 10])], {
       ripostesGiven: 20,
       riposteLanded: 14,
-      riposteDamage: 700
-    })
+      riposteDamage: 700,
+    }),
   })
   const r = abilityRiposte(paladin, 'Melee', 'melee')
   assert.ok(r)
@@ -224,7 +261,10 @@ test('CLICKABILITY IS A PER-ABILITY GATE: a weapon swing expands, a DoT tick doe
   // Melee / slay are weapon swings — crit and miss are core stats, so they expand even at 0%
   // (Dragon Punch after a clean fight shows the miss it did not take). This is the owner's model.
   assert.equal(abilityExpandable(row('Dragon Punch', 'melee', { hits: 3, crits: 0 }), null), true)
-  assert.equal(abilityExpandable(row('Melee', 'melee'), abilityMultiAttack(PALADIN, 'Melee', 'melee')), true)
+  assert.equal(
+    abilityExpandable(row('Melee', 'melee'), abilityMultiAttack(PALADIN, 'Melee', 'melee')),
+    true,
+  )
   assert.equal(abilityExpandable(row('Bash', 'slay', { hits: 4 }), null), true)
   // A DoT tick: no swings to miss, no rounds, no crit — nothing to expand, so it is not clickable.
   assert.equal(abilityExpandable(row('Venom', 'dot', { hits: 10 }), null), false)
@@ -233,10 +273,24 @@ test('CLICKABILITY IS A PER-ABILITY GATE: a weapon swing expands, a DoT tick doe
 })
 
 test('A DIRECT SPELL EXPANDS ONLY WHEN IT HAS A STAT — a crit makes it clickable, a plain nuke does not', () => {
-  assert.equal(abilityExpandable(row('Nuke', 'spell', { hits: 5, crits: 2 }), null), true, 'a spell that crit states its rate')
-  assert.equal(abilityExpandable(row('Nuke', 'spell', { hits: 5, crits: 0 }), null), false, 'a plain nuke has none of the four stats')
+  assert.equal(
+    abilityExpandable(row('Nuke', 'spell', { hits: 5, crits: 2 }), null),
+    true,
+    'a spell that crit states its rate',
+  )
+  assert.equal(
+    abilityExpandable(row('Nuke', 'spell', { hits: 5, crits: 0 }), null),
+    false,
+    'a plain nuke has none of the four stats',
+  )
   // An ability of ANY category that multi-attacked is worth a click for that alone.
-  assert.equal(abilityExpandable(row('Kick', 'spell', { hits: 5, crits: 0 }), abilityMultiAttack(PALADIN, 'Bash', 'melee')), true)
+  assert.equal(
+    abilityExpandable(
+      row('Kick', 'spell', { hits: 5, crits: 0 }),
+      abilityMultiAttack(PALADIN, 'Bash', 'melee'),
+    ),
+    true,
+  )
 })
 
 test('THE OVERLAY DRILL NO LONGER PERSISTS A CATEGORY — the store normalizer rebuilds entityId alone', () => {
@@ -247,5 +301,9 @@ test('THE OVERLAY DRILL NO LONGER PERSISTS A CATEGORY — the store normalizer r
   const store = readFileSync(new URL('../src/main/store.ts', import.meta.url), 'utf8')
   const block = /next\.drill\s*=[\s\S]{0,200}/.exec(store)?.[0] ?? ''
   assert.match(block, /entityId/, 'the drill normalizer still rebuilds the entityId')
-  assert.doesNotMatch(block, /category/, 'the drill normalizer no longer carries a damage type (level 3 is gone)')
+  assert.doesNotMatch(
+    block,
+    /category/,
+    'the drill normalizer no longer carries a damage type (level 3 is gone)',
+  )
 })

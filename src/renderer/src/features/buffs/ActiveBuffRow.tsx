@@ -14,7 +14,7 @@ import {
   isOverdue,
   classAccent,
   estimatePrefix,
-  estimatorSourceTitle
+  estimatorSourceTitle,
 } from './format'
 import { Tooltip } from '../../lib/Tooltip'
 // The rich spell card (JOS-293). The row states what this INSTANCE is doing (elapsed, estimate,
@@ -49,7 +49,8 @@ function estimateState(buff: ActiveBuff, elapsed: number): EstimateState {
   // the literal truth — the spell has outlasted everything the log can prove.
   const stated = buff.durationSource === 'db' || buff.durationSource === 'deathBound'
   const overdue =
-    isOverdue(elapsed, buff.p75, buff.n) || (stated && buff.estimatedMs != null && elapsed > buff.estimatedMs)
+    isOverdue(elapsed, buff.p75, buff.n) ||
+    (stated && buff.estimatedMs != null && elapsed > buff.estimatedMs)
   return { est, spread, overdue }
 }
 
@@ -95,7 +96,7 @@ function EstimateBar({
   est,
   elapsed,
   state,
-  buff
+  buff,
 }: {
   est: number
   elapsed: number
@@ -124,8 +125,8 @@ function EstimateBar({
           borderRadius: 1,
           // Fade toward warning as the estimated window empties / runs overdue.
           '& .MuiLinearProgress-bar': {
-            bgcolor: overdue || frac < 0.2 ? 'warning.main' : 'primary.main'
-          }
+            bgcolor: overdue || frac < 0.2 ? 'warning.main' : 'primary.main',
+          },
         }}
       />
       <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -179,7 +180,7 @@ export function ActiveRow({ buff, now }: { buff: ActiveBuff; now: number }): JSX
         gap: 0.5,
         // Class accent: red-ish left border for debuffs, green for pet, gold for self.
         borderLeft: '3px solid',
-        borderLeftColor: classAccent(buff.cls)
+        borderLeftColor: classAccent(buff.cls),
       }}
     >
       <Stack direction="row" alignItems="baseline" spacing={1}>
@@ -244,4 +245,3 @@ export function ActiveRow({ buff, now }: { buff: ActiveBuff; now: number }): JSX
     </Paper>
   )
 }
-

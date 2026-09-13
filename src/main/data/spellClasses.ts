@@ -71,7 +71,7 @@ const ABBR_BY_NAME = new Map<string, ClassAbbr>([
   ['shadowknight', 'SHD'],
   ['shaman', 'SHM'],
   ['warrior', 'WAR'],
-  ['wizard', 'WIZ']
+  ['wizard', 'WIZ'],
 ])
 
 /**

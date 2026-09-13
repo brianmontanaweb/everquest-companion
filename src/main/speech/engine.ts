@@ -126,7 +126,7 @@ export function kokoroSessionOptions(): ort.InferenceSession.SessionOptions {
   return {
     intraOpNumThreads: 1,
     interOpNumThreads: 1,
-    executionMode: 'sequential'
+    executionMode: 'sequential',
   }
 }
 
@@ -189,7 +189,11 @@ export function resolveKokoroVoice(voiceId: string | null | undefined): string {
  * is a plain failure and says so.
  */
 function isUnloadable(err: unknown): boolean {
-  return typeof err === 'object' && err !== null && (err as { code?: unknown }).code === 'ERR_DLOPEN_FAILED'
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    (err as { code?: unknown }).code === 'ERR_DLOPEN_FAILED'
+  )
 }
 
 /**
@@ -210,7 +214,7 @@ function workerInit(userData: string, cacheDir: string): SpeechWorkerInit {
   return {
     modelPath: join(kokoroDir(userData), KOKORO_ASSETS[0].name),
     voicesPath: join(kokoroDir(userData), KOKORO_ASSETS[1].name),
-    cacheDir
+    cacheDir,
   }
 }
 
@@ -349,6 +353,6 @@ export function createSpeechEngine(opts: SpeechEngineOptions): SpeechEngine {
       worker = null
       failAllPending('shutting down')
       void w?.terminate()
-    }
+    },
   }
 }

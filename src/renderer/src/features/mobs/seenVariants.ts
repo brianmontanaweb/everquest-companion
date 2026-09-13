@@ -70,7 +70,7 @@ export function foldSeenVariants(seen: readonly MobSeenDrop[]): SeenVariantGroup
   for (const [key, rows] of byKey) {
     // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 8: MobSeenDrop comes from a corpus still bundled in the renderer (mobs/posky/bosses JSON). Moves behind knowledge queries when that surface cuts over.
     const variants = [...rows].sort(
-      (a, b) => itemVariantLevel(a.item) - itemVariantLevel(b.item) || b.count - a.count
+      (a, b) => itemVariantLevel(a.item) - itemVariantLevel(b.item) || b.count - a.count,
     )
     const base = variants.find((v) => itemVariantLevel(v.item) === 0)
     const hasVariants = variants.some((v) => itemVariantLevel(v.item) > 0)
@@ -82,7 +82,7 @@ export function foldSeenVariants(seen: readonly MobSeenDrop[]): SeenVariantGroup
       // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 8: MobSeenDrop comes from a corpus still bundled in the renderer (mobs/posky/bosses JSON). Moves behind knowledge queries when that surface cuts over.
       lastTs: variants.reduce((t, v) => Math.max(t, v.lastTs), 0),
       variants,
-      hasVariants
+      hasVariants,
     })
   }
   return groups.sort((a, b) => b.count - a.count || b.lastTs - a.lastTs)

@@ -29,7 +29,7 @@ import {
   readPendingAchievementsGz,
   readPendingInventoryGz,
   removeQueued,
-  type QueuedReport
+  type QueuedReport,
 } from './state'
 
 /** First drain, after the log tail has attached and startup has settled. */
@@ -52,7 +52,7 @@ function requestOf(entry: QueuedReport): SubmitRequest {
     clientTs: entry.clientTs,
     log: entry.log,
     inventory: entry.inventory ?? null,
-    achievements: entry.achievements ?? null
+    achievements: entry.achievements ?? null,
   }
 }
 
@@ -73,7 +73,7 @@ export async function flushQueue(): Promise<number> {
     const res = await sendReport(requestOf(entry), {
       log: readPendingGz(entry),
       inventory: readPendingInventoryGz(entry),
-      achievements: readPendingAchievementsGz(entry)
+      achievements: readPendingAchievementsGz(entry),
     })
     if (res.ok) {
       removeQueued(entry.clientReportId)

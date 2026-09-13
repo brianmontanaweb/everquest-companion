@@ -102,12 +102,17 @@ function padForASlowFold(log: FixtureLog): void {
 /** The drop notices currently on a timer window (the buffs surface's flash). */
 function dropNotices(overlay: Page): Promise<string[]> {
   return overlay.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="buff-timer-drop"]')].map((e) => e.textContent?.trim() ?? '')
+    [...document.querySelectorAll('[data-testid="buff-timer-drop"]')].map(
+      (e) => e.textContent?.trim() ?? '',
+    ),
   )
 }
 
 /** The Ensnare row for one enemy, whichever arrangement the window is drawn in. */
-function snareOn(rows: { name: string; target: string; mode: string }[], target: string): { name: string; target: string; mode: string } | undefined {
+function snareOn(
+  rows: { name: string; target: string; mode: string }[],
+  target: string,
+): { name: string; target: string; mode: string } | undefined {
   return rows.find((r) => r.name === SPELL && r.target.includes(target))
 }
 
@@ -118,32 +123,45 @@ function snareOn(rows: { name: string; target: string; mode: string }[], target:
  * The snare is played into the LIVE log and read back before we quit, so the next launch's
  * assertion cannot be blamed on a sentence the model never accepted in the first place.
  */
-export async function seedRestart(page: Page, app: ElectronApplication, log: FixtureLog): Promise<void> {
+export async function seedRestart(
+  page: Page,
+  app: ElectronApplication,
+  log: FixtureLog,
+): Promise<void> {
   await ensureOpen(page, 'buffs')
   await ensureOpen(page, 'debuffs')
-  const open = await settle(() => state(page), (s) => s.buffs === true && s.debuffs === true, {
-    timeoutMs: 15_000
-  })
+  const open = await settle(
+    () => state(page),
+    (s) => s.buffs === true && s.debuffs === true,
+    {
+      timeoutMs: 15_000,
+    },
+  )
   if (
     !check(
       'launch 1 leaves BOTH timer overlays open in the store',
       open.buffs === true && open.debuffs === true,
-      JSON.stringify(open)
+      JSON.stringify(open),
     )
   ) {
     return
   }
   const overlay = await overlayWindow(app, 'debuffs')
-  if (!check('…and the debuffs window is back on screen to receive the snare', overlay !== null)) return
+  if (!check('…and the debuffs window is back on screen to receive the snare', overlay !== null))
+    return
 
   castEnsnare(log, SNARED_EARLY)
-  const rows = await settle(() => timerRows(overlay as Page), (r) => snareOn(r, SNARED_EARLY) !== undefined, {
-    timeoutMs: 30_000
-  })
+  const rows = await settle(
+    () => timerRows(overlay as Page),
+    (r) => snareOn(r, SNARED_EARLY) !== undefined,
+    {
+      timeoutMs: 30_000,
+    },
+  )
   check(
     'a long debuff cast live lands on the debuffs window before the restart',
     snareOn(rows, SNARED_EARLY) !== undefined,
-    JSON.stringify(rows.map((r) => `${r.name}|${r.target}`))
+    JSON.stringify(rows.map((r) => `${r.name}|${r.target}`)),
   )
 }
 
@@ -173,7 +191,13 @@ export async function stepRestartRehydrate(log: FixtureLog, userData: string): P
     const page = await mainWindow(app)
     const debuffs = await overlayWindow(app, 'debuffs')
     const buffs = await overlayWindow(app, 'buffs')
-    if (!check('a restart brings both timer overlays back by itself', debuffs !== null && buffs !== null)) return
+    if (
+      !check(
+        'a restart brings both timer overlays back by itself',
+        debuffs !== null && buffs !== null,
+      )
+    )
+      return
     for (const [kind, o] of [['buffs', buffs] as const, ['debuffs', debuffs] as const]) {
       o?.on('console', (m) => {
         if (m.type() === 'error') consoleErrors.push(`${kind} overlay: ${m.text()}`)
@@ -190,31 +214,47 @@ export async function stepRestartRehydrate(log: FixtureLog, userData: string): P
     check(
       'the historical fold is STILL RUNNING when the overlay bridges come up (the mid-fold hydrate this is about)',
       midFold,
-      `hydrating=${String(midFold)} behind ${String(PAD_LINES)} padding lines`
+      `hydrating=${String(midFold)} behind ${String(PAD_LINES)} padding lines`,
     )
     const hydrated = await waitHydrated(page)
     note(`the padded fold took ${String(hydrated.ms)} ms`)
 
     // THE TICKET. The row the fold finished with reaches the window that was already open.
-    const rows = await settle(() => timerRows(debuffs as Page), (r) => snareOn(r, SNARED_LATE) !== undefined, {
-      timeoutMs: 45_000
-    })
+    const rows = await settle(
+      () => timerRows(debuffs as Page),
+      (r) => snareOn(r, SNARED_LATE) !== undefined,
+      {
+        timeoutMs: 45_000,
+      },
+    )
     const late = snareOn(rows, SNARED_LATE)
     const listed = JSON.stringify(rows.map((r) => `${r.name}|${r.target}`))
     if (
       !check(
         'a debuff folded AFTER the overlay hydrated reaches an overlay that was ALREADY OPEN',
         late !== undefined,
-        listed
+        listed,
       )
     ) {
       return
     }
-    check('…naming the enemy it is still on', late?.target.includes(SNARED_LATE) === true, JSON.stringify(late))
-    check('…and counting DOWN from the duration spells.json states', late?.mode === 'countdown', JSON.stringify(late))
+    check(
+      '…naming the enemy it is still on',
+      late?.target.includes(SNARED_LATE) === true,
+      JSON.stringify(late),
+    )
+    check(
+      '…and counting DOWN from the duration spells.json states',
+      late?.mode === 'countdown',
+      JSON.stringify(late),
+    )
     // …and the half a mid-fold hydrate could already see is still there beside it: a re-hydrate
     // REPLACES the window's world, so a fix that dropped what it already held would be no fix.
-    check('…while the debuff the mid-fold snapshot already held is still standing', snareOn(rows, SNARED_EARLY) !== undefined, listed)
+    check(
+      '…while the debuff the mid-fold snapshot already held is still standing',
+      snareOn(rows, SNARED_EARLY) !== undefined,
+      listed,
+    )
 
     // NO PHANTOM DROP-FLASH. The mid-fold hydrate and the post-fold one are two readings of the
     // same log at two different instants, so buffs legitimately disappear between them — every one
@@ -224,11 +264,15 @@ export async function stepRestartRehydrate(log: FixtureLog, userData: string): P
     check(
       'and the buffs window announces NO drops for a re-hydrate — a rebuild is not a loss',
       drops.length === 0,
-      JSON.stringify(drops)
+      JSON.stringify(drops),
     )
     await stepAllowSurvivesRestart(page, buffs)
 
-    check('no overlay console errors across the restart', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no overlay console errors across the restart',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
   } finally {
     await close()
   }

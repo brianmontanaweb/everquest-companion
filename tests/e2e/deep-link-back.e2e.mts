@@ -48,7 +48,7 @@ import {
   settleCount,
   settleGone,
   settleStable,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -73,7 +73,7 @@ const KILL_STAT = '[data-testid="mob-stat-kills"]'
 function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
   return page.waitForSelector(sel, { timeout: ms }).then(
     () => true,
-    () => false
+    () => false,
   )
 }
 
@@ -85,7 +85,10 @@ function backLabel(page: Page, sel: string): Promise<string> {
 
 /** Rendered text of the first match; '' when the node isn't mounted. */
 function textOf(page: Page, sel: string): Promise<string> {
-  return page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
+  return page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    sel,
+  )
 }
 
 /**
@@ -127,17 +130,26 @@ async function stepLootRoundTrip(page: Page): Promise<boolean> {
     return false
   }
   await page.click(DROP_ROW, { timeout: 15_000 })
-  if (!check('a recent-drop row opens the Loot tab’s item drill', await appears(page, LOOT_DETAIL, 30_000))) {
+  if (
+    !check(
+      'a recent-drop row opens the Loot tab’s item drill',
+      await appears(page, LOOT_DETAIL, 30_000),
+    )
+  ) {
     return false
   }
   const label = await backLabel(page, LOOT_BACK)
-  check('its back arrow names the tab that sent us, not the ledger', label === 'Back to Overview', label)
+  check(
+    'its back arrow names the tab that sent us, not the ledger',
+    label === 'Back to Overview',
+    label,
+  )
 
   await page.click(LOOT_BACK, { timeout: 15_000 })
   check('…and pressing it returns to the Overview', await appears(page, GRID))
   check(
     '…with the nav agreeing about where we are',
-    (await countOf(page, '[data-testid="nav-overview"].Mui-selected')) === 1
+    (await countOf(page, '[data-testid="nav-overview"].Mui-selected')) === 1,
   )
   check('…and the loot drill left behind', (await countOf(page, LOOT_DETAIL)) === 0)
   return true
@@ -154,11 +166,21 @@ async function stepLootRoundTrip(page: Page): Promise<boolean> {
  */
 async function stepNativeArrival(page: Page): Promise<void> {
   await page.click(DROP_ROW, { timeout: 15_000 })
-  if (!check('the same drop row deep-links a second time (the nonce contract)', await appears(page, LOOT_DETAIL, 30_000))) {
+  if (
+    !check(
+      'the same drop row deep-links a second time (the nonce contract)',
+      await appears(page, LOOT_DETAIL, 30_000),
+    )
+  ) {
     return
   }
   await page.click(LOOT_CRUMB, { timeout: 15_000 })
-  if (!check('the breadcrumb root still means the loot ledger, deep link or not', await appears(page, LOOT_LIST))) {
+  if (
+    !check(
+      'the breadcrumb root still means the loot ledger, deep link or not',
+      await appears(page, LOOT_LIST),
+    )
+  ) {
     return
   }
   if (!(await haveRow(page, LOOT_ROW))) {
@@ -166,12 +188,23 @@ async function stepNativeArrival(page: Page): Promise<void> {
     return
   }
   await page.click(LOOT_ROW, { timeout: 15_000 })
-  if (!check('clicking a ledger row opens that item’s drill', await appears(page, LOOT_DETAIL))) return
+  if (!check('clicking a ledger row opens that item’s drill', await appears(page, LOOT_DETAIL)))
+    return
   const label = await backLabel(page, LOOT_BACK)
-  check('a drill opened FROM the list says the list is where back goes', label === 'Back to the loot list', label)
+  check(
+    'a drill opened FROM the list says the list is where back goes',
+    label === 'Back to the loot list',
+    label,
+  )
   await page.click(LOOT_BACK, { timeout: 15_000 })
-  check('…and it lands there — a native drill does not inherit a parked origin', await appears(page, LOOT_LIST))
-  check('…without leaving the Loot tab', (await countOf(page, '[data-testid="nav-loot"].Mui-selected')) === 1)
+  check(
+    '…and it lands there — a native drill does not inherit a parked origin',
+    await appears(page, LOOT_LIST),
+  )
+  check(
+    '…without leaving the Loot tab',
+    (await countOf(page, '[data-testid="nav-loot"].Mui-selected')) === 1,
+  )
 }
 
 /**
@@ -192,7 +225,13 @@ async function stepMobRoundTrip(page: Page): Promise<void> {
     return
   }
   await page.click(KILL_LINK, { timeout: 15_000 })
-  if (!check('a recent-kill name opens the Mobs tab’s creature page', await appears(page, MOBS_BACK, 30_000))) return
+  if (
+    !check(
+      'a recent-kill name opens the Mobs tab’s creature page',
+      await appears(page, MOBS_BACK, 30_000),
+    )
+  )
+    return
   // JOS-350. The row that opened this page IS a kill of this mob, so the page's own Kills tally
   // cannot read 0 — and reading 0 is exactly what it did before the page joined the kills module
   // for itself (the caller attached no record, and the combat-fed name carries a ` (N)` suffix no
@@ -205,12 +244,12 @@ async function stepMobRoundTrip(page: Page): Promise<void> {
     const tally = await settle(
       async () => Number((await textOf(page, KILL_STAT)).split('\n')[0]?.trim()),
       (n) => Number.isFinite(n) && n >= 1,
-      { timeoutMs: 15_000 }
+      { timeoutMs: 15_000 },
     )
     check(
       'the mob page opened from a kill row counts that kill (JOS-350: it read 0)',
       Number.isFinite(tally) && tally >= 1,
-      String(tally)
+      String(tally),
     )
   } else {
     check('the mob page shows its Kills tally', false)
@@ -218,12 +257,16 @@ async function stepMobRoundTrip(page: Page): Promise<void> {
   // Rendered text, not the source string: MUI buttons carry `text-transform: uppercase`, so the
   // DOM says OVERVIEW where the code says Overview. The identity is the word, not its casing.
   const label = (await textOf(page, MOBS_BACK)).replace(/\s+/g, ' ').trim()
-  check('the mob page’s Back names the Overview, not this tab’s own list', label.toLowerCase() === 'overview', label)
+  check(
+    'the mob page’s Back names the Overview, not this tab’s own list',
+    label.toLowerCase() === 'overview',
+    label,
+  )
   await page.click(MOBS_BACK, { timeout: 15_000 })
   check('…and pressing it returns to the Overview', await appears(page, GRID))
   check(
     '…rather than to the mobs browse surface',
-    (await countOf(page, '[data-testid="mobs-zone-roster"]')) === 0
+    (await countOf(page, '[data-testid="mobs-zone-roster"]')) === 0,
   )
 }
 
@@ -243,7 +286,10 @@ async function stepManualNavClears(page: Page): Promise<void> {
   // prove that nothing of the parked origin survived it.
   await settleGone(page, LOOT_DETAIL, { timeoutMs: 15_000 })
   await page.click('[data-testid="nav-loot"]', { timeout: 15_000 })
-  check('a hand-picked tab ends the journey: Loot re-opens on its ledger', await appears(page, LOOT_LIST))
+  check(
+    'a hand-picked tab ends the journey: Loot re-opens on its ledger',
+    await appears(page, LOOT_LIST),
+  )
   check('…with no drill left over', (await countOf(page, LOOT_DETAIL)) === 0)
 }
 
@@ -265,7 +311,9 @@ async function stepManualNavClears(page: Page): Promise<void> {
  */
 function pressMouseBack(app: ElectronApplication): Promise<boolean> {
   return app.evaluate(({ BrowserWindow }) => {
-    const win = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().includes('index.html'))
+    const win = BrowserWindow.getAllWindows().find((w) =>
+      w.webContents.getURL().includes('index.html'),
+    )
     if (!win) return false
     win.emit('app-command', {}, 'browser-backward')
     return true
@@ -288,10 +336,20 @@ async function stepMouseBack(page: Page, app: ElectronApplication): Promise<void
     return
   }
   await page.click(DROP_ROW, { timeout: 15_000 })
-  if (!check('a recent-drop row opens the item drill (again)', await appears(page, LOOT_DETAIL, 30_000))) return
+  if (
+    !check(
+      'a recent-drop row opens the item drill (again)',
+      await appears(page, LOOT_DETAIL, 30_000),
+    )
+  )
+    return
 
-  if (!check('the main window accepts the browser-back app-command', await pressMouseBack(app))) return
-  check('the mouse’s Back button returns to the tab that deep-linked here', await appears(page, GRID))
+  if (!check('the main window accepts the browser-back app-command', await pressMouseBack(app)))
+    return
+  check(
+    'the mouse’s Back button returns to the tab that deep-linked here',
+    await appears(page, GRID),
+  )
   check('…leaving the drill behind, exactly as the arrow does', await settleGone(page, LOOT_DETAIL))
 
   // A drill opened from the list it belongs to: Back is the list, and the mouse must agree.
@@ -301,7 +359,10 @@ async function stepMouseBack(page: Page, app: ElectronApplication): Promise<void
   if (!(await appears(page, LOOT_DETAIL))) return
   await pressMouseBack(app)
   check('on a natively opened drill it means that drill’s own list', await appears(page, LOOT_LIST))
-  check('…without leaving the Loot tab', (await countOf(page, '[data-testid="nav-loot"].Mui-selected')) === 1)
+  check(
+    '…without leaving the Loot tab',
+    (await countOf(page, '[data-testid="nav-loot"].Mui-selected')) === 1,
+  )
 
   // Nothing to back out of. An ABSENCE, so it is asserted the way this suite asserts absences:
   // wait for the reading to stop moving, THEN read it (wave E3).
@@ -309,12 +370,12 @@ async function stepMouseBack(page: Page, app: ElectronApplication): Promise<void
   const stayed = await settleStable(async () => ({
     ledger: await countOf(page, LOOT_LIST),
     drill: await countOf(page, LOOT_DETAIL),
-    onLoot: await countOf(page, '[data-testid="nav-loot"].Mui-selected')
+    onLoot: await countOf(page, '[data-testid="nav-loot"].Mui-selected'),
   }))
   check(
     'a press with nowhere to go does nothing at all',
     stayed.ledger === 1 && stayed.drill === 0 && stayed.onLoot === 1,
-    JSON.stringify(stayed)
+    JSON.stringify(stayed),
   )
 }
 
@@ -341,7 +402,11 @@ async function main(): Promise<void> {
     await stepMobRoundTrip(page)
     await stepMouseBack(page, app)
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
 
     if (failures.length) await dumpArtifacts(page, 'deep-link-back-FAIL')
     else await dumpArtifacts(page, 'deep-link-back-pass')

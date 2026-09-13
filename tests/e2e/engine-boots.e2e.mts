@@ -67,7 +67,7 @@ import {
   reportRun,
   settle,
   settleGone,
-  sleep
+  sleep,
 } from './appHarness.mjs'
 import { closeWindows, mainWindow } from './appWindow.mjs'
 import { launchOnFixture, type FixtureLaunch } from './logFixture.mjs'
@@ -82,7 +82,7 @@ import {
   settleTable,
   tapOutput,
   type AppOutput,
-  type EngineReady
+  type EngineReady,
 } from './engineSteps.mjs'
 
 /** The fixture: the smallest committed log the suite has. Nothing in this spec is about what the
@@ -124,7 +124,10 @@ function lastEngineLines(out: AppOutput): string {
 
 /** Every engine that DESCENDS from this launch, or — on a machine with no `wmic` — every engine
  *  that was not already running before it started. The caller says which claim it got. */
-function ours(launch: FixtureLaunch, before: readonly number[]): { pids: number[]; attributed: boolean } {
+function ours(
+  launch: FixtureLaunch,
+  before: readonly number[],
+): { pids: number[]; attributed: boolean } {
   const table = engineTable()
   const kin = engineDescendantsOf(table, launch.app.process().pid ?? -1)
   if (kin !== null) return { pids: kin, attributed: true }
@@ -137,7 +140,10 @@ function ours(launch: FixtureLaunch, before: readonly number[]): { pids: number[
  * Waits on the CONDITION (an engine appears), never on the clock: the spawn is two processes and a
  * disk read away from the moment `mainWindow()` resolved.
  */
-async function stepSpawned(launch: FixtureLaunch, before: readonly number[]): Promise<number | null> {
+async function stepSpawned(
+  launch: FixtureLaunch,
+  before: readonly number[],
+): Promise<number | null> {
   const appPid = launch.app.process().pid ?? -1
   await settleTable((table) => {
     const kin = engineDescendantsOf(table, appPid)
@@ -145,12 +151,14 @@ async function stepSpawned(launch: FixtureLaunch, before: readonly number[]): Pr
   })
   const found = ours(launch, before)
   if (!found.attributed) {
-    note('this machine has no wmic — the engine is identified as "the one that appeared during this launch" rather than by descent')
+    note(
+      'this machine has no wmic — the engine is identified as "the one that appeared during this launch" rather than by descent',
+    )
   }
   check(
     'launching with EQC_ENGINE=1 spawns exactly one engined.exe under this launch',
     found.pids.length === 1,
-    `${String(found.pids.length)} engine(s): ${found.pids.join(', ')} · launch pid ${String(appPid)}`
+    `${String(found.pids.length)} engine(s): ${found.pids.join(', ')} · launch pid ${String(appPid)}`,
   )
   return found.pids.length === 1 ? found.pids[0] : null
 }
@@ -162,29 +170,33 @@ async function stepSpawned(launch: FixtureLaunch, before: readonly number[]): Pr
  * of it: the ready line itself (with everything it carries), and the fact that an engine dying is
  * a condition this app RECOVERS from rather than a session that quietly loses its engine.
  */
-async function stepReady(launch: FixtureLaunch, out: AppOutput, firstPid: number): Promise<EngineReady | null> {
+async function stepReady(
+  launch: FixtureLaunch,
+  out: AppOutput,
+  firstPid: number,
+): Promise<EngineReady | null> {
   killEngine(firstPid)
   const ready = await settleReady(out, firstPid)
   const announced = check(
     'killing the engine outright: the supervisor spawns another and announces it READY',
     ready !== null,
-    ready === null ? lastEngineLines(out) : `pid ${String(ready.pid)}`
+    ready === null ? lastEngineLines(out) : `pid ${String(ready.pid)}`,
   )
   if (!announced || ready === null) return null
   check(
     '…and READY means a session.health ROUND TRIP answered, not a process that started',
     ready.status === 'idle' && ready.engineVersion !== '' && ready.engineVersion !== 'unknown',
-    `engine ${ready.engineVersion}, status ${ready.status}`
+    `engine ${ready.engineVersion}, status ${ready.status}`,
   )
   check(
     '…on a live loopback port, at the protocol version both languages were generated against',
     ready.port > 0 && ready.port <= 65535 && ready.protocol === PROTOCOL_VERSION,
-    `port ${String(ready.port)}, protocol ${String(ready.protocol)} (ours ${String(PROTOCOL_VERSION)})`
+    `port ${String(ready.port)}, protocol ${String(ready.protocol)} (ours ${String(PROTOCOL_VERSION)})`,
   )
   check(
     '…and the replacement is a DIFFERENT process, alive in the table (a respawn is a launch)',
     ready.pid !== firstPid && engineTable().pids.includes(ready.pid),
-    `${String(firstPid)} → ${String(ready.pid)}`
+    `${String(firstPid)} → ${String(ready.pid)}`,
   )
   // The durable half of the same event. The kill is a crash from the supervisor's point of view, and
   // an unexplained engine exit is a thing the fleet must be able to read about later — so it is an
@@ -193,7 +205,7 @@ async function stepReady(launch: FixtureLaunch, out: AppOutput, firstPid: number
   check(
     'the crash is on the record: errors.log carries one EngineExited naming the exit',
     log.includes('EngineExited'),
-    log.includes('EngineExited') ? 'named' : `${String(log.length)} bytes, no EngineExited`
+    log.includes('EngineExited') ? 'named' : `${String(log.length)} bytes, no EngineExited`,
   )
   return ready
 }
@@ -286,11 +298,20 @@ async function armCatchUp(launch: FixtureLaunch, page: Page): Promise<void> {
  */
 async function stepCatchUp(page: Page): Promise<void> {
   const seen = await settle(
-    () => page.evaluate(() => (window as unknown as { __eqcFoldBar?: string | null }).__eqcFoldBar ?? null),
+    () =>
+      page.evaluate(
+        () => (window as unknown as { __eqcFoldBar?: string | null }).__eqcFoldBar ?? null,
+      ),
     (t) => t !== null,
-    { timeoutMs: 60_000 }
+    { timeoutMs: 60_000 },
   )
-  if (!check('while the engine re-folds the log, the shell SHOWS a catch-up bar', seen !== null, seen ?? 'never appeared')) {
+  if (
+    !check(
+      'while the engine re-folds the log, the shell SHOWS a catch-up bar',
+      seen !== null,
+      seen ?? 'never appeared',
+    )
+  ) {
     return
   }
   const text = (seen ?? '').replace(/\s+/g, ' ')
@@ -301,14 +322,18 @@ async function stepCatchUp(page: Page): Promise<void> {
   check(
     '…and how much of the log it has read, in units a person reads',
     /\d[\d.]* (B|KB|MB|GB) of \d[\d.]* (B|KB|MB|GB)/.test(text),
-    text.slice(0, 140)
+    text.slice(0, 140),
   )
   // The event count rides along because it is what says the fold is doing work rather than seeking.
   check('…and how many events that has produced', /events/.test(text), text.slice(0, 140))
   // THE GO-LIVE BEAT: the bar resolves and disappears. Generous, because it is waiting on a whole
   // re-fold of a log this step just made several megabytes long.
   const gone = await settleGone(page, PROGRESS, { timeoutMs: 90_000 })
-  check('…and when the fold goes live the bar resolves and is gone', gone, gone ? 'gone' : 'still on screen')
+  check(
+    '…and when the fold goes live the bar resolves and is gone',
+    gone,
+    gone ? 'gone' : 'still on screen',
+  )
 }
 
 /**
@@ -320,12 +345,18 @@ async function stepCatchUp(page: Page): Promise<void> {
  */
 async function stepWrongToken(ready: EngineReady): Promise<void> {
   const knock = await knockWithWrongToken(ready.port, PROTOCOL_VERSION)
-  if (!check('a stranger can reach the engine socket at all (loopback is not a boundary)', knock.connected)) return
+  if (
+    !check(
+      'a stranger can reach the engine socket at all (loopback is not a boundary)',
+      knock.connected,
+    )
+  )
+    return
   const refused = /"ok"\s*:\s*false/.test(knock.reply) && /"kind"\s*:\s*"hello"/.test(knock.reply)
   check(
     'a hello with the WRONG token is refused once and hung up on — the port is not the authentication',
     refused && knock.closed,
-    `${knock.reply.trim().replace(/\s+/g, ' ').slice(0, 100) || '(silence)'}${knock.closed ? ' · closed' : ' · still open'}`
+    `${knock.reply.trim().replace(/\s+/g, ' ').slice(0, 100) || '(silence)'}${knock.closed ? ' · closed' : ' · still open'}`,
   )
 }
 
@@ -337,13 +368,17 @@ async function stepWrongToken(ready: EngineReady): Promise<void> {
  * teardown. The claim is not merely "no orphan" but HOW: stdin EOF, exit 0, and the escalation to
  * `kill` never armed. A child that had to be killed is a child that could have been killed too late.
  */
-async function stepQuit(launch: FixtureLaunch, out: AppOutput, pids: readonly number[]): Promise<void> {
+async function stepQuit(
+  launch: FixtureLaunch,
+  out: AppOutput,
+  pids: readonly number[],
+): Promise<void> {
   await closeWindows(launch.app)
   const bowedOut = await settleSaid(out, 'exited 0 after the shutdown signal')
   check(
     'quitting closes the engine’s stdin — the shutdown signal, never a signal',
     out.said('closing stdin (the shutdown signal)'),
-    out.said('escalating to kill') ? 'and then ESCALATED TO KILL' : 'no escalation'
+    out.said('escalating to kill') ? 'and then ESCALATED TO KILL' : 'no escalation',
   )
   // THE NARRATION IS STDOUT FROM A PROCESS THAT IS QUITTING, so whether it exists is a race the
   // app is allowed to win — `stopEngine` deliberately does not wait, and a release-built engine
@@ -361,14 +396,18 @@ async function stepQuit(launch: FixtureLaunch, out: AppOutput, pids: readonly nu
   check(
     '…and the engine takes the hint: exit 0, the contract’s own ending',
     cleanEnding,
-    bowedOut ? 'said out loud' : 'app quit before narrating; errors.log carries no EngineShutdownExit'
+    bowedOut
+      ? 'said out loud'
+      : 'app quit before narrating; errors.log carries no EngineShutdownExit',
   )
   const left = await settleTable((table) => pids.every((pid) => !table.pids.includes(pid)), 15_000)
   const orphans = pids.filter((pid) => left.pids.includes(pid))
   check(
     'no engined.exe outlives the app that spawned it',
     orphans.length === 0,
-    orphans.length === 0 ? `${String(pids.length)} engine(s) accounted for` : `orphaned: ${orphans.join(', ')}`
+    orphans.length === 0
+      ? `${String(pids.length)} engine(s) accounted for`
+      : `orphaned: ${orphans.join(', ')}`,
   )
 }
 
@@ -404,11 +443,14 @@ async function stepAbsence(): Promise<void> {
     await sleep(ABSENCE_WINDOW_MS)
     const appPid = launch.app.process().pid ?? -1
     const table = engineTable()
-    const kin = engineDescendantsOf(table, appPid) ?? table.pids.filter((pid) => !before.includes(pid))
+    const kin =
+      engineDescendantsOf(table, appPid) ?? table.pids.filter((pid) => !before.includes(pid))
     check(
       'with no engine BINARY reachable, no engine is spawned at all',
       kin.length === 0,
-      kin.length === 0 ? `none, ${String(ABSENCE_WINDOW_MS / 1000)}s after the window came up` : kin.join(', ')
+      kin.length === 0
+        ? `none, ${String(ABSENCE_WINDOW_MS / 1000)}s after the window came up`
+        : kin.join(', '),
     )
     await closeWindows(launch.app)
     // A beat for the quit's own lines to reach this side of the pipe: an engine that HAD been
@@ -418,7 +460,7 @@ async function stepAbsence(): Promise<void> {
     check(
       '…and the app never narrates an engine on the way out either, so nothing was quietly running',
       !out.said('data-server engine'),
-      out.said('data-server engine') ? lastEngineLines(out) : 'silent'
+      out.said('data-server engine') ? lastEngineLines(out) : 'silent',
     )
   } finally {
     await launch.close()
@@ -433,7 +475,9 @@ async function main(): Promise<void> {
 
   const before = engineTable().pids
   if (before.length > 0) {
-    note(`${String(before.length)} engined.exe already running before this spec launched anything — they are excluded, not killed`)
+    note(
+      `${String(before.length)} engined.exe already running before this spec launched anything — they are excluded, not killed`,
+    )
   }
 
   const launch = await launchOnFixture(FIXTURE)
@@ -465,7 +509,9 @@ async function main(): Promise<void> {
   await stepAbsence()
 
   if (failures.length === 0) {
-    note('the ready line is the app’s OWN narration of a health round-trip, provoked by killing the engine — a tap attached at launch has already missed the first one')
+    note(
+      'the ready line is the app’s OWN narration of a health round-trip, provoked by killing the engine — a tap attached at launch has already missed the first one',
+    )
   }
   reportRun()
 }

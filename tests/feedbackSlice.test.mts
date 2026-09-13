@@ -64,9 +64,9 @@ test('lineTs / anchorMs read the log prefix and nothing else', () => {
     anchorMs([
       { ts: 1, line: 'a' },
       { ts: 5, line: 'b' },
-      { ts: 0, line: 'c' }
+      { ts: 0, line: 'c' },
     ]),
-    5
+    5,
   )
   assert.equal(anchorMs([{ ts: 0, line: 'x' }]), 0)
 })
@@ -81,7 +81,7 @@ test('the window is anchored on the LAST LINE, never on Date.now()', async () =>
     at(ANCHOR - 45 * MIN, 'You slash a gnoll for 100 points of damage.'),
     at(ANCHOR - 20 * MIN, 'You slash a gnoll for 200 points of damage.'),
     at(ANCHOR - 1 * MIN, 'You have slain a gnoll!'),
-    at(ANCHOR, 'You gain experience!')
+    at(ANCHOR, 'You gain experience!'),
   ]
   const fx = writeLog(lines)
   try {
@@ -106,7 +106,7 @@ test('continuation lines are kept only BETWEEN two in-window lines', async () =>
     at(ANCHOR - 10 * MIN, 'You slash a gnoll for 100 points of damage.'),
     'a fragment INSIDE the window',
     at(ANCHOR, 'You have slain a gnoll!'),
-    'a trailing fragment with nothing after it'
+    'a trailing fragment with nothing after it',
   ])
   try {
     const slice = await buildSlice({ logPath: fx.path, windowMinutes: 30 })
@@ -133,7 +133,7 @@ test('the scrub drops third-party chat and counts every drop honestly', async ()
     at(ANCHOR - 3 * MIN, '[50 PAL/MNK] Stranger (Dark Elf) ZONE: freeport'),
     at(ANCHOR - 2 * MIN, "Vebarn told you, 'Attacking a gnoll Master.'"),
     at(ANCHOR - 1 * MIN, 'You slash a gnoll for 120 points of damage.'),
-    at(ANCHOR, 'You have slain a gnoll!')
+    at(ANCHOR, 'You have slain a gnoll!'),
   ])
   try {
     const slice = await buildSlice({ logPath: fx.path, windowMinutes: 30 })
@@ -143,7 +143,10 @@ test('the scrub drops third-party chat and counts every drop honestly', async ()
     // lines stay.
     assert.equal(slice.dropped, 5)
     assert.equal(slice.lines, 5)
-    assert.ok(slice.text.includes('Attacking a gnoll Master.'), 'the pet-claim tell is load-bearing')
+    assert.ok(
+      slice.text.includes('Attacking a gnoll Master.'),
+      'the pet-claim tell is load-bearing',
+    )
     assert.ok(slice.text.includes('has joined the group'), 'membership events are triage context')
     assert.ok(!slice.text.includes('wanna group'))
     assert.ok(!slice.text.includes('WTS Fungi Tunic'))
@@ -159,13 +162,16 @@ test("the active character's own /who row survives; a stranger's does not", asyn
   const rows = [
     at(ANCHOR - 2 * MIN, '[50 PAL/MNK/ENC] Testchar (Dark Elf) <Guild> ZONE: freeport'),
     at(ANCHOR - 1 * MIN, '[50 WAR/CLR] Stranger (Human) ZONE: freeport'),
-    at(ANCHOR, 'You have slain a gnoll!')
+    at(ANCHOR, 'You have slain a gnoll!'),
   ]
   const fx = writeLog(rows)
   try {
     const mine = await buildSlice({ logPath: fx.path, windowMinutes: 30, selfName: 'Testchar' })
     assert.ok(mine)
-    assert.ok(mine.text.includes('Testchar (Dark Elf)'), 'own loadout row is the owner’s own identity')
+    assert.ok(
+      mine.text.includes('Testchar (Dark Elf)'),
+      'own loadout row is the owner’s own identity',
+    )
     assert.ok(!mine.text.includes('Stranger'))
     assert.equal(mine.dropped, 1)
     // No selfName ⇒ no carve-out at all: every /who row goes. That is the safe default.
@@ -181,7 +187,7 @@ test("the active character's own /who row survives; a stranger's does not", asyn
 test('a window whose only survivors are chat yields NO attachment at all', async () => {
   const fx = writeLog([
     at(ANCHOR - 50 * MIN, 'You slash a gnoll for 120 points of damage.'),
-    at(ANCHOR, "Rykkerr tells you, 'hello?'")
+    at(ANCHOR, "Rykkerr tells you, 'hello?'"),
   ])
   try {
     // An empty slice is `log: null` upstream — an empty attachment is not an attachment.
@@ -197,7 +203,7 @@ test('the gz is level 9, round-trips exactly, and the sha256 is of the GZ BYTES'
   const fx = writeLog([
     at(ANCHOR - 2 * MIN, 'You slash a gnoll for 120 points of damage.'),
     at(ANCHOR - 1 * MIN, 'You slash a gnoll for 121 points of damage.'),
-    at(ANCHOR, 'You have slain a gnoll!')
+    at(ANCHOR, 'You have slain a gnoll!'),
   ])
   try {
     const slice = await buildSlice({ logPath: fx.path, windowMinutes: 30 })
@@ -221,7 +227,12 @@ test('a busy hour is capped at 50k lines, keeping the LAST ones', async () => {
   const total = 70_000
   const lines: string[] = []
   for (let i = 0; i < total; i++) {
-    lines.push(at(ANCHOR - 59 * MIN + Math.floor((i * 59 * MIN) / total), `You slash a gnoll for ${i % 300} points of damage.`))
+    lines.push(
+      at(
+        ANCHOR - 59 * MIN + Math.floor((i * 59 * MIN) / total),
+        `You slash a gnoll for ${i % 300} points of damage.`,
+      ),
+    )
   }
   const fx = writeLog(lines)
   try {
@@ -256,7 +267,8 @@ test('the 16 MB tail cap bounds the read — the head of a huge log is never see
     assert.ok(slice)
     assert.ok(!slice.text.includes(marker), 'the tail cap must bound what is read')
     // The leading FRAGMENT of a truncated read is discarded: every kept line is a real line.
-    for (const line of slice.text.trimEnd().split('\n')) assert.ok(line.startsWith('['), line.slice(0, 40))
+    for (const line of slice.text.trimEnd().split('\n'))
+      assert.ok(line.startsWith('['), line.slice(0, 40))
   } finally {
     cleanup(fx)
   }
@@ -280,7 +292,10 @@ test('an oversize slice halves its window until the 2 MB gz cap fits', async () 
     // Same reasoning as the tail-cap test above: the noise rides in the real modifier slot so
     // the scrub keeps every line instead of treating the noise as unclassified free text.
     lines.push(
-      at(ANCHOR - 60 * MIN + i * 150, `You slash a gnoll for 100 points of damage. (${noise(120)})`)
+      at(
+        ANCHOR - 60 * MIN + i * 150,
+        `You slash a gnoll for 100 points of damage. (${noise(120)})`,
+      ),
     )
   }
   const fx = writeLog(lines)
@@ -318,7 +333,7 @@ test('previewOf caps at PREVIEW_MAX_LINES with an explicit omission marker', () 
 test('a long slice previews the head and tail, and the FULL text is still available', async () => {
   const total = PREVIEW_MAX_LINES + 2_000
   const lines = Array.from({ length: total }, (_, i) =>
-    at(ANCHOR - 29 * MIN + i * 100, `You slash a gnoll for ${i} points of damage.`)
+    at(ANCHOR - 29 * MIN + i * 100, `You slash a gnoll for ${i} points of damage.`),
   )
   const fx = writeLog(lines)
   try {
@@ -356,7 +371,7 @@ test('missing, empty and timestamp-free logs yield null, never a throw', async (
 test('THE GAME LOG IS OPENED READ-ONLY AND IS NEVER WRITTEN TO', async () => {
   const fx = writeLog([
     at(ANCHOR - 5 * MIN, 'You have entered Plane of Sky.'),
-    at(ANCHOR, 'You have slain a gnoll!')
+    at(ANCHOR, 'You have slain a gnoll!'),
   ])
   try {
     const before = readFileSync(fx.path)

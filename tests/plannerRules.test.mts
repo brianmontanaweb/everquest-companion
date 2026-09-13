@@ -12,7 +12,7 @@ import {
   narrowedClasses,
   planWarnings,
   socketCompatibility,
-  type DonorIndex
+  type DonorIndex,
 } from '../src/shared/planner/rules'
 import type { ExaltPlan, PlannerDonor, SocketType } from '../src/shared/planner/types'
 import { EXALTATION_SLOT_TYPES, expToNextTier } from '../src/shared/itemStats'
@@ -29,7 +29,7 @@ function donor(over: Partial<PlannerDonor> = {}): PlannerDonor {
     hasteLocked: false,
     quest: false,
     playerCrafted: false,
-    ...over
+    ...over,
   }
 }
 
@@ -55,7 +55,10 @@ test('a +4 proc costs 15 merge XP — 15 D0 copies, or 1 D4 copy', () => {
   const proc = extractionCost(4)
   assert.deepEqual(proc, { tier: 4, xp: 15, d0Copies: 15, d4Copies: 1 })
   // Derived, not restated: 1 + 2 + 4 + 8 is exactly the curve itemStats encodes.
-  assert.equal(proc.xp, [0, 1, 2, 3].reduce((n, t) => n + (expToNextTier(t) ?? 0), 0))
+  assert.equal(
+    proc.xp,
+    [0, 1, 2, 3].reduce((n, t) => n + (expToNextTier(t) ?? 0), 0),
+  )
 })
 
 test('every extraction tier is 2^tier − 1, and a D4 drop is already there', () => {
@@ -85,29 +88,30 @@ test('a transfer needs a shared slot and a shared class', () => {
 
 test('haste never travels, whatever the slot and class say (R3)', () => {
   const hasted = donor({ effect: 'Haste', hasteLocked: true })
-  assert.deepEqual(socketCompatibility(hasted, ['PRIMARY'], ['PAL']), { ok: false, reason: 'haste' })
+  assert.deepEqual(socketCompatibility(hasted, ['PRIMARY'], ['PAL']), {
+    ok: false,
+    reason: 'haste',
+  })
 })
 
 test('an unstated slot or class list is not a pass', () => {
   assert.deepEqual(socketCompatibility(donor({ slots: [] }), ['PRIMARY'], ['PAL']), {
     ok: false,
-    reason: 'slot'
+    reason: 'slot',
   })
   assert.deepEqual(socketCompatibility(donor({ classes: [] }), ['PRIMARY'], ['PAL']), {
     ok: false,
-    reason: 'class'
+    reason: 'class',
   })
   // …but a set with no trio chosen yet is asking for NO class filter, not for zero classes.
   assert.deepEqual(socketCompatibility(donor(), ['PRIMARY'], []), { ok: true })
 })
 
 test('socketing narrows the host class list to the overlap', () => {
-  assert.deepEqual(narrowedClasses(['WAR', 'PAL', 'RNG', 'SHD', 'BRD', 'ROG'], ['WAR', 'PAL', 'RNG', 'SHD']), [
-    'WAR',
-    'PAL',
-    'RNG',
-    'SHD'
-  ])
+  assert.deepEqual(
+    narrowedClasses(['WAR', 'PAL', 'RNG', 'SHD', 'BRD', 'ROG'], ['WAR', 'PAL', 'RNG', 'SHD']),
+    ['WAR', 'PAL', 'RNG', 'SHD'],
+  )
   assert.deepEqual(narrowedClasses(['WAR'], ['CLR']), [], 'no overlap narrows to nobody')
   // An empty list is UNKNOWN, so it narrows nothing rather than claiming an empty intersection.
   assert.deepEqual(narrowedClasses([], ['WAR', 'PAL']), ['WAR', 'PAL'])
@@ -124,7 +128,7 @@ function plan(over: Partial<ExaltPlan> = {}): ExaltPlan {
     createdAt: 0,
     updatedAt: 0,
     slots: {},
-    ...over
+    ...over,
   }
 }
 
@@ -137,8 +141,12 @@ const index = (donors: PlannerDonor[]): DonorIndex => {
 test('a clean plan warns about nothing', () => {
   const p = plan({
     slots: {
-      PRIMARY: { hostKey: 'fiery avenger', hostName: 'Fiery Avenger', sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } } }
-    }
+      PRIMARY: {
+        hostKey: 'fiery avenger',
+        hostName: 'Fiery Avenger',
+        sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } },
+      },
+    },
   })
   assert.deepEqual(planWarnings(p, index([donor()])), [])
 })
@@ -150,12 +158,18 @@ test('the set lint names every unreachable socket', () => {
       // wrong classes for the trio, and no host picked
       PRIMARY: { sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } } },
       // donor exists but belongs on a weapon
-      HEAD: { hostKey: 'crown', sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } } },
+      HEAD: {
+        hostKey: 'crown',
+        sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } },
+      },
       // haste can't be moved at all
-      WRIST: { hostKey: 'bracer', sockets: { worn: { effect: 'Haste', donorKey: 'flowing black robe' } } },
+      WRIST: {
+        hostKey: 'bracer',
+        sockets: { worn: { effect: 'Haste', donorKey: 'flowing black robe' } },
+      },
       // the donor key isn't in the database
-      NECK: { hostKey: 'chain', sockets: { click: { effect: 'Gate', donorKey: 'no such item' } } }
-    }
+      NECK: { hostKey: 'chain', sockets: { click: { effect: 'Gate', donorKey: 'no such item' } } },
+    },
   })
   const donors = index([
     donor(),
@@ -167,13 +181,19 @@ test('the set lint names every unreachable socket', () => {
       tierRequired: 3,
       hasteLocked: true,
       slots: ['CHEST', 'WRIST'],
-      classes: ['NEC', 'WIZ', 'ENC', 'MAG']
-    })
+      classes: ['NEC', 'WIZ', 'ENC', 'MAG'],
+    }),
   ])
   const kinds = planWarnings(p, donors)
     .map((w) => `${w.slot}:${w.kind}`)
     .sort()
-  assert.deepEqual(kinds, ['HEAD:slot', 'NECK:unknown-donor', 'PRIMARY:class', 'PRIMARY:no-host', 'WRIST:haste'])
+  assert.deepEqual(kinds, [
+    'HEAD:slot',
+    'NECK:unknown-donor',
+    'PRIMARY:class',
+    'PRIMARY:no-host',
+    'WRIST:haste',
+  ])
   // Messages state the situation, not the method (UI convention), and name the donor.
   const haste = planWarnings(p, donors).find((w) => w.kind === 'haste')
   assert.ok(haste?.message.includes('Flowing Black Robe'))
@@ -191,14 +211,20 @@ test('the lint runs per CELL, and R2 is still asked about the SLOT (JOS-67)', ()
     socket: 'focus',
     tierRequired: 1,
     slots: ['FINGER'],
-    classes: ['PAL', 'CLR']
+    classes: ['PAL', 'CLR'],
   })
   const both = plan({
     classes: ['PAL'],
     slots: {
-      FINGER: { hostKey: 'ring a', sockets: { focus: { effect: ring.effect, donorKey: ring.key } } },
-      FINGER2: { hostKey: 'ring b', sockets: { focus: { effect: ring.effect, donorKey: ring.key } } }
-    }
+      FINGER: {
+        hostKey: 'ring a',
+        sockets: { focus: { effect: ring.effect, donorKey: ring.key } },
+      },
+      FINGER2: {
+        hostKey: 'ring b',
+        sockets: { focus: { effect: ring.effect, donorKey: ring.key } },
+      },
+    },
   })
   assert.deepEqual(planWarnings(both, index([ring])), [])
 
@@ -206,8 +232,11 @@ test('the lint runs per CELL, and R2 is still asked about the SLOT (JOS-67)', ()
   const misplaced = plan({
     classes: ['PAL'],
     slots: {
-      FINGER2: { hostKey: 'ring b', sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } } }
-    }
+      FINGER2: {
+        hostKey: 'ring b',
+        sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } },
+      },
+    },
   })
   const [warning] = planWarnings(misplaced, index([donor()]))
   assert.equal(warning.slot, 'FINGER2')
@@ -224,16 +253,31 @@ test('an ANY cell lets every SLOT through and still enforces class and haste (JO
   const anywhere = plan({
     classes: ['PAL'],
     slots: {
-      ANY1: { hostKey: 'brigandine tunic', sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } } },
-      ANY2: { hostKey: 'midnight clad straps', sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } } }
-    }
+      ANY1: {
+        hostKey: 'brigandine tunic',
+        sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } },
+      },
+      ANY2: {
+        hostKey: 'midnight clad straps',
+        sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } },
+      },
+    },
   })
-  assert.deepEqual(planWarnings(anywhere, index([ghoulbane])), [], 'a PRIMARY donor is legal in an any-cell')
+  assert.deepEqual(
+    planWarnings(anywhere, index([ghoulbane])),
+    [],
+    'a PRIMARY donor is legal in an any-cell',
+  )
   // The same donor in the CHEST cell is not, which is what makes the line above a real difference
   // rather than the lint having gone quiet everywhere.
   const chest = plan({
     classes: ['PAL'],
-    slots: { CHEST: { hostKey: 'brigandine tunic', sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } } } }
+    slots: {
+      CHEST: {
+        hostKey: 'brigandine tunic',
+        sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } },
+      },
+    },
   })
   assert.equal(planWarnings(chest, index([ghoulbane]))[0]?.kind, 'slot')
 
@@ -241,7 +285,9 @@ test('an ANY cell lets every SLOT through and still enforces class and haste (JO
   // properties of the donor and the set, and an any-slot is not a permit for either.
   const wrongClass = plan({
     classes: ['ENC'],
-    slots: { ANY1: { hostKey: 'robe', sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } } } }
+    slots: {
+      ANY1: { hostKey: 'robe', sockets: { proc: { effect: 'Holy Might', donorKey: 'ghoulbane' } } },
+    },
   })
   assert.equal(planWarnings(wrongClass, index([ghoulbane]))[0]?.kind, 'class')
 
@@ -253,20 +299,34 @@ test('an ANY cell lets every SLOT through and still enforces class and haste (JO
     tierRequired: 3,
     hasteLocked: true,
     slots: ['CHEST'],
-    classes: ['ENC']
+    classes: ['ENC'],
   })
   const hasteInAny = plan({
     classes: ['ENC'],
-    slots: { ANY2: { hostKey: 'robe', sockets: { worn: { effect: 'Haste', donorKey: hasted.key } } } }
+    slots: {
+      ANY2: { hostKey: 'robe', sockets: { worn: { effect: 'Haste', donorKey: hasted.key } } },
+    },
   })
   assert.equal(planWarnings(hasteInAny, index([hasted]))[0]?.kind, 'haste')
 
   // A donor whose page states NO slot still fails everywhere, any-cell included: R2 needs a shared
   // slot and it shares none (law 1 — an absent fact is not a pass).
-  const slotless = donor({ key: 'potion', name: 'Potion', effect: 'Gate', socket: 'click', tierRequired: 2, slots: [] })
+  const slotless = donor({
+    key: 'potion',
+    name: 'Potion',
+    effect: 'Gate',
+    socket: 'click',
+    tierRequired: 2,
+    slots: [],
+  })
   const slotlessInAny = plan({
     classes: [],
-    slots: { ANY1: { hostKey: 'brigandine tunic', sockets: { click: { effect: 'Gate', donorKey: 'potion' } } } }
+    slots: {
+      ANY1: {
+        hostKey: 'brigandine tunic',
+        sockets: { click: { effect: 'Gate', donorKey: 'potion' } },
+      },
+    },
   })
   assert.equal(planWarnings(slotlessInAny, index([slotless]))[0]?.kind, 'slot')
 
@@ -282,7 +342,7 @@ test('an empty slot with no sockets is quiet, not an error', () => {
 test('a donor key that carries several effects resolves by effect name', () => {
   const multi = [
     donor({ key: 'multi', name: 'Multi', effect: 'Holy Might', socket: 'proc', tierRequired: 4 }),
-    donor({ key: 'multi', name: 'Multi', effect: 'Gate', socket: 'click', tierRequired: 2 })
+    donor({ key: 'multi', name: 'Multi', effect: 'Gate', socket: 'click', tierRequired: 2 }),
   ]
   const p = plan({
     slots: {
@@ -290,15 +350,20 @@ test('a donor key that carries several effects resolves by effect name', () => {
         hostKey: 'host',
         sockets: {
           proc: { effect: 'Holy Might', donorKey: 'multi' },
-          click: { effect: 'Gate', donorKey: 'multi' }
-        }
-      }
-    }
+          click: { effect: 'Gate', donorKey: 'multi' },
+        },
+      },
+    },
   })
   assert.deepEqual(planWarnings(p, index(multi)), [])
   // …and an effect that item does not carry is an unknown donor, not a silent pass.
   const wrong = plan({
-    slots: { PRIMARY: { hostKey: 'host', sockets: { proc: { effect: 'Lifetap', donorKey: 'multi' } } } }
+    slots: {
+      PRIMARY: { hostKey: 'host', sockets: { proc: { effect: 'Lifetap', donorKey: 'multi' } } },
+    },
   })
-  assert.deepEqual(planWarnings(wrong, index(multi)).map((w) => w.kind), ['unknown-donor'])
+  assert.deepEqual(
+    planWarnings(wrong, index(multi)).map((w) => w.kind),
+    ['unknown-donor'],
+  )
 })

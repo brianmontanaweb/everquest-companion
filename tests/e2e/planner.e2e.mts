@@ -62,7 +62,7 @@ import {
   reportRun,
   settleCount,
   settleGone,
-  settleStable
+  settleStable,
 } from './appHarness.mjs'
 
 import { makeUserData, removeUserData } from './appWindow.mjs'
@@ -93,7 +93,7 @@ import {
   stepNonEquip,
   stepSearchOnly,
   textOf,
-  until
+  until,
 } from './plannerSteps.mjs'
 import {
   WISH_TAB,
@@ -105,7 +105,7 @@ import {
   stepSearchWishes,
   stepSeedImport,
   stepWishDeepLink,
-  stepZoneGrouping
+  stepZoneGrouping,
 } from './wishlistSteps.mjs'
 // JOS-329's away-and-back step for this browser, from the module the gear and character specs share.
 import { stepBrowseMemory } from './areaMemorySteps.mjs'
@@ -163,19 +163,33 @@ function seedStore(userData: string): void {
             classes: [],
             createdAt: now,
             updatedAt: now,
-            slots: { HEAD: { sockets: { focus: { effect: 'Extended Enhancement II', donorKey: PLANNED_DONOR } } } }
-          }
+            slots: {
+              HEAD: {
+                sockets: { focus: { effect: 'Extended Enhancement II', donorKey: PLANNED_DONOR } },
+              },
+            },
+          },
         ],
         wishlist: {
           entries: [
-            { itemKey: OWNED_WISH.key, name: OWNED_WISH.name, kind: 'gear', addedAt: now, source: 'user' }
+            {
+              itemKey: OWNED_WISH.key,
+              name: OWNED_WISH.name,
+              kind: 'gear',
+              addedAt: now,
+              source: 'user',
+            },
           ],
-          clearedDone: []
-        }
-      }
-    }
+          clearedDone: [],
+        },
+      },
+    },
   }
-  writeFileSync(join(userData, 'everquest-companion-progress.json'), `${JSON.stringify(store, null, 2)}\n`, 'utf8')
+  writeFileSync(
+    join(userData, 'everquest-companion-progress.json'),
+    `${JSON.stringify(store, null, 2)}\n`,
+    'utf8',
+  )
 }
 
 /**
@@ -194,27 +208,40 @@ function seedStore(userData: string): void {
 async function stepMount(page: Page): Promise<boolean> {
   const hasRow = await page.waitForSelector(NAV, { timeout: 60_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
-  if (!check('the nav drawer has a Gear row — the one door to all four gear tabs', hasRow)) return false
+  if (!check('the nav drawer has a Gear row — the one door to all four gear tabs', hasRow))
+    return false
   const rowLabel = (await textOf(page, NAV)).replace(/\s+/g, ' ').trim()
-  check('…and the row is called Gear, the area rather than the tab', rowLabel.includes('Gear'), `reads "${rowLabel}"`)
+  check(
+    '…and the row is called Gear, the area rather than the tab',
+    rowLabel.includes('Gear'),
+    `reads "${rowLabel}"`,
+  )
   await page.click(NAV, { timeout: 15_000 })
 
   const hasTab = await page.waitForSelector(TAB, { timeout: 30_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!check('…and it opens an area whose tab bar offers Exaltations', hasTab)) return false
   const tabLabel = (await textOf(page, TAB)).replace(/\s+/g, ' ').trim()
-  check('…called Exaltations, the name the game uses', tabLabel.includes('Exaltations'), `reads "${tabLabel}"`)
+  check(
+    '…called Exaltations, the name the game uses',
+    tabLabel.includes('Exaltations'),
+    `reads "${tabLabel}"`,
+  )
   await page.click(TAB, { timeout: 15_000 })
 
   const mounted = await until(async () => (await countOf(page, VIEW)) > 0, 30_000)
   if (!mounted) {
     const noLogs = (await textOf(page, 'main')).includes('No EverQuest logs found')
-    check('clicking Exaltations mounts the pane (or the no-logs empty state explains why not)', noLogs)
-    if (noLogs) note('no character logs on this machine — the app shows its fresh-machine empty state')
+    check(
+      'clicking Exaltations mounts the pane (or the no-logs empty state explains why not)',
+      noLogs,
+    )
+    if (noLogs)
+      note('no character logs on this machine — the app shows its fresh-machine empty state')
     return false
   }
   check('clicking the Exaltations tab mounts the pane straight onto its browse', true)
@@ -234,29 +261,44 @@ async function stepMount(page: Page): Promise<boolean> {
  */
 async function stepExplainer(page: Page): Promise<void> {
   const first = await settleStable(
-    async () => ({ card: await countOf(page, EXPLAINER), ask: await countOf(page, EXPLAINER_OPEN) }),
-    { timeoutMs: 20_000 }
+    async () => ({
+      card: await countOf(page, EXPLAINER),
+      ask: await countOf(page, EXPLAINER_OPEN),
+    }),
+    { timeoutMs: 20_000 },
   )
   check(
     'the planner does NOT teach unasked — no rules card on a first visit',
     first.card === 0,
-    `${String(first.card)} cards up before anyone asked`
+    `${String(first.card)} cards up before anyone asked`,
   )
   if (!check('…and the toolbar carries the ? that is now the only way in', first.ask > 0)) return
 
   await page.click(EXPLAINER_OPEN, { timeout: 15_000 })
-  if (!check('asking with the ? puts the exaltation rules card up', (await settleCount(page, EXPLAINER, 1, { timeoutMs: 8_000 })) > 0)) {
+  if (
+    !check(
+      'asking with the ? puts the exaltation rules card up',
+      (await settleCount(page, EXPLAINER, 1, { timeoutMs: 8_000 })) > 0,
+    )
+  ) {
     return
   }
   // The numbers are read from the rules, never written here — so the unlock tiers must be on it.
   const text = (await textOf(page, EXPLAINER)).replace(/\s+/g, ' ')
-  check('…and it states the unlock tiers it reads out of the rules', /Focus at \+\d/.test(text), text.slice(0, 90))
+  check(
+    '…and it states the unlock tiers it reads out of the rules',
+    /Focus at \+\d/.test(text),
+    text.slice(0, 90),
+  )
 
   await page.click(`${EXPLAINER} .MuiAlert-action button`, { timeout: 15_000 })
   check('dismissing the card puts it away', await settleGone(page, EXPLAINER, { timeoutMs: 8_000 }))
 
   await page.click(EXPLAINER_OPEN, { timeout: 15_000 })
-  check('the ? brings it back after a dismissal', (await settleCount(page, EXPLAINER, 1, { timeoutMs: 8_000 })) > 0)
+  check(
+    'the ? brings it back after a dismissal',
+    (await settleCount(page, EXPLAINER, 1, { timeoutMs: 8_000 })) > 0,
+  )
   await page.click(`${EXPLAINER} .MuiAlert-action button`, { timeout: 15_000 })
   await settleGone(page, EXPLAINER, { timeoutMs: 8_000 })
 }
@@ -265,11 +307,17 @@ async function stepExplainer(page: Page): Promise<void> {
 async function stepEffects(page: Page): Promise<boolean> {
   const listed = await until(async () => (await countOf(page, EFFECT_ROW)) > 0, 60_000)
   const box = await boxOf(page, EFFECT_LIST)
-  check('the effect browser renders rows from the committed item DB', listed, `${String(await countOf(page, EFFECT_ROW))} rows`)
+  check(
+    'the effect browser renders rows from the committed item DB',
+    listed,
+    `${String(await countOf(page, EFFECT_ROW))} rows`,
+  )
   check(
     'the effect list is its own scroller (a growing list never grows the page)',
     box !== null && box.h > 0 && box.scrollH >= box.clientH,
-    box ? `${String(box.h)}px tall · scrollHeight ${String(box.scrollH)} vs clientHeight ${String(box.clientH)}` : 'absent'
+    box
+      ? `${String(box.h)}px tall · scrollHeight ${String(box.scrollH)} vs clientHeight ${String(box.clientH)}`
+      : 'absent',
   )
   return listed
 }
@@ -303,7 +351,7 @@ async function stepEffectSays(page: Page): Promise<void> {
   check(
     'a donor row states what its effect DOES, in one line from the spell DB',
     says * 2 > rows && rows > 0,
-    `${String(says)} of ${String(rows)} visible rows — e.g. ${await textOf(page, EFFECT_SAYS)}`
+    `${String(says)} of ${String(rows)} visible rows — e.g. ${await textOf(page, EFFECT_SAYS)}`,
   )
 }
 
@@ -332,43 +380,71 @@ const controlOfDonor = (name: string): string =>
  * Returns the donor's NAME so the wish-list half can find the row it just made.
  */
 async function stepAddWish(page: Page): Promise<string | null> {
-  if (!check('an effect row expands into at least one donor', await ensureDonorRow(page), `${String(await countOf(page, ADD_BUTTON))} donors`)) {
+  if (
+    !check(
+      'an effect row expands into at least one donor',
+      await ensureDonorRow(page),
+      `${String(await countOf(page, ADD_BUTTON))} donors`,
+    )
+  ) {
     return null
   }
   await stepEffectSays(page)
   const name = (await textOf(page, DONOR_NAME)).trim()
   const label = (await textOf(page, ADD_BUTTON)).replace(/\s+/g, ' ').trim()
-  check('the add control names where the click sends it', label.toLowerCase().includes('wish'), `reads "${label}"`)
+  check(
+    'the add control names where the click sends it',
+    label.toLowerCase().includes('wish'),
+    `reads "${label}"`,
+  )
 
   await page.click(ADD_BUTTON, { timeout: 15_000 })
   // No slot menu can open any more — the flat list has no cell to disambiguate. Asserted as an
   // absence the settle way, because a menu that opened would only be visible for a moment.
   const menu = await settleCount(page, '.MuiMenu-root .MuiMenuItem-root', 0, { timeoutMs: 3_000 })
-  check('adding never asks which cell — a flat wish has none to ask about', menu === 0, `${String(menu)} menu items`)
+  check(
+    'adding never asks which cell — a flat wish has none to ask about',
+    menu === 0,
+    `${String(menu)} menu items`,
+  )
 
   const marked = await until(async () => (await countOf(page, WISHED_CHIP)) > 0, 10_000)
   check(`adding "${name}" chips its own row as wished`, marked)
   check(
     '…and the control reads its added state rather than staying an add (JOS-343)',
-    (await countOf(page, ADD_WISHED)) > 0
+    (await countOf(page, ADD_WISHED)) > 0,
   )
   if (!marked) return null
 
   // THE TOGGLE, IN PLACE. Same control, same row, no tab in between: the second click is a REMOVE.
   const control = controlOfDonor(name)
-  if (!check(`the wished donor's own control is findable by name — "${name}"`, (await countOf(page, control)) === 1)) {
+  if (
+    !check(
+      `the wished donor's own control is findable by name — "${name}"`,
+      (await countOf(page, control)) === 1,
+    )
+  ) {
     return name
   }
   await page.click(control, { timeout: 15_000 })
   check(
     'a second click on a wished donor removes the wish — the lit no-op is overruled',
-    await until(async () => (await countOf(page, `${control}[data-wished="true"]`)) === 0, 10_000)
+    await until(async () => (await countOf(page, `${control}[data-wished="true"]`)) === 0, 10_000),
   )
-  check('…and its row drops the wished chip with it', (await countOf(page, `${DONOR_ROW}:has([data-testid="planner-donor-name"][title="${name}"]) ${WISHED_CHIP}`)) === 0)
+  check(
+    '…and its row drops the wished chip with it',
+    (await countOf(
+      page,
+      `${DONOR_ROW}:has([data-testid="planner-donor-name"][title="${name}"]) ${WISHED_CHIP}`,
+    )) === 0,
+  )
 
   // …and back on, because the route half of the run is built on this wish existing.
   await page.click(control, { timeout: 15_000 })
-  const readded = await until(async () => (await countOf(page, `${control}[data-wished="true"]`)) === 1, 10_000)
+  const readded = await until(
+    async () => (await countOf(page, `${control}[data-wished="true"]`)) === 1,
+    10_000,
+  )
   check('a third click puts it back — the toggle is a toggle, not a one-shot', readded)
   return readded ? name : null
 }
@@ -386,7 +462,10 @@ function pickTwoUnwished(page: Page): Promise<[string, string] | null> {
   return page.evaluate((rowSel) => {
     const names = Array.from(document.querySelectorAll(rowSel)).map((row) => ({
       row,
-      name: (row.querySelector('[data-testid="planner-donor-name"]') as HTMLElement | null)?.innerText.trim() ?? ''
+      name:
+        (
+          row.querySelector('[data-testid="planner-donor-name"]') as HTMLElement | null
+        )?.innerText.trim() ?? '',
     }))
     const seen = new Map<string, number>()
     for (const n of names) seen.set(n.name, (seen.get(n.name) ?? 0) + 1)
@@ -394,7 +473,12 @@ function pickTwoUnwished(page: Page): Promise<[string, string] | null> {
     for (const n of names) {
       const control = n.row.querySelector('[data-testid="planner-add"]')
       if (n.name === '' || seen.get(n.name) !== 1) continue
-      if (control === null || control.hasAttribute('disabled') || control.hasAttribute('data-wished')) continue
+      if (
+        control === null ||
+        control.hasAttribute('disabled') ||
+        control.hasAttribute('data-wished')
+      )
+        continue
       picked.push(n.name)
       if (picked.length === 2) return [picked[0], picked[1]] as [string, string]
     }
@@ -433,33 +517,73 @@ async function stepBrowseToggleReachesStore(page: Page): Promise<void> {
   // The product answer is `PlannerView`'s `donorToggle` (no control at all until `ready`); this is
   // the spec's half of the same fact, and it is a real claim rather than a wait: the run reaches
   // here with wishes on the list, so a browse showing none of them has not re-read the store.
-  if (!check(
-    'the remounted browse has re-read the wish document before a row is picked off it',
-    await until(async () => (await countOf(page, ADD_WISHED)) > 0, 20_000)
-  )) return
+  if (
+    !check(
+      'the remounted browse has re-read the wish document before a row is picked off it',
+      await until(async () => (await countOf(page, ADD_WISHED)) > 0, 20_000),
+    )
+  )
+    return
   const pair = await pickTwoUnwished(page)
-  if (!check('two unwished donor rows are on screen to toggle against each other', pair !== null)) return
+  if (!check('two unwished donor rows are on screen to toggle against each other', pair !== null))
+    return
   const [kept, undone] = pair as [string, string]
 
   const keptControl = controlOfDonor(kept)
   const undoneControl = controlOfDonor(undone)
   await page.click(keptControl, { timeout: 15_000 })
-  if (!check(`"${kept}" is added and stays added`, await until(async () => (await countOf(page, `${keptControl}[data-wished="true"]`)) === 1, 10_000))) return
+  if (
+    !check(
+      `"${kept}" is added and stays added`,
+      await until(
+        async () => (await countOf(page, `${keptControl}[data-wished="true"]`)) === 1,
+        10_000,
+      ),
+    )
+  )
+    return
 
   await page.click(undoneControl, { timeout: 15_000 })
-  if (!check(`"${undone}" is added too`, await until(async () => (await countOf(page, `${undoneControl}[data-wished="true"]`)) === 1, 10_000))) return
+  if (
+    !check(
+      `"${undone}" is added too`,
+      await until(
+        async () => (await countOf(page, `${undoneControl}[data-wished="true"]`)) === 1,
+        10_000,
+      ),
+    )
+  )
+    return
   await page.click(undoneControl, { timeout: 15_000 })
-  if (!check(`…and a second click on "${undone}" reads as removed`, await until(async () => (await countOf(page, `${undoneControl}[data-wished="true"]`)) === 0, 10_000))) return
+  if (
+    !check(
+      `…and a second click on "${undone}" reads as removed`,
+      await until(
+        async () => (await countOf(page, `${undoneControl}[data-wished="true"]`)) === 0,
+        10_000,
+      ),
+    )
+  )
+    return
 
   await page.click(WISH_TAB, { timeout: 15_000 })
-  if (!check('the Wish list tab mounts to be asked about both', await until(async () => (await countOf(page, '[data-testid="wishlist-view"]')) > 0, 20_000))) return
+  if (
+    !check(
+      'the Wish list tab mounts to be asked about both',
+      await until(async () => (await countOf(page, '[data-testid="wishlist-view"]')) > 0, 20_000),
+    )
+  )
+    return
   // Both row kinds, because a wish the progress join calls fulfilled is filed in the done strip
   // rather than the route and is still very much ON the list.
   const WISH_ROWS = '[data-testid="wishlist-row"], [data-testid="wishlist-done-row"]'
   const readNames = (): Promise<string[]> =>
     page.evaluate(
-      (s) => Array.from(document.querySelectorAll(s)).map((e) => (e as HTMLElement).innerText.split('\n')[0].trim()),
-      WISH_ROWS
+      (s) =>
+        Array.from(document.querySelectorAll(s)).map((e) =>
+          (e as HTMLElement).innerText.split('\n')[0].trim(),
+        ),
+      WISH_ROWS,
     )
   // AND THE MOUNT IS NOT THE ROWS. The route is a fold over BOTH corpus indices and the progress
   // join, so a freshly mounted pane draws its shell with nothing under it for a beat — read at the
@@ -468,11 +592,15 @@ async function stepBrowseToggleReachesStore(page: Page): Promise<void> {
   // afterwards either way — a list that never fills fails on the claim below, not on a timeout.
   await until(async () => (await readNames()).includes(kept), 20_000)
   const listed = await readNames()
-  check(`the donor left added is on the wish list — "${kept}"`, listed.includes(kept), listed.slice(0, 6).join(', '))
+  check(
+    `the donor left added is on the wish list — "${kept}"`,
+    listed.includes(kept),
+    listed.slice(0, 6).join(', '),
+  )
   check(
     `…and the one clicked twice is not — the browse's second click used the wish list's own delete — "${undone}"`,
     !listed.includes(undone),
-    listed.slice(0, 6).join(', ')
+    listed.slice(0, 6).join(', '),
   )
 }
 
@@ -500,27 +628,47 @@ async function stepDeepLink(page: Page): Promise<void> {
   await page.click(DONOR_NAME, { timeout: 15_000 })
 
   const landed = await until(async () => (await countOf(page, LOOT_DETAIL)) > 0, 20_000)
-  if (!check('clicking a donor name opens the Loot tab’s item drill-down', landed, `donor "${name}"`)) return
+  if (
+    !check('clicking a donor name opens the Loot tab’s item drill-down', landed, `donor "${name}"`)
+  )
+    return
   const title = (await textOf(page, LOOT_TITLE)).replace(/\s+/g, ' ').trim()
-  check('…on the item that was clicked, not on the ledger', title === name, `"${title}" vs "${name}"`)
+  check(
+    '…on the item that was clicked, not on the ledger',
+    title === name,
+    `"${title}" vs "${name}"`,
+  )
   check(
     'the drill states what the committed DBs know about where it drops (never-looted items included)',
-    (await countOf(page, LOOT_DB_SOURCES)) > 0
+    (await countOf(page, LOOT_DB_SOURCES)) > 0,
   )
 
   // THE RETURN LEG (JOS-43). The arrow says where it goes before you press it — one string feeds
   // the tooltip and the accessible name — and then it goes there.
   const label = await page.getAttribute(LOOT_BACK, 'aria-label')
-  check('the drill’s back arrow names Exaltations, not the loot list', label === 'Back to Exaltations', String(label))
+  check(
+    'the drill’s back arrow names Exaltations, not the loot list',
+    label === 'Back to Exaltations',
+    String(label),
+  )
   await page.click(LOOT_BACK, { timeout: 15_000 })
   const home = await until(async () => (await countOf(page, VIEW)) > 0, 20_000)
   check('…and pressing Back returns to the Exaltations tab you were reading', home)
-  check('…with the browse still on screen, not the loot ledger', (await countOf(page, LOOT_DETAIL)) === 0)
+  check(
+    '…with the browse still on screen, not the loot ledger',
+    (await countOf(page, LOOT_DETAIL)) === 0,
+  )
   // BOTH HALVES OF "WHERE AM I" SINCE JOS-324. The nav row stands for the whole gear area, so it
   // reads selected on any of the four tabs and cannot by itself say we came back to Exaltations —
   // the TAB is what says that.
-  check('…and the nav agreeing about where we are', (await countOf(page, `${NAV}.Mui-selected`)) === 1)
-  check('…down to which of the area’s tabs is up', (await countOf(page, `${TAB}.Mui-selected`)) === 1)
+  check(
+    '…and the nav agreeing about where we are',
+    (await countOf(page, `${NAV}.Mui-selected`)) === 1,
+  )
+  check(
+    '…down to which of the area’s tabs is up',
+    (await countOf(page, `${TAB}.Mui-selected`)) === 1,
+  )
 }
 
 /** Everything the EXALTATIONS tab owns, in order. */
@@ -558,13 +706,16 @@ async function wishlistSteps(page: Page, addedFromBrowse: string | null): Promis
   if (!(await stepSeedImport(page))) return
   if (addedFromBrowse !== null) {
     const names = await page.evaluate(
-      (s) => Array.from(document.querySelectorAll(s)).map((e) => (e as HTMLElement).innerText.split('\n')[0].trim()),
-      '[data-testid="wishlist-row"]'
+      (s) =>
+        Array.from(document.querySelectorAll(s)).map((e) =>
+          (e as HTMLElement).innerText.split('\n')[0].trim(),
+        ),
+      '[data-testid="wishlist-row"]',
     )
     check(
       `the donor added on the Exaltations tab is on the wish list — "${addedFromBrowse}"`,
       names.includes(addedFromBrowse),
-      names.slice(0, 5).join(', ')
+      names.slice(0, 5).join(', '),
     )
   }
   await stepZoneGrouping(page)
@@ -600,7 +751,7 @@ async function main(): Promise<void> {
   // branch on every launch.
   const { app, close } = await launchOnFixture('e2e-planner.log', {
     inventory: 'Primitive_freeport-Inventory.txt',
-    userData
+    userData,
   })
 
   let page: Page | null = null
@@ -618,14 +769,14 @@ async function main(): Promise<void> {
       check(
         'Exaltations never scrolls the page (its lists clip inside their own boxes)',
         over.doc === 0 && over.content === 0,
-        `document +${String(over.doc)}px · content area +${String(over.content)}px`
+        `document +${String(over.doc)}px · content area +${String(over.content)}px`,
       )
       await wishlistSteps(page, added)
       const wishOver = await pageOverflow(page)
       check(
         'the Wish list never scrolls the page either',
         wishOver.doc === 0 && wishOver.content === 0,
-        `document +${String(wishOver.doc)}px · content area +${String(wishOver.content)}px`
+        `document +${String(wishOver.doc)}px · content area +${String(wishOver.content)}px`,
       )
       // Runs LAST: it leaves the app on Exaltations having passed through the Loot tab, so every
       // pane-scoped measurement above it has already been taken.
@@ -637,7 +788,11 @@ async function main(): Promise<void> {
       await stepBrowseToggleReachesStore(page)
     }
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
 
     if (failures.length) await dumpArtifacts(page, 'planner-FAIL')
     else await dumpArtifacts(page, 'planner-pass')

@@ -16,7 +16,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import type { View } from '../src/renderer/src/appViews'
-import { MAX_ORIGINS, afterBack, afterLink, originTop, type NavOrigin } from '../src/renderer/src/navOrigin'
+import {
+  MAX_ORIGINS,
+  afterBack,
+  afterLink,
+  originTop,
+  type NavOrigin,
+} from '../src/renderer/src/navOrigin'
 
 /** The router builds these from VIEW_LABELS; the label is opaque to the stack itself. */
 const at = (view: View, label: string): NavOrigin => ({ view, label })
@@ -44,7 +50,7 @@ test('links chain, and Back unwinds them in the order they were walked', () => {
   s = afterLink(s, at('loot', 'Loot'), 'mobs', true)
   assert.deepEqual(
     s.map((o) => o.view),
-    ['planner', 'loot']
+    ['planner', 'loot'],
   )
   assert.deepEqual(originTop(s), { view: 'loot', label: 'Loot' })
   s = afterBack(s)
@@ -64,7 +70,12 @@ test('the trail is bounded — overflow drops the OLDEST hop, never the one Back
   let s: NavOrigin[] = []
   for (let i = 0; i < MAX_ORIGINS + 4; i++) {
     // Alternate so no hop is ever a same-view re-anchor.
-    s = afterLink(s, at(i % 2 === 0 ? 'loot' : 'mobs', i % 2 === 0 ? 'Loot' : 'Mobs'), i % 2 === 0 ? 'mobs' : 'loot', true)
+    s = afterLink(
+      s,
+      at(i % 2 === 0 ? 'loot' : 'mobs', i % 2 === 0 ? 'Loot' : 'Mobs'),
+      i % 2 === 0 ? 'mobs' : 'loot',
+      true,
+    )
   }
   assert.equal(s.length, MAX_ORIGINS)
   assert.deepEqual(originTop(s), { view: 'mobs', label: 'Mobs' })

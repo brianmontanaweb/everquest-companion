@@ -44,7 +44,7 @@ export type SmokeOutcome = 'sent' | 'queued' | 'closed' | 'error'
  */
 export function smokeNonce(
   env: Readonly<Record<string, string | undefined>>,
-  e2e: boolean
+  e2e: boolean,
 ): string | null {
   if (e2e) return null
   const raw = env[SMOKE_ENV]

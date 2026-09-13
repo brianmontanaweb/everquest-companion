@@ -51,7 +51,7 @@ import {
   MenuItem,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import StarIcon from '@mui/icons-material/Star'
 import StarBorderIcon from '@mui/icons-material/StarBorder'
@@ -100,7 +100,7 @@ const QuestPickers = memo(function QuestPickers({
   islands,
   setIslands,
   bosses,
-  setBosses
+  setBosses,
 }: {
   classes: string[]
   facets: QuestListState['facets']
@@ -166,7 +166,7 @@ const QuestPickers = memo(function QuestPickers({
  */
 const QuestSearchField = memo(function QuestSearchField({
   query,
-  setQuery
+  setQuery,
 }: {
   query: string
   setQuery: (v: string) => void
@@ -207,7 +207,7 @@ const QuestSearchField = memo(function QuestSearchField({
  *  a `TextField select` is a MUI Select, and re-drawing one per keystroke buys nothing. */
 const QuestSortSelect = memo(function QuestSortSelect({
   sort,
-  setSort
+  setSort,
 }: {
   sort: SortKey
   setSort: (v: SortKey) => void
@@ -225,7 +225,9 @@ const QuestSortSelect = memo(function QuestSortSelect({
       sx={{ minWidth: 180 }}
     >
       {SORT_OPTIONS.map((o) => (
-        <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+        <MenuItem key={o.value} value={o.value}>
+          {o.label}
+        </MenuItem>
       ))}
     </TextField>
   )
@@ -257,7 +259,7 @@ const QuestToggles = memo(function QuestToggles({
   hideNoItems,
   setHideNoItems,
   favoritesOnly,
-  setFavoritesOnly
+  setFavoritesOnly,
 }: {
   hideCompleted: boolean
   setHideCompleted: (v: boolean) => void
@@ -295,7 +297,9 @@ const QuestToggles = memo(function QuestToggles({
         label="Hide quests I have turned in"
       />
       <FormControlLabel
-        control={<Checkbox checked={hideNoItems} onChange={(e) => setHideNoItems(e.target.checked)} />}
+        control={
+          <Checkbox checked={hideNoItems} onChange={(e) => setHideNoItems(e.target.checked)} />
+        }
         label="Only quests with turn-ins"
       />
       <FormControlLabel
@@ -361,7 +365,7 @@ const DumpNotCounted = memo(function DumpNotCounted(): JSX.Element {
 export const InventorySource = memo(function InventorySource({
   countSource,
   onCountSource,
-  inventoryLoadedAt
+  inventoryLoadedAt,
 }: {
   countSource: CountSource
   onCountSource: (s: CountSource) => void
@@ -411,7 +415,9 @@ export const InventorySource = memo(function InventorySource({
         sx={{ minWidth: 190 }}
       >
         {COUNT_SOURCE_OPTIONS.map((o) => (
-          <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+          <MenuItem key={o.value} value={o.value}>
+            {o.label}
+          </MenuItem>
         ))}
       </TextField>
       {/* THE FRESHNESS LINE, HUNG UNDER THE DROPDOWN IT BELONGS TO (JOS-268).
@@ -472,7 +478,7 @@ export default function QuestFilterBar({
   classes,
   countSource,
   onCountSource,
-  inventoryLoadedAt
+  inventoryLoadedAt,
 }: QuestFilterBarProps): JSX.Element {
   return (
     <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center" useFlexGap>

@@ -28,7 +28,6 @@ import { EMPTY_PROGRESSION } from '../leveling/progressionDelta'
 import { ProvenanceChip, SlotChips } from '../profiles/ClassComboChips'
 import { useComboSnap } from '../profiles/ClassComboData'
 
-
 export default function CharacterIdentity(): JSX.Element {
   const who = useModule<CharacterSnap>('character')
   const prog = useModule<ProgressionSnap>('progression')

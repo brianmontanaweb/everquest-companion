@@ -80,7 +80,10 @@ const LOOKED_IN = '[data-testid="engine-launch-lookedin-toggle"]'
 
 /** Rendered text of the first match; '' when the node is not mounted. */
 function textOf(page: Page, sel: string): Promise<string> {
-  return page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
+  return page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    sel,
+  )
 }
 
 /**
@@ -95,8 +98,17 @@ function textOf(page: Page, sel: string): Promise<string> {
  * in only one of the two places fails in the other rather than passing in both.
  */
 async function stepFailureCard(page: Page): Promise<void> {
-  const card = await settle(() => textOf(page, CARD), (t) => t !== '')
-  if (!check('the app SAYS the engine is missing, on screen, in its own words', card !== '', card || '(no card)')) {
+  const card = await settle(
+    () => textOf(page, CARD),
+    (t) => t !== '',
+  )
+  if (
+    !check(
+      'the app SAYS the engine is missing, on screen, in its own words',
+      card !== '',
+      card || '(no card)',
+    )
+  ) {
     return
   }
   // The no-binary words. Not a paraphrase: the resolver exhausted its candidate list, so the card
@@ -104,7 +116,7 @@ async function stepFailureCard(page: Page): Promise<void> {
   check(
     '…and names the right failure: it could not FIND the engine, not that it crashed',
     /cannot find its data engine/i.test(card) && /missing from this installation/i.test(card),
-    card.replace(/\s+/g, ' ').slice(0, 160)
+    card.replace(/\s+/g, ' ').slice(0, 160),
   )
   // The remedy that matters for this class. A quarantined binary is what "missing from a shipped
   // install" almost always is, and a card that did not say the word would leave the commonest
@@ -112,26 +124,38 @@ async function stepFailureCard(page: Page): Promise<void> {
   check(
     '…and points at antivirus quarantine, which is what a missing shipped binary usually is',
     /antivirus/i.test(card) && /quarantine/i.test(card),
-    /antivirus/i.test(card) ? 'named' : 'no remedy offered'
+    /antivirus/i.test(card) ? 'named' : 'no remedy offered',
   )
   // AND IT NEVER LIES ABOUT DEGRADED FUNCTION. There is no TypeScript fold behind this any more, so
   // "some features are unavailable" would describe a product that does not exist.
   check(
     '…and admits there is NO data at all, rather than implying a degraded app',
     /cannot read your log at all/i.test(card) && /every panel will stay empty/i.test(card),
-    card.replace(/\s+/g, ' ').slice(0, 160)
+    card.replace(/\s+/g, ' ').slice(0, 160),
   )
   // THE OPTIONS. A dead end with an explanation is still a dead end.
   const retry = await textOf(page, RETRY)
   const report = await textOf(page, REPORT)
-  check('…and offers a RETRY, because a restored file deserves a button and not a relaunch', retry !== '', retry || 'absent')
-  check('…and a way to REPORT it, pre-tagged so triage can find the class', report !== '', report || 'absent')
+  check(
+    '…and offers a RETRY, because a restored file deserves a button and not a relaunch',
+    retry !== '',
+    retry || 'absent',
+  )
+  check(
+    '…and a way to REPORT it, pre-tagged so triage can find the class',
+    report !== '',
+    report || 'absent',
+  )
   // WHERE IT LOOKED. `resolveEngineBinary` has always narrated this to a dev log nobody but a
   // developer reads; the paths are the actionable half of an absence, so they are offered to the
   // person in front of the empty window too — behind a disclosure, because a list of paths is not
   // what a card opens with.
   const paths = await textOf(page, LOOKED_IN)
-  check('…and can show WHERE it looked, which is how somebody finds the quarantined file', paths !== '', paths || 'absent')
+  check(
+    '…and can show WHERE it looked, which is how somebody finds the quarantined file',
+    paths !== '',
+    paths || 'absent',
+  )
 }
 
 async function main(): Promise<void> {
@@ -142,7 +166,10 @@ async function main(): Promise<void> {
     // CLAIM 1 — it boots.
     const page = await mainWindow(launch.app)
     await sleep(SETTLE_MS)
-    check('the app boots with no engine binary anywhere, and the window is still up', !page.isClosed())
+    check(
+      'the app boots with no engine binary anywhere, and the window is still up',
+      !page.isClosed(),
+    )
 
     // …and nothing was spawned, which is what makes every claim below about the absent case.
     const table = engineTable()
@@ -152,7 +179,7 @@ async function main(): Promise<void> {
     check(
       'no engine process exists — the resolver found nothing, so nothing was spawned',
       kin.length === 0,
-      kin.length === 0 ? 'none' : kin.join(', ')
+      kin.length === 0 ? 'none' : kin.join(', '),
     )
 
     // CLAIM 2 — it never pretends an engine is there.
@@ -174,26 +201,40 @@ async function main(): Promise<void> {
     check(
       'the app never claims an engine — no connect, no attach, no health, nothing',
       !out.said('data-server engine') && !out.said('data-server client: connected'),
-      out.said('data-server engine') ? 'it narrated an engine' : 'silent about any engine'
+      out.said('data-server engine') ? 'it narrated an engine' : 'silent about any engine',
     )
 
     // CLAIM 3 — it invents nothing. The renderer mounted and holds no fabricated rows.
-    const mounted = await page.evaluate(() => document.querySelector('#root')?.childElementCount ?? 0)
-    check('the renderer mounted rather than blanking', mounted > 0, `${String(mounted)} root children`)
+    const mounted = await page.evaluate(
+      () => document.querySelector('#root')?.childElementCount ?? 0,
+    )
+    check(
+      'the renderer mounted rather than blanking',
+      mounted > 0,
+      `${String(mounted)} root children`,
+    )
     // The one thing a fabricating app would do: report a fold it never made. `replayDone` still
     // marks (the phase is real) but nothing may claim events were folded here.
     check(
       'nothing claims to have folded a log — an app with no engine reports no fold',
       !out.said('This process’s own fold loaded'),
-      out.said('This process’s own fold loaded') ? 'it claimed a fold' : 'silent about folding'
+      out.said('This process’s own fold loaded') ? 'it claimed a fold' : 'silent about folding',
     )
 
     // CLAIM 5 — and it says so, on screen, with something to do about it.
     await stepFailureCard(page)
 
     // CLAIM 4 — it does not fall over.
-    for (const bad of ['main:uncaughtException', 'renderer:ErrorBoundary', 'main:unhandledRejection']) {
-      check(`no ${bad} in a window full of unanswerable reads`, !out.said(bad), out.said(bad) ? 'present' : 'clean')
+    for (const bad of [
+      'main:uncaughtException',
+      'renderer:ErrorBoundary',
+      'main:unhandledRejection',
+    ]) {
+      check(
+        `no ${bad} in a window full of unanswerable reads`,
+        !out.said(bad),
+        out.said(bad) ? 'present' : 'clean',
+      )
     }
 
     if (failures.length > 0) await dumpArtifacts(page, 'engine-absent')
@@ -205,7 +246,9 @@ async function main(): Promise<void> {
   if (failures.length === 0) {
     note('engine-absent is an HONEST state now, not a fallback: no TS fold answers behind it')
     note('the reads that could not be served are counted and named in the dev log — readShim.ts')
-    note('…and since JOS-503 the WINDOW says so too, with a retry, a report path and where it looked')
+    note(
+      '…and since JOS-503 the WINDOW says so too, with a retry, a report path and where it looked',
+    )
   }
   reportRun()
 }

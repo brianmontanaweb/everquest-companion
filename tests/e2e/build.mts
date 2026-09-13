@@ -17,7 +17,7 @@ import {
   readdirSync,
   rmdirSync,
   statSync,
-  writeFileSync
+  writeFileSync,
 } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
@@ -84,7 +84,7 @@ function isFresh(): boolean {
   }
   const srcMs = Math.max(
     newestMtime(join(ROOT, 'src')),
-    statSync(join(ROOT, 'electron.vite.config.ts')).mtimeMs
+    statSync(join(ROOT, 'electron.vite.config.ts')).mtimeMs,
   )
   return outMs > srcMs
 }
@@ -239,7 +239,7 @@ export function buildEngineIfStale(): string {
   console.log('build: cargo build --release -p engined (the engine binary is stale)…')
   const res = spawnSync(cargoBinary(), ['build', '--release', '-p', 'engined'], {
     cwd: join(ROOT, 'engine'),
-    stdio: 'inherit'
+    stdio: 'inherit',
   })
   if (res.error) throw new Error(`e2e: could not run cargo — ${res.error.message}`)
   if (res.status !== 0) {
@@ -341,8 +341,12 @@ export function buildIfStale(): void {
     // crashes on a non-TTY stdout with no config escape hatch — see that script's own header.
     const res = spawnSync(
       process.execPath,
-      [join(ROOT, 'scripts', 'electron-vite.mjs'), 'build', `--outDir=${OUT_DIR.replace(/\\/g, '/')}`],
-      { cwd: ROOT, stdio: 'inherit' }
+      [
+        join(ROOT, 'scripts', 'electron-vite.mjs'),
+        'build',
+        `--outDir=${OUT_DIR.replace(/\\/g, '/')}`,
+      ],
+      { cwd: ROOT, stdio: 'inherit' },
     )
     if (res.status !== 0) throw new Error(`electron-vite build failed (exit ${String(res.status)})`)
   } finally {
@@ -361,6 +365,7 @@ export function buildIfStale(): void {
  */
 export function electronBinary(): string {
   const exe: unknown = requireFromRoot('electron')
-  if (typeof exe !== 'string') throw new Error('e2e: the electron package did not resolve to a path')
+  if (typeof exe !== 'string')
+    throw new Error('e2e: the electron package did not resolve to a path')
   return exe
 }

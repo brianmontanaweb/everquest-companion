@@ -60,8 +60,8 @@ export function watchOutputFile(path: string, handlers: OutputWatchHandlers): FS
     ignoreInitial: true,
     awaitWriteFinish: {
       stabilityThreshold: STABILITY_THRESHOLD_MS,
-      pollInterval: POLL_INTERVAL_MS
-    }
+      pollInterval: POLL_INTERVAL_MS,
+    },
   })
   watcher.on('change', handlers.onChange)
   // The recreated file, settled. `ignoreInitial` means this can only be a file that came BACK, so
@@ -96,15 +96,15 @@ export function watchOutputFile(path: string, handlers: OutputWatchHandlers): FS
 export function watchForOutputFile(
   dir: string,
   def: OutputKindDef,
-  handlers: OutputWatchHandlers
+  handlers: OutputWatchHandlers,
 ): FSWatcher {
   const watcher = watch(dir, {
     ignoreInitial: true,
     depth: 0,
     awaitWriteFinish: {
       stabilityThreshold: STABILITY_THRESHOLD_MS,
-      pollInterval: POLL_INTERVAL_MS
-    }
+      pollInterval: POLL_INTERVAL_MS,
+    },
   })
   watcher.on('add', (path: string) => {
     if (isOutputFileName(def, basename(path))) handlers.onChange()

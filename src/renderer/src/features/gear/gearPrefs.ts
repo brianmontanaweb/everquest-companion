@@ -76,7 +76,15 @@ export function toggleColumn(base: readonly GearSortKey[], key: GearSortKey): Ge
  * that shaped phase 3) — it is the one control that is not a narrowing of the corpus but the way
  * into it, and a Gear tab you cannot type into is not a configuration anyone meant to reach.
  */
-export const GEAR_CONTROLS = ['slot', 'weapon', 'effect', 'classes', 'era', 'owned', 'upgrade'] as const
+export const GEAR_CONTROLS = [
+  'slot',
+  'weapon',
+  'effect',
+  'classes',
+  'era',
+  'owned',
+  'upgrade',
+] as const
 
 export type GearControl = (typeof GEAR_CONTROLS)[number]
 
@@ -88,7 +96,7 @@ export const GEAR_CONTROL_LABEL: Record<GearControl, string> = {
   classes: 'Classes',
   era: 'Current era',
   owned: 'Owned or looted',
-  upgrade: 'Upgrade state'
+  upgrade: 'Upgrade state',
 }
 
 const CONTROLS: ReadonlySet<string> = new Set<string>(GEAR_CONTROLS)
@@ -125,7 +133,7 @@ export const LEGACY_GEAR_CONTROLS: readonly string[] = [
   'owned',
   'upgrade',
   'ratio',
-  'thresholds'
+  'thresholds',
 ]
 
 /**
@@ -174,7 +182,9 @@ export function sanitizeControls(raw: unknown): GearControl[] | null {
   if (typeof raw !== 'object' || raw === null) return null
   const stored = raw as Partial<StoredControlChoice>
   if (!Array.isArray(stored.shown)) return null
-  const vocab = Array.isArray(stored.vocab) ? stored.vocab.filter((v): v is string => typeof v === 'string') : []
+  const vocab = Array.isArray(stored.vocab)
+    ? stored.vocab.filter((v): v is string => typeof v === 'string')
+    : []
   return resolveChoice(knownControls(stored.shown), vocab)
 }
 
@@ -223,6 +233,6 @@ export function inertFilters(filters: GearFilters, visible: ReadonlySet<GearCont
     classes: visible.has('classes') ? filters.classes : [],
     // NOT `d.eraOnly` — that is `true`. Inert is the value that hides nothing.
     eraOnly: visible.has('era') ? filters.eraOnly : false,
-    ownedOnly: visible.has('owned') ? filters.ownedOnly : false
+    ownedOnly: visible.has('owned') ? filters.ownedOnly : false,
   }
 }

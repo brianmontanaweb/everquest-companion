@@ -39,7 +39,7 @@ import {
   serveCombatSnapshot,
   serveModuleSnapshot,
   serveSearchFights,
-  type ModuleSnap
+  type ModuleSnap,
 } from '../dataServer/serveShim'
 
 /**
@@ -81,26 +81,25 @@ function emptyCombat(): CombatSnapshot {
     zoneSessions: [],
     // THE ONE FIELD THAT CARRIES THE MEANING. Not "there was no combat" — "nobody can say yet".
     hydrating: true,
-    roster: { members: [], seen: false, lastSignalTs: 0 }
+    roster: { members: [], seen: false, lastSignalTs: 0 },
   }
 }
 
 export function registerWorldIpc(): void {
   // Generic module transport: one handler serves every registered module.
-  ipcMain.handle(
-    IPC.getModuleSnapshot,
-    (_e, moduleId: string): Promise<ModuleSnap | null> => serveModuleSnapshot(moduleId)
+  ipcMain.handle(IPC.getModuleSnapshot, (_e, moduleId: string): Promise<ModuleSnap | null> =>
+    serveModuleSnapshot(moduleId),
   )
   ipcMain.handle(
     IPC.getCombatSnapshot,
     (_e, opts: SnapshotOpts | undefined): Promise<CombatSnapshot> =>
-      serveCombatSnapshot(opts ?? {}, emptyCombat)
+      serveCombatSnapshot(opts ?? {}, emptyCombat),
   )
   ipcMain.handle(
     IPC.searchFights,
     (_e, text: unknown, limit: unknown): Promise<FightSearchResult> => {
       const query = typeof text === 'string' ? text : ''
       return serveSearchFights(query, clampLimit(limit), () => ({ hits: [], corpus: 0 }))
-    }
+    },
   )
 }

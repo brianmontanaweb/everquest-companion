@@ -99,7 +99,7 @@ export const POISON_EFFECT_LABEL: Record<PoisonEffect, string> = {
   root: 'root',
   snare: 'snare',
   dot: 'DoT',
-  damage: 'damage'
+  damage: 'damage',
 }
 
 /** One coatable poison. `coatMsg` is the spell DB's msgCastOnYou, verbatim. */
@@ -140,33 +140,162 @@ export interface PoisonDef {
  */
 export const POISONS: readonly PoisonDef[] = [
   // ── utility (ONE at a time; replaces the previous utility coat) ────────────────────
-  { name: 'Weakening Poison', group: 'utility', level: 4, coatMsg: 'You coat your blades in a weak paralytic.', strikes: ['Weakening Strike'] },
-  { name: 'Hobbling Poison', group: 'utility', level: 5, coatMsg: 'You coat your blades in a thick venom.', strikes: ['Hobbling Strike'] },
-  { name: 'Concussive Poison', group: 'utility', level: 7, coatMsg: 'You coat your blades with a potent venom.', strikes: ['Concussive Strike'] },
-  { name: 'Befuddling Poison', group: 'utility', level: 9, coatMsg: 'You coat your blades in a mind numbing poison.', strikes: ['Befuddling Strike'] },
-  { name: 'Grounding Poison', group: 'utility', level: 11, coatMsg: 'You coat your blades in a tar-like poison.', strikes: ['Grounding Strike'] },
-  { name: 'Clumsiness Poison', group: 'utility', level: 18, coatMsg: 'You coat your blades in a numbing poison.', strikes: ['Clumsiness Strike'] },
-  { name: 'Banishing Poison', group: 'utility', level: 20, coatMsg: 'You coat your blades with a magical poison.', strikes: ['Banishing Strike'] },
-  { name: 'Fettering Poison', group: 'utility', level: 23, coatMsg: 'You coat your blades in a fettering poison.', strikes: ['Grounding Strike', 'Hobbling Strike'] },
-  { name: 'Binding Poison', group: 'utility', level: 25, coatMsg: 'You coat your blades in a binding poison.', strikes: ['Weakening Strike', 'Hobbling Strike'] },
-  { name: 'Neurotoxic Poison', group: 'utility', level: 28, coatMsg: 'You coat your blades in a neurotoxic poison.', strikes: ['Befuddling Strike', 'Weakening Strike'] },
-  { name: 'Mind Wrack Poison', group: 'utility', level: 30, coatMsg: 'You coat your blades in a mind wracking poison.', strikes: ['Concussive Strike', 'Clumsiness Strike'] },
-  { name: 'Thought Drain Poison', group: 'utility', level: 33, coatMsg: 'You coat your blades in a thought draining poison.', strikes: ['Befuddling Strike', 'Clumsiness Strike'] },
-  { name: 'Antimagic Poison', group: 'utility', level: 36, coatMsg: 'You coat your blades in antimagic poison.', strikes: ['Concussive Strike', 'Banishing Strike'] },
-  { name: 'Mage Bane Poison', group: 'utility', level: 39, coatMsg: 'You coat your blades in mage bane poison.', strikes: ['Befuddling Strike', 'Banishing Strike'] },
-  { name: 'Paralytic Poison', group: 'utility', level: 42, coatMsg: 'You coat your blades in a paralytic poison.', strikes: ['Weakening Strike', 'Clumsiness Strike'] },
+  {
+    name: 'Weakening Poison',
+    group: 'utility',
+    level: 4,
+    coatMsg: 'You coat your blades in a weak paralytic.',
+    strikes: ['Weakening Strike'],
+  },
+  {
+    name: 'Hobbling Poison',
+    group: 'utility',
+    level: 5,
+    coatMsg: 'You coat your blades in a thick venom.',
+    strikes: ['Hobbling Strike'],
+  },
+  {
+    name: 'Concussive Poison',
+    group: 'utility',
+    level: 7,
+    coatMsg: 'You coat your blades with a potent venom.',
+    strikes: ['Concussive Strike'],
+  },
+  {
+    name: 'Befuddling Poison',
+    group: 'utility',
+    level: 9,
+    coatMsg: 'You coat your blades in a mind numbing poison.',
+    strikes: ['Befuddling Strike'],
+  },
+  {
+    name: 'Grounding Poison',
+    group: 'utility',
+    level: 11,
+    coatMsg: 'You coat your blades in a tar-like poison.',
+    strikes: ['Grounding Strike'],
+  },
+  {
+    name: 'Clumsiness Poison',
+    group: 'utility',
+    level: 18,
+    coatMsg: 'You coat your blades in a numbing poison.',
+    strikes: ['Clumsiness Strike'],
+  },
+  {
+    name: 'Banishing Poison',
+    group: 'utility',
+    level: 20,
+    coatMsg: 'You coat your blades with a magical poison.',
+    strikes: ['Banishing Strike'],
+  },
+  {
+    name: 'Fettering Poison',
+    group: 'utility',
+    level: 23,
+    coatMsg: 'You coat your blades in a fettering poison.',
+    strikes: ['Grounding Strike', 'Hobbling Strike'],
+  },
+  {
+    name: 'Binding Poison',
+    group: 'utility',
+    level: 25,
+    coatMsg: 'You coat your blades in a binding poison.',
+    strikes: ['Weakening Strike', 'Hobbling Strike'],
+  },
+  {
+    name: 'Neurotoxic Poison',
+    group: 'utility',
+    level: 28,
+    coatMsg: 'You coat your blades in a neurotoxic poison.',
+    strikes: ['Befuddling Strike', 'Weakening Strike'],
+  },
+  {
+    name: 'Mind Wrack Poison',
+    group: 'utility',
+    level: 30,
+    coatMsg: 'You coat your blades in a mind wracking poison.',
+    strikes: ['Concussive Strike', 'Clumsiness Strike'],
+  },
+  {
+    name: 'Thought Drain Poison',
+    group: 'utility',
+    level: 33,
+    coatMsg: 'You coat your blades in a thought draining poison.',
+    strikes: ['Befuddling Strike', 'Clumsiness Strike'],
+  },
+  {
+    name: 'Antimagic Poison',
+    group: 'utility',
+    level: 36,
+    coatMsg: 'You coat your blades in antimagic poison.',
+    strikes: ['Concussive Strike', 'Banishing Strike'],
+  },
+  {
+    name: 'Mage Bane Poison',
+    group: 'utility',
+    level: 39,
+    coatMsg: 'You coat your blades in mage bane poison.',
+    strikes: ['Befuddling Strike', 'Banishing Strike'],
+  },
+  {
+    name: 'Paralytic Poison',
+    group: 'utility',
+    level: 42,
+    coatMsg: 'You coat your blades in a paralytic poison.',
+    strikes: ['Weakening Strike', 'Clumsiness Strike'],
+  },
   // ── combat (STACK across lines; a line's two members REPLACE each other) ──────────
-  { name: 'Blood Siphon Venom', group: 'combat', level: 1, coatMsg: 'You coat your blades in a siphoning poison.', strikes: ['Blood Siphon Strike'], line: 'blood' },
-  { name: 'Asp Venom', group: 'combat', level: 2, coatMsg: 'You coat your blades in asp venom.', strikes: ['Asp Venom Strike'], line: 'asp' },
-  { name: 'Stunning Venom', group: 'combat', level: 15, coatMsg: 'You coat your blades with a stunning agent.', strikes: ['Stunning Strike'], line: 'stunning' },
-  { name: 'Blood Draw Venom', group: 'combat', level: 46, coatMsg: 'You coat your blades in a drawing poison.', strikes: ['Blood Draw Strike'], line: 'blood' },
-  { name: 'Cobra Venom', group: 'combat', level: 46, coatMsg: 'You coat your blades in cobra venom.', strikes: ['Cobra Venom Strike'], line: 'asp' }
+  {
+    name: 'Blood Siphon Venom',
+    group: 'combat',
+    level: 1,
+    coatMsg: 'You coat your blades in a siphoning poison.',
+    strikes: ['Blood Siphon Strike'],
+    line: 'blood',
+  },
+  {
+    name: 'Asp Venom',
+    group: 'combat',
+    level: 2,
+    coatMsg: 'You coat your blades in asp venom.',
+    strikes: ['Asp Venom Strike'],
+    line: 'asp',
+  },
+  {
+    name: 'Stunning Venom',
+    group: 'combat',
+    level: 15,
+    coatMsg: 'You coat your blades with a stunning agent.',
+    strikes: ['Stunning Strike'],
+    line: 'stunning',
+  },
+  {
+    name: 'Blood Draw Venom',
+    group: 'combat',
+    level: 46,
+    coatMsg: 'You coat your blades in a drawing poison.',
+    strikes: ['Blood Draw Strike'],
+    line: 'blood',
+  },
+  {
+    name: 'Cobra Venom',
+    group: 'combat',
+    level: 46,
+    coatMsg: 'You coat your blades in cobra venom.',
+    strikes: ['Cobra Venom Strike'],
+    line: 'asp',
+  },
 ]
 
 /** coat line → poison, for the parser's O(1) exact-match lookup. */
-export const POISON_BY_COAT_MSG: ReadonlyMap<string, PoisonDef> = new Map(POISONS.map((p) => [p.coatMsg, p]))
+export const POISON_BY_COAT_MSG: ReadonlyMap<string, PoisonDef> = new Map(
+  POISONS.map((p) => [p.coatMsg, p]),
+)
 /** poison NAME → poison, for consumers holding only a name (engine, renderer). */
-export const POISON_BY_NAME: ReadonlyMap<string, PoisonDef> = new Map(POISONS.map((p) => [p.name, p]))
+export const POISON_BY_NAME: ReadonlyMap<string, PoisonDef> = new Map(
+  POISONS.map((p) => [p.name, p]),
+)
 
 /**
  * The three combat-venom LINES, in roster order. `MAX_COMBAT_COATS` is DERIVED from this — the
@@ -174,7 +303,9 @@ export const POISON_BY_NAME: ReadonlyMap<string, PoisonDef> = new Map(POISONS.ma
  * somewhere. Add a fourth line to POISONS and the cap moves with it.
  */
 export const COMBAT_POISON_LINES: readonly string[] = [
-  ...new Set(POISONS.filter((p) => p.group === 'combat').map((p) => p.line ?? p.name.toLowerCase()))
+  ...new Set(
+    POISONS.filter((p) => p.group === 'combat').map((p) => p.line ?? p.name.toLowerCase()),
+  ),
 ]
 
 /** Most combat venoms that can be on the blades at once = one per line. Three today. */
@@ -202,7 +333,7 @@ export function coatLineKey(poison: string): string {
  */
 export const POISON_DRY_MSG: Readonly<Record<string, PoisonGroup>> = {
   'The poison dries from the blade.': 'utility',
-  'The venom drips away.': 'combat'
+  'The venom drips away.': 'combat',
 }
 
 /**
@@ -229,12 +360,24 @@ export const POISON_PROCS: readonly PoisonProcDef[] = [
   { suffix: "'s fingers slow down.", strikes: ['Clumsiness Strike'], effect: 'spellSlow' },
   { suffix: "'s blessings wither!", strikes: ['Banishing Strike'], effect: 'dispel' },
   { suffix: "'s feet won't budge!", strikes: ['Grounding Strike'], effect: 'root' },
-  { suffix: 'stumbles, clutching their head!', strikes: ['Befuddling Strike'], effect: 'manaDrain' },
+  {
+    suffix: 'stumbles, clutching their head!',
+    strikes: ['Befuddling Strike'],
+    effect: 'manaDrain',
+  },
   { suffix: 'begins to sway!', strikes: ['Stunning Strike'], effect: 'stun' },
   { suffix: 'blinks, looking confused!', strikes: ['Concussive Strike'], effect: 'interrupt' },
   { suffix: 'starts limping!', strikes: ['Hobbling Strike'], effect: 'snare' },
-  { suffix: 'begins to bleed profusely!', strikes: ['Blood Siphon Strike', 'Blood Draw Strike'], effect: 'dot' },
-  { suffix: 'screams as poison burns their veins!', strikes: ['Asp Venom Strike', 'Cobra Venom Strike'], effect: 'damage' }
+  {
+    suffix: 'begins to bleed profusely!',
+    strikes: ['Blood Siphon Strike', 'Blood Draw Strike'],
+    effect: 'dot',
+  },
+  {
+    suffix: 'screams as poison burns their veins!',
+    strikes: ['Asp Venom Strike', 'Cobra Venom Strike'],
+    effect: 'damage',
+  },
 ]
 
 /**
@@ -278,7 +421,7 @@ export const DISPEL_FAMILY: ReadonlySet<string> = new Set([
   'Nullify Magic',
   'Beholder Dispel',
   'Pillage Enchantment',
-  'Strip Enchantment'
+  'Strip Enchantment',
 ])
 
 /** True when coating this poison gives you a chance at the slow proc (grants SLOW_STRIKE). */

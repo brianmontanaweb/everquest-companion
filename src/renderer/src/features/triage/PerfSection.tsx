@@ -38,14 +38,25 @@ function PerfSlices({ rows }: { rows: readonly TriagePerfSlice[] }): JSX.Element
     )
   }
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(120px, max-content) max-content 1fr', columnGap: 1.5, rowGap: 0.25 }}>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(120px, max-content) max-content 1fr',
+        columnGap: 1.5,
+        rowGap: 0.25,
+      }}
+    >
       {rows.map((r) => (
         <Box key={r.id} sx={{ display: 'contents' }}>
           <Typography variant="caption">{r.id}</Typography>
           <Typography variant="caption" sx={{ fontVariantNumeric: 'tabular-nums' }}>
             {rateLabel(r.rate)}
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ fontVariantNumeric: 'tabular-nums' }}
+          >
             {formatNum(r.stalls)} of {formatNum(r.reports)} reports
           </Typography>
         </Box>
@@ -71,10 +82,20 @@ export function PerfSection({ data }: { data: TriageAnalyticsData }): JSX.Elemen
         </Typography>
       ) : (
         <Stack spacing={1}>
-          <Typography variant="caption" data-testid="analytics-perf-fleet" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+          <Typography
+            variant="caption"
+            data-testid="analytics-perf-fleet"
+            sx={{ fontVariantNumeric: 'tabular-nums' }}
+          >
             Fleet: {formatNum(p.stalls)} of {formatNum(p.reports)} reports · {rateLabel(p.rate)}
           </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: 2,
+            }}
+          >
             <Stack spacing={0.5}>
               <Typography variant="caption" color="text.secondary">
                 By EverQuest window mode

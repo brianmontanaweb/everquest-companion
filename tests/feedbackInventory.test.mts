@@ -21,7 +21,15 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { gunzipSync } from 'node:zlib'
@@ -31,7 +39,7 @@ import {
   dumpLines,
   inventoryMeta,
   MAX_DUMP_READ_BYTES,
-  previewOfDump
+  previewOfDump,
 } from '../src/main/feedback/inventory'
 import { inventoryNotes, sanitizeInventory } from '../src/main/triage/rows'
 
@@ -58,7 +66,8 @@ const cleanup = (t: Temp): void => {
 /** A synthetic dump with `rows` item rows, in the real header + tab-separated shape. */
 function syntheticDump(rows: number): string {
   const out = ['Location\tName\tID\tCount\tSlots']
-  for (let i = 0; i < rows; i++) out.push(`General ${String((i % 10) + 1)}\tItem ${String(i)}\t${String(1000 + i)}\t1\t0`)
+  for (let i = 0; i < rows; i++)
+    out.push(`General ${String((i % 10) + 1)}\tItem ${String(i)}\t${String(1000 + i)}\t1\t0`)
   return `${out.join('\r\n')}\r\n`
 }
 
@@ -68,13 +77,14 @@ test('dumpLines drops the trailing newline’s empty line and KEEPS the interior
   // The interior blank is the file's SECTION SEPARATOR (item table, blank, keyring table). A
   // filter that dropped it would hand the owner a dump that parses differently from the
   // player's, which is the one thing an evidence file must never do.
-  const text = 'Location\tName\tID\tCount\tSlots\r\nEar\tRing\t1\t1\t0\r\n\r\nKeyRing\tName\tID\t\r\n'
+  const text =
+    'Location\tName\tID\tCount\tSlots\r\nEar\tRing\t1\t1\t0\r\n\r\nKeyRing\tName\tID\t\r\n'
   const lines = dumpLines(text)
   assert.deepEqual(lines, [
     'Location\tName\tID\tCount\tSlots',
     'Ear\tRing\t1\t1\t0',
     '',
-    'KeyRing\tName\tID\t'
+    'KeyRing\tName\tID\t',
   ])
   assert.deepEqual(dumpLines(''), [])
   assert.deepEqual(dumpLines('\n'), [''])
@@ -123,7 +133,12 @@ test('the real dump round-trips: gzip is exactly the bytes on disk, and the dige
   assert.equal(res.previewLines.length, 295)
 
   // The metadata half is exactly the four wire fields — no path, no filename, nothing else.
-  assert.deepEqual(Object.keys(inventoryMeta(res)).sort(), ['bytes', 'lines', 'sha256', 'updatedAt'])
+  assert.deepEqual(Object.keys(inventoryMeta(res)).sort(), [
+    'bytes',
+    'lines',
+    'sha256',
+    'updatedAt',
+  ])
 })
 
 test('the dump is opened READ-ONLY — packaging it does not touch the file', async () => {
@@ -231,7 +246,8 @@ test('a file too big to load whole is refused on the STAT, without ever reading 
   try {
     const rows: string[] = ['Location\tName\tID\tCount\tSlots']
     // ~9 MB of unique text, comfortably past MAX_DUMP_READ_BYTES.
-    for (let i = 0; i < 90_000; i++) rows.push(`General 1\t${'q'.repeat(90)}${String(i)}\t${String(i)}\t1\t0`)
+    for (let i = 0; i < 90_000; i++)
+      rows.push(`General 1\t${'q'.repeat(90)}${String(i)}\t${String(i)}\t1\t0`)
     writeFileSync(fx.path, rows.join('\r\n'), 'utf8')
     assert.ok(statSync(fx.path).size > MAX_DUMP_READ_BYTES, 'the fixture is not actually oversize')
     const res = await buildInventoryAttachment(fx.path, 'Testchar_freeport-Inventory.txt')
@@ -259,14 +275,22 @@ test('THE FORMAT SWEEP: the committed dumps carry nothing the log scrubber would
       const code = c.codePointAt(0) ?? 0
       return c !== '\t' && c !== '\r' && c !== '\n' && (code < 0x20 || code > 0x7e)
     })
-    assert.equal(bad, undefined, `${where} non-printable byte U+${(bad?.codePointAt(0) ?? 0).toString(16)}`)
+    assert.equal(
+      bad,
+      undefined,
+      `${where} non-printable byte U+${(bad?.codePointAt(0) ?? 0).toString(16)}`,
+    )
 
     // 2. No timestamps. Every log line carries the `[Day Mon DD HH:MM:SS YYYY]` prefix that the
     //    scrubber's whole vocabulary is built on; not one row here does.
     assert.equal(/^\[[A-Z][a-z]{2} [A-Z][a-z]{2} /m.test(text), false, `${where} a log prefix`)
 
     // 3. No speech, no tells, no /who, no emotes — the four families the scrubber drops.
-    assert.equal(/\b(says|tells you|told you|shouts|auctions|WHO)\b/.test(text), false, `${where} speech`)
+    assert.equal(
+      /\b(says|tells you|told you|shouts|auctions|WHO)\b/.test(text),
+      false,
+      `${where} speech`,
+    )
 
     // 4. No paths, URLs or e-mail-shaped text. Nothing in this file names a machine.
     assert.equal(/https?:\/\/|[A-Za-z]:\\|@[A-Za-z0-9-]+\./.test(text), false, `${where} a locator`)
@@ -315,7 +339,10 @@ test('the owner-side sanitize is a NO-OP on a real dump — no warning, no lost 
   // And the structure the app's dump parser needs is intact, column for column.
   const rows = dumpLines(clean.text)
   assert.equal(rows[0].split('\t')[1], 'Name')
-  assert.ok(rows.every((r) => r.length === 0 || r.split('\t').length >= 2), 'a row lost its tabs')
+  assert.ok(
+    rows.every((r) => r.length === 0 || r.split('\t').length >= 2),
+    'a row lost its tabs',
+  )
 })
 
 test('the keyring dump survives the owner-side sanitize too, blank separator and all', () => {

@@ -28,7 +28,7 @@ import {
   MAX_PERF_BYTES,
   perfBytes,
   type FeedbackPerf,
-  type FeedbackPerfState
+  type FeedbackPerfState,
 } from '../../shared/feedbackPerf'
 import type { EngineFoldInput } from '../../shared/feedbackPerfEngine'
 import { presenceNeeded } from '../../shared/presencePrefs'
@@ -37,7 +37,7 @@ import { OVERLAY_KINDS } from '../../shared/types'
 import {
   enginePerfBudgets,
   enginePerfSnapshot,
-  enginePerfTimeline
+  enginePerfTimeline,
 } from '../dataServer/engineClientHost'
 import { eqWindowMode } from '../eqWindowMode'
 import { peekLiveTimeline } from '../livePerfProbe'
@@ -80,7 +80,7 @@ function gpuVendorId(): Promise<number | string | undefined> {
     try {
       const info = (await Promise.race([
         app.getGPUInfo('basic'),
-        new Promise((resolve) => setTimeout(resolve, GPU_INFO_TIMEOUT_MS).unref())
+        new Promise((resolve) => setTimeout(resolve, GPU_INFO_TIMEOUT_MS).unref()),
       ])) as { gpuDevice?: { vendorId?: number | string; active?: boolean }[] } | undefined
       const devices = info?.gpuDevice ?? []
       // The ACTIVE device when Chromium names one — a laptop with switchable graphics lists both,
@@ -130,9 +130,9 @@ async function perfState(): Promise<FeedbackPerfState> {
     totalMemGb: safely(() => Math.floor(totalmem() / 1_073_741_824 + 0.5), 0),
     gpuVendor: gpuVendorOf(await gpuVendorId()),
     gpuCompositing: gpuCompositingOf(
-      safely((): unknown => app.getGPUFeatureStatus().gpu_compositing, undefined)
+      safely((): unknown => app.getGPUFeatureStatus().gpu_compositing, undefined),
     ),
-    eqWindowMode: safely(eqWindowMode, 'unknown')
+    eqWindowMode: safely(eqWindowMode, 'unknown'),
   }
 }
 
@@ -164,7 +164,7 @@ async function engineReadings(now: number): Promise<EngineFoldInput | undefined>
       snapshot,
       budgets: await enginePerfBudgets(),
       timeline: await enginePerfTimeline(),
-      now
+      now,
     }
   } catch {
     return undefined
@@ -192,7 +192,7 @@ export async function feedbackPerfBlock(now = Date.now()): Promise<FeedbackPerf 
     const tail = peekTailIoTimeline().map((s) => ({
       at: s.at,
       readMs: s.readMs,
-      reopened: s.reason !== 'reused'
+      reopened: s.reason !== 'reused',
     }))
     // THE RINGS ARE CHECKED BEFORE THE MACHINE IS ASKED, and that ordering is the point: a report
     // composed before `replayDone` has no timeline to carry, and it must not pay a second of GPU
@@ -214,9 +214,9 @@ export async function feedbackPerfBlock(now = Date.now()): Promise<FeedbackPerf 
         state: await perfState(),
         seams: attribution.seams,
         gc: attribution.gc,
-        engine: await engineReadings(now)
+        engine: await engineReadings(now),
       },
-      now
+      now,
     )
     return perf !== null && perfBytes(perf) <= MAX_PERF_BYTES ? perf : null
   } catch {

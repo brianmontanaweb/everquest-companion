@@ -45,8 +45,11 @@ export const ADD_EMPTY = '[data-testid="wishlist-add-empty"]'
 /** Every wish name currently on the pane, in DOM order. */
 function rowNames(page: Page): Promise<string[]> {
   return page.evaluate(
-    (s) => Array.from(document.querySelectorAll(s)).map((e) => (e as HTMLElement).innerText.split('\n')[0].trim()),
-    WISH_ROW
+    (s) =>
+      Array.from(document.querySelectorAll(s)).map((e) =>
+        (e as HTMLElement).innerText.split('\n')[0].trim(),
+      ),
+    WISH_ROW,
   )
 }
 
@@ -71,14 +74,14 @@ export async function stepSeedImport(page: Page): Promise<boolean> {
   check(
     'the one-time seed carried the stored exaltation plan across, labelled as an import',
     imported,
-    `${String(await countOf(page, IMPORT_CHIP))} imported rows of ${String(await countOf(page, WISH_ROW))}`
+    `${String(await countOf(page, IMPORT_CHIP))} imported rows of ${String(await countOf(page, WISH_ROW))}`,
   )
   if (imported) {
     const label = (await textOf(page, IMPORT_CHIP)).replace(/\s+/g, ' ').trim()
     check(
       '…and the label says where it came from, in words rather than in a colour',
       label.toLowerCase().includes('exaltation plan'),
-      `reads "${label}"`
+      `reads "${label}"`,
     )
   }
   return true
@@ -95,24 +98,39 @@ export async function stepSeedImport(page: Page): Promise<boolean> {
  */
 export async function stepZoneGrouping(page: Page): Promise<void> {
   const grouped = await until(async () => (await countOf(page, WISH_GROUP)) > 0, 20_000)
-  if (!check('the wish list groups its rows under headings — where to go, not just what to want', grouped)) {
-    note(`the list drew no group: ${(await textOf(page, WISH_LIST)).replace(/\s+/g, ' ').trim().slice(0, 120)}`)
+  if (
+    !check(
+      'the wish list groups its rows under headings — where to go, not just what to want',
+      grouped,
+    )
+  ) {
+    note(
+      `the list drew no group: ${(await textOf(page, WISH_LIST)).replace(/\s+/g, ' ').trim().slice(0, 120)}`,
+    )
     return
   }
   const unreachable = await countOf(page, WISH_GROUP_OUT_OF_ERA)
   check(
     'no wish-list heading sends you to a zone this era cannot reach (JOS-42, inherited)',
     unreachable === 0,
-    `${String(unreachable)} out-of-era headings`
+    `${String(unreachable)} out-of-era headings`,
   )
   const box = await page.evaluate((s) => {
     const el = document.querySelector(s)
-    return el === null ? null : { h: Math.round(el.getBoundingClientRect().height), scrollH: el.scrollHeight, clientH: el.clientHeight }
+    return el === null
+      ? null
+      : {
+          h: Math.round(el.getBoundingClientRect().height),
+          scrollH: el.scrollHeight,
+          clientH: el.clientHeight,
+        }
   }, WISH_LIST)
   check(
     'the wish list is its own scroller (a growing list never grows the page)',
     box !== null && box.h > 0 && box.scrollH >= box.clientH,
-    box ? `${String(box.h)}px tall · scrollHeight ${String(box.scrollH)} vs clientHeight ${String(box.clientH)}` : 'absent'
+    box
+      ? `${String(box.h)}px tall · scrollHeight ${String(box.scrollH)} vs clientHeight ${String(box.clientH)}`
+      : 'absent',
   )
 }
 
@@ -130,7 +148,13 @@ export async function stepZoneGrouping(page: Page): Promise<void> {
  * The trust invariant that needs the filter ON is asserted by `stepZoneGrouping`, above.
  */
 export async function stepEraOff(page: Page): Promise<void> {
-  if (!check('the wish list offers the shared current-era filter', (await countOf(page, WISH_ERA_TOGGLE)) > 0)) return
+  if (
+    !check(
+      'the wish list offers the shared current-era filter',
+      (await countOf(page, WISH_ERA_TOGGLE)) > 0,
+    )
+  )
+    return
   const before = await countOf(page, WISH_ROW)
   const line = (await countOf(page, WISH_ERA_HIDDEN)) > 0 ? await textOf(page, WISH_ERA_HIDDEN) : ''
   const claimed = Number(/^(\d+)/.exec(line.trim())?.[1] ?? '0')
@@ -139,12 +163,12 @@ export async function stepEraOff(page: Page): Promise<void> {
   const after = await settle(
     () => countOf(page, WISH_ROW),
     (n) => n === before + claimed,
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   )
   check(
     'turning the era filter off reveals exactly what it said it was hiding',
     after === before + claimed,
-    `${String(before)} rows + ${String(claimed)} claimed hidden = ${String(after)} rows`
+    `${String(before)} rows + ${String(claimed)} claimed hidden = ${String(after)} rows`,
   )
 }
 
@@ -160,30 +184,39 @@ export async function stepEraOff(page: Page): Promise<void> {
  * the name it added so the removal step can take the same row back off again.
  */
 export async function stepAddFromCorpus(page: Page): Promise<string | null> {
-  if (!check('the wish list offers one add control', (await countOf(page, ADD_OPEN)) > 0)) return null
+  if (!check('the wish list offers one add control', (await countOf(page, ADD_OPEN)) > 0))
+    return null
   await page.click(ADD_OPEN, { timeout: 15_000 })
-  if (!check('…which opens a search over every item and effect', await until(async () => (await countOf(page, ADD_SEARCH)) > 0, 10_000))) {
+  if (
+    !check(
+      '…which opens a search over every item and effect',
+      await until(async () => (await countOf(page, ADD_SEARCH)) > 0, 10_000),
+    )
+  ) {
     return null
   }
   // Before anything is typed the list says what to do rather than reporting an empty search.
   check(
     'an untouched search says what to type, not "no results"',
     (await textOf(page, ADD_EMPTY)).toLowerCase().includes('two letters'),
-    (await textOf(page, ADD_EMPTY)).slice(0, 80)
+    (await textOf(page, ADD_EMPTY)).slice(0, 80),
   )
 
   await page.fill(ADD_SEARCH, 'sword', { timeout: 15_000 })
   const answered = await until(async () => (await countOf(page, ADD_HIT)) > 0, 15_000)
   if (!check('typing a name searches the whole corpus', answered)) return null
   const kinds = await settle(
-    async () => ({ gear: await countOf(page, ADD_HIT_GEAR), donor: await countOf(page, ADD_HIT_DONOR) }),
+    async () => ({
+      gear: await countOf(page, ADD_HIT_GEAR),
+      donor: await countOf(page, ADD_HIT_DONOR),
+    }),
     (r) => r.gear > 0 && r.donor > 0,
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   )
   check(
     'the one result list carries BOTH indices — items to wear and items wanted for an effect',
     kinds.gear > 0 && kinds.donor > 0,
-    `${String(kinds.gear)} gear rows · ${String(kinds.donor)} donor rows`
+    `${String(kinds.gear)} gear rows · ${String(kinds.donor)} donor rows`,
   )
 
   const name = (await textOf(page, ADD_HIT)).split('\n')[0].trim()
@@ -191,10 +224,21 @@ export async function stepAddFromCorpus(page: Page): Promise<string | null> {
   await page.click(ADD_HIT, { timeout: 15_000 })
   // TWO READINGS, because they answer different questions. The tab's COUNT is the whole document
   // and proves the write landed whatever the era filter is doing; the ROW proves it is on screen.
-  const counted = await until(async () => (await textOf(page, WISH_COUNT)).trim() !== before, 15_000)
-  check(`adding "${name}" from the corpus search writes it to the list`, counted, `count was "${before}"`)
+  const counted = await until(
+    async () => (await textOf(page, WISH_COUNT)).trim() !== before,
+    15_000,
+  )
+  check(
+    `adding "${name}" from the corpus search writes it to the list`,
+    counted,
+    `count was "${before}"`,
+  )
   const landed = await until(async () => (await rowNames(page)).includes(name), 15_000)
-  check(`…and the row is on screen under its zone`, landed, (await rowNames(page)).slice(0, 4).join(', '))
+  check(
+    `…and the row is on screen under its zone`,
+    landed,
+    (await rowNames(page)).slice(0, 4).join(', '),
+  )
   return landed ? name : null
 }
 
@@ -211,13 +255,19 @@ export async function stepNoDoubleWish(page: Page, name: string): Promise<void> 
   await page.fill(ADD_SEARCH, name.slice(0, 12), { timeout: 15_000 })
   await until(async () => (await countOf(page, ADD_HIT)) > 0, 15_000)
   const taken = await page.evaluate(
-    (s) => Array.from(document.querySelectorAll(s)).some((e) => (e as HTMLElement).innerText.includes('wished')),
-    ADD_HIT
+    (s) =>
+      Array.from(document.querySelectorAll(s)).some((e) =>
+        (e as HTMLElement).innerText.includes('wished'),
+      ),
+    ADD_HIT,
   )
   check('an item already on the list is shown as taken rather than offered again', taken)
   await page.keyboard.press('Escape')
   await until(async () => (await countOf(page, ADD_SEARCH)) === 0, 8_000)
-  check('…and the list did not grow behind the closed popover', (await rowNames(page)).length === before)
+  check(
+    '…and the list did not grow behind the closed popover',
+    (await rowNames(page)).length === before,
+  )
 }
 
 /**
@@ -234,7 +284,10 @@ export async function stepSearchWishes(page: Page, name: string): Promise<void> 
 
   await page.fill(WISH_SEARCH, 'zzzzz no such item zzzzz', { timeout: 15_000 })
   const emptied = await until(async () => (await countOf(page, WISH_ROW)) === 0, 10_000)
-  check('…and a query nothing matches empties the list and says so', emptied && (await countOf(page, WISH_EMPTY)) > 0)
+  check(
+    '…and a query nothing matches empties the list and says so',
+    emptied && (await countOf(page, WISH_EMPTY)) > 0,
+  )
   await page.fill(WISH_SEARCH, '', { timeout: 15_000 })
   await until(async () => (await countOf(page, WISH_ROW)) > 0, 10_000)
 }
@@ -258,14 +311,14 @@ export async function stepRemove(page: Page, name: string): Promise<void> {
       }
       return false
     },
-    { row: WISH_ROW, remove: WISH_REMOVE, name }
+    { row: WISH_ROW, remove: WISH_REMOVE, name },
   )
   if (!check(`the row for "${name}" carries a remove control`, removed)) return
   const gone = await until(async () => !(await rowNames(page)).includes(name), 15_000)
   check(
     'removing a wish takes it off the list',
     gone,
-    `${String(before.length)} rows → ${String((await rowNames(page)).length)}`
+    `${String(before.length)} rows → ${String((await rowNames(page)).length)}`,
   )
 }
 
@@ -284,9 +337,20 @@ export async function stepWishDeepLink(page: Page, detail: string, title: string
   }
   await page.click(`${WISH_ROW} [data-testid="planner-donor-name"]`, { timeout: 15_000 })
   const landed = await until(async () => (await countOf(page, detail)) > 0, 20_000)
-  if (!check('clicking a wish name opens the Loot tab’s item drill-down', landed, `wish "${names[0]}"`)) return
+  if (
+    !check(
+      'clicking a wish name opens the Loot tab’s item drill-down',
+      landed,
+      `wish "${names[0]}"`,
+    )
+  )
+    return
   const drilled = (await textOf(page, title)).replace(/\s+/g, ' ').trim()
-  check('…on the item that was clicked, not on the ledger', drilled === names[0], `"${drilled}" vs "${names[0]}"`)
+  check(
+    '…on the item that was clicked, not on the ledger',
+    drilled === names[0],
+    `"${drilled}" vs "${names[0]}"`,
+  )
 }
 
 /**
@@ -304,14 +368,23 @@ export async function stepWishDeepLink(page: Page, detail: string, title: string
 export async function stepDoneStrip(page: Page, expected: string): Promise<void> {
   const up = await until(async () => (await countOf(page, DONE_STRIP)) > 0, 20_000)
   if (!check('a wish the character already owns is filed as done, not as a trip to make', up)) {
-    note(`no done strip: the progress join placed nothing, with rows ${(await rowNames(page)).join(', ')}`)
+    note(
+      `no done strip: the progress join placed nothing, with rows ${(await rowNames(page)).join(', ')}`,
+    )
     return
   }
   const done = await page.evaluate(
-    (s) => Array.from(document.querySelectorAll(s)).map((e) => (e as HTMLElement).innerText.split('\n')[0].trim()),
-    DONE_ROW
+    (s) =>
+      Array.from(document.querySelectorAll(s)).map((e) =>
+        (e as HTMLElement).innerText.split('\n')[0].trim(),
+      ),
+    DONE_ROW,
   )
-  check(`…and it is the one the dump says is worn — "${expected}"`, done.includes(expected), done.join(', '))
+  check(
+    `…and it is the one the dump says is worn — "${expected}"`,
+    done.includes(expected),
+    done.join(', '),
+  )
   check('…which is therefore NOT in the route', !(await rowNames(page)).includes(expected))
   const rows = done.length
   check('the done strip lists what it says it has', rows > 0, `${String(rows)} fulfilled rows`)
@@ -325,6 +398,6 @@ export async function stepDoneStrip(page: Page, expected: string): Promise<void>
   check(
     '…and it is a DISMISSAL, not a deletion — the list is the same length it was',
     after === before,
-    `"${before}" → "${after}"`
+    `"${before}" → "${after}"`,
   )
 }

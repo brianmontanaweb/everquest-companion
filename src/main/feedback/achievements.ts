@@ -77,7 +77,7 @@ import {
   MAX_ACHIEVEMENTS_LINES,
   MAX_UPLOAD_BYTES,
   type AchievementsDumpMeta,
-  type InventoryUnavailable
+  type InventoryUnavailable,
 } from '../../shared/feedback'
 import { dumpLines, previewOfDump, MAX_DUMP_READ_BYTES } from './inventory'
 
@@ -96,8 +96,7 @@ export interface AchievementsAttachment extends AchievementsDumpMeta {
 
 /** Either a packaged dump or the NAMED reason there is none. */
 export type AchievementsResult =
-  | AchievementsAttachment
-  | { readonly ok: false; readonly reason: InventoryUnavailable }
+  AchievementsAttachment | { readonly ok: false; readonly reason: InventoryUnavailable }
 
 const refuse = (reason: InventoryUnavailable): AchievementsResult => ({ ok: false, reason })
 
@@ -113,7 +112,7 @@ const refuse = (reason: InventoryUnavailable): AchievementsResult => ({ ok: fals
  */
 export async function buildAchievementsAttachment(
   path: string,
-  fileName: string
+  fileName: string,
 ): Promise<AchievementsResult> {
   let updatedAt: number
   let rawBytes: number
@@ -153,7 +152,7 @@ export async function buildAchievementsAttachment(
     gz,
     text,
     fileName,
-    ...previewOfDump(lines)
+    ...previewOfDump(lines),
   }
 }
 

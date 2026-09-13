@@ -172,7 +172,10 @@ export function droppersFor(itemName: string, index: DropperIndex): DropperMob[]
  * mob. An unconfirmed string ("SL", "random drop — any Plane of Sky mob") is dropped here and
  * survives untouched in `PoskyItem.who`, which the UI still shows.
  */
-export function statedDroppers(who: readonly string[] | undefined, names: MobNameIndex): DropperMob[] {
+export function statedDroppers(
+  who: readonly string[] | undefined,
+  names: MobNameIndex,
+): DropperMob[] {
   const out: DropperMob[] = []
   const seen = new Set<string>()
   for (const w of who ?? []) {
@@ -185,7 +188,10 @@ export function statedDroppers(who: readonly string[] | undefined, names: MobNam
 }
 
 /** Merge the two layers, layer 1 first (authority), deduped by page. */
-export function mergeDroppers(stated: readonly DropperMob[], indexed: readonly DropperMob[]): DropperMob[] {
+export function mergeDroppers(
+  stated: readonly DropperMob[],
+  indexed: readonly DropperMob[],
+): DropperMob[] {
   const out = [...stated]
   const seen = new Set(out.map((m) => m.page))
   for (const m of indexed) {
@@ -205,13 +211,16 @@ export interface DropperDisplay {
 
 export function dropperDisplay(
   droppers: readonly DropperMob[],
-  cap: number = DROPPER_DISPLAY_CAP
+  cap: number = DROPPER_DISPLAY_CAP,
 ): DropperDisplay {
   return { shown: droppers.slice(0, cap), more: Math.max(0, droppers.length - cap) }
 }
 
 /** The one-line inline text: names up to the cap, then the overflow count. Empty for none. */
-export function dropperLabel(droppers: readonly DropperMob[], cap: number = DROPPER_DISPLAY_CAP): string {
+export function dropperLabel(
+  droppers: readonly DropperMob[],
+  cap: number = DROPPER_DISPLAY_CAP,
+): string {
   const { shown, more } = dropperDisplay(droppers, cap)
   const names = shown.map((m) => m.name).join(', ')
   return more > 0 ? `${names} +${more} more` : names
@@ -312,7 +321,7 @@ export function itemDropFacts(it: ItemDropRow): ItemDropFacts {
     droppers:
       it.droppers.length > 0
         ? it.droppers.map((m) => dropperFacts(m))
-        : (it.who ?? []).map((w) => w.trim()).filter((w) => w !== '')
+        : (it.who ?? []).map((w) => w.trim()).filter((w) => w !== ''),
   }
 }
 
@@ -377,7 +386,9 @@ export function questKillTargets(items: readonly KillTargetItem[]): KillTarget[]
     .map((e) => ({
       mob: e.mob,
       covers: e.covers,
-      islands: mobIslands(e.mob.page, [...e.islands]).sort((a, b) => islandNumber(a) - islandNumber(b))
+      islands: mobIslands(e.mob.page, [...e.islands]).sort(
+        (a, b) => islandNumber(a) - islandNumber(b),
+      ),
     }))
 }
 

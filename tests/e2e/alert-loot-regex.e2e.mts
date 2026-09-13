@@ -39,7 +39,7 @@ import {
   failures,
   reportRun,
   settle,
-  settleGone
+  settleGone,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -62,7 +62,7 @@ interface StoredDef {
 function valueOf(page: Page, testid: string): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLInputElement | null)?.value ?? '<missing>',
-    `[data-testid="${testid}"] input`
+    `[data-testid="${testid}"] input`,
   )
 }
 
@@ -74,8 +74,8 @@ function fill(page: Page, testid: string, value: string): Promise<void> {
 function saveDisabled(page: Page): Promise<boolean> {
   return page.evaluate(
     () =>
-      (document.querySelector('[data-testid="alert-save"]') as HTMLButtonElement | null)?.disabled ??
-      true
+      (document.querySelector('[data-testid="alert-save"]') as HTMLButtonElement | null)
+        ?.disabled ?? true,
   )
 }
 
@@ -83,7 +83,9 @@ function saveDisabled(page: Page): Promise<boolean> {
 function fieldKeyHelp(page: Page): Promise<string> {
   return page.evaluate(() => {
     const box = document.querySelector('[data-testid="alert-field-key"]')
-    const id = (box?.querySelector('input') as HTMLInputElement | null)?.getAttribute('aria-describedby')
+    const id = (box?.querySelector('input') as HTMLInputElement | null)?.getAttribute(
+      'aria-describedby',
+    )
     const help = id ? document.getElementById(id) : null
     return (help?.textContent ?? '').trim()
   })
@@ -96,7 +98,7 @@ function storedProbe(page: Page): Promise<StoredDef | null> {
       (window as unknown as { eq: { listAlerts: () => Promise<StoredDef[]> } }).eq
         .listAlerts()
         .then((defs) => defs.find((d) => d.id === id) ?? null),
-    PROBE_ID
+    PROBE_ID,
   ) as Promise<StoredDef | null>
 }
 
@@ -130,7 +132,7 @@ async function seedProbe(page: Page): Promise<boolean> {
       enabled: true,
       trigger: { type: 'event', kind: 'loot' },
       sound: { packId: pack?.id ?? 'alan-rickman', soundId },
-      cooldownMs: 4000
+      cooldownMs: 4000,
     })
   }, PROBE_ID)
   // A def written straight through main is invisible to the OPEN view until something makes it
@@ -142,8 +144,16 @@ async function seedProbe(page: Page): Promise<boolean> {
     window.dispatchEvent(new Event('blur'))
     window.dispatchEvent(new Event('focus'))
   })
-  const seen = await settle(() => countOf(page, ROW), (n) => n === 1, { timeoutMs: 20_000 })
-  return check('the probe loot alert is in the list, ready to edit', seen === 1, `${String(seen)} rows`)
+  const seen = await settle(
+    () => countOf(page, ROW),
+    (n) => n === 1,
+    { timeoutMs: 20_000 },
+  )
+  return check(
+    'the probe loot alert is in the list, ready to edit',
+    seen === 1,
+    `${String(seen)} rows`,
+  )
 }
 
 /** Open the probe in the editor and confirm it arrived as a blank-matcher loot condition. */
@@ -155,7 +165,7 @@ async function openProbe(page: Page): Promise<boolean> {
   return check(
     'the editor opens on the loot condition with both matcher boxes empty',
     key === '' && val === '',
-    `key "${key}", value "${val}"`
+    `key "${key}", value "${val}"`,
   )
 }
 
@@ -167,38 +177,54 @@ async function openProbe(page: Page): Promise<boolean> {
  */
 async function checkHalfWrittenIsRefused(page: Page): Promise<void> {
   await fill(page, 'alert-field-val', REGEX)
-  const disabled = await settle(() => saveDisabled(page), (d) => d, { timeoutMs: 10_000 })
+  const disabled = await settle(
+    () => saveDisabled(page),
+    (d) => d,
+    { timeoutMs: 10_000 },
+  )
   check(
     'a regex typed with no field name cannot be saved, so it cannot be silently dropped',
     disabled,
     // An enabled button here IS the defect: the click would store a def with no `where` at all.
-    `Save disabled: ${String(disabled)}`
+    `Save disabled: ${String(disabled)}`,
   )
   const help = await fieldKeyHelp(page)
   check(
     '…and the Field box says what is missing, naming the field a loot alert wants',
     help.includes(FIELD),
-    `helper text read "${help}"`
+    `helper text read "${help}"`,
   )
   const kept = await valueOf(page, 'alert-field-val')
-  check('…while the pattern stays on screen rather than being cleared', kept === REGEX, `read "${kept}"`)
+  check(
+    '…while the pattern stays on screen rather than being cleared',
+    kept === REGEX,
+    `read "${kept}"`,
+  )
 }
 
 /** Answer the error the way the user now can, and prove the def really carries the regex. */
 async function checkNamingTheFieldSaves(page: Page): Promise<void> {
   await fill(page, 'alert-field-key', FIELD)
-  const stillDisabled = await settle(() => saveDisabled(page), (d) => !d, { timeoutMs: 10_000 })
+  const stillDisabled = await settle(
+    () => saveDisabled(page),
+    (d) => !d,
+    { timeoutMs: 10_000 },
+  )
   if (!check('naming the field completes the condition and Save comes back', !stillDisabled)) return
   await page.click('[data-testid="alert-save"]')
   await settleGone(page, DIALOG, { timeoutMs: 15_000 })
 
-  const stored = await settle(() => storedProbe(page), (d) => d?.trigger?.where !== undefined, {
-    timeoutMs: 15_000
-  })
+  const stored = await settle(
+    () => storedProbe(page),
+    (d) => d?.trigger?.where !== undefined,
+    {
+      timeoutMs: 15_000,
+    },
+  )
   check(
     'the stored loot trigger carries the regex the user typed — through IPC and electron-store',
     stored?.trigger?.kind === 'loot' && stored.trigger.where?.[FIELD] === REGEX,
-    JSON.stringify(stored)
+    JSON.stringify(stored),
   )
 }
 
@@ -211,7 +237,7 @@ async function checkReopenShowsIt(page: Page): Promise<void> {
   check(
     'reopening the alert shows the pattern, which is where the report noticed the loss',
     key === FIELD && val === REGEX,
-    `key "${key}", value "${val}"`
+    `key "${key}", value "${val}"`,
   )
   check('and a complete condition leaves Save available', !(await saveDisabled(page)))
   await page.keyboard.press('Escape')
@@ -240,7 +266,11 @@ async function main(): Promise<void> {
       await checkReopenShowsIt(page)
     }
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     if (failures.length) await dumpArtifacts(page, 'alert-loot-regex-FAIL')
   } finally {
     await close()

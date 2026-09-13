@@ -55,18 +55,22 @@ interface WatchProbe {
 
 /** Drive one edge in, as the worker would have reported it. */
 function transition(app: ElectronApplication, inside: boolean): Promise<boolean> {
-  return app.evaluate((_e, args) => {
-    const p = (globalThis as unknown as Record<string, unknown>).__eqOverlayHover as
-      | HoverProbe
-      | undefined
-    if (!p) return false
-    p.transition(args.kind, args.inside)
-    return true
-  }, { kind: KIND, inside })
+  return app.evaluate(
+    (_e, args) => {
+      const p = (globalThis as unknown as Record<string, unknown>).__eqOverlayHover as
+        HoverProbe | undefined
+      if (!p) return false
+      p.transition(args.kind, args.inside)
+      return true
+    },
+    { kind: KIND, inside },
+  )
 }
 
 /** The strip height main publishes, and the ignore-state it last applied to this kind. */
-function mainState(app: ElectronApplication): Promise<{ stripPx: number; ignoring: boolean | null; pushed: boolean | null } | null> {
+function mainState(
+  app: ElectronApplication,
+): Promise<{ stripPx: number; ignoring: boolean | null; pushed: boolean | null } | null> {
   return app.evaluate((_e, kind) => {
     const g = globalThis as unknown as Record<string, unknown>
     const hover = g.__eqOverlayHover as HoverProbe | undefined
@@ -75,7 +79,7 @@ function mainState(app: ElectronApplication): Promise<{ stripPx: number; ignorin
     return {
       stripPx: hover.stripPx,
       ignoring: watch ? (watch.applied()[kind] ?? null) : null,
-      pushed: hover.pushed()[kind] ?? null
+      pushed: hover.pushed()[kind] ?? null,
     }
   }, KIND)
 }
@@ -102,7 +106,7 @@ function headerHeight(overlay: Page): Promise<number> {
 export async function stepHoverZones(
   app: ElectronApplication,
   overlay: Page,
-  setLocked: SetLocked
+  setLocked: SetLocked,
 ): Promise<void> {
   await setLocked(overlay, true)
 
@@ -118,17 +122,21 @@ export async function stepHoverZones(
   check(
     'the published chrome strip still reaches the bottom of the real header row',
     row > 0 && row <= state.stripPx,
-    `row ends at ${String(row)}px, strip is ${String(state.stripPx)}px`
+    `row ends at ${String(row)}px, strip is ${String(state.stripPx)}px`,
   )
   note(`chrome strip ${String(state.stripPx)}px vs a measured header row of ${String(row)}px`)
 
   // ---- A LOCKED, UNHOVERED OVERLAY SHOWS NO CHROME AND IGNORES THE MOUSE ---------------------
   const idle = await controlCount(overlay)
-  check('a pinned overlay with the cursor elsewhere draws no controls', idle === 0, `${String(idle)} control(s)`)
+  check(
+    'a pinned overlay with the cursor elsewhere draws no controls',
+    idle === 0,
+    `${String(idle)} control(s)`,
+  )
   check(
     '…and main is ignoring its mouse events (it is click-through)',
     state.ignoring !== false,
-    `applied ignore=${String(state.ignoring)}`
+    `applied ignore=${String(state.ignoring)}`,
   )
 
   // ---- THE ENTER EDGE ------------------------------------------------------------------------
@@ -136,17 +144,21 @@ export async function stepHoverZones(
   // input is main being told the cursor crossed into a rectangle, exactly as the worker would say
   // it. If the pin appears, the hookless sensor works end to end.
   check('the hover edge reached main', await transition(app, true))
-  const revealed = await settle(() => controlCount(overlay), (n) => n > 0, { timeoutMs: 8_000 })
+  const revealed = await settle(
+    () => controlCount(overlay),
+    (n) => n > 0,
+    { timeoutMs: 8_000 },
+  )
   check(
     'ENTER: an off-thread hit test alone reveals the pin (no mouse hook, no mouse event)',
     revealed > 0,
-    `${String(revealed)} control(s)`
+    `${String(revealed)} control(s)`,
   )
   const captured = await mainState(app)
   check(
     '…and main opened the window’s mouse mode so the pin can be pressed',
     captured?.ignoring === false,
-    `applied ignore=${String(captured?.ignoring)}`
+    `applied ignore=${String(captured?.ignoring)}`,
   )
   check('…and the window was told, once, which way the edge went', captured?.pushed === true)
 
@@ -157,17 +169,21 @@ export async function stepHoverZones(
   // observable is the same one the DOM sensor has always had: the chrome goes, and the ignore
   // state comes back through the renderer's own `setIgnoreMouse`.
   check('the leave edge reached main', await transition(app, false))
-  const hidden = await settle(() => controlCount(overlay), (n) => n === 0, { timeoutMs: 8_000 })
+  const hidden = await settle(
+    () => controlCount(overlay),
+    (n) => n === 0,
+    { timeoutMs: 8_000 },
+  )
   check('LEAVE: the chrome goes again', hidden === 0, `${String(hidden)} control(s)`)
   const released = await settle(
     async () => (await mainState(app))?.ignoring ?? null,
     (v) => v === true,
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
   check(
     '…and the RENDERER gave the mouse back — main never took it (the popup rule)',
     released === true,
-    `applied ignore=${String(released)}`
+    `applied ignore=${String(released)}`,
   )
 
   await setLocked(overlay, false)

@@ -20,10 +20,7 @@
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import {
-  comboSource,
-  EMPTY_COMBO_SOURCE
-} from '../src/renderer/src/features/leveling/comboAdapter'
+import { comboSource, EMPTY_COMBO_SOURCE } from '../src/renderer/src/features/leveling/comboAdapter'
 import {
   ALL_CLASSES,
   NONE,
@@ -40,14 +37,14 @@ import {
   spanText,
   spansText,
   startFuzzMs,
-  startFuzzText
+  startFuzzText,
 } from '../src/renderer/src/features/profiles/ClassComboLabels'
 import {
   CLASS_ABBRS,
   type ClassAbbr,
   type ComboInterval,
   type ComboProvenance,
-  type ComboSlot
+  type ComboSlot,
 } from '../src/shared/classCombo'
 
 const HOUR = 3_600_000
@@ -75,7 +72,7 @@ function interval(over: Partial<ComboInterval> & { id: string }): ComboInterval 
     levelLo: null,
     levelHi: null,
     evidenceCount: 0,
-    userLocked: false
+    userLocked: false,
   }
   return { ...base, ...over }
 }
@@ -148,7 +145,7 @@ test('an overruled override says what happened; an ordinary interval says nothin
   const overruled = interval({
     id: 'ci3',
     slots: [slot(['PAL'], 'who'), slot(['MNK'], 'who'), slot(['ENC'], 'who')],
-    userOverruled: true
+    userOverruled: true,
   })
   const text = overruledText(overruled)
   assert.ok(text)
@@ -168,7 +165,7 @@ test('an exact boundary has no ~ annotation; a fuzzy one states its window', () 
     startLo: T0,
     startHi: T0 + 34 * HOUR,
     startReason: 'levelDrop',
-    startAlso: ['evidenceShift']
+    startAlso: ['evidenceShift'],
   })
   assert.equal(startFuzzMs(fuzzy), 34 * HOUR)
   const text = startFuzzText(fuzzy) ?? ''
@@ -195,11 +192,21 @@ test('a merged span states its bracket AND that it took more than one range (JOS
   assert.equal(spansText([late, early]), merged)
 
   // One open member makes the union open: it is still running now.
-  assert.match(spansText([early, interval({ id: 'ci3', startTs: T0 + 5 * HOUR })]), /→ now · 2 ranges/)
+  assert.match(
+    spansText([early, interval({ id: 'ci3', startTs: T0 + 5 * HOUR })]),
+    /→ now · 2 ranges/,
+  )
 })
 
 test('every boundary reason has prose — no raw enum reaches the UI', () => {
-  for (const reason of ['who', 'levelDrop', 'evidenceShift', 'overDetermined', 'user', 'logStart'] as const) {
+  for (const reason of [
+    'who',
+    'levelDrop',
+    'evidenceShift',
+    'overDetermined',
+    'user',
+    'logStart',
+  ] as const) {
     const label = boundaryReasonLabel(reason)
     assert.ok(label.length > 0)
     assert.notEqual(label, reason)
@@ -230,8 +237,8 @@ test('a model interval reduces to the thin shape rangeStats declared', () => {
       id: 'ci1',
       startTs: T0,
       endTs: T0 + 2 * HOUR,
-      slots: [slot(['PAL'], 'who'), slot(['CLR', 'PAL'], 'inferred'), slot([], 'inferred')]
-    })
+      slots: [slot(['PAL'], 'who'), slot(['CLR', 'PAL'], 'inferred'), slot([], 'inferred')],
+    }),
   ])
   const [row] = src.intervalsIn(T0, T0 + 2 * HOUR)
   assert.deepEqual(row.classes, ['PAL', 'CLR|PAL', NONE])
@@ -242,7 +249,7 @@ test('a model interval reduces to the thin shape rangeStats declared', () => {
 
 test('inferred is false only when NO slot is still inference', () => {
   const stated = comboSource([
-    interval({ id: 'ci1', endTs: T0 + HOUR, slots: [slot(['PAL'], 'who'), slot(['ROG'], 'user')] })
+    interval({ id: 'ci1', endTs: T0 + HOUR, slots: [slot(['PAL'], 'who'), slot(['ROG'], 'user')] }),
   ])
   assert.equal(stated.intervalsIn(T0, T0 + HOUR)[0].inferred, false)
 })
@@ -250,7 +257,7 @@ test('inferred is false only when NO slot is still inference', () => {
 test('intervalsIn clips to the query window, both edges', () => {
   const src = comboSource([
     interval({ id: 'ci1', startTs: T0, endTs: T0 + 4 * HOUR }),
-    interval({ id: 'ci2', startTs: T0 + 4 * HOUR, endTs: T0 + 8 * HOUR })
+    interval({ id: 'ci2', startTs: T0 + 4 * HOUR, endTs: T0 + 8 * HOUR }),
   ])
   const rows = src.intervalsIn(T0 + 2 * HOUR, T0 + 6 * HOUR)
   assert.equal(rows.length, 2)
@@ -278,7 +285,7 @@ test('the OPEN interval is clipped to the query end, never fabricated', () => {
 test('comboAt picks the interval whose ESTIMATE covers ts, and nothing before the first', () => {
   const src = comboSource([
     interval({ id: 'ci1', startTs: T0, endTs: T0 + 2 * HOUR, slots: [slot(['PAL'])] }),
-    interval({ id: 'ci2', startTs: T0 + 2 * HOUR, endTs: T0 + 4 * HOUR, slots: [slot(['ENC'])] })
+    interval({ id: 'ci2', startTs: T0 + 2 * HOUR, endTs: T0 + 4 * HOUR, slots: [slot(['ENC'])] }),
   ])
   assert.equal(src.comboAt(T0 - 1), null)
   assert.deepEqual(src.comboAt(T0)?.classes, ['PAL'])

@@ -47,7 +47,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type RefObject
+  type RefObject,
 } from 'react'
 import type { MapBounds } from '@shared/maps'
 import {
@@ -64,7 +64,7 @@ import {
   type MapView,
   type ScreenPos,
   type ViewRect,
-  type ViewportSize
+  type ViewportSize,
 } from './mapGeometry'
 
 export interface MapViewportArgs {
@@ -163,11 +163,11 @@ export function useMapViewport({ bounds, id, hostRef }: MapViewportArgs): MapVie
 
   const toScreen = useCallback(
     (x: number, y: number): ScreenPos => project(view, size, { x, y }),
-    [view, size]
+    [view, size],
   )
   const toMap = useCallback(
     (px: number, py: number): MapPos => unproject(view, size, { px, py }),
-    [view, size]
+    [view, size],
   )
   const rect = useMemo(() => viewRect(view, size), [view, size])
 
@@ -175,7 +175,7 @@ export function useMapViewport({ bounds, id, hostRef }: MapViewportArgs): MapVie
     (anchor: ScreenPos, factor: number) => {
       setZoomed((v) => zoomAround({ view: v ?? fitted, bounds, vp: size, anchor, factor }))
     },
-    [fitted, bounds, size]
+    [fitted, bounds, size],
   )
 
   const onWheel = useCallback(
@@ -184,10 +184,13 @@ export function useMapViewport({ bounds, id, hostRef }: MapViewportArgs): MapVie
       if (!el) return
       const r = el.getBoundingClientRect()
       // deltaY < 0 (scroll up) = zoom IN = MORE pixels per map unit.
-      zoomAt({ px: ev.clientX - r.left, py: ev.clientY - r.top }, ev.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP)
+      zoomAt(
+        { px: ev.clientX - r.left, py: ev.clientY - r.top },
+        ev.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
+      )
       ev.preventDefault()
     },
-    [hostRef, zoomAt]
+    [hostRef, zoomAt],
   )
 
   // NON-PASSIVE, NATIVE. See the header — React's onWheel cannot preventDefault.
@@ -205,7 +208,7 @@ export function useMapViewport({ bounds, id, hostRef }: MapViewportArgs): MapVie
       ev.currentTarget.setPointerCapture(ev.pointerId)
       setDragging(true)
     },
-    [view]
+    [view],
   )
   const onPointerMove = useCallback(
     (ev: React.PointerEvent<HTMLElement>) => {
@@ -214,7 +217,7 @@ export function useMapViewport({ bounds, id, hostRef }: MapViewportArgs): MapVie
       // Against the drag's START view, never the previous move's result.
       setZoomed(panBy(d.from, bounds, size, { px: ev.clientX - d.px, py: ev.clientY - d.py }))
     },
-    [bounds, size]
+    [bounds, size],
   )
   const onPointerUp = useCallback((ev: React.PointerEvent<HTMLElement>) => {
     dragRef.current = null
@@ -224,13 +227,15 @@ export function useMapViewport({ bounds, id, hostRef }: MapViewportArgs): MapVie
 
   const zoomBy = useCallback(
     (factor: number) => zoomAt({ px: size.w / 2, py: size.h / 2 }, factor),
-    [zoomAt, size.w, size.h]
+    [zoomAt, size.w, size.h],
   )
   const centerOn = useCallback(
     (x: number, y: number, scale?: number) => {
-      setZoomed((v) => clampView({ cx: x, cy: y, scale: scale ?? (v ?? fitted).scale }, bounds, size))
+      setZoomed((v) =>
+        clampView({ cx: x, cy: y, scale: scale ?? (v ?? fitted).scale }, bounds, size),
+      )
     },
-    [fitted, bounds, size]
+    [fitted, bounds, size],
   )
   const resetFit = useCallback(() => setZoomed(null), [])
 
@@ -247,6 +252,6 @@ export function useMapViewport({ bounds, id, hostRef }: MapViewportArgs): MapVie
     dragging,
     onPointerDown,
     onPointerMove,
-    onPointerUp
+    onPointerUp,
   }
 }

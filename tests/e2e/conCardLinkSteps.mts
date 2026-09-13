@@ -48,14 +48,19 @@ interface LockBridge {
 /** Rendered text of the first match, whitespace folded; '' when nothing is mounted. */
 function textOf(page: Page, sel: string): Promise<string> {
   return page.evaluate(
-    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').trim() ?? '',
-    sel
+    (s) =>
+      (document.querySelector(s) as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').trim() ??
+      '',
+    sel,
   )
 }
 
 /** An attribute of the first match; '' when the node is absent or the attribute is not set. */
 function attrOf(page: Page, sel: string, attr: string): Promise<string> {
-  return page.evaluate((a) => document.querySelector(a.sel)?.getAttribute(a.attr) ?? '', { sel, attr })
+  return page.evaluate((a) => document.querySelector(a.sel)?.getAttribute(a.attr) ?? '', {
+    sel,
+    attr,
+  })
 }
 
 /** How many cards are on screen. There is never supposed to be more than one. */
@@ -76,7 +81,11 @@ async function mobPageShowing(page: Page): Promise<string> {
  */
 async function parkOnOverview(page: Page): Promise<void> {
   await page.click('[data-testid="nav-overview"]', { timeout: 15_000 })
-  await settle(() => countOf(page, MOBS_BACK), (n) => n === 0, { timeoutMs: 15_000 }).catch(() => 0)
+  await settle(
+    () => countOf(page, MOBS_BACK),
+    (n) => n === 0,
+    { timeoutMs: 15_000 },
+  ).catch(() => 0)
 }
 
 /**
@@ -106,23 +115,37 @@ function clickIn(card: Page, sel: string): Promise<boolean> {
  */
 export async function stepNoDropsOnTheCard(card: Page): Promise<void> {
   const body = await textOf(card, CARD)
-  check('the card no longer draws a drop block at all',
-    (await countOf(card, '[data-testid="con-card-drops"]')) === 0, body.slice(0, 200))
+  check(
+    'the card no longer draws a drop block at all',
+    (await countOf(card, '[data-testid="con-card-drops"]')) === 0,
+    body.slice(0, 200),
+  )
   check('…nor a single drop line', (await countOf(card, '[data-testid="con-card-drop"]')) === 0)
   check('…nor a respawn line', (await countOf(card, '[data-testid="con-card-respawn"]')) === 0)
   // The two sentences that block used to say. Either one on screen means an old renderer shipped.
-  check('…and never says it is looking anything up',
-    !/Looking up|No drops known/i.test(body), body.slice(0, 200))
+  check(
+    '…and never says it is looking anything up',
+    !/Looking up|No drops known/i.test(body),
+    body.slice(0, 200),
+  )
   // …and the card says what it IS now. NAMED, NEVER HOVERED (the 2026-08-16 overlay tooltip
   // ruling): the words are the card's accessible name, the seeing reader's hint is the name wearing
   // a link's underline, and NOTHING in this bundle hands the DOM a `title` — which is asserted
   // structurally by tests/overlayTooltipPolicy.test.mts and observably right here.
-  check('the card NAMES where a click goes',
-    (await attrOf(card, CARD, 'aria-label')) === 'Open in the app', await attrOf(card, CARD, 'aria-label'))
-  check('…and the name wears a link, which is the hint you can see',
-    (await attrOf(card, NAME, 'data-linked')) === 'true', await attrOf(card, NAME, 'data-linked'))
-  check('…and nothing on the card hovers a tooltip over the game',
-    (await countOf(card, `${CARD} [title], ${CARD}[title]`)) === 0)
+  check(
+    'the card NAMES where a click goes',
+    (await attrOf(card, CARD, 'aria-label')) === 'Open in the app',
+    await attrOf(card, CARD, 'aria-label'),
+  )
+  check(
+    '…and the name wears a link, which is the hint you can see',
+    (await attrOf(card, NAME, 'data-linked')) === 'true',
+    await attrOf(card, NAME, 'data-linked'),
+  )
+  check(
+    '…and nothing on the card hovers a tooltip over the game',
+    (await countOf(card, `${CARD} [title], ${CARD}[title]`)) === 0,
+  )
 }
 
 /**
@@ -137,15 +160,44 @@ export async function stepClickOpensTheMobPage(card: Page, page: Page, mob: stri
   const linked = await attrOf(card, CARD, 'data-linked')
   check('a LOCKED card is a link (the state the click claim is about)', linked === 'true', linked)
   if (!check('the card body is there to click', await clickIn(card, CARD))) return
-  const landed = await settle(() => countOf(page, MOBS_BACK), (n) => n === 1, { timeoutMs: 20_000 }).catch(() => 0)
-  if (!check('clicking the card opens the MOB PAGE in the app', landed === 1, `${String(landed)} mob page(s)`)) return
-  const shown = await settle(() => mobPageShowing(page), (t) => t.includes(mob), { timeoutMs: 10_000 }).catch(() => '')
-  check('…on the creature that was conned, under the name the log printed', shown.includes(mob), shown.slice(0, 160))
-  check('…with the Mobs tab selected', (await countOf(page, '[data-testid="nav-mobs"].Mui-selected')) === 1)
+  const landed = await settle(
+    () => countOf(page, MOBS_BACK),
+    (n) => n === 1,
+    { timeoutMs: 20_000 },
+  ).catch(() => 0)
+  if (
+    !check(
+      'clicking the card opens the MOB PAGE in the app',
+      landed === 1,
+      `${String(landed)} mob page(s)`,
+    )
+  )
+    return
+  const shown = await settle(
+    () => mobPageShowing(page),
+    (t) => t.includes(mob),
+    { timeoutMs: 10_000 },
+  ).catch(() => '')
+  check(
+    '…on the creature that was conned, under the name the log printed',
+    shown.includes(mob),
+    shown.slice(0, 160),
+  )
+  check(
+    '…with the Mobs tab selected',
+    (await countOf(page, '[data-testid="nav-mobs"].Mui-selected')) === 1,
+  )
   const still = await cardCount(card)
-  check('…and the card is STILL up — a click is "show me more", not "I have read it"',
-    still === 1, `${String(still)} card(s)`)
-  check('…naming the same creature it just opened', (await textOf(card, NAME)) === mob, await textOf(card, NAME))
+  check(
+    '…and the card is STILL up — a click is "show me more", not "I have read it"',
+    still === 1,
+    `${String(still)} card(s)`,
+  )
+  check(
+    '…naming the same creature it just opened',
+    (await textOf(card, NAME)) === mob,
+    await textOf(card, NAME),
+  )
 }
 
 /**
@@ -161,21 +213,38 @@ export async function stepUnlockedClickDoesNotNavigate(card: Page, page: Page): 
   const setLocked = (locked: boolean): Promise<void> =>
     page.evaluate((l) => (window as unknown as { eq: LockBridge }).eq.setConCardLocked(l), locked)
   const linkState = (want: string): Promise<string> =>
-    settle(() => attrOf(card, CARD, 'data-linked'), (v) => v === want, { timeoutMs: 10_000 }).catch(() => '')
+    settle(
+      () => attrOf(card, CARD, 'data-linked'),
+      (v) => v === want,
+      { timeoutMs: 10_000 },
+    ).catch(() => '')
 
   await parkOnOverview(page)
   await setLocked(false)
   // The lock crosses IPC and comes back as a config echo, so the mode is a state to settle on.
   const unlocked = await linkState('false')
-  if (!check('unlocking the card puts it in positioning mode — it stops being a link', unlocked === 'false', unlocked)) {
+  if (
+    !check(
+      'unlocking the card puts it in positioning mode — it stops being a link',
+      unlocked === 'false',
+      unlocked,
+    )
+  ) {
     await setLocked(true)
     await linkState('true')
     return
   }
   await clickIn(card, CARD)
-  const stayed = await settleStable(() => countOf(page, MOBS_BACK), { timeoutMs: 8_000, stable: 5, pollMs: 200 })
-  check('…and a click there navigates NOTHING — it is the user moving the window',
-    stayed === 0, `${String(stayed)} mob page(s)`)
+  const stayed = await settleStable(() => countOf(page, MOBS_BACK), {
+    timeoutMs: 8_000,
+    stable: 5,
+    pollMs: 200,
+  })
+  check(
+    '…and a click there navigates NOTHING — it is the user moving the window',
+    stayed === 0,
+    `${String(stayed)} mob page(s)`,
+  )
   await setLocked(true)
   const relocked = await linkState('true')
   check('…and locking it again makes it a link once more', relocked === 'true', relocked)
@@ -191,10 +260,22 @@ export async function stepUnlockedClickDoesNotNavigate(card: Page, page: Page): 
 export async function stepCloseDoesNotNavigate(card: Page, page: Page): Promise<boolean> {
   await parkOnOverview(page)
   if (!check('the card’s × is there to click', await clickIn(card, CLOSE))) return false
-  const gone = await settle(() => cardCount(card), (n) => n === 0, { timeoutMs: 10_000 }).catch(() => 1)
-  if (!check('clicking the card’s own × closes it', gone === 0, `${String(gone)} card(s)`)) return false
-  const stayed = await settleStable(() => countOf(page, MOBS_BACK), { timeoutMs: 8_000, stable: 5, pollMs: 200 })
-  check('…and navigates NOTHING — the one control on the card that is not the link',
-    stayed === 0, `${String(stayed)} mob page(s)`)
+  const gone = await settle(
+    () => cardCount(card),
+    (n) => n === 0,
+    { timeoutMs: 10_000 },
+  ).catch(() => 1)
+  if (!check('clicking the card’s own × closes it', gone === 0, `${String(gone)} card(s)`))
+    return false
+  const stayed = await settleStable(() => countOf(page, MOBS_BACK), {
+    timeoutMs: 8_000,
+    stable: 5,
+    pollMs: 200,
+  })
+  check(
+    '…and navigates NOTHING — the one control on the card that is not the link',
+    stayed === 0,
+    `${String(stayed)} mob page(s)`,
+  )
   return true
 }

@@ -25,14 +25,14 @@ const ACCENT: Record<AaPaceTile['id'], string> = {
   rate: '#6fb3d2',
   points: '#b07fd0',
   eta: '#5fbf72',
-  potion: '#d9b25f'
+  potion: '#d9b25f',
 }
 
 const ICON: Record<AaPaceTile['id'], JSX.Element> = {
   rate: <SpeedIcon />,
   points: <AutoAwesomeIcon />,
   eta: <HourglassBottomIcon />,
-  potion: <ScienceIcon />
+  potion: <ScienceIcon />,
 }
 
 function PaceTile({ tile }: { tile: AaPaceTile }): JSX.Element {
@@ -41,7 +41,14 @@ function PaceTile({ tile }: { tile: AaPaceTile }): JSX.Element {
     <Tooltip title={tile.title}>
       <Paper
         variant="outlined"
-        sx={{ p: 1.25, flex: 1, minWidth: 150, borderLeft: `3px solid ${accent}`, display: 'flex', gap: 1 }}
+        sx={{
+          p: 1.25,
+          flex: 1,
+          minWidth: 150,
+          borderLeft: `3px solid ${accent}`,
+          display: 'flex',
+          gap: 1,
+        }}
         data-testid={`leveling-aa-tile-${tile.id}`}
       >
         <Box sx={{ color: accent, display: 'flex', alignItems: 'center' }}>{ICON[tile.id]}</Box>

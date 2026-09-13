@@ -84,7 +84,7 @@ import {
   type TelemetryGpuCompositing,
   type TelemetryGpuVendor,
   type TelemetryOverlayKind,
-  type TelemetryRecord
+  type TelemetryRecord,
 } from './telemetry'
 // THE PRIMITIVES live in `./telemetryValidateBase.ts` and the ERROR REPORT's validator in
 // `./telemetryValidateError.ts` — both split out of this file when JOS-100 pushed it past the
@@ -101,7 +101,7 @@ import {
   signedInt,
   whole,
   type TelemetryValidationFailure,
-  type Validated
+  type Validated,
 } from './telemetryValidateBase'
 import { validateErrorReport } from './telemetryValidateError'
 // …and the three SESSION reports in `./telemetryValidateSession.ts`, split out when JOS-208
@@ -189,7 +189,7 @@ function vSetupSnapshot(o: Record<string, unknown>): Validated<TelemetryEvent> {
     autoHide: autoHide.value,
     voiceEngine: engine.value,
     soundPackCount: packs.value,
-    updateChannel: channel.value
+    updateChannel: channel.value,
   }
   return machineClass(o, value)
 }
@@ -209,7 +209,7 @@ function vSetupSnapshot(o: Record<string, unknown>): Validated<TelemetryEvent> {
  */
 function machineClass(
   o: Record<string, unknown>,
-  value: EvSetupSnapshot
+  value: EvSetupSnapshot,
 ): Validated<TelemetryEvent> {
   const ladders = machineBuckets(o, value)
   if (!ladders.ok) return ladders
@@ -225,15 +225,12 @@ function machineClass(
 
 /** The four ladders. Split from its caller purely to stay under the repo's complexity ceiling —
  *  a loop with an optional-field guard and a failure return costs three branches per axis. */
-function machineBuckets(
-  o: Record<string, unknown>,
-  value: EvSetupSnapshot
-): Validated<true> {
+function machineBuckets(o: Record<string, unknown>, value: EvSetupSnapshot): Validated<true> {
   const buckets = [
     ['cpuCountBucket', CPU_COUNT_EDGES],
     ['totalMemBucket', TOTAL_MEM_GB_EDGES],
     ['displayCountBucket', DISPLAY_COUNT_EDGES],
-    ['primaryScaleBucket', PRIMARY_SCALE_EDGES]
+    ['primaryScaleBucket', PRIMARY_SCALE_EDGES],
   ] as const
   for (const [field, edges] of buckets) {
     if (o[field] === undefined || o[field] === null) continue
@@ -249,7 +246,7 @@ function machineEnums(o: Record<string, unknown>, value: EvSetupSnapshot): Valid
   const enums = [
     ['gpuVendor', TELEMETRY_GPU_VENDORS],
     ['gpuCompositing', TELEMETRY_GPU_COMPOSITING],
-    ['eqWindowMode', TELEMETRY_EQ_WINDOW_MODES]
+    ['eqWindowMode', TELEMETRY_EQ_WINDOW_MODES],
   ] as const
   for (const [field, allowed] of enums) {
     if (o[field] === undefined || o[field] === null) continue
@@ -290,7 +287,7 @@ const HEALTH_FIELDS = [
   'mainErrorLogLines',
   'parserStalls',
   'presenceRestarts',
-  'speechFailures'
+  'speechFailures',
 ] as const
 
 /**
@@ -314,7 +311,7 @@ const HEALTH_OPTIONAL_FIELDS = [
   // one is an ERROR (it is `rendererCrashes` with a different process); the utility one is not —
   // `HEALTH_NON_ERROR_FIELDS` (./telemetryRollup.ts) is where that distinction is kept.
   'gpuProcessGone',
-  'utilityProcessGone'
+  'utilityProcessGone',
 ] as const
 
 function vHealthCounters(o: Record<string, unknown>): Validated<TelemetryEvent> {
@@ -330,7 +327,7 @@ function vHealthCounters(o: Record<string, unknown>): Validated<TelemetryEvent> 
     mainErrorLogLines: counts[1],
     parserStalls: counts[2],
     presenceRestarts: counts[3],
-    speechFailures: counts[4]
+    speechFailures: counts[4],
   }
   for (const field of HEALTH_OPTIONAL_FIELDS) {
     const raw = o[field]
@@ -400,7 +397,7 @@ const EVENT_VALIDATORS: Record<
   updateOutcome: vUpdateOutcome,
   errorReport: validateErrorReport,
   optOut: vOptOut,
-  optIn: vOptIn
+  optIn: vOptIn,
 }
 
 /**
@@ -426,7 +423,7 @@ export function validateEnvelope(input: unknown): Validated<TelemetryEnvelope> {
     input.appVersion,
     'env.appVersion',
     APP_VERSION_RE,
-    'a semver version'
+    'a semver version',
   )
   if (!appVersion.ok) return appVersion
   const channel = oneOf(input.channel, 'env.channel', TELEMETRY_CHANNELS)
@@ -437,7 +434,7 @@ export function validateEnvelope(input: unknown): Validated<TelemetryEnvelope> {
     input.tzOffsetBucket,
     'env.tzOffsetBucket',
     MIN_TZ_OFFSET_HOURS,
-    MAX_TZ_OFFSET_HOURS
+    MAX_TZ_OFFSET_HOURS,
   )
   if (!tz.ok) return tz
   return {
@@ -447,8 +444,8 @@ export function validateEnvelope(input: unknown): Validated<TelemetryEnvelope> {
       appVersion: appVersion.value,
       channel: channel.value,
       platform: platform.value,
-      tzOffsetBucket: tz.value
-    }
+      tzOffsetBucket: tz.value,
+    },
   }
 }
 

@@ -30,7 +30,7 @@ import {
   type PlanSlot,
   type PlanSlotId,
   type PlanSocket,
-  type SocketType
+  type SocketType,
 } from '../../shared/planner/types'
 
 /** Bounds. Generous — they exist to stop a runaway write, not to tell the user how to plan. */
@@ -129,7 +129,7 @@ function exaltPlan(v: unknown, now: number): ExaltPlan | undefined {
     classes: classes(v.classes),
     createdAt,
     updatedAt: stamp(v.updatedAt, createdAt),
-    slots: planSlots(v.slots)
+    slots: planSlots(v.slots),
   }
   if (from !== undefined) plan.classesProvenance = from
   return plan
@@ -212,7 +212,7 @@ function gearSet(v: unknown, now: number): GearSet | undefined {
     name: text(v.name, MAX_NAME_CHARS) ?? 'Untitled set',
     createdAt,
     updatedAt: stamp(v.updatedAt, createdAt),
-    slots: gearSlots(v.slots)
+    slots: gearSlots(v.slots),
   }
 }
 
@@ -274,7 +274,7 @@ function wishEntry(v: unknown, now: number): WishEntry | undefined {
     name: text(v.name, MAX_NAME_CHARS) ?? key,
     kind: v.kind === 'donor' ? 'donor' : 'gear',
     addedAt: stamp(v.addedAt, now),
-    source: v.source === 'planImport' ? 'planImport' : 'user'
+    source: v.source === 'planImport' ? 'planImport' : 'user',
   }
   // The effect context is DONOR-ONLY and is dropped wholesale on a gear wish: an effect name on a
   // row that says it is not about an effect is a contradiction, not extra information. Each half

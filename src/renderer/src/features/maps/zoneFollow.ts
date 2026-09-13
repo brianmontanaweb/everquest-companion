@@ -92,7 +92,7 @@ export function onPick(zone: ZoneShort): ZoneSelection {
 export function onFollowCurrent(
   state: ZoneSelection,
   auto: ZoneShort | null,
-  stated: boolean
+  stated: boolean,
 ): ZoneSelection {
   return { zone: stated ? auto : state.zone, mode: 'follow' }
 }
@@ -118,7 +118,10 @@ export function loadZoneSelection(store: ZoneStore = localStorage): ZoneSelectio
  * install has no map name for leaves the last real zone remembered, which is what makes the next
  * launch open somewhere rather than nowhere.
  */
-export function saveZoneSelection(sel: ZoneSelection, store: ZoneStore = localStorage): ZoneSelection {
+export function saveZoneSelection(
+  sel: ZoneSelection,
+  store: ZoneStore = localStorage,
+): ZoneSelection {
   store.setItem(ZONE_MODE_KEY, sel.mode)
   if (sel.zone != null) store.setItem(LAST_ZONE_KEY, sel.zone)
   return sel

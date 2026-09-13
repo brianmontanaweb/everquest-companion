@@ -33,13 +33,13 @@ export type {
   CoinSource,
   ItemReceivedEvent,
   ItemReceivedVia,
-  PurchaseEvent
+  PurchaseEvent,
 } from './acquireEvents'
 export {
   CONSIDER_FACTION_COLOR,
   CONSIDER_FACTION_LABEL,
   CONSIDER_FACTION_RUNGS,
-  considerDifficultyShort
+  considerDifficultyShort,
 } from './considerFaction'
 
 /** Fields present on every event: a monotonic sequence, timestamp, and the raw line. */
@@ -1377,7 +1377,6 @@ export interface ConsiderEvent extends LogEventBase {
 // message tables, the Strike proc emotes and the dispel family — lives in shared/poisons.ts;
 // its block comment carries the evidence (spell DB + eqlwiki) behind every string.
 // ---------------------------------------------------------------------------
-
 
 /**
  * A rogue-poison Strike LANDING on a target (Task #64). Emitted from the Strike's own

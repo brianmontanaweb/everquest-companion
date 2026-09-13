@@ -52,7 +52,7 @@ import { CC_STEMS, CHARM_STEMS } from './spellStems'
 import {
   applySpellCorrections,
   type CorrectionsReport,
-  type SpellMessageField
+  type SpellMessageField,
 } from './spellCorrections'
 // …and the layer BEFORE them (JOS-337): spells the wiki carries that EQ Legends does not have. It
 // runs first because a spell that is not in the game cannot also have a corrected message, and
@@ -272,7 +272,7 @@ export function buildSpellDb(spells: SpellEntry[]): SpellDb {
     castOnOtherSuffix: castOnOtherSuffixMap,
     castOnOtherByLastWord: byLastWord,
     castOnOtherUnkeyed: unkeyed,
-    spells
+    spells,
   }
 }
 
@@ -290,7 +290,7 @@ const NO_SUFFIXES: readonly SuffixEntry[] = []
  */
 function firstSuffixMatch(
   text: string,
-  list: readonly SuffixEntry[]
+  list: readonly SuffixEntry[],
 ): { entry: SuffixEntry; target: string } | null {
   for (const entry of list) {
     const tail = entry.tail
@@ -328,7 +328,7 @@ function firstSuffixMatch(
  */
 export function matchCastOnOtherSuffix(
   text: string,
-  db: SpellDb
+  db: SpellDb,
 ): { entry: SuffixEntry; target: string } | null {
   const bucket = db.castOnOtherByLastWord.get(text.slice(text.lastIndexOf(' ') + 1)) ?? NO_SUFFIXES
   const keyed = firstSuffixMatch(text, bucket)
@@ -435,7 +435,7 @@ const BENEFICIAL_TYPES: ReadonlySet<string> = new Set([
   'Proc Buff', // 1  — Spirit of the Puma, the reported case
   'Regen', // 1
   'Damage Shield', // 1  — cast on you/your pet, not on the mob
-  'Block' // 1
+  'Block', // 1
 ])
 
 const DETRIMENTAL_TYPES: ReadonlySet<string> = new Set([
@@ -448,13 +448,13 @@ const DETRIMENTAL_TYPES: ReadonlySet<string> = new Set([
   'Stun', // 1
   'Root', // 1
   'Statistic Debuff', // 1
-  'DD' // 1
+  'DD', // 1
 ])
 
 /** Every type this table names, for the audit test that pins it against spells.json. */
 export const CLASSIFIED_SPELL_TYPES: ReadonlySet<string> = new Set([
   ...BENEFICIAL_TYPES,
-  ...DETRIMENTAL_TYPES
+  ...DETRIMENTAL_TYPES,
 ])
 
 /**
@@ -535,7 +535,7 @@ export function spellNature(spellType: string | undefined): SpellNature {
 const CALM_LANDING_MESSAGES: ReadonlySet<string> = new Set([
   'Someone looks less aggressive.',
   'Someone calms down.',
-  'Someone looks friendly.'
+  'Someone looks friendly.',
 ])
 
 /** True when this DB row is a member of the calm line — see {@link CALM_LANDING_MESSAGES}. */
@@ -617,7 +617,7 @@ function suggestionTemplates(s: SpellEntry): SpellCatalogEntry['templates'] {
     // EVENT. `charmSpell` is tested FIRST in classifyWornOff, so these two gates are disjoint by
     // construction and no spell can be offered both chips. See buffTypes.ts `charmBreaks` for why
     // the per-spell offer had to exist beside the curated group.
-    charmBreaks: CHARM_STEMS.test(s.name)
+    charmBreaks: CHARM_STEMS.test(s.name),
   }
 }
 
@@ -645,7 +645,7 @@ export function searchTextFor(s: SpellEntry, rankNames: readonly string[] | unde
     parts
       .filter((p): p is string => !!p)
       .join(' ')
-      .toLowerCase()
+      .toLowerCase(),
   )
 }
 
@@ -671,7 +671,7 @@ function offersAnyTemplate(t: SpellCatalogEntry['templates']): boolean {
 export function buildSpellCatalog(
   db: SpellDb,
   usage: Map<string, number>,
-  lastSeen?: Map<string, number>
+  lastSeen?: Map<string, number>,
 ): SpellCatalog {
   const entries: SpellCatalogEntry[] = []
   const rankNames = rankNamesByLine(db)
@@ -700,7 +700,7 @@ export function buildSpellCatalog(
       // Always present in practice (the map is built from the same spell list db.byKey is);
       // the optional field absorbs the impossible miss without a branch.
       rankNames: rankNames.get(key),
-      searchText: searchTextFor(s, rankNames.get(key))
+      searchText: searchTextFor(s, rankNames.get(key)),
     })
   }
   // Sort (Task #45 — the user's directive: recency over frequency). USED spells (those the
@@ -772,7 +772,8 @@ export function applyDerivedDurations(spells: readonly SpellEntry[]): {
     const ms = parseDurationMs(s.durationText)
     if (ms === s.durationMs) return s
     if (s.durationMs == null) report.filled += 1
-    else if (ms != null) report.corrected.push({ spell: s.name, text: s.durationText, from: s.durationMs, to: ms })
+    else if (ms != null)
+      report.corrected.push({ spell: s.name, text: s.durationText, from: s.durationMs, to: ms })
     // A reader that stopped reading a form the scrape DID read would land here with `ms === null`,
     // which the audit test refuses — better a loud test than a spell that quietly stops drawing.
     return { ...s, durationMs: ms }
@@ -799,7 +800,7 @@ export interface PlaceholderReport {
 const MESSAGE_FIELDS: readonly SpellMessageField[] = [
   'msgCastOnYou',
   'msgCastOnOther',
-  'msgWearsOff'
+  'msgWearsOff',
 ]
 
 /**
@@ -817,7 +818,7 @@ const BARE_SUBJECTS: ReadonlySet<string> = new Set([
   'someone',
   'target',
   'player',
-  'soandso'
+  'soandso',
 ])
 
 /**
@@ -854,7 +855,10 @@ export function isPlaceholderMessage(msg: string): boolean {
   if (text.toUpperCase() === 'N/A') return true
   // The message's WORDS: every run of non-alphanumerics is a separator, so the trailing period, the
   // wiki's stray spacing and a lone `!` all fall away and what is left is prose or nothing.
-  const words = text.replace(/[^A-Za-z0-9]+/g, ' ').trim().toLowerCase()
+  const words = text
+    .replace(/[^A-Za-z0-9]+/g, ' ')
+    .trim()
+    .toLowerCase()
   return words === '' || BARE_SUBJECTS.has(words)
 }
 
@@ -1001,7 +1005,7 @@ export function spellPlaceholdersReport(): PlaceholderReport | null {
  */
 export function applyOverlayCorrections(
   db: SpellDb,
-  corrections: Map<string, { spell: string; contradicts?: string }>
+  corrections: Map<string, { spell: string; contradicts?: string }>,
 ): number {
   let applied = 0
   for (const [text, corr] of corrections) {

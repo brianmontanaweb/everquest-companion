@@ -53,7 +53,7 @@ import {
   settleStable,
   snapshot,
   waitHydrated,
-  type Snap
+  type Snap,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 // The drill walk is the COMBAT tab's own, run against this card on purpose (JOS-105): the whole
@@ -86,18 +86,24 @@ function osnap(page: Page): Promise<OverviewSnap> {
 
 /** Rendered text of the first match; '' when the node isn't mounted. */
 function textOf(page: Page, sel: string): Promise<string> {
-  return page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
+  return page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    sel,
+  )
 }
 
 /** Box + scroll geometry — enough to prove a growing list is a BOUNDED scroller. */
-function boxOf(page: Page, sel: string): Promise<{ h: number; scrollH: number; clientH: number } | null> {
+function boxOf(
+  page: Page,
+  sel: string,
+): Promise<{ h: number; scrollH: number; clientH: number } | null> {
   return page.evaluate((s) => {
     const el = document.querySelector(s)
     if (!el) return null
     return {
       h: Math.round(el.getBoundingClientRect().height),
       scrollH: el.scrollHeight,
-      clientH: el.clientHeight
+      clientH: el.clientHeight,
     }
   }, sel)
 }
@@ -119,14 +125,14 @@ async function stepLanding(page: Page): Promise<void> {
   //    Overview grid is mounted AND the Combat tab's selector is not.
   const landed = await page.waitForSelector(GRID, { timeout: 60_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!check('a fresh userData lands the app on Overview (DEFAULT_VIEW)', landed)) {
     throw new Error('never landed on Overview — nothing below can be asserted')
   }
   check(
     '…and not on Combat (the fight selector is not mounted)',
-    (await countOf(page, SEGMENT_SELECT)) === 0
+    (await countOf(page, SEGMENT_SELECT)) === 0,
   )
 }
 
@@ -136,8 +142,17 @@ async function stepHydration(page: Page): Promise<OverviewSnap> {
   //    Against a per-spec fixture the replay is normally over before the spec's first look —
   //    `wasHydrating` is what separates "the placeholder never rendered" (a defect) from "it
   //    never had a moment to" (the fixture doing its job).
-  const { snap, ms, sawUi, wasHydrating } = await waitHydrated(page, '[data-testid="overview-hydrating"]')
-  if (!check('hydration completes (replay hands off to the live tail)', !snap.hydrating, `${String(ms)}ms`)) {
+  const { snap, ms, sawUi, wasHydrating } = await waitHydrated(
+    page,
+    '[data-testid="overview-hydrating"]',
+  )
+  if (
+    !check(
+      'hydration completes (replay hands off to the live tail)',
+      !snap.hydrating,
+      `${String(ms)}ms`,
+    )
+  ) {
     throw new Error('still hydrating — nothing below can be asserted')
   }
   check(
@@ -145,7 +160,7 @@ async function stepHydration(page: Page): Promise<OverviewSnap> {
     sawUi || !wasHydrating,
     sawUi
       ? 'saw [overview-hydrating]'
-      : `the fixture replayed in ${String(ms)}ms — the placeholder had no moment to exist`
+      : `the fixture replayed in ${String(ms)}ms — the placeholder had no moment to exist`,
   )
   return osnap(page)
 }
@@ -161,10 +176,24 @@ async function stepHydration(page: Page): Promise<OverviewSnap> {
  */
 async function stepPlayAFight(page: Page, log: FixtureLog): Promise<OverviewSnap> {
   const before = (await osnap(page)).recent.length
-  await playPull(log, () => settle(() => osnap(page), (s) => s.recent.length > before, { timeoutMs: 8_000 }))
-  const snap = await settle(() => osnap(page), (s) => (s.selected?.outTotal ?? 0) === PULL_DAMAGE, { timeoutMs: 20_000 })
+  await playPull(log, () =>
+    settle(
+      () => osnap(page),
+      (s) => s.recent.length > before,
+      { timeoutMs: 8_000 },
+    ),
+  )
+  const snap = await settle(
+    () => osnap(page),
+    (s) => (s.selected?.outTotal ?? 0) === PULL_DAMAGE,
+    { timeoutMs: 20_000 },
+  )
   const total = Math.round(snap.selected?.outTotal ?? -1)
-  check('a fight played into the tailed log reaches the glance, with its exact total', total === PULL_DAMAGE, `${String(total)} of ${String(PULL_DAMAGE)} points · ${snap.selected?.name ?? 'no selection'}`)
+  check(
+    'a fight played into the tailed log reaches the glance, with its exact total',
+    total === PULL_DAMAGE,
+    `${String(total)} of ${String(PULL_DAMAGE)} points · ${snap.selected?.name ?? 'no selection'}`,
+  )
   return snap
 }
 
@@ -176,7 +205,7 @@ async function stepGridAndDps(page: Page, snap: OverviewSnap): Promise<void> {
   check(
     'the Overview grid has real height (it is not squeezed to nothing)',
     !!grid && grid.h >= 200,
-    grid ? `${grid.w}×${grid.h}px` : 'absent'
+    grid ? `${grid.w}×${grid.h}px` : 'absent',
   )
 
   // 4. THE DPS CARD STATES A RATE — in the app's ONE rate vocabulary ('21.7k dps', the word
@@ -188,12 +217,13 @@ async function stepGridAndDps(page: Page, snap: OverviewSnap): Promise<void> {
     check(
       'the DPS card states a rate in the app’s rate vocabulary (never "/s")',
       /\d.*dps/i.test(dpsText) && !dpsText.includes('/s'),
-      dpsText.slice(0, 90) || 'empty'
+      dpsText.slice(0, 90) || 'empty',
     )
   } else {
-    note(`the selected fight (${snap.selected?.name ?? 'none'}) carries no damage — the DPS card's honest empty state is what shows: "${dpsText.slice(0, 60)}"`)
+    note(
+      `the selected fight (${snap.selected?.name ?? 'none'}) carries no damage — the DPS card's honest empty state is what shows: "${dpsText.slice(0, 60)}"`,
+    )
   }
-
 }
 
 async function stepHeadLabel(page: Page, snap: OverviewSnap): Promise<void> {
@@ -212,7 +242,7 @@ async function stepHeadLabel(page: Page, snap: OverviewSnap): Promise<void> {
       ? 'a fight is open ⇒ the head label says live'
       : 'no fight is open ⇒ the head label says "Last fight", never live',
     openFight ? /live/i.test(label) : /Last fight/.test(label),
-    label.slice(0, 80) || 'empty'
+    label.slice(0, 80) || 'empty',
   )
 }
 
@@ -222,11 +252,13 @@ async function stepZoneAndMob(page: Page, snap: OverviewSnap): Promise<void> {
   //    from the engine's copy of the same `You have entered X.` line — so this is a genuine
   //    cross-owner agreement check, not a tautology. Polled: the delta lands on its own clock.
   if (snap.zone) {
-    const zone = (await pollText(() => textOf(page, '[data-testid="overview-zone"]'), snap.zone)).trim()
+    const zone = (
+      await pollText(() => textOf(page, '[data-testid="overview-zone"]'), snap.zone)
+    ).trim()
     check(
       'the zone strip states the zone the engine is in',
       zone.length > 0 && zone.includes(snap.zone),
-      `strip "${zone.slice(0, 50)}" vs snapshot "${snap.zone}"`
+      `strip "${zone.slice(0, 50)}" vs snapshot "${snap.zone}"`,
     )
   } else {
     note('the log has stated no zone yet — the strip correctly says nothing')
@@ -238,19 +270,24 @@ async function stepZoneAndMob(page: Page, snap: OverviewSnap): Promise<void> {
   //    to agree with, which is a note (the step-8 convention in the combat spec), not a failure.
   const mobText = (await textOf(page, '[data-testid="overview-mob"]')).replace(/\s+/g, ' ').trim()
   if (snap.currentTarget) {
-    const name = await pollText(() => textOf(page, '[data-testid="overview-mob-name"]'), snap.currentTarget.name)
+    const name = await pollText(
+      () => textOf(page, '[data-testid="overview-mob-name"]'),
+      snap.currentTarget.name,
+    )
     check(
       'the Target card names the mob the snapshot says you are on',
       name.includes(snap.currentTarget.name),
-      `card "${name.slice(0, 50)}" vs currentTarget "${snap.currentTarget.name}" (+${snap.currentTarget.others})`
+      `card "${name.slice(0, 50)}" vs currentTarget "${snap.currentTarget.name}" (+${snap.currentTarget.others})`,
     )
   } else {
     check(
       'no current target ⇒ the Target card shows its quiet state and names no mob',
       (await countOf(page, '[data-testid="overview-mob-name"]')) === 0,
-      mobText.slice(0, 70) || 'empty'
+      mobText.slice(0, 70) || 'empty',
     )
-    note('no encounter was open with a landed hit during this run — the mob AGREEMENT half is not asserted (live log)')
+    note(
+      'no encounter was open with a landed hit during this run — the mob AGREEMENT half is not asserted (live log)',
+    )
   }
 }
 
@@ -265,12 +302,12 @@ async function stepDropsFeed(page: Page): Promise<void> {
   check(
     'the drops feed is bounded (it cannot grow to eat the page)',
     b.h > 0 && b.h <= 320,
-    `${b.h}px tall`
+    `${b.h}px tall`,
   )
   check(
     '…and it is its own scroller (content scrolls INSIDE the box)',
     b.scrollH >= b.clientH,
-    `scrollHeight ${b.scrollH} vs clientHeight ${b.clientH}`
+    `scrollHeight ${b.scrollH} vs clientHeight ${b.clientH}`,
   )
   // The feed is delta-pushed, so a read taken the instant the tab remounts is a read of the
   // pre-hydrated list. Wait for the positive signal — a row — before deciding there are none.
@@ -280,7 +317,7 @@ async function stepDropsFeed(page: Page): Promise<void> {
     check(
       'the feed renders its rows, and the highlighted ones are a SUBSET (never every row)',
       hot <= rows,
-      `${rows} rows · ${hot} highlighted`
+      `${rows} rows · ${hot} highlighted`,
     )
   } else {
     note('no loot in the log yet — the feed shows its quiet empty state')
@@ -304,7 +341,13 @@ async function stepLinkDown(page: Page): Promise<void> {
   // trip, so an immediate read can catch the pre-hydration blank and make the identity below
   // vacuous ("no head-row label ⇒ not asserted") when there is in fact a fight on screen.
   const labelSel = '[data-testid="overview-dps-label"]'
-  const label = (await settle(() => textOf(page, labelSel), (t) => t.trim().length > 0, { timeoutMs: 8_000 })).trim()
+  const label = (
+    await settle(
+      () => textOf(page, labelSel),
+      (t) => t.trim().length > 0,
+      { timeoutMs: 8_000 },
+    )
+  ).trim()
   const before = await osnap(page)
   const liveBefore = before.segments.some((s) => s.kind === 'current')
   // "Last fight — <name>" ⇒ the subject is the name; "Current fight (live)" ⇒ the whole label is.
@@ -312,11 +355,14 @@ async function stepLinkDown(page: Page): Promise<void> {
 
   const clicked = await page
     .click('[data-testid="overview-open-combat"]', { timeout: 15_000 })
-    .then(() => true, () => false)
+    .then(
+      () => true,
+      () => false,
+    )
   if (!check('the DPS card offers "Open in Combat"', clicked)) return
   const onCombat = await page.waitForSelector(SEGMENT_SELECT, { timeout: 30_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   check('…and clicking it opens the Combat tab (the fight selector is mounted)', onCombat)
   if (!onCombat) return
@@ -325,21 +371,27 @@ async function stepLinkDown(page: Page): Promise<void> {
   // the glance card had linked to the zone aggregate rather than to its own subject.
   const fightScope = await page.evaluate(() => {
     const b = document.querySelector('[data-testid="scope-toggle"] button:nth-child(1)')
-    return !!b && (b.classList.contains('Mui-selected') || b.getAttribute('aria-pressed') === 'true')
+    return (
+      !!b && (b.classList.contains('Mui-selected') || b.getAttribute('aria-pressed') === 'true')
+    )
   })
   check('…in the Fight scope (the link carries the scope, it does not inherit one)', fightScope)
 
   const shown = (await pollText(() => selectorText(page), subject)).replace(/\s+/g, ' ').trim()
   const liveAfter = (await osnap(page)).segments.some((s) => s.kind === 'current')
   if (!subject) {
-    note('the Overview showed no head-row label (no fights in the log) — the subject identity is not asserted this run')
+    note(
+      'the Overview showed no head-row label (no fights in the log) — the subject identity is not asserted this run',
+    )
   } else if (!shown.includes(subject) && liveBefore !== liveAfter) {
-    note(`the fight ${liveBefore ? 'finalized' : 'opened'} between the click and the render — the head row honestly relabelled ("${subject}" → "${shown.slice(0, 50)}"), so the identity is not asserted this run`)
+    note(
+      `the fight ${liveBefore ? 'finalized' : 'opened'} between the click and the render — the head row honestly relabelled ("${subject}" → "${shown.slice(0, 50)}"), so the identity is not asserted this run`,
+    )
   } else {
     check(
       '…on the SAME fight the Overview was showing (selector text carries the glance’s subject)',
       shown.includes(subject),
-      `overview "${subject.slice(0, 40)}" · selector "${shown.slice(0, 60)}"`
+      `overview "${subject.slice(0, 40)}" · selector "${shown.slice(0, 60)}"`,
     )
   }
 }
@@ -352,7 +404,7 @@ async function stepRoundTrip(page: Page): Promise<void> {
   await page.click('[data-testid="nav-overview"]', { timeout: 15_000 })
   const back = await page.waitForSelector(GRID, { timeout: 20_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   check('clicking Overview in the nav comes back to the grid', back)
   // The layout has to have STOPPED MOVING before "it does not scroll the page" means anything;
@@ -361,7 +413,7 @@ async function stepRoundTrip(page: Page): Promise<void> {
   check(
     '…and the Overview never scrolls the page (the grid scrolls inside itself)',
     over.doc === 0 && over.content === 0,
-    `document +${over.doc}px · content area +${over.content}px`
+    `document +${over.doc}px · content area +${over.content}px`,
   )
 }
 
@@ -379,36 +431,42 @@ async function stepLevelingPanel(page: Page): Promise<void> {
     page,
     '[data-testid="overview-leveling-tiles"] [data-testid^="overview-leveling-tile-"]',
     2,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   if (tiles === 0) {
-    note('the log holds no progression in the last hour — the leveling card shows its quiet empty state')
+    note(
+      'the log holds no progression in the last hour — the leveling card shows its quiet empty state',
+    )
     return
   }
   check(
     'the leveling panel states 2–4 stat tiles (a tile the log cannot support is absent, not blank)',
     tiles >= 2 && tiles <= 4,
-    `${tiles} tiles`
+    `${tiles} tiles`,
   )
   const spark = await countOf(page, '[data-testid="overview-leveling-spark"]')
   const refused = await countOf(page, '[data-testid="overview-leveling-spark-none"]')
   check(
     'the hour is drawn as a sparkline, or REFUSED with a reason — exactly one of the two',
     spark + refused === 1,
-    `spark ${spark} · refusal ${refused}`
+    `spark ${spark} · refusal ${refused}`,
   )
   // The pace tile always exists once the window does; its unit is the app's ONE rate wording.
-  const rate = (await textOf(page, '[data-testid="overview-leveling-tile-rate"]')).replace(/\s+/g, ' ').trim()
+  const rate = (await textOf(page, '[data-testid="overview-leveling-tile-rate"]'))
+    .replace(/\s+/g, ' ')
+    .trim()
   check(
     'the pace tile speaks the app’s rate vocabulary (never "/hr" alone, never "/s")',
     rate.includes('lvl/hr') && !rate.includes('/s'),
-    rate.slice(0, 60) || 'empty'
+    rate.slice(0, 60) || 'empty',
   )
 
   // 11b. THE AA LINE — the read that survives the level cap (JOS-36). Conditional on the log:
   //      an hour with no AA completion legitimately has no line, and that ABSENCE is the honest
   //      answer (law 1) rather than a row of em-dashes, so it is noted, not failed.
-  const aa = (await textOf(page, '[data-testid="overview-leveling-aa"]')).replace(/\s+/g, ' ').trim()
+  const aa = (await textOf(page, '[data-testid="overview-leveling-aa"]'))
+    .replace(/\s+/g, ' ')
+    .trim()
   if (aa === '') {
     note('no AA completion in the last hour — the AA line is correctly absent (never em-dashes)')
     return
@@ -416,12 +474,12 @@ async function stepLevelingPanel(page: Page): Promise<void> {
   check(
     'the AA line states both rates together, in the app’s rate vocabulary (never "/s")',
     aa.includes('AA/hr') && aa.includes('pts/hr') && !aa.includes('/s'),
-    aa.slice(0, 70)
+    aa.slice(0, 70),
   )
   check(
     '…and its INFERRED wait is labeled in one word, never a caveat sentence',
     (!aa.includes('next') || aa.includes('est.')) && aa.length < 70,
-    aa.slice(0, 70)
+    aa.slice(0, 70),
   )
 }
 
@@ -432,15 +490,13 @@ async function stepLevelingPanel(page: Page): Promise<void> {
  */
 async function stepNavOrder(page: Page): Promise<void> {
   const order = await page.evaluate(() =>
-    [...document.querySelectorAll('[data-testid^="nav-"]')].map((el) => el.getAttribute('data-testid') ?? '')
+    [...document.querySelectorAll('[data-testid^="nav-"]')].map(
+      (el) => el.getAttribute('data-testid') ?? '',
+    ),
   )
   const mobs = order.indexOf('nav-mobs')
   const loot = order.indexOf('nav-loot')
-  check(
-    'the nav puts Loot directly after Mobs',
-    mobs >= 0 && loot === mobs + 1,
-    order.join(' · ')
-  )
+  check('the nav puts Loot directly after Mobs', mobs >= 0 && loot === mobs + 1, order.join(' · '))
 }
 
 /**
@@ -457,12 +513,19 @@ async function stepNavOrder(page: Page): Promise<void> {
  * its own — the indicator is the click target now, and what it opens carries the detail.
  */
 async function stepUpdateChipClearsPreferences(page: Page): Promise<void> {
-  const chip = await page.evaluate(() =>
-    ['update-chip-quiet', 'update-chip-disabled', 'update-chip-ready', 'update-chip-downloading'].find(
-      (id) => document.querySelector(`[data-testid="${id}"]`) !== null
-    ) ?? ''
+  const chip = await page.evaluate(
+    () =>
+      [
+        'update-chip-quiet',
+        'update-chip-disabled',
+        'update-chip-ready',
+        'update-chip-downloading',
+      ].find((id) => document.querySelector(`[data-testid="${id}"]`) !== null) ?? '',
   )
-  if (!check('the update indicator is mounted under Preferences', chip !== '', chip || 'none found')) return
+  if (
+    !check('the update indicator is mounted under Preferences', chip !== '', chip || 'none found')
+  )
+    return
   const box = await page.evaluate((sel) => {
     const r = document.querySelector(sel)?.getBoundingClientRect()
     return r ? { x: r.x + r.width / 2, y: r.y + r.height / 2 } : null
@@ -474,7 +537,11 @@ async function stepUpdateChipClearsPreferences(page: Page): Promise<void> {
   // 100ms plus a transition, so the honest wait is for the popper count to stop changing rather
   // than for a flat 1200ms: it settles at 0 immediately when there is none, and at 1 (a failure,
   // reported as such) when there is.
-  await settleStable(() => countOf(page, '.MuiTooltip-popper'), { timeoutMs: 5_000, stable: 5, pollMs: 150 })
+  await settleStable(() => countOf(page, '.MuiTooltip-popper'), {
+    timeoutMs: 5_000,
+    stable: 5,
+    pollMs: 150,
+  })
 
   const probe = await page.evaluate(() => {
     const row = document.querySelector('[data-testid="nav-preferences"]')
@@ -495,18 +562,18 @@ async function stepUpdateChipClearsPreferences(page: Page): Promise<void> {
   check(
     'with the update indicator hovered, Preferences is clickable along its FULL row',
     probe.missed.length === 0,
-    probe.missed.join(' · ') || '11/11 points hit the row'
+    probe.missed.join(' · ') || '11/11 points hit the row',
   )
   check(
     '…because hovering the indicator mounts no tooltip popper at all',
     probe.poppers === 0,
-    `${String(probe.poppers)} popper(s)`
+    `${String(probe.poppers)} popper(s)`,
   )
   // A real click has to land, too — the measurement above is only a proxy for it.
   await page.click('[data-testid="nav-preferences"]', { timeout: 15_000 })
   check(
     '…and clicking it opens Preferences',
-    (await settleCount(page, '[data-testid="nav-preferences"].Mui-selected')) === 1
+    (await settleCount(page, '[data-testid="nav-preferences"].Mui-selected')) === 1,
   )
   await page.click('[data-testid="nav-overview"]', { timeout: 15_000 })
   await settleCount(page, GRID)
@@ -526,31 +593,40 @@ async function stepLootLink(page: Page): Promise<void> {
     note('no loot in the log yet — the drops feed has no row to deep-link from this run')
     return
   }
-  const item = (await textOf(page, '[data-testid="overview-drop-name"]')).replace(/\s+/g, ' ').trim()
+  const item = (await textOf(page, '[data-testid="overview-drop-name"]'))
+    .replace(/\s+/g, ' ')
+    .trim()
   await page.click('[data-testid="overview-drop-row"]', { timeout: 15_000 })
-  const onDetail = await page.waitForSelector('[data-testid="loot-detail"]', { timeout: 30_000 }).then(
-    () => true,
-    () => false
-  )
+  const onDetail = await page
+    .waitForSelector('[data-testid="loot-detail"]', { timeout: 30_000 })
+    .then(
+      () => true,
+      () => false,
+    )
   if (!check('clicking a drop row opens the Loot tab on that item’s detail pane', onDetail)) return
   check(
     '…as a PANE TAKEOVER, not a popover (the ledger is not underneath it)',
-    (await countOf(page, '[data-testid="loot-list"]')) === 0
+    (await countOf(page, '[data-testid="loot-list"]')) === 0,
   )
-  const title = (await textOf(page, '[data-testid="loot-detail-title"]')).replace(/\s+/g, ' ').trim()
+  const title = (await textOf(page, '[data-testid="loot-detail-title"]'))
+    .replace(/\s+/g, ' ')
+    .trim()
   // The feed shows a `N× ` stack prefix the ledger's item name does not carry, so the identity
   // is asserted the way round that survives it.
   check(
     '…on the SAME item the row named',
     title.length > 0 && item.includes(title),
-    `row "${item.slice(0, 40)}" · breadcrumb "${title.slice(0, 40)}"`
+    `row "${item.slice(0, 40)}" · breadcrumb "${title.slice(0, 40)}"`,
   )
-  check('…with a breadcrumb root back to the list', (await countOf(page, '[data-testid="loot-breadcrumb-root"]')) === 1)
+  check(
+    '…with a breadcrumb root back to the list',
+    (await countOf(page, '[data-testid="loot-breadcrumb-root"]')) === 1,
+  )
 
   await page.click('[data-testid="loot-breadcrumb-root"]', { timeout: 15_000 })
   const back = await page.waitForSelector('[data-testid="loot-list"]', { timeout: 20_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   check('the breadcrumb root returns to the loot ledger', back)
   check('…and the detail pane is gone', (await countOf(page, '[data-testid="loot-detail"]')) === 0)
@@ -596,7 +672,11 @@ async function main(): Promise<void> {
     await stepLootLink(page)
 
     // 14. No renderer console errors across the whole run.
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
 
     if (failures.length) await dumpArtifacts(page, 'overview-FAIL')
     else await dumpArtifacts(page, 'overview-pass')

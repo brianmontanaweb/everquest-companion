@@ -33,7 +33,7 @@ import { windowLootRates, type WindowLootRates } from '@shared/lootRates'
 export function useSliceLootRates(
   history: readonly LootEvent[],
   slice: Timeslice,
-  prog: ProgressionSnap
+  prog: ProgressionSnap,
 ): WindowLootRates | null {
   return useMemo(() => {
     if (history.length === 0) return null
@@ -45,7 +45,7 @@ export function useSliceLootRates(
       // BOTH halves of the zone membership (JOS-130 / JOS-291), so the denominator below is the
       // time spent in exactly the visits the rows are counted from.
       zoneKey: slice.zoneKey,
-      zoneExactKey: slice.zoneExactKey
+      zoneExactKey: slice.zoneExactKey,
     })
     return windowLootRates({
       events: history,
@@ -53,7 +53,7 @@ export function useSliceLootRates(
       t1: slice.range.t1,
       spans,
       zoneKey: slice.zoneKey,
-      zoneExactKey: slice.zoneExactKey
+      zoneExactKey: slice.zoneExactKey,
     })
   }, [history, slice, prog])
 }

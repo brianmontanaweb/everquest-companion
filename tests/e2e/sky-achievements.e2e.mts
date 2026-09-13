@@ -51,7 +51,7 @@ import {
   dumpArtifacts,
   failures,
   reportRun,
-  settle
+  settle,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -104,7 +104,7 @@ function filteredCount(page: Page): Promise<number | null> {
 /** The badge as the DOM states it: the count, whether it is derived, and WHICH source said so. */
 function chip(
   page: Page,
-  sel: string
+  sel: string,
 ): Promise<{
   count: number | null
   inferred: string | null
@@ -121,7 +121,7 @@ function chip(
       inferred: el.getAttribute('data-inferred'),
       evidence: el.getAttribute('data-evidence'),
       title: el.getAttribute('title') ?? '',
-      label: el.textContent ?? ''
+      label: el.textContent ?? '',
     }
   }, sel)
 }
@@ -136,7 +136,7 @@ function undo(page: Page): Promise<{ disabled: boolean | null; title: string }> 
     // The title lives on the SPAN the tooltip needed, because a disabled button swallows no events.
     return {
       disabled: (el as HTMLButtonElement).disabled,
-      title: el.closest('span')?.getAttribute('title') ?? ''
+      title: el.closest('span')?.getAttribute('title') ?? '',
     }
   }, UNDO)
 }
@@ -144,12 +144,20 @@ function undo(page: Page): Promise<{ disabled: boolean | null; title: string }> 
 /** Narrow the list to one quest by name, and expand it so its detail toolbar exists. */
 async function openQuest(page: Page, name: string): Promise<boolean> {
   await page.fill(`${SEARCH} input`, name)
-  const only = await settle(() => filteredCount(page), (n) => n === 1, { timeoutMs: 30_000 })
+  const only = await settle(
+    () => filteredCount(page),
+    (n) => n === 1,
+    { timeoutMs: 30_000 },
+  )
   if (!check(`the search narrows to ${name} alone`, only === 1, `filtered=${String(only)}`)) {
     return false
   }
   await page.click(SUMMARY, { timeout: 15_000 })
-  const drawn = await settle(() => countOf(page, TURNIN_COUNT), (n) => n === 1, { timeoutMs: 20_000 })
+  const drawn = await settle(
+    () => countOf(page, TURNIN_COUNT),
+    (n) => n === 1,
+    { timeoutMs: 20_000 },
+  )
   return check(`…and expanding ${name} draws its turn-in controls`, drawn === 1, String(drawn))
 }
 
@@ -158,7 +166,7 @@ async function openSky(page: Page): Promise<boolean> {
   await page.click(NAV_SKY, { timeout: 30_000 })
   const bar = await page.waitForSelector(SEARCH, { timeout: 60_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!check('the Sky tab opens on its filter bar', bar)) return false
   // The search box and the counts line are not the same render: the box needs no quest data and
@@ -167,7 +175,11 @@ async function openSky(page: Page): Promise<boolean> {
   // dump staged beside the log — to flip this from "always wins the race" to "usually does").
   // settle() is what every OTHER counts-line read in this file already uses; this is the one that
   // was missing it.
-  const counts = await settle(() => filteredCount(page), (n) => n !== null, { timeoutMs: 30_000 })
+  const counts = await settle(
+    () => filteredCount(page),
+    (n) => n !== null,
+    { timeoutMs: 30_000 },
+  )
   return check('…with the counts line under it', counts !== null)
 }
 
@@ -183,23 +195,37 @@ async function openSky(page: Page): Promise<boolean> {
  * and no inventory export is staged, so that difference is the achievements dump and nothing else.
  */
 async function stepTheDumpMarksExactlyWhatItMarks(page: Page): Promise<void> {
-  const all = await settle(() => filteredCount(page), (n) => n !== null && n > 1, {
-    timeoutMs: 45_000
-  })
-  if (!check('the tab opens on the whole Plane', all !== null && all > 1, `quests=${String(all)}`)) {
+  const all = await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n > 1,
+    {
+      timeoutMs: 45_000,
+    },
+  )
+  if (
+    !check('the tab opens on the whole Plane', all !== null && all > 1, `quests=${String(all)}`)
+  ) {
     return
   }
   await page.click(HIDE_TURNED_IN, { timeout: 15_000 })
-  const kept = await settle(() => filteredCount(page), (n) => n !== null && n < (all ?? 0), {
-    timeoutMs: 20_000
-  })
+  const kept = await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n < (all ?? 0),
+    {
+      timeoutMs: 20_000,
+    },
+  )
   check(
     `THE OWNER'S OWN ACHIEVEMENTS FILE MARKS THEIR ${String(MARKED)} COMPLETED SKY QUESTS`,
     all !== null && kept === all - MARKED,
-    `of ${String(all)} quests, ${String((all ?? 0) - (kept ?? 0))} read as turned in`
+    `of ${String(all)} quests, ${String((all ?? 0) - (kept ?? 0))} read as turned in`,
   )
   await page.click(HIDE_TURNED_IN, { timeout: 15_000 })
-  const back = await settle(() => filteredCount(page), (n) => n === all, { timeoutMs: 20_000 })
+  const back = await settle(
+    () => filteredCount(page),
+    (n) => n === all,
+    { timeoutMs: 20_000 },
+  )
   check('…and unticking the box leaves the tab exactly as it was found', back === all, String(back))
 }
 
@@ -211,37 +237,41 @@ async function stepTheDumpMarksExactlyWhatItMarks(page: Page): Promise<void> {
 async function stepAMarkedQuestReadsAsATurnIn(page: Page): Promise<void> {
   if (!(await openQuest(page, VOUCHED))) return
   const b = await badge(page)
-  check(`${VOUCHED} reads TURNED IN off the achievements dump alone`, b.count === 1, `count=${String(b.count)}`)
+  check(
+    `${VOUCHED} reads TURNED IN off the achievements dump alone`,
+    b.count === 1,
+    `count=${String(b.count)}`,
+  )
   check(
     '…and the badge SAYS the reading is derived rather than read out of the log',
     b.inferred === 'true',
-    `data-inferred=${String(b.inferred)}`
+    `data-inferred=${String(b.inferred)}`,
   )
   check(
     '…and NAMES the achievements dump as the source, not the inventory export',
     b.evidence === 'achievement',
-    `data-evidence=${String(b.evidence)}`
+    `data-evidence=${String(b.evidence)}`,
   )
   check(
     'THE BADGE ITSELF READS DIFFERENT FROM AN OBSERVED TURN-IN, not only its hover (JOS-441)',
     b.label.includes('Turned in') && b.label.includes('achievements'),
-    b.label
+    b.label,
   )
   check(
     '…in words, on hover, naming the export as the evidence',
     b.title.includes('achievements export'),
-    b.title
+    b.title,
   )
   const u = await undo(page)
   check(
     'THE UNDO IS HONESTLY DEAD: the achievement is still earned, so a take-back would not survive',
     u.disabled === true,
-    `disabled=${String(u.disabled)}`
+    `disabled=${String(u.disabled)}`,
   )
   check(
     '…and says exactly that instead of looking broken',
     u.title.includes('achievements export'),
-    u.title
+    u.title,
   )
 }
 
@@ -256,13 +286,13 @@ async function stepAnUnearnedQuestIsUntouched(page: Page): Promise<void> {
   check(
     `${UNVOUCHED} has no badge at all — an unearned row proves nothing either way`,
     b.count === null,
-    String(b.count)
+    String(b.count),
   )
   const u = await undo(page)
   check(
     '…and its undo is dead for the OLD reason, with the old words',
     u.title === 'Nothing to take back',
-    u.title
+    u.title,
   )
 }
 
@@ -279,26 +309,30 @@ async function stepACascadedQuestIsTrackedButNotCounted(page: Page): Promise<voi
   check(
     `${CASCADED} does NOT read as turned in — the reports' own sentence, refused`,
     b.count === null,
-    `data-count=${String(b.count)}`
+    `data-count=${String(b.count)}`,
   )
   const u = await chip(page, CLASS_UNLOCK)
   check(
     '…yet the evidence is still tracked and drawn, under its own testid',
     u.evidence === 'class-unlock',
-    `data-evidence=${String(u.evidence)}`
+    `data-evidence=${String(u.evidence)}`,
   )
   check('…with a count of zero on the chip', u.count === 0, `data-count=${String(u.count)}`)
-  check('…labelled as what it is rather than as a turn-in', u.label.includes('Class unlock'), u.label)
+  check(
+    '…labelled as what it is rather than as a turn-in',
+    u.label.includes('Class unlock'),
+    u.label,
+  )
   check(
     '…and saying, on hover, that the class unlock was granted',
     u.title.includes('NOT counted') && u.title.includes('Primary Class Unlock Token'),
-    u.title
+    u.title,
   )
   const un = await undo(page)
   check(
     'the undo is dead because there is nothing to take back, not because we refuse',
     un.disabled === true && un.title.includes('Nothing to take back'),
-    `disabled=${String(un.disabled)} title=${un.title}`
+    `disabled=${String(un.disabled)} title=${un.title}`,
   )
 }
 
@@ -312,13 +346,13 @@ async function stepTheFreshnessLineSpeaksForTheKind(page: Page): Promise<void> {
   const text = await settle(
     () => page.evaluate((sel) => document.querySelector(sel)?.textContent ?? '', FRESH),
     (t) => t.length > 0,
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
   check('the Sky tab draws the achievements freshness line', text.length > 0, text)
   check(
     '…naming the command verbatim, out of the registry rather than a hand-typed string',
     text.includes('/outputfile achievements'),
-    text
+    text,
   )
 }
 
@@ -338,23 +372,31 @@ async function stepNoDumpChangesNothing(): Promise<void> {
     page = await mainWindow(launched.app)
     await page.waitForSelector(NAV_OVERVIEW, { timeout: 60_000 })
     if (!(await openSky(page))) return
-    const all = await settle(() => filteredCount(page), (n) => n !== null && n > 1, {
-      timeoutMs: 45_000
-    })
+    const all = await settle(
+      () => filteredCount(page),
+      (n) => n !== null && n > 1,
+      {
+        timeoutMs: 45_000,
+      },
+    )
     await page.click(HIDE_TURNED_IN, { timeout: 15_000 })
     // An ABSENCE, so it is settled rather than sampled once (the settleStable discipline): the box
     // has to be given every chance to remove a row before "it removed none" is a claim.
-    const kept = await settle(() => filteredCount(page), (n) => n === all, { timeoutMs: 20_000 })
+    const kept = await settle(
+      () => filteredCount(page),
+      (n) => n === all,
+      { timeoutMs: 20_000 },
+    )
     check(
       'WITH NO ACHIEVEMENTS DUMP STAGED, not one quest reads as turned in',
       kept === all && all !== null,
-      `of ${String(all)} quests, ${String((all ?? 0) - (kept ?? 0))} read as turned in`
+      `of ${String(all)} quests, ${String((all ?? 0) - (kept ?? 0))} read as turned in`,
     )
     const text = await page.evaluate((sel) => document.querySelector(sel)?.textContent ?? '', FRESH)
     check(
       '…and the freshness line says the command has never been run, rather than saying nothing',
       text.includes('/outputfile achievements') && /not yet run/i.test(text),
-      text
+      text,
     )
     if (failures.length) await dumpArtifacts(page, 'sky-achievements-none-FAIL')
   } finally {

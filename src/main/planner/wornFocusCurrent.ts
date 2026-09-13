@@ -29,7 +29,11 @@ export function currentWornFocus(): WornFocus[] {
     resolved = null
     return []
   }
-  if (resolved !== null && resolved.path === status.path && resolved.loadedAt === status.updatedAt) {
+  if (
+    resolved !== null &&
+    resolved.path === status.path &&
+    resolved.loadedAt === status.updatedAt
+  ) {
     return resolved.focus
   }
   // `loadInventoryDump` re-resolves the same status, so the two can never disagree about WHICH file

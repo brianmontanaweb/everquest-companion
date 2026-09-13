@@ -41,7 +41,13 @@ import { logError } from './errorLog'
 import { writeFileDurableAsync } from './telemetry/durableWrite'
 import { normalizeItemName, parseItemWikitext } from './itemLookupParse'
 import { buildQuestItemIndex } from './questItemIndex'
-import { buildItemDbIndex, itemKey, knowledgeFromDb, type ItemDbEntry, type ItemDbFile } from './itemsDb'
+import {
+  buildItemDbIndex,
+  itemKey,
+  knowledgeFromDb,
+  type ItemDbEntry,
+  type ItemDbFile,
+} from './itemsDb'
 import { heldClickySpells as clickySpells } from './itemClickies'
 import type { HeldCounts, ItemKnowledge, ItemQuestUse, PoskyData, QuestData } from '../shared/types'
 
@@ -257,7 +263,8 @@ const RETRY_AFTER_FALLBACK_MS = 60_000
 
 async function apiFetch(params: Record<string, string>): Promise<unknown> {
   if (Date.now() < cooldownUntil) return null // server asked for quiet — stay quiet
-  const url = API + '?' + new URLSearchParams({ format: 'json', formatversion: '2', ...params }).toString()
+  const url =
+    API + '?' + new URLSearchParams({ format: 'json', formatversion: '2', ...params }).toString()
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS)
   try {
@@ -280,9 +287,12 @@ async function apiFetch(params: Record<string, string>): Promise<unknown> {
 
 /** Fetch a page's raw wikitext. Returns '' when the page doesn't exist, null on network error. */
 async function fetchWikitext(title: string): Promise<string | null> {
-  const j = (await apiFetch({ action: 'parse', page: title, prop: 'wikitext', redirects: '1' })) as
-    | { parse?: { wikitext?: string }; error?: { code?: string } }
-    | null
+  const j = (await apiFetch({
+    action: 'parse',
+    page: title,
+    prop: 'wikitext',
+    redirects: '1',
+  })) as { parse?: { wikitext?: string }; error?: { code?: string } } | null
   if (j === null) return null // network error (offline)
   if (j.error) return '' // missingtitle etc. — a real negative
   return j.parse?.wikitext ?? ''
@@ -299,7 +309,7 @@ async function resolvePage(name: string): Promise<ResolveResult> {
     action: 'query',
     list: 'search',
     srsearch: name,
-    srlimit: '8'
+    srlimit: '8',
   })) as { query?: { search?: { title: string }[] } } | null
   if (j === null) return { status: 'offline' }
   const hits = j.query?.search ?? []
@@ -385,7 +395,11 @@ function scheduleSave(): void {
     const entries: Record<string, CacheEntry> = {}
     for (const [k, v] of (mem ?? new Map<string, CacheEntry>()).entries()) entries[k] = v
     const path = cacheFilePath()
-    void writeFileDurableAsync(dirname(path), path, JSON.stringify({ version: CACHE_VERSION, entries } satisfies CacheFile))
+    void writeFileDurableAsync(
+      dirname(path),
+      path,
+      JSON.stringify({ version: CACHE_VERSION, entries } satisfies CacheFile),
+    )
       .catch((err: unknown) => {
         logError('main:itemLookup', { message: 'failed writing item-knowledge cache', err })
       })
@@ -407,7 +421,10 @@ function cacheHit(entry: CacheEntry): boolean {
 
 /** Merge the LOCAL associations (posky + quest catalog) into a knowledge record; local
  *  wins on identity, so the wiki's `|relatedquests` links only ADD quests we didn't know. */
-function mergeLocal(base: Omit<ItemKnowledge, 'cached'>, local: ItemQuestUse[] | null): Omit<ItemKnowledge, 'cached'> {
+function mergeLocal(
+  base: Omit<ItemKnowledge, 'cached'>,
+  local: ItemQuestUse[] | null,
+): Omit<ItemKnowledge, 'cached'> {
   if (!local || local.length === 0) return base
   const uses = [...local]
   // Avoid listing the same quest twice. posky labels a quest "Class · Quest Name" where the
@@ -417,7 +434,13 @@ function mergeLocal(base: Omit<ItemKnowledge, 'cached'>, local: ItemQuestUse[] |
   const norm = questIdentity
   for (const u of base.questUses) {
     const nu = norm(u.quest)
-    if (!uses.some((x) => { const nx = norm(x.quest); return nx === nu || nx.includes(nu) || nu.includes(nx) })) uses.push(u)
+    if (
+      !uses.some((x) => {
+        const nx = norm(x.quest)
+        return nx === nu || nx.includes(nu) || nu.includes(nx)
+      })
+    )
+      uses.push(u)
   }
   return { ...base, quest: true, questUses: uses }
 }
@@ -456,7 +479,7 @@ export async function lookupItem(name: string): Promise<ItemKnowledge> {
   const finish = (extra: Partial<Omit<ItemKnowledge, 'cached' | 'name'>>): ItemKnowledge => {
     const base = mergeLocal(
       { name: display, lore: false, quest: (local?.length ?? 0) > 0, questUses: [], ...extra },
-      local
+      local,
     )
     const data: ItemKnowledge = { ...base, cached: false }
     cache.set(key, { at: Date.now(), data })
@@ -478,7 +501,7 @@ export async function lookupItem(name: string): Promise<ItemKnowledge> {
   // Keep the queue serialized + spaced regardless of this call's outcome.
   queue = run.then(
     () => new Promise((r) => setTimeout(r, REQUEST_SPACING_MS)),
-    () => new Promise((r) => setTimeout(r, REQUEST_SPACING_MS))
+    () => new Promise((r) => setTimeout(r, REQUEST_SPACING_MS)),
   )
 
   try {
@@ -487,7 +510,19 @@ export async function lookupItem(name: string): Promise<ItemKnowledge> {
     logError('main:itemLookup', { message: `lookup failed for ${display}`, err })
     // Degrade to an offline record (still carries local posky) — but don't persist it as a
     // negative; a thrown error is transient, so the next call should retry the network.
-    return { ...mergeLocal({ name: display, lore: false, quest: (local?.length ?? 0) > 0, questUses: [], offline: true }, local), cached: false }
+    return {
+      ...mergeLocal(
+        {
+          name: display,
+          lore: false,
+          quest: (local?.length ?? 0) > 0,
+          questUses: [],
+          offline: true,
+        },
+        local,
+      ),
+      cached: false,
+    }
   }
 }
 

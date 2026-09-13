@@ -42,7 +42,7 @@ import {
   layeredVerdict,
   layeredVerdictAt,
   zoneEra,
-  type Era
+  type Era,
 } from '../src/shared/planner/era'
 import { ZONES, zoneKey } from '../src/shared/zones'
 import mobsJson from '../src/renderer/src/data/eqlegends/mobs.json'
@@ -65,7 +65,9 @@ test("the Avatar donors' zone reads out-of-era: Primal Velium is Sleeper's Tomb,
   // Found by the catalog, not by hand: every mob whose loot list names a Primal Velium item.
   // Measured 2026-08-04: 7 mobs (the four warders, the Master of the Guard, the Final Arbiter,
   // the Progenitor), 8 distinct weapons, ONE zone between them.
-  const droppers = catalog.mobs.filter((m) => (m.drops ?? []).some((d) => /^Primal Velium /i.test(d)))
+  const droppers = catalog.mobs.filter((m) =>
+    (m.drops ?? []).some((d) => /^Primal Velium /i.test(d)),
+  )
   assert.ok(droppers.length >= 5, `only ${String(droppers.length)} Primal Velium droppers found`)
   for (const mob of droppers) {
     const zones = mob.zones ?? []
@@ -120,13 +122,21 @@ test('junk, prose and ambiguity read UNKNOWN — never a nearest guess (law 12)'
     'Field of Bone?',
     'Kelethin (Greater Faydark)',
     'Lake of Ill Omen.',
-    'West Freeport OR East Freeport'
+    'West Freeport OR East Freeport',
   ]) {
     assert.equal(zoneEra(junk), null, `"${junk}" must not resolve`)
     assert.equal(eraVerdict([junk]), 'unknown', `"${junk}" must read unknown`)
   }
   // The AMBIGUOUS city names zones.ts deliberately refuses (each is 2-3 different map files).
-  for (const ambiguous of ['Freeport', 'Kaladim', 'Neriak', 'Qeynos', 'Felwithe', 'Guk', 'Karana']) {
+  for (const ambiguous of [
+    'Freeport',
+    'Kaladim',
+    'Neriak',
+    'Qeynos',
+    'Felwithe',
+    'Guk',
+    'Karana',
+  ]) {
     assert.equal(zoneEra(ambiguous), null, `"${ambiguous}" is ambiguous and must not resolve`)
   }
   // Degenerate input never throws and never resolves.
@@ -187,7 +197,7 @@ test('the verdict is a comparison against CURRENT_ERA, not a hardcoded era list'
     classic: ['in-era', 'out-of-era', 'out-of-era'],
     kunark: ['in-era', 'in-era', 'out-of-era'],
     velious: ['in-era', 'in-era', 'in-era'],
-    luclin: ['in-era', 'in-era', 'in-era']
+    luclin: ['in-era', 'in-era', 'in-era'],
   }
   for (const era of ERA_ORDER) {
     const [g, c, s] = expected[era]
@@ -225,7 +235,7 @@ test('eraFromTag is the hand-authored table, token for token (law 12)', () => {
     ['Chardok', 'kunark'],
     ['Velious', 'velious'],
     ['Luclin', 'luclin'],
-    ['Unknown', null] // the wiki saying it does not know must not become our guess
+    ['Unknown', null], // the wiki saying it does not know must not become our guess
   ]
   for (const [tag, era] of TABLE) assert.equal(eraFromTag(tag), era, tag)
 
@@ -287,7 +297,7 @@ test('eraBadge IS Template:PageEra’s switch, key for key (a mirror, not a judg
     ['paineel', 'in'],
     ['epics', 'out'],
     ['epicquests', 'out'],
-    ['unknown', 'out']
+    ['unknown', 'out'],
   ]
   assert.equal(SWITCH.length, 20, 'the quoted switch has 20 rows')
   for (const [key, answer] of SWITCH) assert.equal(eraBadge(key), answer, key)
@@ -328,7 +338,16 @@ test('the OUT badge overrules zones; the IN badge never does; and the flip still
   assert.equal(eraBadgeOverrides('Velious', 'velious'), false)
   // IN never overrules anything, at any era — this is the one-directionality, at the source.
   for (const era of ERA_ORDER) {
-    for (const tag of ['Classic', 'Sky', 'Fear', 'Hate', 'Temple', 'Paineel', 'Hole', 'Stonebrunt']) {
+    for (const tag of [
+      'Classic',
+      'Sky',
+      'Fear',
+      'Hate',
+      'Temple',
+      'Paineel',
+      'Hole',
+      'Stonebrunt',
+    ]) {
       assert.equal(eraBadgeOverrides(tag, era), false, `${tag} @ ${era}`)
     }
   }
@@ -349,12 +368,12 @@ test('THE RAGEBRINGER PIN: an epic weapon nobody drops must read out-of-era on a
   // Asserted from the mob catalog rather than by hand: no mob in the catalog drops Ragebringer,
   // so its zone list really is empty and layer 2 really is the whole verdict.
   const droppers = catalog.mobs.filter((m) =>
-    (m.drops ?? []).some((d) => d.trim().toLowerCase() === 'ragebringer')
+    (m.drops ?? []).some((d) => d.trim().toLowerCase() === 'ragebringer'),
   )
   assert.deepEqual(
     droppers.map((m) => m.name),
     [],
-    'the catalog now names a Ragebringer dropper — the pin needs a dropperless epic'
+    'the catalog now names a Ragebringer dropper — the pin needs a dropperless epic',
   )
 
   // Its page's own banner (`{{Epics Era}}`, pinned against the corpus in
@@ -441,7 +460,7 @@ test('the tag layer moves with CURRENT_ERA too — it is the same rank compariso
     classic: ['in-era', 'out-of-era'],
     kunark: ['in-era', 'in-era'],
     velious: ['in-era', 'in-era'],
-    luclin: ['in-era', 'in-era']
+    luclin: ['in-era', 'in-era'],
   }
   for (const era of ERA_ORDER) {
     const [classicTag, kunarkTag] = expected[era]
@@ -479,7 +498,10 @@ test('the era layer resolves the catalog, by name count AND by mob weight', () =
   }
 
   // Measured: 159 of 192 names resolve.
-  assert.ok(names >= 140, `only ${String(names)} of ${String(CATALOG_ZONES.size)} catalog zones resolve`)
+  assert.ok(
+    names >= 140,
+    `only ${String(names)} of ${String(CATALOG_ZONES.size)} catalog zones resolve`,
+  )
   // Measured: 8,128 of 8,214 links, 99.0%. The unresolved tail is one-mob junk, so the weighted
   // floor is the number that actually matters to a user staring at the farm rollup.
   assert.ok(total >= 8_000, `only ${String(total)} mob-zone links`)
@@ -521,7 +543,7 @@ test('the big rooms resolve, and to the right expansion', () => {
     ['The Hole', 'classic'],
     ['Runnyeye', 'classic'], // catalog-only short form added with this wave
     ['Dalnir', 'kunark'], // ditto
-    ['Northern Karana (35)', 'classic']
+    ['Northern Karana (35)', 'classic'],
   ]
   for (const [zone, era] of ANCHORS) assert.equal(zoneEra(zone), era, zone)
 })
@@ -538,7 +560,10 @@ test('every era annotation is one of the three, and most of the table carries on
   // Measured 2026-08-04: 122 of the table's 128 rows are annotated; the 6 that are not are the
   // EQL-new New Sebilis Expedition plus five Live-EQ hub zones (Bazaar, Nexus, Plane of
   // Knowledge, Guild Lobby, Barter Hall). A floor, so adding rows never breaks this.
-  assert.ok(annotated >= 115, `only ${String(annotated)} of ${String(ZONES.length)} rows carry an era`)
+  assert.ok(
+    annotated >= 115,
+    `only ${String(annotated)} of ${String(ZONES.length)} rows carry an era`,
+  )
 })
 
 test('the reverse index has one row per folded spelling — name, alias and catalog name alike', () => {
@@ -547,16 +572,19 @@ test('the reverse index has one row per folded spelling — name, alias and cata
   // three. A collision would mean one catalog string silently claiming another zone's era.
   const seen = new Map<string, string>()
   for (const entry of ZONES) {
-    for (const spelling of [entry.name, ...(entry.aliases ?? []), ...(entry.mobCatalogNames ?? [])]) {
+    for (const spelling of [
+      entry.name,
+      ...(entry.aliases ?? []),
+      ...(entry.mobCatalogNames ?? []),
+    ]) {
       const key = zoneKey(spelling)
       assert.notEqual(key, '', `${entry.short}: "${spelling}" folds to nothing`)
       const prior = seen.get(key)
       assert.ok(
         prior === undefined || prior === entry.short,
-        `"${spelling}" (${entry.short}) collides with ${String(prior)} on key "${key}"`
+        `"${spelling}" (${entry.short}) collides with ${String(prior)} on key "${key}"`,
       )
       seen.set(key, entry.short)
     }
   }
 })
-

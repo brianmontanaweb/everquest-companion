@@ -73,7 +73,7 @@ import {
   hardenSession,
   hardenWebContents,
   reconcileOverlayDisplays,
-  sendToMain
+  sendToMain,
 } from './windows'
 import { watchDisplays } from './windowPlacement'
 import { OVERLAY_KINDS } from '../shared/types'
@@ -146,7 +146,6 @@ noteHeapAfterData()
 // the one case the engine bumps its own epoch for, and its `moduleChanged` cursors carry the
 // re-read without needing a special signal from here.
 
-
 // ---------------------------------------------------------------------------------------
 // DEV-ONLY: the feedback-triage IPC surface (src/main/triage/**).
 // ---------------------------------------------------------------------------------------
@@ -181,7 +180,7 @@ function registerDevTriageIpc(): void {
     .then(({ registerTriageIpc }) => {
       closeDevTriage = registerTriageIpc()
       logInfo(
-        '[everquest-companion] Owner triage IPC registered (EQ_OWNER_TOOLS=1, AWS profile auth).'
+        '[everquest-companion] Owner triage IPC registered (EQ_OWNER_TOOLS=1, AWS profile auth).',
       )
     })
     .catch((err: unknown) => logError('main:triage', err))
@@ -222,7 +221,7 @@ if (!gotSingleInstanceLock) {
   void app.whenReady().then(() => {
     markStartupPhase('appReady')
     logInfo(
-      `[everquest-companion] Channel '${CHANNEL}' - userData ${USER_DATA}, error log ${errorLogPath()}`
+      `[everquest-companion] Channel '${CHANNEL}' - userData ${USER_DATA}, error log ${errorLogPath()}`,
     )
     registerIpc()
     registerDevTriageIpc()
@@ -244,7 +243,7 @@ if (!gotSingleInstanceLock) {
       // The read-back line is DEV-ONLY: it is one line per window load, and its whole job is to
       // make a silent re-raise by Chromium's priority manager visible while someone is watching.
       debug: app.isPackaged ? undefined : (line) => logInfo(`[everquest-companion] ${line}`),
-      onError: (err: unknown) => logError('main:processPriority', err)
+      onError: (err: unknown) => logError('main:processPriority', err),
     })
     // Permissions are a SESSION property; every window here uses the default session (no
     // custom `partition` anywhere — the same fact that lets one eqimg:// handler serve them all).
@@ -260,16 +259,16 @@ if (!gotSingleInstanceLock) {
       bundledImageRoots({
         appPath: app.getAppPath(),
         resourcesPath: process.resourcesPath ?? '',
-        cwd: process.cwd()
-      })
+        cwd: process.cwd(),
+      }),
     )
     logInfo(
-      `[everquest-companion] Bundled wiki images: ${bundledDir ?? 'none (falling back to the runtime cache)'}`
+      `[everquest-companion] Bundled wiki images: ${bundledDir ?? 'none (falling back to the runtime cache)'}`,
     )
     installImageCacheProtocol(protocol, {
       userData: USER_DATA,
       bundledDir,
-      onError: (msg, err) => logError('main:imageCache', { message: msg, err })
+      onError: (msg, err) => logError('main:imageCache', { message: msg, err }),
     })
     // …and `eqspeech://<hash>` from <userData>/speech-cache, beside it and for the same
     // reason: one read-only handler on the default session serves every window. It NEVER
@@ -277,7 +276,7 @@ if (!gotSingleInstanceLock) {
     // (see speech/cache.ts).
     installSpeechCacheProtocol(protocol, {
       userData: USER_DATA,
-      onError: (msg, err) => logError('main:speechCache', { message: msg, err })
+      onError: (msg, err) => logError('main:speechCache', { message: msg, err }),
     })
     markStartupPhase('protocols')
     // ONE SWITCH NOW GOVERNS BOTH OVERLAY APPEARANCE FLAGS (JOS-408), so the two of them have to
@@ -286,7 +285,9 @@ if (!gotSingleInstanceLock) {
     // It changes nothing on screen by construction — the direction it resolves in seeds the twelve
     // per-kind sizes from what every window is already drawing (shared/overlayIndependent.ts).
     if (reconcileOverlayIndependentOnce()) {
-      logInfo('[everquest-companion] Overlay appearance: the two independent flags disagreed and are now both on')
+      logInfo(
+        '[everquest-companion] Overlay appearance: the two independent flags disagreed and are now both on',
+      )
     }
     createMainWindow()
     markStartupPhase('windowCreated')

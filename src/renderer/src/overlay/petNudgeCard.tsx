@@ -36,7 +36,8 @@ import type { PetSummonNudge } from '@shared/combat'
  * tests/copyNoEmDash.test.mts. `/pet who leader` is typed verbatim in the game, so it is quoted as
  * the player must type it and nothing is abbreviated away from it.
  */
-export const PET_NUDGE_TEXT = 'Pet summoned - order it once or type /pet who leader so the meter can see it'
+export const PET_NUDGE_TEXT =
+  'Pet summoned - order it once or type /pet who leader so the meter can see it'
 
 /**
  * The card. Nothing to configure: it either has a nudge to draw or renders nothing at all, which is
@@ -67,7 +68,7 @@ export function PetNudgeCard({ nudge }: { nudge: PetSummonNudge | undefined }): 
         boxShadow: '0 1px 4px rgba(0,0,0,0.45)',
         fontSize: 10,
         lineHeight: 1.3,
-        color: 'rgba(255,255,255,0.86)'
+        color: 'rgba(255,255,255,0.86)',
       }}
     >
       {PET_NUDGE_TEXT}

@@ -31,7 +31,7 @@ import {
   spellLineageLine,
   spellLineageMembers,
   spellStatRows,
-  type SpellDetail
+  type SpellDetail,
 } from '../src/shared/spellDetail'
 import { parseWornFocus, type WornFocus } from '../src/shared/wornFocus'
 
@@ -49,7 +49,7 @@ function bare(over: Partial<SpellDetail> = {}): SpellDetail {
     lineage: null,
     linePath: null,
     combo: [],
-    ...over
+    ...over,
   }
 }
 
@@ -88,7 +88,11 @@ test('D3 a STATED ZERO is a fact and draws its row (mana 0, cast 0 - every bard 
 
 test('D4 the values are the source’s own words, never a re-spelling of them', () => {
   const rows = spellStatRows(
-    bare({ durationText: 'Permanent', targetType: 'Single Friendly (or Self)', spellType: 'Resist Buff' })
+    bare({
+      durationText: 'Permanent',
+      targetType: 'Single Friendly (or Self)',
+      spellType: 'Resist Buff',
+    }),
   )
   assert.equal(rows.find((r) => r.id === 'duration')?.value, 'Permanent')
   assert.equal(rows.find((r) => r.id === 'target')?.value, 'Single Friendly (or Self)')
@@ -103,10 +107,18 @@ test('D5 the row order is the spell window’s, whichever subset is present', ()
     recastMs: 1500,
     mana: 0,
     durationText: '3 ticks',
-    instrumentEnhanced: 'Yes'
+    instrumentEnhanced: 'Yes',
   })
   // Recast sits beside cast: the casting cycle is the two of them read as one sentence (JOS-444).
-  assert.deepEqual(idsOf(full), ['type', 'target', 'cast', 'recast', 'mana', 'duration', 'instrument'])
+  assert.deepEqual(idsOf(full), [
+    'type',
+    'target',
+    'cast',
+    'recast',
+    'mana',
+    'duration',
+    'instrument',
+  ])
 })
 
 // ─────────────────────────── 2. the real DB, read end to end ─────────────────────────────────
@@ -143,7 +155,10 @@ test('D8 the derived effect classes come off the effect list, not off the name',
   // `Charm` reads its own effect line; the JOS-251 law is that a name stem would have matched
   // items and near-misses instead.
   const charm = buildSpellDetail(db, 'Charm')
-  assert.ok(charm.effectClasses.includes('charm'), `Charm effect classes: ${charm.effectClasses.join(',')}`)
+  assert.ok(
+    charm.effectClasses.includes('charm'),
+    `Charm effect classes: ${charm.effectClasses.join(',')}`,
+  )
   assert.ok(spellEffectClassLabels(charm).includes('charm'))
   // A pure DIRECT heal derives no roster at all - and an empty list draws no line. `Kragg's Salve`
   // states `Increase Hitpoints by 688` and nothing else, which is the shape this assertion is about.
@@ -231,7 +246,10 @@ test('D14 an unsuffixed name whose line HAS siblings lists them, without claimin
 test('D15 an observed rank of a DIFFERENT line never joins this one', () => {
   const d = buildSpellDetail(db, 'Rune III', ['Clarity III', 'Mesmerization III'])
   const members = d.lineage?.members.map((m) => m.name) ?? []
-  assert.ok(members.every((m) => m.toLowerCase().startsWith('rune')), members.join(' | '))
+  assert.ok(
+    members.every((m) => m.toLowerCase().startsWith('rune')),
+    members.join(' | '),
+  )
 })
 
 test('D16 a name the DB and the log BOTH carry is not listed twice', () => {
@@ -263,7 +281,11 @@ test('D18 the record carries the row’s own figures, read at the level the spel
   assert.ok(d.metrics?.heal !== undefined && d.metrics.healPerMana !== undefined)
   const entry = db.spells.find((s) => s.name === 'Superior Healing')
   assert.ok(entry)
-  assert.deepEqual(d.metrics, spellMetricsAt(entry, 30), 'the card reads what the row reads, from one function')
+  assert.deepEqual(
+    d.metrics,
+    spellMetricsAt(entry, 30),
+    'the card reads what the row reads, from one function',
+  )
 
   // A nuke reads out of the same seam with the damage half of the same shape.
   const nuke = buildSpellDetail(db, 'Ice Comet')
@@ -314,7 +336,7 @@ const MASK = ((): WornFocus => {
     'Limit Effect: Current HP',
     'Limit Max Duration: 0s',
     'Limit Type: Detrimental',
-    'Limit Target: Exclude Target AE'
+    'Limit Target: Exclude Target AE',
   ])
   assert.ok(parsed)
   return parsed
@@ -327,12 +349,20 @@ test('D21 the card carries a THIRD reading with the player`s gear on, and names 
   assert.deepEqual(worn.metrics, plain.metrics)
   // The third is the same spell as you CAST it: its L18 gain-level figure plus the middle of the
   // 1..20 band the page states.
-  assert.equal(worn.metricsWithFocus?.damage, Number(((plain.metrics?.damage ?? 0) * 1.105).toFixed(1)))
+  assert.equal(
+    worn.metricsWithFocus?.damage,
+    Number(((plain.metrics?.damage ?? 0) * 1.105).toFixed(1)),
+  )
   assert.deepEqual(worn.focusSources, [
-    { side: 'damage', effect: 'Improved Damage II', item: 'Polished Mithril Mask (Exaltation)', pct: 10.5 }
+    {
+      side: 'damage',
+      effect: 'Improved Damage II',
+      item: 'Polished Mithril Mask (Exaltation)',
+      pct: 10.5,
+    },
   ])
   assert.deepEqual(spellFocusLines(worn), [
-    'worn +11% damage · Improved Damage II · Polished Mithril Mask (Exaltation)'
+    'worn +11% damage · Improved Damage II · Polished Mithril Mask (Exaltation)',
   ])
   // No em dashes anywhere near a player (AGENTS.md).
   assert.doesNotMatch(spellFocusLines(worn)[0], /[–—]/)
@@ -368,7 +398,7 @@ test('D19 a spell with no hitpoint line states no figures at all — never a zer
     assert.equal(
       rec.metrics === undefined,
       rec.metricsLevel === undefined,
-      `${s.name}: figures and the level they were read at are one statement`
+      `${s.name}: figures and the level they were read at are one statement`,
     )
   }
 })

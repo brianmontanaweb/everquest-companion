@@ -32,7 +32,7 @@ import {
   CURRENT_SCHEMA_VERSION,
   SCHEMA_VERSION_KEY,
   migrateStoreData,
-  type StoreData
+  type StoreData,
 } from '../src/main/storeMigrations'
 import { DEFAULT_PERF_HUD_PREFS } from '../src/shared/perf'
 
@@ -56,16 +56,31 @@ test('a v6 store gains the perfHud blob at its default, and nothing else moves',
   // contiguously from there. Pinning the whole list would make every future migration edit a
   // test about a different feature.
   assert.equal(applied[0], 7, 'a v6 store enters the chain at the perf-HUD step')
-  assert.deepEqual(applied, Array.from({ length: applied.length }, (_, i) => i + 7))
+  assert.deepEqual(
+    applied,
+    Array.from({ length: applied.length }, (_, i) => i + 7),
+  )
 
   assert.deepEqual(data['perfHud'], DEFAULT_PERF_HUD_PREFS)
   assert.deepEqual(data['perfHud'], { enabled: false })
 
   // Everything the user already had is byte-identical: this step ADDS, it never edits. The
   // analytics answer especially — an upgrade must never quietly re-enable something declined.
-  const untouched = ['byCharacter', 'activeLogPath', 'eqInstallDir', 'windowBounds', 'alerts',
-    'alertPrefs', 'alertSoundMigration', 'overlays', 'updateChannel', 'updateLastCheckedAt',
-    'cursorRing', 'overlayAutoHide', 'telemetry']
+  const untouched = [
+    'byCharacter',
+    'activeLogPath',
+    'eqInstallDir',
+    'windowBounds',
+    'alerts',
+    'alertPrefs',
+    'alertSoundMigration',
+    'overlays',
+    'updateChannel',
+    'updateLastCheckedAt',
+    'cursorRing',
+    'overlayAutoHide',
+    'telemetry',
+  ]
   for (const key of untouched) {
     assert.deepEqual(data[key], before[key], `${key} must come through untouched`)
   }
@@ -77,7 +92,7 @@ test('a v6 store gains the perfHud blob at its default, and nothing else moves',
     engine: was['engine'],
     voiceId: was['voiceId'],
     rate: was['rate'],
-    volume: was['volume']
+    volume: was['volume'],
   })
 })
 
@@ -85,7 +100,12 @@ test('AN UPGRADING USER DOES NOT GET THE HUD SWITCHED ON FOR THEM', () => {
   // The one way this step could be wrong in a way nobody notices: deciding that someone who has
   // used the app for months would "probably like" a live meter, and starting two timers for
   // them. Off means off, on every path into this version.
-  for (const name of ['store-v1-first-build.json', 'store-v1-pre-framework.json', 'store-v5-telemetry.json', V6]) {
+  for (const name of [
+    'store-v1-first-build.json',
+    'store-v1-pre-framework.json',
+    'store-v5-telemetry.json',
+    V6,
+  ]) {
     const { data } = migrateStoreData(fixture(name))
     assert.deepEqual(data['perfHud'], { enabled: false }, `${name}: the HUD stays off`)
   }

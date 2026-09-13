@@ -45,8 +45,8 @@ function pickerRows(page: Page): Promise<PickerRow[]> {
   return page.evaluate(() =>
     [...document.querySelectorAll('li[data-value]')].map((el) => ({
       value: el.getAttribute('data-value') ?? '',
-      label: (el as HTMLElement).innerText.replace(/\s+/g, ' ').trim()
-    }))
+      label: (el as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
+    })),
   )
 }
 
@@ -83,12 +83,12 @@ async function scriptOneHit(page: Page, log: FixtureLog): Promise<boolean> {
   const total = await settle(
     async () => (await snapshot(page)).zoneSessions.find((z) => z.id === 'zone')?.total ?? 0,
     (t) => t > 0,
-    { timeoutMs: 25_000 }
+    { timeoutMs: 25_000 },
   )
   return check(
     'a scripted hit reaches the meter’s live Overall, so the click has a stay to close',
     total > 0,
-    `live zone total ${String(total)}`
+    `live zone total ${String(total)}`,
   )
 }
 
@@ -105,15 +105,25 @@ export async function stepOneClickSplitsBoth(page: Page, log: FixtureLog): Promi
 
   const beforeMeter = await overallRows(page)
   const beforeLoot = await lootSegments(page)
-  if (!check('the ledger offers the one-click "New session"', (await countOf(page, NEW_SESSION)) === 1)) return
+  if (
+    !check(
+      'the ledger offers the one-click "New session"',
+      (await countOf(page, NEW_SESSION)) === 1,
+    )
+  )
+    return
 
   await page.click(NEW_SESSION, { timeout: 10_000 })
 
-  const afterLoot = await settle(() => lootSegments(page), (n) => n > beforeLoot, { timeoutMs: 10_000 })
+  const afterLoot = await settle(
+    () => lootSegments(page),
+    (n) => n > beforeLoot,
+    { timeoutMs: 10_000 },
+  )
   check(
     'one press opens one more session in the LOOT picker',
     afterLoot === beforeLoot + 1,
-    `${String(beforeLoot)} -> ${String(afterLoot)}`
+    `${String(beforeLoot)} -> ${String(afterLoot)}`,
   )
 
   const afterMeter = await overallRows(page)
@@ -123,7 +133,7 @@ export async function stepOneClickSplitsBoth(page: Page, log: FixtureLog): Promi
     !check(
       '…and THE SAME press opens one more stay in the METER’s Overall picker — one instant, both subsystems',
       gained.length === 1,
-      `${String(beforeMeter.length)} -> ${String(afterMeter.length)} rows; new: ${gained.map((r) => r.value).join(', ') || 'none'}`
+      `${String(beforeMeter.length)} -> ${String(afterMeter.length)} rows; new: ${gained.map((r) => r.value).join(', ') || 'none'}`,
     )
   ) {
     return
@@ -131,11 +141,11 @@ export async function stepOneClickSplitsBoth(page: Page, log: FixtureLog): Promi
   check(
     '…and the meter calls it a SESSION, the word loot and leveling already print for this click',
     /-\s*session\b/i.test(gained[0].label),
-    gained[0].label
+    gained[0].label,
   )
   check(
     '…while the live stay it opened is back to zero — the Details! reset feel, without losing the old record',
-    ((await snapshot(page)).zoneSessions.find((z) => z.id === 'zone')?.total ?? -1) === 0
+    ((await snapshot(page)).zoneSessions.find((z) => z.id === 'zone')?.total ?? -1) === 0,
   )
 
   // Leave the ledger where the next step expects it: the whole record, nothing hidden.

@@ -37,7 +37,7 @@ export function classifyFailure(raw: unknown): TelemetryFailureClass {
   if (/enospc|erofs|eacces|eperm|emfile|no space|disk|permission denied/.test(text)) return 'disk'
   if (
     /enotfound|econnreset|econnrefused|ehostunreach|enetunreach|epipe|socket|dns|tls|certificate|fetch failed|network|http \d{3}|short read|empty body|status code/.test(
-      text
+      text,
     )
   ) {
     return 'network'

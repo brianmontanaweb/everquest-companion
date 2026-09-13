@@ -44,7 +44,7 @@ import {
   type EvSessionHeartbeat,
   type StartupReplayStats,
   type StartupStutterStats,
-  type TelemetryEvent
+  type TelemetryEvent,
 } from './telemetry'
 import {
   FREE_MEM_GB_EDGES,
@@ -52,13 +52,13 @@ import {
   WORKING_SET_MB_EDGES,
   type LiveStallStats,
   type SessionStateStats,
-  type TailReadStats
+  type TailReadStats,
 } from './telemetryLive'
 import {
   PERF_SEAMS,
   type GcStallStats,
   type SeamStallStats,
-  type SeamStatsEntry
+  type SeamStatsEntry,
 } from './perfSeams'
 import { bucket, fail, flag, whole, type Validated } from './telemetryValidateBase'
 
@@ -112,7 +112,7 @@ function optionalStartup(o: Record<string, unknown>): Validated<StartupReplaySta
     dutyPct: duty.value,
     maxBlockMs: maxBlock.value,
     blocksOver50: blocks.value,
-    logSizeBucket: logSize.value
+    logSizeBucket: logSize.value,
   })
 }
 
@@ -128,7 +128,7 @@ function optionalStartup(o: Record<string, unknown>): Validated<StartupReplaySta
  */
 function startupDiscriminators(
   raw: Record<string, unknown>,
-  base: StartupReplayStats
+  base: StartupReplayStats,
 ): Validated<StartupReplayStats> {
   const newBytes = optionalBucket(raw.newBytesBucket, 'startup.newBytesBucket', NEW_BYTES_EDGES)
   if (!newBytes.ok) return newBytes
@@ -142,8 +142,8 @@ function startupDiscriminators(
       ...base,
       ...(newBytes.value === undefined ? {} : { newBytesBucket: newBytes.value }),
       ...(stutter.value === undefined ? {} : { stutter: stutter.value }),
-      ...(firstMb.value === undefined ? {} : { firstMbMs: firstMb.value })
-    }
+      ...(firstMb.value === undefined ? {} : { firstMbMs: firstMb.value }),
+    },
   }
 }
 
@@ -157,7 +157,7 @@ function optionalWhole(raw: unknown, field: string, max: number): Validated<numb
 function optionalBucket(
   raw: unknown,
   field: string,
-  edges: readonly number[]
+  edges: readonly number[],
 ): Validated<number | undefined> {
   if (raw === undefined || raw === null) return { ok: true, value: undefined }
   return bucket(raw, field, edges)
@@ -213,7 +213,7 @@ function optionalLive(o: Record<string, unknown>): Validated<LiveStallStats | un
     p95Bucket: p95.value,
     maxBucket: max.value,
     over100: over100.value,
-    over500: over500.value
+    over500: over500.value,
   }
   if (coincident.value !== undefined) value.coincident = coincident.value
   return { ok: true, value }
@@ -242,14 +242,21 @@ function optionalTail(o: Record<string, unknown>): Validated<TailReadStats | und
   if (!over100.ok) return over100
   const over500 = whole(raw.over500, 'tail.over500', MAX_COUNT)
   if (!over500.ok) return over500
-  return tailBytes(raw, { reads: reads.value, reopens: reopens.value, p95Bucket: p95.value, maxBucket: max.value, over100: over100.value, over500: over500.value })
+  return tailBytes(raw, {
+    reads: reads.value,
+    reopens: reopens.value,
+    p95Bucket: p95.value,
+    maxBucket: max.value,
+    over100: over100.value,
+    over500: over500.value,
+  })
 }
 
 /** The tail group's two SIZE buckets, split off so neither function is past the repo's factoring
  *  ceilings. Both are required members of the group — see `optionalTail`. */
 function tailBytes(
   raw: Record<string, unknown>,
-  base: Omit<TailReadStats, 'deltaBytesBucket' | 'logSizeBucket'>
+  base: Omit<TailReadStats, 'deltaBytesBucket' | 'logSizeBucket'>,
 ): Validated<TailReadStats> {
   const delta = bucket(raw.deltaBytesBucket, 'tail.deltaBytesBucket', NEW_BYTES_EDGES)
   if (!delta.ok) return delta
@@ -289,8 +296,8 @@ function optionalState(o: Record<string, unknown>): Validated<SessionStateStats 
       presenceOn: presence.value,
       ringOn: ring.value,
       freeMemBucket: freeMem.value,
-      workingSetBucket: workingSet.value
-    }
+      workingSetBucket: workingSet.value,
+    },
   }
 }
 
@@ -323,8 +330,8 @@ function optionalGc(o: Record<string, unknown>): Validated<GcStallStats | undefi
       majorPauses: major.value,
       maxBucket: max.value,
       totalBucket: total.value,
-      over100: over100.value
-    }
+      over100: over100.value,
+    },
   }
 }
 
@@ -380,7 +387,7 @@ function seamEntry(raw: unknown, seam: string): Validated<SeamStatsEntry> {
  * across and accepts the batch exactly as before (THE ADDITIVE-FIELD RULE).
  */
 function liveRiders(
-  o: Record<string, unknown>
+  o: Record<string, unknown>,
 ): Validated<Pick<EvSessionHeartbeat, 'live' | 'tail' | 'state' | 'gc' | 'seams'>> {
   const live = optionalLive(o)
   if (!live.ok) return live
@@ -399,8 +406,8 @@ function liveRiders(
       ...(tail.value === undefined ? {} : { tail: tail.value }),
       ...(state.value === undefined ? {} : { state: state.value }),
       ...(gc.value === undefined ? {} : { gc: gc.value }),
-      ...(seams.value === undefined ? {} : { seams: seams.value })
-    }
+      ...(seams.value === undefined ? {} : { seams: seams.value }),
+    },
   }
 }
 
@@ -434,7 +441,7 @@ export function vSessionEnd(o: Record<string, unknown>): Validated<TelemetryEven
     t: 'sessionEnd',
     durationMs: ms.value,
     viewsVisited: views.value,
-    ...riders.value
+    ...riders.value,
   }
   if (lines.value !== undefined) value.linesParsed = lines.value
   if (startup.value !== undefined) value.startup = startup.value

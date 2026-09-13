@@ -96,6 +96,6 @@ export function createDraftStore(): DraftStore {
       // Copied first: a subscriber that unsubscribes while being notified must not shorten the
       // list being walked (the useTimeslice store's own rule).
       for (const cb of [...listeners]) cb()
-    }
+    },
   }
 }

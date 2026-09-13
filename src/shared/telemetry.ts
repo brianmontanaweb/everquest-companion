@@ -126,7 +126,7 @@ export const TELEMETRY_VIEWS = [
   // once, which is exactly what JOS-327 did.
   'character',
   'preferences',
-  'triage'
+  'triage',
 ] as const
 export type TelemetryView = (typeof TELEMETRY_VIEWS)[number]
 
@@ -163,7 +163,7 @@ export const TELEMETRY_OVERLAY_KINDS = [
   // reason: the enum is CLOSED, the ingest Lambda validates through this module, and a batch
   // carrying a value the server has not learned yet is refused WHOLE with a 400 the client classes
   // as permanent and drops. The server ships first.
-  'conCard'
+  'conCard',
 ] as const
 export type TelemetryOverlayKind = (typeof TELEMETRY_OVERLAY_KINDS)[number]
 
@@ -185,7 +185,7 @@ export const TELEMETRY_FEATURES = [
   'procAnalyticsOpen',
   'questFavorite',
   'lootFilter',
-  'profileSwitch'
+  'profileSwitch',
 ] as const
 export type TelemetryFeature = (typeof TELEMETRY_FEATURES)[number]
 
@@ -285,10 +285,10 @@ export const TELEMETRY_FUNNEL_STEPS: Readonly<Record<TelemetryFunnel, readonly s
     'logDetected',
     'firstParse',
     'firstNonOverviewView',
-    'firstOverlayEnabled'
+    'firstOverlayEnabled',
   ],
   'voice-install': ['engineSelected', 'downloadStarted', 'downloadCompleted', 'firstUtterance'],
-  feedback: ['dialogOpened', 'sendPressed', 'sendFinished']
+  feedback: ['dialogOpened', 'sendPressed', 'sendFinished'],
 }
 
 /** How a step ended, when it ended at all. Absent means "reached", which is the common case. */
@@ -301,7 +301,7 @@ export const TELEMETRY_FAILURE_CLASSES = [
   'checksum',
   'disk',
   'timeout',
-  'other'
+  'other',
 ] as const
 export type TelemetryFailureClass = (typeof TELEMETRY_FAILURE_CLASSES)[number]
 
@@ -358,14 +358,53 @@ export type TelemetryErrorView = (typeof TELEMETRY_ERROR_VIEWS)[number]
  * rejected rather than the crumb dropped. (`engine:cycled` is the JOS-519 addition.)
  */
 export const TELEMETRY_BREADCRUMB_KINDS = [
-  'zone', 'loot', 'offer', 'trade', 'level', 'aaGain', 'aaSpend', 'aaPotion', 'aaActivate',
-  'death', 'playerDeath', 'damage', 'heal', 'healUnstated', 'mitigation', 'miss', 'resist',
-  'charm', 'uncharm', 'cc', 'petClaim', 'petSay', 'castBegin', 'castFizzle', 'castInterrupted',
-  'buffApply', 'buffFade', 'buffWearOff', 'illusionFade', 'buffExpired', 'spellEmote',
-  'stanceChange', 'invocationChange', 'spellMemorize', 'spellForget', 'spellSet',
-  'consider', 'poisonProc', 'poisonCoat', 'poisonDry',
-  'epoch', 'unknown',
-  'engine:spawned', 'engine:ready', 'engine:live', 'engine:gone', 'engine:cycled'
+  'zone',
+  'loot',
+  'offer',
+  'trade',
+  'level',
+  'aaGain',
+  'aaSpend',
+  'aaPotion',
+  'aaActivate',
+  'death',
+  'playerDeath',
+  'damage',
+  'heal',
+  'healUnstated',
+  'mitigation',
+  'miss',
+  'resist',
+  'charm',
+  'uncharm',
+  'cc',
+  'petClaim',
+  'petSay',
+  'castBegin',
+  'castFizzle',
+  'castInterrupted',
+  'buffApply',
+  'buffFade',
+  'buffWearOff',
+  'illusionFade',
+  'buffExpired',
+  'spellEmote',
+  'stanceChange',
+  'invocationChange',
+  'spellMemorize',
+  'spellForget',
+  'spellSet',
+  'consider',
+  'poisonProc',
+  'poisonCoat',
+  'poisonDry',
+  'epoch',
+  'unknown',
+  'engine:spawned',
+  'engine:ready',
+  'engine:live',
+  'engine:gone',
+  'engine:cycled',
 ] as const
 export type TelemetryBreadcrumbKind = (typeof TELEMETRY_BREADCRUMB_KINDS)[number]
 
@@ -401,7 +440,9 @@ export const MODULE_CRUMB_RE = /^module:[a-zA-Z]{1,24}$/
 
 /** Does this string name a breadcrumb kind the wire admits — fixed member or module movement? */
 export function isBreadcrumbKind(kind: string): boolean {
-  return (TELEMETRY_BREADCRUMB_KINDS as readonly string[]).includes(kind) || MODULE_CRUMB_RE.test(kind)
+  return (
+    (TELEMETRY_BREADCRUMB_KINDS as readonly string[]).includes(kind) || MODULE_CRUMB_RE.test(kind)
+  )
 }
 
 /** How old the session was when it threw. 1 min / 5 min / 30 min / 2 h ⇒ five buckets. A raw
@@ -515,7 +556,9 @@ export const CHAR_COUNT_EDGES = [1, 2, 3, 5, 9] as const
 /** Size of the tailed log on disk. A raw byte count is a fingerprint; a decade is not. */
 // (1 MB / 10 MB / 100 MB / 512 MB / 2 GB — spelled on one line so the section stays inside the
 //  repo's 400-code-line ceiling now that JOS-364's four ladders share it. Same numbers.)
-export const LOG_SIZE_BYTES_EDGES = [1_048_576, 10_485_760, 104_857_600, 536_870_912, 2_147_483_648] as const
+export const LOG_SIZE_BYTES_EDGES = [
+  1_048_576, 10_485_760, 104_857_600, 536_870_912, 2_147_483_648,
+] as const
 /** How many alert definitions the user keeps. */
 export const ALERT_COUNT_EDGES = [1, 5, 10, 25, 50] as const
 /**
@@ -528,7 +571,9 @@ export const ALERT_COUNT_EDGES = [1, 5, 10, 25, 50] as const
  * It is bucketed for the same reason the size is — a raw byte count is a fingerprint of one
  * player's evening; a decade is not.
  */
-export const NEW_BYTES_EDGES = [65_536, 262_144, 1_048_576, 4_194_304, 16_777_216, 67_108_864, 268_435_456] as const
+export const NEW_BYTES_EDGES = [
+  65_536, 262_144, 1_048_576, 4_194_304, 16_777_216, 67_108_864, 268_435_456,
+] as const
 /**
  * OBSERVED TIMER DRIFT DURING THE REPLAY (JOS-57 scope addition) — 2 / 5 / 10 / 25 / 50 / 100 /
  * 250 ms ⇒ eight buckets.
@@ -571,7 +616,7 @@ export function bucketOf(value: number, edges: readonly number[]): number {
 /** The half-open range bucket `i` covers: `[lo, hi)`, with `hi: null` for the open top. */
 export function bucketRange(
   edges: readonly number[],
-  i: number
+  i: number,
 ): { lo: number; hi: number | null } {
   return { lo: i === 0 ? 0 : edges[i - 1], hi: i < edges.length ? edges[i] : null }
 }
@@ -622,8 +667,7 @@ export const MAX_REPLAY_EVENTS = 100_000_000
 export const MAX_DURATION_MS = 30 * 24 * 60 * 60 * 1000
 
 /** `crypto.randomUUID()` shape — the analyticsId's only permitted spelling. */
-export const UUID_V4_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+export const UUID_V4_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 /** `app.getVersion()` — semver, optionally with the CI channel prerelease tag. */
 export const APP_VERSION_RE = /^\d+\.\d+\.\d+(?:-[\w.]+)?$/
 
@@ -1091,7 +1135,7 @@ export const TELEMETRY_EVENT_KINDS = [
   // below them, and a reader who has just been told what the app measures should meet the two
   // events that say "stop" in the same breath as the sentence explaining them.
   'optOut',
-  'optIn'
+  'optIn',
 ] as const
 
 /** The two kinds a SWITCH FLIP produces. One list, so the client, the doc and the rollup agree. */
@@ -1185,7 +1229,7 @@ export const DEFAULT_TELEMETRY_PREFS: TelemetryPrefs = {
   enabled: true,
   noticeShown: false,
   analyticsId: null,
-  funnelsDone: []
+  funnelsDone: [],
 }
 
 /** The one spelling of a once-ever mark, so the writer and the reader cannot disagree. */
@@ -1196,7 +1240,7 @@ export function funnelStepMark(funnel: TelemetryFunnel, step: string): string {
 /** Every mark that could ever be legal — the normalizer's allowlist, built from the schema. */
 export function allFunnelStepMarks(): string[] {
   return TELEMETRY_FUNNELS.flatMap((funnel) =>
-    TELEMETRY_FUNNEL_STEPS[funnel].map((step) => funnelStepMark(funnel, step))
+    TELEMETRY_FUNNEL_STEPS[funnel].map((step) => funnelStepMark(funnel, step)),
   )
 }
 
@@ -1221,7 +1265,7 @@ export function normalizeTelemetryPrefs(value: unknown): TelemetryPrefs {
     // ALLOWLISTED, deduped and canonically ordered: the marks are schema constants, so an
     // unrecognized one (a hand edit, a downgrade from a build with more steps) is DROPPED rather
     // than carried. A dropped mark can only ever cost one duplicate event, never a wrong one.
-    funnelsDone: normalizeFunnelsDone(v.funnelsDone)
+    funnelsDone: normalizeFunnelsDone(v.funnelsDone),
   }
 }
 

@@ -57,7 +57,7 @@ function endpointTransport<Out, In>(self: Endpoint<Out, In>): Transport<Out, In>
     },
     get closed() {
       return self.closed
-    }
+    },
   }
 }
 

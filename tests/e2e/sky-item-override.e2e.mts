@@ -92,7 +92,7 @@ function filteredCount(page: Page): Promise<number | null> {
 function haveText(page: Page, item: string): Promise<string | null> {
   return page.evaluate((name) => {
     const row = [...document.querySelectorAll('tr')].find((tr) =>
-      (tr.cells[1]?.textContent ?? '').trim().startsWith(name)
+      (tr.cells[1]?.textContent ?? '').trim().startsWith(name),
     )
     if (!row) return null
     return /^\s*(\d+\/\d+)/.exec(row.cells[2]?.textContent ?? '')?.[1] ?? null
@@ -112,14 +112,23 @@ async function openTheQuest(page: Page): Promise<boolean> {
   await page.click(NAV_SKY, { timeout: 30_000 })
   const bar = await page.waitForSelector(SEARCH, { timeout: 60_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!check('the Sky tab opens on its filter bar', bar)) return false
   await page.fill(`${SEARCH} input`, QUEST)
-  const only = await settle(() => filteredCount(page), (n) => n === 1, { timeoutMs: 30_000 })
-  if (!check(`the search narrows to ${QUEST} alone`, only === 1, `filtered=${String(only)}`)) return false
+  const only = await settle(
+    () => filteredCount(page),
+    (n) => n === 1,
+    { timeoutMs: 30_000 },
+  )
+  if (!check(`the search narrows to ${QUEST} alone`, only === 1, `filtered=${String(only)}`))
+    return false
   await page.click(SUMMARY, { timeout: 15_000 })
-  const have = await settle(() => haveText(page, ITEM), (v) => v !== null, { timeoutMs: 20_000 })
+  const have = await settle(
+    () => haveText(page, ITEM),
+    (v) => v !== null,
+    { timeoutMs: 20_000 },
+  )
   return check('…and expanding it draws the item table', have !== null, String(have))
 }
 
@@ -128,11 +137,15 @@ async function stepLootedOnce(page: Page, log: FixtureLog): Promise<boolean> {
   const before = await haveText(page, ITEM)
   check('with an empty log the item is not held at all', before === '0/1', String(before))
   log.appendAt(new Date(), LOOT)
-  const after = await settle(() => haveText(page, ITEM), (v) => v === '1/1', { timeoutMs: 45_000 })
+  const after = await settle(
+    () => haveText(page, ITEM),
+    (v) => v === '1/1',
+    { timeoutMs: 45_000 },
+  )
   return check(
     `LOOTING ${ITEM} MAKES THE APP COUNT IT — the reporter's starting position`,
     after === '1/1',
-    String(after)
+    String(after),
   )
 }
 
@@ -145,17 +158,25 @@ async function stepStateZero(page: Page): Promise<boolean> {
   const filled = await settle(
     () => page.inputValue(INPUT).catch(() => null),
     (v) => v === '1',
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
-  check('the editor opens pre-filled with what the app thinks you hold', filled === '1', String(filled))
+  check(
+    'the editor opens pre-filled with what the app thinks you hold',
+    filled === '1',
+    String(filled),
+  )
   await page.fill(INPUT, '0')
   await page.click(SAVE, { timeout: 15_000 })
-  const have = await settle(() => haveText(page, ITEM), (v) => v === '0/1', { timeoutMs: 20_000 })
+  const have = await settle(
+    () => haveText(page, ITEM),
+    (v) => v === '0/1',
+    { timeoutMs: 20_000 },
+  )
   if (
     !check(
       'STATING 0 BY HAND IS THE NUMBER THE TAB COUNTS — through IPC, the store and back',
       have === '0/1',
-      String(have)
+      String(have),
     )
   ) {
     return false
@@ -163,7 +184,7 @@ async function stepStateZero(page: Page): Promise<boolean> {
   check('…and the row says the number is the user`s', (await chipCount(page, CHIP)) === 0)
   return check(
     '…and the tab`s counts line says one count is stated by hand',
-    (await chipCount(page, SUMMARY_CHIP)) === 1
+    (await chipCount(page, SUMMARY_CHIP)) === 1,
   )
 }
 
@@ -174,26 +195,34 @@ async function stepStateZero(page: Page): Promise<boolean> {
  */
 async function stepLootAfterCounts(page: Page, log: FixtureLog): Promise<void> {
   log.appendAt(new Date(Date.now() + 5 * 60_000), LOOT)
-  const have = await settle(() => haveText(page, ITEM), (v) => v === '1/1', { timeoutMs: 45_000 })
+  const have = await settle(
+    () => haveText(page, ITEM),
+    (v) => v === '1/1',
+    { timeoutMs: 45_000 },
+  )
   if (
     !check(
       'A DROP AFTER THE STATEMENT COUNTS ON TOP OF IT — the statement is an instant, not a pin',
       have === '1/1',
-      String(have)
+      String(have),
     )
   ) {
     return
   }
   check(
     '…with the statement still in force, so the row still says where the number came from',
-    (await chipCount(page, CHIP)) === 0
+    (await chipCount(page, CHIP)) === 0,
   )
 }
 
 /** STEP 4 — the take-back, off the chip that made the statement visible. */
 async function stepTakeItBack(page: Page): Promise<void> {
   await page.click(CHIP_CLEAR, { timeout: 15_000 })
-  const gone = await settle(() => chipCount(page, CHIP), (v) => v === null, { timeoutMs: 20_000 })
+  const gone = await settle(
+    () => chipCount(page, CHIP),
+    (v) => v === null,
+    { timeoutMs: 20_000 },
+  )
   check('CLEARING THE STATEMENT REMOVES IT FROM THE ROW', gone === null, String(gone))
   check('…and from the tab`s counts line', (await chipCount(page, SUMMARY_CHIP)) === null)
   // The log saw TWO of these drop and the quest needs one, so the witnesses answer 1/1 again. The

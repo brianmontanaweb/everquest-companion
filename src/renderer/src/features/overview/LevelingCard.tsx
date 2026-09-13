@@ -69,7 +69,12 @@ import { DashCard, QuietNote } from '../combat/combatShared'
 import { ACTIVE_TIME_TITLE, OFFLINE_TITLE } from '../leveling/rangeStatsRows'
 import { formatTime } from '../../lib/formatDate'
 import type { OverviewLevelingState } from './overviewLevelingData'
-import { SPARK_BUCKETS, sparkColor, type LevelingSpark, type LevelingTile } from './overviewLevelingTiles'
+import {
+  SPARK_BUCKETS,
+  sparkColor,
+  type LevelingSpark,
+  type LevelingTile,
+} from './overviewLevelingTiles'
 import { Tooltip } from '../../lib/Tooltip'
 
 export interface LevelingCardProps {
@@ -103,13 +108,31 @@ function OpenLeveling({ onOpenLeveling }: { onOpenLeveling: () => void }): JSX.E
 /** The label row: which window this is, plus the chips that qualify it. */
 function LevelingChips({ state }: { state: OverviewLevelingState }): JSX.Element {
   return (
-    <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap sx={{ minWidth: 0 }}>
-      <Typography variant="caption" color="text.secondary" data-testid="overview-leveling-window" noWrap>
+    <Stack
+      direction="row"
+      spacing={0.75}
+      alignItems="center"
+      flexWrap="wrap"
+      useFlexGap
+      sx={{ minWidth: 0 }}
+    >
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        data-testid="overview-leveling-window"
+        noWrap
+      >
         Last hour
       </Typography>
       {state.atCap && (
         <Tooltip title={AT_CAP_TITLE}>
-          <Chip size="small" color="warning" variant="outlined" label="at cap" sx={{ height: 20 }} />
+          <Chip
+            size="small"
+            color="warning"
+            variant="outlined"
+            label="at cap"
+            sx={{ height: 20 }}
+          />
         </Tooltip>
       )}
       {state.clipped && (
@@ -145,7 +168,12 @@ function StatTile({ tile }: { tile: LevelingTile }): JSX.Element {
           <Typography
             variant="h5"
             noWrap
-            sx={{ color: 'primary.main', lineHeight: 1.15, fontVariantNumeric: 'tabular-nums', minWidth: 0 }}
+            sx={{
+              color: 'primary.main',
+              lineHeight: 1.15,
+              fontVariantNumeric: 'tabular-nums',
+              minWidth: 0,
+            }}
           >
             {tile.value}
           </Typography>
@@ -155,7 +183,12 @@ function StatTile({ tile }: { tile: LevelingTile }): JSX.Element {
             </Typography>
           )}
         </Stack>
-        <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', minWidth: 0 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          noWrap
+          sx={{ display: 'block', minWidth: 0 }}
+        >
           {tile.label}
         </Typography>
       </Paper>
@@ -200,7 +233,12 @@ const SPARK_MIN_H = 2
 function Spark({ spark }: { spark: LevelingSpark }): JSX.Element {
   if (spark.stated === 0 && spark.unstated > 0) {
     return (
-      <Typography variant="caption" color="text.disabled" data-testid="overview-leveling-spark-none" sx={{ mt: 0.5 }}>
+      <Typography
+        variant="caption"
+        color="text.disabled"
+        data-testid="overview-leveling-spark-none"
+        sx={{ mt: 0.5 }}
+      >
         No level-bar percentage stated this hour - progress unknown, not zero.
       </Typography>
     )
@@ -233,7 +271,14 @@ function Spark({ spark }: { spark: LevelingSpark }): JSX.Element {
         )
       })}
       {/* The baseline: without it an empty hour is a blank box rather than a flat reading. */}
-      <rect x={0} y={SPARK_H - 0.75} width={SPARK_W} height={0.75} fill="currentColor" opacity={0.25} />
+      <rect
+        x={0}
+        y={SPARK_H - 0.75}
+        width={SPARK_W}
+        height={0.75}
+        fill="currentColor"
+        opacity={0.25}
+      />
     </Box>
   )
 }
@@ -318,7 +363,11 @@ export function LevelingCard({ state, onOpenLeveling }: LevelingCardProps): JSX.
   // The link down is offered even with nothing to show, for the same reason the DPS card offers
   // it: the one affordance this card exists for must not be the least reliable thing on it.
   return (
-    <DashCard title="Leveling" testId="overview-leveling" right={<OpenLeveling onOpenLeveling={onOpenLeveling} />}>
+    <DashCard
+      title="Leveling"
+      testId="overview-leveling"
+      right={<OpenLeveling onOpenLeveling={onOpenLeveling} />}
+    >
       {state.empty ? (
         <QuietNote>
           No progress recorded yet - levels of progress and credited kills appear here as you play.
@@ -330,8 +379,15 @@ export function LevelingCard({ state, onOpenLeveling }: LevelingCardProps): JSX.
           <Spark spark={state.spark} />
           {/* This line prints the hour's kills/hr AND its active/idle split, so its hover carries
               the definition of the denominator under both (JOS-249). */}
-          <Tooltip title={`${String(state.kills)} credited kills · ${state.idleCaption} · ${ACTIVE_TIME_TITLE}`}>
-            <Typography variant="caption" color="text.secondary" data-testid="overview-leveling-sub" noWrap>
+          <Tooltip
+            title={`${String(state.kills)} credited kills · ${state.idleCaption} · ${ACTIVE_TIME_TITLE}`}
+          >
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              data-testid="overview-leveling-sub"
+              noWrap
+            >
               {state.killRate} · {state.activity}
             </Typography>
           </Tooltip>

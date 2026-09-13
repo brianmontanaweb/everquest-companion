@@ -67,7 +67,13 @@ export interface GearIndexState {
   refused: boolean
 }
 
-const EMPTY: GearIndexState = { rows: [], ready: false, scrapedAt: null, stats: null, refused: false }
+const EMPTY: GearIndexState = {
+  rows: [],
+  ready: false,
+  scrapedAt: null,
+  stats: null,
+  refused: false,
+}
 
 let CACHE: GearIndexState | null = null
 let INFLIGHT: Promise<GearIndexState> | null = null
@@ -81,7 +87,7 @@ async function fetchIndex(): Promise<GearIndexState> {
           ready: true,
           scrapedAt: payload.scrapedAt,
           stats: payload.stats,
-          refused: false
+          refused: false,
         }
       : { ...EMPTY, ready: true, refused: true }
   return CACHE
@@ -194,7 +200,7 @@ export function useGearOwnership(): GearOwnershipState {
   const lootedNames = useMemo(
     // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives LootEvent. Becomes a view descriptor when the source lands.
     () => [...new Set(history.filter(isKept).map((e) => e.item))],
-    [history]
+    [history],
   )
 
   const map = useMemo(() => {
@@ -259,9 +265,9 @@ export function useGearCompare(rows: readonly GearRow[], state: ItemUpgradeState
       exportedAt: outputUpdatedMillis(inventory?.loadedAt),
       hasDump: inventory !== null,
       ready,
-      state
+      state,
     }),
-    [equipped, byKey, inventory, ready, state]
+    [equipped, byKey, inventory, ready, state],
   )
 }
 
@@ -269,7 +275,9 @@ export function useGearCompare(rows: readonly GearRow[], state: ItemUpgradeState
  * The owned filter as the pure model wants it — the same injected-predicate shape `useEraHidden`
  * returns, and stable while the join is, so `filterGearRows`' memo can key on it.
  */
-export function useOwnedOrLooted(map: GearOwnershipMap | null): { ownedOrLooted: (row: GearRow) => boolean } {
+export function useOwnedOrLooted(map: GearOwnershipMap | null): {
+  ownedOrLooted: (row: GearRow) => boolean
+} {
   return useMemo(
     () => ({
       ownedOrLooted: (row: GearRow): boolean => {
@@ -278,9 +286,9 @@ export function useOwnedOrLooted(map: GearOwnershipMap | null): { ownedOrLooted:
         // An exaltation counts: it is proof a copy passed through this character's hands, which is
         // exactly what the checkbox asks (gearOwnership.ts, rule 2).
         return o.owned || o.looted || o.exaltations > 0
-      }
+      },
     }),
-    [map]
+    [map],
   )
 }
 
@@ -389,13 +397,16 @@ export function useGearClasses(): GearClasses {
   // An unresolved slot contributes nothing, so a half-known combo yields the classes it does know
   // and nothing it does not (law 1) — the same read PlannerView makes.
   const detected = useMemo(() => (current === null ? [] : resolvedClasses(current)), [current])
-  const [pinned, setPinned] = useRemembered<ClassAbbr[] | null>('eq.gear.classes', sanitizeGearClasses)
+  const [pinned, setPinned] = useRemembered<ClassAbbr[] | null>(
+    'eq.gear.classes',
+    sanitizeGearClasses,
+  )
 
   const set = useCallback(
     (next: ClassAbbr[]) => {
       setPinned(next)
     },
-    [setPinned]
+    [setPinned],
   )
   // ADOPTING THE OFFER PINS, and always did: taking today's detection is accepting one answer, not
   // handing the filter back to inference forever (the `useBrowseClasses.adopt` rule, stated there).
@@ -404,6 +415,7 @@ export function useGearClasses(): GearClasses {
   }, [detected, setPinned])
 
   const classes = pinned ?? detected
-  const offer = pinned !== null && detected.length > 0 && !sameClasses(pinned, detected) ? detected : null
+  const offer =
+    pinned !== null && detected.length > 0 && !sameClasses(pinned, detected) ? detected : null
   return { classes, detected, following: pinned === null, offer, set, adopt }
 }

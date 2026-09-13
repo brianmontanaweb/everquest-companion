@@ -53,7 +53,9 @@ const KIND = 'fight'
 /** The fight overlay's own window, found by its `?kind=` URL — the door overlayScrollSteps uses. */
 function fightBounds(app: ElectronApplication): Promise<Bounds | null> {
   return app.evaluate(({ BrowserWindow }) => {
-    const w = BrowserWindow.getAllWindows().find((win) => win.webContents.getURL().includes('kind=fight'))
+    const w = BrowserWindow.getAllWindows().find((win) =>
+      win.webContents.getURL().includes('kind=fight'),
+    )
     return w ? w.getBounds() : null
   })
 }
@@ -62,7 +64,11 @@ function fightBounds(app: ElectronApplication): Promise<Bounds | null> {
 function watchState(app: ElectronApplication): Promise<WatchState | null> {
   return app.evaluate(() => {
     const p = (globalThis as unknown as Record<string, unknown>).__eqOverlayPointerWatch as
-      | { watching: () => string[]; applied: () => Record<string, boolean>; exits: () => Record<string, number> }
+      | {
+          watching: () => string[]
+          applied: () => Record<string, boolean>
+          exits: () => Record<string, number>
+        }
       | undefined
     return p ? { watching: p.watching(), applied: p.applied(), exits: p.exits() } : null
   })
@@ -72,8 +78,7 @@ function watchState(app: ElectronApplication): Promise<WatchState | null> {
 function setCursor(app: ElectronApplication, at: { x: number; y: number } | null): Promise<void> {
   return app.evaluate((_e, p) => {
     const probe = (globalThis as unknown as Record<string, unknown>).__eqOverlayPointerWatch as
-      | { cursor: { x: number; y: number } | null }
-      | undefined
+      { cursor: { x: number; y: number } | null } | undefined
     if (probe) probe.cursor = p
   }, at)
 }
@@ -114,7 +119,9 @@ async function noteTickCost(app: ElectronApplication): Promise<void> {
     for (let i = 0; i < n; i++) screen.getCursorScreenPoint()
     return Number(process.hrtime.bigint() - t0) / n / 1000
   })
-  note(`one watchdog tick reads the cursor in ${us.toFixed(1)}us — ${(us * 5).toFixed(0)}us per captured second at 200ms`)
+  note(
+    `one watchdog tick reads the cursor in ${us.toFixed(1)}us — ${(us * 5).toFixed(0)}us per captured second at 200ms`,
+  )
 }
 
 /** No timer while a locked overlay is IDLE, and none for an unlocked one — the whole of rule 2. */
@@ -127,41 +134,65 @@ async function checkNoTimer(app: ElectronApplication, name: string): Promise<voi
 async function captureTheWindow(app: ElectronApplication, overlay: Page, b: Bounds): Promise<void> {
   await setCursor(app, { x: b.x + Math.floor(b.width / 2), y: b.y + Math.floor(b.height / 2) })
   await dispatchRow(overlay, 'mouseover')
-  const shown = await settle(() => controlCount(overlay), (n) => n > 0, { timeoutMs: 8_000 })
-  check('hovering the selector row captures the mouse (its controls reveal)', shown > 0, `${shown} control(s)`)
+  const shown = await settle(
+    () => controlCount(overlay),
+    (n) => n > 0,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    'hovering the selector row captures the mouse (its controls reveal)',
+    shown > 0,
+    `${shown} control(s)`,
+  )
   const s = await settle(() => watchState(app), isWatching, { timeoutMs: 6_000 })
   check('…and ONLY NOW does main watch the cursor', isWatching(s), watchList(s))
   // …and it says nothing while the pointer really is inside. This is the selector-popup case too:
   // the open list is inside this window, so a pointer moving from the header into it never leaves.
   const held = await settleStable(() => controlCount(overlay), { timeoutMs: 3_000, stable: 5 })
-  check('a cursor still INSIDE the window keeps the capture — nothing is dropped', held > 0, `${held} control(s)`)
+  check(
+    'a cursor still INSIDE the window keeps the capture — nothing is dropped',
+    held > 0,
+    `${held} control(s)`,
+  )
 }
 
 /**
  * THE ALT-TAB CASE: the cursor moves off and NOT ONE EVENT follows it — no mouseout, no blur, no
  * visibility change. Exactly what the task switcher leaves a captured window with.
  */
-async function checkTheCursorWalksOff(app: ElectronApplication, overlay: Page, b: Bounds): Promise<void> {
+async function checkTheCursorWalksOff(
+  app: ElectronApplication,
+  overlay: Page,
+  b: Bounds,
+): Promise<void> {
   const before = exitsSoFar(await watchState(app))
   await setCursor(app, { x: b.x + b.width + 400, y: b.y + b.height + 400 })
-  const gone = await settle(() => controlCount(overlay), (n) => n === 0, { timeoutMs: 6_000 })
-  check('THE CHROME HIDES ON ITS OWN when the cursor has left, with no leave event', gone === 0, `${gone} control(s)`)
+  const gone = await settle(
+    () => controlCount(overlay),
+    (n) => n === 0,
+    { timeoutMs: 6_000 },
+  )
+  check(
+    'THE CHROME HIDES ON ITS OWN when the cursor has left, with no leave event',
+    gone === 0,
+    `${gone} control(s)`,
+  )
 
   const after = await settle(
     () => watchState(app),
     (s) => s?.applied[KIND] === true && exitsSoFar(s) > before,
-    { timeoutMs: 6_000 }
+    { timeoutMs: 6_000 },
   )
   const applied = after?.applied[KIND]
   check(
     '…and main really re-applied click-through (setIgnoreMouseEvents(true) over the game)',
     applied === true,
-    `applied ignore=${String(applied)}`
+    `applied ignore=${String(applied)}`,
   )
   check(
     '…off ONE pushed exit, not a stream of them',
     exitsSoFar(after) === before + 1,
-    `${before} → ${exitsSoFar(after)}`
+    `${before} → ${exitsSoFar(after)}`,
   )
   check('…and the timer stopped itself with the capture', !isWatching(after), watchList(after))
 }
@@ -169,9 +200,14 @@ async function checkTheCursorWalksOff(app: ElectronApplication, overlay: Page, b
 export async function stepPointerWatch(
   app: ElectronApplication,
   overlay: Page,
-  setLocked: SetLocked
+  setLocked: SetLocked,
 ): Promise<void> {
-  if (!check('main exposes its cursor watchdog to the harness (EQ_E2E only)', (await watchState(app)) !== null))
+  if (
+    !check(
+      'main exposes its cursor watchdog to the harness (EQ_E2E only)',
+      (await watchState(app)) !== null,
+    )
+  )
     return
   const rect = await fightBounds(app)
   if (rect === null) {
@@ -181,7 +217,10 @@ export async function stepPointerWatch(
 
   await noteTickCost(app)
   await setLocked(overlay, true)
-  await checkNoTimer(app, 'a LOCKED, idle overlay runs NO cursor timer at all (the owner’s performance rule)')
+  await checkNoTimer(
+    app,
+    'a LOCKED, idle overlay runs NO cursor timer at all (the owner’s performance rule)',
+  )
   await captureTheWindow(app, overlay, rect)
   await checkTheCursorWalksOff(app, overlay, rect)
 

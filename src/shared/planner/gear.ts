@@ -84,7 +84,7 @@ export const GEAR_STAT_KEYS = [
   'DMG_BONUS',
   'BACKSTAB',
   'RANGE',
-  'WEIGHT'
+  'WEIGHT',
 ] as const
 
 export type GearStatKey = (typeof GEAR_STAT_KEYS)[number]

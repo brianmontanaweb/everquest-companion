@@ -60,7 +60,7 @@ import type { MobLevelFact } from '../resist/world'
 import type { MobSeenDrop } from '../../shared/mobTypes'
 import type {
   CombatSnapshotOpts,
-  ModuleSnapshotResult
+  ModuleSnapshotResult,
 } from '../../shared/dataServer/protocol.generated'
 
 /** What `registry.snapshot(id)` answers with, and therefore what `module:getSnapshot` returns. */
@@ -139,7 +139,7 @@ function readShim(): ReadShim {
     now: () => Date.now(),
     timeoutMs: SERVE_TIMEOUT_MS,
     noteEveryMs: NOTE_EVERY_MS,
-    delay
+    delay,
   })
   return shim
 }
@@ -174,7 +174,7 @@ export const OPTS_ARE_STATED: Record<keyof SnapshotOpts, true> = {
   selectedId: true,
   showUnparsed: true,
   maxSegments: true,
-  timeline: true
+  timeline: true,
 }
 
 // ── the three channels ─────────────────────────────────────────────────────────────────────────
@@ -249,22 +249,25 @@ function projectModule(moduleId: string, r: ModuleSnapshotResult): ModuleSnap | 
  * still counted and narrated by `readShim.ts`, so the silence is legible in the dev log.
  */
 export function serveModuleSnapshot(moduleId: string): Promise<ModuleSnap | null> {
-  return readShim().serve('module.snapshot', { module: moduleId }, (r) =>
-    projectModule(moduleId, r)
-  , () => null)
+  return readShim().serve(
+    'module.snapshot',
+    { module: moduleId },
+    (r) => projectModule(moduleId, r),
+    () => null,
+  )
 }
 
 /** `combat:snapshot`, served — see the header for the clock test and for the cast. */
 export function serveCombatSnapshot(
   opts: SnapshotOpts,
-  own: () => CombatSnapshot
+  own: () => CombatSnapshot,
 ): Promise<CombatSnapshot> {
   return readShim().serve(
     'combat.snapshot',
     { opts: engineOpts(opts) },
     (r) =>
       Math.abs(r.now - Date.now()) > NOW_SKEW_MS ? null : (r.snapshot as unknown as CombatSnapshot),
-    own
+    own,
   )
 }
 
@@ -274,13 +277,13 @@ export function serveCombatSnapshot(
 export function serveSearchFights(
   text: string,
   limit: number | undefined,
-  own: () => FightSearchResult
+  own: () => FightSearchResult,
 ): Promise<FightSearchResult> {
   return readShim().serve(
     'combat.searchFights',
     limit === undefined ? { query: text } : { query: text, limit },
     (r) => ({ hits: r.hits, corpus: r.corpus }) as unknown as FightSearchResult,
-    own
+    own,
   )
 }
 
@@ -323,7 +326,7 @@ export function serveSearchFights(
  */
 export function serveMobLevel(
   mob: string,
-  own: () => MobLevelFact | null
+  own: () => MobLevelFact | null,
 ): Promise<MobLevelFact | null> {
   return readShim()
     .serve(
@@ -340,7 +343,7 @@ export function serveMobLevel(
         if (row.mob !== mob) return null
         return { fact: { level: row.level, lo: row.lo, hi: row.hi, from: row.from } }
       },
-      () => ({ fact: own() })
+      () => ({ fact: own() }),
     )
     .then((boxed) => boxed.fact)
 }
@@ -379,18 +382,20 @@ export function serveMobLevel(
  * comes back is echoed in the spelling this app sent.
  */
 export function serveMobDropsSeen(name: string): Promise<{ seen?: MobSeenDrop[] } | null> {
-  return readShim().serve(
-    'knowledge.mob',
-    { name },
-    (r) => {
-      if (r.name !== name) return null
-      const seen = (r.record as { dropsSeen?: unknown }).dropsSeen
-      if (seen === undefined) return { box: {} }
-      if (!Array.isArray(seen)) return null
-      return { box: { seen: seen as MobSeenDrop[] } }
-    },
-    () => null
-  ).then((boxed) => (boxed === null ? null : boxed.box))
+  return readShim()
+    .serve(
+      'knowledge.mob',
+      { name },
+      (r) => {
+        if (r.name !== name) return null
+        const seen = (r.record as { dropsSeen?: unknown }).dropsSeen
+        if (seen === undefined) return { box: {} }
+        if (!Array.isArray(seen)) return null
+        return { box: { seen: seen as MobSeenDrop[] } }
+      },
+      () => null,
+    )
+    .then((boxed) => (boxed === null ? null : boxed.box))
 }
 
 // NO TEARDOWN FLUSH, AND THAT IS A DECISION. The tally prints its FIRST fallback immediately

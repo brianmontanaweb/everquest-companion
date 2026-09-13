@@ -34,9 +34,9 @@ function rows(page: Page, testid: string): Promise<RowRead[]> {
       [...document.querySelectorAll(`[data-testid="${id}"]`)].map((e) => ({
         mob: e.getAttribute('data-respawn-mob') ?? '',
         source: e.getAttribute('data-respawn-source') ?? '',
-        text: (e as HTMLElement).innerText.replace(/\s+/g, ' ').trim()
+        text: (e as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
       })),
-    testid
+    testid,
   )
 }
 
@@ -52,28 +52,55 @@ function search(page: Page, text: string): Promise<void> {
  *
  * It leaves the box EMPTY, because the steps after it click Watch on candidates this one can hide.
  */
-export async function stepSearchRecentlyKilled(page: Page, keep: string, drop: string): Promise<void> {
-  const all = await settle(() => countOf(page, '[data-testid="respawn-candidate"]'), (n) => n >= 2, {
-    timeoutMs: 20_000
-  })
+export async function stepSearchRecentlyKilled(
+  page: Page,
+  keep: string,
+  drop: string,
+): Promise<void> {
+  const all = await settle(
+    () => countOf(page, '[data-testid="respawn-candidate"]'),
+    (n) => n >= 2,
+    {
+      timeoutMs: 20_000,
+    },
+  )
 
   await search(page, 'wan ghoul')
-  const narrowed = await settle(() => rows(page, 'respawn-candidate'), (r) => r.length < all, { timeoutMs: 20_000 })
+  const narrowed = await settle(
+    () => rows(page, 'respawn-candidate'),
+    (r) => r.length < all,
+    { timeoutMs: 20_000 },
+  )
   check('typing narrows Recently killed', narrowed.length < all, JSON.stringify({ all, narrowed }))
   check('…to the mob that was typed', find(narrowed, keep) !== undefined, JSON.stringify(narrowed))
-  check('…and the one that was not is gone', find(narrowed, drop) === undefined, JSON.stringify(narrowed))
+  check(
+    '…and the one that was not is gone',
+    find(narrowed, drop) === undefined,
+    JSON.stringify(narrowed),
+  )
 
   await search(page, 'zzzznothing')
   const empty = await settle(
-    () => page.evaluate(() => document.querySelector('[data-testid="respawn-recent-empty"]')?.textContent ?? ''),
+    () =>
+      page.evaluate(
+        () => document.querySelector('[data-testid="respawn-recent-empty"]')?.textContent ?? '',
+      ),
     (t) => t.length > 0,
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   )
-  check('a query that matches nothing says so, rather than reading as an empty log', empty.includes('No kills match'), empty)
+  check(
+    'a query that matches nothing says so, rather than reading as an empty log',
+    empty.includes('No kills match'),
+    empty,
+  )
 
   await search(page, '')
-  const restored = await settle(() => countOf(page, '[data-testid="respawn-candidate"]'), (n) => n === all, {
-    timeoutMs: 20_000
-  })
+  const restored = await settle(
+    () => countOf(page, '[data-testid="respawn-candidate"]'),
+    (n) => n === all,
+    {
+      timeoutMs: 20_000,
+    },
+  )
   check('clearing the box brings every candidate back', restored === all)
 }

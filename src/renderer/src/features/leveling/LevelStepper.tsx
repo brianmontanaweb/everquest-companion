@@ -31,7 +31,12 @@ export interface LevelStepperProps {
 }
 
 /** −/+ around the level, with the character's own level as the default and the reset. */
-export function LevelStepper({ level, onChange, dimmed = false, testidPrefix }: LevelStepperProps): JSX.Element {
+export function LevelStepper({
+  level,
+  onChange,
+  dimmed = false,
+  testidPrefix,
+}: LevelStepperProps): JSX.Element {
   return (
     <Stack
       direction="row"
@@ -50,7 +55,11 @@ export function LevelStepper({ level, onChange, dimmed = false, testidPrefix }: 
       >
         <ChevronLeftIcon fontSize="small" />
       </IconButton>
-      <Typography variant="subtitle2" data-testid={`${testidPrefix}-value`} sx={{ minWidth: 64, textAlign: 'center' }}>
+      <Typography
+        variant="subtitle2"
+        data-testid={`${testidPrefix}-value`}
+        sx={{ minWidth: 64, textAlign: 'center' }}
+      >
         Level {level}
       </Typography>
       <IconButton

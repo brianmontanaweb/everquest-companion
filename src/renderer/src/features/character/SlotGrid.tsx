@@ -55,7 +55,7 @@ function SlotIcon({ cell }: { cell: SheetCellView }): JSX.Element {
         bgcolor: 'rgba(255,255,255,0.03)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
       }}
     >
       {iconId !== undefined && (
@@ -103,7 +103,7 @@ function ExaltationChips({ names }: { names: readonly string[] }): JSX.Element |
             height: 16,
             maxWidth: '100%',
             borderColor: EQ_ITEM_COLORS.border,
-            '& .MuiChip-label': { px: 0.5, fontSize: 10, lineHeight: 1.6 }
+            '& .MuiChip-label': { px: 0.5, fontSize: 10, lineHeight: 1.6 },
           }}
         />
       ))}
@@ -122,7 +122,11 @@ function SlotCell({ cell }: { cell: SheetCellView }): JSX.Element {
     >
       <SlotIcon cell={cell} />
       <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-        <Typography variant="caption" color="text.disabled" sx={{ display: 'block', lineHeight: 1.2 }}>
+        <Typography
+          variant="caption"
+          color="text.disabled"
+          sx={{ display: 'block', lineHeight: 1.2 }}
+        >
           {cell.label}
         </Typography>
         {item ? (
@@ -139,7 +143,7 @@ function SlotCell({ cell }: { cell: SheetCellView }): JSX.Element {
                   textUnderlineOffset: 2,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {item.name}
@@ -148,7 +152,11 @@ function SlotCell({ cell }: { cell: SheetCellView }): JSX.Element {
             <ExaltationChips names={item.exaltations} />
           </>
         ) : (
-          <Typography variant="caption" color="text.disabled" sx={{ display: 'block', opacity: 0.6 }}>
+          <Typography
+            variant="caption"
+            color="text.disabled"
+            sx={{ display: 'block', opacity: 0.6 }}
+          >
             empty
           </Typography>
         )}

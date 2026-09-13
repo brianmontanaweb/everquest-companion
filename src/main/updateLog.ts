@@ -76,7 +76,7 @@ import {
   classifyUpdateFailure,
   updateFailureCode,
   updateHttpStatus,
-  type UpdateFailureKind
+  type UpdateFailureKind,
 } from '../shared/update'
 
 /** Which half of the flow failed. electron-updater funnels both through one `error` event, and
@@ -166,7 +166,7 @@ export function updateFailureLine(
   step: UpdateStep,
   attempt: UpdateAttempt,
   kind: UpdateFailureKind,
-  err: unknown
+  err: unknown,
 ): string {
   const status = updateHttpStatus(err)
   const klass = status === null ? kind : `${kind} ${String(status)}`
@@ -200,7 +200,7 @@ export function logUpdateFailure(
   step: UpdateStep,
   attempt: UpdateAttempt,
   err: unknown,
-  sinks: UpdateLogSinks
+  sinks: UpdateLogSinks,
 ): UpdateFailureKind {
   const kind = classifyUpdateFailure(err)
   if (kind === 'blocked') {
@@ -209,7 +209,7 @@ export function logUpdateFailure(
     if (takeUnreachableWarning(BLOCKED_WARN_CODE)) {
       sinks.warn(
         UPDATER_LOG_PREFIX,
-        `update ${step} failed its code-signature check (${BLOCKED_WARN_CODE}); ${SIGNATURE_BLOCKED_WARN}`
+        `update ${step} failed its code-signature check (${BLOCKED_WARN_CODE}); ${SIGNATURE_BLOCKED_WARN}`,
       )
     }
     return kind
@@ -226,7 +226,7 @@ export function logUpdateFailure(
           ? `update ${step} was cut short by the machine suspending or changing network (${code}); ` +
               'the next check is re-anchored'
           : `update ${step} could not reach the update service (${code}); ` +
-              'further unreachable attempts this session are counted, not logged'
+              'further unreachable attempts this session are counted, not logged',
       )
     }
     return kind
@@ -236,7 +236,7 @@ export function logUpdateFailure(
     attempt,
     kind,
     message: updateFailureLine(step, attempt, kind, err),
-    error: err
+    error: err,
   }
   sinks.error(step === 'download' ? UPDATE_DOWNLOAD_SOURCE : UPDATE_CHECK_SOURCE, payload)
   return kind

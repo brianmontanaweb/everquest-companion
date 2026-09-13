@@ -23,7 +23,7 @@ import { bucketRange, LOG_SIZE_BYTES_EDGES, NEW_BYTES_EDGES } from '../../shared
 import {
   FREE_MEM_GB_EDGES,
   LIVE_STALL_MS_EDGES,
-  WORKING_SET_MB_EDGES
+  WORKING_SET_MB_EDGES,
 } from '../../shared/telemetryLive'
 import { percentileBucket, USAGE_METRICS } from '../../shared/telemetryRollup'
 import type { TriageAnalyticsLive, TriageMixRow } from '../../shared/triage'
@@ -41,7 +41,9 @@ export function stallMsLabel(i: number): string {
 function byteLabel(edges: readonly number[], i: number): string {
   const { lo, hi } = bucketRange(edges, Number.isInteger(i) ? i : 0)
   const size = (b: number): string =>
-    b >= 1_048_576 ? `${String(Math.round(b / 1_048_576))} MB` : `${String(Math.round(b / 1024))} KB`
+    b >= 1_048_576
+      ? `${String(Math.round(b / 1_048_576))} MB`
+      : `${String(Math.round(b / 1024))} KB`
   return hi === null ? `≥ ${size(lo)}` : i === 0 ? `< ${size(hi)}` : `${size(lo)}-${size(hi)}`
 }
 
@@ -49,7 +51,11 @@ function byteLabel(edges: readonly number[], i: number): string {
  *  the storage threw that precision away on purpose, so nothing here invents a number inside a
  *  bucket. `analytics.ts bucketLabelAt`, restated rather than imported: that file is at its
  *  ceiling and this is three lines. */
-function labelAt(counts: readonly number[], p: number, label: (i: number) => string): string | null {
+function labelAt(
+  counts: readonly number[],
+  p: number,
+  label: (i: number) => string,
+): string | null {
   const i = percentileBucket(counts, p)
   return i < 0 ? null : label(i)
 }
@@ -59,7 +65,7 @@ function labelAt(counts: readonly number[], p: number, label: (i: number) => str
 function ladder(
   usage: readonly UsageRow[],
   metric: string,
-  label: (i: number) => string
+  label: (i: number) => string,
 ): TriageMixRow[] {
   return [...dimsOf(usage, metric).entries()]
     .map(([dim, n]) => ({ index: Number(dim), n }))
@@ -86,8 +92,16 @@ function stateRows(usage: readonly UsageRow[]): TriageMixRow[] {
     ...mix(USAGE_METRICS.stateRing, 'cursor ring'),
     // The two memory ladders keep the units they are DECLARED in — gibibytes with halves, and
     // mebibytes — because `0 GB - 1 GB` would hide the rung the paging hypothesis lives on.
-    ...ladder(usage, USAGE_METRICS.stateFreeMem, (i) => `free RAM ${unitLabel(i, FREE_MEM_GB_EDGES, 'GB')}`),
-    ...ladder(usage, USAGE_METRICS.stateWorkingSet, (i) => `our RAM ${unitLabel(i, WORKING_SET_MB_EDGES, 'MB')}`)
+    ...ladder(
+      usage,
+      USAGE_METRICS.stateFreeMem,
+      (i) => `free RAM ${unitLabel(i, FREE_MEM_GB_EDGES, 'GB')}`,
+    ),
+    ...ladder(
+      usage,
+      USAGE_METRICS.stateWorkingSet,
+      (i) => `our RAM ${unitLabel(i, WORKING_SET_MB_EDGES, 'MB')}`,
+    ),
   ]
 }
 
@@ -132,8 +146,8 @@ export function buildLiveStalls(usage: readonly UsageRow[]): TriageAnalyticsLive
     tailOver500: sumOf(usage, USAGE_METRICS.tailOver500),
     tailDeltas: ladder(usage, USAGE_METRICS.tailDeltaBytes, (i) => byteLabel(NEW_BYTES_EDGES, i)),
     tailLogSizes: ladder(usage, USAGE_METRICS.tailLogSize, (i) =>
-      byteLabel(LOG_SIZE_BYTES_EDGES, i)
+      byteLabel(LOG_SIZE_BYTES_EDGES, i),
     ),
-    state: stateRows(usage)
+    state: stateRows(usage),
   }
 }

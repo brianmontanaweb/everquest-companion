@@ -37,7 +37,7 @@ export const AUDIO_FAILURE_THROTTLE_MS = 60_000
 export function shouldReportAudioFailure(
   lastReportedAt: number | undefined,
   now: number,
-  throttleMs: number = AUDIO_FAILURE_THROTTLE_MS
+  throttleMs: number = AUDIO_FAILURE_THROTTLE_MS,
 ): boolean {
   if (lastReportedAt === undefined) return true
   return now - lastReportedAt >= throttleMs
@@ -58,7 +58,7 @@ export function audioFailureMessage(
   kind: AudioFailureKind,
   key: string,
   errorName: string,
-  suppressed = 0
+  suppressed = 0,
 ): string {
   const head =
     kind === 'fetch'

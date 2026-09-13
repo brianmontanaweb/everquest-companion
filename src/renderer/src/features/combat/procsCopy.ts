@@ -23,21 +23,22 @@ export { fmtElapsed } from './copyTable'
 const COLS: Col[] = [
   { header: 'Proc', align: 'left' },
   { header: 'PPM', align: 'right' },
-  { header: 'Count', align: 'right' }
+  { header: 'Count', align: 'right' },
 ]
 
 /** The Procs cell, as text: subject line, the header readout, then the ranked rows. */
 export function formatProcsText(seg: SegmentView): string {
   const rows = procListRows(seg.procs)
-  if (rows.length === 0) return [subjectLine('Procs', seg), 'No procs in this selection.'].join('\n')
+  if (rows.length === 0)
+    return [subjectLine('Procs', seg), 'No procs in this selection.'].join('\n')
   return [
     subjectLine('Procs', seg),
     ...statLines([procSummary(seg.procs).header]),
     '',
     ...table(
       COLS,
-      rows.map((r) => [r.ambiguous ? `~ ${r.name}` : r.name, r.ppm, String(r.count)])
-    )
+      rows.map((r) => [r.ambiguous ? `~ ${r.name}` : r.name, r.ppm, String(r.count)]),
+    ),
   ].join('\n')
 }
 

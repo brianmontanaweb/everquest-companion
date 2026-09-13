@@ -121,7 +121,7 @@ export const INITIAL_PRESENCE: PresenceState = {
   eqRunning: true,
   eqFocused: true,
   eqBounds: null,
-  cursorVisible: true
+  cursorVisible: true,
 }
 
 /** One cursor sample pushed to the ring window, in that window's own CSS px. */
@@ -236,12 +236,12 @@ export const DEFAULT_CURSOR_RING: CursorRingPrefs = {
   enabled: false,
   sizePx: DEFAULT_RING_SIZE_PX,
   thicknessPx: DEFAULT_RING_THICKNESS_PX,
-  colorHex: DEFAULT_RING_COLOR
+  colorHex: DEFAULT_RING_COLOR,
 }
 
 export const DEFAULT_OVERLAY_AUTO_HIDE: OverlayAutoHidePrefs = {
   hideWhenNotRunning: true,
-  hideWhenUnfocused: false
+  hideWhenUnfocused: false,
 }
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
@@ -270,13 +270,13 @@ export function normalizeCursorRing(value: unknown): CursorRingPrefs {
     v.thicknessPx,
     MIN_RING_THICKNESS_PX,
     MAX_RING_THICKNESS_PX,
-    DEFAULT_RING_THICKNESS_PX
+    DEFAULT_RING_THICKNESS_PX,
   )
   return {
     enabled: bool(v.enabled, DEFAULT_CURSOR_RING.enabled),
     sizePx,
     thicknessPx: Math.max(MIN_RING_THICKNESS_PX, Math.min(thickness, Math.floor(sizePx / 2))),
-    colorHex: normalizeRingColor(v.colorHex)
+    colorHex: normalizeRingColor(v.colorHex),
   }
 }
 
@@ -285,7 +285,7 @@ export function normalizeOverlayAutoHide(value: unknown): OverlayAutoHidePrefs {
   const v = isPlainObject(value) ? value : {}
   return {
     hideWhenNotRunning: bool(v.hideWhenNotRunning, DEFAULT_OVERLAY_AUTO_HIDE.hideWhenNotRunning),
-    hideWhenUnfocused: bool(v.hideWhenUnfocused, DEFAULT_OVERLAY_AUTO_HIDE.hideWhenUnfocused)
+    hideWhenUnfocused: bool(v.hideWhenUnfocused, DEFAULT_OVERLAY_AUTO_HIDE.hideWhenUnfocused),
   }
 }
 
@@ -315,7 +315,7 @@ export function normalizeOverlayAutoHide(value: unknown): OverlayAutoHidePrefs {
 export function presenceNeeded(
   ring: CursorRingPrefs,
   autoHide: OverlayAutoHidePrefs,
-  hoverHitTest = false
+  hoverHitTest = false,
 ): boolean {
   return ring.enabled || autoHide.hideWhenNotRunning || autoHide.hideWhenUnfocused || hoverHitTest
 }

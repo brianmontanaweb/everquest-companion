@@ -30,7 +30,13 @@ import { Tooltip } from '../../lib/Tooltip'
  * `dense` is the stats-table variant: the same control at table-row scale, because a durations row
  * is 20px tall and a card header is not.
  */
-export function BuffAllowCheck({ spell, dense = false }: { spell: string; dense?: boolean }): JSX.Element | null {
+export function BuffAllowCheck({
+  spell,
+  dense = false,
+}: {
+  spell: string
+  dense?: boolean
+}): JSX.Element | null {
   const { prefs, setLine } = useBuffAllow(window.eq)
   if (!prefs.optIn) return null
   const key = timerNameKey(spell)

@@ -36,7 +36,7 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useState
+  useState,
 } from 'react'
 import {
   Box,
@@ -48,7 +48,7 @@ import {
   Snackbar,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
@@ -65,7 +65,7 @@ import { usePoisonSlowOffers, useResolvedClasses, useSpellLines } from './lineIn
 /** Title row: what this dialog is, how big the catalog is, and the manual escape hatch. */
 function SuggestHeader({
   catalog,
-  onCreateManually
+  onCreateManually,
 }: {
   catalog: SpellCatalog | null
   onCreateManually: () => void
@@ -99,7 +99,7 @@ function SuggestHeader({
 function SearchBox({
   inputRef,
   query,
-  onQuery
+  onQuery,
 }: {
   inputRef: RefObject<HTMLInputElement | null>
   query: string
@@ -120,8 +120,8 @@ function SearchBox({
             <InputAdornment position="start">
               <SearchIcon fontSize="small" />
             </InputAdornment>
-          )
-        }
+          ),
+        },
       }}
     />
   )
@@ -131,7 +131,7 @@ function SearchBox({
 function CreatedSnackbar({
   snack,
   onClose,
-  onUndo
+  onUndo,
 }: {
   snack: { name: string; id: string } | null
   onClose: () => void
@@ -191,7 +191,15 @@ function useSpellSearch(open: boolean): SpellSearch {
   const deferredQuery = useDeferredValue(query)
   const tokens = useMemo(() => tokenizeSpellQuery(deferredQuery), [deferredQuery])
 
-  return { catalog, searchRef, query, setQuery, deferredQuery, catchingUp: query !== deferredQuery, tokens }
+  return {
+    catalog,
+    searchRef,
+    query,
+    setQuery,
+    deferredQuery,
+    catchingUp: query !== deferredQuery,
+    tokens,
+  }
 }
 
 /** No section is collapsed to begin with — the redesign's point is that everything is visible. */
@@ -232,7 +240,7 @@ export default function SuggestAlertsDialog({
   onCreate,
   onDelete,
   onCreateManually,
-  spellLastCast
+  spellLastCast,
 }: {
   open: boolean
   /** every stored alert: the created/checked state AND the poison-slow offer's coverage test. */
@@ -270,7 +278,7 @@ export default function SuggestAlertsDialog({
       await onCreate(s.def)
       setSnack({ name: s.def.name, id: s.def.id })
     },
-    [onCreate]
+    [onCreate],
   )
 
   // One click on a ready-made SET writes every alert it is missing (never re-writes one the
@@ -281,7 +289,7 @@ export default function SuggestAlertsDialog({
       for (const def of defs) await onCreate(def)
       if (defs[0]) setSnack({ name: `${group.title} (${defs.length})`, id: defs[0].id })
     },
-    [onCreate]
+    [onCreate],
   )
 
   const undo = useCallback(async () => {
@@ -297,9 +305,9 @@ export default function SuggestAlertsDialog({
       onCreate: (s) => void create(s),
       onCreateGroup: (g, defs) => void createGroup(g, defs),
       onPersist: (def) => void onCreate(def),
-      onDismissOffer: poisonSlow.dismiss
+      onDismissOffer: poisonSlow.dismiss,
     }),
-    [create, createGroup, onCreate, poisonSlow.dismiss]
+    [create, createGroup, onCreate, poisonSlow.dismiss],
   )
 
   const illusion = catalog?.hasIllusions ? illusionSuggestion(defaultPackId) : null
@@ -307,14 +315,15 @@ export default function SuggestAlertsDialog({
   const resolved = useResolvedClasses()
   const ctx = useMemo<RowContext>(
     () => ({ lines, resolved, defaultPackId }),
-    [lines, resolved, defaultPackId]
+    [lines, resolved, defaultPackId],
   )
 
   // A COLLAPSED section mounts no rows and spends none of the shared MAX_ROWS budget, so the
   // fold state is an input to the result build, not just to the render.
   const results = useMemo(
-    () => buildSuggestResults(catalog?.entries ?? [], tokens, state.searching ? NONE : state.collapsed),
-    [catalog, tokens, state.searching, state.collapsed]
+    () =>
+      buildSuggestResults(catalog?.entries ?? [], tokens, state.searching ? NONE : state.collapsed),
+    [catalog, tokens, state.searching, state.collapsed],
   )
   const groups = useMemo(() => filterAlertGroups(VERIFIED_ALERT_GROUPS, tokens), [tokens])
 

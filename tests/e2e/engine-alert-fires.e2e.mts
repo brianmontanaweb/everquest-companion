@@ -72,7 +72,14 @@
  * Run: `npm run test:e2e -- engine-alert-fires`
  */
 import type { Page } from 'playwright-core'
-import { buildEngineIfStale, buildIfStale, check, failures, note, reportRun } from './appHarness.mjs'
+import {
+  buildEngineIfStale,
+  buildIfStale,
+  check,
+  failures,
+  note,
+  reportRun,
+} from './appHarness.mjs'
 import { closeWindows, mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
 import { settleServing, tapOutput, type AppOutput } from './engineSteps.mjs'
@@ -113,7 +120,7 @@ interface Spoken {
 /** The speech seam's own ring. `[]` when nothing has ever asked to speak. */
 function spoken(page: Page): Promise<Spoken[]> {
   return page.evaluate(
-    () => (window as unknown as { __eqSpeech?: { spoken: Spoken[] } }).__eqSpeech?.spoken ?? []
+    () => (window as unknown as { __eqSpeech?: { spoken: Spoken[] } }).__eqSpeech?.spoken ?? [],
   ) as Promise<Spoken[]>
 }
 
@@ -130,7 +137,7 @@ function fireLines(out: AppOutput, rule: string): { played: number; logged: numb
     .filter((l) => l.includes('data-server fire:') && l.includes(rule))
   return {
     played: mine.filter((l) => l.includes('PLAYED from the engine')).length,
-    logged: mine.filter((l) => l.includes('logged, not played')).length
+    logged: mine.filter((l) => l.includes('logged, not played')).length,
   }
 }
 
@@ -154,11 +161,11 @@ async function saveProbe(page: Page): Promise<number> {
         // report one sound whether the cutover worked or not.
         alwaysPlay: true,
         audio: 'speech',
-        speech: { mode: 'custom', phrase }
+        speech: { mode: 'custom', phrase },
       })
       return defs.length
     },
-    { id: PROBE_ID, name: PROBE_NAME, phrase: PHRASE, regex: REGEX }
+    { id: PROBE_ID, name: PROBE_NAME, phrase: PHRASE, regex: REGEX },
   )
 }
 
@@ -181,10 +188,10 @@ async function refreshPlayer(page: Page): Promise<boolean> {
           (window as unknown as { eq: { listAlerts: () => Promise<{ id: string }[]> } }).eq
             .listAlerts()
             .then((d) => d.some((a) => a.id === id)),
-        PROBE_ID
+        PROBE_ID,
       ),
     (present) => present,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   ).catch(() => false)
 }
 
@@ -203,19 +210,22 @@ async function stepOneSound(page: Page, out: AppOutput, append: (at: Date) => vo
   const ring = await settle(
     () => spoken(page),
     (list) => list.slice(before).some((s) => s.text === PHRASE),
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   ).catch(() => null)
   const heard = ring === null ? [] : ring.slice(before).filter((s) => s.text === PHRASE)
   if (
     !check(
       'a matching LIVE line reaches the speaker — one append, one alert',
       heard.length > 0,
-      heard.length === 0 ? `never spoke "${PHRASE}"` : `${String(heard.length)} utterance(s)`
+      heard.length === 0 ? `never spoke "${PHRASE}"` : `${String(heard.length)} utterance(s)`,
     )
   ) {
     return
   }
-  check('…and this channel stayed mute doing it', heard.every((s) => !s.uttered))
+  check(
+    '…and this channel stayed mute doing it',
+    heard.every((s) => !s.uttered),
+  )
 
   // THE SINGLE-AUDIO BAR. A second publisher's firing lands within milliseconds of the first — the
   // two worlds are reading the same file — but "milliseconds" is not a claim worth resting a
@@ -226,7 +236,7 @@ async function stepOneSound(page: Page, out: AppOutput, append: (at: Date) => vo
   check(
     'EXACTLY ONE SOUND for one matching line — the TS evaluator is silent, not merely coalesced',
     after.length === 1,
-    `${String(after.length)} utterance(s) with the throttle off for this def`
+    `${String(after.length)} utterance(s) with the throttle off for this def`,
   )
 
   const now = fireLines(out, PROBE_NAME)
@@ -235,7 +245,7 @@ async function stepOneSound(page: Page, out: AppOutput, append: (at: Date) => vo
   check(
     '…and the sound is ENGINE-ATTRIBUTED: the app placed the fire frame and PLAYED it',
     played === 1,
-    `${String(played)} played · ${String(logged)} logged-not-played, for "${PROBE_NAME}"`
+    `${String(played)} played · ${String(logged)} logged-not-played, for "${PROBE_NAME}"`,
   )
   // THE DISCRIMINATOR, STATED AS ITS OWN CHECK. `logged, not played` is what an unarmed launch
   // prints — the flag off, the gate refused, or the frame unplaceable against any def — and every
@@ -244,7 +254,7 @@ async function stepOneSound(page: Page, out: AppOutput, append: (at: Date) => vo
   check(
     '…and this process made none of it: no fire for this rule was merely logged',
     logged === 0,
-    `${String(logged)} fire(s) the app heard and did not play`
+    `${String(logged)} fire(s) the app heard and did not play`,
   )
 }
 
@@ -269,7 +279,7 @@ async function main(): Promise<void> {
       !check(
         'the engine went live on this log — the fire path’s readiness',
         serving !== null,
-        serving?.line ?? 'the app never reported the engine serving'
+        serving?.line ?? 'the app never reported the engine serving',
       )
     ) {
       return
@@ -277,10 +287,17 @@ async function main(): Promise<void> {
 
     // ── the probe def, through the app's own door ──────────────────────────────────────────────
     const stored = await saveProbe(page)
-    if (!check('the probe alert saves through the app’s own IPC', stored > 0, `${String(stored)} defs stored`)) {
+    if (
+      !check(
+        'the probe alert saves through the app’s own IPC',
+        stored > 0,
+        `${String(stored)} defs stored`,
+      )
+    ) {
       return
     }
-    if (!check('…and the renderer’s player has re-read the def set', await refreshPlayer(page))) return
+    if (!check('…and the renderer’s player has re-read the def set', await refreshPlayer(page)))
+      return
 
     // THE DEFINE IS A ROUND TRIP THE SAVE DOES NOT WAIT ON. `pushAppKnowledge` is voided by design
     // (a preference write is answered by the app's own state, never by the engine), so the ack is
@@ -289,7 +306,7 @@ async function main(): Promise<void> {
     const defined = await settle(
       () => Promise.resolve(out.text().includes('data-server define: alerts.define')),
       (seen) => seen,
-      { timeoutMs: 20_000 }
+      { timeoutMs: 20_000 },
     ).catch(() => false)
     if (!check('the engine acknowledged the def push', defined)) return
 
@@ -302,8 +319,12 @@ async function main(): Promise<void> {
   }
 
   if (failures.length === 0) {
-    note('one live line under EQC_ENGINE_ALERTS=1 produced exactly one sound, and the engine made it')
-    note('the app-side evaluator still matched and still spent its cooldown clock — it simply published nothing')
+    note(
+      'one live line under EQC_ENGINE_ALERTS=1 produced exactly one sound, and the engine made it',
+    )
+    note(
+      'the app-side evaluator still matched and still spent its cooldown clock — it simply published nothing',
+    )
   }
 }
 

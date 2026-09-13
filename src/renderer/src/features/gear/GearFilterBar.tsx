@@ -68,7 +68,7 @@ const EFFECT_OPTIONS: { value: EffectFilter; label: string }[] = [
   { value: 'proc', label: SOCKET_LABEL.proc },
   { value: 'worn', label: SOCKET_LABEL.worn },
   { value: 'focus', label: SOCKET_LABEL.focus },
-  { value: 'click', label: SOCKET_LABEL.click }
+  { value: 'click', label: SOCKET_LABEL.click },
 ]
 
 /** The bar's ON/OFF idiom, lifted verbatim from EffectFilterBar: one chip, lit when the filter is on. */
@@ -77,7 +77,7 @@ function ToggleChip({
   hint,
   on,
   testId,
-  onToggle
+  onToggle,
 }: {
   label: string
   hint: string
@@ -112,7 +112,11 @@ export interface GearFilterBarProps {
 }
 
 /** The three closed-list narrowings of WHO a row is: its slots, its weapon kind, its effect kind. */
-function SelectRow({ filters, setFilters, visible }: Pick<GearFilterBarProps, 'filters' | 'setFilters' | 'visible'>): JSX.Element {
+function SelectRow({
+  filters,
+  setFilters,
+  visible,
+}: Pick<GearFilterBarProps, 'filters' | 'setFilters' | 'visible'>): JSX.Element {
   return (
     <>
       {/* MULTI-SELECT SINCE JOS-302, and it KEPT its testid: `gear-slot` is the handle the e2e slot
@@ -170,7 +174,14 @@ function SelectRow({ filters, setFilters, visible }: Pick<GearFilterBarProps, 'f
 }
 
 /** WHICH ITEMS: name, slot, classes, effect kind, era. Search is always drawn — see the header. */
-function IdentityRow({ filters, setFilters, text, setText, classes, visible }: Omit<GearFilterBarProps, 'upgrade'>): JSX.Element {
+function IdentityRow({
+  filters,
+  setFilters,
+  text,
+  setText,
+  classes,
+  visible,
+}: Omit<GearFilterBarProps, 'upgrade'>): JSX.Element {
   return (
     <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'nowrap' }}>
       <TextField

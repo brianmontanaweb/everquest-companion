@@ -31,7 +31,14 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { stripTitles, type TitleHolder } from '../src/renderer/src/overlay/pointerExit'
 
-const OVERLAY = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'src', 'renderer', 'src', 'overlay')
+const OVERLAY = join(
+  fileURLToPath(new URL('.', import.meta.url)),
+  '..',
+  'src',
+  'renderer',
+  'src',
+  'overlay',
+)
 
 /**
  * THE TITLE BAR, as two files. `OverlayHeader.tsx` IS the bar — the lock/unlock pin, the close ✕
@@ -68,7 +75,7 @@ test('JOS-358: nothing outside the title bar carries a tooltip', () => {
   assert.deepEqual(
     offenders,
     [],
-    `the owner ruled the bars get NO tooltip; these still hover: ${offenders.join(', ')}`
+    `the owner ruled the bars get NO tooltip; these still hover: ${offenders.join(', ')}`,
   )
 })
 
@@ -78,14 +85,18 @@ test('2026-08-16: …and neither does the title bar — its controls are NAMED, 
   // The primitive puts the string on the element as its accessible NAME and nowhere else: the pin
   // is still `button[aria-label^="Unlock"]` to the e2e and to a screen reader, and draws no popup.
   assert.match(button, /aria-label=\{label\}/)
-  assert.doesNotMatch(button, /\btitle=/, 'IconButton still hands its label to the DOM as a tooltip')
+  assert.doesNotMatch(
+    button,
+    /\btitle=/,
+    'IconButton still hands its label to the DOM as a tooltip',
+  )
   // The bar's other hover texts - the tail, the live dot, the selector's disambiguation - moved to
   // aria-label the same way; the drag gutter's hint is simply gone (there is nothing to name).
   // Only the <HeaderBody title={title}> PROP (the bar's own text) may still spell `title=`.
   assert.doesNotMatch(
     header,
     /^\s+title=(?!\{title\})/m,
-    'OverlayHeader still hands a tooltip to the DOM'
+    'OverlayHeader still hands a tooltip to the DOM',
   )
   assert.match(header, /aria-label=\{tailTitle\}/)
   assert.match(header, /aria-label=\{live \? 'In combat' : 'Idle'\}/)
@@ -124,7 +135,7 @@ function fake(title: string | null, connected = true): TitleHolder & { title: st
     },
     setAttribute(_n: 'title', v: string): void {
       this.title = v
-    }
+    },
   }
 }
 
@@ -206,5 +217,8 @@ test('the feed hover card leaves with the pointer too — it is a feature, not a
   // …through the OWNING ROW's own close path, so the layer never unmounts itself behind the state
   // that mounted it.
   const feed = readFileSync(join(OVERLAY, 'EventLogOverlay.tsx'), 'utf8')
-  assert.equal((feed.match(/<HoverCardLayer anchor=\{anchor\} onDismiss=\{leave\}>/g) ?? []).length, 2)
+  assert.equal(
+    (feed.match(/<HoverCardLayer anchor=\{anchor\} onDismiss=\{leave\}>/g) ?? []).length,
+    2,
+  )
 })

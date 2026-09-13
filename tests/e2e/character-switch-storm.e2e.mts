@@ -72,7 +72,7 @@ import {
   settle,
   settleStable,
   sleep,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow, overlayWindow } from './appWindow.mjs'
 import { launchOnFixture, stamp, type FixtureLog } from './logFixture.mjs'
@@ -128,7 +128,7 @@ function alertFires(page: Page): Promise<Fires> {
     const bridge = window as unknown as {
       eq: {
         getModuleSnapshot: (
-          id: string
+          id: string,
         ) => Promise<{ state?: { history?: Record<string, unknown[]> } } | null>
       }
     }
@@ -215,15 +215,17 @@ async function tally(main: Page, toast: Page): Promise<Tally> {
   return {
     fires: fires.total,
     toasts: await toastsSeen(toast),
-    deltas: await main.evaluate(() => (window as unknown as { __eqDeltas?: number }).__eqDeltas ?? 0),
-    byId: fires.byId
+    deltas: await main.evaluate(
+      () => (window as unknown as { __eqDeltas?: number }).__eqDeltas ?? 0,
+    ),
+    byId: fires.byId,
   }
 }
 
 /** What changed between two readings, in the words a failure line wants. */
 function since(before: Tally, after: Tally): string {
   return `${String(after.fires - before.fires)} alert fire(s) ${JSON.stringify(after.byId)} · ${String(
-    after.toasts - before.toasts
+    after.toasts - before.toasts,
   )} card(s) · ${String(after.deltas - before.deltas)} module delta(s)`
 }
 
@@ -232,8 +234,10 @@ async function switchTo(page: Page, logPath: string): Promise<{ name: string; ms
   const t0 = Date.now()
   await page.evaluate(
     (p) =>
-      (window as unknown as { eq: { setCharacter: (x: string) => Promise<unknown> } }).eq.setCharacter(p),
-    logPath
+      (
+        window as unknown as { eq: { setCharacter: (x: string) => Promise<unknown> } }
+      ).eq.setCharacter(p),
+    logPath,
   )
   const ms = Date.now() - t0
   const name = await settle(
@@ -245,7 +249,7 @@ async function switchTo(page: Page, logPath: string): Promise<{ name: string; ms
         return (await bridge.eq.getCharacter())?.name ?? ''
       }),
     (n) => n !== '',
-    { timeoutMs: 120_000 }
+    { timeoutMs: 120_000 },
   )
   // …AND THEN FOR THE ENGINE TO BE ANSWERING FOR THIS CHARACTER (JOS-499) — the same wait
   // `character-switch.e2e.mts switchTo` grew, for the same measured reason: `character:set` no
@@ -262,7 +266,7 @@ async function switchTo(page: Page, logPath: string): Promise<{ name: string; ms
         return (await bridge.eq.getModuleSnapshot('kills')) !== null
       }),
     (ready) => ready,
-    { timeoutMs: 120_000 }
+    { timeoutMs: 120_000 },
   )
   return { name, ms }
 }
@@ -320,7 +324,7 @@ function startStorm(page: Page, picks: readonly string[], gapMs: number): Promis
       const state = {
         done: false,
         deltasAtEnd: -1,
-        picks: [] as { ok: boolean; name: string; ms: number }[]
+        picks: [] as { ok: boolean; name: string; ms: number }[],
       }
       w.__eqStorm = state
       void (async () => {
@@ -332,7 +336,7 @@ function startStorm(page: Page, picks: readonly string[], gapMs: number): Promis
           // renderer has one and it is monotonic; nothing crosses a process boundary with it.
           const at = performance.now()
           inFlight.push(
-            w.eq.setCharacter(p).then((r) => ({ ...r, ms: Math.round(performance.now() - at) }))
+            w.eq.setCharacter(p).then((r) => ({ ...r, ms: Math.round(performance.now() - at) })),
           )
           await new Promise((r) => setTimeout(r, gap))
         }
@@ -342,7 +346,7 @@ function startStorm(page: Page, picks: readonly string[], gapMs: number): Promis
         state.done = true
       })()
     },
-    { paths: [...picks], gap: gapMs }
+    { paths: [...picks], gap: gapMs },
   )
 }
 
@@ -361,7 +365,7 @@ function stormState(page: Page): Promise<StormState> {
       done: s?.done ?? false,
       deltasAtEnd: s?.deltasAtEnd ?? -1,
       deltas: w.__eqDeltas ?? 0,
-      picks: s?.picks ?? []
+      picks: s?.picks ?? [],
     }
   })
 }
@@ -393,7 +397,7 @@ function reportPreemption(picks: readonly StormPick[]): void {
   note(
     `preemption latency (pick → dropped): worst ${String(worst)}ms, median ${String(median)}ms, ` +
       `over ${String(dropped.length)} preempted picks (G4 target <${String(PREEMPT_TARGET_MS)}ms) ` +
-      `— ${worst < PREEMPT_TARGET_MS ? 'inside' : 'OUTSIDE'} target`
+      `— ${worst < PREEMPT_TARGET_MS ? 'inside' : 'OUTSIDE'} target`,
   )
   // A LEDGER LINE, the bench's shape (`.bench/replay.jsonl`), so a change to the switch controller
   // is comparable against the runs before it instead of against a number somebody remembers. It
@@ -412,9 +416,9 @@ function reportPreemption(picks: readonly StormPick[]): void {
         medianMs: median,
         allMs: sorted,
         winnerMs: picks[picks.length - 1]?.ms ?? null,
-        targetMs: PREEMPT_TARGET_MS
+        targetMs: PREEMPT_TARGET_MS,
       })}\n`,
-      'utf8'
+      'utf8',
     )
     note(`preemption ledger: ${join(ARTIFACTS, 'preemption.jsonl')}`)
   } catch {
@@ -430,14 +434,22 @@ function toastWindow(app: ElectronApplication): Promise<Page | null> {
 /** Pad both staged logs, each while the app is tailing the OTHER one (see the header). */
 async function padBoth(page: Page, log: FixtureLog, otherPath: string): Promise<void> {
   const away = await switchTo(page, otherPath)
-  check(`the app is tailing ${OTHER} while Primitive's log is padded`, away.name === OTHER, away.name)
+  check(
+    `the app is tailing ${OTHER} while Primitive's log is padded`,
+    away.name === OTHER,
+    away.name,
+  )
   let t0 = Date.now()
   note(
-    `padded Primitive's log with ${String(padFile(log.logPath, PAD_LINES))} historical swing lines in ${String(Date.now() - t0)}ms`
+    `padded Primitive's log with ${String(padFile(log.logPath, PAD_LINES))} historical swing lines in ${String(Date.now() - t0)}ms`,
   )
 
   const back = await switchTo(page, log.logPath)
-  check("the app is tailing Primitive while Alterna's log is padded", back.name === 'Primitive', back.name)
+  check(
+    "the app is tailing Primitive while Alterna's log is padded",
+    back.name === 'Primitive',
+    back.name,
+  )
   // THE DEFECT'S WINDOW IS GONE WITH THE FOLD (JOS-499). This asked whether the switch had
   // outlived one heartbeat, because JOS-457's defect needed picks to land INSIDE a running
   // whole-log replay on this thread. There is no replay here: a switch is an attach plus a
@@ -445,7 +457,7 @@ async function padBoth(page: Page, log: FixtureLog, otherPath: string): Promise<
   // another process. Asking for the window would fail every run for the right reason.
   t0 = Date.now()
   note(
-    `padded ${OTHER}'s log with ${String(padFile(otherPath, PAD_LINES))} historical swing lines in ${String(Date.now() - t0)}ms`
+    `padded ${OTHER}'s log with ${String(padFile(otherPath, PAD_LINES))} historical swing lines in ${String(Date.now() - t0)}ms`,
   )
 }
 
@@ -454,11 +466,15 @@ async function drive(page: Page, strip: Page, log: FixtureLog, otherPath: string
 
   // THE BASELINE. Everything below is measured against this: the launch and the switches that got
   // us here must have celebrated nothing at all — the whole history is the PAST.
-  const base = await settleStable(() => tally(page, strip), { timeoutMs: 15_000, stable: 4, pollMs: 200 })
+  const base = await settleStable(() => tally(page, strip), {
+    timeoutMs: 15_000,
+    stable: 4,
+    pollMs: 200,
+  })
   check(
     'the launch and the setup switches celebrate NOTHING (a replay is history, not news)',
     base.fires === 0 && base.toasts === 0,
-    since({ fires: 0, toasts: 0, deltas: 0, byId: {} }, base)
+    since({ fires: 0, toasts: 0, deltas: 0, byId: {} }, base),
   )
 
   // ── THE CONTROL: a LIVE credited kill must celebrate exactly once ──────────────────────────────
@@ -466,23 +482,35 @@ async function drive(page: Page, strip: Page, log: FixtureLog, otherPath: string
   const live1 = await settle(
     () => tally(page, strip),
     (t) => t.fires > base.fires && t.toasts > base.toasts,
-    { timeoutMs: 30_000, pollMs: 200 }
+    { timeoutMs: 30_000, pollMs: 200 },
   )
   // COUNTED AS TOASTS (JOS-499). `alertFires` reads the alerts history ring, and this alert is a
   // bossDefeat APP SIGNAL — renderer-evaluated on both sides by design, so the engine's ring
   // cannot record it and the app-side recorder went with the deleted alerts module. Nothing the
   // user sees is lost: the alert fires, plays and shows its card, and the card is what is counted
   // here. `byId` is still printed in every failure line, so a run that starts recording says so.
-  check(`a LIVE credited kill of ${BOSS} celebrates exactly once`, live1.toasts - base.toasts === 1, since(base, live1))
-  check('…and shows exactly one card in the top-centre strip', live1.toasts - base.toasts === 1, since(base, live1))
+  check(
+    `a LIVE credited kill of ${BOSS} celebrates exactly once`,
+    live1.toasts - base.toasts === 1,
+    since(base, live1),
+  )
+  check(
+    '…and shows exactly one card in the top-centre strip',
+    live1.toasts - base.toasts === 1,
+    since(base, live1),
+  )
   await sleep(ALERT_COOLDOWN_MS + 500)
 
   // ── THE STORM ─────────────────────────────────────────────────────────────────────────────────
   // Primitive has now killed a boss Alterna never has, which is exactly the asymmetry a returning
   // replay used to read as "a boss just died".
-  const before = await settleStable(() => tally(page, strip), { timeoutMs: 10_000, stable: 4, pollMs: 200 })
+  const before = await settleStable(() => tally(page, strip), {
+    timeoutMs: 10_000,
+    stable: 4,
+    pollMs: 200,
+  })
   const paths = Array.from({ length: STORM_PICKS }, (_, i) =>
-    i % 2 === 0 ? otherPath : log.logPath
+    i % 2 === 0 ? otherPath : log.logPath,
   )
   const t0 = Date.now()
   await startStorm(page, paths, STORM_GAP_MS)
@@ -497,11 +525,18 @@ async function drive(page: Page, strip: Page, log: FixtureLog, otherPath: string
       return s
     },
     (s) => s.done,
-    { timeoutMs: 180_000, pollMs: 100 }
+    { timeoutMs: 180_000, pollMs: 100 },
   )
-  note(`storm: ${String(STORM_PICKS)} picks ${String(STORM_GAP_MS)}ms apart, settled in ${String(Date.now() - t0)}ms`)
+  note(
+    `storm: ${String(STORM_PICKS)} picks ${String(STORM_GAP_MS)}ms apart, settled in ${String(Date.now() - t0)}ms`,
+  )
 
-  if (!check('the storm completed (every pick answered)', state.done && state.picks.length === STORM_PICKS)) {
+  if (
+    !check(
+      'the storm completed (every pick answered)',
+      state.done && state.picks.length === STORM_PICKS,
+    )
+  ) {
     return
   }
 
@@ -525,9 +560,15 @@ async function drive(page: Page, strip: Page, log: FixtureLog, otherPath: string
   // leaves the app CORRECT — the last pick wins, the world it lands on is that character's, and
   // nothing celebrates history on the way through. Those claims are below and are untouched.
   const dropped = state.picks.filter((p) => !p.ok).length
-  note(`${String(dropped)} of ${String(STORM_PICKS)} picks were dropped app-side (0 is expected since JOS-499)`)
+  note(
+    `${String(dropped)} of ${String(STORM_PICKS)} picks were dropped app-side (0 is expected since JOS-499)`,
+  )
   const last = state.picks[STORM_PICKS - 1]
-  check('the LAST pick is the one that won', last.ok && last.name === 'Primitive', JSON.stringify(last))
+  check(
+    'the LAST pick is the one that won',
+    last.ok && last.name === 'Primitive',
+    JSON.stringify(last),
+  )
 
   // ── G4: HOW FAST A SUPERSEDED CLICK IS TOLD SO (JOS-458) ────────────────────────────────────
   reportPreemption(state.picks)
@@ -541,7 +582,7 @@ async function drive(page: Page, strip: Page, log: FixtureLog, otherPath: string
         return (await bridge.eq.getCharacter())?.name ?? ''
       }),
     (n) => n !== '',
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
   check('…and the app ends attached to that final pick', attached === 'Primitive', attached)
 
@@ -549,15 +590,19 @@ async function drive(page: Page, strip: Page, log: FixtureLog, otherPath: string
   check(
     'ZERO module deltas reached the renderer across the whole storm',
     state.deltasAtEnd - before.deltas === 0,
-    `${String(state.deltasAtEnd - before.deltas)} at the last reply · peak ${String(peakDuring)} while folding`
+    `${String(state.deltasAtEnd - before.deltas)} at the last reply · peak ${String(peakDuring)} while folding`,
   )
   check('…and none was seen mid-storm either', peakDuring === 0, String(peakDuring))
 
-  const after = await settleStable(() => tally(page, strip), { timeoutMs: 20_000, stable: 4, pollMs: 200 })
+  const after = await settleStable(() => tally(page, strip), {
+    timeoutMs: 20_000,
+    stable: 4,
+    pollMs: 200,
+  })
   check(
     'ZERO alert fires and ZERO celebration cards — the random audio and the announcements are gone',
     after.fires === before.fires && after.toasts === before.toasts,
-    since(before, after)
+    since(before, after),
   )
 
   // ── THE CONSTRAINT: the app is alive and celebrations still work ───────────────────────────────
@@ -577,18 +622,18 @@ async function drive(page: Page, strip: Page, log: FixtureLog, otherPath: string
         return (await bridge.eq.getModuleSnapshot('kills')) !== null
       }),
     (ready) => ready,
-    { timeoutMs: 120_000 }
+    { timeoutMs: 120_000 },
   )
   log.append(...KILL_LINES)
   const live2 = await settle(
     () => tally(page, strip),
     (t) => t.toasts > after.toasts,
-    { timeoutMs: 60_000, pollMs: 200 }
+    { timeoutMs: 60_000, pollMs: 200 },
   )
   check(
     'a live kill AFTER the storm still celebrates exactly once (suppressed, not broken)',
     live2.toasts - after.toasts === 1,
-    since(after, live2)
+    since(after, live2),
   )
   check('…and still shows exactly one card', live2.toasts - after.toasts === 1, since(after, live2))
 }
@@ -598,7 +643,7 @@ async function main(): Promise<void> {
 
   console.log('launch: hidden Electron (EQ_E2E=1) with TWO characters staged from e2e-toast.log…')
   const { app, close, log } = await launchOnFixture('e2e-toast.log', {
-    others: { [OTHER]: 'e2e-toast.log' }
+    others: { [OTHER]: 'e2e-toast.log' },
   })
 
   let page: Page | null = null
@@ -615,20 +660,32 @@ async function main(): Promise<void> {
     await watchDeltas(page)
 
     const toast = await toastWindow(app)
-    if (!check('the toast overlay window is open (the top-centre announcement strip)', toast !== null)) {
+    if (
+      !check('the toast overlay window is open (the top-centre announcement strip)', toast !== null)
+    ) {
       return
     }
     const strip = toast as Page
     await watchToasts(strip)
 
     const otherPath = log.others[OTHER]
-    if (!check(`a second character (${OTHER}) is staged beside Primitive`, typeof otherPath === 'string', String(otherPath))) {
+    if (
+      !check(
+        `a second character (${OTHER}) is staged beside Primitive`,
+        typeof otherPath === 'string',
+        String(otherPath),
+      )
+    ) {
       return
     }
 
     await drive(page, strip, log, otherPath)
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     if (failures.length) await dumpArtifacts(page, 'character-switch-storm-FAIL')
   } finally {
     await close()

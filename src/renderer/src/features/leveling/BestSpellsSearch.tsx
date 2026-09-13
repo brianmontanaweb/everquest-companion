@@ -31,7 +31,7 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import ClearIcon from '@mui/icons-material/Clear'
 import SearchIcon from '@mui/icons-material/Search'
@@ -39,7 +39,7 @@ import {
   TAB_LABEL,
   type BestSpellColumn,
   type BestSpellSort,
-  type BestSpellTab
+  type BestSpellTab,
 } from '@shared/bestSpells'
 import { elsewhereLabel, type BestSpellSearchResults } from '@shared/bestSpellsSearch'
 import type { ObservedSpellRanksSnap } from '@shared/spellRanks'
@@ -60,7 +60,7 @@ const PLACEHOLDER = 'Search all spells'
 /** The box. Controlled by the panel, because the panel is what switches its body on the same state. */
 export function BestSpellsSearchField({
   query,
-  onChange
+  onChange,
 }: {
   query: string
   onChange: (q: string) => void
@@ -92,8 +92,8 @@ export function BestSpellsSearchField({
                   <ClearIcon sx={{ fontSize: 13 }} />
                 </IconButton>
               </InputAdornment>
-            )
-        }
+            ),
+        },
       }}
     />
   )
@@ -110,7 +110,7 @@ export function BestSpellsSearchField({
  */
 function ClassLevelChips({
   levels,
-  loadout
+  loadout,
 }: {
   levels: readonly SearchClassLevel[]
   loadout: ReadonlySet<string>
@@ -175,7 +175,7 @@ export function BestSpellsResults({
   sort,
   onSort,
   ranks,
-  loadout
+  loadout,
 }: BestSpellsResultsProps): JSX.Element {
   const elsewhere = elsewhereLabel(results.elsewhere, TAB_LABEL[tab])
   return (
@@ -188,7 +188,12 @@ export function BestSpellsResults({
       data-desc={String(sort.desc)}
     >
       {results.rows.length === 0 ? (
-        <Typography variant="caption" color="text.disabled" display="block" data-testid="best-spells-search-empty">
+        <Typography
+          variant="caption"
+          color="text.disabled"
+          display="block"
+          data-testid="best-spells-search-empty"
+        >
           {results.elsewhere > 0
             ? `nothing that matches has a ${TAB_LABEL[tab]} reading - try another tab`
             : 'no spell in the wiki DB matches that - try a name, a class, a level or a range'}
@@ -210,7 +215,13 @@ export function BestSpellsResults({
                 columns={columns}
                 ranks={ranks}
                 extra={
-                  <Stack direction="row" spacing={0.5} alignItems="baseline" flexWrap="wrap" useFlexGap>
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    alignItems="baseline"
+                    flexWrap="wrap"
+                    useFlexGap
+                  >
                     <OutOfEraChip outOfEra={r.outOfEra} />
                     <ClassLevelChips levels={r.levels} loadout={loadout} />
                   </Stack>
@@ -221,7 +232,10 @@ export function BestSpellsResults({
         </Table>
       )}
       {results.hidden > 0 && (
-        <ResultNote text={`+${String(results.hidden)} more, refine your search`} testid="best-spells-search-more" />
+        <ResultNote
+          text={`+${String(results.hidden)} more, refine your search`}
+          testid="best-spells-search-more"
+        />
       )}
       {elsewhere !== null && results.rows.length > 0 && (
         <ResultNote text={elsewhere} testid="best-spells-search-elsewhere" />

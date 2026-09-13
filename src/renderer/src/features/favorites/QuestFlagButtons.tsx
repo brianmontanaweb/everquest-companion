@@ -18,7 +18,7 @@ import { Tooltip } from '../../lib/Tooltip'
 
 export function QuestStarButton({
   favorited,
-  onToggle
+  onToggle,
 }: {
   favorited: boolean
   onToggle: () => void
@@ -52,13 +52,15 @@ export function QuestStarButton({
 
 export function QuestIgnoreButton({
   ignored,
-  onToggle
+  onToggle,
 }: {
   ignored: boolean
   onToggle: () => void
 }): JSX.Element {
   return (
-    <Tooltip title={ignored ? 'Stop ignoring - show this quest again' : 'Ignore this quest permanently'}>
+    <Tooltip
+      title={ignored ? 'Stop ignoring - show this quest again' : 'Ignore this quest permanently'}
+    >
       <IconButton
         size="small"
         component="span"

@@ -62,7 +62,7 @@ export const BROKEN_PIPE_CODES: readonly string[] = [
   'ENXIO',
   'ECONNRESET',
   'ERR_STREAM_DESTROYED',
-  'ERR_STREAM_WRITE_AFTER_END'
+  'ERR_STREAM_WRITE_AFTER_END',
 ]
 
 /**

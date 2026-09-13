@@ -30,7 +30,7 @@ import {
   note,
   reportRun,
   settle,
-  settleGone
+  settleGone,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture } from './logFixture.mjs'
@@ -78,7 +78,7 @@ function pickColor(page: Page, hex: string): Promise<void> {
       el.dispatchEvent(new Event('input', { bubbles: true }))
       el.dispatchEvent(new Event('change', { bubbles: true }))
     },
-    { sel: COLOR, value: hex }
+    { sel: COLOR, value: hex },
   )
 }
 
@@ -93,7 +93,7 @@ function storedColor(page: Page): Promise<string> {
   return page.evaluate(() =>
     (window as unknown as { eq: { getCursorRing: () => Promise<{ colorHex: string }> } }).eq
       .getCursorRing()
-      .then((r) => r.colorHex)
+      .then((r) => r.colorHex),
   )
 }
 
@@ -127,34 +127,46 @@ async function stepDefaultIsUnchanged(page: Page): Promise<void> {
   }, COLOR)
   check('…which is the platform colour input, not a text field', type === 'color', type)
 
-  const value = await settle(() => inputValue(page), (v) => v === DEFAULT_RING_COLOR, {
-    timeoutMs: 15_000
-  })
+  const value = await settle(
+    () => inputValue(page),
+    (v) => v === DEFAULT_RING_COLOR,
+    {
+      timeoutMs: 15_000,
+    },
+  )
   check(
     'a fresh install is on white — the colour every ring had before this control existed',
     value === DEFAULT_RING_COLOR,
-    value
+    value,
   )
   const drawn = await previewColor(page)
   check(
     '…and the sample is drawn in exactly the old ring colour',
     drawn === ringStrokeColor(DEFAULT_RING_COLOR),
-    `${drawn} vs ${ringStrokeColor(DEFAULT_RING_COLOR)}`
+    `${drawn} vs ${ringStrokeColor(DEFAULT_RING_COLOR)}`,
   )
 }
 
 /** THE ASSERTION THE TICKET IS ABOUT: picking a colour changes the ring's colour, now. */
 async function stepPickAColor(page: Page): Promise<void> {
   await pickColor(page, CHOSEN)
-  const drawn = await settle(() => previewColor(page), (c) => c === ringStrokeColor(CHOSEN), {
-    timeoutMs: 15_000
-  })
+  const drawn = await settle(
+    () => previewColor(page),
+    (c) => c === ringStrokeColor(CHOSEN),
+    {
+      timeoutMs: 15_000,
+    },
+  )
   check(
     `picking ${CHOSEN} redraws the ring in it, without a relaunch`,
     drawn === ringStrokeColor(CHOSEN),
-    `${drawn} vs ${ringStrokeColor(CHOSEN)}`
+    `${drawn} vs ${ringStrokeColor(CHOSEN)}`,
   )
-  const stored = await settle(() => storedColor(page), (c) => c === CHOSEN, { timeoutMs: 15_000 })
+  const stored = await settle(
+    () => storedColor(page),
+    (c) => c === CHOSEN,
+    { timeoutMs: 15_000 },
+  )
   check('…and main stored what was picked', stored === CHOSEN, stored)
 }
 
@@ -164,13 +176,17 @@ async function stepPersisted(page: Page): Promise<void> {
   check(
     'a relaunch still has the chosen colour — it outlived the process that picked it',
     stored === CHOSEN,
-    stored
+    stored,
   )
   await openCursorRing(page)
   // WAIT FOR THE CONDITION. The card hydrates from main like every other prefs card, so the
   // input opens on the default it was constructed with and lands on the stored answer an IPC
   // round trip later. That is the app's hydration pattern, not a defect.
-  const value = await settle(() => inputValue(page), (v) => v === CHOSEN, { timeoutMs: 15_000 })
+  const value = await settle(
+    () => inputValue(page),
+    (v) => v === CHOSEN,
+    { timeoutMs: 15_000 },
+  )
   check('…and the picker agrees with the store it hydrated from', value === CHOSEN, value)
   const drawn = await previewColor(page)
   check('…as does the ring it draws', drawn === ringStrokeColor(CHOSEN), drawn)
@@ -182,15 +198,19 @@ async function stepBackToWhite(page: Page): Promise<void> {
   const drawn = await settle(
     () => previewColor(page),
     (c) => c === ringStrokeColor(DEFAULT_RING_COLOR),
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   check(
     'choosing white again puts the ring back exactly where it started',
     drawn === ringStrokeColor(DEFAULT_RING_COLOR),
-    drawn
+    drawn,
   )
   const stored = await storedColor(page)
-  check('…and stores it, so the next launch is ordinary again', stored === DEFAULT_RING_COLOR, stored)
+  check(
+    '…and stores it, so the next launch is ordinary again',
+    stored === DEFAULT_RING_COLOR,
+    stored,
+  )
 }
 
 async function main(): Promise<void> {
@@ -237,9 +257,15 @@ async function main(): Promise<void> {
   }
 
   // A missing IPC handler shows up here first (`invoke` rejects into an unhandled rejection).
-  check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+  check(
+    'no renderer console errors',
+    consoleErrors.length === 0,
+    consoleErrors.slice(0, 3).join(' | '),
+  )
   if (consoleErrors.length === 0) {
-    note('two real launches over one userData dir — the persistence claim is a restart, not a reload')
+    note(
+      'two real launches over one userData dir — the persistence claim is a restart, not a reload',
+    )
   }
 
   reportRun()

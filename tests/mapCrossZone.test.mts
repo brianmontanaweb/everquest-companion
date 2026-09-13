@@ -32,7 +32,7 @@ import {
   isReachable,
   jumpTarget,
   searchMobsAcrossZones,
-  type CrossZoneRow
+  type CrossZoneRow,
 } from '../src/renderer/src/features/maps/crossZone'
 import { MOB_CATALOG } from '../src/renderer/src/features/mobs/mobSearch'
 import { ZONES, zoneShortNameFromCatalog } from '../src/shared/zones'
@@ -53,14 +53,18 @@ test('the report: searching a High Keep NPC while in High Pass answers with High
     query: 'Tarn Visilin',
     catalog: MOB_CATALOG,
     here: 'highpass',
-    installed: INSTALLED
+    installed: INSTALLED,
   })
   const row = find(rows, 'Tarn Visilin')
   assert.ok(row, 'the catalog knows him and the search reaches him from another zone')
   assert.equal(row.kind, 'mob')
   assert.equal(row.zone, 'highkeep', 'the row opens the High Keep map')
   assert.equal(row.zoneName, 'High Keep', 'and names the zone in the words a player uses')
-  assert.equal(row.note, null, 'his page states one zone and one position, so there is nothing to excuse')
+  assert.equal(
+    row.note,
+    null,
+    'his page states one zone and one position, so there is nothing to excuse',
+  )
   // `/loc (65, -223)` is map (223, -65): mapX = -ew, mapY = -ns. The ONE seam (mapGeometry.ts).
   assert.deepEqual(row.at, { x: 223, y: -65 })
   assert.deepEqual(jumpTarget(row), { zone: 'highkeep', at: { x: 223, y: -65 } })
@@ -72,9 +76,13 @@ test('…and the zone you are STANDING in is never repeated here', () => {
     query: 'Tarn Visilin',
     catalog: MOB_CATALOG,
     here: 'highkeep',
-    installed: INSTALLED
+    installed: INSTALLED,
   })
-  assert.equal(find(here, 'Tarn Visilin'), undefined, 'that row is the pane’s own "Named mobs" section')
+  assert.equal(
+    find(here, 'Tarn Visilin'),
+    undefined,
+    'that row is the pane’s own "Named mobs" section',
+  )
 })
 
 // ---- 2. ranking, across both authorities -----------------------------------------------------
@@ -85,7 +93,7 @@ const CATALOG: MobEntry[] = [
   // Substring WITHIN a token: `the Visilin Guard` would not be one — the scorer works per token,
   // so a whole word sitting in a longer name is an EXACT match and ranks like one.
   { page: 'Substring', name: 'Provisilin', zones: ['High Keep'], loc: [{ ns: 5, ew: 6 }] },
-  { page: 'Elsewhere', name: 'Visilin', zones: ['Befallen'] }
+  { page: 'Elsewhere', name: 'Visilin', zones: ['Befallen'] },
 ]
 
 const POINT = (over: Partial<MapPoint>): MapPoint => ({
@@ -99,7 +107,7 @@ const POINT = (over: Partial<MapPoint>): MapPoint => ({
   label: 'A_Label',
   display: 'A Label',
   layer: 1,
-  ...over
+  ...over,
 })
 
 test('exact beats prefix beats substring, and the ordering is the scorer’s, not the list’s', () => {
@@ -107,11 +115,11 @@ test('exact beats prefix beats substring, and the ordering is the scorer’s, no
     query: 'visilin',
     catalog: CATALOG,
     here: null,
-    installed: INSTALLED
+    installed: INSTALLED,
   })
   assert.deepEqual(
     rows.map((r) => r.name),
-    ['Visilin', 'Visilin', 'Visilinius', 'Provisilin']
+    ['Visilin', 'Visilin', 'Visilinius', 'Provisilin'],
   )
   assert.ok(rows[0].score > rows[2].score && rows[2].score > rows[3].score)
 })
@@ -119,14 +127,18 @@ test('exact beats prefix beats substring, and the ordering is the scorer’s, no
 test('a map label and a wiki mob land in ONE ranked list, comparable because one scorer scored both', () => {
   const hits: MapSearchHit[] = [
     { zone: 'befallen', point: POINT({ label: 'Visilin', display: 'Visilin' }), score: 1 },
-    { zone: 'befallen', point: POINT({ label: 'Visilin_Road', display: 'Visilin Road', x: 9 }), score: 0.5 }
+    {
+      zone: 'befallen',
+      point: POINT({ label: 'Visilin_Road', display: 'Visilin Road', x: 9 }),
+      score: 0.5,
+    },
   ]
   const rows = crossZoneRows({
     query: 'visilin',
     catalog: CATALOG,
     hits,
     here: null,
-    installed: INSTALLED
+    installed: INSTALLED,
   })
   // The two exact matches (one label, one mob) sit above every weaker row, whichever list they
   // arrived in — which is the whole reason the two halves are merged rather than stacked.
@@ -139,14 +151,14 @@ test('a map label and a wiki mob land in ONE ranked list, comparable because one
 test('crossZoneRows drops the zone on screen from BOTH halves at once', () => {
   const hits: MapSearchHit[] = [
     { zone: 'highkeep', point: POINT({ display: 'Visilin' }), score: 1 },
-    { zone: 'befallen', point: POINT({ display: 'Visilin' }), score: 1 }
+    { zone: 'befallen', point: POINT({ display: 'Visilin' }), score: 1 },
   ]
   const rows = crossZoneRows({
     query: 'visilin',
     catalog: CATALOG,
     hits,
     here: 'highkeep',
-    installed: INSTALLED
+    installed: INSTALLED,
   })
   assert.deepEqual(new Set(rows.map((r) => r.zone)), new Set(['befallen']))
 })
@@ -154,11 +166,11 @@ test('crossZoneRows drops the zone on screen from BOTH halves at once', () => {
 test('a blank query answers nothing at all — never the whole world', () => {
   assert.deepEqual(
     searchMobsAcrossZones({ query: '   ', catalog: CATALOG, here: null, installed: INSTALLED }),
-    []
+    [],
   )
   assert.deepEqual(
     crossZoneRows({ query: '', catalog: CATALOG, hits: [], here: null, installed: INSTALLED }),
-    []
+    [],
   )
 })
 
@@ -169,7 +181,7 @@ test('the list is capped, and the cap is a real ceiling', () => {
     hits: [],
     here: null,
     installed: INSTALLED,
-    limit: 5
+    limit: 5,
   })
   assert.equal(rows.length, 5)
   assert.ok(CROSS_ZONE_LIMIT > 0)
@@ -182,13 +194,13 @@ test('a page that names SEVERAL zones opens each of them and points at none', ()
     page: 'Wanderer',
     name: 'a wanderer',
     zones: ['High Keep', 'Befallen'],
-    loc: [{ ns: 9, ew: 9 }]
+    loc: [{ ns: 9, ew: 9 }],
   }
   const rows = searchMobsAcrossZones({
     query: 'wanderer',
     catalog: [wanderer],
     here: null,
-    installed: INSTALLED
+    installed: INSTALLED,
   })
   assert.deepEqual(rows.map((r) => r.zone).sort(), ['befallen', 'highkeep'])
   for (const row of rows) {
@@ -204,7 +216,7 @@ test('a page that states no position is LISTED, opens its zone, and says so', ()
     query: 'quiet one',
     catalog: [{ page: 'Quiet', name: 'a quiet one', zones: ['Befallen'] }],
     here: null,
-    installed: INSTALLED
+    installed: INSTALLED,
   })
   assert.equal(rows[0].zone, 'befallen')
   assert.equal(rows[0].at, null)
@@ -219,10 +231,14 @@ test('a zone spelling the table refuses resolves to NO map, under the wiki’s o
     query: 'ambiguous one',
     catalog: [{ page: 'Amb', name: 'an ambiguous one', zones: ['Freeport'] }],
     here: null,
-    installed: INSTALLED
+    installed: INSTALLED,
   })
   assert.equal(rows[0].zone, null)
-  assert.equal(rows[0].zoneName, 'Freeport', 'stated as the wiki spells it, never as a guessed stem')
+  assert.equal(
+    rows[0].zoneName,
+    'Freeport',
+    'stated as the wiki spells it, never as a guessed stem',
+  )
   assert.equal(rows[0].note, 'no map is named that')
   assert.equal(isReachable(rows[0]), false)
   assert.equal(jumpTarget(rows[0]), null)
@@ -249,7 +265,7 @@ test('a zone no installed pack provides is listed and disabled, never offered as
     query: 'visilin',
     catalog: CATALOG,
     here: null,
-    installed: new Set(['befallen'])
+    installed: new Set(['befallen']),
   })
   const keep = rows.filter((r) => r.zoneName === 'High Keep')
   assert.ok(keep.length > 0, 'the answer is still shown — the mob does live there')
@@ -269,7 +285,7 @@ test('an EMPTY installed list means "not known yet", never "nothing is installed
     query: 'visilin',
     catalog: CATALOG,
     here: null,
-    installed: new Set()
+    installed: new Set(),
   })
   assert.ok(rows.every(isReachable))
 })
@@ -285,7 +301,7 @@ test('the shipped catalog is reachable across zones: most rows resolve to a real
   // 7,872 rows name at least one zone the table can point at.
   assert.ok(
     reachable > MOB_CATALOG.length * 0.9,
-    `only ${String(reachable)} of ${String(MOB_CATALOG.length)} catalog rows name a resolvable zone`
+    `only ${String(reachable)} of ${String(MOB_CATALOG.length)} catalog rows name a resolvable zone`,
   )
 })
 
@@ -294,7 +310,7 @@ test('every row the real corpus produces is internally consistent', () => {
     query: 'ambassador',
     catalog: MOB_CATALOG,
     here: null,
-    installed: INSTALLED
+    installed: INSTALLED,
   })
   assert.ok(rows.length > 0)
   for (const row of rows) {

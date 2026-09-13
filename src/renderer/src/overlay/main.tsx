@@ -71,5 +71,5 @@ if (!container) throw new Error('overlay: #overlay-root container missing from o
 ReactDOM.createRoot(container).render(
   <React.StrictMode>
     <Surface />
-  </React.StrictMode>
+  </React.StrictMode>,
 )

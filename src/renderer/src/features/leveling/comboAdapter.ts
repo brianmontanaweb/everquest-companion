@@ -36,7 +36,7 @@ function toStatsInterval(interval: ModelInterval, startTs: number, endTs: number
     classes: interval.slots.map(slotLabel),
     // ANY slot still inferred taints the row: the chip says the loadout was not stated outright,
     // and a partly-observed combo is not an observed one.
-    inferred: interval.slots.some((s) => s.provenance === 'inferred')
+    inferred: interval.slots.some((s) => s.provenance === 'inferred'),
   }
 }
 
@@ -71,7 +71,7 @@ export function comboSource(intervals: readonly ModelInterval[]): ComboSource {
         if (end > start) out.push(toStatsInterval(interval, start, end))
       }
       return out
-    }
+    },
   }
 }
 

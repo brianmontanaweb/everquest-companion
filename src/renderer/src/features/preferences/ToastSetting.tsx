@@ -57,9 +57,11 @@ function useToastState(): [ToastState, (patch: Partial<ToastState>) => void] {
   useEffect(() => {
     let alive = true
     const hydrate = (): void => {
-      void Promise.all([window.eq.getOverlayState(), window.eq.getToastConfig()]).then(([open, cfg]) => {
-        if (alive) setState({ open: open.toast, locked: cfg.locked })
-      })
+      void Promise.all([window.eq.getOverlayState(), window.eq.getToastConfig()]).then(
+        ([open, cfg]) => {
+          if (alive) setState({ open: open.toast, locked: cfg.locked })
+        },
+      )
     }
     window.addEventListener('focus', hydrate)
     const off = window.eq.onOverlayState((s) => {
@@ -98,7 +100,9 @@ export function ToastSetting(): JSX.Element {
               onChange={() => void window.eq.toggleOverlay('toast')}
             />
           }
-          label={<Typography variant="body2">Celebrate boss kills and Sky quests on screen</Typography>}
+          label={
+            <Typography variant="body2">Celebrate boss kills and Sky quests on screen</Typography>
+          }
         />
         <Typography variant="caption" color="text.secondary">
           {state.open
@@ -107,7 +111,11 @@ export function ToastSetting(): JSX.Element {
         </Typography>
         {/* JOS-405: the strip's own A− / A+ is in a drag frame you have to unlock to see, so this
             says where else the size lives. One sentence, state not process. */}
-        <Typography variant="caption" color="text.secondary" data-testid="pref-toast-text-size-note">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          data-testid="pref-toast-text-size-note"
+        >
           Its text size and transparency are Appearance → Overlays.
         </Typography>
       </Stack>

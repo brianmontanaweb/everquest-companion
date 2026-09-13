@@ -31,7 +31,7 @@ import {
   settleStable,
   snapshot,
   type Snap,
-  type SnapEntity
+  type SnapEntity,
 } from './appHarness.mjs'
 import { drilled, leaveCombat, meterRows, returnToCombat } from './drill.mjs'
 import {
@@ -39,7 +39,7 @@ import {
   SCOPE_LABEL_SEL,
   scopeFromPrefs,
   setMeterScope,
-  type Scope
+  type Scope,
 } from './combatPrefsSteps.mjs'
 import {
   PET_BOUND_DAMAGE,
@@ -58,7 +58,7 @@ import {
   playPetLeaderAnswer,
   playPetOrder,
   playPetPull,
-  playPull
+  playPull,
 } from './gameplay.mjs'
 import type { FixtureLog } from './logFixture.mjs'
 
@@ -76,7 +76,7 @@ function selectedIndex(page: Page, testid: string): Promise<number> {
     const buttons = [...document.querySelectorAll(`[data-testid="${id}"] button`)]
     return (
       buttons.findIndex(
-        (b) => b.getAttribute('aria-pressed') === 'true' || b.classList.contains('Mui-selected')
+        (b) => b.getAttribute('aria-pressed') === 'true' || b.classList.contains('Mui-selected'),
       ) + 1
     )
   }, testid)
@@ -91,15 +91,25 @@ function selectedIndex(page: Page, testid: string): Promise<number> {
  * guess at how long that takes on an unloaded machine.
  */
 export async function clickToggle(page: Page, testid: string, index: number): Promise<boolean> {
-  await page.click(`[data-testid="${testid}"] button:nth-child(${String(index)})`, { timeout: 15_000 })
-  return (await settle(() => selectedIndex(page, testid), (n) => n === index, { timeoutMs: 10_000 })) === index
+  await page.click(`[data-testid="${testid}"] button:nth-child(${String(index)})`, {
+    timeout: 15_000,
+  })
+  return (
+    (await settle(
+      () => selectedIndex(page, testid),
+      (n) => n === index,
+      { timeoutMs: 10_000 },
+    )) === index
+  )
 }
 
 /** Fight | Overall. 1 = Fight, 2 = Overall. */
-export const clickScope = (page: Page, index: 1 | 2): Promise<boolean> => clickToggle(page, 'scope-toggle', index)
+export const clickScope = (page: Page, index: 1 | 2): Promise<boolean> =>
+  clickToggle(page, 'scope-toggle', index)
 
 /** Dashboard | Timeline. 1 = Dashboard, 2 = Timeline. */
-export const clickView = (page: Page, index: 1 | 2): Promise<boolean> => clickToggle(page, 'view-toggle', index)
+export const clickView = (page: Page, index: 1 | 2): Promise<boolean> =>
+  clickToggle(page, 'view-toggle', index)
 
 /**
  * The METER panel alone. TWO cards share the `dash-panel` testid, and the tab header carries an
@@ -108,7 +118,9 @@ export const clickView = (page: Page, index: 1 | 2): Promise<boolean> => clickTo
  */
 function meterPanelText(page: Page): Promise<string> {
   return page.evaluate(() => {
-    const el = document.querySelector('[data-testid="meter-body"]')?.closest('[data-testid="dash-panel"]')
+    const el = document
+      .querySelector('[data-testid="meter-body"]')
+      ?.closest('[data-testid="dash-panel"]')
     return (el as HTMLElement | null)?.innerText ?? ''
   })
 }
@@ -121,29 +133,37 @@ function inMeterPanel(page: Page, sel: string): Promise<number> {
         .querySelector('[data-testid="meter-body"]')
         ?.closest('[data-testid="dash-panel"]')
         ?.querySelectorAll(s).length ?? 0,
-    sel
+    sel,
   )
 }
 
 export async function stepHealingDimension(page: Page): Promise<void> {
   await page.click(`${TOGGLE} button[value="heal"]`, { timeout: 15_000 })
   // The condition is the panel having SWAPPED units — the healing list is the whole claim.
-  const panel = await settle(() => meterPanelText(page), (t) => /\bhps\b/.test(t), { timeoutMs: 10_000 })
+  const panel = await settle(
+    () => meterPanelText(page),
+    (t) => /\bhps\b/.test(t),
+    { timeoutMs: 10_000 },
+  )
   check('the meter panel offers a HEALING dimension beside Outgoing/Incoming', panel.length > 0)
   check(
     '…whose headline is an hps rate, never a dps one (one formatter, its own unit word)',
     /\bhps\b/.test(panel) && !/\bdps\b/.test(panel),
-    panel.slice(0, 140).replace(/\s+/g, ' ')
+    panel.slice(0, 140).replace(/\s+/g, ' '),
   )
   check(
     '…and which offers no copy button (copyText serializes damage tables only)',
-    (await inMeterPanel(page, '[data-testid="copy-view"]')) === 0
+    (await inMeterPanel(page, '[data-testid="copy-view"]')) === 0,
   )
 
   // Back to Outgoing so every later step sees the panel it expects — and so the switch is proved
   // to work in both directions rather than being a one-way trip.
   await page.click(`${TOGGLE} button[value="out"]`, { timeout: 15_000 })
-  const back = await settle(() => meterPanelText(page), (t) => /\bdps\b/.test(t), { timeoutMs: 10_000 })
+  const back = await settle(
+    () => meterPanelText(page),
+    (t) => /\bdps\b/.test(t),
+    { timeoutMs: 10_000 },
+  )
   check('…and switching back to Outgoing restores the damage meter', /\bdps\b/.test(back))
 }
 
@@ -163,7 +183,10 @@ export async function stepMeterDrill(page: Page): Promise<void> {
   // 1. LEVEL 1 IS WHERE IT OPENS. No crumb, no Back — nothing has been drilled yet.
   //    (Every step before this one leaves the meter un-drilled; `meterRows` guarantees it.)
   const rows = await meterRows(page)
-  check('the Combat tab opens ZOOMED OUT — one bar per combatant, no auto-drill', !(await drilled(page)))
+  check(
+    'the Combat tab opens ZOOMED OUT — one bar per combatant, no auto-drill',
+    !(await drilled(page)),
+  )
   if (rows === 0) {
     note('the selection has no outgoing damage right now — there is no bar to click')
     return
@@ -172,7 +195,11 @@ export async function stepMeterDrill(page: Page): Promise<void> {
   // 2. CLICKING A BAR DRILLS IT. The first row is the biggest source, which on this log is you
   //    (or your bar with the pet folded in) — the exact bar whose click went missing.
   await page.click('[data-testid="meter-row"]', { timeout: 15_000 })
-  const opened = await settle(() => drilled(page), (d) => d, { timeoutMs: 10_000 })
+  const opened = await settle(
+    () => drilled(page),
+    (d) => d,
+    { timeoutMs: 10_000 },
+  )
   check('…and clicking a source bar — your own included — opens that entity’s breakdown', opened)
 
   // 3. AND THERE IS A WAY BACK. The meter used to withhold Back on precisely the view it had
@@ -180,7 +207,11 @@ export async function stepMeterDrill(page: Page): Promise<void> {
   const back = await inMeterPanel(page, '[data-testid="drill-back"]')
   check('…with the zoom-out affordance on that level', back === 1, `${back} back control(s)`)
   const after = await meterRows(page)
-  check('…and Back returns to the same source list it came from', after === rows, `${rows} → ${after} rows`)
+  check(
+    '…and Back returns to the same source list it came from',
+    after === rows,
+    `${rows} → ${after} rows`,
+  )
 }
 
 // ── ONE BAR PER ABILITY, STATS EXPAND INLINE (JOS-113) ─────────────────────────────────────
@@ -206,7 +237,10 @@ const STATS = '[data-testid="ability-stats"]'
 
 /** The visible text of the first element matching `sel`, or '' when there is none. */
 function textOf(page: Page, sel: string): Promise<string> {
-  return page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
+  return page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    sel,
+  )
 }
 
 export async function stepAbilityStats(page: Page): Promise<void> {
@@ -214,11 +248,18 @@ export async function stepAbilityStats(page: Page): Promise<void> {
   // abilities belong to ONE source, and that is the level where a source is the subject.
   if (!(await drilled(page))) {
     await page.click('[data-testid="meter-row"]', { timeout: 15_000 }).catch(() => undefined)
-    await settle(() => drilled(page), (d) => d, { timeoutMs: 10_000 })
+    await settle(
+      () => drilled(page),
+      (d) => d,
+      { timeoutMs: 10_000 },
+    )
   }
 
   // 1. NO CATEGORY CHIP. The strip the owner rejected must be gone — one bar per ability, flat.
-  check('the drilled source shows NO category chip (JOS-113 removed the grouping layer)', (await inMeterPanel(page, CHIP)) === 0)
+  check(
+    'the drilled source shows NO category chip (JOS-113 removed the grouping layer)',
+    (await inMeterPanel(page, CHIP)) === 0,
+  )
 
   const bars = await inMeterPanel(page, SKILL)
   if (bars === 0) {
@@ -236,25 +277,45 @@ export async function stepAbilityStats(page: Page): Promise<void> {
   for (let i = 0; i < bars && picked === null; i++) {
     const bar = inPanel.nth(i)
     await bar.click({ position: { x: 12, y: 8 }, timeout: 5_000 }).catch(() => undefined)
-    if ((await inMeterPanel(page, STATS)) >= 1) picked = ((await bar.textContent()) ?? '').split('·')[0]?.trim() ?? ''
+    if ((await inMeterPanel(page, STATS)) >= 1)
+      picked = ((await bar.textContent()) ?? '').split('·')[0]?.trim() ?? ''
   }
   const opened = picked !== null
-  check('…and clicking a stat-bearing ability expands its stats INLINE, beneath its own bar', opened, picked ?? 'none expanded')
+  check(
+    '…and clicking a stat-bearing ability expands its stats INLINE, beneath its own bar',
+    opened,
+    picked ?? 'none expanded',
+  )
   if (!opened) return
 
   // 3. THE STATS ARE THE OWNER'S: crit is stated for every weapon swing; double/triple appear on
   //    the ability that multi-attacked (the auto-attack Melee, where the fixture has one).
   const body = await textOf(page, STATS)
-  check('…whose figures include the crit rate', /crit/i.test(body), body.slice(0, 160).replace(/\s+/g, ' '))
+  check(
+    '…whose figures include the crit rate',
+    /crit/i.test(body),
+    body.slice(0, 160).replace(/\s+/g, ' '),
+  )
   if (/double attack|triple attack|rounds/i.test(body)) {
-    check('…and the double/triple attack it lists is over its ROUNDS (law 11)', /rounds/i.test(body))
+    check(
+      '…and the double/triple attack it lists is over its ROUNDS (law 11)',
+      /rounds/i.test(body),
+    )
   } else {
-    note('the expanded ability opened no attack rounds — its multi-attack section correctly renders nothing')
+    note(
+      'the expanded ability opened no attack rounds — its multi-attack section correctly renders nothing',
+    )
   }
 
   // 4. THE OLD PANEL AND THE OLD LEVEL ARE GONE, everywhere on the page.
-  check('the standalone multi-attack panel is gone', (await countOf(page, '[data-testid="multi-attack-panel"]')) === 0)
-  check('and no category-drill level survives', (await countOf(page, '[data-testid="category-drill"]')) === 0)
+  check(
+    'the standalone multi-attack panel is gone',
+    (await countOf(page, '[data-testid="multi-attack-panel"]')) === 0,
+  )
+  check(
+    'and no category-drill level survives',
+    (await countOf(page, '[data-testid="category-drill"]')) === 0,
+  )
 
   // 5. CLICKING AGAIN COLLAPSES IT — the list never gained a nav level, so the flat list is still
   //    right there and the SAME ability closes in place. Click the BAR row (y:8, above the now
@@ -262,7 +323,10 @@ export async function stepAbilityStats(page: Page): Promise<void> {
   const openBar = inPanel.filter({ has: page.locator(STATS) }).first()
   await openBar.click({ position: { x: 12, y: 8 }, timeout: 5_000 }).catch(() => undefined)
   await settleGone(page, STATS, { timeoutMs: 10_000 }).catch(() => undefined)
-  check('…and clicking it again collapses the stats in place', (await inMeterPanel(page, STATS)) === 0)
+  check(
+    '…and clicking it again collapses the stats in place',
+    (await inMeterPanel(page, STATS)) === 0,
+  )
   check('…while the ability list and its Back control stay put', await drilled(page))
 }
 
@@ -288,7 +352,11 @@ export async function stepFrozenList(page: Page, log: FixtureLog): Promise<void>
 
   // The pull is written with the picker OPEN — that is the whole scenario.
   const written = await playPull(log, () =>
-    settle(() => snapshot(page), (s) => s.recent.length !== churnA.recent.length, { timeoutMs: 8_000 })
+    settle(
+      () => snapshot(page),
+      (s) => s.recent.length !== churnA.recent.length,
+      { timeoutMs: 8_000 },
+    ),
   )
   // …and the churn we wait for is the engine's own view of the world moving: a fight opened, or
   // the selection's damage grew. Either is enough to have rebuilt the rows underneath.
@@ -297,7 +365,7 @@ export async function stepFrozenList(page: Page, log: FixtureLog): Promise<void>
     (s) =>
       !!s.segments.find((seg) => seg.kind === 'current') ||
       (s.selected?.outTotal ?? 0) !== (churnA.selected?.outTotal ?? 0),
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   const frozenAfter = await listedValues(page)
   const busy =
@@ -309,12 +377,12 @@ export async function stepFrozenList(page: Page, log: FixtureLog): Promise<void>
   check(
     'the world moved under the open list — the harness played a fight into the tailed log',
     busy,
-    `${String(written)} lines written · ${String(churnA.recent.length)} → ${String(churnB.recent.length)} in the ring`
+    `${String(written)} lines written · ${String(churnA.recent.length)} → ${String(churnB.recent.length)} in the ring`,
   )
   check(
     'the OPEN fight list is frozen — a live fight changes neither its rows nor their order',
     sameList,
-    `${frozenBefore.length} rows → ${frozenAfter.length} rows${sameList ? '' : ` (was ${frozenBefore.slice(0, 4).join(',')} · now ${frozenAfter.slice(0, 4).join(',')})`}`
+    `${frozenBefore.length} rows → ${frozenAfter.length} rows${sameList ? '' : ` (was ${frozenBefore.slice(0, 4).join(',')} · now ${frozenAfter.slice(0, 4).join(',')})`}`,
   )
   await closePicker(page)
 }
@@ -331,31 +399,47 @@ export async function stepFrozenList(page: Page, log: FixtureLog): Promise<void>
  * and the total would be that fight's, not this one's.
  */
 export async function stepScriptedPull(page: Page, log: FixtureLog): Promise<Snap> {
-  const quiet = await settle(() => snapshot(page), (s) => !s.segments.some((x) => x.kind === 'current'), {
-    timeoutMs: 90_000,
-    pollMs: 500
-  })
+  const quiet = await settle(
+    () => snapshot(page),
+    (s) => !s.segments.some((x) => x.kind === 'current'),
+    {
+      timeoutMs: 90_000,
+      pollMs: 500,
+    },
+  )
   if (
     !check(
       'the fixture’s own fights have all closed before the scripted pull opens one',
       !quiet.segments.some((s) => s.kind === 'current'),
-      quiet.segments.find((s) => s.kind === 'current')?.name ?? 'none open'
+      quiet.segments.find((s) => s.kind === 'current')?.name ?? 'none open',
     )
   ) {
     return quiet
   }
   const before = quiet.recent.length
   const written = await playPull(log, () =>
-    settle(() => snapshot(page), (s) => s.recent.length > before, { timeoutMs: 8_000 })
+    settle(
+      () => snapshot(page),
+      (s) => s.recent.length > before,
+      { timeoutMs: 8_000 },
+    ),
   )
-  check('the harness wrote the whole pull into the tailed log', written === PULL_LINES, `${String(written)} lines`)
+  check(
+    'the harness wrote the whole pull into the tailed log',
+    written === PULL_LINES,
+    `${String(written)} lines`,
+  )
 
   // The ring is capped, so its LENGTH is not the claim — that it GREW from the live tail is.
-  const after = await settle(() => snapshot(page), (s) => s.recent.length > before, { timeoutMs: 15_000 })
+  const after = await settle(
+    () => snapshot(page),
+    (s) => s.recent.length > before,
+    { timeoutMs: 15_000 },
+  )
   check(
     'the live tail carried the scripted lines into the classification ring',
     after.recent.length > before,
-    `${String(before)} → ${String(after.recent.length)} lines in the ring`
+    `${String(before)} → ${String(after.recent.length)} lines in the ring`,
   )
   // WAIT FOR THE DOM CONDITION, NOT FOR THE IPC ONE (JOS-510). Every `settle` above reads
   // `snapshot(page)`, which calls `window.eq.getCombatSnapshot` DIRECTLY — it bypasses the React
@@ -368,23 +452,31 @@ export async function stepScriptedPull(page: Page, log: FixtureLog): Promise<Sna
   // fallback timer rather than a real frame. Nothing about the claim changes — if the lines never
   // render, this settles at 0 and the check still fails.
   const LOG_ROW = '[data-testid="combat-log"] > div'
-  const rendered = await settle(() => countOf(page, LOG_ROW), (n) => n >= 1, { timeoutMs: 8_000 })
+  const rendered = await settle(
+    () => countOf(page, LOG_ROW),
+    (n) => n >= 1,
+    { timeoutMs: 8_000 },
+  )
   check('…and the combat log renders them', rendered >= 1, `${String(rendered)} rendered`)
 
   // THE POINT OF ALL OF IT: an EXACT number. The pull states its own damage, so the engine's
   // total is not a floor to be satisfied — it is an arithmetic identity to be checked.
-  const exact = await settle(() => snapshot(page), (s) => (s.selected?.outTotal ?? 0) === PULL_DAMAGE, {
-    timeoutMs: 20_000
-  })
+  const exact = await settle(
+    () => snapshot(page),
+    (s) => (s.selected?.outTotal ?? 0) === PULL_DAMAGE,
+    {
+      timeoutMs: 20_000,
+    },
+  )
   check(
     'the scripted pull’s damage lands EXACTLY, not approximately',
     Math.round(exact.selected?.outTotal ?? -1) === PULL_DAMAGE,
-    `${String(Math.round(exact.selected?.outTotal ?? -1))} of ${String(PULL_DAMAGE)} points`
+    `${String(Math.round(exact.selected?.outTotal ?? -1))} of ${String(PULL_DAMAGE)} points`,
   )
   check(
     '…on a fight named after the mob the harness pulled',
     (exact.selected?.name ?? '').includes(PULL_TARGET.replace(/^a /, '')),
-    exact.selected?.name ?? 'no selection'
+    exact.selected?.name ?? 'no selection',
   )
   return exact
 }
@@ -410,7 +502,7 @@ export async function stepScriptedPull(page: Page, log: FixtureLog): Promise<Sna
 export async function stepMeterScope(page: Page): Promise<void> {
   check(
     'the inline You/Group/Everyone control is GONE from the combat toolbar (JOS-115)',
-    (await countOf(page, RETIRED_SCOPE_CHIP)) === 0
+    (await countOf(page, RETIRED_SCOPE_CHIP)) === 0,
   )
   check('…replaced by a readout of the preference', (await countOf(page, SCOPE_LABEL_SEL)) === 1)
 
@@ -427,8 +519,16 @@ export async function stepMeterScope(page: Page): Promise<void> {
   // Everyone" from "defaulted to Everyone", and only one of those is the claim.
   const chosen = await scopeFromPrefs(page, 'nav-combat')
   await settleCount(page, '[data-testid="combat-dashboard"]', 1, { timeoutMs: 20_000 })
-  check('an absent preference resolves to Everyone in the control too', chosen === 'everyone', chosen)
-  const baseline = await settle(() => meterRows(page), (n) => n > 0, { timeoutMs: 15_000 })
+  check(
+    'an absent preference resolves to Everyone in the control too',
+    chosen === 'everyone',
+    chosen,
+  )
+  const baseline = await settle(
+    () => meterRows(page),
+    (n) => n > 0,
+    { timeoutMs: 15_000 },
+  )
 
   // THE PREFERENCE APPLIES. Setting it two tabs away is the whole control now, and the CONDITION
   // each write produces is this surface's own next word.
@@ -448,23 +548,43 @@ export async function stepMeterScope(page: Page): Promise<void> {
   }
 
   const groupWord = await setTo('group', (t) => t.startsWith('Group'))
-  check('choosing Group in Preferences reaches the Combat tab', groupWord.startsWith('Group'), groupWord)
+  check(
+    'choosing Group in Preferences reaches the Combat tab',
+    groupWord.startsWith('Group'),
+    groupWord,
+  )
   // Which of the two Group states this log leaves behind — the popover pairing at the end of this
   // step is the one that cares, and it now learns it HERE rather than from the opening readout.
   const noRoster = groupWord === 'Group (no roster yet)'
   // The row count has to have STOPPED MOVING before it means anything: the panel is fed by a
   // snapshot that arrives a beat after the remount, so a reading taken on the first frame is a
   // reading of an empty meter (settleStable's argument, spelled with a floor).
-  const group = await settle(() => meterRows(page), (n) => n > 0, { timeoutMs: 15_000 })
+  const group = await settle(
+    () => meterRows(page),
+    (n) => n > 0,
+    { timeoutMs: 15_000 },
+  )
   // NARROWING NEVER WIDENS. Equal is legal and expected on the law-1 fallback, where Group renders
   // as Everyone; more rows under Group than under Everyone would mean the filter added somebody.
   check('Group shows no more than Everyone did', group <= baseline, `${group} vs ${baseline}`)
 
-  check('…and so does choosing You', (await setTo('you', (t) => t === 'You')) === 'You', await label())
+  check(
+    '…and so does choosing You',
+    (await setTo('you', (t) => t === 'You')) === 'You',
+    await label(),
+  )
   // NO SCOPE EVER HIDES YOU OR YOUR PETS. The rows here are yours and your pets' — they must
   // survive every scope, and only a member row may ever go.
-  const you = await settle(() => meterRows(page), (n) => n > 0, { timeoutMs: 15_000 })
-  check('You scope keeps your own rows — only a member is ever filtered', you >= 1 && you <= group, `${you} of ${group}`)
+  const you = await settle(
+    () => meterRows(page),
+    (n) => n > 0,
+    { timeoutMs: 15_000 },
+  )
+  check(
+    'You scope keeps your own rows — only a member is ever filtered',
+    you >= 1 && you <= group,
+    `${you} of ${group}`,
+  )
 
   // PERSISTED: the choice survives leaving the tab and coming back, because it is a stored
   // preference and not component state.
@@ -472,7 +592,11 @@ export async function stepMeterScope(page: Page): Promise<void> {
   await settleCount(page, '[data-testid="overview-grid"]')
   await page.click('[data-testid="nav-combat"]')
   await settleCount(page, SCOPE_LABEL_SEL)
-  check('the scope is remembered across a tab round trip', (await settle(label, (t) => t === 'You')) === 'You', await label())
+  check(
+    'the scope is remembered across a tab round trip',
+    (await settle(label, (t) => t === 'You')) === 'You',
+    await label(),
+  )
 
   // The roster popover (G3) — the answer to "who does the app think is with me, and why". Still a
   // control, and deliberately so: correcting a mis-inferred group is a different act from choosing
@@ -489,12 +613,12 @@ export async function stepMeterScope(page: Page): Promise<void> {
     check(
       'the empty roster and the readout tell the same story',
       noRoster ? popover.includes('no group signal') : popover.includes('nobody on the roster'),
-      `readout=${first} · popover=${popover.slice(0, 70)}`
+      `readout=${first} · popover=${popover.slice(0, 70)}`,
     )
     check(
       '…and only the law-1 fallback claims to be showing everyone',
       noRoster ? popover.includes('showing everyone') : !popover.includes('showing everyone'),
-      popover.slice(0, 90)
+      popover.slice(0, 90),
     )
   } else {
     note('the log left real members on the roster — the empty-state wording was not exercised')
@@ -509,7 +633,7 @@ export async function stepMeterScope(page: Page): Promise<void> {
   check(
     'the meter is left on its Everyone default',
     (await settle(label, (t) => t === 'Everyone', { timeoutMs: 8_000 })) === 'Everyone',
-    await label()
+    await label(),
   )
 }
 
@@ -542,45 +666,75 @@ export async function stepPetNeverAsked(page: Page, log: FixtureLog): Promise<vo
   await closePicker(page)
 
   const written = playPetPull(log)
-  check('the harness wrote the unbound pet into the tailed log', written === PET_PULL_LINES, `${String(written)} lines`)
+  check(
+    'the harness wrote the unbound pet into the tailed log',
+    written === PET_PULL_LINES,
+    `${String(written)} lines`,
+  )
 
   // The lines ARRIVED — otherwise every absence below is vacuous. Your own two swings are the
   // proof, because they are the half of the same bursts the meter is allowed to show.
   const petOf = (s: Snap): SnapEntity | undefined =>
-    s.selected?.entities.find((e) => e.kind === 'pet' && e.name.replace(/\s+\(\d+\)$/, '') === PET_NAME)
-  const landed = await settle(() => snapshot(page), (s) => (s.selected?.outTotal ?? 0) >= 78, { timeoutMs: 20_000 })
-  if (!check('the scripted pull reached the meter', (landed.selected?.outTotal ?? 0) >= 78, `${String(Math.round(landed.selected?.outTotal ?? 0))} points`)) {
+    s.selected?.entities.find(
+      (e) => e.kind === 'pet' && e.name.replace(/\s+\(\d+\)$/, '') === PET_NAME,
+    )
+  const landed = await settle(
+    () => snapshot(page),
+    (s) => (s.selected?.outTotal ?? 0) >= 78,
+    { timeoutMs: 20_000 },
+  )
+  if (
+    !check(
+      'the scripted pull reached the meter',
+      (landed.selected?.outTotal ?? 0) >= 78,
+      `${String(Math.round(landed.selected?.outTotal ?? 0))} points`,
+    )
+  ) {
     return
   }
 
   // THE ABSENCE. Let the reading settle, then assert the three things that are gone.
-  const settled = await settleStable(() => snapshot(page).then((s) => JSON.stringify(petOf(s) ?? null)), {
-    timeoutMs: 10_000
-  })
-  check('the unbound pet gets NO row — the blind spot is accepted, not papered over', settled === 'null', settled)
+  const settled = await settleStable(
+    () => snapshot(page).then((s) => JSON.stringify(petOf(s) ?? null)),
+    {
+      timeoutMs: 10_000,
+    },
+  )
+  check(
+    'the unbound pet gets NO row — the blind spot is accepted, not papered over',
+    settled === 'null',
+    settled,
+  )
   check(
     '…and the meter asks no question about it, on any surface',
-    (await settleCount(page, OFFER, { timeoutMs: 5_000 })) === 0
+    (await settleCount(page, OFFER, { timeoutMs: 5_000 })) === 0,
   )
   check(
     '…nor is there a question in the snapshot for a surface to render',
     !('petClaims' in (await snapshot(page))),
-    'CombatSnapshot carries no petClaims'
+    'CombatSnapshot carries no petClaims',
   )
 
   // THE CURE, and the whole of the owner's answer: order it once.
   const ordered = playPetOrder(log)
   check('the harness ordered the pet', ordered === PET_ORDER_LINES, `${String(ordered)} lines`)
-  const bound = await settle(() => snapshot(page), (s) => petOf(s) !== undefined, { timeoutMs: 20_000 })
+  const bound = await settle(
+    () => snapshot(page),
+    (s) => petOf(s) !== undefined,
+    { timeoutMs: 20_000 },
+  )
   const row = petOf(bound)
-  if (!check('one pet command puts the pet on the meter', !!row, row ? row.name : 'still no pet row')) return
+  if (
+    !check('one pet command puts the pet on the meter', !!row, row ? row.name : 'still no pet row')
+  )
+    return
   // A TELL BINDS FORWARD, NOT BACKWARD (measured, JOS-49): the row is the ONE hit that landed
   // after the tell, and the three that came before it stay unattributed. That is the honest cost
   // of ordering late, and it is why the instruction is "order it when you summon it".
   check(
     '…and the row is what it did AFTER the order — a tell does not reach backwards',
     row?.total === PET_BOUND_DAMAGE,
-    `${String(row?.total ?? 0)} of ${String(PET_BOUND_DAMAGE)} (unbound ${String(PET_UNBOUND_DAMAGE)} stays invisible)`
+    `${String(row?.total ?? 0)} of ${String(PET_BOUND_DAMAGE)} (unbound ${String(PET_UNBOUND_DAMAGE)} stays invisible)`,
   )
 }
 
@@ -623,7 +777,10 @@ const lineSel = (k: string): string => `[data-testid="dps-line-${k}"]`
 /** '1' when the entry says its line is hidden, '0' when drawn, '' when there is no such entry —
  *  the control's own account of the state, which is what the user reads off the strip. */
 function legendHidden(page: Page, k: string): Promise<string> {
-  return page.evaluate((sel) => document.querySelector(sel)?.getAttribute('data-hidden') ?? '', legendSel(k))
+  return page.evaluate(
+    (sel) => document.querySelector(sel)?.getAttribute('data-hidden') ?? '',
+    legendSel(k),
+  )
 }
 
 /** The curve entries this fight actually has. `pet`/`group`/`incoming` appear only when the fight
@@ -640,7 +797,9 @@ export async function stepChartLegendToggles(page: Page): Promise<void> {
   // The outgoing entry exists whenever the curve is drawn at all; no curve is a NOTE, the same
   // convention the hover step uses for a ringless or damage-free selection.
   if ((await countOf(page, legendSel('out'))) === 0) {
-    note('the DPS-over-time curve is not drawn for this selection - its legend is not asserted this run')
+    note(
+      'the DPS-over-time curve is not drawn for this selection - its legend is not asserted this run',
+    )
     return
   }
   const entries = await legendEntries(page)
@@ -648,12 +807,18 @@ export async function stepChartLegendToggles(page: Page): Promise<void> {
 
   // 1. ONE CLICK TAKES A LINE OFF THE PLOT — and leaves the entry that says so.
   await page.click(legendSel('out'), { timeout: 15_000 })
-  check('clicking a legend entry takes its line off the chart', await settleGone(page, lineSel('out'), { timeoutMs: 10_000 }))
-  check('…and the shaded area under it goes with it, not on its own', (await countOf(page, '[data-testid="dps-area"]')) === 0)
+  check(
+    'clicking a legend entry takes its line off the chart',
+    await settleGone(page, lineSel('out'), { timeoutMs: 10_000 }),
+  )
+  check(
+    '…and the shaded area under it goes with it, not on its own',
+    (await countOf(page, '[data-testid="dps-area"]')) === 0,
+  )
   check(
     'THE ENTRY STAYS IN THE LEGEND, DIMMED — hidden is a state you can see and undo',
     (await countOf(page, legendSel('out'))) === 1 && (await legendHidden(page, 'out')) === '1',
-    `entry ${String(await countOf(page, legendSel('out')))}, data-hidden=${await legendHidden(page, 'out')}`
+    `entry ${String(await countOf(page, legendSel('out')))}, data-hidden=${await legendHidden(page, 'out')}`,
   )
 
   // 2. …AND IT SURVIVES THE TAB SWITCH. A `useState` here would pass every check above and lose
@@ -661,41 +826,85 @@ export async function stepChartLegendToggles(page: Page): Promise<void> {
   //    is a renderer pref.
   const left = await leaveCombat(page)
   if (check('leaving the Combat tab unmounts it', left) && (await returnToCombat(page))) {
-    const still = await settle(() => legendHidden(page, 'out'), (v) => v === '1', { timeoutMs: 10_000 })
-    check('A HIDDEN LINE SURVIVES LEAVING AND RETURNING TO THE COMBAT TAB', still === '1', `data-hidden=${still}`)
-    check('…and the line is still off the plot, not merely remembered', (await countOf(page, lineSel('out'))) === 0)
+    const still = await settle(
+      () => legendHidden(page, 'out'),
+      (v) => v === '1',
+      { timeoutMs: 10_000 },
+    )
+    check(
+      'A HIDDEN LINE SURVIVES LEAVING AND RETURNING TO THE COMBAT TAB',
+      still === '1',
+      `data-hidden=${still}`,
+    )
+    check(
+      '…and the line is still off the plot, not merely remembered',
+      (await countOf(page, lineSel('out'))) === 0,
+    )
   }
 
   // 3. REVERSIBLE from the entry it left behind.
   await page.click(legendSel('out'), { timeout: 15_000 })
-  check('clicking the dimmed entry draws its line again', (await settleCount(page, lineSel('out'), 1, { timeoutMs: 10_000 })) === 1)
+  check(
+    'clicking the dimmed entry draws its line again',
+    (await settleCount(page, lineSel('out'), 1, { timeoutMs: 10_000 })) === 1,
+  )
   check('…and the entry reads as drawn again', (await legendHidden(page, 'out')) === '0')
 
   // 4. EVERY LINE OFF is a legal state: a note where the plot was, the legend still under it.
   for (const k of entries) await page.click(legendSel(k), { timeout: 15_000 })
-  check('with every line hidden the card draws no plot at all', await settleGone(page, DPS_PLOT, { timeoutMs: 10_000 }))
-  check('…and says so, rather than rendering an empty box', /every line is hidden/i.test(await combatText(page)))
-  check('…with the whole legend still there to switch one back on', (await legendEntries(page)).length === entries.length)
-  check('…and the dashboard still standing', (await countOf(page, '[data-testid="combat-dashboard"]')) === 1)
+  check(
+    'with every line hidden the card draws no plot at all',
+    await settleGone(page, DPS_PLOT, { timeoutMs: 10_000 }),
+  )
+  check(
+    '…and says so, rather than rendering an empty box',
+    /every line is hidden/i.test(await combatText(page)),
+  )
+  check(
+    '…with the whole legend still there to switch one back on',
+    (await legendEntries(page)).length === entries.length,
+  )
+  check(
+    '…and the dashboard still standing',
+    (await countOf(page, '[data-testid="combat-dashboard"]')) === 1,
+  )
 
   // 5. Put it back the way it was found.
   for (const k of entries) await page.click(legendSel(k), { timeout: 15_000 })
   const back = await settleCount(page, DPS_PLOT, 1, { timeoutMs: 10_000 })
-  check('switching them back on restores the chart', back === 1 && (await countOf(page, lineSel('out'))) === 1)
+  check(
+    'switching them back on restores the chart',
+    back === 1 && (await countOf(page, lineSel('out'))) === 1,
+  )
 }
 
 export async function stepPetAnswersWhoLeads(page: Page, log: FixtureLog): Promise<void> {
   const asked = playPetLeaderAnswer(log)
-  check('the harness asked the new pet who its leader is', asked === PET_LEADER_LINES, `${String(asked)} lines`)
-  const after = await settle(() => snapshot(page), (s) => petRowFor(s, PET_LEADER_NAME) !== undefined, {
-    timeoutMs: 20_000
-  })
+  check(
+    'the harness asked the new pet who its leader is',
+    asked === PET_LEADER_LINES,
+    `${String(asked)} lines`,
+  )
+  const after = await settle(
+    () => snapshot(page),
+    (s) => petRowFor(s, PET_LEADER_NAME) !== undefined,
+    {
+      timeoutMs: 20_000,
+    },
+  )
   const heir = petRowFor(after, PET_LEADER_NAME)
-  if (!check('a pet that NAMES YOU ITS LEADER lands on the meter', !!heir, heir ? heir.name : 'no row')) return
+  if (
+    !check(
+      'a pet that NAMES YOU ITS LEADER lands on the meter',
+      !!heir,
+      heir ? heir.name : 'no row',
+    )
+  )
+    return
   check(
     '…forward only, exactly like the tell — the hit before the answer stays invisible',
     heir?.total === PET_LEADER_BOUND_DAMAGE,
-    `${String(heir?.total ?? 0)} of ${String(PET_LEADER_BOUND_DAMAGE)} (unbound ${String(PET_LEADER_UNBOUND_DAMAGE)} dropped)`
+    `${String(heir?.total ?? 0)} of ${String(PET_LEADER_BOUND_DAMAGE)} (unbound ${String(PET_LEADER_UNBOUND_DAMAGE)} dropped)`,
   )
   // ONE PET AT A TIME (JOS-54), through the whole product: binding the successor retired the
   // predecessor, so its LATER swing is nobody's — while everything it earned while it was yours
@@ -703,11 +912,11 @@ export async function stepPetAnswersWhoLeads(page: Page, log: FixtureLog): Promi
   // is asserted by waiting for the reading to stop moving.
   const held = await settleStable(
     () => snapshot(page).then((s) => String(petRowFor(s, PET_NAME)?.total ?? -1)),
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   )
   check(
     `the retired pet keeps its ${String(PET_BOUND_DAMAGE)} and earns nothing more — one pet at a time`,
     held === String(PET_BOUND_DAMAGE),
-    `${held} (the ${String(PET_RETIRED_DAMAGE)} it swung after the succession is not yours)`
+    `${held} (the ${String(PET_RETIRED_DAMAGE)} it swung after the succession is not yours)`,
   )
 }

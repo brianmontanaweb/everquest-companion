@@ -90,7 +90,7 @@ import {
   islandNumber,
   islandOf,
   mergeDroppers,
-  type DropperMob
+  type DropperMob,
 } from './poskyDroppers'
 // The mob-island overlay (JOS-415). It applies to the MOB card only — a `NeededItem`'s islands
 // stay the items' own, because that list really is about where the item drops.
@@ -226,7 +226,7 @@ function recordItem(byKey: Map<string, ItemAgg>, q: TargetsQuest, it: TargetsQue
     droppers: it.droppers,
     isRandom: false,
     islands: new Set<string>(),
-    quests: []
+    quests: [],
   }
   agg.totalNeed += it.need
   agg.isRandom = agg.isRandom || isRandomDropWho(it.who)
@@ -240,8 +240,7 @@ function recordItem(byKey: Map<string, ItemAgg>, q: TargetsQuest, it: TargetsQue
   // today's scrape (poskyDroppers' header: nine values, none of them a mob name) and not an
   // invariant. First-wins would make the card set depend on which quest folded first the day that
   // measurement changes. `mergeDroppers` is the module's own union, deduped by page.
-  agg.droppers =
-    agg.droppers.length === 0 ? it.droppers : mergeDroppers(agg.droppers, it.droppers)
+  agg.droppers = agg.droppers.length === 0 ? it.droppers : mergeDroppers(agg.droppers, it.droppers)
   const island = islandOf(it.where)
   if (island !== undefined) agg.islands.add(island)
   agg.quests.push({ className: q.className, questName: q.name, need: it.need })
@@ -251,7 +250,7 @@ function recordItem(byKey: Map<string, ItemAgg>, q: TargetsQuest, it: TargetsQue
 /** Everything the need set says, per counting key. The one membership filter is HERE. */
 function accumulateNeeds(
   quests: readonly TargetsQuest[],
-  firstTimeOnly: boolean
+  firstTimeOnly: boolean,
 ): Map<string, ItemAgg> {
   const byKey = new Map<string, ItemAgg>()
   for (const q of quests) {
@@ -276,7 +275,11 @@ interface MobAcc {
 
 /** Fold one needed item onto every mob that drops it — per ITEM dedupe by page, so a page listed
  *  twice on one item cannot inflate its coverage (the questKillTargets rule). */
-function foldIntoMobs(mobsByPage: Map<string, MobAcc>, needed: NeededItem, droppers: readonly DropperMob[]): void {
+function foldIntoMobs(
+  mobsByPage: Map<string, MobAcc>,
+  needed: NeededItem,
+  droppers: readonly DropperMob[],
+): void {
   const seen = new Set<string>()
   for (const m of droppers) {
     if (seen.has(m.page)) continue
@@ -297,10 +300,7 @@ function foldIntoMobs(mobsByPage: Map<string, MobAcc>, needed: NeededItem, dropp
  * Ready tab's toggle (JOS-155) with the same default and the same meaning, deliberately, so a
  * player only has to learn the rule once.
  */
-export function skyTargets(
-  quests: readonly TargetsQuest[],
-  firstTimeOnly = true
-): SkyTargetsModel {
+export function skyTargets(quests: readonly TargetsQuest[], firstTimeOnly = true): SkyTargetsModel {
   const mobsByPage = new Map<string, MobAcc>()
   const randomDrop: NeededItem[] = []
   const unsourced: NeededItem[] = []
@@ -322,7 +322,7 @@ export function skyTargets(
         covers: e.items.length,
         islands,
         island: islands[0] ?? null,
-        items: [...e.items].sort(byItemName)
+        items: [...e.items].sort(byItemName),
       }
     })
     .sort(byIslandThenCounted)

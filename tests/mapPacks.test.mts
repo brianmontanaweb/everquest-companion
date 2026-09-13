@@ -31,7 +31,7 @@ import {
   discoverPacks,
   resolveZoneLayers,
   splitMapFileName,
-  type MapLibrary
+  type MapLibrary,
 } from '../src/main/maps/packs'
 
 // --- the synthetic corpus ---------------------------------------------------
@@ -48,7 +48,7 @@ const DEFAULT_PACK: Record<string, string> = {
   'Thurgadina1.txt': GEOMETRY,
   'Thurgadina1_1.txt': 'P 2, 2, 0, 255, 0, 0, 3, to_Thurgadin',
   // Present but ZERO BYTES: resolution must fall through to a pack that has real geometry.
-  'grobb.txt': ''
+  'grobb.txt': '',
 }
 
 const BREWALL_PACK: Record<string, string> = {
@@ -57,23 +57,23 @@ const BREWALL_PACK: Record<string, string> = {
   'befallen_1.txt': [
     'P -20, -20, 0, 255, 0, 0, 3, to_Commonlands',
     'P 12, 3, 4, 0, 127, 0, 2, Locked_Door_(Quests,Unpickable)',
-    'P 4, 8, 1, 0, 0, 240, 1, GS:_Ruined_Wagon'
+    'P 4, 8, 1, 0, 0, 240, 1, GS:_Ruined_Wagon',
   ].join('\r\n'),
   // The legend, drawn far outside the map — credits + the height hint live here.
   'befallen_2.txt': [
     'P 2000, 4800, 0, 0, 0, 0, 2, Height_Filter:_25/25',
-    'P 2000, 4700, 0, 0, 0, 0, 2, Original_Map:_Goodurden_<RoI>'
+    'P 2000, 4700, 0, 0, 0, 0, 2, Original_Map:_Goodurden_<RoI>',
   ].join('\r\n'),
   // A real zero-byte layer file (`brewall\*_3.txt`) — a valid empty layer, not an error.
   'befallen_3.txt': '',
   // A zone the DEFAULT SET DOES NOT SHIP. blackburrow/soldungb/hateplane/hole are the real ones.
   'blackburrow.txt': GEOMETRY,
   'blackburrow_1.txt': 'P 7, 7, 0, 255, 0, 0, 3, to_Everfrost',
-  'grobb.txt': GEOMETRY
+  'grobb.txt': GEOMETRY,
 }
 
 const USER_PACK: Record<string, string> = {
-  'befallen_1.txt': 'P 9, 9, 0, 0, 0, 0, 2, My_Own_Label'
+  'befallen_1.txt': 'P 9, 9, 0, 0, 0, 0, 2, My_Own_Label',
 }
 
 interface Fixture {
@@ -151,13 +151,13 @@ test('discovery finds the game maps dir, its subdir packs and the userData packs
       [
         ['default', 'game'],
         ['brewall', 'game'],
-        ['mypack', 'user']
-      ]
+        ['mypack', 'user'],
+      ],
     )
     // `.hidden` could never be addressed by a renderer pref (isSafePackId), so it is not listed.
     assert.equal(
       packs.find((p) => p.pack.id === '.hidden'),
-      undefined
+      undefined,
     )
     const brewall = packs.find((p) => p.pack.id === 'brewall')!
     assert.equal(brewall.pack.fileCount, Object.keys(BREWALL_PACK).length)
@@ -166,7 +166,7 @@ test('discovery finds the game maps dir, its subdir packs and the userData packs
     for (const info of lib.packs()) assert.equal('dir' in info, false)
     assert.deepEqual(
       lib.packs().map((p) => p.id),
-      ['default', 'brewall', 'mypack']
+      ['default', 'brewall', 'mypack'],
     )
   })
 })
@@ -195,7 +195,7 @@ test('a mixed-case filename resolves from a lowercase zone stem, keeping the rea
     assert.ok(thurg.ok)
     assert.deepEqual(
       thurg.data.sources.map((s) => s.file),
-      ['Thurgadina1.txt', 'Thurgadina1_1.txt']
+      ['Thurgadina1.txt', 'Thurgadina1_1.txt'],
     )
   })
 })
@@ -213,16 +213,17 @@ test('geometry and labels are sourced from DIFFERENT packs and the merge is reco
     // The legend follows the labels: its credits describe whoever drew them.
     assert.equal(by.get(2), 'brewall')
     // Provenance is DATA, not a UI guess: every layer says which pack it came from.
-    assert.deepEqual(
-      [...by.keys()].sort(),
-      [0, 1, 2, 3]
-    )
+    assert.deepEqual([...by.keys()].sort(), [0, 1, 2, 3])
     const labels = res.data.points.filter((p) => p.layer === 1).map((p) => p.display)
-    assert.deepEqual(labels, ['to Commonlands', 'Locked Door (Quests,Unpickable)', 'GS: Ruined Wagon'])
+    assert.deepEqual(labels, [
+      'to Commonlands',
+      'Locked Door (Quests,Unpickable)',
+      'GS: Ruined Wagon',
+    ])
     assert.equal(
       labels.includes('Sparse Default Label'),
       false,
-      'the default pack label layer must not be merged in alongside brewall s'
+      'the default pack label layer must not be merged in alongside brewall s',
     )
     // Base-layer points come with the geometry pack, so both packs contribute points.
     assert.ok(res.data.points.some((p) => p.display === 'Default Base Point'))
@@ -240,7 +241,7 @@ test('a zone the default set does not ship resolves entirely from the pack that 
     assert.ok(res.ok)
     assert.deepEqual(res.data.sources, [
       { layer: 0, packId: 'brewall', file: 'blackburrow.txt' },
-      { layer: 1, packId: 'brewall', file: 'blackburrow_1.txt' }
+      { layer: 1, packId: 'brewall', file: 'blackburrow_1.txt' },
     ])
     assert.equal(res.data.lines.count, 2)
     assert.equal(res.data.points.length, 1)
@@ -282,14 +283,14 @@ test('an explicit per-layer pack preference overrides the default order', () => 
     assert.equal(by.get(1), 'default')
     assert.deepEqual(
       res.data.points.filter((p) => p.layer === 1).map((p) => p.display),
-      ['Sparse Default Label']
+      ['Sparse Default Label'],
     )
     // A user-installed pack is selectable the same way.
     const mine = lib.get('befallen', { labels: 'mypack' })
     assert.ok(mine.ok)
     assert.deepEqual(
       mine.data.points.filter((p) => p.layer === 1).map((p) => p.display),
-      ['My Own Label']
+      ['My Own Label'],
     )
   })
 })
@@ -318,9 +319,10 @@ test('traversal is rejected at the handler predicate and finds nothing if it eve
     '//server/share/file',
     'zone\0name',
     'zone name',
-    ''
+    '',
   ]
-  for (const id of hostile) assert.equal(isSafePackId(id), false, `must reject ${JSON.stringify(id)}`)
+  for (const id of hostile)
+    assert.equal(isSafePackId(id), false, `must reject ${JSON.stringify(id)}`)
   // Every real stem and pack directory name passes unchanged — nothing here motivates widening.
   for (const ok of ['befallen', 'thurgadina1', 'poknowledge', 'newsebexp', 'cshome', 'brewall'])
     assert.equal(isSafePackId(ok), true, `must admit ${ok}`)
@@ -414,7 +416,7 @@ test('an in-zone search ranks over the SAME zone resolution get() returns for th
     assert.ok(res.ok)
     assert.ok(
       res.data.points.includes(hits[0].point),
-      'the hit must be a point of the map get() resolves for these prefs'
+      'the hit must be a point of the map get() resolves for these prefs',
     )
     // brewall's labels are not part of the zone under these prefs, so they cannot rank either.
     assert.deepEqual(lib.search('unpickable', { zone: 'befallen', prefs }), [])

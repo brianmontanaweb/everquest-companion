@@ -27,7 +27,7 @@ import {
   zoneEra,
   type Era,
   type EraDerivation,
-  type EraVerdict
+  type EraVerdict,
 } from '../../../../shared/planner/era'
 import { classesMismatch } from './plannerClasses'
 import { defaultAxis, isAxisFor, type GroupAxis } from './plannerGroups'
@@ -73,7 +73,7 @@ export const DEFAULT_FILTERS: DonorFilters = {
   socket: 'proc',
   text: '',
   slot: null,
-  trioOnly: true
+  trioOnly: true,
 }
 
 // ---- the fetch ----------------------------------------------------------------------
@@ -140,7 +140,7 @@ export function indexDonors(rows: readonly DonorRow[]): Map<string, DonorRow[]> 
 export function donorFor(
   index: ReadonlyMap<string, DonorRow[]>,
   donorKey: string,
-  effect: string
+  effect: string,
 ): DonorRow | null {
   return index.get(donorKey)?.find((d) => d.effect === effect) ?? null
 }
@@ -245,7 +245,7 @@ function eraCacheKey(subject: EraSubject): string {
     // on (JOS-377), and the same item key reaches this cache from the planner carrying none, so a
     // count would let a zone-less subject read a zone-backed answer straight off the cache.
     (subject.zones ?? []).join(','),
-    derived === undefined ? '' : `${derived.basis}:${derived.target}`
+    derived === undefined ? '' : `${derived.basis}:${derived.target}`,
   ].join('\u0000')
 }
 
@@ -269,7 +269,7 @@ function statedEra(subject: EraSubject, zones: readonly string[]): DonorEra {
   return {
     verdict: layeredVerdict(zones, subject.eraTag),
     era,
-    by: overruled ? 'tag' : fromZone !== null ? 'zone' : era === null ? null : 'tag'
+    by: overruled ? 'tag' : fromZone !== null ? 'zone' : era === null ? null : 'tag',
   }
 }
 
@@ -292,7 +292,8 @@ export function donorEra(subject: EraSubject): DonorEra {
   // The era stays `null` either way: the edge names an expansion often enough, but what we know is
   // whether the way you GET this thing is open, not which expansion the thing itself belongs to.
   const derived = subject.eraDerived
-  const speaks = derived !== undefined && (derived.definitive === true || stated.verdict === 'unknown')
+  const speaks =
+    derived !== undefined && (derived.definitive === true || stated.verdict === 'unknown')
   const value: DonorEra = speaks ? { verdict: derived.verdict, era: null, by: 'derived' } : stated
   ERA_CACHE.set(id, value)
   return value
@@ -330,10 +331,14 @@ const UNKNOWN_TOOLTIP = 'Nothing in our data states an era for this donor.'
  */
 function derivedReason(d: EraDerivation | undefined): string {
   if (d === undefined) return UNKNOWN_TOOLTIP
-  if (d.basis === 'component') return `Its recipe needs ${d.target}, which the wiki marks out of era (${d.detail}).`
-  if (d.basis === 'yield') return `Its recipe yields ${d.target}, which the wiki marks out of era (${d.detail}).`
-  if (d.basis === 'quest') return `It is only awarded by ${d.target}, a quest that starts in ${d.detail}.`
-  if (d.basis === 'drop-mob') return `Every mob that drops it is out of era on the wiki: ${d.detail}.`
+  if (d.basis === 'component')
+    return `Its recipe needs ${d.target}, which the wiki marks out of era (${d.detail}).`
+  if (d.basis === 'yield')
+    return `Its recipe yields ${d.target}, which the wiki marks out of era (${d.detail}).`
+  if (d.basis === 'quest')
+    return `It is only awarded by ${d.target}, a quest that starts in ${d.detail}.`
+  if (d.basis === 'drop-mob')
+    return `Every mob that drops it is out of era on the wiki: ${d.detail}.`
   if (d.basis === 'page') {
     return d.verdict === 'in-era'
       ? `Its notes name ${d.target}, which the wiki files as ${d.detail}, in era.`
@@ -366,7 +371,7 @@ export function eraChip(subject: EraSubject): EraChipInfo | null {
         ? derivedReason(subject.eraDerived)
         : by === 'tag'
           ? `Its wiki page is banner-tagged ${subject.eraTag ?? label}, which the wiki marks out of era.`
-          : `This donor's sources are in ${label}.`
+          : `This donor's sources are in ${label}.`,
   }
 }
 
@@ -478,7 +483,7 @@ export function filterDonors(
   rows: readonly DonorRow[],
   filters: DonorFilters,
   planClasses: readonly ClassAbbr[],
-  view: DonorView = DEFAULT_VIEW
+  view: DonorView = DEFAULT_VIEW,
 ): DonorRow[] {
   const needle = filters.text.trim().toLowerCase()
   return rows.filter((d) => {
@@ -521,13 +526,13 @@ export function hiddenByView(
   rows: readonly DonorRow[],
   filters: DonorFilters,
   planClasses: readonly ClassAbbr[],
-  view: DonorView
+  view: DonorView,
 ): HiddenByView {
   const open: DonorView = { eraOnly: false, nonEquip: true }
   const candidates = filterDonors(rows, filters, planClasses, open)
   return {
     era: view.eraOnly ? candidates.filter((d) => eraHides(d, true)).length : 0,
-    nonEquip: view.nonEquip ? 0 : candidates.filter((d) => isNonEquippable(d)).length
+    nonEquip: view.nonEquip ? 0 : candidates.filter((d) => isNonEquippable(d)).length,
   }
 }
 
@@ -565,7 +570,7 @@ export function useGroupBy(socket: SocketType): [GroupAxis, (v: GroupAxis) => vo
       localStorage.setItem(`${GROUP_KEY}.${socket}`, v)
       setAxis(v)
     },
-    [socket]
+    [socket],
   )
   return [axis, set]
 }

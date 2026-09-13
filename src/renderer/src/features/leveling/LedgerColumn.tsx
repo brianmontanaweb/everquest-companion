@@ -33,7 +33,7 @@ export interface FeedItem {
 const FEED_COLOR: Record<FeedItem['kind'], string> = {
   level: '#d9b25f',
   aa: '#6fb3d2',
-  swap: SWAP_COLOR
+  swap: SWAP_COLOR,
 }
 
 /**
@@ -44,7 +44,13 @@ const FEED_COLOR: Record<FeedItem['kind'], string> = {
  * The empty case is STATED. A narrow window legitimately holds no ding and no gain line, and a
  * silently empty box reads as a broken panel rather than as a quiet hour.
  */
-function ProgressFeedPanel({ feed, scopeLabel }: { feed: FeedItem[]; scopeLabel: string }): JSX.Element {
+function ProgressFeedPanel({
+  feed,
+  scopeLabel,
+}: {
+  feed: FeedItem[]
+  scopeLabel: string
+}): JSX.Element {
   return (
     <Paper variant="outlined" sx={{ p: 2 }} data-testid="leveling-feed">
       <Typography variant="subtitle2" gutterBottom>
@@ -74,7 +80,7 @@ function ProgressFeedPanel({ feed, scopeLabel }: { feed: FeedItem[]; scopeLabel:
                 bgcolor: `${FEED_COLOR[f.kind]}22`,
                 color: FEED_COLOR[f.kind],
                 fontWeight: 700,
-                minWidth: 68
+                minWidth: 68,
               }}
             />
             <Typography variant="caption" color="text.secondary" sx={{ flexGrow: 1 }} noWrap>

@@ -12,7 +12,7 @@ import { compareRatchets, entryKeys } from '../scripts/checkLintRatchet.mjs'
 
 const entry = (file: string, ...rules: string[]) => ({
   files: [file],
-  rules: Object.fromEntries(rules.map((r) => [r, 'off']))
+  rules: Object.fromEntries(rules.map((r) => [r, 'off'])),
 })
 
 test('a ratchet that shrank adds nothing', () => {

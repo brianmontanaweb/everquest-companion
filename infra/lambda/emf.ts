@@ -48,7 +48,7 @@ const MAX_METRICS_PER_LINE = 100
 export function emfLine(
   dimensions: Record<string, string>,
   metrics: readonly EmfMetric[],
-  nowMs: number
+  nowMs: number,
 ): string | null {
   const usable = metrics.filter((m) => Number.isFinite(m.value)).slice(0, MAX_METRICS_PER_LINE)
   if (usable.length === 0) return null
@@ -61,11 +61,11 @@ export function emfLine(
           Namespace: EMF_NAMESPACE,
           // A single dimension SET. An empty set is legal and means "aggregate only".
           Dimensions: dimensionKeys.length > 0 ? [dimensionKeys] : [[]],
-          Metrics: usable.map((m) => ({ Name: m.name, Unit: m.unit ?? 'Count' }))
-        }
-      ]
+          Metrics: usable.map((m) => ({ Name: m.name, Unit: m.unit ?? 'Count' })),
+        },
+      ],
     },
-    ...dimensions
+    ...dimensions,
   }
   for (const m of usable) doc[m.name] = m.value
   return JSON.stringify(doc)
@@ -75,7 +75,7 @@ export function emfLine(
 export function emit(
   dimensions: Record<string, string>,
   metrics: readonly EmfMetric[],
-  nowMs: number
+  nowMs: number,
 ): void {
   const line = emfLine(dimensions, metrics, nowMs)
   if (line !== null) process.stdout.write(`${line}\n`)

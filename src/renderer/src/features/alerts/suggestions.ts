@@ -124,7 +124,7 @@ export const SUGGEST_TEMPLATES: Record<
     // BOTH conditions name who: `buffExpired.target` is 'self' or the bound entity, and the raw
     // `buffWearOff.target` is always 'self' — which speaks as "you", because the wears-off emote
     // is printed to the holder. So this chip answers the reporters' question on the self side too.
-    speaks: (short) => `${short} wore off {target}`
+    speaks: (short) => `${short} wore off {target}`,
   },
   // Beneficial: JUST the pet/named-target fade side (target-only), for users who want to
   // separate it from the self-side. Uses the raw buffFade the parser already emits.
@@ -138,7 +138,7 @@ export const SUGGEST_TEMPLATES: Record<
     // `buffFade.target` is the named mob, the literal 'pet', or ABSENT for the self form — and the
     // resolver reads all three (absence is what `Your <Spell> spell has worn off.` means, so it
     // speaks "you"). This is the "Soothe has worn off a Fire Giant" sentence for every non-hold buff.
-    speaks: (short) => `${short} faded on {target}`
+    speaks: (short) => `${short} faded on {target}`,
   },
   // Detrimental + cast-on-other: the debuff landing on a target.
   //
@@ -162,7 +162,7 @@ export const SUGGEST_TEMPLATES: Record<
     // landed on, so this says "Shiftless on Coercer T`vala" with no regex anywhere — the same
     // sentence `landsOnOther` had to author a capture pattern to reach, now available to every
     // spell that has a typed landing event.
-    speaks: (short) => `${short} on {target}`
+    speaks: (short) => `${short} on {target}`,
   },
   // Beneficial + cast-on-YOU: the buff landing on the person casting it (JOS-318).
   //
@@ -186,7 +186,7 @@ export const SUGGEST_TEMPLATES: Record<
     kind: 'buffApply',
     verb: 'lands on you',
     sound: 'task-acknowledge-task-acknowledge-05',
-    where: (name) => ({ spell: name, target: 'self' })
+    where: (name) => ({ spell: name, target: 'self' }),
   },
   // THE CAPTURE TEMPLATE (JOS-103) — "who did this land on?", answered out loud.
   //
@@ -219,7 +219,7 @@ export const SUGGEST_TEMPLATES: Record<
     // no typed event to read an entity field off (that is the whole reason it is a `raw` trigger),
     // so the declared capture is the only thing that can answer. If the two ever disagree the token
     // renders literally, which is visible in the editor's preview rather than silent.
-    speaks: (short) => `${short} on {player}`
+    speaks: (short) => `${short} on {player}`,
   },
   // THE HEAL-OVER-TIME TICK (JOS-318) — the one line a HoT cannot fail to print.
   //
@@ -247,7 +247,7 @@ export const SUGGEST_TEMPLATES: Record<
     kind: 'heal',
     verb: 'heals over time',
     sound: 'task-acknowledge-task-acknowledge-05',
-    where: (name) => ({ spell: name })
+    where: (name) => ({ spell: name }),
   },
   // Crowd control: the HOLD ENDING, per spell (JOS-161).
   //
@@ -276,7 +276,7 @@ export const SUGGEST_TEMPLATES: Record<
     // "Mez has dropped on a ghoul" — the reporters' own sentence, and the `cc` break spells its
     // entity `mob` rather than `target`, which is exactly why the resolver is a table and the user
     // never has to know (shared/alertTargets.ts).
-    speaks: (short) => `${short} broke on {target}`
+    speaks: (short) => `${short} broke on {target}`,
   },
   // The CHARM breaking, per spell (JOS-200) — `breaks`'s twin, and a different EVENT.
   //
@@ -307,8 +307,8 @@ export const SUGGEST_TEMPLATES: Record<
     where: (name) => ({ spell: name }),
     // Same sentence as `breaks`, same `mob` field, different event — and naming the mob matters
     // MORE here: a broken charm is a pet turning on you, and which one is the whole question.
-    speaks: (short) => `${short} charm broke on {target}`
-  }
+    speaks: (short) => `${short} charm broke on {target}`,
+  },
 }
 
 /** UI metadata for the two rank-pinned templates. `chip` takes the rank display name. */
@@ -321,15 +321,15 @@ export const RANK_TEMPLATES: Record<
     kind: 'castBegin',
     verb: 'cast',
     // "Consider this my opening move."
-    sound: 'task-acknowledge-task-acknowledge-05'
+    sound: 'task-acknowledge-task-acknowledge-05',
   },
   resistRank: {
     chip: (rank) => `When ${rank} is resisted`,
     kind: 'resist',
     verb: 'resisted',
     // a dry error read — it was shrugged off.
-    sound: 'task-error-task-error-01'
-  }
+    sound: 'task-error-task-error-01',
+  },
 }
 
 /** A concrete suggestion: the template it came from + the exact AlertDef it authors. */
@@ -433,8 +433,8 @@ function buildTrigger(entry: SpellCatalogEntry, template: TemplateKind): AlertDe
       type: 'any',
       conditions: [
         { type: 'event', kind: t.kind, ...(where ? { where } : {}) },
-        { type: 'event', kind: t.alsoKind, ...(where ? { where } : {}) }
-      ]
+        { type: 'event', kind: t.alsoKind, ...(where ? { where } : {}) },
+      ],
     }
   }
   return { type: 'event', kind: t.kind, where }
@@ -464,7 +464,7 @@ function buildDef(entry: SpellCatalogEntry, template: TemplateKind, packId: stri
     trigger: buildTrigger(entry, template),
     sound: { packId, soundId: t.sound },
     cooldownMs: cooldownFor(entry, template),
-    note: `Suggested alert (Task #38/#47) - ${template} for ${entry.name}.`
+    note: `Suggested alert (Task #38/#47) - ${template} for ${entry.name}.`,
   }
   // THE TEMPLATES THAT SAY WHO (JOS-103 for `{player}`, JOS-353 for `{target}`). One branch for
   // all of them now: the phrase is the template's own (`speaks`), and every template that has one
@@ -502,7 +502,7 @@ function buildRankDef(
   entry: SpellCatalogEntry,
   rank: string,
   template: RankTemplateKind,
-  packId: string
+  packId: string,
 ): AlertDef {
   const t = RANK_TEMPLATES[template]
   // resist carries a caster field: pin it to YOUR casts so a pet's or a bystander's resist of
@@ -516,7 +516,7 @@ function buildRankDef(
     trigger: { type: 'event', kind: t.kind, where },
     sound: { packId, soundId: t.sound },
     cooldownMs: DEFAULT_COOLDOWN_MS,
-    note: `Suggested alert - ${template} for ${rank}.`
+    note: `Suggested alert - ${template} for ${rank}.`,
   }
   if (template === 'resistRank') {
     def.audio = 'speech'
@@ -540,7 +540,7 @@ function buildRankDef(
 export function suggestionsFor(
   entry: SpellCatalogEntry,
   rank?: SpellRank | null,
-  packId: string = DEFAULT_PACK_ID
+  packId: string = DEFAULT_PACK_ID,
 ): Suggestion[] {
   const out: Suggestion[] = []
   // The rank-LESS chips, in the order they are offered — one entry per flag, walked rather than
@@ -556,7 +556,7 @@ export function suggestionsFor(
     'landsOnOther',
     'healsOverTime',
     'breaks',
-    'charmBreaks'
+    'charmBreaks',
   ]
   for (const t of RANKLESS) {
     if (entry.templates[t]) out.push({ template: t, def: buildDef(entry, t, packId) })
@@ -568,13 +568,13 @@ export function suggestionsFor(
     out.push({
       template: 'castRank',
       rank: rank.name,
-      def: buildRankDef(entry, rank.name, 'castRank', packId)
+      def: buildRankDef(entry, rank.name, 'castRank', packId),
     })
     if (entry.spellType === 'Detrimental') {
       out.push({
         template: 'resistRank',
         rank: rank.name,
-        def: buildRankDef(entry, rank.name, 'resistRank', packId)
+        def: buildRankDef(entry, rank.name, 'resistRank', packId),
       })
     }
   }
@@ -593,7 +593,7 @@ export function illusionSuggestion(packId: string = DEFAULT_PACK_ID): Suggestion
       // "It has all gone rather pear-shaped."
       sound: { packId, soundId: 'task-error-task-error-08' },
       cooldownMs: DEFAULT_COOLDOWN_MS,
-      note: 'Suggested alert (Task #38) - fires when your illusion clicks/wears off.'
-    }
+      note: 'Suggested alert (Task #38) - fires when your illusion clicks/wears off.',
+    },
   }
 }

@@ -59,7 +59,7 @@ import {
   settle,
   settleCount,
   settleStable,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { closeWindows, mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -102,7 +102,9 @@ function readLedger(page: Page): Promise<Ledger> {
     for (const row of Array.from(document.querySelectorAll(sel))) {
       const cells: string[] = []
       for (const cell of Array.from(row.querySelectorAll('td'))) {
-        cells.push(((cell as HTMLElement).innerText || cell.textContent || '').replace(/\s+/g, ' ').trim())
+        cells.push(
+          ((cell as HTMLElement).innerText || cell.textContent || '').replace(/\s+/g, ' ').trim(),
+        )
       }
       rows.push(cells)
     }
@@ -116,7 +118,7 @@ function readHeadings(page: Page): Promise<string[]> {
     const table = document.querySelector(`${sel} table`)
     if (!table) return []
     return Array.from(table.querySelectorAll('th')).map((th) =>
-      ((th as HTMLElement).innerText || th.textContent || '').trim()
+      ((th as HTMLElement).innerText || th.textContent || '').trim(),
     )
   }, LOOT_LIST)
 }
@@ -130,7 +132,7 @@ function settledLedger(page: Page): Promise<Ledger> {
 function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
   return page.waitForSelector(sel, { timeout: ms }).then(
     () => true,
-    () => false
+    () => false,
   )
 }
 
@@ -138,17 +140,22 @@ function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
 async function stepFlatLedger(page: Page): Promise<boolean> {
   if (!check('the app lands on the Overview', await appears(page, GRID, 60_000))) return false
   const { snap } = await waitHydrated(page)
-  if (!check('hydration completes (the replay has filled the loot ledger)', !snap.hydrating)) return false
+  if (!check('hydration completes (the replay has filled the loot ledger)', !snap.hydrating))
+    return false
   await page.click('[data-testid="nav-loot"]', { timeout: 15_000 })
   if (!check('the Loot tab opens on its ledger', await appears(page, LOOT_LIST))) return false
   await page.click(GROUP_SWITCH, { timeout: 15_000 })
   // The order picker belongs to the GROUPED table only ("ungrouped, the ledger is already a
   // chronological one" — LootChrome), so its disappearance is the flat ledger's own signal.
-  const flat = await settle(() => countOf(page, LOOT_SORT), (n) => n === 0, { timeoutMs: 10_000 })
+  const flat = await settle(
+    () => countOf(page, LOOT_SORT),
+    (n) => n === 0,
+    { timeoutMs: 10_000 },
+  )
   return check(
     '"Group by item" off puts the tab on the FLAT chronological ledger — the shape loot.ledger serves',
     flat === 0,
-    `sort controls still mounted: ${String(flat)}`
+    `sort controls still mounted: ${String(flat)}`,
   )
 }
 
@@ -165,7 +172,9 @@ async function stepBrokered(page: Page): Promise<boolean> {
   return check(
     'this WINDOW is a client of the engine: main brokered it a port and the handshake landed',
     there,
-    there ? 'the dev data-source toggle is mounted' : 'no toggle — the renderer never held a live client'
+    there
+      ? 'the dev data-source toggle is mounted'
+      : 'no toggle — the renderer never held a live client',
   )
 }
 
@@ -191,12 +200,12 @@ function stepRowsAgree(app: Ledger, engine: Ledger): void {
   const deep = check(
     `both ledgers hold rows worth comparing (at least ${String(MIN_ROWS)})`,
     app.length >= MIN_ROWS && engine.length >= MIN_ROWS,
-    `app ${String(app.length)} rows · engine ${String(engine.length)} rows`
+    `app ${String(app.length)} rows · engine ${String(engine.length)} rows`,
   )
   check(
     'the served window covers every row the app-fed ledger drew — nothing is compared by halves',
     engine.length >= app.length,
-    `app ${String(app.length)} · engine ${String(engine.length)} (the served box is taller — less chrome above it)`
+    `app ${String(app.length)} · engine ${String(engine.length)} (the served box is taller — less chrome above it)`,
   )
   if (!deep) return
   const n = Math.min(app.length, engine.length)
@@ -209,7 +218,7 @@ function stepRowsAgree(app: Ledger, engine: Ledger): void {
     firstDiff < 0,
     firstDiff < 0
       ? `first row: ${JSON.stringify(app[0])}`
-      : `row ${String(firstDiff)} differs — app ${JSON.stringify(app[firstDiff])} vs engine ${JSON.stringify(engine[firstDiff])}`
+      : `row ${String(firstDiff)} differs — app ${JSON.stringify(app[firstDiff])} vs engine ${JSON.stringify(engine[firstDiff])}`,
   )
   if (firstDiff < 0) {
     // THE EVIDENCE, printed rather than merely asserted: the ticket asks for the row equality
@@ -236,7 +245,7 @@ async function main(): Promise<void> {
         check(
           'the served table draws the same four columns the app-fed one does',
           JSON.stringify(appHeadings) === JSON.stringify(engineHeadings),
-          `app ${JSON.stringify(appHeadings)} · engine ${JSON.stringify(engineHeadings)}`
+          `app ${JSON.stringify(appHeadings)} · engine ${JSON.stringify(engineHeadings)}`,
         )
         stepRowsAgree(app, engine)
         // BACK, because a one-way toggle is a toggle nobody proved. The app ledger has to return
@@ -246,7 +255,9 @@ async function main(): Promise<void> {
         check(
           'flipping back restores the app-fed ledger exactly as it was',
           JSON.stringify(back) === JSON.stringify(app),
-          back.length === app.length ? 'same rows' : `app ${String(app.length)} · back ${String(back.length)}`
+          back.length === app.length
+            ? 'same rows'
+            : `app ${String(app.length)} · back ${String(back.length)}`,
         )
       }
     }
@@ -266,8 +277,12 @@ async function main(): Promise<void> {
   }
 
   if (failures.length === 0) {
-    note('the toggle is DEV-ONLY and gated on a live connection: no engine, no control, no engine ledger')
-    note('main relayed every one of those bytes without parsing a frame — src/main/dataServer/byteRelay.ts')
+    note(
+      'the toggle is DEV-ONLY and gated on a live connection: no engine, no control, no engine ledger',
+    )
+    note(
+      'main relayed every one of those bytes without parsing a frame — src/main/dataServer/byteRelay.ts',
+    )
   }
   reportRun()
 }

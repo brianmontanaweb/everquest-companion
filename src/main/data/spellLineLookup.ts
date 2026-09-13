@@ -141,7 +141,7 @@ export function replacedBy(spellName: string, cls: ClassAbbr): SpellLinePlace {
   return {
     replaces: previousTier(line, at),
     replacedBy: nextTier(line, at),
-    line: line.name
+    line: line.name,
   }
 }
 

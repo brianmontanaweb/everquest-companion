@@ -36,12 +36,20 @@ import {
   spellFactsAreForLine,
   spellFocusLines,
   spellLineageLine,
-  spellStatRows
+  spellStatRows,
 } from '@shared/spellDetail'
 import { spellMetricsParts } from '@shared/spellMetrics'
 import { romanRank } from '@shared/spellLines'
 import { nameStatesRank, observedRankLabel, observedRankRow } from '@shared/spellRanks'
-import { CARD_LABEL, CARD_MONO, CARD_TEXT, CardSection, LABEL_STYLE, MoreLine, TEXT_STYLE } from './hoverCards'
+import {
+  CARD_LABEL,
+  CARD_MONO,
+  CARD_TEXT,
+  CardSection,
+  LABEL_STYLE,
+  MoreLine,
+  TEXT_STYLE,
+} from './hoverCards'
 import { Tooltip } from './Tooltip'
 import { useObservedSpellRanks } from './useObservedSpellRanks'
 import { useSpellLink, type OpenSpell } from './spellLink'
@@ -65,7 +73,7 @@ const ERA_PILL: React.CSSProperties = {
   fontSize: 9,
   lineHeight: 1.4,
   padding: '0 3px',
-  whiteSpace: 'nowrap'
+  whiteSpace: 'nowrap',
 }
 
 /**
@@ -86,14 +94,14 @@ const RANK_PILL: React.CSSProperties = {
   fontSize: 9,
   lineHeight: 1.4,
   padding: '0 3px',
-  whiteSpace: 'nowrap'
+  whiteSpace: 'nowrap',
 }
 
 /** The header colour says what KIND of spell it is - the same question the row's chip answers. */
 const NATURE_COLOR: Record<SpellDetail['nature'], string> = {
   beneficial: '#7fd8a0',
   detrimental: '#e08a8a',
-  unknown: CARD_TEXT
+  unknown: CARD_TEXT,
 }
 
 // ---- the record cache: one lookup per spell per few seconds, and NOT one per open --------------
@@ -259,7 +267,11 @@ function Figures({ detail }: { detail: SpellDetail }): JSX.Element | null {
           and this one is the spell as you own it; the card is the surface with room for the pair,
           which is exactly why the table below settles for one number and the `yours:` chip. */}
       {atRank !== null && atRank.length > 0 && (
-        <div style={TEXT_STYLE} data-testid="spell-card-figures-at-rank" data-rank={String(detail.metricsRank)}>
+        <div
+          style={TEXT_STYLE}
+          data-testid="spell-card-figures-at-rank"
+          data-rank={String(detail.metricsRank)}
+        >
           {`at ${romanRank(detail.metricsRank ?? 0)}: ${atRank.join(' · ')}`}
         </div>
       )}
@@ -280,7 +292,8 @@ function Figures({ detail }: { detail: SpellDetail }): JSX.Element | null {
  * the lint config's complexity ceiling, and because these two lines are one thought.
  */
 function WithFocus({ detail }: { detail: SpellDetail }): JSX.Element | null {
-  const parts = detail.metricsWithFocus === undefined ? [] : spellMetricsParts(detail.metricsWithFocus)
+  const parts =
+    detail.metricsWithFocus === undefined ? [] : spellMetricsParts(detail.metricsWithFocus)
   const lines = spellFocusLines(detail)
   if (parts.length === 0 || lines.length === 0) return null
   return (
@@ -357,11 +370,13 @@ function Lineage({ detail }: { detail: SpellDetail }): JSX.Element | null {
 /** The sentences the game prints for this spell - how you recognize it in the log. */
 function Messages({ detail }: { detail: SpellDetail }): JSX.Element | null {
   const rows: { id: string; label: string; text: string }[] = []
-  if (detail.msgCastOnYou !== undefined) rows.push({ id: 'you', label: 'On you', text: detail.msgCastOnYou })
+  if (detail.msgCastOnYou !== undefined)
+    rows.push({ id: 'you', label: 'On you', text: detail.msgCastOnYou })
   if (detail.msgCastOnOther !== undefined) {
     rows.push({ id: 'other', label: 'On a target', text: detail.msgCastOnOther })
   }
-  if (detail.msgWearsOff !== undefined) rows.push({ id: 'off', label: 'Wears off', text: detail.msgWearsOff })
+  if (detail.msgWearsOff !== undefined)
+    rows.push({ id: 'off', label: 'Wears off', text: detail.msgWearsOff })
   if (rows.length === 0) return null
   return (
     <CardSection label="It says:">
@@ -381,7 +396,13 @@ function Messages({ detail }: { detail: SpellDetail }): JSX.Element | null {
  * the line-row note is a third thing again: the facts above are real, they just belong to the LINE
  * rather than to the rank you asked about.
  */
-function Footer({ detail, loading }: { detail: SpellDetail | null; loading: boolean }): JSX.Element {
+function Footer({
+  detail,
+  loading,
+}: {
+  detail: SpellDetail | null
+  loading: boolean
+}): JSX.Element {
   return (
     <>
       {loading && !detail && <div style={{ ...LABEL_STYLE, marginTop: 4 }}>Looking up…</div>}
@@ -421,7 +442,7 @@ function useRankPill(name: string): string | null {
 function CardHeader({
   name,
   accent,
-  detail
+  detail,
 }: {
   name: string
   accent: string
@@ -455,7 +476,7 @@ function CardHeader({
 export function SpellCardBody({
   name,
   data,
-  loading
+  loading,
 }: {
   name: string
   data: SpellDetail | null
@@ -474,7 +495,7 @@ export function SpellCardBody({
         padding: 8,
         maxWidth: 320,
         fontFamily: CARD_MONO,
-        boxShadow: '0 6px 20px rgba(0,0,0,0.6)'
+        boxShadow: '0 6px 20px rgba(0,0,0,0.6)',
       }}
     >
       <CardHeader name={name} accent={accent} detail={data} />
@@ -511,7 +532,7 @@ export function SpellCard({ name }: { name: string }): JSX.Element {
  * the popper contributes no padding, no background and no 300px width cap on top of it.
  */
 const SPELL_CARD_SLOT_PROPS = {
-  tooltip: { sx: { p: 0, bgcolor: 'transparent', maxWidth: 'none' } }
+  tooltip: { sx: { p: 0, bgcolor: 'transparent', maxWidth: 'none' } },
 } as const
 
 /**
@@ -552,7 +573,7 @@ function anchorFor(
   children: ReactElement<SpellAnchorProps>,
   open: OpenSpell | null,
   name: string,
-  props: SpellAnchorProps
+  props: SpellAnchorProps,
 ): ReactElement {
   if (open === null) return children
   return cloneElement(children, props)
@@ -589,9 +610,9 @@ function useAnchorProps(open: OpenSpell | null, name: string): SpellAnchorProps 
       },
       role: 'link',
       tabIndex: 0,
-      style: { cursor: 'pointer' }
+      style: { cursor: 'pointer' },
     }),
-    [open, name]
+    [open, name],
   )
 }
 
@@ -619,7 +640,11 @@ function useAnchorProps(open: OpenSpell | null, name: string): SpellAnchorProps 
  * table's 350: these anchors are names inside prose and table cells rather than whole dense rows,
  * so the pointer is aimed at one when it is on one.
  */
-export function SpellTooltip({ name, placement = 'right', children }: SpellTooltipProps): JSX.Element {
+export function SpellTooltip({
+  name,
+  placement = 'right',
+  children,
+}: SpellTooltipProps): JSX.Element {
   const open = useSpellLink()
   const anchorProps = useAnchorProps(open, name)
   return (

@@ -52,7 +52,7 @@ import {
   reportRun,
   settle,
   settleStable,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -91,18 +91,24 @@ const CROSS_ZONE_STEM = 'highkeep'
 
 /** Rendered text of the first match; '' when the node isn't mounted. */
 function textOf(page: Page, sel: string): Promise<string> {
-  return page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
+  return page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    sel,
+  )
 }
 
 /** Box + scroll geometry — enough to prove a growing list is a BOUNDED scroller. */
-function boxOf(page: Page, sel: string): Promise<{ h: number; scrollH: number; clientH: number } | null> {
+function boxOf(
+  page: Page,
+  sel: string,
+): Promise<{ h: number; scrollH: number; clientH: number } | null> {
   return page.evaluate((s) => {
     const el = document.querySelector(s)
     if (!el) return null
     return {
       h: Math.round(el.getBoundingClientRect().height),
       scrollH: el.scrollHeight,
-      clientH: el.clientHeight
+      clientH: el.clientHeight,
     }
   }, sel)
 }
@@ -120,7 +126,7 @@ function until(fn: () => Promise<boolean>, ms: number): Promise<boolean> {
  * element.
  */
 function canvasMetrics(
-  page: Page
+  page: Page,
 ): Promise<{ cssW: number; cssH: number; bufW: number; bufH: number; dpr: number } | null> {
   return page.evaluate((sel) => {
     const cv = document.querySelector(sel) as HTMLCanvasElement | null
@@ -130,7 +136,7 @@ function canvasMetrics(
       cssH: Math.round(cv.getBoundingClientRect().height),
       bufW: cv.width,
       bufH: cv.height,
-      dpr: window.devicePixelRatio || 1
+      dpr: window.devicePixelRatio || 1,
     }
   }, CANVAS)
 }
@@ -170,8 +176,8 @@ function installBouncelessProbe(page: Page): Promise<void> {
           Math.round(r.top),
           Math.round(r.height),
           drawn ? 'map' : 'nomap',
-          zoom ? getComputedStyle(zoom).visibility : 'absent'
-        ].join('|')
+          zoom ? getComputedStyle(zoom).visibility : 'absent',
+        ].join('|'),
       )
     }, 16)
   })
@@ -205,13 +211,13 @@ function stepNoBounce(states: string[]): void {
   check(
     'the map row never moves or resizes between mounting the tab and the map arriving',
     geometry.length === 1,
-    `${String(states.length)} distinct states: ${states.join('  →  ')}`
+    `${String(states.length)} distinct states: ${states.join('  →  ')}`,
   )
   const shown = states.filter((s) => s.includes('|nomap|visible'))
   check(
     '…and the space it holds is held by nothing the user can see',
     shown.length === 0,
-    shown.join(' ')
+    shown.join(' '),
   )
 }
 
@@ -228,7 +234,7 @@ async function labelPrefix(page: Page): Promise<string> {
 async function stepMount(page: Page): Promise<boolean> {
   const hasRow = await page.waitForSelector(NAV, { timeout: 60_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!check('the nav drawer has a Maps row', hasRow)) return false
   // BEFORE the click, because the subject is what happens between the mount and the first map
@@ -237,14 +243,17 @@ async function stepMount(page: Page): Promise<boolean> {
   await page.click(NAV, { timeout: 15_000 })
   const mounted = await page.waitForSelector(HEADER, { timeout: 30_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!mounted) {
     // The one legitimate reason the view does not mount: no character logs at all, so App's
     // fresh-machine empty state stands in front of every feature view.
     const noLogs = (await textOf(page, 'main')).includes('No EverQuest logs found')
     check('clicking Maps mounts the viewer (or the no-logs empty state explains why not)', noLogs)
-    if (noLogs) note('no character logs on this machine — the app shows its fresh-machine empty state and no feature view mounts')
+    if (noLogs)
+      note(
+        'no character logs on this machine — the app shows its fresh-machine empty state and no feature view mounts',
+      )
     return false
   }
   check('clicking the Maps nav row mounts the viewer', true)
@@ -268,12 +277,12 @@ async function stepMapOrEmpty(page: Page, zone: string | undefined): Promise<boo
   check(
     'no map drawn ⇒ the viewer shows its quiet picker, never an error or a blank pane',
     emptyText.length > 0,
-    emptyText.slice(0, 110)
+    emptyText.slice(0, 110),
   )
   note(
     zone == null || zone === ''
       ? 'the log has stated no zone yet — the picker is the correct state and the map assertions are skipped'
-      : `no map is open for "${zone}" (unmapped zone, or no maps\\ directory on this machine) — the picker is the correct state and the map assertions are skipped`
+      : `no map is open for "${zone}" (unmapped zone, or no maps\\ directory on this machine) — the picker is the correct state and the map assertions are skipped`,
   )
   return false
 }
@@ -284,7 +293,7 @@ async function stepCanvas(page: Page): Promise<void> {
   check(
     'the map pane has real size (it is not squeezed to nothing)',
     !!rect && rect.w > 0 && rect.h > 0,
-    rect ? `${String(rect.w)}×${String(rect.h)}px` : 'absent'
+    rect ? `${String(rect.w)}×${String(rect.h)}px` : 'absent',
   )
   const m = await canvasMetrics(page)
   if (!m) return
@@ -295,12 +304,12 @@ async function stepCanvas(page: Page): Promise<void> {
   check(
     'the canvas fills its pane (it is not sitting at the intrinsic 300×150 default)',
     !!rect && Math.abs(m.cssW - rect.w) <= 1 && Math.abs(m.cssH - rect.h) <= 1,
-    `canvas ${String(m.cssW)}×${String(m.cssH)} vs pane ${rect ? `${String(rect.w)}×${String(rect.h)}` : 'absent'}`
+    `canvas ${String(m.cssW)}×${String(m.cssH)} vs pane ${rect ? `${String(rect.w)}×${String(rect.h)}` : 'absent'}`,
   )
   check(
     'the canvas backing store is scaled by devicePixelRatio (a CSS-sized buffer is the blurry-map bug)',
     m.bufW === Math.round(m.cssW * m.dpr) && m.bufH === Math.round(m.cssH * m.dpr),
-    `css ${String(m.cssW)}×${String(m.cssH)} · buffer ${String(m.bufW)}×${String(m.bufH)} · dpr ${String(m.dpr)}`
+    `css ${String(m.cssW)}×${String(m.cssH)} · buffer ${String(m.bufW)}×${String(m.bufH)} · dpr ${String(m.dpr)}`,
   )
 
   // The layout contract: the app's content area owns the scroll, and a view never grows the
@@ -309,7 +318,7 @@ async function stepCanvas(page: Page): Promise<void> {
   check(
     'the Maps tab never scrolls the page (the map clips inside its own pane)',
     over.doc === 0 && over.content === 0,
-    `document +${String(over.doc)}px · content area +${String(over.content)}px`
+    `document +${String(over.doc)}px · content area +${String(over.content)}px`,
   )
 }
 
@@ -320,7 +329,7 @@ async function stepHeader(page: Page, zone: string | undefined): Promise<void> {
   check(
     'the header names a source pack for every layer it drew (a silent cross-pack merge is forbidden)',
     sources > 0,
-    `${String(sources)} source chips`
+    `${String(sources)} source chips`,
   )
   if (zone == null || zone === '') {
     note('the log has stated no zone — the header correctly names the manually picked map instead')
@@ -329,7 +338,7 @@ async function stepHeader(page: Page, zone: string | undefined): Promise<void> {
   check(
     'the header states the zone the log says you are in',
     header.includes(zone),
-    `header "${header.slice(0, 90)}" vs log zone "${zone}"`
+    `header "${header.slice(0, 90)}" vs log zone "${zone}"`,
   )
 }
 
@@ -348,12 +357,12 @@ async function stepPaneBounds(page: Page): Promise<void> {
   check(
     'the sidebar is as tall as the map beside it and no taller (it cannot grow to eat the page)',
     pane.h > 0 && pane.h <= surface.h + 2,
-    `pane ${String(pane.h)}px vs map ${String(surface.h)}px`
+    `pane ${String(pane.h)}px vs map ${String(surface.h)}px`,
   )
   check(
     '…and its list is its own scroller (content scrolls INSIDE the box)',
     scroll.scrollH >= scroll.clientH,
-    `scrollHeight ${String(scroll.scrollH)} vs clientHeight ${String(scroll.clientH)}`
+    `scrollHeight ${String(scroll.scrollH)} vs clientHeight ${String(scroll.clientH)}`,
   )
 }
 
@@ -367,33 +376,40 @@ async function stepPaneBounds(page: Page): Promise<void> {
 async function stepCrossZone(page: Page): Promise<void> {
   const prefix = await labelPrefix(page)
   if (prefix === '') {
-    note('no labels are drawn in this zone at the fit view — the cross-zone half is not asserted this run')
+    note(
+      'no labels are drawn in this zone at the fit view — the cross-zone half is not asserted this run',
+    )
     return
   }
   await page.fill(PANE_SEARCH, prefix, { timeout: 15_000 })
   const found = await until(async () => (await countOf(page, PANE_HIT)) > 0, 15_000)
   if (!found) {
-    note(`no other installed map labels "${prefix}" — the cross-zone list is correctly empty and the jump is not asserted`)
+    note(
+      `no other installed map labels "${prefix}" — the cross-zone list is correctly empty and the jump is not asserted`,
+    )
     return
   }
   check(
     'one box also finds labels in OTHER zones (the corpus lookup the toolbar used to hold)',
     true,
-    `"${prefix}" → ${String(await countOf(page, PANE_HIT))} rows in other zones`
+    `"${prefix}" → ${String(await countOf(page, PANE_HIT))} rows in other zones`,
   )
   // The marker is transient by design, so it is polled for immediately and its later
   // disappearance is not asserted.
   await page.click(PANE_HIT, { timeout: 15_000 })
-  const marked = await until(async () => (await countOf(page, '[data-testid="maps-marker"]')) > 0, 20_000)
+  const marked = await until(
+    async () => (await countOf(page, '[data-testid="maps-marker"]')) > 0,
+    20_000,
+  )
   check('clicking one loads that zone and flashes the marker where the label is', marked)
 }
 
 /** An attribute off the first match; '' when the node isn't mounted or carries no such attribute. */
 function attrOf(page: Page, sel: string, name: string): Promise<string> {
-  return page.evaluate(
-    ([s, a]) => document.querySelector(s)?.getAttribute(a) ?? '',
-    [sel, name] as const
-  )
+  return page.evaluate(([s, a]) => document.querySelector(s)?.getAttribute(a) ?? '', [
+    sel,
+    name,
+  ] as const)
 }
 
 /**
@@ -408,27 +424,39 @@ function attrOf(page: Page, sel: string, name: string): Promise<string> {
  */
 async function stepCrossZoneMob(page: Page): Promise<void> {
   if ((await textOf(page, ZONE_CHIP)).trim() === CROSS_ZONE_STEM) {
-    note(`already on the ${CROSS_ZONE_STEM} map — the cross-zone MOB jump needs a different zone and is skipped`)
+    note(
+      `already on the ${CROSS_ZONE_STEM} map — the cross-zone MOB jump needs a different zone and is skipped`,
+    )
     return
   }
   await page.fill(PANE_SEARCH, CROSS_ZONE_MOB, { timeout: 15_000 })
   const found = await until(async () => (await countOf(page, PANE_HIT_MOB)) > 0, 15_000)
-  if (!check(`one box also finds a mob the WIKI places elsewhere ("${CROSS_ZONE_MOB}")`, found)) return
+  if (!check(`one box also finds a mob the WIKI places elsewhere ("${CROSS_ZONE_MOB}")`, found))
+    return
 
   const zone = await attrOf(page, PANE_HIT_MOB, 'data-zone')
   if (zone === '') {
-    note(`no ${CROSS_ZONE_STEM} map is installed on this machine — the row correctly states the zone without offering to open it`)
+    note(
+      `no ${CROSS_ZONE_STEM} map is installed on this machine — the row correctly states the zone without offering to open it`,
+    )
     return
   }
   check(
     '…and the row names the zone it will take you to',
     zone === CROSS_ZONE_STEM,
-    `row points at "${zone}", expected "${CROSS_ZONE_STEM}"`
+    `row points at "${zone}", expected "${CROSS_ZONE_STEM}"`,
   )
   await page.click(PANE_HIT_MOB, { timeout: 15_000 })
   const arrived = await until(async () => (await textOf(page, ZONE_CHIP)).trim() === zone, 25_000)
-  check('clicking it opens THAT zone’s map', arrived, `zone chip reads "${(await textOf(page, ZONE_CHIP)).trim()}"`)
-  const marked = await until(async () => (await countOf(page, '[data-testid="maps-marker"]')) > 0, 20_000)
+  check(
+    'clicking it opens THAT zone’s map',
+    arrived,
+    `zone chip reads "${(await textOf(page, ZONE_CHIP)).trim()}"`,
+  )
+  const marked = await until(
+    async () => (await countOf(page, '[data-testid="maps-marker"]')) > 0,
+    20_000,
+  )
   check('…and marks the spot the wiki stated for him', marked)
 }
 
@@ -464,16 +492,19 @@ async function stepPaneFilter(page: Page): Promise<void> {
   check(
     'the pane lists something from at least one of its two authorities',
     mobRows + labelRows > 0,
-    `${String(mobRows)} wiki mobs · ${String(labelRows)} map labels`
+    `${String(mobRows)} wiki mobs · ${String(labelRows)} map labels`,
   )
   await page.fill(PANE_SEARCH, 'zzzqqq', { timeout: 15_000 })
   const emptied = await until(
     async () => (await countOf(page, PANE_MOB)) === 0 && (await countOf(page, PANE_LABEL)) === 0,
-    6000
+    6000,
   )
   check('the pane’s one search box filters BOTH sections', emptied)
   await page.fill(PANE_SEARCH, '', { timeout: 15_000 })
-  await until(async () => (await countOf(page, PANE_MOB)) + (await countOf(page, PANE_LABEL)) > 0, 6000)
+  await until(
+    async () => (await countOf(page, PANE_MOB)) + (await countOf(page, PANE_LABEL)) > 0,
+    6000,
+  )
 }
 
 /**
@@ -498,14 +529,18 @@ async function stepPaneSelect(page: Page): Promise<void> {
   const ringed = await until(async () => (await countOf(page, PANE_MARKER)) > 0, 4000)
   check('clicking a pane row highlights it on the map with a persistent ring', ringed)
   if (before == null) {
-    note('no wiki pin is drawn for this zone (its catalog rows state no coordinates) — the transform check is skipped')
+    note(
+      'no wiki pin is drawn for this zone (its catalog rows state no coordinates) — the transform check is skipped',
+    )
     return
   }
   const after = await pinAt(page)
   check(
     '…and centres the viewport on it (the projection actually moved)',
     after != null && (after.x !== before.x || after.y !== before.y),
-    after ? `pin ${String(before.x)},${String(before.y)} → ${String(after.x)},${String(after.y)}` : 'pin gone'
+    after
+      ? `pin ${String(before.x)},${String(before.y)} → ${String(after.x)},${String(after.y)}`
+      : 'pin gone',
   )
 }
 
@@ -528,7 +563,7 @@ async function stepPaneClose(page: Page): Promise<void> {
   check(
     'closing the sidebar gives its width back to the MAP (no fixed-size arithmetic, no ghost column)',
     closed && widthClosed > widthOpen,
-    `surface ${String(widthOpen)}px → ${String(widthClosed)}px`
+    `surface ${String(widthOpen)}px → ${String(widthClosed)}px`,
   )
   if (!check('closing it leaves a way back in', (await countOf(page, PANE_OPEN)) > 0)) return
 
@@ -538,7 +573,7 @@ async function stepPaneClose(page: Page): Promise<void> {
   check(
     'and reopening it takes exactly that width back',
     reopened && Math.abs(widthAgain - widthOpen) <= 2,
-    `surface ${String(widthClosed)}px → ${String(widthAgain)}px (was ${String(widthOpen)}px)`
+    `surface ${String(widthClosed)}px → ${String(widthAgain)}px (was ${String(widthOpen)}px)`,
   )
 }
 
@@ -552,7 +587,9 @@ async function stepPaneClose(page: Page): Promise<void> {
  */
 async function stepPane(page: Page): Promise<void> {
   const open = await until(async () => (await countOf(page, PANE)) > 0, 8000)
-  if (!check('the sidebar is on screen without being asked for (it is the default experience)', open))
+  if (
+    !check('the sidebar is on screen without being asked for (it is the default experience)', open)
+  )
     return
 
   await stepPaneBounds(page)
@@ -600,7 +637,11 @@ async function main(): Promise<void> {
       }
     }
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
 
     if (failures.length) await dumpArtifacts(page, 'maps-FAIL')
     else await dumpArtifacts(page, 'maps-pass')

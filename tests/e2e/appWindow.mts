@@ -39,7 +39,7 @@ export async function mainWindow(app: ElectronApplication, timeoutMs = 60_000): 
         .evaluate(
           () =>
             typeof (window as unknown as { eq?: { getCombatSnapshot?: unknown } }).eq
-              ?.getCombatSnapshot === 'function'
+              ?.getCombatSnapshot === 'function',
         )
         // A window mid-navigation throws on evaluate; it is simply not the answer yet.
         .catch(() => false)
@@ -70,7 +70,7 @@ export async function mainWindow(app: ElectronApplication, timeoutMs = 60_000): 
 export async function overlayWindow(
   app: ElectronApplication,
   kind: string,
-  timeoutMs = 30_000
+  timeoutMs = 30_000,
 ): Promise<Page | null> {
   const t0 = Date.now()
   while (Date.now() - t0 < timeoutMs) {
@@ -81,7 +81,7 @@ export async function overlayWindow(
         .evaluate(
           () =>
             typeof (window as unknown as { eqOverlay?: { getFightSelection?: unknown } }).eqOverlay
-              ?.getFightSelection === 'function'
+              ?.getFightSelection === 'function',
         )
         .catch(() => false)
       if (ready) return w
@@ -316,7 +316,7 @@ export async function launchApp(
      * Defaults to ROOT, which is every other spec in the suite.
      */
     cwd?: string
-  } = {}
+  } = {},
 ): Promise<LaunchedApp> {
   const owned = opts.userData === undefined
   const userData = opts.userData ?? makeUserData()
@@ -360,7 +360,7 @@ export async function launchApp(
     args: [MAIN_ENTRY, ...MUTE_ARGS],
     cwd: opts.cwd ?? ROOT,
     env,
-    timeout: 60_000
+    timeout: 60_000,
   })
   await muteEveryWindow(app)
   return {
@@ -369,7 +369,7 @@ export async function launchApp(
     close: async (): Promise<void> => {
       await app.close().catch(() => undefined)
       if (owned) await removeUserData(userData)
-    }
+    },
   }
 }
 
@@ -389,7 +389,7 @@ export async function launchApp(
  */
 export async function launchOnRealInstall(
   opts: Parameters<typeof launchApp>[0],
-  label: string
+  label: string,
 ): Promise<LaunchedApp> {
   const launched = await launchApp(opts)
   await settleRealLogFold(launched.app, label)

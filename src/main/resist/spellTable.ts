@@ -205,7 +205,10 @@ export function spellsUsMtime(): number | null {
 }
 
 /** Test seam: install a table without touching the filesystem. */
-export function installSpellTable(table: SpellResistTable | null, why: SpellTableState = 'unloadable'): void {
+export function installSpellTable(
+  table: SpellResistTable | null,
+  why: SpellTableState = 'unloadable',
+): void {
   loaded = table
   pending = Promise.resolve(table)
   state = table ? 'ok' : why

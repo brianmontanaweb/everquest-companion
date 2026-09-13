@@ -27,10 +27,25 @@
 
 import type { SegmentView, SourceView } from '@shared/combat'
 import { flattenSkills, type MobBreakdown, type SkillRow, type TargetDetail } from './dashboardData'
-import { defenseHeadlineParts, defenseRowText, defenseRows, riposteLine, ripostesTakenLine } from './defenseRows'
+import {
+  defenseHeadlineParts,
+  defenseRowText,
+  defenseRows,
+  riposteLine,
+  ripostesTakenLine,
+} from './defenseRows'
 import { landEvidence } from './landEvidence'
 import { nestedRows, type OwnRow } from './petRows'
-import { RANK, count, pctText, statLines, subjectLine, table, wrapText, type Col } from './copyTable'
+import {
+  RANK,
+  count,
+  pctText,
+  statLines,
+  subjectLine,
+  table,
+  wrapText,
+  type Col,
+} from './copyTable'
 import { formatNum, formatRate } from '../../lib/formatRate'
 
 // The width constant and the `m:ss` spelling keep their old import path: combatShared.tsx
@@ -78,14 +93,25 @@ function segmentStats(seg: SegmentView, mode: 'out' | 'in'): string[] {
   const total = mode === 'out' ? seg.outTotal : seg.inTotal
   const dps = mode === 'out' ? seg.outDps : seg.inDps
   const act =
-    mode === 'out' && seg.activeSec > 0 && seg.activeSec < seg.durationSec ? ` (act ${formatRate(seg.activeDps)})` : ''
-  const stats = [`${mode === 'out' ? 'Outgoing' : 'Incoming'} damage`, formatNum(total), `${formatRate(dps)}${act}`]
-  if (mode === 'out' && seg.enemyHealTotal > 0) stats.push(`+${formatNum(seg.enemyHealTotal)} enemy heal`)
+    mode === 'out' && seg.activeSec > 0 && seg.activeSec < seg.durationSec
+      ? ` (act ${formatRate(seg.activeDps)})`
+      : ''
+  const stats = [
+    `${mode === 'out' ? 'Outgoing' : 'Incoming'} damage`,
+    formatNum(total),
+    `${formatRate(dps)}${act}`,
+  ]
+  if (mode === 'out' && seg.enemyHealTotal > 0)
+    stats.push(`+${formatNum(seg.enemyHealTotal)} enemy heal`)
   return stats
 }
 
 /** The ranked source table. Optional columns appear only when some row HAS that data. */
-function sourceTable(rows: SourceView[], mode: 'out' | 'in', selfLabel: string | null = null): string[] {
+function sourceTable(
+  rows: SourceView[],
+  mode: 'out' | 'in',
+  selfLabel: string | null = null,
+): string[] {
   const showCrit = rows.some((r) => r.crits > 0)
   const showHit = rows.some((r) => r.misses > 0)
   const showResist = rows.some((r) => r.resists > 0)
@@ -93,7 +119,7 @@ function sourceTable(rows: SourceView[], mode: 'out' | 'in', selfLabel: string |
     { header: RANK, align: 'right' },
     { header: mode === 'out' ? 'Source' : 'Attacker', align: 'left' },
     { header: 'Total', align: 'right' },
-    { header: 'DPS', align: 'right' }
+    { header: 'DPS', align: 'right' },
   ]
   if (showCrit) cols.push({ header: 'Crit', align: 'right' })
   if (showHit) cols.push({ header: 'Hit', align: 'right' })
@@ -108,7 +134,7 @@ function sourceTable(rows: SourceView[], mode: 'out' | 'in', selfLabel: string |
       if (showHit) cells.push(e.misses > 0 ? pctText(e.hitPct) : '')
       if (showResist) cells.push(e.resists > 0 ? pctText(e.resistPct) : '')
       return cells
-    })
+    }),
   )
 }
 
@@ -134,7 +160,7 @@ function defenseHeader(seg: SegmentView): string[] {
     ...statLines(defenseRows(d).map(defenseRowText)),
     // The riposte notes are PROSE — the counter-swing's "already inside your melee total" caveat
     // is the honesty, so it wraps on words and is never summarised away.
-    ...notes.flatMap((n) => wrapText(n))
+    ...notes.flatMap((n) => wrapText(n)),
   ]
 }
 
@@ -142,7 +168,8 @@ function defenseHeader(seg: SegmentView): string[] {
 function healFooter(seg: SegmentView): string[] {
   if (seg.incomingHealTotal <= 0) return []
   const out = ['', `Heals received: ${formatNum(seg.incomingHealTotal)}`]
-  for (const h of seg.incomingHealers.slice(0, 4)) out.push(`  ${h.name} · ${formatNum(h.total)} (${h.count})`)
+  for (const h of seg.incomingHealers.slice(0, 4))
+    out.push(`  ${h.name} · ${formatNum(h.total)} (${h.count})`)
   return out
 }
 
@@ -155,7 +182,7 @@ function healFooter(seg: SegmentView): string[] {
 export function formatSegmentText(
   seg: SegmentView,
   mode: 'out' | 'in',
-  selfLabel: string | null = null
+  selfLabel: string | null = null,
 ): string {
   const rows = mode === 'out' ? seg.entities : seg.incoming
   const out: string[] = [subjectLine(null, seg), ...statLines(segmentStats(seg, mode))]
@@ -167,7 +194,11 @@ export function formatSegmentText(
   if (mode === 'in') out.push(...defenseHeader(seg))
 
   if (rows.length === 0) {
-    out.push(mode === 'out' ? 'No outgoing damage in this segment.' : 'No incoming damage in this segment.')
+    out.push(
+      mode === 'out'
+        ? 'No outgoing damage in this segment.'
+        : 'No incoming damage in this segment.',
+    )
     return out.join('\n')
   }
 
@@ -189,9 +220,10 @@ function skillCols(rows: SkillRow[]): Col[] {
   const cols: Col[] = [
     { header: 'Skill', align: 'left' },
     { header: 'Total', align: 'right' },
-    { header: 'Hits', align: 'right' }
+    { header: 'Hits', align: 'right' },
   ]
-  if (rows.some((s) => s.hits > 0)) cols.push({ header: 'Avg', align: 'right' }, { header: 'Max', align: 'right' })
+  if (rows.some((s) => s.hits > 0))
+    cols.push({ header: 'Avg', align: 'right' }, { header: 'Max', align: 'right' })
   if (rows.some((s) => s.crits > 0)) cols.push({ header: 'Crit', align: 'right' })
   if (rows.some((s) => (s.lands ?? 0) > 0)) cols.push({ header: 'Landed', align: 'right' })
   if (rows.some((s) => (s.misses ?? 0) > 0)) cols.push({ header: 'Miss', align: 'right' })
@@ -221,7 +253,7 @@ function skillCells(s: SkillRow, cols: Col[], a: string): string[] {
     ['Crit', s.crits > 0 ? pctText((s.crits / Math.max(1, s.hits)) * 100, a) : ''],
     // Same omission the meter row makes: a rate is only meaningful once something was avoided.
     ['Miss', misses > 0 ? pctText((misses / (s.hits + misses)) * 100, a) : ''],
-    ['Resist', resists > 0 && land.resistPct !== undefined ? pctText(land.resistPct, a) : '']
+    ['Resist', resists > 0 && land.resistPct !== undefined ? pctText(land.resistPct, a) : ''],
   ])
   return cols.map((c, i) => (i === 0 ? skillName(s) : (by.get(c.header) ?? '')))
 }
@@ -231,7 +263,7 @@ function skillTable(rows: SkillRow[], a: string): string[] {
   const cols = skillCols(rows)
   return table(
     cols,
-    rows.map((s) => skillCells(s, cols, a))
+    rows.map((s) => skillCells(s, cols, a)),
   )
 }
 
@@ -255,7 +287,7 @@ function ownTable(rows: OwnRow[]): string[] {
   const cols = skillCols(rows.flatMap((r) => (r.kind === 'skill' ? [r.skill] : [])))
   return table(
     cols,
-    rows.map((r) => (r.kind === 'pet' ? petCells(r, cols.length) : skillCells(r.skill, cols, '')))
+    rows.map((r) => (r.kind === 'pet' ? petCells(r, cols.length) : skillCells(r.skill, cols, ''))),
   )
 }
 
@@ -277,7 +309,7 @@ export function formatEntityText(
   seg: SegmentView,
   entity: SourceView,
   pets: SourceView[] = [],
-  selfLabel: string | null = null
+  selfLabel: string | null = null,
 ): string {
   const stats = [formatNum(entity.total), formatRate(entity.dps), `${entity.hits} hits`]
   if (entity.crits > 0) stats.push(`${Math.round(entity.critPct)}% crit`)
@@ -300,7 +332,7 @@ function roundsFooter(r: SourceView['rounds']): string[] {
   if (!r || (r.multiHitRounds === 0 && r.maxHitsInRound <= 1)) return []
   return [
     '',
-    `Melee rounds: ${r.totalRounds} · avg ${r.avgHitsPerRound.toFixed(2)} hits/round · ${r.multiHitRounds} multi-hit · up to ${r.maxHitsInRound}/round`
+    `Melee rounds: ${r.totalRounds} · avg ${r.avgHitsPerRound.toFixed(2)} hits/round · ${r.multiHitRounds} multi-hit · up to ${r.maxHitsInRound}/round`,
   ]
 }
 
@@ -315,7 +347,11 @@ function roundsFooter(r: SourceView['rounds']): string[] {
 export function formatTargetText(seg: SegmentView, target: string, detail: TargetDetail): string {
   const a = detail.estimated ? '~' : ''
   const share = seg.outTotal > 0 ? (detail.total / seg.outTotal) * 100 : 0
-  const stats = [`${a}${formatNum(detail.total)}`, `${Math.round(share)}% of outgoing`, `${a}${detail.hits} hits`]
+  const stats = [
+    `${a}${formatNum(detail.total)}`,
+    `${Math.round(share)}% of outgoing`,
+    `${a}${detail.hits} hits`,
+  ]
   if (detail.crits > 0) stats.push(`${a}${detail.crits} crit`)
   if (detail.misses > 0) stats.push(`${a}${detail.misses} avoided`)
   if (detail.resists > 0) stats.push(`${a}${detail.resists} resisted`)
@@ -341,7 +377,10 @@ export function formatTargetText(seg: SegmentView, target: string, detail: Targe
 export function formatMobsText(seg: SegmentView, mobs: MobBreakdown, limit?: number): string {
   const a = mobs.estimated ? '~' : ''
   const shown = limit != null ? mobs.rows.slice(0, limit) : mobs.rows
-  const out = [subjectLine('Damage by mob', seg), `${count(mobs.rows.length, 'mob')} · ${a}${formatNum(mobs.total)}`]
+  const out = [
+    subjectLine('Damage by mob', seg),
+    `${count(mobs.rows.length, 'mob')} · ${a}${formatNum(mobs.total)}`,
+  ]
   if (shown.length === 0) {
     out.push('Nothing landed on anything yet.')
     return out.join('\n')
@@ -355,7 +394,7 @@ export function formatMobsText(seg: SegmentView, mobs: MobBreakdown, limit?: num
     { header: 'Mob', align: 'left' },
     { header: 'Total', align: 'right' },
     { header: 'Share', align: 'right' },
-    { header: 'Hits', align: 'right' }
+    { header: 'Hits', align: 'right' },
   ]
   if (showCrit) cols.push({ header: 'Crit', align: 'right' })
   if (showMiss) cols.push({ header: 'Avoided', align: 'right' })
@@ -366,15 +405,22 @@ export function formatMobsText(seg: SegmentView, mobs: MobBreakdown, limit?: num
     ...table(
       cols,
       shown.map((m, i) => {
-        const cells = [String(i + 1), m.target, `${a}${formatNum(m.total)}`, `${Math.round(m.share)}%`, `${a}${m.hits}`]
+        const cells = [
+          String(i + 1),
+          m.target,
+          `${a}${formatNum(m.total)}`,
+          `${Math.round(m.share)}%`,
+          `${a}${m.hits}`,
+        ]
         if (showCrit) cells.push(m.crits > 0 ? `${a}${m.crits}` : '')
         if (showMiss) cells.push(m.misses > 0 ? `${a}${m.misses}` : '')
         if (showResist) cells.push(m.resists > 0 ? `${a}${m.resists}` : '')
         return cells
-      })
-    )
+      }),
+    ),
   )
-  if (mobs.rows.length > shown.length) out.push(`+${mobs.rows.length - shown.length} more not shown`)
+  if (mobs.rows.length > shown.length)
+    out.push(`+${mobs.rows.length - shown.length} more not shown`)
   if (mobs.estimated) out.push('', APPROX_NOTE)
   return out.join('\n')
 }

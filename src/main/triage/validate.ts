@@ -29,7 +29,7 @@ import {
   TRIAGE_SINCE_CHOICES,
   type TriageChannelFilter,
   type TriageListQuery,
-  type TriagePatch
+  type TriagePatch,
 } from '../../shared/triage'
 
 /** Crockford base32, 26 characters — the exact shape of a server-minted report id. */
@@ -76,7 +76,7 @@ function queryFilters(q: Record<string, unknown>): Pick<TriageListQuery, 'status
   if (q.type !== undefined && !isIn(q.type, FEEDBACK_TYPES)) return null
   return {
     ...(q.status === undefined ? {} : { status: q.status }),
-    ...(q.type === undefined ? {} : { type: q.type })
+    ...(q.type === undefined ? {} : { type: q.type }),
   }
 }
 

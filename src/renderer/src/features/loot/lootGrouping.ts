@@ -36,7 +36,7 @@ export interface GroupRow {
 export function filterLootEvents({
   keyed,
   questOnly,
-  q
+  q,
 }: {
   keyed: KeyedLoot[]
   questOnly: boolean
@@ -85,7 +85,7 @@ function tallyGroups(events: KeyedLoot[]): Map<string, Group> {
         last: 0,
         sources: new Map(),
         zones: new Set(),
-        dispositions: new Set()
+        dispositions: new Set(),
       }
       map.set(key, cur)
     }
@@ -110,7 +110,7 @@ function tallyGroups(events: KeyedLoot[]): Map<string, Group> {
  */
 export function groupLootRows(
   events: KeyedLoot[],
-  sort: LootSortKey = DEFAULT_LOOT_SORT
+  sort: LootSortKey = DEFAULT_LOOT_SORT,
 ): GroupRow[] {
   const list: GroupRow[] = [...tallyGroups(events).entries()].map(([key, g]) => {
     const topSource = [...g.sources.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
@@ -125,7 +125,7 @@ export function groupLootRows(
       last: g.last,
       topSource,
       zoneCount: g.zones.size,
-      disposition
+      disposition,
     }
   })
   return sortLootRows(list, sort)
@@ -143,7 +143,7 @@ export function groupLootRows(
 export function buildInvOnlyRows({
   source,
   questOnly,
-  q
+  q,
 }: {
   source: InventoryRow[]
   questOnly: boolean

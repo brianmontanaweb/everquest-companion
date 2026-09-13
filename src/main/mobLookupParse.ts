@@ -73,7 +73,9 @@ export function unlink(value: string): string {
       const pipe = inner.indexOf('|')
       return (pipe >= 0 ? inner.slice(pipe + 1) : inner).trim()
     })
-    .replace(/\[(?:https?|ftp):\/\/\S*(?:\s+([^\]]*))?\]/gi, (_m, label?: string) => (label ?? '').trim())
+    .replace(/\[(?:https?|ftp):\/\/\S*(?:\s+([^\]]*))?\]/gi, (_m, label?: string) =>
+      (label ?? '').trim(),
+    )
     .replace(/<[^>]*>/g, '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -173,7 +175,7 @@ export function parseMobLocations(field: string): MobLoc[] {
       ns,
       ew,
       ...(z !== undefined && Number.isFinite(z) ? { z } : {}),
-      ...(pct !== undefined && Number.isFinite(pct) ? { pct } : {})
+      ...(pct !== undefined && Number.isFinite(pct) ? { pct } : {}),
     })
   }
   return out

@@ -32,12 +32,12 @@ export function registerDevIpc(): void {
     const ctx: WatchContext = {
       rendererUrl: process.env.ELECTRON_RENDERER_URL,
       roots: [app.getAppPath(), process.cwd()],
-      touch: touchFile
+      touch: touchFile,
     }
     const result = performDevRestart(app, ctx)
     if (result.action !== 'relaunched') {
       logInfo(
-        `[everquest-companion] dev restart: ${result.action}${result.detail === undefined ? '' : ` - ${result.detail}`}`
+        `[everquest-companion] dev restart: ${result.action}${result.detail === undefined ? '' : ` - ${result.detail}`}`,
       )
     }
     return result

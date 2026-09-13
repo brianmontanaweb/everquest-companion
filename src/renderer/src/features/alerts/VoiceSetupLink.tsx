@@ -36,7 +36,7 @@ export interface VoiceSetupNotice {
 
 export default function VoiceSetupLink({
   notice,
-  testId
+  testId,
 }: {
   notice: VoiceSetupNotice
   testId?: string

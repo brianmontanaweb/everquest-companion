@@ -51,7 +51,16 @@
  */
 
 import { useRef } from 'react'
-import { Box, ButtonBase, ClickAwayListener, InputBase, Paper, Popper, Stack, Typography } from '@mui/material'
+import {
+  Box,
+  ButtonBase,
+  ClickAwayListener,
+  InputBase,
+  Paper,
+  Popper,
+  Stack,
+  Typography,
+} from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import { formatRate } from '../../lib/formatRate'
 import {
@@ -60,7 +69,7 @@ import {
   LoadMoreRow,
   Row,
   SearchMoreNote,
-  SelectorRow
+  SelectorRow,
 } from './FightPickerParts'
 import { rowTiming } from './fightPickerRows'
 import { useFightPicker, type PickerState } from './useFightPicker'
@@ -90,7 +99,7 @@ function PickerTrigger({
   scope,
   disabled,
   now,
-  emptyLabel
+  emptyLabel,
 }: {
   anchorRef: React.RefObject<HTMLButtonElement>
   p: PickerState
@@ -128,10 +137,10 @@ function PickerTrigger({
           borderLeft: '4px solid transparent',
           borderRight: '4px solid transparent',
           borderTop: '4px solid currentColor',
-          opacity: 0.5
+          opacity: 0.5,
         },
         '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' },
-        '&.Mui-disabled': { opacity: 0.5 }
+        '&.Mui-disabled': { opacity: 0.5 },
       }}
     >
       {current ? (
@@ -173,7 +182,8 @@ function PickerSearchBar({ p, scope }: { p: PickerState; scope: CombatScope }): 
           'aria-expanded': true,
           'aria-controls': 'fight-picker-list',
           'aria-autocomplete': 'list',
-          'aria-activedescendant': p.clampedActive >= 0 ? `fight-picker-row-${p.clampedActive}` : undefined
+          'aria-activedescendant':
+            p.clampedActive >= 0 ? `fight-picker-row-${p.clampedActive}` : undefined,
         }}
         sx={{ fontSize: 13 }}
       />
@@ -186,7 +196,7 @@ function PickerList({
   p,
   opts,
   scope,
-  selection
+  selection,
 }: {
   p: PickerState
   opts: ScopeOptions
@@ -231,7 +241,14 @@ export function FightPicker(props: FightPickerProps): React.JSX.Element {
 
   return (
     <>
-      <PickerTrigger anchorRef={anchorRef} p={p} scope={scope} disabled={disabled} now={now} emptyLabel={emptyLabel} />
+      <PickerTrigger
+        anchorRef={anchorRef}
+        p={p}
+        scope={scope}
+        disabled={disabled}
+        now={now}
+        emptyLabel={emptyLabel}
+      />
 
       <Popper
         open={p.open}
@@ -259,7 +276,7 @@ export function FightPicker(props: FightPickerProps): React.JSX.Element {
               flexDirection: 'column',
               overflow: 'hidden',
               border: '1px solid',
-              borderColor: 'divider'
+              borderColor: 'divider',
             }}
           >
             <PickerSearchBar p={p} scope={scope} />

@@ -5,7 +5,15 @@
 // this is the contract those accessors are written against. Each field keeps the note saying when
 // it arrived and what an ABSENT value means, because that is what a migration has to reason about.
 
-import type { AlertDef, AlertPrefs, OverlayConfig, OverlayKind, ProgressState, UpdateChannel, VoicePrefs } from '../shared/types'
+import type {
+  AlertDef,
+  AlertPrefs,
+  OverlayConfig,
+  OverlayKind,
+  ProgressState,
+  UpdateChannel,
+  VoicePrefs,
+} from '../shared/types'
 import type { CursorRingPrefs, OverlayAutoHidePrefs } from '../shared/presencePrefs'
 import type { OverlaySnapPrefs } from '../shared/overlaySnap'
 import type { OverlayTextSizePrefs } from '../shared/overlayTextScale'

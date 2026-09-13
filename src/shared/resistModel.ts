@@ -72,7 +72,13 @@ import {
   OVERCHANNEL_RESIST_ADJ,
   isInformativeSpell,
 } from './resistFormula'
-import { type DamageRef, damageKind, damageRefKey, fullDamageRefs, splitDamage } from './resistDamage'
+import {
+  type DamageRef,
+  damageKind,
+  damageRefKey,
+  fullDamageRefs,
+  splitDamage,
+} from './resistDamage'
 import { decayWeight, newestWeekOf } from './resistDecay'
 import { type Term, empiricalOf, fitTerms, priorLog, rowTerm, termN } from './resistTerms'
 
@@ -100,7 +106,6 @@ export { PRIOR_SIGMA, debuffAmount } from './resistTerms'
 export const ALL_RESISTED_MIN_N = 10
 export const ALL_RESISTED_SHARE = 0.9
 
-
 /** How many damage lines a row holds, whatever they were worth. */
 function dmgTotalOf(row: ResistRow): number {
   let total = 0
@@ -114,9 +119,14 @@ function dmgTotalOf(row: ResistRow): number {
  * that says "up to level 55" ALWAYS fails above 55, and filing that resist would invent a
  * magic-resistant mob out of a level cap (world-model law 1).
  */
-function rowIsEvidence(row: ResistRow, info: SpellResistInfo | undefined, axis: ResistAxis): info is SpellResistInfo {
+function rowIsEvidence(
+  row: ResistRow,
+  info: SpellResistInfo | undefined,
+  axis: ResistAxis,
+): info is SpellResistInfo {
   if (info?.axis !== axis) return false
-  if (info.levelCap !== undefined && row.mobLevel !== null && row.mobLevel > info.levelCap) return false
+  if (info.levelCap !== undefined && row.mobLevel !== null && row.mobLevel > info.levelCap)
+    return false
   return true
 }
 
@@ -249,7 +259,11 @@ function noteCastTerms(ev: ResistSpellEvidence, row: ResistRow, total: number): 
   const adj = OVERCHANNEL_RESIST_ADJ + OVERCHANNEL_PER_CASTER_CLASS * casterClasses
   const held = ev.overchannel
   ev.overchannel = held
-    ? { casts: held.casts + total, adj: Math.min(held.adj, adj), casterClasses: Math.max(held.casterClasses, casterClasses) }
+    ? {
+        casts: held.casts + total,
+        adj: Math.min(held.adj, adj),
+        casterClasses: Math.max(held.casterClasses, casterClasses),
+      }
     : { casts: total, adj, casterClasses }
 }
 
@@ -281,7 +295,12 @@ export function unobservableSpells(rows: readonly ResistRow[]): Set<string> {
   return out
 }
 
-function noteEvidence(prep: Prepared, row: ResistRow, info: SpellResistInfo, mode: DamageRef | undefined): void {
+function noteEvidence(
+  prep: Prepared,
+  row: ResistRow,
+  info: SpellResistInfo,
+  mode: DamageRef | undefined,
+): void {
   const key = row.spellKey + '|' + row.family
   const ev = prep.evidence.get(key) ?? blankEvidence(row, info)
   const fixed = damageKind(row, info, mode) === 'ddFix'
@@ -329,7 +348,7 @@ function isHeldOut(
   row: ResistRow,
   opts: EstimateOpts,
   blind: ReadonlySet<string>,
-  prep: Prepared
+  prep: Prepared,
 ): boolean {
   if (blind.has(row.spellKey)) {
     // A spell this app has never seen land ANYWHERE. Shown in the drilldown, labelled there.
@@ -358,7 +377,11 @@ function isHeldOut(
   return row.casterKind === 'npc' && opts.includeNpcCasters === false
 }
 
-function prepare(rows: readonly ResistRow[], spells: SpellResistTable, opts: EstimateOpts): Prepared {
+function prepare(
+  rows: readonly ResistRow[],
+  spells: SpellResistTable,
+  opts: EstimateOpts,
+): Prepared {
   const prep: Prepared = {
     terms: [],
     evidence: new Map(),
@@ -437,7 +460,7 @@ function verdicts(prep: Prepared): {
 export function estimate(
   rows: readonly ResistRow[],
   spells: SpellResistTable,
-  opts: EstimateOpts
+  opts: EstimateOpts,
 ): ResistEstimate {
   const prep = prepare(rows, spells, opts)
   const mobLevel = opts.mobLevel ?? null
@@ -484,7 +507,7 @@ export function estimate(
     // casts that actually tested the mob's resistance sat underneath. Sorting is the whole fix
     // for that: nothing is hidden, and the line that answers the question is the line at the top.
     perSpell: [...prep.evidence.values()].sort(
-      (a, b) => Number(b.informative) - Number(a.informative) || b.casts - a.casts
+      (a, b) => Number(b.informative) - Number(a.informative) || b.casts - a.casts,
     ),
     baselineWeight,
     userOnly: fromYou >= USER_ONLY_AT,

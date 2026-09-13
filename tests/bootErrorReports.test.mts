@@ -32,7 +32,7 @@ import {
   noteError,
   peekErrorReports,
   resetErrorReports,
-  takeErrorReports
+  takeErrorReports,
 } from '../src/main/telemetry/errorReports'
 import { migrateStoreFile } from '../src/main/storeFile'
 
@@ -63,7 +63,8 @@ test('an error filed before any session survives INTO the first one', () => {
 
 test('repeats filed at boot arrive as ONE report carrying its count', () => {
   atBoot()
-  for (let i = 0; i < 4; i++) noteError('main:storeSchema', 'store schema: the store is not valid JSON')
+  for (let i = 0; i < 4; i++)
+    noteError('main:storeSchema', 'store schema: the store is not valid JSON')
   resetErrorReports(1_000_000, true)
 
   const drained = takeErrorReports()
@@ -91,7 +92,11 @@ test('a switch turned OFF and back ON does not resurrect what was filed while it
   resetErrorReports(1_000_000, true)
   resetErrorReports(0) // the user turned it off
   noteError('main:uncaughtException', new Error('filed while off'))
-  assert.equal(peekErrorReports().length, 1, 'noteError has no switch of its own; the drain is the gate')
+  assert.equal(
+    peekErrorReports().length,
+    1,
+    'noteError has no switch of its own; the drain is the gate',
+  )
 
   resetErrorReports(3_000_000) // turned back on — NOT the boot window
   assert.deepEqual(peekErrorReports(), [], 'and the off-window errors go with it')
@@ -127,7 +132,7 @@ test('THE QUARANTINE EVENT, end to end: the real message reaches the drain', () 
       //    which is `noteError` plus the two log lines this suite has no console for.
       error: (message) => {
         noteError('main:storeSchema', message)
-      }
+      },
     })
     assert.equal(out.salvagedFrom, undefined, 'this one really is unrecoverable')
     assert.ok(out.quarantinedPath, 'and it really was quarantined')
@@ -137,14 +142,17 @@ test('THE QUARANTINE EVENT, end to end: the real message reaches the drain', () 
 
     const drained = takeErrorReports()
     assert.equal(drained.length, 1, 'the event the fleet has never seen once')
-    assert.ok(drained[0].fingerprint.length > 0, 'and it has an identity the error store can group on')
+    assert.ok(
+      drained[0].fingerprint.length > 0,
+      'and it has an identity the error store can group on',
+    )
     // AND IT IS STILL LEGIBLE AFTER REDACTION, which is the whole reason `migrateStoreFile` puts
     // the verdict ahead of the paths: `redactMessage` replaces the first path-shaped run with
     // `<path>` and takes the rest of the line with it. The two things worth counting fleet-wide —
     // that this happened at all, and whether the user kept their settings — both survive.
     assert.equal(
       drained[0].redactedMessage,
-      'store schema: the store file is not valid JSON, starting from defaults - <path>'
+      'store schema: the store file is not valid JSON, starting from defaults - <path>',
     )
   } finally {
     atBoot()

@@ -32,14 +32,14 @@ import {
   isTransientPackInstallFailure,
   packInstallFailureLine,
   packInstallHttpStatus,
-  packInstallRetryDelayMs
+  packInstallRetryDelayMs,
 } from '../src/shared/packInstall'
 import {
   MAX_WARNED_PACK_CODES,
   PACK_INSTALL_SOURCE,
   logPackInstallFailure,
   resetPackInstallWarnings,
-  type PackInstallLogSinks
+  type PackInstallLogSinks,
 } from '../src/main/packInstallLog'
 import { caughtFields } from '../src/shared/errorReportLocation'
 import { redactMessage } from '../src/shared/errorReport'
@@ -74,7 +74,7 @@ function recorder(): Recorder {
     filed,
     warned,
     error: (source, payload) => filed.push({ source, payload }),
-    warn: (...args) => warned.push(args)
+    warn: (...args) => warned.push(args),
   }
 }
 
@@ -83,13 +83,17 @@ function recorder(): Recorder {
 test('AN ANSWER HAS A NUMBER, and both spellings of it are readable', () => {
   for (const status of [403, 404, 408, 429, 500, 502, 503]) {
     assert.equal(packInstallHttpStatus(statusError(status)), status, `property: ${String(status)}`)
-    assert.equal(packInstallHttpStatus(stringifiedStatusError(status)), status, `text: ${String(status)}`)
+    assert.equal(
+      packInstallHttpStatus(stringifiedStatusError(status)),
+      status,
+      `text: ${String(status)}`,
+    )
     // 429 is an answer with a number like any other — and its own KIND (JOS-420), because it is
     // the only status that is a statement about the clock rather than about the pack.
     assert.equal(
       classifyPackInstallFailure(statusError(status)),
       status === 429 ? 'rate-limited' : 'http',
-      String(status)
+      String(status),
     )
   }
   // …and it reads the same when the properties were lost in a log line.
@@ -116,7 +120,7 @@ test('OUR OWN REFUSALS are their own kind, and are asked FIRST', () => {
     'openpeon.json is not valid JSON',
     'no sounds after conversion',
     'download exceeded size cap',
-    `too many redirects (${TARBALL})`
+    `too many redirects (${TARBALL})`,
   ]) {
     assert.equal(classifyPackInstallFailure(new Error(text)), 'rejected', text)
     assert.equal(isTransientPackInstallFailure(new Error(text)), false, text)
@@ -129,7 +133,7 @@ test('OUR OWN REFUSALS are their own kind, and are asked FIRST', () => {
     'archive contained no files',
     'pack has no openpeon.json',
     'no sounds after conversion',
-    'download exceeded size cap'
+    'download exceeded size cap',
   ]) {
     assert.ok(src.includes(text), `packRegistry.ts no longer throws: ${text}`)
   }
@@ -142,7 +146,7 @@ test('a BROKEN DOWNLOAD is its own kind — zlib and the dead socket both', () =
     'invalid distance too far back',
     'socket hang up',
     'aborted',
-    'Premature close'
+    'Premature close',
   ]) {
     assert.equal(classifyPackInstallFailure(new Error(text)), 'truncated', text)
   }
@@ -193,7 +197,7 @@ test('THE STORE ROW FINALLY SAYS WHY', () => {
   // Our own refusal names itself rather than a status it does not have.
   assert.match(
     packInstallFailureLine('alan-rickman', 1, 3, new Error('pack has no openpeon.json')),
-    /\(attempt 1\/3, rejected\): pack has no openpeon\.json$/
+    /\(attempt 1\/3, rejected\): pack has no openpeon\.json$/,
   )
   // ONE bounded line, whatever the error carries — a stack must not become a paragraph in a row.
   const fat = new Error(`first line\n${'  at frame\n'.repeat(200)}`)
@@ -231,12 +235,21 @@ test('AN ATTEMPT THAT WILL BE RETRIED IS NOT A FAILURE YET', () => {
   // rows, at every startup, forever.
   resetPackInstallWarnings()
   const r = recorder()
-  logPackInstallFailure({ pack: 'p', attempt: 1, attempts: 3, final: false, err: statusError(503) }, r)
-  logPackInstallFailure({ pack: 'p', attempt: 2, attempts: 3, final: false, err: statusError(503) }, r)
+  logPackInstallFailure(
+    { pack: 'p', attempt: 1, attempts: 3, final: false, err: statusError(503) },
+    r,
+  )
+  logPackInstallFailure(
+    { pack: 'p', attempt: 2, attempts: 3, final: false, err: statusError(503) },
+    r,
+  )
   assert.equal(r.filed.length, 0)
   assert.equal(r.warned.length, 2)
   assert.match(String(r.warned[0][1]), /- retrying$/)
-  logPackInstallFailure({ pack: 'p', attempt: 3, attempts: 3, final: true, err: statusError(503) }, r)
+  logPackInstallFailure(
+    { pack: 'p', attempt: 3, attempts: 3, final: true, err: statusError(503) },
+    r,
+  )
   assert.equal(r.filed.length, 1, 'the one that gave up IS filed')
   resetPackInstallWarnings()
 })
@@ -246,24 +259,39 @@ test('AN ANSWER IS FILED EVERY TIME; SOMEBODY ELSE’S NETWORK IS NOT', () => {
   const r = recorder()
   // The thing the ticket is about must always land. Bounding it is errorRepeat/errorBudget's job.
   for (let i = 0; i < 200; i++) {
-    logPackInstallFailure({ pack: 'p', attempt: 1, attempts: 3, final: true, err: statusError(404) }, r)
+    logPackInstallFailure(
+      { pack: 'p', attempt: 1, attempts: 3, final: true, err: statusError(404) },
+      r,
+    )
   }
   assert.equal(r.filed.length, 200)
   assert.equal(r.warned.length, 0)
   // …and our own refusal is ours to know about, not the user's network.
   logPackInstallFailure(
-    { pack: 'p', attempt: 1, attempts: 3, final: true, err: new Error('pack has no openpeon.json') },
-    r
+    {
+      pack: 'p',
+      attempt: 1,
+      attempts: 3,
+      final: true,
+      err: new Error('pack has no openpeon.json'),
+    },
+    r,
   )
   assert.equal(r.filed.length, 201)
   // An install that can never reach GitHub runs at EVERY startup (provisionDefaultPacks). One line
   // per code per session, console only - JOS-266's rule, applied to the second producer.
   for (let i = 0; i < 5_000; i++) {
-    logPackInstallFailure({ pack: 'p', attempt: 3, attempts: 3, final: true, err: offlineError('ENOTFOUND') }, r)
+    logPackInstallFailure(
+      { pack: 'p', attempt: 3, attempts: 3, final: true, err: offlineError('ENOTFOUND') },
+      r,
+    )
   }
   assert.equal(r.filed.length, 201, 'not one offline report')
   assert.equal(r.warned.length, 1)
-  logPackInstallFailure({ pack: 'p', attempt: 3, attempts: 3, final: true, err: offlineError('ECONNREFUSED') }, r)
+  logPackInstallFailure(
+    { pack: 'p', attempt: 3, attempts: 3, final: true, err: offlineError('ECONNREFUSED') },
+    r,
+  )
   assert.equal(r.warned.length, 2, 'a different code is a different story about the machine')
   resetPackInstallWarnings()
 })
@@ -271,8 +299,22 @@ test('AN ANSWER IS FILED EVERY TIME; SOMEBODY ELSE’S NETWORK IS NOT', () => {
 test('the warn gate is bounded - a pathological machine cannot grow it', () => {
   resetPackInstallWarnings()
   const r = recorder()
-  for (const code of ['ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'ECONNRESET', 'ECONNABORTED', 'ETIMEDOUT', 'EHOSTUNREACH', 'ENETUNREACH', 'ENETDOWN', 'EPIPE']) {
-    logPackInstallFailure({ pack: 'p', attempt: 1, attempts: 1, final: true, err: offlineError(code) }, r)
+  for (const code of [
+    'ENOTFOUND',
+    'EAI_AGAIN',
+    'ECONNREFUSED',
+    'ECONNRESET',
+    'ECONNABORTED',
+    'ETIMEDOUT',
+    'EHOSTUNREACH',
+    'ENETUNREACH',
+    'ENETDOWN',
+    'EPIPE',
+  ]) {
+    logPackInstallFailure(
+      { pack: 'p', attempt: 1, attempts: 1, final: true, err: offlineError(code) },
+      r,
+    )
   }
   assert.equal(r.warned.length, MAX_WARNED_PACK_CODES)
   assert.equal(r.filed.length, 0)
@@ -298,7 +340,10 @@ test('THE WIRING: ONE retry loop, and BOTH callers take it', () => {
   assert.doesNotMatch(ipc, /\bimport \{[^}]*\binstallPack\b[^}]*\} from '\.\.\/packRegistry'/s)
 
   const provision = read('src/main/provisionPacks.ts')
-  assert.match(provision, /installPackWithRetry\(pack, swallowProgress, \{ targetRoot: packsRoot \}\)/)
+  assert.match(
+    provision,
+    /installPackWithRetry\(pack, swallowProgress, \{ targetRoot: packsRoot \}\)/,
+  )
   assert.doesNotMatch(provision, /for \(let attempt = 1; attempt <= MAX_ATTEMPTS/)
   assert.doesNotMatch(provision, /provisioning '\$\{pack\.name\}' failed/)
 })

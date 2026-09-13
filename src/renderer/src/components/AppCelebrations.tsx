@@ -78,7 +78,7 @@ const bossData = getBossData()
  */
 function useAppCelebrations(
   onDefeat: (s: TargetStatus) => void,
-  onQuestComplete: (name: string) => void
+  onQuestComplete: (name: string) => void,
 ): void {
   // Level-ups: the third watch, and the only one with no on-screen surface of its own — the
   // overlay card IS the celebration. It seeds its own silent baseline (the startup replay holds
@@ -108,9 +108,9 @@ function useAppCelebrations(
         kind: 'bossKill',
         title: `${s.target.name} defeated`,
         // A zone we have never seen a line for falls back to the roster's — never invented.
-        subtitle: [tierStyle(tier).long, zone ?? s.target.zone].filter(Boolean).join(' · ')
+        subtitle: [tierStyle(tier).long, zone ?? s.target.zone].filter(Boolean).join(' · '),
       })
-    }
+    },
   })
 
   useProgress({
@@ -130,7 +130,7 @@ function useAppCelebrations(
         itemName: q.reward,
         // ANCHORED AT THE QUEST since wave O2 (wave L shipped the tab and flagged this as the
         // follow-up): the canonical `Class::Name` key, which is what PoskyView reveals on.
-        focus: { view: 'posky', quest: questKey(q) }
+        focus: { view: 'posky', quest: questKey(q) },
       })
       window.eq.reportFeedEvent({
         kind: 'quest',
@@ -138,9 +138,9 @@ function useAppCelebrations(
         title: q.name,
         detail: q.giver ? `turned in to ${q.giver}` : q.className,
         page: skyQuestPage(q.className),
-        reward: q.reward ? { item: q.reward, page: q.rewardPage, stats: q.rewardStats } : undefined
+        reward: q.reward ? { item: q.reward, page: q.rewardPage, stats: q.rewardStats } : undefined,
       })
-    }
+    },
   })
 }
 

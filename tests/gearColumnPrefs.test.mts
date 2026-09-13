@@ -31,7 +31,7 @@ import {
   columnsFor,
   gearTableLayout,
   sortWithin,
-  visibleColumns
+  visibleColumns,
 } from '../src/renderer/src/features/gear/gearColumns'
 import {
   DEFAULT_GEAR_FILTERS,
@@ -40,7 +40,7 @@ import {
   sortValue,
   type GearFilters,
   type GearSort,
-  type GearSortKey
+  type GearSortKey,
 } from '../src/renderer/src/features/gear/gearFilter'
 import {
   GEAR_CONTROLS,
@@ -50,7 +50,7 @@ import {
   sanitizeColumns,
   sanitizeControls,
   toggleColumn,
-  toggleControl
+  toggleControl,
 } from '../src/renderer/src/features/gear/gearPrefs'
 
 // =================================================================================
@@ -69,7 +69,7 @@ function row(name: string, stats: GearStats): GearRow {
     quest: false,
     playerCrafted: false,
     stats,
-    effects: []
+    effects: [],
   }
 }
 
@@ -105,16 +105,23 @@ test('no stored choice means the columns are DERIVED, exactly as the shipped tab
   assert.deepEqual(
     derived.map((c) => c.key),
     visibleColumns(byRegen).map((c) => c.key),
-    'the seed is the same function the tab already used'
+    'the seed is the same function the tab already used',
   )
-  assert.deepEqual(derived.map((c) => c.key), [...CORE_COLUMNS, 'HP_REGEN'])
+  assert.deepEqual(
+    derived.map((c) => c.key),
+    [...CORE_COLUMNS, 'HP_REGEN'],
+  )
 })
 
 test('an explicit choice WINS - it is not re-seeded with the core or with the sort key', () => {
   const chosen: GearSortKey[] = ['STR', 'CHA']
   // A sort on HP_REGEN: under the derivation that column AND the whole core would be drawn.
   const columns = columnsFor(chosen, { key: 'HP_REGEN', dir: 'desc' })
-  assert.deepEqual(columns.map((c) => c.key), chosen, 'exactly what was asked for, in that order')
+  assert.deepEqual(
+    columns.map((c) => c.key),
+    chosen,
+    'exactly what was asked for, in that order',
+  )
   assert.ok(!columns.some((c) => c.key === 'AC'), 'a core column the user removed stays removed')
   assert.ok(!columns.some((c) => c.key === 'HP_REGEN'), 'and the sort key cannot conjure one back')
 })
@@ -126,15 +133,23 @@ test('a stored EMPTY list is a CHOICE, and never the same thing as no choice at 
   assert.deepEqual(columnsFor([], DEFAULT_GEAR_SORT), [], 'chosen-none draws no numeric columns')
   assert.ok(
     columnsFor(null, DEFAULT_GEAR_SORT).length > 0,
-    'while stored-nothing still draws the derived core - the two must never fold together'
+    'while stored-nothing still draws the derived core - the two must never fold together',
   )
 })
 
 test('a stored choice DEGRADES rather than erroring, whatever another build wrote', () => {
   assert.equal(sanitizeColumns('AC,HP'), null, 'a string is not a choice')
   assert.equal(sanitizeColumns({ AC: true }), null, 'nor is an object')
-  assert.deepEqual(sanitizeColumns(['AC', 'NOT_A_STAT', 'name', 42, 'HP']), ['AC', 'HP'], 'unknown keys drop out')
-  assert.deepEqual(sanitizeColumns(['HP', 'AC', 'HP']), ['HP', 'AC'], 'repeats collapse, stored order survives')
+  assert.deepEqual(
+    sanitizeColumns(['AC', 'NOT_A_STAT', 'name', 42, 'HP']),
+    ['AC', 'HP'],
+    'unknown keys drop out',
+  )
+  assert.deepEqual(
+    sanitizeColumns(['HP', 'AC', 'HP']),
+    ['HP', 'AC'],
+    'repeats collapse, stored order survives',
+  )
   assert.deepEqual(sanitizeColumns(['RATIO']), ['RATIO'], 'the derived ratio is a pickable column')
   assert.deepEqual(sanitizeColumns(['EFF_HP']), ['EFF_HP'], '…and so is the derived effective HP')
 })
@@ -152,7 +167,10 @@ test('the picker offers the WHOLE vocabulary - every indexed stat, both derived 
   // the STA it is summed with.
   assert.equal(PICKABLE_COLUMNS[PICKABLE_COLUMNS.indexOf('DELAY') + 1], 'RATIO')
   assert.equal(PICKABLE_COLUMNS[PICKABLE_COLUMNS.indexOf('HP') + 1], 'EFF_HP')
-  assert.ok(PICKABLE_COLUMNS.indexOf('STA') < PICKABLE_COLUMNS.indexOf('EFF_HP'), 'both halves come first')
+  assert.ok(
+    PICKABLE_COLUMNS.indexOf('STA') < PICKABLE_COLUMNS.indexOf('EFF_HP'),
+    'both halves come first',
+  )
   // The seven attributes the owner named by hand. Since JOS-302 this list is the ONLY way to put a
   // stat on the table that the sort has not already put there - which is exactly the trade the
   // owner priced when the stat-threshold box went: the picker names it, the header ranks it.
@@ -167,8 +185,14 @@ test('a toggle keeps VOCABULARY order, and the first click promotes the seed unc
   assert.ok(added.includes('STR'))
   for (const key of seed) assert.ok(added.includes(key), `${key} survived the promotion`)
   // STR comes before HP and MP in the corpus's order, so the result is re-ordered, not appended.
-  assert.deepEqual(added, PICKABLE_COLUMNS.filter((k) => added.includes(k)))
-  assert.deepEqual(toggleColumn(added, 'STR'), seed.slice().sort((a, b) => order(a) - order(b)))
+  assert.deepEqual(
+    added,
+    PICKABLE_COLUMNS.filter((k) => added.includes(k)),
+  )
+  assert.deepEqual(
+    toggleColumn(added, 'STR'),
+    seed.slice().sort((a, b) => order(a) - order(b)),
+  )
 })
 
 function order(key: GearSortKey): number {
@@ -181,7 +205,11 @@ function order(key: GearSortKey): number {
 
 test('every key the picker offers is a working sort axis - the exposure IS the sortability', () => {
   for (const key of PICKABLE_COLUMNS) {
-    assert.notEqual(sortValue(HIGH, key), undefined, `${key} reads a number off a row that states it`)
+    assert.notEqual(
+      sortValue(HIGH, key),
+      undefined,
+      `${key} reads a number off a row that states it`,
+    )
     assert.equal(sortValue(NONE, key), undefined, `${key} reads nothing off a row that states none`)
   }
 })
@@ -194,7 +222,7 @@ test('every exposed key ranks BOTH ways, and an absent value sorts LAST either w
       const firstAbsent = values.findIndex((v) => v === undefined)
       assert.ok(
         firstAbsent !== -1 && values.slice(firstAbsent).every((v) => v === undefined),
-        `${key} ${dir}: a row stating none must never outrank one that states a number`
+        `${key} ${dir}: a row stating none must never outrank one that states a number`,
       )
       const stated = values.slice(0, firstAbsent) as number[]
       assert.equal(stated.length, 2, `${key} ${dir}: both stating rows survived`)
@@ -207,11 +235,27 @@ test('every exposed key ranks BOTH ways, and an absent value sorts LAST either w
 test('the sort is confined to what is DRAWN - removing the sorted column moves the lit header', () => {
   const shown = columnsFor(['STR', 'CHA'], filters(), DEFAULT_GEAR_SORT)
   const kept: GearSort = { key: 'STR', dir: 'asc' }
-  assert.equal(sortWithin(kept, shown), kept, 'a sort on a drawn column is returned UNCHANGED - same object')
-  assert.deepEqual(sortWithin({ key: 'AC', dir: 'desc' }, shown), { key: 'STR', dir: 'desc' }, 'it falls to the first drawn column')
-  assert.deepEqual(sortWithin({ key: 'AC', dir: 'desc' }, []), { key: 'name', dir: 'asc' }, 'no numeric columns leaves the item name')
+  assert.equal(
+    sortWithin(kept, shown),
+    kept,
+    'a sort on a drawn column is returned UNCHANGED - same object',
+  )
+  assert.deepEqual(
+    sortWithin({ key: 'AC', dir: 'desc' }, shown),
+    { key: 'STR', dir: 'desc' },
+    'it falls to the first drawn column',
+  )
+  assert.deepEqual(
+    sortWithin({ key: 'AC', dir: 'desc' }, []),
+    { key: 'name', dir: 'asc' },
+    'no numeric columns leaves the item name',
+  )
   const byName: GearSort = { key: 'name', dir: 'asc' }
-  assert.equal(sortWithin(byName, []), byName, 'the item column is always drawn, so a name sort always holds')
+  assert.equal(
+    sortWithin(byName, []),
+    byName,
+    'the item column is always drawn, so a name sort always holds',
+  )
 })
 
 // =================================================================================
@@ -225,8 +269,15 @@ test('NOTHING THE DERIVATION CAN PRODUCE crosses into pixel mode - over the whol
   // hand-built worst case that no longer exists.
   for (const key of PICKABLE_COLUMNS) {
     const derived = columnsFor(null, { key, dir: 'desc' })
-    assert.ok(derived.length <= MAX_PERCENT_COLUMNS, `sorting by ${key} draws ${String(derived.length)} columns`)
-    assert.equal(gearTableLayout(derived.length, true).mode, 'percent', `sorting by ${key} left percentage mode`)
+    assert.ok(
+      derived.length <= MAX_PERCENT_COLUMNS,
+      `sorting by ${key} draws ${String(derived.length)} columns`,
+    )
+    assert.equal(
+      gearTableLayout(derived.length, true).mode,
+      'percent',
+      `sorting by ${key} left percentage mode`,
+    )
   }
 })
 
@@ -241,7 +292,10 @@ test('percentage mode states percentages that FIT the pane, with the item column
       Number(layout.slot.replace('%', '')) +
       Number(layout.classes.replace('%', '')) +
       Number(layout.owned.replace('%', ''))
-    assert.ok(stated <= 100, `${String(count)} columns state ${String(stated)}% - the name column needs the rest`)
+    assert.ok(
+      stated <= 100,
+      `${String(count)} columns state ${String(stated)}% - the name column needs the rest`,
+    )
     assert.ok(stated < 100, 'and there is always something left for the name')
   }
 })
@@ -252,7 +306,11 @@ test('past the floor the layout switches to PIXELS and states a table minimum - 
   assert.equal(narrow.mode, 'percent')
   assert.equal(wide.mode, 'pixel')
   assert.ok(wide.minWidth > 0, 'the table now has a floor of its own')
-  assert.notEqual(wide.name, undefined, 'and every column states a width, because the SUM is the point')
+  assert.notEqual(
+    wide.name,
+    undefined,
+    'and every column states a width, because the SUM is the point',
+  )
 
   // The floor GROWS with the set: that is the whole mechanism by which a wide choice overflows.
   const wider = gearTableLayout(MAX_PERCENT_COLUMNS + 10, false)
@@ -265,7 +323,10 @@ test('past the floor the layout switches to PIXELS and states a table minimum - 
   // (JOS-336 added the thirty-fourth) widens this claim instead of stale-ing it.
   const everything = gearTableLayout(PICKABLE_COLUMNS.length, true)
   assert.equal(everything.mode, 'pixel')
-  assert.ok(everything.minWidth > 2500, `all ${String(PICKABLE_COLUMNS.length)} columns state ${String(everything.minWidth)}px`)
+  assert.ok(
+    everything.minWidth > 2500,
+    `all ${String(PICKABLE_COLUMNS.length)} columns state ${String(everything.minWidth)}px`,
+  )
 })
 
 // =================================================================================
@@ -281,7 +342,11 @@ test('no stored toolbar choice shows every control, and a stored EMPTY one shows
 test('a stored toolbar choice degrades the same way a column choice does', () => {
   assert.equal(sanitizeControls('era'), null)
   assert.equal(sanitizeControls(42), null)
-  assert.equal(sanitizeControls({ vocab: [...GEAR_CONTROLS] }), null, 'an object with no `shown` has said nothing')
+  assert.equal(
+    sanitizeControls({ vocab: [...GEAR_CONTROLS] }),
+    null,
+    'an object with no `shown` has said nothing',
+  )
   // A KEY THIS VERSION DROPPED degrades rather than erroring, and JOS-302 dropped three for real:
   // `classOnly` was the "Usable by these" toggle (the class picks narrow on their own now), and
   // `ratio`/`thresholds` were the two numeric filters the fourth owner ask deleted outright. A
@@ -293,13 +358,25 @@ test('a stored toolbar choice degrades the same way a column choice does', () =>
   // test and `gearPrefs.LEGACY_GEAR_CONTROLS` — a legacy list cannot have hidden a control that did
   // not exist when it was written, so `weapon` joins every one of these. The DEGRADATION claim these
   // lines were written for is untouched: unknown keys still drop out, repeats still collapse.
-  assert.deepEqual(sanitizeControls(['slot', 'classOnly', 'classes']), ['slot', 'weapon', 'classes'])
-  assert.deepEqual(sanitizeControls(['upgrade', 'ratio', 'thresholds', 'era']), ['weapon', 'era', 'upgrade'])
+  assert.deepEqual(sanitizeControls(['slot', 'classOnly', 'classes']), [
+    'slot',
+    'weapon',
+    'classes',
+  ])
+  assert.deepEqual(sanitizeControls(['upgrade', 'ratio', 'thresholds', 'era']), [
+    'weapon',
+    'era',
+    'upgrade',
+  ])
   assert.deepEqual(sanitizeControls(['era', 'nope', 'era', 7, 'slot']), ['slot', 'weapon', 'era'])
   // ORDER IS THE BAR'S, not the store's — and that is not a loss. A control list is turned into a
   // Set by `controlsVisible` and `GearFilterBar` draws in its own fixed order, so unlike the COLUMN
   // list (which the user can see the order of) this one has no order anybody can observe.
-  assert.deepEqual(toggleControl(['era'], 'slot'), ['slot', 'era'], 'the bar draws slot before era, so the list does too')
+  assert.deepEqual(
+    toggleControl(['era'], 'slot'),
+    ['slot', 'era'],
+    'the bar draws slot before era, so the list does too',
+  )
   assert.deepEqual(toggleControl(['slot', 'era'], 'era'), ['slot'])
   for (const control of GEAR_CONTROLS) {
     assert.ok(GEAR_CONTROL_LABEL[control].length > 0, `${control} has words in the picker`)
@@ -330,10 +407,16 @@ test('THE DEFAULT IS EVERY CONTROL - an untouched install has the whole toolbar'
 test('a LEGACY choice gains the controls it was never offered, and keeps the hides it made', () => {
   // The owner's shape: a pre-JOS-302 list. `weapon` did not exist to be hidden, so it comes back…
   const resolved = sanitizeControls(['slot', 'classes', 'era', 'owned', 'upgrade', 'classOnly'])
-  assert.ok(resolved !== null && resolved.includes('weapon'), 'the control added after the choice is ON')
+  assert.ok(
+    resolved !== null && resolved.includes('weapon'),
+    'the control added after the choice is ON',
+  )
   // …while `effect`, which DID exist and was left out, stays hidden. That is the half the owner's
   // "existing users keep their choice" clause protects, and the half a blanket reset would destroy.
-  assert.ok(resolved !== null && !resolved.includes('effect'), 'a control they really did hide stays hidden')
+  assert.ok(
+    resolved !== null && !resolved.includes('effect'),
+    'a control they really did hide stays hidden',
+  )
 })
 
 test('a NEW-shape choice is taken at its word — hiding weapon deliberately keeps it hidden', () => {
@@ -356,7 +439,10 @@ test('…and the migration heals itself: a stale vocab only widens, never narrow
   for (const grown of ['weapon', 'era', 'owned', 'upgrade'] as const) {
     assert.ok(stale.includes(grown), `${grown} was not in the recorded vocabulary, so it is ON`)
   }
-  assert.ok(!stale.includes('effect'), 'while a control that WAS in it and was not picked stays off')
+  assert.ok(
+    !stale.includes('effect'),
+    'while a control that WAS in it and was not picked stays off',
+  )
 })
 
 test('a control that is not on screen is not filtering either - every field goes INERT', () => {
@@ -367,7 +453,7 @@ test('a control that is not on screen is not filtering either - every field goes
     classes: ['PAL'],
     eraOnly: true,
     ownedOnly: true,
-    text: 'thelvorn'
+    text: 'thelvorn',
   })
   const hidden = inertFilters(busy, controlsVisible([]))
   assert.deepEqual(hidden.slots, [])
@@ -393,7 +479,7 @@ test('a control that IS on screen keeps its value untouched, one at a time', () 
     classes: ['PAL'],
     effect: 'proc',
     eraOnly: true,
-    ownedOnly: true
+    ownedOnly: true,
   })
   assert.deepEqual(inertFilters(busy, controlsVisible(['slot'])).slots, ['PRIMARY'])
   assert.deepEqual(inertFilters(busy, controlsVisible(['weapon'])).weaponTypes, ['TWO_HAND'])
@@ -412,7 +498,12 @@ test('HIDING A CONTROL CANNOT MOVE A COLUMN any more - the two choices stopped b
   // deleted the thresholds, so the derivation reads ONLY the sort - and the sort is not a toolbar
   // control at all. That is the honest replacement claim: whatever the toolbar is showing, the
   // derived columns are the same, because the two choices no longer touch.
-  const busy = filters({ slots: ['PRIMARY'], weaponTypes: ['ONE_HAND'], classes: ['PAL'], eraOnly: true })
+  const busy = filters({
+    slots: ['PRIMARY'],
+    weaponTypes: ['ONE_HAND'],
+    classes: ['PAL'],
+    eraOnly: true,
+  })
   const sort: GearSort = { key: 'HP_REGEN', dir: 'desc' }
   const whole = columnsFor(null, sort).map((c) => c.key)
   assert.deepEqual(whole, [...CORE_COLUMNS, 'HP_REGEN'])
@@ -420,6 +511,9 @@ test('HIDING A CONTROL CANNOT MOVE A COLUMN any more - the two choices stopped b
     // `inertFilters` still runs - it is what keeps a hidden control from FILTERING - and the
     // columns simply do not depend on its answer.
     void inertFilters(busy, shown)
-    assert.deepEqual(columnsFor(null, sort).map((c) => c.key), whole)
+    assert.deepEqual(
+      columnsFor(null, sort).map((c) => c.key),
+      whole,
+    )
   }
 })

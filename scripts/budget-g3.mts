@@ -42,7 +42,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
  */
 const CANDIDATE_DIRS = [
   join(ROOT, 'tests', 'bench', 'fixtures', 'Logs'),
-  join(ROOT, '..', '..', '..', 'tests', 'bench', 'fixtures', 'Logs')
+  join(ROOT, '..', '..', '..', 'tests', 'bench', 'fixtures', 'Logs'),
 ]
 
 function findFixture(): string | null {
@@ -67,9 +67,9 @@ if (fixture === null) {
   console.log('budget:g3 — no pinned fixture found. Looked in:')
   for (const dir of CANDIDATE_DIRS) console.log(`  ${dir}`)
   console.log(
-    '\nThis check folds the owner\'s real log and is MACHINE-LOCAL by design: the fixture is\n' +
+    "\nThis check folds the owner's real log and is MACHINE-LOCAL by design: the fixture is\n" +
       'gitignored and never enters git. Nothing is wrong — there is simply nothing to measure here.\n' +
-      'The budget CI actually enforces is `npm run budget:ci`, whose corpus is generated.'
+      'The budget CI actually enforces is `npm run budget:ci`, whose corpus is generated.',
   )
   process.exit(0)
 }
@@ -91,13 +91,13 @@ const res = spawnSync(
     'the_owners_full_log',
     '--',
     '--nocapture',
-    '--test-threads=1'
+    '--test-threads=1',
   ],
   {
     cwd: join(ROOT, 'engine'),
     stdio: 'inherit',
-    env: { ...process.env, EQC_BUDGET_LOG: fixture }
-  }
+    env: { ...process.env, EQC_BUDGET_LOG: fixture },
+  },
 )
 
 if (res.error) {

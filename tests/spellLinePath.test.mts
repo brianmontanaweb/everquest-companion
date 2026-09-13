@@ -48,13 +48,18 @@ test('P1 a spell on a ladder reports the WHOLE ladder, in the table’s level or
   assert.equal(path.cls, 'CLR')
   assert.equal(path.ladder, true)
   const names = path.steps.map((s) => s.name)
-  assert.deepEqual(names.slice(0, 4), ['Minor Healing', 'Light Healing', 'Healing', 'Greater Healing'])
+  assert.deepEqual(names.slice(0, 4), [
+    'Minor Healing',
+    'Light Healing',
+    'Healing',
+    'Greater Healing',
+  ])
   // Level order is the table's own and is never re-derived here; assert it as a property so a
   // regenerated research file that lands a rung out of order fails HERE.
   for (let i = 1; i < path.steps.length; i++) {
     assert.ok(
       path.steps[i].level >= path.steps[i - 1].level,
-      `${path.steps[i].name}@${String(path.steps[i].level)} after ${path.steps[i - 1].name}@${String(path.steps[i - 1].level)}`
+      `${path.steps[i].name}@${String(path.steps[i].level)} after ${path.steps[i - 1].name}@${String(path.steps[i - 1].level)}`,
     )
   }
   assert.equal(marked(path.steps), 'Healing')
@@ -134,12 +139,18 @@ test('P7 no loadout at all is a different statement from "not for your classes"'
   const warrior = buildSpellDetail(db, 'Healing', [], { combo: ['WAR'] })
   const stepOf = (d: typeof unknown): { yoursAt: number | null } =>
     d.linePath?.steps.find((s) => s.name === 'Healing') ?? { yoursAt: null }
-  assert.equal(spellStepWhen({ name: '', level: 0, queried: false, ...stepOf(unknown) }, unknown.combo), 'loadout unknown')
+  assert.equal(
+    spellStepWhen({ name: '', level: 0, queried: false, ...stepOf(unknown) }, unknown.combo),
+    'loadout unknown',
+  )
   assert.equal(
     spellStepWhen({ name: '', level: 0, queried: false, ...stepOf(warrior) }, warrior.combo),
-    'not for your classes'
+    'not for your classes',
   )
-  assert.equal(spellStepWhen({ name: '', level: 0, queried: false, yoursAt: 29 }, ['CLR']), 'you: 29')
+  assert.equal(
+    spellStepWhen({ name: '', level: 0, queried: false, yoursAt: 29 }, ['CLR']),
+    'you: 29',
+  )
 })
 
 // ─────────────────────────── 3. which ladder the page leads with ─────────────────────────────
@@ -158,9 +169,15 @@ test('P8 a class you are PLAYING wins the ladder over one you are not, and says 
   assert.notEqual(asShaman.next, asCleric.next)
   // And when it is nobody's ladder, the note says whose it is instead of staying quiet.
   const notMine = buildSpellDetail(db, 'Greater Healing', [], { combo: ['WAR'] })
-  assert.equal(spellLineNote(notMine), `${String(notMine.linePath?.cls)} levels - not one of your classes`)
+  assert.equal(
+    spellLineNote(notMine),
+    `${String(notMine.linePath?.cls)} levels - not one of your classes`,
+  )
   const noCombo = buildSpellDetail(db, 'Greater Healing', [], { combo: [] })
-  assert.equal(spellLineNote(noCombo), `${String(noCombo.linePath?.cls)} levels - your loadout is not known yet`)
+  assert.equal(
+    spellLineNote(noCombo),
+    `${String(noCombo.linePath?.cls)} levels - your loadout is not known yet`,
+  )
   // A ladder that IS yours carries no caveat at all.
   assert.equal(spellLineNote(buildSpellDetail(db, 'Greater Healing', [], { combo: ['CLR'] })), null)
 })
@@ -179,7 +196,7 @@ test('P9 the pick is stable and is the earliest rung among equals', () => {
     const rung = other.line.members[other.index].level
     assert.ok(
       rung > here.level || (rung === here.level && cls >= path.cls),
-      `${cls} gets it at ${String(rung)}, earlier than the chosen ${path.cls} at ${String(here.level)}`
+      `${cls} gets it at ${String(rung)}, earlier than the chosen ${path.cls} at ${String(here.level)}`,
     )
   }
   // Twice in a row is the same answer — the index is built once and handed out, never rebuilt.
@@ -192,14 +209,17 @@ test('P10 a destination SET names its line and refuses to name a neighbour', () 
   // The research marks travel/gem/poison categories `ladder: false`; the lookup declines a
   // replacement for them and this page must not invent one from the member ordering it can see.
   const sets = CLASS_ABBRS.flatMap((cls) =>
-    (lineContaining('Ring of Karana', cls) ? [cls] : []).map((c) => ({ c }))
+    (lineContaining('Ring of Karana', cls) ? [cls] : []).map((c) => ({ c })),
   )
   const found = sets.length > 0 ? buildSpellLinePath(db, 'Ring of Karana', []) : null
   if (found) {
     assert.equal(found.ladder, false)
     assert.equal(found.prior, null)
     assert.equal(found.next, null)
-    assert.ok(found.steps.length > 1, 'the membership is still drawn — only the ordering claim is not')
+    assert.ok(
+      found.steps.length > 1,
+      'the membership is still drawn — only the ordering claim is not',
+    )
   }
   // Whatever the table carries, `ladder: false` and a named neighbour must never coexist.
   for (const cls of CLASS_ABBRS) {
@@ -225,7 +245,10 @@ test('P11 the record carries the ladder, the loadout and the class table togethe
   // EVERY class that gets the spell, with its level — the third section, and it is not filtered
   // down to the loadout: the page states who else casts it, which is the question it was asked.
   assert.ok(d.classLevels.length >= 2, JSON.stringify(d.classLevels))
-  assert.ok(d.classLevels.some((c) => c.cls === 'PAL'), 'a class outside the combo still appears')
+  assert.ok(
+    d.classLevels.some((c) => c.cls === 'PAL'),
+    'a class outside the combo still appears',
+  )
 })
 
 test('P12 a rank-suffixed name reaches the ladder its ROW sits on', () => {

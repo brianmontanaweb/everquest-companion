@@ -19,7 +19,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import type { WindowLootRates } from '../src/shared/lootRates'
-import { ELAPSED_TIME_TITLE, LOOT_RATE_TITLE, lootRateText } from '../src/renderer/src/features/loot/lootRateText'
+import {
+  ELAPSED_TIME_TITLE,
+  LOOT_RATE_TITLE,
+  lootRateText,
+} from '../src/renderer/src/features/loot/lootRateText'
 
 const MIN = 60_000
 const HOUR = 60 * MIN
@@ -32,7 +36,7 @@ function rates(over: Partial<WindowLootRates> = {}): WindowLootRates {
     wallMs: 2 * HOUR,
     dropsPerHourActive: 6,
     dropsPerHourWall: 3,
-    ...over
+    ...over,
   }
 }
 
@@ -47,12 +51,23 @@ test('neither rate can pass for the other — the words `active` and `elapsed` a
   const text = lootRateText(rates()) ?? ''
   assert.ok(text.includes('active'), text)
   assert.ok(text.includes('elapsed'), text)
-  assert.ok(!/\d+ drops\/hr(?! over)/.test(text.replace(/-\s+drops\/hr/g, '')), 'no bare "N drops/hr" anywhere')
+  assert.ok(
+    !/\d+ drops\/hr(?! over)/.test(text.replace(/-\s+drops\/hr/g, '')),
+    'no bare "N drops/hr" anywhere',
+  )
 })
 
 /** Rule 2. A rate that outran its span would be a confident claim about ten minutes of play. */
 test('a rate never appears without the span it was measured over', () => {
-  const text = lootRateText(rates({ activeMs: 5 * MIN, wallMs: 5 * MIN, dropsPerHourActive: 12, dropsPerHourWall: 12, drops: 1 }))
+  const text = lootRateText(
+    rates({
+      activeMs: 5 * MIN,
+      wallMs: 5 * MIN,
+      dropsPerHourActive: 12,
+      dropsPerHourWall: 12,
+      drops: 1,
+    }),
+  )
   // …and ONE drop is a drop, not "1 drops": the count is a sentence, and the span beside the rate
   // is what stops a single pickup from reading as a confident 12 an hour.
   assert.equal(text, '1 drop · 12.0 drops/hr over 5m active · 12.0 drops/hr over 5m elapsed')
@@ -64,7 +79,10 @@ test('a null active rate is an em-dash that keeps its word, never 0.00', () => {
   const text = lootRateText(rates({ activeMs: 0, dropsPerHourActive: null })) ?? ''
   assert.ok(text.includes('- drops/hr active'), text)
   assert.ok(!text.includes('0.00 drops/hr active'), text)
-  assert.ok(text.includes('3.00 drops/hr over 2h 0m elapsed'), 'and the other half still states itself')
+  assert.ok(
+    text.includes('3.00 drops/hr over 2h 0m elapsed'),
+    'and the other half still states itself',
+  )
 })
 
 /** Rule 3, on the wall half: a window that is entirely a logout has no online wall to divide by. */
@@ -82,7 +100,9 @@ test('no drops in the window ⇒ no line at all', () => {
 
 /** Thousands separate, like every other count in this caption. */
 test('the numerator is grouped, like every other count on the ledger', () => {
-  const text = lootRateText(rates({ drops: 12_400, dropsPerHourActive: 12_400, dropsPerHourWall: 6_200 })) ?? ''
+  const text =
+    lootRateText(rates({ drops: 12_400, dropsPerHourActive: 12_400, dropsPerHourWall: 6_200 })) ??
+    ''
   assert.ok(text.startsWith('12,400 drops · '), text)
 })
 

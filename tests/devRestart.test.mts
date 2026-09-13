@@ -21,7 +21,15 @@
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -30,7 +38,7 @@ import {
   touchFile,
   WATCH_ANCHOR,
   type RestartHost,
-  type WatchContext
+  type WatchContext,
 } from '../src/main/devRestart'
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -42,14 +50,14 @@ function spyHost(isPackaged: boolean): RestartHost & { calls: string[] } {
     calls,
     isPackaged,
     relaunch: () => calls.push('relaunch'),
-    exit: (code?: number) => calls.push(`exit:${String(code)}`)
+    exit: (code?: number) => calls.push(`exit:${String(code)}`),
   }
 }
 
 /** A stand-in for the world outside Electron, recording every file it was asked to touch. */
 function spyCtx(
   rendererUrl: string | undefined,
-  opts: { roots?: readonly string[]; missing?: readonly string[] } = {}
+  opts: { roots?: readonly string[]; missing?: readonly string[] } = {},
 ): WatchContext & { touched: string[] } {
   const touched: string[] = []
   const missing = opts.missing ?? []
@@ -62,7 +70,7 @@ function spyCtx(
       // because "try the next root" is the whole reason the roots are a list.
       if (missing.some((m) => file.startsWith(m))) throw new Error(`ENOENT: ${file}`)
       touched.push(file)
-    }
+    },
   }
 }
 
@@ -121,7 +129,7 @@ test('dev server: falls through to the next root, and touches exactly ONE anchor
   const host = spyHost(false)
   const ctx = spyCtx('http://localhost:5173', {
     roots: ['C:\\wrong', 'C:\\repo'],
-    missing: ['C:\\wrong']
+    missing: ['C:\\wrong'],
   })
   assert.equal(performDevRestart(host, ctx).action, 'watcher')
   assert.deepEqual(ctx.touched, [join('C:\\repo', WATCH_ANCHOR)])
@@ -133,7 +141,7 @@ test('dev server, no anchor anywhere: refuses and NAMES the roots it tried', () 
   const host = spyHost(false)
   const ctx = spyCtx('http://localhost:5173', {
     roots: ['C:\\a', 'C:\\b'],
-    missing: ['C:\\a', 'C:\\b']
+    missing: ['C:\\a', 'C:\\b'],
   })
   const result = performDevRestart(host, ctx)
   assert.equal(result.action, 'refused')

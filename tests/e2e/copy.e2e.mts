@@ -42,7 +42,7 @@ import {
   reportRun,
   settleCount,
   sleep,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -80,7 +80,11 @@ async function mainClipboard(app: ElectronApplication, write?: string): Promise<
 /** Wait out the startup replay; false when it never finished (nothing below can be asserted). */
 async function waitReplayed(page: Page): Promise<boolean> {
   const { snap, ms } = await waitHydrated(page)
-  return check('hydration completes (replay hands off to the live tail)', !snap.hydrating, `${String(ms)}ms`)
+  return check(
+    'hydration completes (replay hands off to the live tail)',
+    !snap.hydrating,
+    `${String(ms)}ms`,
+  )
 }
 
 /**
@@ -95,7 +99,9 @@ function waitForCopyButton(page: Page): Promise<number> {
 async function stepCopy(app: ElectronApplication, page: Page): Promise<void> {
   const buttons = await waitForCopyButton(page)
   if (buttons === 0) {
-    note('no panel on screen has rows to copy right now — the clipboard round-trip is not asserted this run')
+    note(
+      'no panel on screen has rows to copy right now — the clipboard round-trip is not asserted this run',
+    )
     return
   }
   // The user's own clipboard, so it can go back exactly as it was.
@@ -108,7 +114,9 @@ async function stepCopy(app: ElectronApplication, page: Page): Promise<void> {
   // Read the icon FIRST: the copied state is deliberately transient (~1.5s), and the clipboard
   // round-trip below can outlive it. Its APPEARANCE is main's reply arriving — a condition, and
   // the very thing the assertion is about, so it is waited for rather than slept past.
-  const checks = await settleCount(page, `${BTN} [data-testid="CheckIcon"]`, 1, { timeoutMs: 5_000 })
+  const checks = await settleCount(page, `${BTN} [data-testid="CheckIcon"]`, 1, {
+    timeoutMs: 5_000,
+  })
   const after = await mainClipboard(app)
   if (userText) await mainClipboard(app, userText)
 
@@ -118,12 +126,12 @@ async function stepCopy(app: ElectronApplication, page: Page): Promise<void> {
     after !== sentinel && after.length > 0,
     after === sentinel
       ? 'the clipboard still holds the sentinel — the click wrote nothing'
-      : `${String(after.length)} chars from ${String(buttons)} copy affordance(s) on screen`
+      : `${String(after.length)} chars from ${String(buttons)} copy affordance(s) on screen`,
   )
   check(
     '…and what landed there is the panel’s own serialization (subject line · duration, then rows)',
     / · \d+:\d{2}$/.test(first) && after.includes('\n'),
-    first.slice(0, 80) || 'empty'
+    first.slice(0, 80) || 'empty',
   )
   // The user-visible half of the same fact: the icon flashes to a checkmark for ~1.5s (MUI's
   // icons carry their own `data-testid`, so the swap is observable). It is driven by main's
@@ -132,7 +140,7 @@ async function stepCopy(app: ElectronApplication, page: Page): Promise<void> {
   check(
     '…and the button flips to its copied state (the checkmark tracks what main actually wrote)',
     checks === 1,
-    `${String(checks)} checkmark(s) among ${String(buttons)} copy affordance(s)`
+    `${String(checks)} checkmark(s) among ${String(buttons)} copy affordance(s)`,
   )
 }
 
@@ -160,7 +168,11 @@ async function main(): Promise<void> {
 
     // The old failure mode logged '[everquest-companion:error] copy failed' from the renderer —
     // so a clean console is part of what "the copy works" means here.
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
 
     if (failures.length) await dumpArtifacts(page, 'copy-FAIL')
   } finally {

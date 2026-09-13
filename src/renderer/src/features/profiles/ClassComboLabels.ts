@@ -16,7 +16,12 @@
 //      bracket it can be 33.9 h apart; the '~' marker and its window are the honest reading of
 //      `startTs`, which is only the best estimate inside [startLo, startHi].
 
-import type { ComboBoundaryReason, ComboInterval, ComboProvenance, ComboSlot } from '@shared/classCombo'
+import type {
+  ComboBoundaryReason,
+  ComboInterval,
+  ComboProvenance,
+  ComboSlot,
+} from '@shared/classCombo'
 import { formatDateTime } from '../../lib/formatDate'
 import { fmtDuration } from '../leveling/levelChartGeometry'
 
@@ -95,7 +100,7 @@ export function loadoutSourceText(interval: ComboInterval): string {
 export function overruledText(interval: ComboInterval): string | null {
   if (interval.userOverruled !== true) return null
   return `A /who row inside this range named ${comboLabel(
-    interval
+    interval,
   )}, so your manual setting is not in effect here. Clear it, or set it to match.`
 }
 
@@ -156,7 +161,7 @@ export function startFuzzText(interval: ComboInterval): string | null {
   if (fuzz <= 0) return null
   const reasons = [interval.startReason, ...(interval.startAlso ?? [])]
   return `Started somewhere in a ${fmtDuration(fuzz)} window (${formatDateTime(
-    interval.startLo
+    interval.startLo,
   )} → ${formatDateTime(interval.startHi)}): ${reasons.map(boundaryReasonLabel).join('; ')}.`
 }
 

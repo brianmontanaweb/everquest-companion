@@ -19,14 +19,12 @@ import type {
   AlertPrefs,
   AlertsSnap,
   PoisonSlowRecency,
-  SoundPack
+  SoundPack,
 } from '@shared/types'
 import type { SoundPackPrefs } from '@shared/soundPacks'
 import { useModule } from '../../lib/useModule'
 import { onAlertStoreChange, refreshAlertStore } from './player'
 import { invalidateSoundCaches } from './soundCache'
-
-
 
 export interface AlertsStore {
   alerts: AlertDef[]
@@ -83,7 +81,7 @@ export function useAlertsStore(): AlertsStore {
       window.eq.listAlerts(),
       window.eq.getAlertPrefs(),
       window.eq.listSoundPacks(),
-      window.eq.getSoundPackPrefs()
+      window.eq.getSoundPackPrefs(),
     ])
     setAlerts(a)
     setPrefs(p)
@@ -160,7 +158,7 @@ export function useAlertsStore(): AlertsStore {
 
   const sortedPacks = useMemo(
     () => [...packs].sort((a, b) => (a.source === b.source ? 0 : a.source === 'bundled' ? -1 : 1)),
-    [packs]
+    [packs],
   )
 
   return {
@@ -179,6 +177,6 @@ export function useAlertsStore(): AlertsStore {
     resetAlerts,
     persistPrefs,
     setPrefs,
-    setAlertVolume
+    setAlertVolume,
   }
 }

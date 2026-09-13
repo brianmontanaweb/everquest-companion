@@ -45,7 +45,10 @@ export function MapMobPins({ pins, vp, selectedId }: MapMobPinsProps): JSX.Eleme
   const pinColor = useTheme().palette.warning.main
   // Keyed on the pin array and the projection, exactly like the label layer's declutter memo:
   // this recomputes per view CHANGE, not per frame.
-  const placed = useMemo(() => pins.map((p) => ({ ...p, at: toScreen(p.pin.x, p.pin.y) })), [pins, toScreen])
+  const placed = useMemo(
+    () => pins.map((p) => ({ ...p, at: toScreen(p.pin.x, p.pin.y) })),
+    [pins, toScreen],
+  )
 
   return (
     <div
@@ -78,7 +81,7 @@ export function MapMobPins({ pins, vp, selectedId }: MapMobPinsProps): JSX.Eleme
               boxShadow: '0 0 0 1px rgba(0,0,0,0.85)',
               opacity: selected ? 1 : 0.85,
               pointerEvents: 'auto',
-              zIndex: selected ? 3 : 1
+              zIndex: selected ? 3 : 1,
             }}
           />
         )

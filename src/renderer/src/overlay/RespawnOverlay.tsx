@@ -94,7 +94,7 @@ import {
   respawnSeenLabel,
   respawnSourceLabel,
   type RespawnRow,
-  type RespawnSnap
+  type RespawnSnap,
 } from '@shared/respawn'
 import { fmtDuration } from '../features/buffs/format'
 import { OverlayHeader } from './OverlayHeader'
@@ -166,7 +166,7 @@ function SeenLine({
   row,
   nowMs,
   interactive,
-  onConfirm
+  onConfirm,
 }: {
   row: RespawnRow
   nowMs: number
@@ -175,7 +175,10 @@ function SeenLine({
 }): JSX.Element {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-      <span data-testid="respawn-overlay-seen" style={{ fontSize: 9, color: SEEN, flexGrow: 1, minWidth: 0 }}>
+      <span
+        data-testid="respawn-overlay-seen"
+        style={{ fontSize: 9, color: SEEN, flexGrow: 1, minWidth: 0 }}
+      >
         {respawnSeenLabel(row, nowMs, fmtDuration)}
       </span>
       {interactive && (
@@ -198,7 +201,7 @@ function SeenLine({
             background: 'transparent',
             border: `1px solid ${SEEN}66`,
             borderRadius: 3,
-            cursor: 'pointer'
+            cursor: 'pointer',
           }}
         >
           start clock here
@@ -219,7 +222,13 @@ function SeenLine({
  * gone rather than shortened. The `aria-label` stays, because it is the only thing distinguishing
  * one row's button from the next one's to anything not reading pixels.
  */
-function UnwatchButton({ row, onUnwatch }: { row: RespawnRow; onUnwatch: (key: string) => void }): JSX.Element {
+function UnwatchButton({
+  row,
+  onUnwatch,
+}: {
+  row: RespawnRow
+  onUnwatch: (key: string) => void
+}): JSX.Element {
   return (
     <button
       type="button"
@@ -237,7 +246,7 @@ function UnwatchButton({ row, onUnwatch }: { row: RespawnRow; onUnwatch: (key: s
         background: 'transparent',
         border: '1px solid rgba(255,255,255,0.18)',
         borderRadius: 3,
-        cursor: 'pointer'
+        cursor: 'pointer',
       }}
     >
       {RESPAWN_UNWATCH_LABEL.toLowerCase()}
@@ -251,7 +260,7 @@ function ClockLine({
   label,
   tone,
   interactive,
-  onUnwatch
+  onUnwatch,
 }: {
   row: RespawnRow
   label: string
@@ -269,14 +278,20 @@ function ClockLine({
           minWidth: 0,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap'
+          whiteSpace: 'nowrap',
         }}
       >
         {row.display}
       </span>
       <span
         data-testid="respawn-overlay-clock"
-        style={{ fontSize: 13, fontWeight: 700, color: tone, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}
+        style={{
+          fontSize: 13,
+          fontWeight: 700,
+          color: tone,
+          fontVariantNumeric: 'tabular-nums',
+          flexShrink: 0,
+        }}
       >
         {label}
       </span>
@@ -320,7 +335,7 @@ function RespawnLine({
   nowMs,
   interactive,
   onConfirm,
-  onUnwatch
+  onUnwatch,
 }: {
   row: RespawnRow
   nowMs: number
@@ -350,24 +365,34 @@ function RespawnLine({
       // hover because there is none in either mode. See the file header.
       style={{ padding: '2px 2px 3px', borderLeft: `2px solid ${tone}66`, paddingLeft: 5 }}
     >
-      <ClockLine row={row} label={label} tone={tone} interactive={interactive} onUnwatch={onUnwatch} />
+      <ClockLine
+        row={row}
+        label={label}
+        tone={tone}
+        interactive={interactive}
+        onUnwatch={onUnwatch}
+      />
       {/* The bar is the estimate running down. Absent entirely when there is no estimate, rather
           than drawn empty — an empty bar reads as "nearly up", which would be a lie. And absent on a
           STALE row (round 8) for the same reason: nothing is still running for it to draw. */}
       {hasEstimate && !r.stale && (
-        <div style={{ height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 2, marginTop: 2 }}>
+        <div
+          style={{ height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 2, marginTop: 2 }}
+        >
           <div
             style={{
               height: '100%',
               width: `${String(Math.round((1 - r.fraction) * 100))}%`,
               background: tone,
-              borderRadius: 2
+              borderRadius: 2,
             }}
           />
         </div>
       )}
       {/* NOTHING RE-BASES ITSELF — the affordance below is the only path to `basis: 'sighting'`. */}
-      {r.seen && <SeenLine row={row} nowMs={nowMs} interactive={interactive} onConfirm={onConfirm} />}
+      {r.seen && (
+        <SeenLine row={row} nowMs={nowMs} interactive={interactive} onConfirm={onConfirm} />
+      )}
       <RungLine row={row} />
     </div>
   )
@@ -377,7 +402,7 @@ function RespawnFooter({
   bgAlpha,
   textScale,
   patch,
-  noDrag
+  noDrag,
 }: {
   bgAlpha: number
   textScale: number
@@ -389,7 +414,7 @@ function RespawnFooter({
       style={{
         ...FOOTER_ROW,
         ...noDrag,
-        gap: 6
+        gap: 6,
       }}
     >
       {/* No hover on the slider (JOS-358): it is the only thing in this footer and it looks like
@@ -404,7 +429,14 @@ function RespawnFooter({
         onChange={(e) => {
           patch({ bgAlpha: Number(e.target.value) })
         }}
-        style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 20, accentColor: ACCENT, height: 4 }}
+        style={{
+          flexGrow: 1,
+          flexShrink: 1,
+          flexBasis: 0,
+          minWidth: 20,
+          accentColor: ACCENT,
+          height: 4,
+        }}
       />
       <TextScaleStepper textScale={textScale} patch={patch} noDrag={noDrag} />
     </div>
@@ -446,7 +478,7 @@ export default function RespawnOverlay(): JSX.Element {
         border: locked ? '1px solid rgba(255,255,255,0.04)' : `1px solid ${ACCENT}66`,
         borderRadius: 8,
         boxSizing: 'border-box',
-        overflow: 'hidden'
+        overflow: 'hidden',
       }}
     >
       <OverlayHeader
@@ -462,7 +494,12 @@ export default function RespawnOverlay(): JSX.Element {
         chrome={{ locked, hovering, dragRegion, noDrag, toggleLock, capture }}
       />
 
-      <OverlayContent textScale={textScale} testId="respawn-overlay-rows" locked={locked} capture={capture}>
+      <OverlayContent
+        textScale={textScale}
+        testId="respawn-overlay-rows"
+        locked={locked}
+        capture={capture}
+      >
         {rows.length === 0 ? (
           // An empty window is a STATE, and it says WHICH one — this is the single most likely
           // thing a first-time user sees. Two different empties: nothing watched anywhere (go to

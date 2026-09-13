@@ -57,9 +57,11 @@ export const windowsApi = {
 
   // ---- the floating overlays' open-state (Task #52; per-kind in Task #54) ----
   /** Toggle a kind's overlay window; resolves to the resulting open-state. */
-  toggleOverlay: (kind: OverlayKind): Promise<boolean> => ipcRenderer.invoke(IPC.overlayToggle, kind),
+  toggleOverlay: (kind: OverlayKind): Promise<boolean> =>
+    ipcRenderer.invoke(IPC.overlayToggle, kind),
   /** Read the open-state map for all overlay kinds. */
-  getOverlayState: (): Promise<Record<OverlayKind, boolean>> => ipcRenderer.invoke(IPC.overlayGetState),
+  getOverlayState: (): Promise<Record<OverlayKind, boolean>> =>
+    ipcRenderer.invoke(IPC.overlayGetState),
   /** Subscribe to overlay open-state changes (so the TitleBar menu stays in sync). Payload {kind, open}. */
   onOverlayState: (cb: (s: { kind: OverlayKind; open: boolean }) => void): (() => void) => {
     const listener = (_e: unknown, s: { kind: OverlayKind; open: boolean }): void => cb(s)
@@ -95,7 +97,8 @@ export const windowsApi = {
   getScopeSelection: (): Promise<ScopeSelection> => ipcRenderer.invoke(IPC.scopeSelectionGet),
   /** "The user moved one of these knobs." A PARTIAL — the half you do not mention does not move.
    *  Fire-and-forget; main rebuilds the patch and fans the result out. */
-  setScopeSelection: (patch: Partial<ScopeSelection>): void => ipcRenderer.send(IPC.scopeSelectionSet, patch),
+  setScopeSelection: (patch: Partial<ScopeSelection>): void =>
+    ipcRenderer.send(IPC.scopeSelectionSet, patch),
   /** Subscribe to scope changes made in ANY window. Payload is the whole selection. */
   onScopeSelection: (cb: (s: ScopeSelection) => void): (() => void) => {
     const listener = (_e: unknown, s: ScopeSelection): void => cb(s)
@@ -163,7 +166,8 @@ export const windowsApi = {
    * config patch above because this one is APPLIED to the live window as well as persisted —
    * `overlay:setConfig` only stores.
    */
-  setToastLocked: (locked: boolean): void => ipcRenderer.send(IPC.overlaySetLocked, 'toast', locked),
+  setToastLocked: (locked: boolean): void =>
+    ipcRenderer.send(IPC.overlaySetLocked, 'toast', locked),
 
   // ---- the alert banner (JOS-378, shared/alertBanner.ts) ------------------------------
   /**
@@ -172,7 +176,8 @@ export const windowsApi = {
    * paths as the sound and the speech and can never disagree with them about which alerts fired.
    * Fire-and-forget; main re-validates and drops it when the overlay is off.
    */
-  showAlertBanner: (payload: AlertBannerPayload): void => ipcRenderer.send(IPC.alertsBanner, payload),
+  showAlertBanner: (payload: AlertBannerPayload): void =>
+    ipcRenderer.send(IPC.alertsBanner, payload),
   /**
    * Read the banner overlay's persisted config (its hold, its line budget, its lock).
    *
@@ -181,7 +186,8 @@ export const windowsApi = {
    * two kinds it draws a Preferences card for. Two spelled-out doors are still a smaller surface
    * than a general per-kind config API handed to the app.
    */
-  getAlertBannerConfig: (): Promise<OverlayConfig> => ipcRenderer.invoke(IPC.overlayGetConfig, 'alertBanner'),
+  getAlertBannerConfig: (): Promise<OverlayConfig> =>
+    ipcRenderer.invoke(IPC.overlayGetConfig, 'alertBanner'),
   /** Patch the banner overlay's config (Preferences owns its hold + line budget). Main clamps. */
   setAlertBannerConfig: (patch: Partial<OverlayConfig>): Promise<OverlayConfig> =>
     ipcRenderer.invoke(IPC.overlaySetConfig, 'alertBanner', patch),
@@ -195,12 +201,14 @@ export const windowsApi = {
   // feature has no renderer producer at all — the trigger is a log line and main owns the log.
   /** Read the con card overlay's persisted config (its auto-hide, its lock). Kind-first, like the
    *  two cards above it, for the reason stated there. */
-  getConCardConfig: (): Promise<OverlayConfig> => ipcRenderer.invoke(IPC.overlayGetConfig, 'conCard'),
+  getConCardConfig: (): Promise<OverlayConfig> =>
+    ipcRenderer.invoke(IPC.overlayGetConfig, 'conCard'),
   /** Patch the con card's config (Preferences owns the auto-hide). Main clamps; 0 means never. */
   setConCardConfig: (patch: Partial<OverlayConfig>): Promise<OverlayConfig> =>
     ipcRenderer.invoke(IPC.overlaySetConfig, 'conCard', patch),
   /** Lock (click-through) / unlock (position it). APPLIED to the live window as well as stored. */
-  setConCardLocked: (locked: boolean): void => ipcRenderer.send(IPC.overlaySetLocked, 'conCard', locked),
+  setConCardLocked: (locked: boolean): void =>
+    ipcRenderer.send(IPC.overlaySetLocked, 'conCard', locked),
 
   // ---- the overlays' TEXT SIZE (JOS-405; shared/overlayTextScale.ts) ------------------------
   //
@@ -290,7 +298,7 @@ export const windowsApi = {
    *  main actually stored them, seeds included, so the pane renders the answer rather than the
    *  request. */
   setOverlayIndependent: (
-    on: boolean
+    on: boolean,
   ): Promise<{ text: OverlayTextSizePrefs; bg: OverlayBgAlphaPrefs }> =>
-    ipcRenderer.invoke(IPC.overlayIndependentSet, on)
+    ipcRenderer.invoke(IPC.overlayIndependentSet, on),
 }

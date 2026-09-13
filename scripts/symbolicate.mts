@@ -138,7 +138,7 @@ export function decodeMappings(mappings: string): Segment[][] {
         srcIndex,
         srcLine,
         srcCol,
-        nameIndex: fields.length >= 5 ? nameIndex : -1
+        nameIndex: fields.length >= 5 ? nameIndex : -1,
       })
     } else {
       // A one-field segment marks generated code with NO original position. It is kept, with a
@@ -164,7 +164,7 @@ export function loadMap(text: string): LoadedMap {
   return {
     sources: (raw.sources ?? []).map((s) => (root === '' ? s : `${root}/${s}`)),
     names: raw.names ?? [],
-    lines: decodeMappings(raw.mappings ?? '')
+    lines: decodeMappings(raw.mappings ?? ''),
   }
 }
 
@@ -201,7 +201,7 @@ function mapFor(mapsDir: string, file: string): LoadedMap | null {
   // `out`, or `out` itself. Both spellings are accepted because both are what a person types.
   const candidates = [
     join(mapsDir, `${file}.map`),
-    join(mapsDir, `${file.replace(/^out\//, '')}.map`)
+    join(mapsDir, `${file.replace(/^out\//, '')}.map`),
   ]
   const path = candidates.find((p) => existsSync(p))
   const loaded = path === undefined ? null : loadMap(readFileSync(path, 'utf8'))
@@ -227,7 +227,7 @@ export function symbolicateFrames(frames: readonly Frame[], mapsDir: string): Re
       // Sourcemap lines are 0-based; every editor and every stack trace is 1-based.
       sourceLine: seg.srcLine + 1,
       sourceCol: seg.srcCol,
-      name: seg.nameIndex >= 0 ? (map.names[seg.nameIndex] ?? null) : null
+      name: seg.nameIndex >= 0 ? (map.names[seg.nameIndex] ?? null) : null,
     }
   })
 }
@@ -280,7 +280,7 @@ function main(): void {
   if (unmapped > 0) {
     console.error(
       `\n${String(unmapped)}/${String(resolved.length)} frame(s) had no mapping under ${dir} — ` +
-        'is this the sourcemap artifact for that exact version?'
+        'is this the sourcemap artifact for that exact version?',
     )
   }
 }

@@ -65,9 +65,9 @@ function useScopedDrops(scope: ScopedStats): WindowItemRow[] {
         // the slice carries a zone, so counting every zone's drops against it would put a rate
         // under a denominator it was never measured over.
         zoneKey: scope.zoneKey,
-        zoneExactKey: scope.zoneExactKey
+        zoneExactKey: scope.zoneExactKey,
       }),
-    [events, scope]
+    [events, scope],
   )
 }
 
@@ -83,7 +83,7 @@ const DROP_ROW_H = 26
 const DropRow = memo(function DropRow({
   row,
   read,
-  onOpenItem
+  onOpenItem,
 }: {
   row: WindowItemRow
   read: BasisRead
@@ -119,7 +119,7 @@ const DropRow = memo(function DropRow({
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
-              textAlign: 'left'
+              textAlign: 'left',
             }}
           >
             {row.item}
@@ -133,7 +133,11 @@ const DropRow = memo(function DropRow({
       <Typography variant="caption" sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
         {row.drops.toLocaleString()}×
       </Typography>
-      <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap', minWidth: 92, textAlign: 'right' }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ whiteSpace: 'nowrap', minWidth: 92, textAlign: 'right' }}
+      >
         {rate}
       </Typography>
     </Stack>
@@ -185,7 +189,11 @@ export function WindowDropsPanel({ scope, onOpenItem }: WindowDropsPanelProps): 
         display="block"
         // The span every drops/hr on this panel divides by, so it hovers what that span IS
         // (JOS-249). Native title, no popper.
-        title={rows.length > 0 ? withBasis('How much of this window the rates below are per.', read) : undefined}
+        title={
+          rows.length > 0
+            ? withBasis('How much of this window the rates below are per.', read)
+            : undefined
+        }
       >
         {/* ONE span for the whole panel — every rate below divides by it, stated once rather
             than repeated on every row. Nothing is said when there is nothing to measure. */}
@@ -201,7 +209,11 @@ export function WindowDropsPanel({ scope, onOpenItem }: WindowDropsPanelProps): 
       )}
       {/* The list owns the scroll, and only once it has outgrown the ceiling above — a long
           window really can hold hundreds of distinct items (641 measured). */}
-      <Box ref={scrollRef} sx={{ minHeight: 0, overflowY: 'auto', pr: 0.75 }} data-testid="leveling-drops-list">
+      <Box
+        ref={scrollRef}
+        sx={{ minHeight: 0, overflowY: 'auto', pr: 0.75 }}
+        data-testid="leveling-drops-list"
+      >
         {/* The two spacers reserve the un-mounted rows' height, so the scrollbar describes the whole
             list and not just the slice — see `useWindowedRows`. */}
         <Box sx={{ height: win.topPad }} />
