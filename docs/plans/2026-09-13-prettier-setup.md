@@ -43,8 +43,30 @@ first (so `format:check` could be verified failing-as-expected before the
 rewrite), then the mass reformat as its own dedicated commit, then blame
 suppression, then the two enforcement layers, then documentation — matching
 this repo's own `security/audit-fixes-2026-09-12` precedent (one branch,
-commits per step, full gate green at the tip, PR opened, **not merged** —
-merge is the owner's call per AGENTS.md's branch-integration rules).
+commits per step, PR opened, **not merged** — merge is the owner's call per
+AGENTS.md's branch-integration rules).
+
+**Gate state at the tip, stated precisely rather than aspirationally — this
+branch is NOT fully green, and pretending otherwise is how it got here.** An
+earlier draft of this document claimed "full gate green at the tip." That was
+never verified against CI, and it was false: `Format check` was red on 1493
+files while every local check reported clean. What is true now, read off the
+real CI run rather than inferred:
+
+- **Green:** `Typecheck`, `Lint`, `Format check`, `Lint ratchet only shrinks`
+  — the four gates this plan is actually about. The last two are the ones the
+  final review fixed; both were verified in CI, not just locally.
+- **Red, caused by this branch:** `Test`, on
+  `tests/agentsDoc.test.mts` — AGENTS.md is 20,193 words against a
+  20,000-word ceiling. `main` sits at **19,997 words**, three under, so
+  Tasks 4 and 6 tripped a tripwire that any AGENTS.md addition would have
+  tripped. Its own protocol (JOS-252, quoted by the failure message) reserves
+  the distillation pass for the integrator and forbids delegating it to a
+  worker, so it is escalated rather than fixed here. See the `-todo.md`
+  companion.
+- **Red, unrelated:** `engine`, on a `combat.rs` timing test. This branch
+  touches zero Rust files (`git diff --stat` empty for `engine/`);
+  pre-existing, out of scope, untouched.
 
 ---
 
@@ -107,6 +129,38 @@ job's existing `Lint` step. The two jobs deliberately duplicate their
 prelude (a documented security-boundary reason lives in the file's header),
 so the new step was added to both rather than factored into a shared step.
 
+## Line endings (`.gitattributes`) — the half of `endOfLine: 'lf'` that was missing
+
+Not in the original plan; added by the final whole-branch review after CI
+failed on it. `endOfLine: 'lf'` is a claim about the **working tree**, because
+that is the only thing Prettier reads — the git blob never enters the picture.
+Under `core.autocrlf=true` (the Git-for-Windows default, and what GitHub's
+`windows-latest` runners use) checkout smudges every unattributed text file to
+CRLF, so `format:check` reds the very files it had just formatted. On this
+branch's first real CI run that was **1493 files**.
+
+`.gitattributes` therefore now pins `eol=lf` on exactly the extensions
+`format`/`format:check` covers — `*.ts *.tsx *.mts *.cts *.js *.jsx *.mjs
+*.cjs`, one line each, since `.gitattributes` patterns are fnmatch and have no
+brace expansion — extending the file's existing JOS-251 section, which had
+already documented this mechanism for three narrower paths. The two files are
+a pair: `prettier.config.mjs` says what line endings the tree must have, and
+`.gitattributes` is what makes a fresh checkout actually have them. Its
+`endOfLine` comment says so, and says what the wrong rationale was.
+
+## The ratchet override
+
+Also not in the original plan, and an owner decision rather than an
+implementer's. Task 2's approved 104-entry re-baseline is exactly the case
+`scripts/checkLintRatchet.mts` failed unconditionally on, so shipping this
+branch meant either a permanently red gate or merging over it. Neither is
+acceptable, so the gate gained a machine-readable way to record consent: a
+`Ratchet-Widening-Approved:` git trailer on any commit in `<base>..HEAD`.
+Found, the growth passes **and is logged in full with the approving commit**;
+absent, the previous fail behavior is unchanged. The predicate is exported and
+unit-tested. Full rationale in the `-todo.md` companion and in the script's own
+header.
+
 ## Documentation
 
 A new `## Formatting (Prettier)` section was added to AGENTS.md, directly
@@ -121,8 +175,13 @@ npm run typecheck
 npm run lint
 npm run format:check
 npm test
-npm run check:lint-ratchet -- <base-sha>   # confirms the reformat added no new ratchet debt beyond the approved re-baseline
+npm run check:lint-ratchet -- <base-sha>   # confirms the reformat added no new ratchet debt beyond the approved, trailer-recorded re-baseline
+git ls-files --eol 'src/**/*.ts'           # every source file must read w/lf, not w/crlf
 ```
+
+`format:check` and the ratchet check are the two that **must be read off the
+real CI run**, not just locally: both passed locally while one of them was red
+in CI, which is the mistake this plan's final review exists to have caught.
 
 ## Artifacts
 

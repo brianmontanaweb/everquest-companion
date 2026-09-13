@@ -12,9 +12,16 @@
 // printWidth: 100 — the tree already runs longer than Prettier's 80-char
 //   default (e.g. windows.ts's multi-symbol import lines); 100 is close to
 //   observed width without being unusually wide.
-// endOfLine: 'lf' — matches what git actually stores (this machine runs
-//   core.autocrlf=true; the few files pinned eol=lf in .gitattributes exist
-//   for the same reason — LF is the canonical stored form).
+// endOfLine: 'lf' — LOAD-BEARING WITH .gitattributes; the two only work as a
+//   pair. Prettier reads the WORKING TREE, not the git blob, so what git
+//   STORES is irrelevant to this setting: under core.autocrlf=true (the
+//   Git-for-Windows default, and what GitHub's windows-latest runners use) a
+//   checkout smudges LF blobs to CRLF on disk, and `format:check` then reds
+//   every file it just wrote. That is not a theory — it failed this branch's
+//   first CI run on 1493 files. .gitattributes therefore pins `eol=lf` on
+//   exactly the extensions this config formats, so a fresh checkout hands
+//   Prettier the line endings it is configured to expect. Change one of those
+//   two lists and you must change the other.
 
 /** @type {import('prettier').Config} */
 export default {

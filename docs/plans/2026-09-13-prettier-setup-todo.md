@@ -15,8 +15,12 @@ Branch: `tooling/prettier-setup-2026-09-13`. Plan: [2026-09-13-prettier-setup.md
 - [x] **Task 5 — CI enforcement (`prettier --check` in both build.yml
   jobs)** `3d13e6d5`
 - [x] **Task 6 — Document Prettier in AGENTS.md** `64e70f72`
-- [ ] **Task 7 — Materialize plan/todo docs, push, open PR (not merged —
-  owner's call)**
+- [x] **Task 7 — Materialize plan/todo docs, push, open PR (not merged —
+  owner's call)** `cbe63b6b`, `5bb57f7b`
+- [x] **Final whole-branch review — fix wave: `.gitattributes` `eol=lf` for
+  the Prettier-formatted extensions, a documented override on the
+  ratchet-only-shrinks gate, and the doc corrections below** — SHAs recorded
+  in the follow-up docs commit (a commit cannot cite its own hash)
 
 ## Task 1 — what actually happened
 
@@ -107,6 +111,15 @@ reflow-driven file×rule entries above plus the 1 pre-existing
 `src/main/windows.ts` entry that predates this plan). `npm run lint` came
 back fully clean; commit `d518b711`.
 
+`d518b711` also rewrites `lint-worklist.md` (137 insertions). That is **not
+an oversight or a stray file** — `npm run lint:ratchet` writes the register
+and the worklist in the same pass (see `scripts/lint-report.mts`), so the
+two always move together and a re-baseline that updated only
+`eslint.ratchet.mjs` would be the suspicious one. The worklist is the
+human-readable companion to the machine-readable register — the same
+inventory, grouped into the five refactor waves — and `lint-report.mts`'s
+own header names both outputs in the same breath.
+
 **Fix round (commits `d518b711`..`e4e22bc7`):** review of `d518b711`
 mechanically reconstructed `prettier(base)` for all 1338 changed files and
 diffed against HEAD, corruption-tested all 11 testable regex pins, and
@@ -153,42 +166,65 @@ independently (clean `git status`, `git config core.hooksPath` correctly
 setup). Review: spec-compliant, shebang deviation and cleanup both verified
 directly rather than taken on trust. Approved.
 
-## Task 5 — what actually happened
+## Task 5 — what actually happened (the implementer was right; the investigation that dismissed them was not)
 
-The implementer reported DONE_WITH_CONCERNS, flagging a `prettier --check
-src/shared/ipc.ts` failure as "pre-existing... CI will fail until resolved
-separately." Given the stakes (a CI gate reported broken on arrival would
-undermine the whole task, and `ipc.ts` is the exact file Task 4's
-hook-verification test had touched-then-reverted), this was investigated
-directly rather than trusted:
+The CI wiring itself went exactly as scoped — two `Format check` YAML steps,
+one per job in `build.yml`, correctly positioned and indented, nothing else
+touched. What went wrong was the verification around it, and it is worth
+recording precisely, because the same two tests will look convincing to the
+next person who reaches for them.
 
-- First worried it was systemic: this worktree runs `core.autocrlf=true`,
-  and `windows-latest` CI runners commonly default the same way, so a fresh
-  `actions/checkout` smudging LF→CRLF tree-wide could make `format:check`
-  red on the very next CI run. **Tested directly:** forced a real `git
-  checkout --` on an untouched, already-clean file — it was not corrupted,
-  still passed `prettier --check`. Systemic theory refuted.
-- Ran `prettier --write` on `ipc.ts`: zero content change (`git diff`
-  empty, only an informational CRLF-on-next-touch warning). Re-ran the
-  single-file check — passed. Ran the real gate exactly as CI will,
-  `npm run format:check` (full-tree glob) — clean.
-- `git status --short` still flagged `ipc.ts` as modified, but
-  `git hash-object` on the working file exactly equaled
-  `git rev-parse HEAD:src/shared/ipc.ts` — byte-identical to the committed
-  blob. This is the same benign Windows stat-cache artifact Task 2's
-  implementer had already documented elsewhere (157 files flagged `M` with
-  zero real diff, verified the same way).
+**The implementer flagged a real defect and was overruled.** They reported
+DONE_WITH_CONCERNS on a `prettier --check src/shared/ipc.ts` failure,
+characterizing it as "pre-existing... CI will fail until resolved
+separately." That characterization was **correct**. It was dismissed at the
+time as a benign Windows stat-cache artifact, on the strength of two tests
+that could not, even in principle, have detected the thing they were used to
+rule out:
 
-**Ruling: not a real defect.** The implementer's "pre-existing, will fail
-CI" characterization was wrong — most likely a transient/stale read at the
-moment it was checked. The gate that actually matters, the full-tree
-`format:check`, was clean. Not re-dispatched for a non-issue; task review
-proceeded with this corrected context. One residual, lower-confidence note
-carried forward but not blocking: this only proves the current worktree's
-checkout path is safe, not that GitHub's `windows-latest` runner's git
-config behaves identically on a genuinely fresh clone — worth eyeballing
-the first real CI run after this branch is pushed. Review: spec-compliant,
-exactly 2 YAML steps added, correctly positioned and indented. No findings.
+- **`git hash-object` cannot see this class of bug.** The argument was that
+  `git hash-object src/shared/ipc.ts` exactly equaled
+  `git rev-parse HEAD:src/shared/ipc.ts`, so the working file must be
+  byte-identical to the committed blob. It is not: `hash-object` applies the
+  **same clean filter** that produced the blob, so a CRLF working-tree file
+  and its LF blob hash identically **by construction**. The test returns
+  "identical" for a corrupted file and a clean one alike. (`git ls-files
+  --eol` is the tool that actually answers this; it reported `i/lf w/crlf`
+  on that exact file the whole time.)
+- **The `git checkout --` control test was a silent no-op.** A real
+  `git checkout -- src/shared/aa.ts` was run on an untouched, already-clean
+  file and, surviving unchanged, was taken to refute the systemic theory.
+  But git **skips rewriting a file its stat cache already considers
+  unchanged**, so no smudge filter ever ran. The test exercised nothing.
+
+**What was actually wrong, and it was systemic exactly as first suspected.**
+`prettier.config.mjs` sets `endOfLine: 'lf'`, and Prettier reads the
+**working tree**, never the git blob. `.gitattributes` pinned `eol=lf` on
+only three paths, so every other source file — all 1493 of the
+Prettier-formatted ones — inherited `core.autocrlf=true`'s LF→CRLF smudge on
+checkout. That is the Git-for-Windows default and it is what GitHub's
+`windows-latest` runners do. `ipc.ts` was simply the one file in this
+worktree that had been genuinely re-checked-out (by Task 4's
+hook-verification test) and so was the only local symptom of a tree-wide
+condition.
+
+**How it was finally caught.** The final whole-branch review reproduced an
+actual fresh checkout with `git checkout-index -a --prefix=<tmp>/` — a
+non-mutating simulation that, unlike `git checkout --`, does **not** skip
+files — and cross-referenced the real CI run on PR #8: `Format check` red on
+**1493 files**, an exact match. The lower-confidence note carried out of this
+task ("worth eyeballing the first real CI run after this branch is pushed")
+turned out to be the whole finding.
+
+**The fix.** `.gitattributes` now forces `eol=lf` on every extension
+`format`/`format:check` covers (`*.ts *.tsx *.mts *.cts *.js *.jsx *.mjs
+*.cjs`, one line per extension — `.gitattributes` patterns are fnmatch, not
+shell globs, so no brace expansion), with a comment tying it to
+`prettier.config.mjs`'s `endOfLine: 'lf'`. `prettier.config.mjs`'s own
+comment was corrected too: it had justified the setting as "matches what git
+actually stores," which is the category error at the root of the whole
+episode — what git stores is irrelevant to a tool that reads the working
+tree. See the final-review section below.
 
 ## Task 6 — what actually happened
 
@@ -197,6 +233,91 @@ directly after `## Linting`, matching that section's terse bulleted style.
 Review confirmed verbatim content match, correct insertion point, and that
 its claims (CI gating, scope, the pre-commit hook) were accurate against
 Tasks 1-5's actual landed state. No findings.
+
+## Final whole-branch review — what it caught, and the one fix wave
+
+The review ran the full suite fresh and, crucially, read the **real CI run on
+PR #8** rather than trusting local commands. Two merge-blocking findings, both
+things every local check had reported green.
+
+**1. `Format check` was red in CI on 1493 files — a real defect, not a flake.**
+Root cause and fix are written up in the Task 5 section above, along with why
+the earlier investigation's two "disproofs" could not have worked. The fix is
+`.gitattributes`: `eol=lf` on `*.ts *.tsx *.mts *.cts *.js *.jsx *.mjs *.cjs`,
+one line per extension, appended to the file's existing JOS-251 section (which
+already explained this exact autocrlf mechanism for three other paths — the
+gap was scope, not understanding). `prettier.config.mjs`'s `endOfLine` comment
+was rewritten in the same commit: it had described the setting as matching
+"what git actually stores," and that sentence is the whole bug in miniature.
+The two files are now a documented pair — change one list and you must change
+the other.
+
+**2. The ratchet-only-shrinks gate had no way to accept an approved widening.**
+`scripts/checkLintRatchet.mts` failed unconditionally whenever the register
+grew, and its advisory said "if this widening is deliberate and yours to make,
+say so in the commit message" — pure prose, enforced by nothing. So the
+owner-approved 104-entry re-baseline from Task 2 would have kept this gate red
+forever, and the only remaining move would have been merging over it.
+
+Owner decision: **add a documented override, not merge over red.** The
+mechanism is a git trailer in the style of `Co-Authored-By:`, checked across
+**every** commit message in `<base>..HEAD` (the widening commit is rarely the
+tip):
+
+```
+Ratchet-Widening-Approved: <why, in one sentence>
+```
+
+Present anywhere in range, the growth passes **and is still printed in full**,
+with the approving commit named beside it — an override that hid what it
+waived would be worse than no gate. Absent, behavior is byte-for-byte
+unchanged: fail, naming every new entry. The predicate
+(`hasRatchetWideningApproval`) and its audit-line companion
+(`ratchetWideningApprovalLines`) are exported and unit-tested in
+`tests/lintRatchetCheck.test.mts` alongside the existing comparators, written
+test-first: trailer absent anywhere in a multi-commit range ⇒ false; trailer on
+*any* commit in range (first, middle, last) ⇒ true; case-sensitive and
+line-anchored, so prose that merely mentions the token is not an approval.
+That last property is the point — a waiver is only trustworthy if it cannot be
+written by accident.
+
+Three documentation minors were fixed in the same wave: this file's
+`lint-worklist.md` note (Task 2 section), Task 7's own unchecked checklist
+entry, and the plan doc's "full gate green at the tip" claim.
+
+**Not this plan's problem, deliberately untouched:** the `engine` CI job's
+`combat.rs` test is red. This branch touches **zero** Rust files
+(`git diff --stat` is empty for `engine/`); it is a wall-clock-sensitive test
+on a loaded runner, pre-existing and unrelated. Noted, not investigated.
+
+### Open, and escalated rather than fixed: AGENTS.md is over its word ceiling
+
+Surfaced by the fix wave running the full suite (CI had never reached its
+`Test` step — `Format check` failed first, every run). **`tests/agentsDoc.test.mts`
+fails: AGENTS.md is 20,193 words against a 20,000-word ceiling.** It is caused
+by this branch, and the arithmetic is worth stating because it changes what the
+fix is:
+
+| ref | AGENTS.md words |
+|---|---|
+| `origin/main` / base `3e72d03d` | **19,997** |
+| after Task 4 (`8ee3ebd0`) | 20,061 — already over |
+| after Task 6 (`64e70f72`) | 20,193 |
+
+`main` was sitting **three words** under the ceiling. So this is not "Tasks 4
+and 6 were too wordy" — **any** addition to AGENTS.md, by any branch, would
+have tripped this tripwire, and this plan simply happened to be the one that
+did. Reverting both additions would land back at 19,997 and leave the next
+contributor with the same three words of headroom.
+
+The real fix is the distillation pass the tripwire exists to trigger, and the
+test's own failure message states the protocol (JOS-252): *"distillation is
+done carefully by the integrator, never delegated to a worker, never
+mechanical truncation, archive before cutting."* The fix wave is a worker.
+**So it is left untouched and escalated to the owner/integrator, deliberately,
+rather than nibbled under the line** — which the protocol also names as the
+wrong move. Until that pass happens, the `build` job's `Test` step is red on
+this branch, and the plan doc says so instead of claiming a green tip.
 
 ## Deliberately NOT done / parked
 

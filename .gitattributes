@@ -20,3 +20,38 @@ src/main/data/spells.json text eol=lf
 # stored blob is already LF — this pin is about the CHECKOUT, which on a box
 # running autocrlf=true would otherwise hand nvm a CR it cannot use.
 .nvmrc text eol=lf
+
+# EVERY SOURCE FILE PRETTIER FORMATS, for the SAME autocrlf mechanism as above —
+# and this one is a gate, not just tree noise.
+#
+# prettier.config.mjs sets `endOfLine: 'lf'`, and Prettier reads the WORKING TREE,
+# never the git blob. The stored blobs here are already LF, so nothing about what
+# git records changes; what changes is that autocrlf=true smudges each of these to
+# CRLF *on checkout*, and `npm run format:check` then reads CRLF where the config
+# says LF and reds the file. Without these lines, every fresh checkout on a box
+# running autocrlf=true — which is the Git-for-Windows default, and is what
+# GitHub's `windows-latest` runners do — fails the format gate on essentially the
+# whole tree.
+#
+# THIS IS NOT HYPOTHETICAL. It was the real failure on this branch's first CI run:
+# `Format check` red on 1493 files. The gap survived the Prettier plan's own Task 5
+# investigation because the two tests used to "disprove" it could not see it —
+# `git hash-object` applies the same clean filter as the stored blob (so a CRLF
+# working file and its LF blob hash identically), and `git checkout -- <file>` is a
+# silent no-op on a file git's stat cache already thinks is unchanged, so the smudge
+# filter never ran. The final whole-branch review caught it by reproducing an actual
+# fresh checkout with `git checkout-index -a --prefix=<tmp>/` — which does NOT skip
+# files — and matching the corruption count to CI's failure exactly.
+#
+# One line per extension on purpose: .gitattributes patterns are fnmatch, NOT shell
+# globs — `*.{ts,tsx}` is a literal filename here, not brace-expansion. The list
+# mirrors package.json's `format`/`format:check` glob exactly; if that glob ever
+# gains an extension, it has to gain a line here in the same commit.
+*.ts text eol=lf
+*.tsx text eol=lf
+*.mts text eol=lf
+*.cts text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
