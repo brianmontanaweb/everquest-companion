@@ -100,6 +100,26 @@ export function petSources(entities: SourceView[]): SourceView[] {
   return entities.filter((e) => e.kind === 'pet')
 }
 
+/** A pet that hasn't landed a crit this segment — no crit % to show, same `crits > 0` gate
+ *  the copy/export text (copyText.ts) already uses before printing one. */
+function isCritlessPet(e: SourceView): boolean {
+  return e.kind === 'pet' && e.crits === 0
+}
+
+/**
+ * PET PRIORITY (owner ruling, 2026-09-12): a pet with no crit this segment sorts BELOW every
+ * other row, regardless of its damage total — its own kind included. Everything else keeps
+ * whatever order it already had: the sort is STABLE and the comparator is 0 for any two rows
+ * that are both crit-having (or both non-pet), so a crit-less pet is the only thing that moves.
+ *
+ * Returns the SAME ARRAY BY REFERENCE when no row needs moving, so a session with no crit-less
+ * pet churns nothing downstream — the same invariant `meterSources` already relies on.
+ */
+function sortCritlessPetsLast<T>(items: T[], isCritless: (item: T) => boolean): T[] {
+  if (!items.some(isCritless)) return items
+  return [...items].sort((a, b) => Number(isCritless(a)) - Number(isCritless(b)))
+}
+
 /**
  * ONE LANE'S RATE — a level-2 row's own DPS, over the SEGMENT's active seconds (owner ruling,
  * 2026-08-05: "every lane shows its own DPS beside its total").
@@ -186,17 +206,18 @@ function combinedSelf(self: SourceView, pets: SourceView[]): SourceView {
  *
  * `combine` off (or nothing to fold) returns the SAME ARRAY BY REFERENCE, so an ungrouped,
  * petless session builds exactly the list it built before and no memo downstream churns — the
- * same invariant `meterScope.scopeSources` keeps.
+ * same invariant `meterScope.scopeSources` keeps. That reference survives a crit-less pet too:
+ * `sortCritlessPetsLast` only allocates when a row actually needs to move.
  *
  * `pct` is re-based over the surviving rows because it is a BAR WIDTH: after the fold your row is
  * usually the longest, and leaving the engine's segment-relative percentages in place would draw
  * a ranking whose top bar stops short for no visible reason.
  */
 export function meterSources(entities: SourceView[], combine: boolean): SourceView[] {
-  if (!combine) return entities
+  if (!combine) return sortCritlessPetsLast(entities, isCritlessPet)
   const self = selfSource(entities)
   const pets = petSources(entities)
-  if (!self || pets.length === 0) return entities
+  if (!self || pets.length === 0) return sortCritlessPetsLast(entities, isCritlessPet)
   const petIds = new Set(pets.map((p) => p.id))
   const kept = entities
     // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives SourceView. Becomes a view descriptor when the source lands.
@@ -225,6 +246,12 @@ function rowLabel(r: OwnRow): string {
   return r.kind === 'pet' ? r.pet.name : r.skill.name
 }
 
+/** A nested pet line item with no crit this segment — the `nestedRows` counterpart of
+ *  `isCritlessPet`, over the line-item shape rather than the raw source. */
+function isCritlessPetRow(r: OwnRow): boolean {
+  return r.kind === 'pet' && r.pet.crits === 0
+}
+
 /**
  * ONE source's flat skill list with `pets` nested into it as line items, ranked together.
  * Pass no pets and this is exactly `flattenSkills` — which is what a drill into the PET itself
@@ -233,13 +260,17 @@ function rowLabel(r: OwnRow): string {
  * Bar widths are re-based on the MERGED maximum — the pet is often the largest row, and a list
  * where two rows both render full-width would be lying about the ranking. A grouped row's
  * children keep their own (group-relative) pct: that expansion is its own ranking.
+ *
+ * A crit-less pet still ranks by total among the skill lanes here, then drops BELOW all of them
+ * (`sortCritlessPetsLast`) — the pet priority rule above, applied to the nested line item.
  */
 export function nestedRows(source: SourceView | null, pets: SourceView[]): OwnRow[] {
   const skills: OwnRow[] = source
     ? flattenSkills(source).map((s) => ({ kind: 'skill' as const, total: s.total, pct: 0, skill: s }))
     : []
   const petRows: OwnRow[] = pets.map((p) => ({ kind: 'pet' as const, total: p.total, pct: 0, pet: toPetRow(p) }))
-  const merged = [...skills, ...petRows].sort((a, b) => b.total - a.total || rowLabel(a).localeCompare(rowLabel(b)))
+  const ranked = [...skills, ...petRows].sort((a, b) => b.total - a.total || rowLabel(a).localeCompare(rowLabel(b)))
+  const merged = sortCritlessPetsLast(ranked, isCritlessPetRow)
   const max = Math.max(1, ...merged.map((r) => r.total))
   return merged.map((r) => {
     const pct = (r.total / max) * 100
