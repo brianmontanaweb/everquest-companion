@@ -21,6 +21,7 @@ import assert from 'node:assert/strict'
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
+import zlib from 'node:zlib'
 import { installPack, sanitizeRegistryPacks } from '../src/main/packRegistry'
 import type { PackInstallProgress, RegistryPack } from '../src/shared/types'
 
@@ -183,4 +184,93 @@ test('sanitizeRegistryPacks keeps the legacy `heron--` owner and the empty sourc
     pack({ name: `heron-pack-${String(i)}`, source_repo: 'heron--/openpeon-hero-soundpack' })
   )
   assert.equal(sanitizeRegistryPacks(many).length, 45)
+})
+
+// ---- decompression-bomb caps: the compressed download cap bounds the WIRE, not the archive ----
+//
+// installPack's MAX_DOWNLOAD_BYTES only ever measured the gzip stream as it arrived; nothing
+// bounded what gunzipSync inflated it to, or how many bytes stageEntries wrote to disk out of
+// that inflation. A small, highly-compressible download (a registry row pointing at a crafted
+// release tarball, or a compromised/MITM'd github.com response) could exhaust memory on gunzip or
+// disk on write — on the Electron MAIN process, which also owns every window. `tarBufOverride`
+// (added alongside this test) lets these drive the real gunzip → readTar → stageEntries path with
+// no network call, exactly like `targetRootOverride` already does for the filesystem side.
+
+function tarHeader(name: string, size: number): Buffer {
+  const header = Buffer.alloc(512)
+  header.write(name, 0, 'ascii')
+  header.write(size.toString(8).padStart(11, '0'), 124, 'ascii')
+  header.write('0', 156, 'ascii') // regular-file typeflag; readTar does not check the checksum
+  return header
+}
+
+/** A minimal valid (unsigned-checksum) tar — enough for `readTar`, which never checks it. */
+function buildTar(entries: readonly { name: string; data: Buffer }[]): Buffer {
+  const parts: Buffer[] = []
+  for (const e of entries) {
+    parts.push(tarHeader(e.name, e.data.length))
+    parts.push(e.data)
+    const pad = (512 - (e.data.length % 512)) % 512
+    if (pad > 0) parts.push(Buffer.alloc(pad))
+  }
+  parts.push(Buffer.alloc(1024)) // two all-zero blocks: end of archive
+  return Buffer.concat(parts)
+}
+
+test('installPack REFUSES a gzip bomb — a small download must not inflate past the memory cap', async () => {
+  // All-zero and highly compressible: ~550MB of content down to a few MB on the wire, which is
+  // exactly the shape of a real bomb (small download, huge inflation) and exactly why the
+  // COMPRESSED-byte cap alone was never enough.
+  const bomb = zlib.gzipSync(Buffer.alloc(550 * 1024 * 1024), { level: 1 })
+  const root = mkdtempSync(join(tmpdir(), 'jos-bomb-'))
+  try {
+    await assert.rejects(
+      installPack(pack({ name: 'bomb-pack' }), noProgress, root, bomb),
+      /exceeded decompressed size cap/
+    )
+    assert.deepEqual(readdirSync(root), [], 'nothing staged or installed from a bomb')
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('installPack REFUSES an archive that fits in memory but is too large to stage to disk', async () => {
+  // Under the 512MB in-memory cap, over the tighter 256MB on-disk cap — the two-tier design's
+  // whole point: bound the transient inflation loosely, bound what actually lands on the user's
+  // disk more tightly.
+  const bigAudio = Buffer.alloc(300 * 1024 * 1024)
+  const tar = buildTar([{ name: 'pack-v1/sounds/bomb.wav', data: bigAudio }])
+  const gz = zlib.gzipSync(tar, { level: 1 })
+  const root = mkdtempSync(join(tmpdir(), 'jos-stage-bomb-'))
+  try {
+    await assert.rejects(
+      installPack(pack({ name: 'stage-bomb-pack' }), noProgress, root, gz),
+      /exceeded staged size cap/
+    )
+    assert.deepEqual(readdirSync(root), [], 'the staged dir is removed, not left half-written')
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('installPack accepts a real pack comfortably under both caps', async () => {
+  // A pack the size of a real one (a small wav + a manifest) must be entirely unaffected by
+  // either cap — this is the "the fix costs a legitimate install nothing" proof.
+  const cesp = JSON.stringify({
+    display_name: 'Tiny Pack',
+    categories: { greeting: [{ file: 'sounds/hi.wav', label: 'Hi' }] }
+  })
+  const tar = buildTar([
+    { name: 'pack-v1/openpeon.json', data: Buffer.from(cesp, 'utf8') },
+    { name: 'pack-v1/sounds/hi.wav', data: Buffer.alloc(1024, 1) }
+  ])
+  const gz = zlib.gzipSync(tar)
+  const root = mkdtempSync(join(tmpdir(), 'jos-real-pack-'))
+  try {
+    await installPack(pack({ name: 'tiny-pack' }), noProgress, root, gz)
+    assert.equal(existsSync(join(root, 'tiny-pack', 'manifest.json')), true)
+    assert.equal(existsSync(join(root, 'tiny-pack', 'sounds', 'hi.wav')), true)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
 })

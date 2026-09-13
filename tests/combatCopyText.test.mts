@@ -381,12 +381,13 @@ test('formatEntityText NESTS the pet as a line item when the preference passes i
       '',
       'Skill          Total  Hits  Avg  Max  Crit  Miss  Resist',
       'Melee          21.2k   210  101  412   11%   18%',
-      // 9.0k ranks the pet second, between Melee and the slay group. Its Avg/Max/Crit/Miss cells
-      // stay EMPTY: a pet aggregate has no single biggest hit, and printing one would invent an
-      // observation.
-      'Vebarn (pet)    9.0k   120',
       'Slay Undead     6.0k    45  133  500   18%   21%',
       'Ancient Wrath   4.0k     5  800  900                 29%',
+      // This pet has landed no crit, so it sorts LAST regardless of its 9.0k total (owner ruling,
+      // 2026-09-12, petRows.sortCritlessPetsLast) — a crit-having pet would still rank by damage.
+      // Its Avg/Max/Crit/Miss cells stay EMPTY: a pet aggregate has no single biggest hit, and
+      // printing one would invent an observation.
+      'Vebarn (pet)    9.0k   120',
       '',
       'Melee rounds: 186 · avg 1.29 hits/round · 41 multi-hit · up to 3/round'
     ].join('\n')

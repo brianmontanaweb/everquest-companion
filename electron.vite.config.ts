@@ -80,11 +80,27 @@ export default defineConfig({
     }
   },
   preload: {
-    // No `externalizeDeps` line: electron-vite 5 defaults it to true, which is exactly what
-    // the old bare `externalizeDepsPlugin()` did here.
     build: {
       // Sourcemaps, for the reason spelled out on the main bundle above.
       sourcemap: true,
+      // SANDBOX (JOS security report, 2026-09-12). Four preload entries below all import the
+      // shared `src/shared/ipc.ts` channel registry, so a normal multi-entry rollup build hoists
+      // it into a shared `out/preload/chunks/ipc-<hash>.js` that each preload then `require()`s.
+      // A SANDBOXED preload's `require` is not Node's — it resolves `electron` plus a small
+      // polyfilled set (events/timers/url) and nothing else, so that `require` fails and
+      // `window.eq`/`eqOverlay`/`eqCursor`/`eqTray` are never installed. `isolatedEntries` is a
+      // real, typed, electron-vite-5 option (`@experimental` in its own types) built for exactly
+      // this: each entry is rebuilt through its own isolated, in-memory Rollup pass with nothing
+      // hoisted out of it, so the emitted file is fully self-contained. It stays inside this same
+      // `electron-vite dev`/`build` invocation — watch-mode file tracking included — so no
+      // separate build script is needed. `externalizeDeps: false` is electron-vite's own stated
+      // prerequisite for sandbox correctness; none of the four preloads import a real
+      // `node_modules` package today (only `electron` and local `../shared/*`), so this is a
+      // no-op now and a guard against a future preload silently reintroducing an unresolvable
+      // `require('some-pkg')` under sandbox. See `src/main/windows.ts`'s `WEB_PREFERENCES` for
+      // the other half (`sandbox: true`) and the verification this needed.
+      isolatedEntries: true,
+      externalizeDeps: false,
       rollupOptions: {
         // Four preloads: the full app bridge (index), a minimal overlay bridge (overlay)
         // that exposes only the combat snapshot + overlay window controls (Task #52),

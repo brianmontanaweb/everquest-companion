@@ -15,11 +15,11 @@
 // A pack is "installed" if listPacks() already surfaces its id (name === id).
 
 import { get as httpsGet } from 'node:https'
-import { gunzipSync } from 'node:zlib'
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { join, resolve, sep } from 'node:path'
+import { join } from 'node:path'
 import { app } from 'electron'
 import { logError } from './errorLog'
+import { gunzipTar, readTar, safeJoin, stageEntries } from './packArchive'
 import {
   cespToManifestSounds,
   deriveSoundId,
@@ -44,6 +44,9 @@ import type {
 const REGISTRY_URL = 'https://peonping.github.io/registry/index.json'
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24h
 const MAX_REDIRECTS = 5
+// This bounds the COMPRESSED tarball as it arrives; packArchive.ts separately bounds what it
+// inflates to and what actually gets written to disk (a gunzip has no ceiling of its own, and a
+// small, highly compressible download can expand orders of magnitude past this).
 const MAX_DOWNLOAD_BYTES = 100 * 1024 * 1024 // 100MB sanity cap
 const PREVIEW_CACHE_MAX = 20 // LRU cap for previewed audio bytes
 const AUDIO_MIME: Record<string, string> = {
@@ -196,71 +199,6 @@ function httpGetBuffer(
     })
     req.on('error', reject)
   })
-}
-
-// ---- minimal tar reader -------------------------------------------------------
-
-interface TarEntry {
-  name: string
-  type: string // '0'/'\0' = file, '5' = dir, 'x'/'g'/'L' = pax/longname (skipped)
-  size: number
-  data: Buffer
-}
-
-/** Parse an octal numeric tar header field (space/NUL terminated). */
-function parseOctal(buf: Buffer, offset: number, length: number): number {
-  const s = buf.toString('ascii', offset, offset + length).replace(/[\0 ]+$/, '').trim()
-  if (!s) return 0
-  const n = parseInt(s, 8)
-  return Number.isFinite(n) ? n : 0
-}
-
-/**
- * Read a (already-gunzipped) tar archive into file entries. 512-byte headers;
- * name (0..100) + optional prefix (345..500) joined; size at 124; typeflag at 156.
- * pax/global/GNU-longname entries ('x','g','L','K') are skipped defensively (their
- * data block is consumed but not interpreted) — we don't need long names for these
- * packs. Two consecutive zero blocks end the archive.
- */
-function readTar(buf: Buffer): TarEntry[] {
-  const out: TarEntry[] = []
-  let off = 0
-  let zeroBlocks = 0
-  while (off + 512 <= buf.length) {
-    const header = buf.subarray(off, off + 512)
-    // End-of-archive: a full zero block.
-    if (header.every((b) => b === 0)) {
-      zeroBlocks++
-      off += 512
-      if (zeroBlocks >= 2) break
-      continue
-    }
-    zeroBlocks = 0
-
-    const name = header.toString('ascii', 0, 100).replace(/\0.*$/, '')
-    const prefix = header.toString('ascii', 345, 500).replace(/\0.*$/, '')
-    const fullName = prefix ? `${prefix}/${name}` : name
-    const size = parseOctal(header, 124, 12)
-    const type = String.fromCharCode(header[156] || 0x30) // '0' default
-    off += 512
-
-    const dataStart = off
-    const padded = Math.ceil(size / 512) * 512
-    off += padded
-
-    // Skip pax extended headers / GNU long-name entries defensively.
-    if (type === 'x' || type === 'g' || type === 'L' || type === 'K') continue
-    // Only regular files ('0' or NUL) carry usable content; skip dirs/links.
-    if (type !== '0' && type !== '\0') continue
-
-    out.push({
-      name: fullName,
-      type,
-      size,
-      data: buf.subarray(dataStart, dataStart + size)
-    })
-  }
-  return out
 }
 
 // ---- registry fetch -----------------------------------------------------------
@@ -435,56 +373,6 @@ export async function findRegistryPack(name: string): Promise<RegistryPack | nul
 
 // ---- install / uninstall ------------------------------------------------------
 
-/** Reject archive entries that would escape the target dir once written. */
-function safeJoin(targetRoot: string, relPath: string): string | null {
-  const dest = resolve(targetRoot, relPath)
-  const rootWithSep = targetRoot.endsWith(sep) ? targetRoot : targetRoot + sep
-  if (dest !== targetRoot && !dest.startsWith(rootWithSep)) return null
-  return dest
-}
-
-/** What the archive walk produced: the raw CESP manifest (if the pack carried one) and how
- *  many audio files were written into the stage dir. */
-interface StagedEntries {
-  cespRaw: string | null
-  wrote: number
-}
-
-/**
- * Write the pack root's files out of the archive into `stageDir`: `openpeon.json` verbatim
- * (kept alongside for provenance) and every audio file flattened under `sounds/`. Throws —
- * after removing the stage dir — on an entry that would escape the target.
- */
-function stageEntries(entries: TarEntry[], rootPrefix: string, stageDir: string): StagedEntries {
-  let cespRaw: string | null = null
-  let wrote = 0
-  for (const entry of entries) {
-    if (!entry.name.startsWith(rootPrefix)) continue
-    const rel = entry.name.slice(rootPrefix.length)
-    if (!rel || rel.endsWith('/')) continue
-
-    const dest = safeJoin(stageDir, rel)
-    if (!dest) {
-      rmSync(stageDir, { recursive: true, force: true })
-      throw new Error(`unsafe archive path: ${entry.name}`)
-    }
-
-    const base = rel.split('/').pop() ?? rel
-    if (rel === 'openpeon.json') {
-      cespRaw = entry.data.toString('utf8')
-      // keep the original alongside for provenance
-      writeFileSync(dest, entry.data)
-      continue
-    }
-    // Only keep audio files, flattened under sounds/ (matches our manifest paths).
-    if (/\.(wav|mp3|ogg)$/i.test(base)) {
-      writeFileSync(join(stageDir, 'sounds', base), entry.data)
-      wrote++
-    }
-  }
-  return { cespRaw, wrote }
-}
-
 /**
  * Convert the staged CESP manifest into ours and write `manifest.json` into the stage dir.
  * Throws — after removing the stage dir — when the CESP is unparseable or converts to nothing.
@@ -522,11 +410,15 @@ function writeConvertedManifest(pack: RegistryPack, stageDir: string, cespRaw: s
  * Install a registry pack end-to-end. Streams progress via `onProgress`. Throws on
  * failure (the IPC layer converts that into a `packs:progress` error + a failed
  * result). `targetRootOverride` lets the validation harness install into a temp dir.
+ * `tarBufOverride` lets it also skip the real network download and hand the (possibly
+ * adversarial) compressed tarball bytes straight to the gunzip/stage step — same pattern,
+ * same reason: exercise the real code path in a test with no network call.
  */
 export async function installPack(
   pack: RegistryPack,
   onProgress: (p: PackInstallProgress) => void,
-  targetRootOverride?: string
+  targetRootOverride?: string,
+  tarBufOverride?: Buffer
 ): Promise<void> {
   const name = pack.name
   // TRAVERSAL GUARD — BEFORE any path is constructed. See assertPackInstallable: `name` and the
@@ -544,15 +436,19 @@ export async function installPack(
 
   // 1. Download the release tarball.
   onProgress({ name, phase: 'downloading', percent: 0 })
-  const tarUrl = `https://github.com/${pack.source_repo}/archive/refs/tags/${pack.source_ref}.tar.gz`
-  const gz = await httpGetBuffer(tarUrl, (received, total) => {
-    if (total) onProgress({ name, phase: 'downloading', percent: Math.round((received / total) * 100) })
-  })
+  let gz: Buffer
+  if (tarBufOverride) {
+    gz = tarBufOverride
+  } else {
+    const tarUrl = `https://github.com/${pack.source_repo}/archive/refs/tags/${pack.source_ref}.tar.gz`
+    gz = await httpGetBuffer(tarUrl, (received, total) => {
+      if (total) onProgress({ name, phase: 'downloading', percent: Math.round((received / total) * 100) })
+    })
+  }
 
-  // 2. Gunzip + tar-extract in memory.
+  // 2. Gunzip (size-capped, see packArchive.ts) + tar-extract in memory.
   onProgress({ name, phase: 'extracting' })
-  const tarBuf = gunzipSync(gz)
-  const entries = readTar(tarBuf)
+  const entries = readTar(gunzipTar(gz))
   if (entries.length === 0) throw new Error('archive contained no files')
 
   // The archive wraps everything in a single top-level dir (e.g. repo-1.0.1/).

@@ -87,6 +87,16 @@ const DROPPED: Record<string, string[]> = {
   'guild motd': [
     '[Wed Jul 29 01:20:33 2026] GUILD MOTD: raid at 8',
     '[Wed Jul 29 01:20:33 2026] Guild message of the day: raid at 8'
+  ],
+  // THE GAP THIS SUITE EXISTS TO CLOSE (2026-09-12): /emote broadcasts arbitrary player-typed
+  // text with no shape a blocklist could ever enumerate. Before the allowlist backstop
+  // (logLineTemplates.ts), none of these matched anything in DROP and all five survived.
+  'custom /emote free text': [
+    "[Thu Sep 10 20:14:02 2026] Grimtak is definitely not a bot, ask me about crypto at t.me/whatever",
+    '[Thu Sep 10 20:14:02 2026] Rykkerr thinks the raid leader has no idea what they are doing',
+    '[Thu Sep 10 20:14:02 2026] Primitive is selling accounts, message me',
+    '[Thu Sep 10 20:14:02 2026] Vexxa just wants everyone to know today is a good day',
+    '[Thu Sep 10 20:14:02 2026] Dranix would like to remind everyone the raid starts at 8pm server'
   ]
 }
 
@@ -128,6 +138,40 @@ const KEPT: Record<string, string[]> = {
   'mob emotes': [
     '[Sun Aug 02 15:30:39 2026] a Teir`Dal ranger yawns.',
     '[Sun Aug 02 15:30:39 2026] an ice giant priest sighs in tranquility.'
+  ],
+  // The allowlist backstop (2026-09-12, logLineTemplates.ts) closes the /emote gap by defaulting
+  // to DROP for anything unrecognized — which means every one of these families had to be found
+  // and named, or they would have silently stopped surviving into a feedback slice. Measured
+  // against tests/fixtures/*.log (a before/after diff against the pre-fix scrubber over all
+  // 93,412 committed lines), not guessed.
+  'third-person cast lifecycle (Rust only conjugates "Your ...", mobs need it too)': [
+    "[Thu Sep 10 20:14:02 2026] Cleric of Innoruuk's Superior Healing spell is interrupted.",
+    '[Thu Sep 10 20:14:02 2026] Ihasthebuffs`s Blast of Poison spell fizzles!',
+    '[Thu Sep 10 20:14:02 2026] Lord Nagafen regains concentration and continues casting.'
+  ],
+  '"You have taken" self-damage (Rust\'s dot regex only conjugates third-person "has taken")': [
+    '[Thu Sep 10 20:14:02 2026] You have taken 30 damage from Deadly Poison by a revultant rat.',
+    '[Thu Sep 10 20:14:02 2026] You hurt yourself for 3 points.'
+  ],
+  'mob/self status-effect flavor (Kind::Unknown live, but canned text, never a bystander\'s words)': [
+    '[Thu Sep 10 20:14:02 2026] Master Yael is tortured by the condemnation of Rodcet Nife.',
+    '[Thu Sep 10 20:14:02 2026] a fire giant warrior adheres to the ground.',
+    '[Thu Sep 10 20:14:02 2026] You writhe in the grip of agony.'
+  ],
+  'system/UI rejection and status text (canned, no bystander content)': [
+    "[Thu Sep 10 20:14:02 2026] You can't use that command right now...",
+    '[Thu Sep 10 20:14:02 2026] Auto attack is on.',
+    '[Thu Sep 10 20:14:02 2026] Your faction standing with Inhabitants of Hate could not possibly get any worse.',
+    '[Thu Sep 10 20:14:02 2026] Tryder tries to cast a spell on you, but you are protected.'
+  ],
+  'per-spell cast/wear-off text from src/main/data/spells.json (isKnownSpellMessage)': [
+    '[Thu Sep 10 20:14:02 2026] You drink the potion.',
+    // msgCastOnOther is scraped as "Someone's muscles pulse with abducted strength." — the
+    // placeholder is stripped and the real target's name substituted, exactly as a real log does.
+    "[Thu Sep 10 20:14:02 2026] Rykkerr's muscles pulse with abducted strength.",
+    // the scrape artifact case: "Someone 's brain begins to melt." (stray space before 's) must
+    // still match the real client's "Nagafen's brain begins to melt." (no space).
+    "[Thu Sep 10 20:14:02 2026] Lord Nagafen's brain begins to melt."
   ]
 }
 

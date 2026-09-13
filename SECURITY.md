@@ -232,6 +232,15 @@ at boundaries we control:
 - **Telemetry has no free-text field to sanitize**, and that claim is tested
   adversarially: a suite poisons every string slot of every event kind and requires
   refusal.
+- **Both routes are unauthenticated by design** — there is no account to check a
+  credential against — **and are rate-limited instead**: API Gateway throttles each
+  one individually and the whole API as a shared ceiling above them (`infra/api.tf`,
+  values and history in `infra/variables.tf` and `infra/README.md`). There is no WAF
+  in front of them. That is a deliberate cost/benefit call for a hobby-scale service,
+  not an oversight: the worst case of someone flooding a route is temporary 429s for
+  everyone else, never data exposure, and the reserved-concurrency + S3 upload-size
+  caps described elsewhere in this document bound what a flood can cost even before
+  the throttle bites.
 
 ## How updates are verified today
 

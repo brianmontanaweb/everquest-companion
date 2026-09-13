@@ -264,18 +264,6 @@ function readStamp(): string | null {
   }
 }
 
-/** electron-vite's CLI entry, via its package manifest — `bin` is the field that names it, and
- *  the subpath itself is not in the package's `exports` map, so it cannot be resolved directly. */
-function electronViteCli(): string {
-  const manifestPath = requireFromRoot.resolve('electron-vite/package.json')
-  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
-    bin?: Record<string, string> | string
-  }
-  const rel = typeof manifest.bin === 'string' ? manifest.bin : manifest.bin?.['electron-vite']
-  if (!rel) throw new Error('e2e: electron-vite declares no bin entry')
-  return join(dirname(manifestPath), rel)
-}
-
 const BUILD_LOCK = join(OUT_DIR, '.build-lock')
 /** A build that has been holding the lock this long is a crashed one, not a slow one. */
 const BUILD_LOCK_STALE_MS = 600_000
@@ -347,9 +335,13 @@ export function buildIfStale(): void {
     // ABSOLUTE outDir on purpose: electron-vite resolves a relative --outDir against each
     // section's own `root`, and the renderer's root is src/renderer — a relative 'out-e2e'
     // silently emits the HTML into src/renderer/out-e2e/ and the app then loads a 404.
+    //
+    // Routed through scripts/electron-vite.mjs, not electronViteCli() directly: this spawn's
+    // stdout is piped (never a TTY), and the preload build's `isolatedEntries` progress reporter
+    // crashes on a non-TTY stdout with no config escape hatch — see that script's own header.
     const res = spawnSync(
       process.execPath,
-      [electronViteCli(), 'build', `--outDir=${OUT_DIR.replace(/\\/g, '/')}`],
+      [join(ROOT, 'scripts', 'electron-vite.mjs'), 'build', `--outDir=${OUT_DIR.replace(/\\/g, '/')}`],
       { cwd: ROOT, stdio: 'inherit' }
     )
     if (res.status !== 0) throw new Error(`electron-vite build failed (exit ${String(res.status)})`)

@@ -125,7 +125,10 @@ function createProbes(app: ElectronApplication): Promise<Record<'pinned' | 'bare
           transparent: true,
           webPreferences: {
             contextIsolation: true,
-            sandbox: false,
+            // Sandboxed, matching src/main/windows.ts's WEB_PREFERENCES — this is the only e2e
+            // spec that loads a real built preload (the cursor-ring bridge), so it is what
+            // proves the sandboxed preload actually works end to end, not just that it builds.
+            sandbox: true,
             ...(preload === '' ? {} : { preload })
           }
         })
