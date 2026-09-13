@@ -55,14 +55,20 @@
 // would never match anything. This module does not replicate the Rust engine's separate
 // removals/corrections passes (`spell-overlay.json`): those exist to keep game-STATE tracking
 // accurate (which spell an event maps to), which has no bearing on whether a given string is
-// genuine client-authored text — the only question this module answers.
+// genuine client-authored text — the only question this module answers. It DOES apply this app's
+// own TS-side removals layer (`src/main/data/spellRemovals.ts`, a distinct, simpler mechanism: "a
+// spell EQ Legends' shipped game does not have at all") before extracting any message text, since
+// a removed spell can never actually be cast, received, or worn off — its scraped message would
+// not be measured client output, it would be a guess, and `tests/spellRemovals.test.mts` requires
+// every raw `spells.json` importer to apply this same layer or state why not.
 //
-// This module has one import, `../main/data/spells.json` (a static data file, not a runtime
-// dependency), and is otherwise zero imports — no `node:`, no Electron, no DOM. It compiles under
-// both tsconfigs and is safe to call 50,000 times in a row on a slice: the corpus below is built
-// ONCE at module load, not per call.
+// This module has two imports, `../main/data/spells.json` and `../main/data/spellRemovals` (both
+// static data / pure functions, not a runtime dependency), and is otherwise zero imports — no
+// `node:`, no Electron, no DOM. It compiles under both tsconfigs and is safe to call 50,000 times
+// in a row on a slice: the corpus below is built ONCE at module load, not per call.
 
 import spellsData from '../main/data/spells.json'
+import { applySpellRemovals } from '../main/data/spellRemovals'
 
 // ---- Combat (engine/crates/eqlog/src/parse/combat.rs) ----
 
@@ -457,9 +463,12 @@ export const KNOWN_SAFE: readonly RegExp[] = [
 // ---- Per-spell messages (src/main/data/spells.json) — see the header's "PER-SPELL MESSAGES" ----
 
 interface RawSpellEntry {
-  readonly msgCastOnYou?: string | null
-  readonly msgCastOnOther?: string | null
-  readonly msgWearsOff?: string | null
+  readonly name: string
+  readonly durationMs: number | null
+  readonly illusion: boolean
+  readonly msgCastOnYou?: string
+  readonly msgCastOnOther?: string
+  readonly msgWearsOff?: string
 }
 
 /** Mirrors `engine/crates/eqlog/src/spelldb/passes.rs`'s `is_placeholder` exactly. */
@@ -489,7 +498,13 @@ function escapeRe(s: string): string {
  * stripped, since a real log prints the target's actual name where the scrape prints `Someone`.
  */
 function buildSpellMessageMatchers(): { self: ReadonlySet<string>; otherSuffix: RegExp | null } {
-  const spells = (spellsData as { spells: readonly RawSpellEntry[] }).spells
+  const raw = (spellsData as { spells: readonly RawSpellEntry[] }).spells
+  // A removal means EQ Legends does not have this spell at all (src/main/data/spellRemovals.ts) —
+  // nobody can ever cast it, receive it, or have it wear off, so its scraped message text is not
+  // real client output and does not belong in a "measured, not guessed" corpus. Applied before
+  // extraction for the same reason every other spells.json consumer applies it before deriving a
+  // table (tests/spellRemovals.test.mts enforces this repo-wide).
+  const { spells } = applySpellRemovals(raw)
   const self = new Set<string>()
   const otherSuffixes = new Set<string>()
   for (const s of spells) {
