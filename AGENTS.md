@@ -354,6 +354,13 @@ docs/agents-archive.md.
 - `npm run typecheck` (node+web) before done. Data JSONs (spells, overlay
   baseline) are ES-imported so electron-vite INLINES them — a path-relative
   readFile would miss in `out/main/`.
+- **Pre-commit hook needs a manual one-time step, same reason
+  `deps:electron` does.** `.npmrc`'s `ignore-scripts=true` blocks
+  `package.json`'s `prepare` script from auto-running husky's setup on
+  `npm ci`/`npm install`. After cloning, run `npm run prepare` once (or
+  `git config core.hooksPath .husky` directly) or the pre-commit
+  auto-format hook silently never activates. CI doesn't need this — it
+  runs `npm run format:check` as an explicit step, same as lint/typecheck.
 - TS: discriminated unions with union-typed tags need a single-guard
   narrowing (`if (ev.t !== 'dmg') return`); `@shared/*` value imports need
   the renderer `resolve.alias` in electron.vite.config.ts. Node-tested
