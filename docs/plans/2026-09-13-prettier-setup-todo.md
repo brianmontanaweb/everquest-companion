@@ -19,8 +19,8 @@ Branch: `tooling/prettier-setup-2026-09-13`. Plan: [2026-09-13-prettier-setup.md
   owner's call)** `cbe63b6b`, `5bb57f7b`
 - [x] **Final whole-branch review — fix wave: `.gitattributes` `eol=lf` for
   the Prettier-formatted extensions, a documented override on the
-  ratchet-only-shrinks gate, and the doc corrections below** — SHAs recorded
-  in the follow-up docs commit (a commit cannot cite its own hash)
+  ratchet-only-shrinks gate, and the doc corrections below** `f94698b6`,
+  plus this docs follow-up recording its verified CI result
 
 ## Task 1 — what actually happened
 
@@ -284,6 +284,29 @@ written by accident.
 Three documentation minors were fixed in the same wave: this file's
 `lint-worklist.md` note (Task 2 section), Task 7's own unchecked checklist
 entry, and the plan doc's "full gate green at the tip" claim.
+
+**Verified against the real CI run, not locally** — which is the entire point
+of this wave, since local verification is what was insufficient the first
+time. Run
+[34776822237](https://github.com/brianmontanaweb/everquest-companion/actions/runs/34776822237),
+`build` job, commit `f94698b6`:
+
+```
+Format check                 ✓  "All matched files use Prettier code style!"
+Lint ratchet only shrinks    ✓  GREW by 104 entry/entries vs 3e72d03d…
+                                APPROVED: widening sanctioned by 1 commit(s) in range:
+                                  f94698b6  Ratchet-Widening-Approved: 104 entries …
+Test                         ✗  pass 4248, fail 1 — the AGENTS.md ceiling, below
+```
+
+Both fixed gates went from red (or never-reached) to green in CI. The
+`.gitattributes` fix was additionally proven locally with the same
+non-mutating fresh-checkout simulation that found the bug: **0 of 1498**
+Prettier-formatted files come out with CRLF, while **54 of 54** unpinned
+`.md`/`.yml` files in the same extraction do — so the smudge filter was
+demonstrably running and the `eol=lf` pins are what stop it. `git ls-files
+--eol` now reports `w/lf` on every source file, including `src/shared/ipc.ts`,
+which was `w/crlf` throughout Task 5.
 
 **Not this plan's problem, deliberately untouched:** the `engine` CI job's
 `combat.rs` test is red. This branch touches **zero** Rust files

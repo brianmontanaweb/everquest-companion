@@ -55,7 +55,9 @@ real CI run rather than inferred:
 
 - **Green:** `Typecheck`, `Lint`, `Format check`, `Lint ratchet only shrinks`
   — the four gates this plan is actually about. The last two are the ones the
-  final review fixed; both were verified in CI, not just locally.
+  final review fixed, and both were read off run
+  [34776822237](https://github.com/brianmontanaweb/everquest-companion/actions/runs/34776822237)
+  rather than inferred from a local command.
 - **Red, caused by this branch:** `Test`, on
   `tests/agentsDoc.test.mts` — AGENTS.md is 20,193 words against a
   20,000-word ceiling. `main` sits at **19,997 words**, three under, so
