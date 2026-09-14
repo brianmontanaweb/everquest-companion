@@ -44,7 +44,7 @@ const CEILING_WORDS = 20_000
  * set well above what each file landed at, leaving room for the later phases
  * that will add to them; a phase that blows one distills rather than raises it.
  * ADD A ROW when a phase creates the next colocated doc. */
-const COLOCATED_DOCS: ReadonlyArray<{ path: string; ceiling: number }> = [
+const COLOCATED_DOCS: readonly { path: string; ceiling: number }[] = [
   { path: join('engine', 'AGENTS.md'), ceiling: 8_000 },
   { path: join('src', 'main', 'AGENTS.md'), ceiling: 8_000 },
 ]
