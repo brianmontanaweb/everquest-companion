@@ -51,7 +51,14 @@
 // `window.eq`. The overlay bundle has no such bridge (and stays MUI-free) — the overlay gets
 // the tradeskill FILTER, not this card.
 
-import { type JSX, type ReactNode, useCallback, useEffect, useState, type ReactElement } from 'react'
+import {
+  type JSX,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+  type ReactElement,
+} from 'react'
 import { Box, CircularProgress, Stack, Typography } from '@mui/material'
 import type { ItemKnowledge } from '@shared/types'
 import { EQ_ITEM_COLORS } from './ItemWindow'
@@ -118,14 +125,19 @@ export function clearItemKnowledgeCache(): void {
  * a name costs no IPC and no spinner. A caller that already holds the record (`preloaded`, the loot
  * view's `knowledgeByKey` map) still wins outright and asks nothing at all.
  */
-function useKnowledgeOnOpen(name: string, preloaded?: ItemKnowledge): {
+function useKnowledgeOnOpen(
+  name: string,
+  preloaded?: ItemKnowledge,
+): {
   data: ItemKnowledge | null
   loading: boolean
 } {
   const [data, setData] = useState<ItemKnowledge | null>(
-    () => preloaded ?? ITEM_KNOWLEDGE.get(name.toLowerCase()) ?? null
+    () => preloaded ?? ITEM_KNOWLEDGE.get(name.toLowerCase()) ?? null,
   )
-  const [loading, setLoading] = useState(() => !preloaded && !ITEM_KNOWLEDGE.get(name.toLowerCase()))
+  const [loading, setLoading] = useState(
+    () => !preloaded && !ITEM_KNOWLEDGE.get(name.toLowerCase()),
+  )
 
   useEffect(() => {
     if (preloaded) {
@@ -178,7 +190,7 @@ function OutcomeName({ name, depth }: { name: string; depth: number }): JSX.Elem
         color: EQ_ITEM_COLORS.name,
         ...(depth <= MAX_HOVER_DEPTH
           ? { textDecoration: 'underline dotted', textUnderlineOffset: 2 }
-          : {})
+          : {}),
       }}
     >
       {name}
@@ -196,7 +208,10 @@ function OutcomeName({ name, depth }: { name: string; depth: number }): JSX.Elem
 function Outcomes({ names, depth }: { names: string[]; depth: number }): JSX.Element | null {
   if (names.length === 0) return null
   return (
-    <Typography component="div" sx={{ color: EQ_ITEM_COLORS.label, fontSize: 11, lineHeight: 1.4, pl: 1 }}>
+    <Typography
+      component="div"
+      sx={{ color: EQ_ITEM_COLORS.label, fontSize: 11, lineHeight: 1.4, pl: 1 }}
+    >
       →{' '}
       {names.map((n, i) => (
         <Box component="span" key={n}>
@@ -232,12 +247,23 @@ function WhatItsFor({ data, depth }: { data: ItemKnowledge; depth: number }): JS
             const where = questUseWhere(u)
             return (
               <Box key={`${u.source}:${u.page ?? ''}:${u.quest}:${u.role ?? ''}`} sx={{ mt: 0.25 }}>
-                <Typography component="div" sx={{ color: EQ_ITEM_COLORS.text, fontSize: 11, lineHeight: 1.4 }}>
+                <Typography
+                  component="div"
+                  sx={{ color: EQ_ITEM_COLORS.text, fontSize: 11, lineHeight: 1.4 }}
+                >
                   {u.quest}
                   {u.role === 'reward' && (
-                    <Box component="span" sx={{ color: EQ_ITEM_COLORS.label }}> · reward</Box>
+                    <Box component="span" sx={{ color: EQ_ITEM_COLORS.label }}>
+                      {' '}
+                      · reward
+                    </Box>
                   )}
-                  {where && <Box component="span" sx={{ color: EQ_ITEM_COLORS.label }}> · {where}</Box>}
+                  {where && (
+                    <Box component="span" sx={{ color: EQ_ITEM_COLORS.label }}>
+                      {' '}
+                      · {where}
+                    </Box>
+                  )}
                 </Typography>
                 {/* Turning it in yields these — one hop, each its own card. */}
                 <Outcomes names={questUseOutcomes(u)} depth={depth} />
@@ -255,7 +281,9 @@ function WhatItsFor({ data, depth }: { data: ItemKnowledge; depth: number }): JS
             // `recipeUseLabel` is the ONE spelling of a recipe use ("Gnome Kabobs (Baking 56)").
             // Here the name is drawn separately (it's the hoverable crafted item), so the
             // tradeskill/trivial half is taken from the same fields the label uses.
-            const how = [r.tradeskill, r.trivial != null ? String(r.trivial) : null].filter(Boolean).join(' ')
+            const how = [r.tradeskill, r.trivial != null ? String(r.trivial) : null]
+              .filter(Boolean)
+              .join(' ')
             return (
               <Typography
                 key={`${r.tradeskill ?? ''}:${r.recipe}`}
@@ -268,7 +296,9 @@ function WhatItsFor({ data, depth }: { data: ItemKnowledge; depth: number }): JS
               </Typography>
             )
           })}
-          {recipes.length > shownRecipes.length && <Muted>+{recipes.length - shownRecipes.length} more</Muted>}
+          {recipes.length > shownRecipes.length && (
+            <Muted>+{recipes.length - shownRecipes.length} more</Muted>
+          )}
         </Box>
       )}
     </Box>
@@ -281,7 +311,7 @@ function KnownItemCard({
   knowledge,
   outcomeDepth,
   stats,
-  extra
+  extra,
 }: {
   name: string
   knowledge?: ItemKnowledge
@@ -341,7 +371,7 @@ function KnownItemCard({
  */
 const NEVER_UPWARD = [
   { name: 'flip', enabled: false },
-  { name: 'preventOverflow', options: { mainAxis: false, altAxis: true } }
+  { name: 'preventOverflow', options: { mainAxis: false, altAxis: true } },
 ]
 
 /**
@@ -369,16 +399,20 @@ const CARD_SURFACE = {
     borderRadius: 1,
     maxWidth: 380,
     p: 1,
-    boxShadow: 6
-  }
+    boxShadow: 6,
+  },
 } as const
 
 const CARD_ARROW = {
-  sx: { color: EQ_ITEM_COLORS.bg, '&::before': { border: `1px solid ${EQ_ITEM_COLORS.border}` } }
+  sx: { color: EQ_ITEM_COLORS.bg, '&::before': { border: `1px solid ${EQ_ITEM_COLORS.border}` } },
 } as const
 
 /** The two shapes `slotProps` takes, hoisted for the same reason — one per mode, not one per row. */
-const CLICK_THROUGH_SLOTS = { popper: CLICK_THROUGH_POPPER, tooltip: CARD_SURFACE, arrow: CARD_ARROW }
+const CLICK_THROUGH_SLOTS = {
+  popper: CLICK_THROUGH_POPPER,
+  tooltip: CARD_SURFACE,
+  arrow: CARD_ARROW,
+}
 const PLAIN_SLOTS = { tooltip: CARD_SURFACE, arrow: CARD_ARROW }
 
 export interface KnownItemTooltipProps {
@@ -416,7 +450,9 @@ export interface KnownItemTooltipProps {
  * Returns nothing at all when inactive — an ordinary card stays UNCONTROLLED, which is MUI's own
  * hover/focus/touch behaviour and not something worth reimplementing to share one code path.
  */
-function useClickThroughControl(active: boolean): Partial<Pick<TooltipProps, 'open' | 'onOpen' | 'onClose'>> {
+function useClickThroughControl(
+  active: boolean,
+): Partial<Pick<TooltipProps, 'open' | 'onOpen' | 'onClose'>> {
   const [open, setOpen] = useState(false)
   const close = useCallback(() => {
     setOpen(false)
@@ -442,7 +478,7 @@ export function KnownItemTooltip({
   stats,
   extra,
   clickThrough = false,
-  children
+  children,
 }: KnownItemTooltipProps): JSX.Element {
   const nested = depth > 0
   const controlled = useClickThroughControl(clickThrough)

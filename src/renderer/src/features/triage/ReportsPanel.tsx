@@ -24,7 +24,7 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import { FEEDBACK_TYPES, REPORT_STATUSES } from '@shared/feedback'
@@ -33,7 +33,7 @@ import {
   TRIAGE_SINCE_CHOICES,
   type TriageDetail,
   type TriageListQuery,
-  type TriageRow
+  type TriageRow,
 } from '@shared/triage'
 import { useWindowedRows } from '../../lib/useWindowedRows'
 import { formatDateTime } from '../../lib/formatDate'
@@ -54,7 +54,7 @@ function FilterSelect({
   options,
   width,
   includeAny,
-  onChange
+  onChange,
 }: {
   label: string
   value: string
@@ -83,7 +83,11 @@ function FilterSelect({
 }
 
 /** Set an optional filter, or remove the key entirely when the user picks "any". */
-function withOptional(query: TriageListQuery, key: 'status' | 'type', value: string): TriageListQuery {
+function withOptional(
+  query: TriageListQuery,
+  key: 'status' | 'type',
+  value: string,
+): TriageListQuery {
   const { [key]: _drop, ...rest } = query
   return value === '' ? rest : { ...rest, [key]: value }
 }
@@ -96,7 +100,7 @@ function Toolbar({
   onRefresh,
   loading,
   shown,
-  total
+  total,
 }: {
   query: TriageListQuery
   setQuery: (q: TriageListQuery) => void
@@ -173,7 +177,7 @@ function Toolbar({
 function ReportRow({
   row,
   selected,
-  onSelect
+  onSelect,
 }: {
   row: TriageRow
   selected: boolean
@@ -201,7 +205,9 @@ function ReportRow({
           <SpamChip score={row.spamScore} />
         </Stack>
       </TableCell>
-      <TableCell sx={{ maxWidth: 420, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <TableCell
+        sx={{ maxWidth: 420, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+      >
         {row.description}
       </TableCell>
     </TableRow>
@@ -221,7 +227,7 @@ function PadRow({ height }: { height: number }): JSX.Element | null {
 function ReportsTable({
   rows,
   selectedId,
-  onSelect
+  onSelect,
 }: {
   rows: TriageRow[]
   selectedId: string | null
@@ -233,7 +239,13 @@ function ReportsTable({
     <Box
       ref={scrollRef}
       data-testid="triage-reports"
-      sx={{ height: TABLE_HEIGHT, overflow: 'auto', border: 1, borderColor: 'divider', borderRadius: 1 }}
+      sx={{
+        height: TABLE_HEIGHT,
+        overflow: 'auto',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+      }}
     >
       <Table size="small" stickyHeader>
         <TableHead>
@@ -268,7 +280,7 @@ function ReportsTable({
  *  (the `present`/`missing` answer) that the list deliberately does not pay per row. */
 function DetailPane({
   reportId,
-  onChanged
+  onChanged,
 }: {
   reportId: string
   onChanged: () => void
@@ -302,7 +314,7 @@ export default function ReportsPanel(): JSX.Element {
     return all.filter((r) =>
       `${r.description} ${r.reportId} ${r.appVersion} ${r.cluster ?? ''}`
         .toLowerCase()
-        .includes(needle)
+        .includes(needle),
     )
   }, [all, deferred])
 

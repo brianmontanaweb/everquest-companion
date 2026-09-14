@@ -83,7 +83,7 @@ export async function openEngineConCard(card: ConCardMessage): Promise<boolean> 
     name: card.name,
     ...(card.level === undefined ? {} : { level: card.level }),
     ...(card.zone === undefined ? {} : { zone: card.zone }),
-    ...(card.rare === true ? { rare: true as const } : {})
+    ...(card.rare === true ? { rare: true as const } : {}),
   }
   // AWAITED SINCE JOS-497 item 1, and the await is one round trip for the creature's LEVEL. The
   // card used to read that out of this process's fold synchronously — the census's last such

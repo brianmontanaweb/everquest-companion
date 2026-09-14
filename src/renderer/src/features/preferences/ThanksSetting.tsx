@@ -47,13 +47,13 @@ export const IMAGE_CREDITS: readonly Credit[] = [
   {
     host: 'wiki.project1999.com',
     url: 'https://wiki.project1999.com/',
-    what: 'the raid-boss portraits on the Raid targets cards'
+    what: 'the raid-boss portraits on the Raid targets cards',
   },
   {
     host: 'eqlwiki.com',
     url: 'https://eqlwiki.com/',
-    what: 'the item icons throughout loot, inventory and the planner - and the item, spell and quest knowledge behind them'
-  }
+    what: 'the item icons throughout loot, inventory and the planner - and the item, spell and quest knowledge behind them',
+  },
 ]
 
 export function ThanksSetting(): JSX.Element {
@@ -107,8 +107,8 @@ export function thanksSection(): PrefSection {
         keywords:
           'thanks credit credits attribution wiki wikis eqlwiki project1999 p99 image images icon icons ' +
           'art portrait portraits picture source sources license attribution offline bundled shipped',
-        content: <ThanksSetting />
-      }
-    ]
+        content: <ThanksSetting />,
+      },
+    ],
   }
 }

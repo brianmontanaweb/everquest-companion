@@ -33,7 +33,7 @@ import type {
   MapLines,
   MapPoint,
   MapSource,
-  ZoneShort
+  ZoneShort,
 } from '../../shared/maps'
 
 /**
@@ -143,7 +143,7 @@ function parsePoint(fields: string[], layer: MapLayer): MapPoint | null {
     size: sizeClass(v[6]),
     label,
     display: label.replace(/_/g, ' '),
-    layer
+    layer,
   }
 }
 
@@ -250,7 +250,7 @@ function computeBounds(parts: readonly MapParseResult[]): MapBounds {
     minY: Infinity,
     maxY: -Infinity,
     minZ: Infinity,
-    maxZ: -Infinity
+    maxZ: -Infinity,
   }
   let seen = false
   for (const part of parts) {
@@ -348,6 +348,6 @@ export function buildMapData(parts: readonly MapParseResult[], meta: MapBuildMet
     zLevels: computeZLevels(drawn),
     ...(heightHint ? { heightHint } : {}),
     credits: mineCredits(parts),
-    skipped
+    skipped,
   }
 }

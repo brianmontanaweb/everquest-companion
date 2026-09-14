@@ -78,12 +78,17 @@ export function useLevelingSeries(state: LevelingSnap): LevelingSeries {
   const levelSegments = useMemo(() => buildLevelSegments(sortedLevels), [sortedLevels])
   const aaCumulative = useMemo<AaPoint[]>(() => {
     let sum = 0
-    return sortedAAs.map((a) => ({ ts: a.ts, y: (sum += a.amount), nowHave: a.nowHave, gain: a.amount }))
+    return sortedAAs.map((a) => ({
+      ts: a.ts,
+      y: (sum += a.amount),
+      nowHave: a.nowHave,
+      gain: a.amount,
+    }))
   }, [sortedAAs])
   const feed = useMemo(() => buildFeed(sortedLevels, sortedAAs), [sortedLevels, sortedAAs])
   const extraTs = useMemo(
     () => [...sortedLevels.map((p) => p.ts), ...aaCumulative.map((a) => a.ts)],
-    [sortedLevels, aaCumulative]
+    [sortedLevels, aaCumulative],
   )
   const aa = useAaHeadline(aas, spends)
   return { sortedLevels, sortedAAs, levelSegments, aaCumulative, feed, extraTs, aa }
@@ -100,8 +105,8 @@ function useAaHeadline(aas: AAEvent[], spends: AASpendEvent[]): AaHeadline {
       aaEarned: acct.earned,
       aaSpent: acct.allocated,
       aaUnspent: aas.length ? acct.unspent : null,
-      boughtCount: acct.boughtCount
+      boughtCount: acct.boughtCount,
     }),
-    [acct, aas]
+    [acct, aas],
   )
 }

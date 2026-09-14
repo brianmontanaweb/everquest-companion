@@ -23,7 +23,16 @@
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import type { ElectronApplication, Page } from 'playwright-core'
-import { ARTIFACTS, check, countOf, hoverAt, note, settle, settleCount, settleGone } from './appHarness.mjs'
+import {
+  ARTIFACTS,
+  check,
+  countOf,
+  hoverAt,
+  note,
+  settle,
+  settleCount,
+  settleGone,
+} from './appHarness.mjs'
 import { playWho } from './gameplay.mjs'
 import type { FixtureLog } from './logFixture.mjs'
 
@@ -56,7 +65,10 @@ const WALK_LEVELS = 40
 
 /** Rendered text of the first match; '' when the node is not mounted. */
 function textOf(page: Page, sel: string): Promise<string> {
-  return page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
+  return page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    sel,
+  )
 }
 
 /** One step of the level stepper, waiting on the stepper's OWN label rather than a sleep. */
@@ -64,7 +76,11 @@ async function stepUp(page: Page): Promise<void> {
   const label = await textOf(page, LEVEL_VALUE)
   await page.click(LEVEL_NEXT, { timeout: 10_000 })
   // Reading the rows before the new level lands would be reading the level we just left.
-  await settle(() => textOf(page, LEVEL_VALUE), (t) => t !== label, { timeoutMs: 8_000 })
+  await settle(
+    () => textOf(page, LEVEL_VALUE),
+    (t) => t !== label,
+    { timeoutMs: 8_000 },
+  )
 }
 
 /** The grammar of the figures line, on whatever row is on screen. */
@@ -73,7 +89,7 @@ async function checkFigures(page: Page): Promise<void> {
   check(
     '…figures read as a compact damage or heal line',
     /(dmg|heal) \d+/.test(text) && /(dmg|heal)\/mana/.test(text),
-    text
+    text,
   )
   check('…with no em dash anywhere in it', !/[—–]/.test(text), text)
 }
@@ -87,7 +103,9 @@ async function checkFigures(page: Page): Promise<void> {
  */
 async function checkOwned(page: Page, at: string): Promise<void> {
   if ((await countOf(page, OWNED)) === 0) {
-    note(`no "already yours" row up to ${at} - this trio shares no spell across two classes that low`)
+    note(
+      `no "already yours" row up to ${at} - this trio shares no spell across two classes that low`,
+    )
     return
   }
   const text = await textOf(page, OWNED)
@@ -114,7 +132,7 @@ async function checkOwned(page: Page, at: string): Promise<void> {
 export async function stepNewAtLevel(page: Page, log: FixtureLog): Promise<void> {
   const mounted = await page.waitForSelector(NEW_AT_LEVEL, { timeout: 20_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!check('the "New at this level" panel is mounted on the Leveling tab', mounted)) return
   const label = await textOf(page, LEVEL_VALUE)
@@ -127,7 +145,9 @@ export async function stepNewAtLevel(page: Page, log: FixtureLog): Promise<void>
   playWho(log)
   await settleGone(page, UNKNOWN_COMBO, { timeoutMs: 15_000 })
   if ((await countOf(page, UNKNOWN_COMBO)) > 0) {
-    note('the combo module resolved no classes even after a live /who — the panel states that instead of drawing empty lists, which is the honest surface')
+    note(
+      'the combo module resolved no classes even after a live /who — the panel states that instead of drawing empty lists, which is the honest surface',
+    )
     return
   }
   check('…and chips naming the loadout it computed against', (await countOf(page, COMBO_CHIP)) > 0)
@@ -140,7 +160,11 @@ export async function stepNewAtLevel(page: Page, log: FixtureLog): Promise<void>
     await stepUp(page)
     rows = await countOf(page, UNLOCK_ROW)
   }
-  check('…and at least one unlock row across the first ten levels', rows > 0, `${String(rows)} rows at ${await textOf(page, LEVEL_VALUE)}`)
+  check(
+    '…and at least one unlock row across the first ten levels',
+    rows > 0,
+    `${String(rows)} rows at ${await textOf(page, LEVEL_VALUE)}`,
+  )
   await stepUnlockRowWorth(page)
 }
 
@@ -200,7 +224,11 @@ async function shoot(page: Page, file: string): Promise<void> {
  */
 async function stepUnlockRowWorth(page: Page): Promise<void> {
   const said = await countOf(page, DIRECTIONAL)
-  check('the panel says `directional` exactly once, and never per row', said === 1, `${String(said)} instances`)
+  check(
+    'the panel says `directional` exactly once, and never per row',
+    said === 1,
+    `${String(said)} instances`,
+  )
 
   let figures = await countOf(page, FIGURES)
   let replaces = await countOf(page, REPLACES)
@@ -211,17 +239,27 @@ async function stepUnlockRowWorth(page: Page): Promise<void> {
   }
   const at = await textOf(page, LEVEL_VALUE)
   if (figures === 0 && (await countOf(page, UNLOCK_ROW)) === 0) {
-    note('this loadout gains no spells in the walked band - a skills-only trio has no figures to draw')
+    note(
+      'this loadout gains no spells in the walked band - a skills-only trio has no figures to draw',
+    )
     return
   }
-  check('…a spell row states what the spell is worth', figures > 0, `${String(figures)} row(s) with figures at ${at}`)
-  check('…and at least one row names the spell it replaces', replaces > 0, `${String(replaces)} row(s) at ${at}`)
+  check(
+    '…a spell row states what the spell is worth',
+    figures > 0,
+    `${String(figures)} row(s) with figures at ${at}`,
+  )
+  check(
+    '…and at least one row names the spell it replaces',
+    replaces > 0,
+    `${String(replaces)} row(s) at ${at}`,
+  )
   await checkFigures(page)
   const replacesText = await textOf(page, REPLACES)
   check(
     '…and `replaces` names a spell and the class whose line it sits in',
     /^replaces .+ \([A-Z]{3}\)/.test(replacesText),
-    replacesText
+    replacesText,
   )
   await checkOwned(page, at)
   await checkReplacedCard(page)
@@ -242,20 +280,46 @@ async function stepUnlockRowWorth(page: Page): Promise<void> {
  */
 async function checkReplacedCard(page: Page): Promise<void> {
   if ((await countOf(page, NOTE_SPELL)) === 0) {
-    note('no row on this level names a spell it replaces, so there is no name inside a note to hover')
+    note(
+      'no row on this level names a spell it replaces, so there is no name inside a note to hover',
+    )
     return
   }
-  const name = await page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', NOTE_SPELL)
-  if (!check('the replaced spell name is reachable to hover', await hoverAt(page, NOTE_SPELL, 0.5, 0.5))) return
+  const name = await page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    NOTE_SPELL,
+  )
+  if (
+    !check(
+      'the replaced spell name is reachable to hover',
+      await hoverAt(page, NOTE_SPELL, 0.5, 0.5),
+    )
+  )
+    return
   const cards = await settleCount(page, SPELL_CARD, 1, { timeoutMs: 8_000 })
-  const opened = await page.evaluate((s) => document.querySelector(s)?.getAttribute('data-spell') ?? '', SPELL_CARD)
-  check('…and hovering it opens THAT spell’s card, not this row’s', cards > 0 && opened === name, `hovered "${name}", card says "${opened}"`)
+  const opened = await page.evaluate(
+    (s) => document.querySelector(s)?.getAttribute('data-spell') ?? '',
+    SPELL_CARD,
+  )
+  check(
+    '…and hovering it opens THAT spell’s card, not this row’s',
+    cards > 0 && opened === name,
+    `hovered "${name}", card says "${opened}"`,
+  )
   // The figures the owner asked the card to carry. A spell with no hitpoint line legitimately has
   // none (most of the catalog), so an absence is a note and a PRESENCE is asserted for its grammar.
-  const figures = await page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', CARD_FIGURES)
-  if (figures === '') note(`the card for "${name}" states no figures - its page prints no hitpoint line`)
+  const figures = await page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    CARD_FIGURES,
+  )
+  if (figures === '')
+    note(`the card for "${name}" states no figures - its page prints no hitpoint line`)
   else {
-    check('…and the card states what that spell is worth, in the row’s own words', /(dmg|heal) \d+/.test(figures), figures)
+    check(
+      '…and the card states what that spell is worth, in the row’s own words',
+      /(dmg|heal) \d+/.test(figures),
+      figures,
+    )
     check('…with no em dash in it', !/[—–]/.test(figures), figures)
   }
   await page.mouse.move(2, 2)
@@ -267,9 +331,9 @@ function rowChips(page: Page): Promise<string[][]> {
   return page.evaluate(
     ([rowSel, chipSel]) =>
       Array.from(document.querySelectorAll(rowSel)).map((r) =>
-        Array.from(r.querySelectorAll(chipSel)).map((c) => (c as HTMLElement).innerText.trim())
+        Array.from(r.querySelectorAll(chipSel)).map((c) => (c as HTMLElement).innerText.trim()),
       ),
-    [UNLOCK_ROW, CLASS_CHIP]
+    [UNLOCK_ROW, CLASS_CHIP],
   )
 }
 
@@ -294,14 +358,27 @@ async function typeQuery(page: Page, query: string): Promise<number> {
  * because order-free is the claim. The count is a floor.
  */
 export async function stepUnlockSearch(page: Page): Promise<void> {
-  if (!check('the "New at this level" panel carries a search box', (await countOf(page, SEARCH)) === 1)) return
+  if (
+    !check(
+      'the "New at this level" panel carries a search box',
+      (await countOf(page, SEARCH)) === 1,
+    )
+  )
+    return
   const levelBefore = await textOf(page, LEVEL_VALUE)
   const rowsBefore = await countOf(page, UNLOCK_ROW)
 
   const results = await typeQuery(page, '27-28 cleric shaman')
   if (!check('typing a query turns the panel into the matching spells', results === 1)) return
-  const dimmed = await page.evaluate((s) => document.querySelector(s)?.getAttribute('data-dimmed') ?? '', STEPPER)
-  check('…and the level stepper greys out, because no level on screen governs these rows', dimmed === 'true', dimmed)
+  const dimmed = await page.evaluate(
+    (s) => document.querySelector(s)?.getAttribute('data-dimmed') ?? '',
+    STEPPER,
+  )
+  check(
+    '…and the level stepper greys out, because no level on screen governs these rows',
+    dimmed === 'true',
+    dimmed,
+  )
 
   const chips = await rowChips(page)
   check('…with real result rows', chips.length > 0, `${String(chips.length)} rows`)
@@ -310,21 +387,44 @@ export async function stepUnlockSearch(page: Page): Promise<void> {
   check(
     '…and every row is a cleric or shaman row at 27 or 28, stated ON the chip',
     chips.length > 0 && offenders.length === 0,
-    offenders.length ? `${String(offenders.length)} rows without a CLR/SHM 27-28 chip: ${offenders[0].join(' ')}` : chips[0]?.join(' ')
+    offenders.length
+      ? `${String(offenders.length)} rows without a CLR/SHM 27-28 chip: ${offenders[0].join(' ')}`
+      : chips[0]?.join(' '),
   )
 
   // ORDER-FREE, on screen: the same words in a different order are the same answer.
-  const names = await page.evaluate((s) => Array.from(document.querySelectorAll(s)).map((e) => (e as HTMLElement).innerText), UNLOCK_ROW)
+  const names = await page.evaluate(
+    (s) => Array.from(document.querySelectorAll(s)).map((e) => (e as HTMLElement).innerText),
+    UNLOCK_ROW,
+  )
   await typeQuery(page, 'shaman 27-28 cleric')
-  const flipped = await page.evaluate((s) => Array.from(document.querySelectorAll(s)).map((e) => (e as HTMLElement).innerText), UNLOCK_ROW)
-  check('…and the same words in any order are the same answer', flipped.join('|') === names.join('|'), `${String(names.length)} vs ${String(flipped.length)} rows`)
+  const flipped = await page.evaluate(
+    (s) => Array.from(document.querySelectorAll(s)).map((e) => (e as HTMLElement).innerText),
+    UNLOCK_ROW,
+  )
+  check(
+    '…and the same words in any order are the same answer',
+    flipped.join('|') === names.join('|'),
+    `${String(names.length)} vs ${String(flipped.length)} rows`,
+  )
 
   // CLEARING GIVES THE LEVEL VIEW BACK — the same level, the same rows, the stepper live again.
   await typeQuery(page, '')
   const back = await settleCount(page, UNLOCK_ROW, rowsBefore, { timeoutMs: 8_000 })
-  check('clearing the box restores the level view exactly', (await countOf(page, RESULTS)) === 0 && back === rowsBefore, `${String(back)} rows vs ${String(rowsBefore)} before`)
-  check('…on the level it was left on', (await textOf(page, LEVEL_VALUE)) === levelBefore, `${levelBefore} → ${await textOf(page, LEVEL_VALUE)}`)
-  const live = await page.evaluate((s) => document.querySelector(s)?.getAttribute('data-dimmed') ?? '', STEPPER)
+  check(
+    'clearing the box restores the level view exactly',
+    (await countOf(page, RESULTS)) === 0 && back === rowsBefore,
+    `${String(back)} rows vs ${String(rowsBefore)} before`,
+  )
+  check(
+    '…on the level it was left on',
+    (await textOf(page, LEVEL_VALUE)) === levelBefore,
+    `${levelBefore} → ${await textOf(page, LEVEL_VALUE)}`,
+  )
+  const live = await page.evaluate(
+    (s) => document.querySelector(s)?.getAttribute('data-dimmed') ?? '',
+    STEPPER,
+  )
   check('…and the stepper is live again', live === 'false', live)
 }
 
@@ -348,12 +448,25 @@ export async function stepUnlockEra(page: Page): Promise<void> {
     check('a search for an out-of-era spell returns the results body', false)
     return
   }
-  const named = await page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', SPELL_NAME)
-  check('the search finds a spell the wiki badges out of era rather than hiding it', named === 'Sloths Healing', named)
-  check('…and the row says so', (await countOf(page, ERA_CHIP)) === 1, `${String(await countOf(page, ERA_CHIP))} chips`)
+  const named = await page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    SPELL_NAME,
+  )
+  check(
+    'the search finds a spell the wiki badges out of era rather than hiding it',
+    named === 'Sloths Healing',
+    named,
+  )
+  check(
+    '…and the row says so',
+    (await countOf(page, ERA_CHIP)) === 1,
+    `${String(await countOf(page, ERA_CHIP))} chips`,
+  )
 
   // The card behind the same name carries the same verdict — the surface that has no row to chip.
-  if (check('the badged spell name is reachable to hover', await hoverAt(page, SPELL_NAME, 0.5, 0.5))) {
+  if (
+    check('the badged spell name is reachable to hover', await hoverAt(page, SPELL_NAME, 0.5, 0.5))
+  ) {
     // THE CARD BEING IN THE DOM IS NOT THE CONDITION — the popper mounts on the enter delay and the
     // body then fetches over IPC, so a read taken at mount sees a card with no record in it yet and
     // no era pill on it, whatever the sidecar says. Waiting for the STAT ROWS is waiting for the
@@ -363,7 +476,7 @@ export async function stepUnlockEra(page: Page): Promise<void> {
     await settle(
       () => countOf(page, `${SPELL_CARD} [data-testid="spell-card-stat"]`),
       (n) => n > 0,
-      { timeoutMs: 15_000 }
+      { timeoutMs: 15_000 },
     )
     check('…and its card wears the same words', (await countOf(page, CARD_ERA)) === 1)
     // Closed and WAITED FOR: a MUI popper left open grows the document and fails `stepPageScroll`.
@@ -372,8 +485,14 @@ export async function stepUnlockEra(page: Page): Promise<void> {
   }
 
   await typeQuery(page, 'snails healing')
-  const inEra = await page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', SPELL_NAME)
+  const inEra = await page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    SPELL_NAME,
+  )
   check('its in-era sibling is found the same way', inEra === 'Snails Healing', inEra)
-  check('…and wears nothing at all, because the wiki says nothing about it', (await countOf(page, ERA_CHIP)) === 0)
+  check(
+    '…and wears nothing at all, because the wiki says nothing about it',
+    (await countOf(page, ERA_CHIP)) === 0,
+  )
   await typeQuery(page, '')
 }

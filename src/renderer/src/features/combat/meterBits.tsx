@@ -15,7 +15,15 @@ import type { AbilityMulti, AbilityRiposte } from './abilityStats'
 import { formatNum as fmt } from '../../lib/formatRate'
 
 /** One labeled figure in a readout: a small uppercase caption over the value. */
-export function StatItem({ label, value, color }: { label: string; value: string; color?: string }): React.JSX.Element {
+export function StatItem({
+  label,
+  value,
+  color,
+}: {
+  label: string
+  value: string
+  color?: string
+}): React.JSX.Element {
   return (
     <Box sx={{ minWidth: 0 }}>
       <Typography
@@ -27,12 +35,16 @@ export function StatItem({ label, value, color }: { label: string; value: string
           lineHeight: 1.4,
           letterSpacing: '0.06em',
           textTransform: 'uppercase',
-          color: 'text.disabled'
+          color: 'text.disabled',
         }}
       >
         {label}
       </Typography>
-      <Typography variant="caption" noWrap sx={{ display: 'block', fontWeight: 600, color: color ?? 'text.primary' }}>
+      <Typography
+        variant="caption"
+        noWrap
+        sx={{ display: 'block', fontWeight: 600, color: color ?? 'text.primary' }}
+      >
         {value}
       </Typography>
     </Box>
@@ -77,17 +89,32 @@ export function MoreRows({ n, onMore }: { n: number; onMore?: () => void }): Rea
  * share is over (melee + slay, the two categories a weapon swing lands in) rather than leaving a
  * bare percentage to be read against whichever number is nearest.
  */
-export function RiposteStats({ riposte, a }: { riposte: AbilityRiposte; a: string }): React.JSX.Element | null {
+export function RiposteStats({
+  riposte,
+  a,
+}: {
+  riposte: AbilityRiposte
+  a: string
+}): React.JSX.Element | null {
   if (riposte.swings <= 0) return null
   return (
     <>
-      <StatItem label="Riposte swings" value={`${a}${fmt(riposte.swings)} (${a}${fmt(riposte.hits)} landed)`} />
+      <StatItem
+        label="Riposte swings"
+        value={`${a}${fmt(riposte.swings)} (${a}${fmt(riposte.hits)} landed)`}
+      />
       <StatItem label="Riposte damage" value={`${a}${fmt(riposte.damage)} · ${riposte.text}`} />
     </>
   )
 }
 
-export function MultiAttackStats({ multi, a }: { multi: AbilityMulti; a: string }): React.JSX.Element | null {
+export function MultiAttackStats({
+  multi,
+  a,
+}: {
+  multi: AbilityMulti
+  a: string
+}): React.JSX.Element | null {
   if (multi.rounds <= 0) return null
   const round = (p: number): string => `${a}${Math.round(p)}%`
   return (

@@ -101,17 +101,17 @@ export const COUNT_SOURCE_OPTIONS: readonly CountSourceOption[] = [
   {
     value: 'log',
     label: 'Log only (ever looted)',
-    phrase: 'the looted log only - the inventory export is ignored'
+    phrase: 'the looted log only - the inventory export is ignored',
   },
   {
     value: 'inventory',
     label: 'Export only (as dumped)',
-    phrase: 'the inventory export only - the looted log is ignored'
+    phrase: 'the inventory export only - the looted log is ignored',
   },
   {
     value: 'both',
     label: 'Both (higher of the two)',
-    phrase: 'the log and the inventory export, whichever holds more of each item'
+    phrase: 'the log and the inventory export, whichever holds more of each item',
   },
   {
     // LAST, because it is the widening that goes the other way: the first three each ADD a witness,
@@ -121,8 +121,8 @@ export const COUNT_SOURCE_OPTIONS: readonly CountSourceOption[] = [
     value: 'rebaseline',
     label: 'Rebaseline (export, then log forward)',
     phrase:
-      'the inventory export as the starting point, plus everything looted since it was written - older log lines are discarded'
-  }
+      'the inventory export as the starting point, plus everything looted since it was written - older log lines are discarded',
+  },
 ]
 
 /** The counting-from sentence fragment for a source. Falls back to the value, which cannot happen

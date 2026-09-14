@@ -147,6 +147,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Format check
+        run: npm run format:check
+
       # THE RATCHET ONLY SHRINKS -- enforced rather than trusted. The step above
       # already reds on NEW debt, because eslint.ratchet.mjs suppresses only the exact
       # file x rule pairs it lists. What lint cannot see is somebody ADDING an entry to
@@ -450,6 +453,9 @@ jobs:
       # See the build job for what this gate is and why it is green.
       - name: Lint
         run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
 
       - name: Test
         run: npm test

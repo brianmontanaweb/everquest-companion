@@ -22,7 +22,7 @@ import {
   SKY_QUEST_REWARDS,
   correctSkyQuestReward,
   needsRewardCorrection,
-  skyQuestRewardFor
+  skyQuestRewardFor,
 } from '../src/shared/skyQuestRewards'
 import { isRenamedItem } from '../src/shared/itemRenames'
 import { rewardInferredQuests } from '../src/renderer/src/features/posky/rewardInference'
@@ -76,7 +76,7 @@ test('the committed scrape still names the WRONG reward on every corrected quest
     assert.equal(
       q.reward,
       r.from,
-      `${r.questName}: posky no longer says "${r.from}" - a re-scrape landed the fix, so delete the row`
+      `${r.questName}: posky no longer says "${r.from}" - a re-scrape landed the fix, so delete the row`,
     )
     assert.ok(needsRewardCorrection(q), `${r.questName}: the guard disagrees with the scrape`)
   }
@@ -176,12 +176,12 @@ test('THE WHOLE POINT: the corrected quest infers from a held reward, the stale 
     assert.equal(
       rewardInferredQuests([q], inv).size,
       0,
-      `${r.questName}: the UNcorrected quest must not match - that is the reported defect`
+      `${r.questName}: the UNcorrected quest must not match - that is the reported defect`,
     )
     assert.equal(
       rewardInferredQuests([correctSkyQuestReward(q)], inv).size,
       1,
-      `${r.questName}: corrected, a held reward must vouch for it`
+      `${r.questName}: corrected, a held reward must vouch for it`,
     )
   }
 })

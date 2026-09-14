@@ -178,7 +178,11 @@ interface Ctx {
 
 const NOW = Date.now()
 
-function oneOf<T extends string>(value: unknown, allowed: readonly T[], flag: string): T | undefined {
+function oneOf<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  flag: string,
+): T | undefined {
   if (value === undefined) return undefined
   if (typeof value !== 'string' || !(allowed as readonly string[]).includes(value)) {
     throw new Error(`${flag}: expected one of ${allowed.join(', ')}`)
@@ -326,14 +330,22 @@ async function cmdDigest(ctx: Ctx): Promise<void> {
     console.log(JSON.stringify({ reports, clusters }, null, 2))
     return
   }
-  console.log(renderDigest(reports, clusters, { sinceMs: filter.sinceMs, nowMs: NOW, channel: filter.channel }))
+  console.log(
+    renderDigest(reports, clusters, {
+      sinceMs: filter.sinceMs,
+      nowMs: NOW,
+      channel: filter.channel,
+    }),
+  )
 }
 
 async function cmdCluster(ctx: Ctx): Promise<void> {
   const { clusters } = digestInputs(await reportsFor(ctx, '30d'))
   for (const c of clusters) {
     const flag = c.regression ? ` REGRESSION(${c.versions[0]})` : ''
-    console.log(`${c.id}  ${c.kind.padEnd(6)} ${String(c.reportIds.length).padStart(3)}x${flag}  ${c.label}`)
+    console.log(
+      `${c.id}  ${c.kind.padEnd(6)} ${String(c.reportIds.length).padStart(3)}x${flag}  ${c.label}`,
+    )
     if (c.signature) console.log(`        signature ${c.signature}`)
   }
   if (!ctx.args.write) {
@@ -375,7 +387,15 @@ async function cmdSet(ctx: Ctx): Promise<void> {
 
 function issueBody(row: Row, r: TriageReport): string {
   const env = JSON.parse(text(row.env_json, '{}')) as Record<string, unknown>
-  const facts = ['appVersion', 'channel', 'updateChannel', 'platform', 'osRelease', 'arch', 'electron']
+  const facts = [
+    'appVersion',
+    'channel',
+    'updateChannel',
+    'platform',
+    'osRelease',
+    'arch',
+    'electron',
+  ]
     .map((k) => `- ${k}: ${text(env[k], '?')}`)
     .join('\n')
   // Every attachment is MENTIONED and none is reproduced — THE LAW (see the file header): an
@@ -385,14 +405,17 @@ function issueBody(row: Row, r: TriageReport): string {
   const kinds = [
     r.hasLog ? 'a scrubbed log slice' : '',
     r.hasInventory ? 'an inventory export' : '',
-    r.hasAchievements ? 'an achievements export' : ''
+    r.hasAchievements ? 'an achievements export' : '',
   ]
   const present = kinds.filter((s) => s.length > 0)
   const attached =
     present.length <= 1
       ? (present[0] ?? '')
       : `${present.slice(0, -1).join(', ')} and ${present[present.length - 1]}`
-  const log = attached === '' ? '' : `\n\n${attached[0].toUpperCase()}${attached.slice(1)} was attached and is available to maintainers; it is deliberately not reproduced here.`
+  const log =
+    attached === ''
+      ? ''
+      : `\n\n${attached[0].toUpperCase()}${attached.slice(1)} was attached and is available to maintainers; it is deliberately not reproduced here.`
   return `### Reported\n\n${r.description}\n\n### Environment\n\n${facts}\n\n_Report ${r.reportId}_${log}\n`
 }
 
@@ -413,7 +436,16 @@ async function cmdIssue(ctx: Ctx): Promise<void> {
 
   const url = execFileSync(
     'gh',
-    ['issue', 'create', '--title', title, '--body', body, '--label', r.type === 'bug' ? 'bug' : 'enhancement'],
+    [
+      'issue',
+      'create',
+      '--title',
+      title,
+      '--body',
+      body,
+      '--label',
+      r.type === 'bug' ? 'bug' : 'enhancement',
+    ],
     { encoding: 'utf8' },
   ).trim()
   await setTriage(c, reportId, { issueUrl: url, status: 'accepted' })
@@ -509,7 +541,8 @@ async function cmdClosed(ctx: Ctx): Promise<void> {
     console.log(`telemetry: ${telemetry} (analytics open|close)`)
     return
   }
-  if (state !== 'on' && state !== 'off') throw new Error('closed: expected `on`, `off`, or no argument to read the current state')
+  if (state !== 'on' && state !== 'off')
+    throw new Error('closed: expected `on`, `off`, or no argument to read the current state')
   const message = typeof ctx.args.message === 'string' ? ctx.args.message : undefined
   await setAccepting(ctx.clients(), state === 'off', message)
   console.log(

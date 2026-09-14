@@ -36,7 +36,7 @@ export const PERF_PROCESS_TYPES: readonly PerfProcessType[] = [
   'renderer',
   'gpu',
   'utility',
-  'other'
+  'other',
 ]
 
 /**
@@ -133,7 +133,7 @@ export function round(value: number, places = 1): number {
  */
 export function aggregateMetrics(metrics: readonly RawProcessMetric[]): PerfProcessRow[] {
   const rows = new Map<PerfProcessType, PerfProcessRow>(
-    PERF_PROCESS_TYPES.map((type) => [type, { type, count: 0, cpuPercent: 0, memoryMb: 0 }])
+    PERF_PROCESS_TYPES.map((type) => [type, { type, count: 0, cpuPercent: 0, memoryMb: 0 }]),
   )
   for (const m of metrics) {
     const row = rows.get(perfProcessType(m.type))
@@ -150,7 +150,10 @@ export function aggregateMetrics(metrics: readonly RawProcessMetric[]): PerfProc
 
 /** App-wide totals from the per-type rows — summed from the SAME rows the table renders, so the
  *  chip and the popover can never disagree about what the app is using. */
-export function totalsOf(rows: readonly PerfProcessRow[]): { cpuPercent: number; memoryMb: number } {
+export function totalsOf(rows: readonly PerfProcessRow[]): {
+  cpuPercent: number
+  memoryMb: number
+} {
   let cpu = 0
   let mem = 0
   for (const r of rows) {
@@ -180,7 +183,7 @@ export function lagStats(drifts: readonly number[]): PerfLagStats {
   return {
     samples: clean.length,
     p95Ms: round(percentile(clean, 95), 0),
-    maxMs: round(clean.length ? Math.max(...clean) : 0, 0)
+    maxMs: round(clean.length ? Math.max(...clean) : 0, 0),
   }
 }
 
@@ -255,7 +258,7 @@ export function foldBlockSamples(samples: readonly BlockSample[]): StartupBlockS
     samples: clean.length,
     maxBlockMs: round(worst ? worst.driftMs : 0, 0),
     blocksOver50Ms: clean.filter((s) => s.driftMs >= STARTUP_BLOCK_THRESHOLD_MS).length,
-    ...(worst && Number.isFinite(worst.atMs) ? { worstAtMs: round(worst.atMs, 0) } : {})
+    ...(worst && Number.isFinite(worst.atMs) ? { worstAtMs: round(worst.atMs, 0) } : {}),
   }
 }
 
@@ -325,7 +328,7 @@ export function foldStutterSamples(drifts: readonly number[]): StartupStutterPro
     p95Ms: round(percentile(clean, 95), 0),
     maxMs: round(clean.length ? Math.max(...clean) : 0, 0),
     lateTicks,
-    latePct: clean.length ? Math.round((lateTicks / clean.length) * 100) : 0
+    latePct: clean.length ? Math.round((lateTicks / clean.length) * 100) : 0,
   }
 }
 
@@ -374,7 +377,7 @@ export function lagSeverity(lag: PerfLagStats): PerfSeverity {
 export function pushSample(
   ring: readonly PerfHudSample[],
   next: PerfHudSample,
-  cap = PERF_RING_SIZE
+  cap = PERF_RING_SIZE,
 ): PerfHudSample[] {
   if (cap <= 0) return []
   const out = [...ring, next]
@@ -458,7 +461,7 @@ export const STARTUP_PHASES = [
   'windowCreated',
   'tailAttached',
   'replayDone',
-  'rendererHydrated'
+  'rendererHydrated',
 ] as const
 
 export type StartupPhase = (typeof STARTUP_PHASES)[number]
@@ -553,8 +556,7 @@ export type StartupMarkError =
   | { code: 'time-went-backwards'; phase: StartupPhase; atMs: number; previousMs: number }
 
 export type StartupMarkResult =
-  | { ok: true; marks: StartupMark[] }
-  | { ok: false; error: StartupMarkError; marks: StartupMark[] }
+  { ok: true; marks: StartupMark[] } | { ok: false; error: StartupMarkError; marks: StartupMark[] }
 
 const phaseIndex = (phase: StartupPhase): number => STARTUP_PHASES.indexOf(phase)
 
@@ -598,7 +600,7 @@ const race = (a: StartupPhase, b: StartupPhase): boolean =>
 export function addMark(
   marks: readonly StartupMark[],
   phase: StartupPhase,
-  atMs: number
+  atMs: number,
 ): StartupMarkResult {
   const kept = [...marks]
   if (phaseMarked(kept, phase)) {
@@ -613,7 +615,7 @@ export function addMark(
     return {
       ok: false,
       error: { code: 'time-went-backwards', phase, atMs: at, previousMs: last.atMs },
-      marks: kept
+      marks: kept,
     }
   }
   return { ok: true, marks: [...kept, { phase, atMs: at }] }
@@ -650,7 +652,7 @@ export interface StartupProfileMeta {
  */
 export function buildProfile(
   marks: readonly StartupMark[],
-  meta: StartupProfileMeta
+  meta: StartupProfileMeta,
 ): StartupProfile {
   let previous = 0
   const phases = marks.map((m) => {
@@ -663,7 +665,7 @@ export function buildProfile(
     version: meta.version,
     phases,
     totalMs: round(previous, 1),
-    complete: marks.length === STARTUP_PHASES.length
+    complete: marks.length === STARTUP_PHASES.length,
   }
   if (meta.eventsReplayed !== undefined) profile.eventsReplayed = Math.max(0, meta.eventsReplayed)
   if (meta.block !== undefined) profile.block = meta.block
@@ -671,14 +673,15 @@ export function buildProfile(
     profile.replay = {
       slices: Math.max(0, Math.round(finite(meta.replay.slices))),
       workMs: round(Math.max(0, finite(meta.replay.workMs)), 1),
-      restMs: round(Math.max(0, finite(meta.replay.restMs)), 1)
+      restMs: round(Math.max(0, finite(meta.replay.restMs)), 1),
     }
   }
   // JOS-57's scope addition. The probe folded its own numbers (`foldStutterSamples`), so this
   // copies rather than re-rounds; the other two are single values and are cleaned here.
   if (meta.stutter !== undefined) profile.stutter = meta.stutter
   if (meta.newBytes !== undefined) profile.newBytes = Math.max(0, Math.round(finite(meta.newBytes)))
-  if (meta.firstMbMs !== undefined) profile.firstMbMs = round(Math.max(0, finite(meta.firstMbMs)), 1)
+  if (meta.firstMbMs !== undefined)
+    profile.firstMbMs = round(Math.max(0, finite(meta.firstMbMs)), 1)
   // Copied rather than re-cleaned: `foldDataWeight` has already rounded and totalled its own
   // numbers, the same reason `stutter` is copied above.
   if (meta.data !== undefined) profile.data = meta.data
@@ -697,7 +700,7 @@ function parseBlockStats(raw: unknown): StartupBlockStats | null {
     samples: Math.max(0, finite(raw.samples)),
     maxBlockMs: Math.max(0, finite(raw.maxBlockMs)),
     blocksOver50Ms: Math.max(0, finite(raw.blocksOver50Ms)),
-    ...(typeof raw.worstAtMs === 'number' ? { worstAtMs: Math.max(0, finite(raw.worstAtMs)) } : {})
+    ...(typeof raw.worstAtMs === 'number' ? { worstAtMs: Math.max(0, finite(raw.worstAtMs)) } : {}),
   }
 }
 
@@ -711,7 +714,7 @@ function parseReplayStats(raw: unknown): ReplayDutyStats | null {
   return {
     slices: Math.max(0, finite(raw.slices)),
     workMs: Math.max(0, finite(raw.workMs)),
-    restMs: Math.max(0, finite(raw.restMs))
+    restMs: Math.max(0, finite(raw.restMs)),
   }
 }
 
@@ -728,7 +731,7 @@ function parseStutterProbe(raw: unknown): StartupStutterProbe | null {
     p95Ms: Math.max(0, finite(raw.p95Ms)),
     maxMs: Math.max(0, finite(raw.maxMs)),
     lateTicks: Math.max(0, finite(raw.lateTicks)),
-    latePct: Math.max(0, finite(raw.latePct))
+    latePct: Math.max(0, finite(raw.latePct)),
   }
 }
 
@@ -777,7 +780,7 @@ export function parseStartupProfile(raw: unknown): StartupProfile | null {
     ...optionalCount(raw.newBytes, 'newBytes'),
     ...optionalCount(raw.firstMbMs, 'firstMbMs'),
     ...(data === null ? {} : { data }),
-    complete: raw.complete === true
+    complete: raw.complete === true,
   }
 }
 

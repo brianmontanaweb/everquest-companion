@@ -28,7 +28,7 @@ export const SORT_OPTIONS: readonly { value: SortKey; label: string }[] = [
   { value: 'least-missing', label: 'Fewest missing' },
   { value: 'name', label: 'Quest name (A-Z)' },
   { value: 'class', label: 'By class' },
-  { value: 'island', label: 'By island' }
+  { value: 'island', label: 'By island' },
 ]
 
 export function isSortKey(v: unknown): v is SortKey {
@@ -118,7 +118,7 @@ export function questDropRecency(items: readonly ItemDropped[]): number | undefi
  */
 function byOptional(
   key: (q: QuestProgress) => number | undefined,
-  order: (a: number, b: number) => number
+  order: (a: number, b: number) => number,
 ): (a: QuestProgress, b: QuestProgress) => number {
   return (a, b) => {
     const ka = key(a)
@@ -136,10 +136,12 @@ export function compareQuests(sort: SortKey): (a: QuestProgress, b: QuestProgres
     // Newest drop first. A quest none of whose items has ever dropped has NO recency —
     // it sorts below every quest that has one, by name.
     case 'recent':
-      return byOptional((q) => q.lastDropAt, (x, y) => y - x)
+      return byOptional(
+        (q) => q.lastDropAt,
+        (x, y) => y - x,
+      )
     case 'closest':
-      return (a, b) =>
-        b.ratio - a.ratio || a.missing.length - b.missing.length || byName(a, b)
+      return (a, b) => b.ratio - a.ratio || a.missing.length - b.missing.length || byName(a, b)
     case 'least-missing':
       return (a, b) => a.missing.length - b.missing.length || b.ratio - a.ratio || byName(a, b)
     case 'name':
@@ -174,7 +176,7 @@ export type PinRank = (q: QuestProgress) => number
 export function orderQuests(
   quests: readonly QuestProgress[],
   sort: SortKey,
-  rank: PinRank
+  rank: PinRank,
 ): QuestProgress[] {
   const sorted = sortQuests(quests, sort)
   if (pinsFavorites(sort)) sorted.sort((a, b) => rank(b) - rank(a))

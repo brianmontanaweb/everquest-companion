@@ -96,7 +96,7 @@ export const VIEW_LABELS: Record<View, string> = {
   // Named even though no nav row draws it: this table is also what a drill's Back button reads
   // (navOrigin.ts), so the day a spell page links onward to something else, that something's Back
   // says "Back to Spell" without anybody remembering to come here.
-  spell: 'Spell'
+  spell: 'Spell',
 }
 
 // Every member of `View` this BUILD can actually render. A view missing here is silently
@@ -124,7 +124,7 @@ const KNOWN_VIEWS: View[] = [
   // runtime read of the opt-in on a dev server — so a contributor's checkout, which has no
   // `EQ_OWNER_TOOLS`, bounces a persisted 'triage' to the default view instead of routing to a
   // tab it will not draw.
-  ...(OWNER_TOOLS ? (['triage'] as const) : [])
+  ...(OWNER_TOOLS ? (['triage'] as const) : []),
 ]
 
 export function loadView(): View {
@@ -172,11 +172,12 @@ export const DEFAULT_GEAR_TAB: View = 'gear'
  * JOS-327 is the proof it works — graduating the Character tab was one word moved in `KNOWN_VIEWS`
  * above, no edit down here, and no window in which the bar offered a tab that mounts nothing.
  */
-export const GEAR_AREA_VIEWS: readonly View[] = (
+export const GEAR_AREA_VIEWS: readonly View[] =
   // Character sits LEFT of Wish list, in the run with everything else (owner ruling 2026-08-13:
   // the right-pushed placement hid the tab well enough that the owner reported it missing).
-  ['gear', 'planner', 'character', 'wishlist'] as const
-).filter((v) => (KNOWN_VIEWS as readonly View[]).includes(v))
+  (['gear', 'planner', 'character', 'wishlist'] as const).filter((v) =>
+    (KNOWN_VIEWS as readonly View[]).includes(v),
+  )
 
 /** Is this view drawn inside the gear area? (⇒ the nav row reads selected, the tab bar is up.) */
 export function isGearAreaView(view: View): boolean {

@@ -98,7 +98,7 @@ export function withDefaultPack(prefs: SoundPackPrefs, packId: string | null): S
 export function withTombstone(
   prefs: SoundPackPrefs,
   packId: string,
-  removed: boolean
+  removed: boolean,
 ): SoundPackPrefs {
   const current = prefs.removedPackIds ?? []
   const next = removed ? [...current, packId] : current.filter((id) => id !== packId)
@@ -134,7 +134,7 @@ export const CESP_CATEGORY_SLUGS: readonly string[] = [
   'task-error',
   'input-required',
   'resource-limit',
-  'user-spam'
+  'user-spam',
 ]
 
 /**
@@ -212,13 +212,14 @@ function firstSound(pack: SoundPack): string | null {
 export function resolveSoundRef(
   ref: AlertSoundRef,
   packs: readonly SoundPack[],
-  fallback: SoundFallback
+  fallback: SoundFallback,
 ): SoundRefResolution {
   const own = packs.find((p) => p.id === ref.packId)
   if (own?.sounds[ref.soundId]) return { packId: ref.packId, soundId: ref.soundId, status: 'exact' }
   if (own) {
     const near = sameCategorySound(own, ref.soundId) ?? firstSound(own)
-    if (near) return { packId: own.id, soundId: near, status: 'substituted', askedPackId: ref.packId }
+    if (near)
+      return { packId: own.id, soundId: near, status: 'substituted', askedPackId: ref.packId }
   }
   const def = packs.find((p) => p.id === fallback.defaultPackId)
   if (def) {
@@ -228,7 +229,8 @@ export function resolveSoundRef(
         ? fallback.fallbackSoundId
         : null) ??
       firstSound(def)
-    if (near) return { packId: def.id, soundId: near, status: 'substituted', askedPackId: ref.packId }
+    if (near)
+      return { packId: def.id, soundId: near, status: 'substituted', askedPackId: ref.packId }
   }
   return { packId: ref.packId, soundId: ref.soundId, status: 'missing', askedPackId: ref.packId }
 }
@@ -246,11 +248,13 @@ export function resolveSoundRef(
 export function seedSoundRef(
   ref: AlertSoundRef,
   packs: readonly SoundPack[],
-  fallback: SoundFallback
+  fallback: SoundFallback,
 ): AlertSoundRef {
   const asked = { packId: fallback.defaultPackId, soundId: ref.soundId }
   const resolved = resolveSoundRef(asked, packs, fallback)
-  return resolved.status === 'missing' ? asked : { packId: resolved.packId, soundId: resolved.soundId }
+  return resolved.status === 'missing'
+    ? asked
+    : { packId: resolved.packId, soundId: resolved.soundId }
 }
 
 /**
@@ -264,7 +268,7 @@ export function seedSoundRef(
 export function preferredPack(
   packs: readonly SoundPack[],
   defaultPackId: string | undefined,
-  shippedPackId: string
+  shippedPackId: string,
 ): SoundPack | null {
   return (
     (defaultPackId ? packs.find((p) => p.id === defaultPackId) : undefined) ??

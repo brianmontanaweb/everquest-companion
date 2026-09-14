@@ -28,7 +28,7 @@ import assert from 'node:assert/strict'
 import {
   flipNoticeBatch,
   flipNoticeKind,
-  telemetryFlipNoticeEnabled
+  telemetryFlipNoticeEnabled,
 } from '../src/main/telemetry/optOut'
 import { telemetryFlushEnabled } from '../src/main/telemetry/net'
 import {
@@ -37,7 +37,7 @@ import {
   TELEMETRY_FLIP_KINDS,
   type TelemetryBatch,
   type TelemetryEnvelope,
-  type TelemetryPrefs
+  type TelemetryPrefs,
 } from '../src/shared/telemetry'
 import { validateTelemetryBatch, validateTelemetryEvent } from '../src/shared/telemetryValidate'
 import { DIM_NONE, rollupBatch, USAGE_METRICS } from '../src/shared/telemetryRollup'
@@ -49,14 +49,14 @@ const ENV: TelemetryEnvelope = {
   appVersion: '0.13.0',
   channel: 'prod',
   platform: 'win32',
-  tzOffsetBucket: -5
+  tzOffsetBucket: -5,
 }
 
 const prefs = (patch: Partial<TelemetryPrefs> = {}): TelemetryPrefs => ({
   ...DEFAULT_TELEMETRY_PREFS,
   noticeShown: true,
   analyticsId: ENV.analyticsId,
-  ...patch
+  ...patch,
 })
 
 const URL = 'https://example.invalid/v1/telemetry'
@@ -157,7 +157,7 @@ test('the validator accepts both kinds and REFUSES A PAYLOAD ON THEM, by constru
       durationMs: 90_000,
       count: 7,
       characterName: 'Primitive',
-      reason: "didn't like it"
+      reason: "didn't like it",
     })
     assert.equal(res.ok, true, kind)
     if (!res.ok) continue
@@ -200,8 +200,8 @@ test('two flips on two builds are two rows — the dim is the version, not a sha
     env: ENV,
     events: [
       { ts: 1, ev: { t: 'optOut' } },
-      { ts: 2, ev: { t: 'optOut' } }
-    ]
+      { ts: 2, ev: { t: 'optOut' } },
+    ],
   }
   // Same envelope ⇒ same dim ⇒ ONE row of 2. The version is an envelope fact, so a batch cannot
   // carry flips from two builds; two builds means two batches, which is what the panel sees.
@@ -215,7 +215,7 @@ const u = (metric: string, dim: string, n: number): UsageRow => ({
   cohort: 'user',
   metric,
   dim,
-  n
+  n,
 })
 
 const install = (appVersion = '0.13.0'): InstallRow => ({
@@ -224,7 +224,7 @@ const install = (appVersion = '0.13.0'): InstallRow => ({
   daysSeen: 3,
   appVersion,
   channel: 'prod',
-  cohort: 'user'
+  cohort: 'user',
 })
 
 test('buildCoverage totals the flips, splits them per build, and never nets them', () => {
@@ -232,9 +232,9 @@ test('buildCoverage totals the flips, splits them per build, and never nets them
     [
       u(USAGE_METRICS.optOuts, '0.13.0', 4),
       u(USAGE_METRICS.optOuts, '0.12.0', 1),
-      u(USAGE_METRICS.optIns, '0.13.0', 2)
+      u(USAGE_METRICS.optIns, '0.13.0', 2),
     ],
-    [install(), install(), install('0.12.0')]
+    [install(), install(), install('0.12.0')],
   )
   assert.equal(c.optOuts, 5)
   assert.equal(c.optIns, 2)
@@ -244,7 +244,7 @@ test('buildCoverage totals the flips, splits them per build, and never nets them
   // hold "net opt-outs", because that number does not describe anything.
   assert.deepEqual(c.byVersion, [
     { version: '0.13.0', optOuts: 4, optIns: 2 },
-    { version: '0.12.0', optOuts: 1, optIns: 0 }
+    { version: '0.12.0', optOuts: 1, optIns: 0 },
   ])
 })
 
@@ -287,6 +287,6 @@ test('an empty fleet renders zeros rather than throwing — every builder here i
     optOuts: 0,
     optIns: 0,
     byVersion: [],
-    anyFlips: false
+    anyFlips: false,
   })
 })

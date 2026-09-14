@@ -48,7 +48,7 @@ import {
   type StartupReplayStats,
   type TelemetryBatch,
   type TelemetryEvent,
-  type TelemetryRecord
+  type TelemetryRecord,
 } from './telemetry'
 import { foldLiveRiders, LIVE_METRICS } from './telemetryRollupLive'
 import {
@@ -56,7 +56,7 @@ import {
   perfDimsFromEvents,
   UNKNOWN_PERF_DIMS,
   type PerfCubeRow,
-  type PerfInstallDims
+  type PerfInstallDims,
 } from './telemetryPerfCube'
 
 /** `dim` is NOT NULL in the schema; this is what "this metric has no dimension" looks like. */
@@ -348,7 +348,7 @@ export const USAGE_METRICS = {
    * they are in this table at all: they are the first numbers this pipeline has ever carried
    * about a session that was RUNNING, as opposed to one that was starting.
    */
-  ...LIVE_METRICS
+  ...LIVE_METRICS,
 } as const
 
 export type UsageMetric = (typeof USAGE_METRICS)[keyof typeof USAGE_METRICS]
@@ -392,7 +392,7 @@ export type UsageMetric = (typeof USAGE_METRICS)[keyof typeof USAGE_METRICS]
 export const HEALTH_NON_ERROR_FIELDS: readonly string[] = [
   'imageFetchFailures',
   'imageCacheReadFailures',
-  'utilityProcessGone'
+  'utilityProcessGone',
 ]
 
 /** Whether a `health` dim's field name is an ERROR for rate purposes. See the list above. */
@@ -415,7 +415,7 @@ export const SESSION_MS_EDGES = [
   30 * 60_000,
   60 * 60_000,
   120 * 60_000,
-  240 * 60_000
+  240 * 60_000,
 ] as const
 
 /**
@@ -661,8 +661,10 @@ function foldSetup(bag: Bag, ev: Extract<TelemetryEvent, { t: 'setupSnapshot' }>
  * per-function ceiling; the cut is by subject — what the install is set to, and what it runs on.
  */
 function foldMachineClass(bag: Bag, ev: Extract<TelemetryEvent, { t: 'setupSnapshot' }>): void {
-  if (ev.cpuCountBucket !== undefined) add(bag, USAGE_METRICS.setupCpu, String(ev.cpuCountBucket), 1)
-  if (ev.totalMemBucket !== undefined) add(bag, USAGE_METRICS.setupMem, String(ev.totalMemBucket), 1)
+  if (ev.cpuCountBucket !== undefined)
+    add(bag, USAGE_METRICS.setupCpu, String(ev.cpuCountBucket), 1)
+  if (ev.totalMemBucket !== undefined)
+    add(bag, USAGE_METRICS.setupMem, String(ev.totalMemBucket), 1)
   if (ev.gpuVendor !== undefined) add(bag, USAGE_METRICS.setupGpuVendor, ev.gpuVendor, 1)
   if (ev.gpuCompositing !== undefined) {
     add(bag, USAGE_METRICS.setupCompositing, ev.gpuCompositing, 1)
@@ -695,7 +697,7 @@ function foldMachineClass(bag: Bag, ev: Extract<TelemetryEvent, { t: 'setupSnaps
 function foldHealth(
   bag: Bag,
   ev: Extract<TelemetryEvent, { t: 'healthCounters' }>,
-  version: string
+  version: string,
 ): void {
   add(bag, USAGE_METRICS.healthReports, version, 1)
   add(bag, USAGE_METRICS.health, `${version}:rendererCrashes`, ev.rendererCrashes)
@@ -709,7 +711,12 @@ function foldHealth(
   add(bag, USAGE_METRICS.health, `${version}:imageFetchFailures`, ev.imageFetchFailures ?? 0)
   add(bag, USAGE_METRICS.health, `${version}:suppressedErrorLines`, ev.suppressedErrorLines ?? 0)
   // …and JOS-266's, read through `?? 0` for the same reason a third time.
-  add(bag, USAGE_METRICS.health, `${version}:imageCacheReadFailures`, ev.imageCacheReadFailures ?? 0)
+  add(
+    bag,
+    USAGE_METRICS.health,
+    `${version}:imageCacheReadFailures`,
+    ev.imageCacheReadFailures ?? 0,
+  )
   // JOS-364's two lost-child counters, `?? 0` for the fourth and fifth time. The GPU one counts
   // into the error RATE (it is a crash of a process we depend on); the utility one is on the deny
   // list below, because Chromium's utility processes come and go by design.
@@ -728,8 +735,18 @@ function foldHealth(
  */
 function foldStartup(bag: Bag, s: StartupReplayStats, version: string): void {
   add(bag, USAGE_METRICS.startupReplays, version, 1)
-  add(bag, USAGE_METRICS.startupReplayMs, `${version}:${String(bucketOf(s.replayMs, REPLAY_MS_EDGES))}`, 1)
-  add(bag, USAGE_METRICS.startupBlockMs, `${version}:${String(bucketOf(s.maxBlockMs, BLOCK_MS_EDGES))}`, 1)
+  add(
+    bag,
+    USAGE_METRICS.startupReplayMs,
+    `${version}:${String(bucketOf(s.replayMs, REPLAY_MS_EDGES))}`,
+    1,
+  )
+  add(
+    bag,
+    USAGE_METRICS.startupBlockMs,
+    `${version}:${String(bucketOf(s.maxBlockMs, BLOCK_MS_EDGES))}`,
+    1,
+  )
   add(bag, USAGE_METRICS.startupDutyPct, version, s.dutyPct)
   add(bag, USAGE_METRICS.startupBlocksOver50, version, s.blocksOver50)
   add(bag, USAGE_METRICS.startupEventsReplayed, version, s.eventsReplayed)
@@ -831,7 +848,13 @@ function foldErrors(records: readonly TelemetryRecord[], appVersion: string): Er
     if (ev.t !== 'errorReport') continue
     const held = bag.get(ev.fingerprint)
     if (held) held.n += ev.count
-    else bag.set(ev.fingerprint, { appVersion, fingerprint: ev.fingerprint, n: ev.count, exemplar: ev })
+    else
+      bag.set(ev.fingerprint, {
+        appVersion,
+        fingerprint: ev.fingerprint,
+        n: ev.count,
+        exemplar: ev,
+      })
   }
   return [...bag.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v)
 }
@@ -932,16 +955,17 @@ export function rollupBatch(batch: TelemetryBatch, ctx: RollupContext): RollupRe
   // next batch from this install sees no difference to report.
   if (ctx.upgraded) add(bag, USAGE_METRICS.upgrades, DIM_NONE, 1)
   for (const { ev } of batch.events) foldEvent(bag, ev, batch.env.appVersion)
-  const counters = [...bag.entries()]
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([, v]) => v)
+  const counters = [...bag.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v)
   return {
     counters,
     funnels: foldFunnels(batch.events, batch.env.appVersion),
     errors: foldErrors(batch.events, batch.env.appVersion),
     // THIS BATCH'S OWN SNAPSHOT WINS over the install row's stored dims: it is the newer fact,
     // and a machine that just changed its EQ window mode says so in the launch that noticed.
-    perf: foldPerfCube(batch.events, perfDimsFromEvents(batch.events) ?? ctx.perf ?? UNKNOWN_PERF_DIMS)
+    perf: foldPerfCube(
+      batch.events,
+      perfDimsFromEvents(batch.events) ?? ctx.perf ?? UNKNOWN_PERF_DIMS,
+    ),
   }
 }
 

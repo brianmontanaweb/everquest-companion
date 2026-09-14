@@ -17,11 +17,11 @@ import {
   asKnowledgeRecord,
   fetchAndDefine,
   installKnowledgeMissFetch,
-  type MissOutcome
+  type MissOutcome,
 } from '../src/main/dataServer/knowledgeMissFetch'
 import type {
   KnowledgeDefineParams,
-  KnowledgeMissMessage
+  KnowledgeMissMessage,
 } from '../src/shared/dataServer/protocol.generated'
 
 interface Rig {
@@ -50,7 +50,7 @@ function arm(opts: { itemFails?: boolean; mobFails?: boolean; defineFails?: bool
       rig.defined.push(params)
       await Promise.resolve()
     },
-    note: (line) => rig.notes.push(line)
+    note: (line) => rig.notes.push(line),
   })
   return rig
 }
@@ -58,7 +58,7 @@ function arm(opts: { itemFails?: boolean; mobFails?: boolean; defineFails?: bool
 const itemMiss: KnowledgeMissMessage = {
   kind: 'knowledgeMiss',
   domain: 'item',
-  name: 'Shard of Nothing'
+  name: 'Shard of Nothing',
 }
 const mobMiss: KnowledgeMissMessage = { kind: 'knowledgeMiss', domain: 'mob', name: 'Blugurg' }
 
@@ -138,7 +138,7 @@ test('two frames for one name do not open two wiki requests', async () => {
     define: async () => {
       await Promise.resolve()
     },
-    note: () => undefined
+    note: () => undefined,
   })
 
   const first = fetchAndDefine(itemMiss)

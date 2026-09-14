@@ -55,7 +55,7 @@ export const ZONE_PALETTE: readonly string[] = [
   '#f08bb4',
   '#5ad8a6',
   '#d96a6a',
-  '#8ca0b3'
+  '#8ca0b3',
 ]
 
 /** One drawable zone visit: already clipped to the domain and merged with its neighbours. */
@@ -136,7 +136,15 @@ export function dataBounds(snap: ProgressionSnap, extraTs: readonly number[]): D
   const b = { lo: Infinity, hi: -Infinity }
   for (const ts of extraTs) widen(b, ts)
   // Columns are ascending (log order is time order), so the ends are the extremes.
-  for (const col of [snap.expTs, snap.killTs, snap.witnessTs, snap.lootTs, snap.zoneStart, snap.levelTs, snap.aaGainTs]) {
+  for (const col of [
+    snap.expTs,
+    snap.killTs,
+    snap.witnessTs,
+    snap.lootTs,
+    snap.zoneStart,
+    snap.levelTs,
+    snap.aaGainTs,
+  ]) {
     if (col.length > 0) {
       widen(b, col[0])
       widen(b, col[col.length - 1])
@@ -159,7 +167,7 @@ export function dataBounds(snap: ProgressionSnap, extraTs: readonly number[]): D
 export function chartDomain(
   snap: ProgressionSnap,
   extraTs: readonly number[],
-  scale: TimescaleId = 'full'
+  scale: TimescaleId = 'full',
 ): ChartScale | null {
   const b = dataBounds(snap, extraTs)
   return b ? { ...windowFor(b.lo, b.hi, scale), w: CHART_W, padX: PAD_X } : null

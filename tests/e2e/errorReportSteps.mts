@@ -39,7 +39,11 @@ export const DELIBERATE = 'parseDamage failed on'
 /** A damage line out of the staged fixture — a REAL one, with real names and numbers in it. */
 function gameplayLine(log: FixtureLog): string | null {
   const lines = readFileSync(log.logPath, 'utf8').split(/\r?\n/)
-  return lines.find((l) => / for \d+ points of damage/.test(l)) ?? lines.find((l) => l.length > 40) ?? null
+  return (
+    lines.find((l) => / for \d+ points of damage/.test(l)) ??
+    lines.find((l) => l.length > 40) ??
+    null
+  )
 }
 
 /**
@@ -72,9 +76,13 @@ export async function stepThrowRendererError(page: Page, log: FixtureLog): Promi
   // fire-and-forget IPC lands before the windows are told to shut — one of the two places in
   // this suite where a clock is the honest instrument, because the thing being waited for is a
   // message with no reply.
-  await settle(() => page.evaluate(() => document.readyState), (s) => s === 'complete', {
-    timeoutMs: 5_000
-  }).catch(() => undefined)
+  await settle(
+    () => page.evaluate(() => document.readyState),
+    (s) => s === 'complete',
+    {
+      timeoutMs: 5_000,
+    },
+  ).catch(() => undefined)
   await sleep(500)
   note(`threw a renderer TypeError carrying a real log line: ${line.slice(0, 60)}…`)
 }
@@ -108,12 +116,12 @@ function checkNoGameplay(ev: Record<string, unknown>, log: FixtureLog): void {
   check(
     'NO GAMEPLAY STRING SURVIVES — not a name, not a verb, not an amount',
     leaked.length === 0,
-    `leaked ${leaked.slice(0, 5).join(', ')} into ${String(ev.redactedMessage)}`
+    `leaked ${leaked.slice(0, 5).join(', ')} into ${String(ev.redactedMessage)}`,
   )
   check(
     '…because the whole log line collapsed to one placeholder',
     String(ev.redactedMessage).endsWith('<logline>'),
-    String(ev.redactedMessage)
+    String(ev.redactedMessage),
   )
 }
 
@@ -126,7 +134,7 @@ export function stepErrorReport(userData: string, log: FixtureLog): void {
     !check(
       'a thrown renderer error becomes an errorReport in the ring',
       reports.length >= 1,
-      `${String(reports.length)} of ${String(events.length)}: ${[...new Set(events.map((r) => String(r.ev.t)))].join(', ')}`
+      `${String(reports.length)} of ${String(events.length)}: ${[...new Set(events.map((r) => String(r.ev.t)))].join(', ')}`,
     )
   ) {
     return
@@ -136,7 +144,7 @@ export function stepErrorReport(userData: string, log: FixtureLog): void {
   check(
     '…and it is a report the SERVER would accept — the same validator, on real bytes',
     valid.ok,
-    JSON.stringify(valid)
+    JSON.stringify(valid),
   )
   // THE RING, AND THE WINDOW IT COULD NOT COVER UNTIL JOS-501.
   //
@@ -153,12 +161,13 @@ export function stepErrorReport(userData: string, log: FixtureLog): void {
   check(
     '…with breadcrumbs — the engine lifecycle edges that are all a boot-window crash can have',
     Array.isArray(crumbs) && crumbs.length > 0,
-    JSON.stringify(crumbs)
+    JSON.stringify(crumbs),
   )
   check(
     '…and every one of them is a kind, never content',
-    Array.isArray(crumbs) && crumbs.every((c) => /^(engine:[a-z]+|module:[a-zA-Z]+|[a-zA-Z]+)$/.test(c.kind)),
-    JSON.stringify(crumbs?.map((c) => c.kind))
+    Array.isArray(crumbs) &&
+      crumbs.every((c) => /^(engine:[a-z]+|module:[a-zA-Z]+|[a-zA-Z]+)$/.test(c.kind)),
+    JSON.stringify(crumbs?.map((c) => c.kind)),
   )
   // FRAMES ARE EMPTY IN THIS SPEC, AND THAT IS CORRECT RATHER THAN A GAP — measured, after a
   // version of this step asserted `length > 0` and went red.
@@ -179,7 +188,7 @@ export function stepErrorReport(userData: string, log: FixtureLog): void {
   check(
     '…and frames that are BUNDLE-relative, never a path on this machine',
     Array.isArray(frames) && frames.every((f) => f.file.startsWith('out/')),
-    JSON.stringify(frames)
+    JSON.stringify(frames),
   )
   const segments = userData.split(/[/\\]/).filter((seg) => seg.length > 2)
   const wire = JSON.stringify(ev)
@@ -187,7 +196,7 @@ export function stepErrorReport(userData: string, log: FixtureLog): void {
   check(
     '…and NO segment of this machine’s own userData path appears anywhere in the report',
     named.length === 0,
-    `${named.join(', ')} in ${wire.slice(0, 120)}`
+    `${named.join(', ')} in ${wire.slice(0, 120)}`,
   )
   checkNoGameplay(ev, log)
 }

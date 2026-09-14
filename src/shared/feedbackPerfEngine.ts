@@ -208,20 +208,15 @@ function signed(value: number | undefined, max: number): number | undefined {
 /** The serve table, summed into the three numbers the block carries. */
 function servePath(rows: readonly EngineServeRow[]): Partial<FeedbackPerfEngine> {
   if (rows.length === 0) return {}
-  const worst = rows
-    .map((r) => r.foldToFrameUsMax)
-    .filter((us): us is number => us !== undefined)
+  const worst = rows.map((r) => r.foldToFrameUsMax).filter((us): us is number => us !== undefined)
   return {
     frames: whole(
       rows.reduce((sum, r) => sum + r.frames, 0),
-      MAX_ENGINE_COUNT
+      MAX_ENGINE_COUNT,
     ),
-    servedKb: whole(
-      kb(rows.reduce((sum, r) => sum + r.payloadWeight, 0)),
-      MAX_ENGINE_KB
-    ),
+    servedKb: whole(kb(rows.reduce((sum, r) => sum + r.payloadWeight, 0)), MAX_ENGINE_KB),
     // Absent, never zero, when no frame anywhere had a fold behind it.
-    ...(worst.length === 0 ? {} : { worstServeUs: whole(Math.max(...worst), MAX_ENGINE_US) })
+    ...(worst.length === 0 ? {} : { worstServeUs: whole(Math.max(...worst), MAX_ENGINE_US) }),
   }
 }
 
@@ -232,7 +227,7 @@ function ringSummary(moments: readonly { frames: number }[]): Partial<FeedbackPe
   return {
     windows: whole(moments.length, MAX_ENGINE_COUNT),
     busiestFrames: whole(Math.max(...moments.map((m) => m.frames)), MAX_ENGINE_COUNT),
-    quietWindows: whole(moments.filter((m) => m.frames === 0).length, MAX_ENGINE_COUNT)
+    quietWindows: whole(moments.filter((m) => m.frames === 0).length, MAX_ENGINE_COUNT),
   }
 }
 
@@ -276,11 +271,13 @@ export function foldPerfEngine(input: EngineFoldInput): FeedbackPerfEngine | nul
     ...optional('scanMs', whole(snap.ingest.scanMs, MAX_ENGINE_MS)),
     ...optional(
       'scanKb',
-      snap.ingest.scanBytes === undefined ? undefined : whole(kb(snap.ingest.scanBytes), MAX_ENGINE_KB)
+      snap.ingest.scanBytes === undefined
+        ? undefined
+        : whole(kb(snap.ingest.scanBytes), MAX_ENGINE_KB),
     ),
     ...servePath(snap.serve),
     budgets: verdicts(input.budgets?.budgets ?? []),
-    ...ringSummary(input.timeline?.timeline ?? [])
+    ...ringSummary(input.timeline?.timeline ?? []),
   }
 }
 
@@ -328,14 +325,13 @@ export function validatePerfEngineField(raw: unknown): Validated<PerfEngineField
 // the same reason, and the drift risk is what its own comment names: a validator importing its
 // error type from the thing that consumes it is the arrangement that lets them separate.
 type Validated<T> =
-  | { ok: true; value: T }
-  | { ok: false; error: 'invalid_payload'; message: string; field: string }
+  { ok: true; value: T } | { ok: false; error: 'invalid_payload'; message: string; field: string }
 
 const bad = (field: string, message: string): Validated<never> => ({
   ok: false,
   error: 'invalid_payload',
   message,
-  field
+  field,
 })
 
 const isRec = (v: unknown): v is Record<string, unknown> =>
@@ -378,7 +374,7 @@ const OPTIONAL_FIELDS = [
   ['worstServeUs', MAX_ENGINE_US],
   ['windows', MAX_ENGINE_COUNT],
   ['busiestFrames', MAX_ENGINE_COUNT],
-  ['quietWindows', MAX_ENGINE_COUNT]
+  ['quietWindows', MAX_ENGINE_COUNT],
 ] as const
 
 /** The budget list on an incoming report. AT MOST ONE ENTRY PER BUDGET, so a forged list cannot
@@ -388,7 +384,7 @@ function validateBudgets(raw: unknown): Validated<FeedbackPerfBudget[]> {
   if (!Array.isArray(raw) || raw.length > ENGINE_BUDGETS.length)
     return bad(
       'env.perf.engine.budgets',
-      `env.perf.engine.budgets must be at most ${ENGINE_BUDGETS.length} entries.`
+      `env.perf.engine.budgets must be at most ${ENGINE_BUDGETS.length} entries.`,
     )
   const out: FeedbackPerfBudget[] = []
   const seen = new Set<string>()
@@ -423,7 +419,10 @@ export function validatePerfEngine(raw: unknown): Validated<FeedbackPerfEngine |
   if (!isRec(raw)) return bad('env.perf.engine', 'env.perf.engine must be an object or null.')
   const state = ENGINE_STATES.find((s) => s === raw.state)
   if (state === undefined)
-    return bad('env.perf.engine.state', `env.perf.engine.state must be one of: ${ENGINE_STATES.join(', ')}.`)
+    return bad(
+      'env.perf.engine.state',
+      `env.perf.engine.state must be one of: ${ENGINE_STATES.join(', ')}.`,
+    )
   const upMs = count(raw.upMs, 'env.perf.engine.upMs', MAX_ENGINE_UP_MS)
   if (!upMs.ok) return upMs
   const budgets = validateBudgets(raw.budgets)
@@ -475,7 +474,7 @@ export function formatPerfEngine(engine: FeedbackPerfEngine | null | undefined):
     ...serveWords(engine),
     engine.budgets.length === 0
       ? 'no budgets reported'
-      : engine.budgets.map((b) => `${b.id} ${b.verdict}`).join(', ')
+      : engine.budgets.map((b) => `${b.id} ${b.verdict}`).join(', '),
   ].join(' · ')
 }
 
@@ -491,7 +490,7 @@ function ingestWords(engine: FeedbackPerfEngine): string[] {
   if (engine.clockSkewMs !== undefined) words.push(`skew ${engine.clockSkewMs}ms`)
   if (engine.scanMs !== undefined)
     words.push(
-      `scan ${engine.scanMs}ms${engine.scanKb === undefined ? '' : ` of ${engine.scanKb}kB`}`
+      `scan ${engine.scanMs}ms${engine.scanKb === undefined ? '' : ` of ${engine.scanKb}kB`}`,
     )
   return words
 }
@@ -502,7 +501,7 @@ function serveWords(engine: FeedbackPerfEngine): string[] {
   if (engine.frames !== undefined)
     words.push(
       `${engine.frames} frames${engine.servedKb === undefined ? '' : ` / ${engine.servedKb}kB`}` +
-        (engine.worstServeUs === undefined ? '' : ` worst ${engine.worstServeUs}us`)
+        (engine.worstServeUs === undefined ? '' : ` worst ${engine.worstServeUs}us`),
     )
   if (engine.windows !== undefined)
     words.push(`${engine.windows} windows (${engine.quietWindows ?? 0} quiet)`)

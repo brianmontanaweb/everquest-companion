@@ -101,7 +101,7 @@ import {
   errorNameOf,
   parseStackFrames,
   redactMessage,
-  type ErrorFrame
+  type ErrorFrame,
 } from '../../shared/errorReport'
 import {
   caughtFields,
@@ -109,7 +109,7 @@ import {
   parseComponentPath,
   parseExternalFrames,
   stampedMessage,
-  type CaughtFields
+  type CaughtFields,
 } from '../../shared/errorReportLocation'
 import {
   bucketOf,
@@ -120,7 +120,7 @@ import {
   type EvErrorReport,
   type TelemetryBreadcrumb,
   type TelemetryBreadcrumbKind,
-  type TelemetryErrorView
+  type TelemetryErrorView,
 } from '../../shared/telemetry'
 import { currentMode, readBreadcrumbs, resetBreadcrumbs } from './breadcrumbs'
 
@@ -260,7 +260,7 @@ export function noteError(
   source: string,
   payload: unknown,
   now = Date.now(),
-  captureSite?: () => string
+  captureSite?: () => string,
 ): BudgetVerdict {
   try {
     // A failure INSIDE the error-log writer must not mint a report about the error-log writer,
@@ -289,7 +289,7 @@ export function noteError(
     const fingerprint = errorFingerprint(
       errorName,
       where.frames,
-      fingerprintFallback(where.external, redactedMessage)
+      fingerprintFallback(where.external, redactedMessage),
     )
     // THE HARD CAP (JOS-197), asked BEFORE anything is recorded and before the storm bound below,
     // so that a fingerprint the exemplar ring had no room for is budgeted all the same — its
@@ -308,7 +308,7 @@ export function noteError(
     if (pending.size >= MAX_SESSION_FINGERPRINTS) return budget
     pending.set(fingerprint, {
       exemplar: exemplarOf({ errorName, redactedMessage, fingerprint }, where, f, now),
-      n: 1
+      n: 1,
     })
     return budget
   } catch {
@@ -334,7 +334,7 @@ function exemplarOf(
   id: Identity,
   where: Location,
   f: CaughtFields,
-  now: number
+  now: number,
 ): Omit<EvErrorReport, 'count'> {
   const exemplar: Omit<EvErrorReport, 'count'> = {
     t: 'errorReport',
@@ -345,7 +345,7 @@ function exemplarOf(
     breadcrumbs: wireCrumbs(),
     view: currentView,
     sessionAgeBucket: bucketOf(sessionAgeMs(now), SESSION_AGE_MS_EDGES),
-    mode: currentMode()
+    mode: currentMode(),
   }
   const code = errorCodeOf(f.code)
   if (code !== undefined) exemplar.code = code

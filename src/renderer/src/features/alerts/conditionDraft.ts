@@ -8,9 +8,12 @@ import type { AlertTrigger, AlertTriggerPrimitive, AppSignal, LogEventKind } fro
 /** Compact badge for ONE primitive condition: `event:uncharm`, `raw:/regex/i`, `app:bossDefeat`. */
 export function primitiveBadge(t: AlertTriggerPrimitive): string {
   if (t.type === 'event') {
-    const where = t.where && Object.keys(t.where).length
-      ? ` {${Object.entries(t.where).map(([k, v]) => `${k}=${v}`).join(', ')}}`
-      : ''
+    const where =
+      t.where && Object.keys(t.where).length
+        ? ` {${Object.entries(t.where)
+            .map(([k, v]) => `${k}=${v}`)
+            .join(', ')}}`
+        : ''
     return `event:${t.kind}${where}`
   }
   if (t.type === 'raw') return `raw:/${t.regex}/i`
@@ -56,7 +59,14 @@ export interface ConditionDraft {
 }
 
 export function blankCondition(): ConditionDraft {
-  return { ttype: 'event', kind: 'uncharm', fieldKey: '', fieldVal: '', regex: '', signal: 'bossDefeat' }
+  return {
+    ttype: 'event',
+    kind: 'uncharm',
+    fieldKey: '',
+    fieldVal: '',
+    regex: '',
+    signal: 'bossDefeat',
+  }
 }
 
 /** Hydrate a condition draft from a stored primitive trigger. */

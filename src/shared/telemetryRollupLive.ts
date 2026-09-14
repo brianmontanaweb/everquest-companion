@@ -128,7 +128,7 @@ export const LIVE_METRICS = {
   /** dim = index into LIVE_STALL_MS_EDGES, dimensioned by BUCKET rather than by seam on purpose:
    *  the seam is already carried by the three metrics above, and a composite dim would be a
    *  string this file assembled rather than a value the schema declared. */
-  seamMax: 'seamMax'
+  seamMax: 'seamMax',
 } as const
 
 /** `0` / `1` / `2+` — a window count as a dim. Past two, how many overlays a person keeps open is
@@ -203,7 +203,11 @@ function foldSeams(add: AddCounter, seams: NonNullable<LiveRiderCarrier['seams']
 }
 
 /** The tail group, split out so `foldLiveRiders` stays inside the repo's factoring ceilings. */
-function foldTail(add: AddCounter, dimNone: string, tail: NonNullable<LiveRiderCarrier['tail']>): void {
+function foldTail(
+  add: AddCounter,
+  dimNone: string,
+  tail: NonNullable<LiveRiderCarrier['tail']>,
+): void {
   add(LIVE_METRICS.tailReads, dimNone, tail.reads)
   add(LIVE_METRICS.tailReopens, dimNone, tail.reopens)
   add(LIVE_METRICS.tailReadP95, String(tail.p95Bucket), 1)

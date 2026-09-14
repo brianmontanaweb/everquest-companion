@@ -114,7 +114,7 @@ export function errorRepeat(source: string, body: string): RepeatDecision {
       notice:
         `[errorRepeat] this line has now been written ${String(MAX_IDENTICAL_ERROR_LINES)} times ` +
         `from [${source}]; further identical copies this session are counted, not written`,
-      suppressed: true
+      suppressed: true,
     }
   }
   return DROP

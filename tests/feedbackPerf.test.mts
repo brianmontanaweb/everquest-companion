@@ -34,7 +34,7 @@ import {
   validatePerf,
   type FeedbackPerf,
   type FeedbackPerfState,
-  type PerfFoldInput
+  type PerfFoldInput,
 } from '../src/shared/feedbackPerf'
 import { LIVE_TIMELINE_MS } from '../src/shared/perfLive'
 import { PERF_SEAMS } from '../src/shared/perfSeams'
@@ -54,7 +54,7 @@ const STATE: FeedbackPerfState = {
   totalMemGb: 32,
   gpuVendor: 'nvidia',
   gpuCompositing: 'hardware',
-  eqWindowMode: 'fullscreen'
+  eqWindowMode: 'fullscreen',
 }
 
 /** Wall clock for the START of bucket `i` — the fold's own grid, restated so a test that
@@ -66,7 +66,7 @@ const input = (over: Partial<PerfFoldInput> = {}): PerfFoldInput => ({
   worker: [],
   tail: [],
   state: STATE,
-  ...over
+  ...over,
 })
 
 /** A block from one late tick — the smallest thing that is still a block. */
@@ -100,7 +100,7 @@ test('a sample lands in the bucket its wall clock falls in, and only that one', 
   assert.equal(
     perf.rows.filter((r) => r.mainMaxLateMs > 0).length,
     1,
-    'one late tick must not smear across the timeline'
+    'one late tick must not smear across the timeline',
   )
 })
 
@@ -110,10 +110,10 @@ test('a bucket keeps the WORST tick in it, never an average', () => {
       main: [
         { at: atRow(5), lateMs: 30 },
         { at: atRow(5) + 4_000, lateMs: 1_200 },
-        { at: atRow(5) + 8_000, lateMs: 40 }
-      ]
+        { at: atRow(5) + 8_000, lateMs: 40 },
+      ],
     }),
-    NOW
+    NOW,
   )
   assert.equal(perf?.rows[5].mainMaxLateMs, 1_200)
 })
@@ -123,10 +123,10 @@ test('samples older than the window are DROPPED, not piled onto row 0', () => {
     input({
       main: [
         { at: NOW - LIVE_TIMELINE_MS - 60_000, lateMs: 5_000 }, // a minute before the window
-        { at: atRow(0), lateMs: 40 }
-      ]
+        { at: atRow(0), lateMs: 40 },
+      ],
     }),
-    NOW
+    NOW,
   )
   assert.equal(perf?.rows[0].mainMaxLateMs, 40, 'the old spike must not appear at the left edge')
   assert.equal(perf?.summary.maxMainMs, 40)
@@ -149,7 +149,7 @@ test('a tail read with no stall at all is still a block', () => {
   // of the three answers this whole feature exists to distinguish.
   const perf = foldFeedbackPerf(
     input({ tail: [{ at: atRow(2), readMs: 640, reopened: true }] }),
-    NOW
+    NOW,
   )
   assert.equal(perf?.rows[2].tailMaxMs, 640)
   assert.equal(perf?.rows[2].tailReads, 1)
@@ -167,7 +167,7 @@ test('an env with no perf block has no perf KEY', () => {
     arch: 'x64',
     electron: '31.0.0',
     chrome: '126.0.0',
-    node: '20.14.0'
+    node: '20.14.0',
   }
   const res = validateEnv(env)
   assert.equal(res.ok, true)
@@ -188,7 +188,7 @@ function submitWith(env: unknown): unknown {
     clientReportId: '5f8a4a1e-2c1a-4b2a-8a1e-2c1a4b2a8a1f',
     clientTs: NOW,
     log: null,
-    inventory: null
+    inventory: null,
   }
 }
 
@@ -199,12 +199,12 @@ test('the summary counts freezes, peaks and the coincidence verdict', () => {
     { at: atRow(1), lateMs: 30 },
     { at: atRow(10), lateMs: 620 },
     { at: atRow(20), lateMs: 1_400 },
-    { at: atRow(30), lateMs: 500 }
+    { at: atRow(30), lateMs: 500 },
   ]
   // The worker was late at the same instant as ONE of those — the machine stalled once.
   const perf = foldFeedbackPerf(
     input({ main, worker: [{ at: atRow(20) + 100, lateMs: 1_380 }] }),
-    NOW
+    NOW,
   )
   assert.equal(perf?.summary.maxMainMs, 1_400)
   assert.equal(perf?.summary.over500, 3, '620, 1400 and 500 are all at or over the freeze line')
@@ -215,7 +215,7 @@ test('the summary counts freezes, peaks and the coincidence verdict', () => {
 test('coincident is 0, not absent, when a second clock ran and never agreed', () => {
   const perf = foldFeedbackPerf(
     input({ main: [{ at: atRow(4), lateMs: 900 }], worker: [{ at: atRow(40), lateMs: 900 }] }),
-    NOW
+    NOW,
   )
   assert.equal(perf?.summary.coincident, 0)
 })
@@ -234,7 +234,7 @@ function ceilingBlock(): FeedbackPerf {
       workerMaxLateMs: 3_599_999,
       tailMaxMs: 3_599_999,
       tailReads: 999_999,
-      tailReopens: 999_999
+      tailReopens: 999_999,
     })),
     summary: { p95MainMs: 3_599_999, maxMainMs: 3_599_999, coincident: 999_999, over500: 999_999 },
     state: { ...perf.state, freeMemMb: 999_999, workingSetMb: 999_999, cpuCount: 999_999 },
@@ -245,7 +245,7 @@ function ceilingBlock(): FeedbackPerf {
       seam,
       lateCalls: 999_999,
       maxMs: 3_599_999,
-      t: 590
+      t: 590,
     })),
     gc: {
       pauses: 999_999,
@@ -254,7 +254,7 @@ function ceilingBlock(): FeedbackPerf {
       totalMs: 3_599_999,
       t: 590,
       // Every member of GC_KINDS is five characters, so any of them is the widest this can be.
-      worstKind: 'major' as const
+      worstKind: 'major' as const,
     },
     // …and JOS-502's engine block at ITS ceiling: every optional field present and every number at
     // its bound, both budgets named (the validator's own cap on that list), and the state member
@@ -276,8 +276,8 @@ function ceilingBlock(): FeedbackPerf {
       windows: 999_999,
       busiestFrames: 999_999,
       quietWindows: 999_999,
-      budgets: ENGINE_BUDGETS.map((id) => ({ id, verdict: 'unmeasured' as const }))
-    }
+      budgets: ENGINE_BUDGETS.map((id) => ({ id, verdict: 'unmeasured' as const })),
+    },
   }
 }
 
@@ -287,7 +287,7 @@ test('a real block, and the biggest possible one, both fit inside the size guard
   const quiet = perfBytes(oneTick())
   const busyMain = Array.from({ length: 200 }, (_v, i) => ({
     at: atRow(i % PERF_ROWS) + i,
-    lateMs: 30 + (i % 9) * 40
+    lateMs: 30 + (i % 9) * 40,
   }))
   const busy = foldFeedbackPerf(
     input({
@@ -296,10 +296,10 @@ test('a real block, and the biggest possible one, both fit inside the size guard
       tail: Array.from({ length: 600 }, (_v, i) => ({
         at: atRow(i % PERF_ROWS) + i,
         readMs: 2 + (i % 40),
-        reopened: i % 97 === 0
-      }))
+        reopened: i % 97 === 0,
+      })),
     }),
-    NOW
+    NOW,
   )
   assert.ok(busy !== null)
   const ceiling = perfBytes(ceilingBlock())
@@ -317,7 +317,7 @@ test('THE SIZE GUARD: no shape-valid block can trip it, and this is what keeps t
   assert.equal(validatePerf(ceiling).ok, true)
   assert.ok(
     perfBytes(ceiling) <= MAX_PERF_BYTES,
-    `the largest shape-valid block is ${perfBytes(ceiling)} bytes and the cap is ${MAX_PERF_BYTES}`
+    `the largest shape-valid block is ${perfBytes(ceiling)} bytes and the cap is ${MAX_PERF_BYTES}`,
   )
   // …and the guard itself still refuses something genuinely over the line, so the arm is live
   // rather than dead code: sixty rows is the shape, and a block that also carries a megabyte of
@@ -348,17 +348,20 @@ test('a malformed block is a NAMED 400, never a silently dropped field', () => {
     ['env.perf.rows[0].t', { ...perf, rows: [{ ...perf.rows[0], t: 7 }, ...perf.rows.slice(1)] }],
     [
       'env.perf.rows[0].mainMaxLateMs',
-      { ...perf, rows: [{ ...perf.rows[0], mainMaxLateMs: 12.7 }, ...perf.rows.slice(1)] }
+      { ...perf, rows: [{ ...perf.rows[0], mainMaxLateMs: 12.7 }, ...perf.rows.slice(1)] },
     ],
     [
       'env.perf.rows[1].tailReads',
-      { ...perf, rows: [perf.rows[0], { ...perf.rows[1], tailReads: -1 }, ...perf.rows.slice(2)] }
+      { ...perf, rows: [perf.rows[0], { ...perf.rows[1], tailReads: -1 }, ...perf.rows.slice(2)] },
     ],
     ['env.perf.summary.maxMainMs', { ...perf, summary: { ...perf.summary, maxMainMs: 'lots' } }],
     ['env.perf.state.cpuCount', { ...perf, state: { ...perf.state, cpuCount: null } }],
     ['env.perf.state.presenceOn', { ...perf, state: { ...perf.state, presenceOn: 'yes' } }],
     ['env.perf.state.gpuVendor', { ...perf, state: { ...perf.state, gpuVendor: 'matrox' } }],
-    ['env.perf.state.eqWindowMode', { ...perf, state: { ...perf.state, eqWindowMode: 'borderless' } }]
+    [
+      'env.perf.state.eqWindowMode',
+      { ...perf, state: { ...perf.state, eqWindowMode: 'borderless' } },
+    ],
   ]
   for (const [field, value] of cases) {
     const res = validatePerf(value)
@@ -374,7 +377,7 @@ test('the validator RECONSTRUCTS the block — a smuggled key does not survive',
     ...perf,
     logPath: 'C:\\Users\\somebody\\Logs\\eqlog_Bob_firiona.txt',
     rows: [{ ...perf.rows[0], selfName: 'Bob' }, ...perf.rows.slice(1)],
-    state: { ...perf.state, machineName: 'BOBS-PC' }
+    state: { ...perf.state, machineName: 'BOBS-PC' },
   })
   assert.equal(res.ok, true)
   assert.equal(JSON.stringify(res.ok && res.value).includes('Bob'), false)
@@ -392,7 +395,7 @@ test('a report carrying a real block survives the whole-request validator', () =
     electron: '31.0.0',
     chrome: '126.0.0',
     node: '20.14.0',
-    perf: oneTick()
+    perf: oneTick(),
   }
   const res = validateSubmit(submitWith(env))
   assert.equal(res.ok, true)
@@ -415,7 +418,10 @@ test('the sparkline is sixty ASCII characters, positioned where the hitch was', 
 })
 
 test('a quiet window draws a blank sparkline rather than a false floor', () => {
-  const perf = foldFeedbackPerf(input({ tail: [{ at: atRow(3), readMs: 4, reopened: false }] }), NOW)
+  const perf = foldFeedbackPerf(
+    input({ tail: [{ at: atRow(3), readMs: 4, reopened: false }] }),
+    NOW,
+  )
   assert.ok(perf !== null)
   assert.equal(perfSparkline(perf).trim(), '')
 })

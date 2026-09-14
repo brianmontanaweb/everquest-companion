@@ -36,7 +36,7 @@ import {
   SELECTION_LABEL,
   scopedStats,
   statsRangeFor,
-  timescaleLabel
+  timescaleLabel,
 } from '../src/renderer/src/features/leveling/windowScope'
 
 const MIN = 60_000
@@ -47,13 +47,28 @@ const T0 = Date.parse('Sat Aug 01 12:00:00 2026')
 
 function emptySnap(): ProgressionSnap {
   return {
-    expTs: [], expPct: [], expFlag: [],
-    killTs: [], killZone: [], killCredit: [],
-    witnessTs: [], recentKills: [], lootTs: [],
-    zoneStart: [], zoneEnd: [], zoneName: [],
-    offlineStart: [], offlineEnd: [], offlineCamped: [],
-    levelTs: [], levelValue: [], aaGainTs: [], aaGainAmount: [],
-    lastTs: 0, windowStart: 0, dropped: 0
+    expTs: [],
+    expPct: [],
+    expFlag: [],
+    killTs: [],
+    killZone: [],
+    killCredit: [],
+    witnessTs: [],
+    recentKills: [],
+    lootTs: [],
+    zoneStart: [],
+    zoneEnd: [],
+    zoneName: [],
+    offlineStart: [],
+    offlineEnd: [],
+    offlineCamped: [],
+    levelTs: [],
+    levelValue: [],
+    aaGainTs: [],
+    aaGainAmount: [],
+    lastTs: 0,
+    windowStart: 0,
+    dropped: 0,
   }
 }
 
@@ -108,7 +123,10 @@ function twoDaySnap(): { snap: ProgressionSnap; lo: number; hi: number } {
 test('`All` scopes EXACTLY the record — the drawn trailing gutter is never counted as time', () => {
   const { lo, hi } = twoDaySnap()
   const win = windowFor(lo, hi, 'full')
-  assert.ok(win.t1 > hi, 'the drawn window really does run past the newest event (else this proves nothing)')
+  assert.ok(
+    win.t1 > hi,
+    'the drawn window really does run past the newest event (else this proves nothing)',
+  )
   // `hi + 1`, not `hi`: ranges are half-open, and the newest event is stamped AT `hi` — see
   // `TAIL_MS`. This was a measured off-by-one, not a decoration.
   assert.deepEqual(statsRangeFor(win, { lo, hi }), { t0: lo, t1: hi + 1 })
@@ -116,7 +134,13 @@ test('`All` scopes EXACTLY the record — the drawn trailing gutter is never cou
 
 test('`All`s numbers are BYTE-IDENTICAL to a full-history read — every field, not just the rate', () => {
   const { snap, lo, hi } = twoDaySnap()
-  const scope = scopedStats({ snap, win: windowFor(lo, hi, 'full'), bounds: { lo, hi }, id: 'full', selection: null })
+  const scope = scopedStats({
+    snap,
+    win: windowFor(lo, hi, 'full'),
+    bounds: { lo, hi },
+    id: 'full',
+    selection: null,
+  })
   assert.equal(scope.kind, 'window')
   assert.deepEqual(scope.stats, rangeStats({ snap, range: { t0: lo, t1: hi + 1 } }))
   // …and it really does hold the WHOLE record: the last pull of the log is inside the totals.
@@ -138,16 +162,37 @@ test('a fixed window that snapped OUTWARD past either end of the record is clamp
 test('a degenerate record (one instant) yields a zero-length range rather than an inverted one', () => {
   const r = statsRangeFor(windowFor(T0, T0, 'full'), { lo: T0, hi: T0 })
   assert.equal(r.t0, T0)
-  assert.ok(r.t1 >= r.t0 && r.t1 <= T0 + 1, 'clamped to the record, never left at the padded drawn edge')
+  assert.ok(
+    r.t1 >= r.t0 && r.t1 <= T0 + 1,
+    'clamped to the record, never left at the padded drawn edge',
+  )
 })
 
 // ── 2. a narrow window measures the narrow window ─────────────────────────────────────
 
 test('a narrower scale re-derives the numbers — it does not restate the full-history ones', () => {
   const { snap, lo, hi } = twoDaySnap()
-  const all = scopedStats({ snap, win: windowFor(lo, hi, 'full'), bounds: { lo, hi }, id: 'full', selection: null })
-  const day = scopedStats({ snap, win: windowFor(lo, hi, 'h24'), bounds: { lo, hi }, id: 'h24', selection: null })
-  const hour = scopedStats({ snap, win: windowFor(lo, hi, 'h1'), bounds: { lo, hi }, id: 'h1', selection: null })
+  const all = scopedStats({
+    snap,
+    win: windowFor(lo, hi, 'full'),
+    bounds: { lo, hi },
+    id: 'full',
+    selection: null,
+  })
+  const day = scopedStats({
+    snap,
+    win: windowFor(lo, hi, 'h24'),
+    bounds: { lo, hi },
+    id: 'h24',
+    selection: null,
+  })
+  const hour = scopedStats({
+    snap,
+    win: windowFor(lo, hi, 'h1'),
+    bounds: { lo, hi },
+    id: 'h1',
+    selection: null,
+  })
 
   // Day two's pulls pay 2% each, day one's 1% — so the rate genuinely MOVES with the window,
   // which a scope that quietly kept measuring everything could not do.
@@ -156,7 +201,7 @@ test('a narrower scale re-derives the numbers — it does not restate the full-h
   assert.equal(hour.stats.kills, 61, 'one pull a minute across the hour, the newest one included')
   assert.ok(
     (day.stats.levelsPerHourActive ?? 0) > (all.stats.levelsPerHourActive ?? 0),
-    'the recent camp pays double, and the recent window says so'
+    'the recent camp pays double, and the recent window says so',
   )
   // Dominance, which holds for any log at any scale: a window inside another can never count more.
   for (const narrow of [day, hour]) {
@@ -169,8 +214,20 @@ test('a narrower scale re-derives the numbers — it does not restate the full-h
 
 test('the AA reads follow the window too — an hour that earned nothing says so, and says 0', () => {
   const { snap, lo, hi } = twoDaySnap()
-  const all = scopedStats({ snap, win: windowFor(lo, hi, 'full'), bounds: { lo, hi }, id: 'full', selection: null })
-  const hour = scopedStats({ snap, win: windowFor(lo, hi, 'h1'), bounds: { lo, hi }, id: 'h1', selection: null })
+  const all = scopedStats({
+    snap,
+    win: windowFor(lo, hi, 'full'),
+    bounds: { lo, hi },
+    id: 'full',
+    selection: null,
+  })
+  const hour = scopedStats({
+    snap,
+    win: windowFor(lo, hi, 'h1'),
+    bounds: { lo, hi },
+    id: 'h1',
+    selection: null,
+  })
   assert.equal(all.stats.aaGainEvents, 3)
   assert.equal(hour.stats.aaGainEvents, 0, 'the last hour of this log holds no completion')
   // A MEASURED zero, not an unknown: a gain line always states its amount, so 0.0 here is a fact.
@@ -189,11 +246,15 @@ test('a window with no experience line states NO levels rate — null, never 0.0
     win: windowFor(T0, T0 + HOUR, 'full'),
     bounds: { lo: T0, hi: T0 + HOUR },
     id: 'full',
-    selection: null
+    selection: null,
   })
   assert.equal(scope.stats.expSamples, 0)
   assert.equal(scope.stats.kills, 0)
-  assert.equal(scope.stats.activeMs, 0, 'an hour of pure silence is idle, so there is no active time')
+  assert.equal(
+    scope.stats.activeMs,
+    0,
+    'an hour of pure silence is idle, so there is no active time',
+  )
   assert.equal(scope.stats.idleMs, HOUR + 1, 'the whole scope, tail millisecond and all')
   assert.equal(scope.stats.levelsPerHourActive, null)
   assert.equal(scope.stats.killsPerHourActive, null)
@@ -210,7 +271,7 @@ test('a window over a snapshot that has folded NOTHING is empty rather than NaN'
     win: windowFor(T0, T0, 'full'),
     bounds: { lo: T0, hi: T0 },
     id: 'full',
-    selection: null
+    selection: null,
   })
   // A record holding one instant spans that instant and nothing more — never the fractional
   // drawn pad, and never a negative or NaN span the rates would be divided by.
@@ -218,7 +279,12 @@ test('a window over a snapshot that has folded NOTHING is empty rather than NaN'
   assert.equal(scope.stats.expSamples, 0)
   assert.equal(scope.stats.kills, 0)
   assert.deepEqual(scope.stats.levelUps, [])
-  for (const n of [scope.stats.activeMs, scope.stats.idleMs, scope.stats.offlineMs, scope.stats.levelEquiv]) {
+  for (const n of [
+    scope.stats.activeMs,
+    scope.stats.idleMs,
+    scope.stats.offlineMs,
+    scope.stats.levelEquiv,
+  ]) {
     assert.ok(Number.isFinite(n), 'every span is a number, not a NaN a rate would inherit')
   }
 })
@@ -232,11 +298,19 @@ test('a window that is entirely one long silence has zero active time and no fab
     win: windowFor(T0, hi, 'full'),
     bounds: { lo: T0, hi },
     id: 'full',
-    selection: quiet
+    selection: quiet,
   })
   assert.equal(scope.stats.activeMs, 0)
-  assert.equal(scope.stats.idleMs, 8 * HOUR, 'the whole stretch is present-but-silent — idle, never offline')
-  assert.equal(scope.stats.offlineMs, 0, 'no login line closed anything here, so nothing is called offline')
+  assert.equal(
+    scope.stats.idleMs,
+    8 * HOUR,
+    'the whole stretch is present-but-silent — idle, never offline',
+  )
+  assert.equal(
+    scope.stats.offlineMs,
+    0,
+    'no login line closed anything here, so nothing is called offline',
+  )
   assert.equal(scope.stats.levelsPerHourActive, null)
 })
 
@@ -253,12 +327,20 @@ test('a committed selection WINS over the window, and clearing it falls straight
   // the gesture. (This assertion used to read "never re-clamped to the record" — see the test
   // below for the case that overturned the words while leaving this one's numbers alone.)
   assert.deepEqual(narrowed.range, sel, 'a drag inside the record is the range verbatim')
-  assert.deepEqual(narrowed.stats, rangeStats({ snap, range: sel }), 'and it is the SAME derivation, not a second one')
+  assert.deepEqual(
+    narrowed.stats,
+    rangeStats({ snap, range: sel }),
+    'and it is the SAME derivation, not a second one',
+  )
 
   const fallback = scopedStats({ snap, win, bounds: { lo, hi }, id: 'h24', selection: null })
   assert.equal(fallback.kind, 'window')
   assert.deepEqual(fallback.stats, rangeStats({ snap, range: statsRangeFor(win, { lo, hi }) }))
-  assert.notDeepEqual(fallback.stats, narrowed.stats, 'the two scopes really are different readings')
+  assert.notDeepEqual(
+    fallback.stats,
+    narrowed.stats,
+    'the two scopes really are different readings',
+  )
 })
 
 // JOS-454. A drag to the right edge of the chart lands in the TRAILING GUTTER — every scale
@@ -283,13 +365,17 @@ test('a drag into the trailing gutter is CLAMPED to the record, exactly as a win
   assert.deepEqual(
     scope.stats,
     rangeStats({ snap, range: { t0: gutter.t0, t1: hi + 1 } }),
-    'and the numbers are the clamped range — still ONE derivation'
+    'and the numbers are the clamped range — still ONE derivation',
   )
   // THE MEASUREMENT THE CLAMP EXISTS FOR: the unclamped read is longer by the whole gutter, and
   // every millisecond of the difference is silence the log never recorded.
   const unclamped = rangeStats({ snap, range: gutter })
   assert.equal(unclamped.durationMs - scope.stats.durationMs, win.t1 - (hi + 1))
-  assert.equal(unclamped.kills, scope.stats.kills, 'the gutter holds no events — it can only add idle')
+  assert.equal(
+    unclamped.kills,
+    scope.stats.kills,
+    'the gutter holds no events — it can only add idle',
+  )
   assert.ok(unclamped.idleMs > scope.stats.idleMs)
 })
 
@@ -298,8 +384,18 @@ test('a drag that lies ENTIRELY past the record measures nothing, and says so', 
   const win = windowFor(lo, hi, 'full')
   // Possible with a real pointer: the gutter is drawable, so a short drag can sit wholly inside
   // it. Honest answer is an empty range — never a slab of invented time.
-  const scope = scopedStats({ snap, win, bounds: { lo, hi }, id: 'full', selection: { t0: hi + 5, t1: win.t1 } })
-  assert.equal(scope.range.t0, scope.range.t1, 'clamped to a zero-length range rather than inverted')
+  const scope = scopedStats({
+    snap,
+    win,
+    bounds: { lo, hi },
+    id: 'full',
+    selection: { t0: hi + 5, t1: win.t1 },
+  })
+  assert.equal(
+    scope.range.t0,
+    scope.range.t1,
+    'clamped to a zero-length range rather than inverted',
+  )
   assert.equal(scope.stats.durationMs, 0)
   assert.equal(scope.stats.kills, 0)
 })
@@ -310,11 +406,15 @@ test('every scope says WHICH stretch it covers, in one spelling per scope', () =
   assert.equal(timescaleLabel('h1'), 'last 1h of the log')
   const { snap, lo, hi } = twoDaySnap()
   const win = windowFor(lo, hi, 'h6')
-  assert.equal(scopedStats({ snap, win, bounds: { lo, hi }, id: 'h6', selection: null }).label, 'last 6h of the log')
   assert.equal(
-    scopedStats({ snap, win, bounds: { lo, hi }, id: 'h6', selection: { t0: hi - HOUR, t1: hi } }).label,
+    scopedStats({ snap, win, bounds: { lo, hi }, id: 'h6', selection: null }).label,
+    'last 6h of the log',
+  )
+  assert.equal(
+    scopedStats({ snap, win, bounds: { lo, hi }, id: 'h6', selection: { t0: hi - HOUR, t1: hi } })
+      .label,
     SELECTION_LABEL,
-    'a selection is never described as the timescale it sits inside'
+    'a selection is never described as the timescale it sits inside',
   )
 })
 
@@ -338,24 +438,42 @@ test('a slice hands its EXACT range through — a stated end is never pushed out
     id: 'full',
     range: exact,
     label: 'the custom range',
-    selection: null
+    selection: null,
   })
   assert.deepEqual(scope.range, exact)
   assert.equal(scope.label, 'the custom range', 'and the slice supplies the wording')
-  assert.deepEqual(scope.stats, rangeStats({ snap, range: exact }), 'still ONE derivation, not a second')
+  assert.deepEqual(
+    scope.stats,
+    rangeStats({ snap, range: exact }),
+    'still ONE derivation, not a second',
+  )
 })
 
 test('the zone half rides on the scope and reaches rangeStats untouched', () => {
   const { snap, lo, hi } = twoDaySnap()
-  const args = { snap, win: windowFor(lo, hi, 'full'), bounds: { lo, hi }, id: 'full' as const, selection: null }
+  const args = {
+    snap,
+    win: windowFor(lo, hi, 'full'),
+    bounds: { lo, hi },
+    id: 'full' as const,
+    selection: null,
+  }
   const all = scopedStats(args)
   assert.equal(all.zoneKey, null, 'an unrestricted scope says so rather than leaving it undefined')
   assert.equal(all.zoneName, null)
 
-  const guk = scopedStats({ ...args, zoneKey: 'lower guk', zoneName: 'Lower Guk', label: 'Lower Guk' })
+  const guk = scopedStats({
+    ...args,
+    zoneKey: 'lower guk',
+    zoneName: 'Lower Guk',
+    label: 'Lower Guk',
+  })
   assert.equal(guk.zoneKey, 'lower guk')
   assert.deepEqual(guk.stats, rangeStats({ snap, range: guk.range, zoneKey: 'lower guk' }))
-  assert.ok(guk.stats.kills < all.stats.kills, 'day one happened in Befallen and is not counted here')
+  assert.ok(
+    guk.stats.kills < all.stats.kills,
+    'day one happened in Befallen and is not counted here',
+  )
   assert.equal(guk.label, 'Lower Guk')
 })
 
@@ -370,7 +488,7 @@ test('a drag narrows TIME and keeps the zone — and the wording says both', () 
     zoneKey: 'lower guk',
     zoneName: 'Lower Guk',
     label: 'Lower Guk',
-    selection: sel
+    selection: sel,
   })
   assert.equal(scope.kind, 'selection')
   assert.deepEqual(scope.range, sel)
@@ -396,10 +514,14 @@ test('a drag keeps the MEMBERSHIP clause too, not just the zone name', () => {
     zoneKey: 'lower guk',
     zoneName: 'Lower Guk',
     zoneCaption: 'Lower Guk 2 (Adaptive), this tier only',
-    label: 'Lower Guk 2 (Adaptive), this tier only'
+    label: 'Lower Guk 2 (Adaptive), this tier only',
   }
   const dragged = scopedStats({ ...args, selection: sel })
-  assert.equal(dragged.zoneCaption, 'Lower Guk 2 (Adaptive), this tier only', 'it rides on the scope')
+  assert.equal(
+    dragged.zoneCaption,
+    'Lower Guk 2 (Adaptive), this tier only',
+    'it rides on the scope',
+  )
   assert.equal(dragged.label, `${SELECTION_LABEL} in Lower Guk 2 (Adaptive), this tier only`)
 
   // The window under the same slice says the same thing in the slice's own words — one membership,
@@ -415,7 +537,13 @@ test('a drag keeps the MEMBERSHIP clause too, not just the zone name', () => {
   assert.equal(bare.label, `${SELECTION_LABEL} in Lower Guk`)
 
   // …and an unrestricted scope has no clause to state, rather than an empty one.
-  const open = scopedStats({ snap, win: windowFor(lo, hi, 'full'), bounds: { lo, hi }, id: 'full', selection: sel })
+  const open = scopedStats({
+    snap,
+    win: windowFor(lo, hi, 'full'),
+    bounds: { lo, hi },
+    id: 'full',
+    selection: sel,
+  })
   assert.equal(open.zoneCaption, null)
   assert.equal(open.label, SELECTION_LABEL)
 })
@@ -425,7 +553,11 @@ test('omitting all three new inputs is EXACTLY the JOS-71 scope', () => {
   for (const id of ['full', 'h24', 'h1'] as const) {
     const win = windowFor(lo, hi, id)
     const scope = scopedStats({ snap, win, bounds: { lo, hi }, id, selection: null })
-    assert.deepEqual(scope.range, statsRangeFor(win, { lo, hi }), `${id}: still derived from the drawn window`)
+    assert.deepEqual(
+      scope.range,
+      statsRangeFor(win, { lo, hi }),
+      `${id}: still derived from the drawn window`,
+    )
     assert.equal(scope.label, timescaleLabel(id))
     assert.deepEqual(scope.stats, rangeStats({ snap, range: statsRangeFor(win, { lo, hi }) }))
   }

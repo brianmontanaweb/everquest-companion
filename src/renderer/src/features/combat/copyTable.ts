@@ -71,10 +71,13 @@ export function table(cols: Col[], rows: string[][]): string[] {
   const w = cols.map((c, i) => Math.max(c.header.length, ...rows.map((r) => r[i].length)))
   const total = (): number => w.reduce((a, b) => a + b, 0) + GAP.length * (w.length - 1)
   const label = cols.findIndex((c) => c.align === 'left')
-  if (label >= 0 && total() > MAX_WIDTH) w[label] = Math.max(MIN_LABEL, w[label] - (total() - MAX_WIDTH))
+  if (label >= 0 && total() > MAX_WIDTH)
+    w[label] = Math.max(MIN_LABEL, w[label] - (total() - MAX_WIDTH))
   const line = (cells: string[]): string =>
     cells
-      .map((c, i) => (cols[i].align === 'left' ? clip(c, w[i]).padEnd(w[i]) : clip(c, w[i]).padStart(w[i])))
+      .map((c, i) =>
+        cols[i].align === 'left' ? clip(c, w[i]).padEnd(w[i]) : clip(c, w[i]).padStart(w[i]),
+      )
       .join(GAP)
       .trimEnd()
   return [line(cols.map((c) => c.header)), ...rows.map(line)]

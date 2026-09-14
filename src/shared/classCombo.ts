@@ -54,7 +54,7 @@ export const CLASS_ABBRS: readonly ClassAbbr[] = [
   'SHD',
   'SHM',
   'WAR',
-  'WIZ'
+  'WIZ',
 ]
 
 const ABBR_SET: ReadonlySet<string> = new Set<string>(CLASS_ABBRS)
@@ -94,12 +94,7 @@ export interface ComboSlot {
 
 /** Why an interval OPENED. `logStart` is the first interval; the rest are swap detectors. */
 export type ComboBoundaryReason =
-  | 'who'
-  | 'levelDrop'
-  | 'evidenceShift'
-  | 'overDetermined'
-  | 'user'
-  | 'logStart'
+  'who' | 'levelDrop' | 'evidenceShift' | 'overDetermined' | 'user' | 'logStart'
 
 /**
  * A contiguous span during which we believe the loadout did not change.

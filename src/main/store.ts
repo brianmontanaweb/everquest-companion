@@ -13,7 +13,7 @@ import type {
   ProgressState,
   RosterEdit,
   UpdateChannel,
-  VoicePrefs
+  VoicePrefs,
 } from '../shared/types'
 import { clampBgAlpha, clampTextScale } from '../shared/types'
 import type { InventorySource } from '../shared/outputs/baseline'
@@ -25,7 +25,7 @@ import {
   normalizeCursorRing,
   normalizeOverlayAutoHide,
   type CursorRingPrefs,
-  type OverlayAutoHidePrefs
+  type OverlayAutoHidePrefs,
 } from '../shared/presencePrefs'
 import { normalizeTelemetryPrefs, type TelemetryPrefs } from '../shared/telemetry'
 import { DEFAULT_TOAST_CONFIG, normalizeToastConfig } from '../shared/toast'
@@ -47,7 +47,7 @@ import {
   DEFAULT_ALERT_PACK_ID,
   DEFAULT_ALERT_SOUNDS,
   alertSoundMigrationPending,
-  migrateAlertSounds
+  migrateAlertSounds,
 } from './data/defaultPacks'
 import { ALERT_TRIGGER_MIGRATION_VERSION, migrateAlertTriggers } from './data/alertDefMigrations'
 // The seeds are written through the DEFAULT-PACK PREFERENCE now (JOS-273). The rule lives in
@@ -68,9 +68,8 @@ export type { WindowBounds }
 const emptyProgress: ProgressState = {
   inventory: {},
   completedQuests: [],
-  inventorySource: undefined
+  inventorySource: undefined,
 }
-
 
 /**
  * SCHEMA MIGRATION, before anything reads the store — and before electron-store is even
@@ -87,7 +86,7 @@ const emptyProgress: ProgressState = {
  */
 const schemaMigration = migrateStoreFile(join(USER_DATA, `${STORE_NAME}.json`), {
   info: (message) => logInfo(`[everquest-companion] ${message}`),
-  error: (message) => logError('main:storeSchema', message)
+  error: (message) => logError('main:storeSchema', message),
 })
 
 const store = new Store<StoreShape>({
@@ -95,7 +94,7 @@ const store = new Store<StoreShape>({
   // The pre-rename `eq-tools-progress.json` is copied+renamed into this channel's userData
   // on its first launch — see channel.ts `seedFromLegacy`.
   name: STORE_NAME,
-  defaults: { byCharacter: {}, activeLogPath: undefined, windowBounds: undefined }
+  defaults: { byCharacter: {}, activeLogPath: undefined, windowBounds: undefined },
 })
 
 // Stamp a store that the migrator could not stamp itself: a fresh install (no file existed,
@@ -187,7 +186,7 @@ export function setProgress(charId: string, next: ProgressState): ProgressState 
 export function setInventory(
   charId: string,
   counts: HeldCounts,
-  source: InventorySource
+  source: InventorySource,
 ): ProgressState {
   return setProgress(charId, { ...getProgress(charId), inventory: counts, inventorySource: source })
 }
@@ -210,9 +209,18 @@ export function setInventory(
  * event, on every ordinary turn-in rather than only the rare over-hand-in. Folding it into this
  * call's own read-modify-write halves all of that back to one.
  */
-export function setQuestTurnIns(charId: string, questKey: string, instants: number[], offered?: Record<number, Record<string, number>>): ProgressState {
+export function setQuestTurnIns(
+  charId: string,
+  questKey: string,
+  instants: number[],
+  offered?: Record<number, Record<string, number>>,
+): ProgressState {
   const p = getProgress(charId)
-  return setProgress(charId, { ...p, ...applyTurnIns(p, questKey, instants), ...(offered && applyTurnInOffered(p, questKey, offered)) })
+  return setProgress(charId, {
+    ...p,
+    ...applyTurnIns(p, questKey, instants),
+    ...(offered && applyTurnInOffered(p, questKey, offered)),
+  })
 }
 
 // ----- Class-combo user corrections (docs/plans/class-combo-inference.md § 7) -----
@@ -245,7 +253,10 @@ function saveComboCorrections(charId: string, corrections: ComboCorrection[]): C
 export function setComboCorrection(charId: string, correction: ComboCorrection): ComboCorrection[] {
   const same = (c: ComboCorrection): boolean =>
     c.startTs === correction.startTs && c.endTs === correction.endTs
-  return saveComboCorrections(charId, [...getComboCorrections(charId).filter((c) => !same(c)), correction])
+  return saveComboCorrections(charId, [
+    ...getComboCorrections(charId).filter((c) => !same(c)),
+    correction,
+  ])
 }
 
 /**
@@ -256,12 +267,12 @@ export function setComboCorrection(charId: string, correction: ComboCorrection):
 export function clearComboCorrections(
   charId: string,
   startTs: number,
-  endTs: number | null
+  endTs: number | null,
 ): ComboCorrection[] {
   const hi = endTs ?? Infinity
   return saveComboCorrections(
     charId,
-    getComboCorrections(charId).filter((c) => (c.endTs ?? Infinity) < startTs || c.startTs > hi)
+    getComboCorrections(charId).filter((c) => (c.endTs ?? Infinity) < startTs || c.startTs > hi),
   )
 }
 
@@ -301,7 +312,10 @@ export function getRosterEdits(charId: string): RosterEdit[] {
 
 /** Record one edit, REPLACING any existing statement about the same name. */
 export function setRosterEdit(charId: string, edit: RosterEdit): RosterEdit[] {
-  const next = sanitizeRosterEdits([...getRosterEdits(charId).filter((e) => e.key !== edit.key), edit])
+  const next = sanitizeRosterEdits([
+    ...getRosterEdits(charId).filter((e) => e.key !== edit.key),
+    edit,
+  ])
   setProgress(charId, { ...getProgress(charId), rosterEdits: next })
   return next
 }
@@ -398,7 +412,7 @@ const DEFAULT_OVERLAY_CONFIG: Record<OverlayKind, OverlayConfig> = {
     bgAlpha: 0.72,
     bounds: undefined,
     drill: null,
-    toast: { ...DEFAULT_TOAST_CONFIG }
+    toast: { ...DEFAULT_TOAST_CONFIG },
   },
   // The BUFF/TIMER bars (JOS-89, docs/plans/buff-timer-overlay.md).
   //
@@ -471,7 +485,7 @@ const DEFAULT_OVERLAY_CONFIG: Record<OverlayKind, OverlayConfig> = {
   // (2026-08-16) is that this one ships on: it answers a question the player just asked by typing
   // `/con`, which is exactly what the alert banner's "text over the game nobody asked for" is not.
   // prettier-ignore
-  conCard: { open: true, locked: true, bgAlpha: 0.72, bounds: undefined, drill: null, conCard: { ...DEFAULT_CON_CARD_CONFIG } }
+  conCard: { open: true, locked: true, bgAlpha: 0.72, bounds: undefined, drill: null, conCard: { ...DEFAULT_CON_CARD_CONFIG } },
 }
 
 /** Read a kind's overlay config, filling missing fields with the kind's defaults.
@@ -568,7 +582,8 @@ export function setOverlayConfig(kind: OverlayKind, patch: Partial<OverlayConfig
   // The toast blob is renderer-writable too (the Preferences sound picker), so it is clamped
   // by its own normalizer rather than trusted — same rule as bgAlpha/textScale above. Only the
   // toast kind carries one; the meters must not grow a stray blob from a malformed patch.
-  if (kind === 'toast') next.toast = normalizeToastConfig({ ...DEFAULT_TOAST_CONFIG, ...next.toast })
+  if (kind === 'toast')
+    next.toast = normalizeToastConfig({ ...DEFAULT_TOAST_CONFIG, ...next.toast })
   else delete next.toast
   // The banner blob is renderer-writable too (Preferences owns its hold and its line budget), so
   // it is clamped by its own normalizer rather than trusted — the toast blob's rule, one kind over.
@@ -636,7 +651,7 @@ const SEED_ALERTS: AlertDef[] = [
     // "I find myself... requiring your attention." — the calm-but-pointed read lands
     // better than a joke sting for suddenly losing your charmed pet (Task #21).
     sound: { packId: DEFAULT_ALERT_PACK_ID, soundId: DEFAULT_ALERT_SOUNDS.charmBreak },
-    note: 'Seeded default - fires when a charm spell wears off (you lose your pet).'
+    note: 'Seeded default - fires when a charm spell wears off (you lose your pet).',
   },
   {
     id: 'boss-defeat',
@@ -645,7 +660,7 @@ const SEED_ALERTS: AlertDef[] = [
     trigger: { type: 'app', signal: 'bossDefeat' },
     // "The matter is settled."
     sound: { packId: DEFAULT_ALERT_PACK_ID, soundId: DEFAULT_ALERT_SOUNDS.bossDefeat },
-    note: 'Seeded default - fires the same moment boss confetti does.'
+    note: 'Seeded default - fires the same moment boss confetti does.',
   },
   {
     id: 'quest-complete',
@@ -658,8 +673,8 @@ const SEED_ALERTS: AlertDef[] = [
     trigger: { type: 'app', signal: 'questComplete' },
     // "It is done."
     sound: { packId: DEFAULT_ALERT_PACK_ID, soundId: DEFAULT_ALERT_SOUNDS.questComplete },
-    note: 'Seeded default - fires the same moment a Sky quest turn-in celebration does.'
-  }
+    note: 'Seeded default - fires the same moment a Sky quest turn-in celebration does.',
+  },
 ]
 
 /**
@@ -770,7 +785,7 @@ export function setAlertPrefs(prefs: AlertPrefs): AlertPrefs {
   const next: AlertPrefs = {
     globalVolume: Math.max(0, Math.min(1, prefs.globalVolume)),
     muted: prefs.muted,
-    ...(prefs.alwaysPlayAll === true ? { alwaysPlayAll: true } : {})
+    ...(prefs.alwaysPlayAll === true ? { alwaysPlayAll: true } : {}),
   }
   store.set('alertPrefs', next)
   return next
@@ -956,7 +971,8 @@ export function getLastSeenNotesVersion(): string | null {
  * app writes should only ever hold shapes this app can read.
  */
 export function setLastSeenNotesVersion(version: string | null): string | null {
-  if (version !== null && /^\d+\.\d+\.\d+$/.test(version)) store.set('lastSeenNotesVersion', version)
+  if (version !== null && /^\d+\.\d+\.\d+$/.test(version))
+    store.set('lastSeenNotesVersion', version)
   else store.delete('lastSeenNotesVersion')
   return getLastSeenNotesVersion()
 }

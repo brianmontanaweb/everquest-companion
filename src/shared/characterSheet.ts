@@ -78,7 +78,7 @@ import {
   PRIMARY_ITEM_SECTION,
   type EquipLocationToken,
   type InventoryDump,
-  type InventoryEntry
+  type InventoryEntry,
 } from './outputs/inventory'
 
 // ---- the grid ------------------------------------------------------------------------
@@ -128,7 +128,7 @@ export const SHEET_SLOTS: readonly SheetSlotDef[] = [
   { id: 'ammo', token: 'Ammo', nth: 0, label: 'Ammo', column: 'bottom' },
   { id: 'held', token: 'Held', nth: 0, label: 'Held', column: 'bottom' },
   { id: 'any1', token: 'Any Slot', nth: 0, label: 'Any Slot', column: 'bottom' },
-  { id: 'any2', token: 'Any Slot', nth: 1, label: 'Any Slot', column: 'bottom' }
+  { id: 'any2', token: 'Any Slot', nth: 1, label: 'Any Slot', column: 'bottom' },
 ]
 
 /** The cells of one column, in render order. */
@@ -173,13 +173,17 @@ export interface SheetCell {
  */
 function isEquipRow(entry: InventoryEntry): boolean {
   return (
-    entry.section === PRIMARY_ITEM_SECTION && entry.path.length === 0 && entry.place.kind === 'equip'
+    entry.section === PRIMARY_ITEM_SECTION &&
+    entry.path.length === 0 &&
+    entry.place.kind === 'equip'
   )
 }
 
 /** The `<Item> (Exaltation)` children of a row, in the order the client wrote them. */
 function exaltationsOf(entry: InventoryEntry): string[] {
-  return entry.children.filter((c) => !c.empty && c.parsedName.exaltation).map((c) => c.parsedName.base)
+  return entry.children
+    .filter((c) => !c.empty && c.parsedName.exaltation)
+    .map((c) => c.parsedName.base)
 }
 
 function sheetItem(entry: InventoryEntry): SheetItem {
@@ -188,7 +192,7 @@ function sheetItem(entry: InventoryEntry): SheetItem {
     name: entry.name,
     baseName: parsed.base,
     itemId: entry.itemId,
-    exaltations: exaltationsOf(entry)
+    exaltations: exaltationsOf(entry),
   }
   if (parsed.tier !== undefined) item.tier = parsed.tier
   return item
@@ -215,7 +219,13 @@ export function sheetCells(dump: InventoryDump): { cells: SheetCell[]; unplaced:
     const key = `${token}#${String(nth)}`
     if (SHEET_SLOTS.some((s) => s.token === token && s.nth === nth)) byKey.set(key, entry)
     else if (!entry.empty) {
-      unplaced.push({ id: key, label: token, column: 'bottom', location: token, item: sheetItem(entry) })
+      unplaced.push({
+        id: key,
+        label: token,
+        column: 'bottom',
+        location: token,
+        item: sheetItem(entry),
+      })
     }
   }
 
@@ -226,7 +236,7 @@ export function sheetCells(dump: InventoryDump): { cells: SheetCell[]; unplaced:
       label: slot.label,
       column: slot.column,
       location: slot.token,
-      item: entry && !entry.empty ? sheetItem(entry) : null
+      item: entry && !entry.empty ? sheetItem(entry) : null,
     }
   })
   return { cells, unplaced }
@@ -326,8 +336,19 @@ export function statInteger(value: string): number | null {
 
 /** Display order for the summed rows. Anything unlisted keeps source order, after these. */
 const STAT_ORDER = [
-  'Strength', 'Stamina', 'Agility', 'Dexterity', 'Wisdom', 'Intelligence', 'Charisma',
-  'HP', 'Mana', 'Endurance', 'Attack', 'Regen', 'Mana Regen'
+  'Strength',
+  'Stamina',
+  'Agility',
+  'Dexterity',
+  'Wisdom',
+  'Intelligence',
+  'Charisma',
+  'HP',
+  'Mana',
+  'Endurance',
+  'Attack',
+  'Regen',
+  'Mana Regen',
 ]
 
 function orderKey(label: string): number {
@@ -339,7 +360,7 @@ function orderKey(label: string): number {
 function foldStats(
   rows: readonly ItemStat[],
   sums: Map<string, GearStat>,
-  unsummed: Map<string, GearUnsummed>
+  unsummed: Map<string, GearUnsummed>,
 ): void {
   for (const row of rows) {
     const label = statLabel(row.key)
@@ -358,7 +379,9 @@ function foldStats(
 }
 
 function ordered(sums: Map<string, GearStat>): GearStat[] {
-  return [...sums.values()].sort((a, b) => orderKey(a.label) - orderKey(b.label) || a.label.localeCompare(b.label))
+  return [...sums.values()].sort(
+    (a, b) => orderKey(a.label) - orderKey(b.label) || a.label.localeCompare(b.label),
+  )
 }
 
 /**
@@ -418,6 +441,6 @@ export function sumGear(worn: readonly WornItemBlock[]): GearTotals {
     saves: [...saves.values()].sort((a, b) => a.label.localeCompare(b.label)),
     unsummed: [...unsummed.values()].sort((a, b) => a.label.localeCompare(b.label)),
     counted,
-    unknown
+    unknown,
   }
 }

@@ -34,7 +34,7 @@ import {
   readPrefsSnapshot,
   recordPref,
   resetPrefsSnapshotForTests,
-  type PrefsReader
+  type PrefsReader,
 } from '../src/renderer/src/features/preferences/prefsSnapshot'
 
 const src = (rel: string): string => readFileSync(new URL(rel, import.meta.url), 'utf8')
@@ -52,11 +52,23 @@ function stubReader(over: Partial<Record<keyof PrefsReader, unknown>> = {}): {
     }
   }
   const reader = {
-    getEqConfig: answer('getEqConfig', { root: 'C:/eq', logsDir: 'C:/eq/Logs', source: 'detected', characterCount: 2, readable: 'ok' }),
+    getEqConfig: answer('getEqConfig', {
+      root: 'C:/eq',
+      logsDir: 'C:/eq/Logs',
+      source: 'detected',
+      characterCount: 2,
+      readable: 'ok',
+    }),
     getUiScale: answer('getUiScale', 1.1),
     getGraphicsPrefs: answer('getGraphicsPrefs', { safeMode: 'auto', opaqueOverlays: 'auto' }),
-    getGraphicsEnvironment: answer('getGraphicsEnvironment', { wine: false, auto: { safeMode: false, opaqueOverlays: false } }),
-    getOverlayAutoHide: answer('getOverlayAutoHide', { hideWhenNotRunning: false, hideWhenUnfocused: true }),
+    getGraphicsEnvironment: answer('getGraphicsEnvironment', {
+      wine: false,
+      auto: { safeMode: false, opaqueOverlays: false },
+    }),
+    getOverlayAutoHide: answer('getOverlayAutoHide', {
+      hideWhenNotRunning: false,
+      hideWhenUnfocused: true,
+    }),
     getOverlaySnap: answer('getOverlaySnap', { enabled: true }),
     // The overlays' text size (JOS-405). Stored ABOVE the shipped 100% and with the switch ON,
     // because both of those are what somebody who used this feature would have: the person who
@@ -83,19 +95,40 @@ function stubReader(over: Partial<Record<keyof PrefsReader, unknown>> = {}): {
     // The open-state map. THREE fields of it become the toast / banner / con-card cards' seeds, and
     // since JOS-408 the WHOLE map is also kept, for the Overlays rows' `closed` tag — one read,
     // four readers, which is the point of a batch.
-    getOverlayState: answer('getOverlayState', { toast: true, alertBanner: true, conCard: false, fight: true }),
+    getOverlayState: answer('getOverlayState', {
+      toast: true,
+      alertBanner: true,
+      conCard: false,
+      fight: true,
+    }),
     getToastConfig: answer('getToastConfig', { locked: false }),
     // The banner ships OFF and its first card mounted on that default; stored ON here, with an
     // off-default hold, so the seed has to carry both (owner, hands-on, 2026-08-16).
-    getAlertBannerConfig: answer('getAlertBannerConfig', { locked: false, alertBanner: { holdMs: 8000, maxLines: 4, introduced: true } }),
+    getAlertBannerConfig: answer('getAlertBannerConfig', {
+      locked: false,
+      alertBanner: { holdMs: 8000, maxLines: 4, introduced: true },
+    }),
     // The con card ships ON (JOS-383) — so the value that can be WRONG for somebody is a stored
     // OFF, which is what this stub carries. Its auto-hide is stored off-default too, and out of
     // range, so the seed has to normalize rather than pass it through.
-    getConCardConfig: answer('getConCardConfig', { locked: true, conCard: { autoHideMs: 999_999 } }),
+    getConCardConfig: answer('getConCardConfig', {
+      locked: true,
+      conCard: { autoHideMs: 999_999 },
+    }),
     getBuffTrust: answer('getBuffTrust', { externals: ['Faelin'] }),
-    getCursorRing: answer('getCursorRing', { enabled: true, sizePx: 60, thicknessPx: 5, color: 'white' }),
+    getCursorRing: answer('getCursorRing', {
+      enabled: true,
+      sizePx: 60,
+      thicknessPx: 5,
+      color: 'white',
+    }),
     getVoicePrefs: answer('getVoicePrefs', { engine: 'system', voice: 'x', rate: 1, volume: 1 }),
-    getTelemetryPayload: answer('getTelemetryPayload', { prefs: { enabled: false }, buffered: [], lastBatch: null, endpointConfigured: false }),
+    getTelemetryPayload: answer('getTelemetryPayload', {
+      prefs: { enabled: false },
+      buffered: [],
+      lastBatch: null,
+      endpointConfigured: false,
+    }),
     getPerfPrefs: answer('getPerfPrefs', { enabled: true }),
     getStartupProfile: answer('getStartupProfile', { phases: [] }),
     // A switch whose compiled-in default is TRUE (JOS-366), stored FALSE — the flash this gate
@@ -106,7 +139,7 @@ function stubReader(over: Partial<Record<keyof PrefsReader, unknown>> = {}): {
     getResistPrefs: answer('getResistPrefs', { includeNpcCasters: false }),
     getAppVersion: answer('getAppVersion', '9.9.9'),
     getUpdateStatus: answer('getUpdateStatus', { state: 'ready' }),
-    listAlerts: answer('listAlerts', [{ id: 'a' }, { id: 'b' }, { id: 'c' }])
+    listAlerts: answer('listAlerts', [{ id: 'a' }, { id: 'b' }, { id: 'c' }]),
   } as unknown as PrefsReader
   return { reader, calls: () => calls }
 }
@@ -154,9 +187,17 @@ test('one read answers every card in the pane, and it snaps the text size to the
   assert.equal(snap.overlaySnap.enabled, true)
   // …and the tray switch, stored ON against its shipped OFF (JOS-139).
   assert.equal(snap.closeToTray.enabled, true)
-  assert.equal(snap.uiScale, 1.1, 'the ladder value arrives snapped, so the cache cannot hold an off-rung number')
+  assert.equal(
+    snap.uiScale,
+    1.1,
+    'the ladder value arrives snapped, so the cache cannot hold an off-rung number',
+  )
   assert.equal(snap.cursorRing.sizePx, 60)
-  assert.equal(snap.alertCount, 3, 'a count, not the list - the Profiles caption is the only reader')
+  assert.equal(
+    snap.alertCount,
+    3,
+    'a count, not the list - the Profiles caption is the only reader',
+  )
   assert.equal(snap.version, '9.9.9')
 
   // The toast's two facts come from two different reads and are one control pair.
@@ -166,7 +207,7 @@ test('one read answers every card in the pane, and it snaps the text size to the
   assert.deepEqual(snap.alertBanner, {
     open: true,
     locked: false,
-    cfg: { holdMs: 8000, maxLines: 4, introduced: true }
+    cfg: { holdMs: 8000, maxLines: 4, introduced: true },
   })
   // And the con card's three (JOS-383). The switch is the one that ships ON, so a stored OFF is the
   // flash this gate exists to prevent; the out-of-range auto-hide arrives clamped.
@@ -212,8 +253,10 @@ test('a failed read is not cached: the next mount gets to try again', async () =
     ...stubReader().reader,
     getEqConfig: () => {
       attempt++
-      return attempt === 1 ? Promise.reject(new Error('main is asleep')) : stubReader().reader.getEqConfig()
-    }
+      return attempt === 1
+        ? Promise.reject(new Error('main is asleep'))
+        : stubReader().reader.getEqConfig()
+    },
   }
   await assert.rejects(() => loadPrefsSnapshot(bad), /main is asleep/)
   assert.equal(peekPrefsSnapshot(), null, 'a failure leaves the cache empty rather than poisoned')
@@ -235,12 +278,16 @@ test('a write updates the cache, so the NEXT mount of a card seeds from the chan
   recordPref('overlayAutoHide', { hideWhenNotRunning: false, hideWhenUnfocused: false })
 
   const seed = peekPrefsSnapshot()
-  assert.equal(seed?.overlayAutoHide.hideWhenUnfocused, false, 'the next mount paints the new value')
+  assert.equal(
+    seed?.overlayAutoHide.hideWhenUnfocused,
+    false,
+    'the next mount paints the new value',
+  )
   assert.equal(seed?.version, '9.9.9', 'and nothing else moved')
   assert.equal(
     before.overlayAutoHide.hideWhenUnfocused,
     true,
-    'the previous object is untouched - a seed already handed to a mounted card must not mutate under it'
+    'the previous object is untouched - a seed already handed to a mounted card must not mutate under it',
   )
   resetPrefsSnapshotForTests()
 })
@@ -278,7 +325,7 @@ test('every Preferences card seeds from the gate, and none of them re-reads main
     'VoiceSetting.tsx',
     'TelemetrySetting.tsx',
     'EqFolderSetting.tsx',
-    'UpdateSetting.tsx'
+    'UpdateSetting.tsx',
   ]
   for (const card of cards) {
     const text = readFileSync(new URL(card, dir), 'utf8')

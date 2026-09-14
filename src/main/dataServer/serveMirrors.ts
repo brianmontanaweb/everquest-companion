@@ -209,7 +209,7 @@ async function refresh(moduleId: string, m: Mirror): Promise<void> {
       d.note(
         `data-server mirror: ${moduleId} could not be refreshed ` +
           `(${err instanceof Error ? err.message : String(err)}); readers keep the last served ` +
-          'value until the engine answers again. Further mirror refusals on this launch are silent.'
+          'value until the engine answers again. Further mirror refusals on this launch are silent.',
       )
     }
   } finally {

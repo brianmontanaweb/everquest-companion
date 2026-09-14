@@ -273,13 +273,11 @@ export interface SpeechSayRequest {
  * existing alert audio element (W3 serves `eqspeech://<hash>` from the wav cache).
  */
 export type SpeechSayResult =
-  | { ok: true; url: string }
-  | { ok: false; reason: SpeechUnavailableReason }
+  { ok: true; url: string } | { ok: false; reason: SpeechUnavailableReason }
 
 /** Reply of `speech:install` — provisioning a downloadable engine tier. */
 export type SpeechInstallResult =
-  | { ok: true }
-  | { ok: false; reason: SpeechUnavailableReason; message?: string }
+  { ok: true } | { ok: false; reason: SpeechUnavailableReason; message?: string }
 
 /**
  * WHERE A RUNNING INSTALL IS (W3). `speech:install` resolves only when provisioning has

@@ -38,7 +38,7 @@ import {
   isOverlayOpen,
   overlayStateMap,
   setOverlayIgnoreMouse,
-  setOverlayOpen
+  setOverlayOpen,
 } from '../windows'
 import { OVERLAY_KINDS, TEXT_SCALE_DEFAULT } from '../../shared/types'
 import type { AppFocus, AppFocusView, OverlayConfig, OverlayKind } from '../../shared/types'
@@ -86,7 +86,10 @@ function overlayTextScaleMap(): Record<OverlayKind, number> {
  */
 function echoOverlayConfigs(): void {
   for (const k of OVERLAY_KINDS) {
-    getOverlayWindow(k)?.webContents.send(IPC.onOverlayConfig, { kind: k, config: getOverlayConfig(k) })
+    getOverlayWindow(k)?.webContents.send(IPC.onOverlayConfig, {
+      kind: k,
+      config: getOverlayConfig(k),
+    })
   }
 }
 
@@ -94,7 +97,8 @@ function echoOverlayConfigs(): void {
  *  app window has rows to correct; an overlay's own config echo already told it about itself. */
 function broadcastOverlayTextScales(): void {
   const app = getMainWindow()
-  if (app && !app.isDestroyed()) app.webContents.send(IPC.onOverlayTextScales, overlayTextScaleMap())
+  if (app && !app.isDestroyed())
+    app.webContents.send(IPC.onOverlayTextScales, overlayTextScaleMap())
 }
 
 /** THE SAME THREE, ONE FIELD OVER (JOS-407) — `bgAlpha` is the second overlay setting with a
@@ -238,7 +242,7 @@ export function registerWindowIpc(): void {
   // ---- floating overlay DPS meters (Task #52; per-kind in Task #54) ----
   // Toggle a kind from the main app's TitleBar menu; returns the resulting open-state.
   ipcMain.handle(IPC.overlayToggle, (_e, kind: OverlayKind) =>
-    setOverlayOpen(kind, !isOverlayOpen(kind))
+    setOverlayOpen(kind, !isOverlayOpen(kind)),
   )
   ipcMain.handle(IPC.overlayGetState, () => overlayStateMap())
   ipcMain.handle(IPC.overlayGetConfig, (_e, kind: OverlayKind) => getOverlayConfig(kind))

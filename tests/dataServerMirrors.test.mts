@@ -21,7 +21,7 @@ import {
   noteMirrorChanged,
   primeMirrors,
   resetMirrors,
-  type MirrorReply
+  type MirrorReply,
 } from '../src/main/dataServer/serveMirrors'
 
 /** A requester whose replies are handed out one at a time, so a test can hold one in flight. */
@@ -44,7 +44,7 @@ function engine() {
           }
           return new Promise<MirrorReply>((resolve) => pending.push(resolve))
         },
-        note: (line) => notes.push(line)
+        note: (line) => notes.push(line),
       })
     },
     refuseNext(why: string): void {
@@ -63,7 +63,7 @@ function engine() {
     },
     inFlight(): number {
       return pending.length
-    }
+    },
   }
 }
 
@@ -110,7 +110,10 @@ test('PRIMING IS NOT OPTIONAL: a module that has gone quiet will never send anot
   e.install()
   primeMirrors()
   assert.deepEqual(e.asked, [...MIRRORED_MODULES])
-  await e.answer(reply('character', 3, { level: { level: 52 } }), reply('outputFiles', 1, { 'inventory.txt': 7 }))
+  await e.answer(
+    reply('character', 3, { level: { level: 52 } }),
+    reply('outputFiles', 1, { 'inventory.txt': 7 }),
+  )
   assert.deepEqual(mirroredModuleState('character'), { level: { level: 52 } })
   assert.deepEqual(mirroredModuleState('outputFiles'), { 'inventory.txt': 7 })
 })

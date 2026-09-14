@@ -80,7 +80,7 @@ export {
   inventoryKeyOf,
   logKeyOf,
   logObjectExists,
-  type AttachmentReport
+  type AttachmentReport,
 } from './attachments'
 
 const { Client, types } = pg
@@ -495,14 +495,26 @@ export function listInstallProfiles(c: Clients, limit = 200): Promise<Row[]> {
 // analytics store each name belongs to.
 export {
   // failure classifiers, shared with the backend's degradation arms
-  missingTable, missingColumn, unreachable,
+  missingTable,
+  missingColumn,
+  unreachable,
   // read caps
-  USAGE_ROW_LIMIT, INSTALL_ROW_LIMIT, OWNER_ROW_LIMIT,
+  USAGE_ROW_LIMIT,
+  INSTALL_ROW_LIMIT,
+  OWNER_ROW_LIMIT,
   // reads
-  readUsageDaily, readUsageFunnelDaily, readAnalyticsInstalls, readAnalyticsInstall,
-  readReportVersions, readErrorReports, readOwnerInstalls, readPerfDaily,
+  readUsageDaily,
+  readUsageFunnelDaily,
+  readAnalyticsInstalls,
+  readAnalyticsInstall,
+  readReportVersions,
+  readErrorReports,
+  readOwnerInstalls,
+  readPerfDaily,
   // writes
-  setInstallCohort, deleteAnalyticsInstall, setTelemetryAccepting,
+  setInstallCohort,
+  deleteAnalyticsInstall,
+  setTelemetryAccepting,
 } from './usageStore'
 
 // ---- writes ------------------------------------------------------------------------
@@ -567,7 +579,11 @@ export async function setBlocked(
  * as an UPSERT so it works even against a cluster whose config row was never
  * seeded; `$2 IS NULL` keeps the existing message when `--message` is omitted.
  */
-export async function setAccepting(c: Clients, accepting: boolean, message?: string): Promise<void> {
+export async function setAccepting(
+  c: Clients,
+  accepting: boolean,
+  message?: string,
+): Promise<void> {
   await c.execute(
     `INSERT INTO feedback_config (id, accepting, closed_message, max_per_install_per_day)
      VALUES ('FEEDBACK', $1, COALESCE($2::text, 'Feedback is paused right now. Please try again later.'), 10)

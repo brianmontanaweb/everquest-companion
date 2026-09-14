@@ -25,7 +25,7 @@ function HeroCard({
   title,
   /** Only the cards an assertion needs to READ carry one (the AA ledger's footer must equal
    *  the AA-points-spent figure, and e2e proves that across the two components). */
-  testId
+  testId,
 }: {
   icon: JSX.Element
   value: string
@@ -38,7 +38,14 @@ function HeroCard({
   const card = (
     <Paper
       variant="outlined"
-      sx={{ p: 2, flex: 1, minWidth: 160, borderLeft: `3px solid ${accent}`, display: 'flex', gap: 1.5 }}
+      sx={{
+        p: 2,
+        flex: 1,
+        minWidth: 160,
+        borderLeft: `3px solid ${accent}`,
+        display: 'flex',
+        gap: 1.5,
+      }}
     >
       <Box sx={{ color: accent, display: 'flex', alignItems: 'center' }}>{icon}</Box>
       <Box>
@@ -82,7 +89,7 @@ export function LevelingHeroes({
   aaEarned,
   aaSpent,
   aaUnspent,
-  boughtCount
+  boughtCount,
 }: LevelingHeroesProps): JSX.Element {
   return (
     <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>

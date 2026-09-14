@@ -71,7 +71,7 @@ function createQuestFlagStore(storageKey: string): QuestFlagStore {
       current = next
       localStorage.setItem(storageKey, JSON.stringify([...current]))
       for (const l of listeners) l()
-    }
+    },
   }
 }
 
@@ -93,9 +93,9 @@ function useQuestFlagSet(store: QuestFlagStore): QuestFlagSet {
       keys,
       has: (questKey: string) => keys.has(questKey.toLowerCase()),
       toggle: store.toggle,
-      size: keys.size
+      size: keys.size,
     }),
-    [keys, store]
+    [keys, store],
   )
 }
 

@@ -21,7 +21,7 @@ import assert from 'node:assert/strict'
 import {
   AUDIO_FAILURE_THROTTLE_MS,
   audioFailureMessage,
-  shouldReportAudioFailure
+  shouldReportAudioFailure,
 } from '../src/shared/audioFailureLog'
 
 test('T1 the first failure of a key always reports', () => {
@@ -39,14 +39,17 @@ test('T2 a repeat inside the window is swallowed, and the window is exactly one 
 test('T3 the line names the step, the sound and the error — and never drops the count', () => {
   assert.equal(
     audioFailureMessage('play', 'afewgoodmen/kaffee_hi', 'NotSupportedError'),
-    "alert sound 'afewgoodmen/kaffee_hi' failed to play: NotSupportedError"
+    "alert sound 'afewgoodmen/kaffee_hi' failed to play: NotSupportedError",
   )
   assert.equal(
     audioFailureMessage('fetch', 'afewgoodmen/kaffee_hi', 'NoSoundData'),
-    "alert sound 'afewgoodmen/kaffee_hi' could not be loaded: NoSoundData"
+    "alert sound 'afewgoodmen/kaffee_hi' could not be loaded: NoSoundData",
   )
   // NEVER SILENT: a quiet log must not under-state a loud problem.
-  assert.match(audioFailureMessage('play', 'x/y', 'AbortError', 41), /\(\+41 more since the last report\)/)
+  assert.match(
+    audioFailureMessage('play', 'x/y', 'AbortError', 41),
+    /\(\+41 more since the last report\)/,
+  )
   // A nameless throw still produces a readable line rather than a dangling colon.
   assert.equal(audioFailureMessage('play', 'x/y', ''), "alert sound 'x/y' failed to play")
 })

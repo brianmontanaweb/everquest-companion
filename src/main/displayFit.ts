@@ -142,7 +142,7 @@ function overhangPast(rect: Rect, area: Rect): number {
     0,
     area.x - rect.x,
     rect.x + rect.width - (area.x + area.width),
-    rect.y + rect.height - (area.y + area.height)
+    rect.y + rect.height - (area.y + area.height),
   )
 }
 
@@ -200,7 +200,7 @@ export function clampInto(rect: Rect, area: Rect): Rect {
     width,
     height,
     x: Math.round(Math.max(area.x, Math.min(rect.x, area.x + area.width - width))),
-    y: Math.round(Math.max(area.y, Math.min(rect.y, area.y + area.height - height)))
+    y: Math.round(Math.max(area.y, Math.min(rect.y, area.y + area.height - height))),
   }
 }
 
@@ -212,7 +212,7 @@ export function centerIn(size: Size, area: Rect): Rect {
     width,
     height,
     x: Math.round(area.x + (area.width - width) / 2),
-    y: Math.round(area.y + (area.height - height) / 2)
+    y: Math.round(area.y + (area.height - height) / 2),
   }
 }
 
@@ -228,7 +228,7 @@ export function centerIn(size: Size, area: Rect): Rect {
 export function fitToDisplays(
   rect: Rect,
   displays: readonly DisplayArea[],
-  options: FitOptions = {}
+  options: FitOptions = {},
 ): Rect | null {
   if (rect.width <= 0 || rect.height <= 0 || displays.length === 0) return null
   const { covered, best } = coverageOf(rect, displays)

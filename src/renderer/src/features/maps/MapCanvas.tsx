@@ -30,7 +30,13 @@
 
 import { useEffect, useRef } from 'react'
 import type { MapLines } from '@shared/maps'
-import { cullSegments, type LayerMask, type MapView, type ViewRect, type ViewportSize } from './mapGeometry'
+import {
+  cullSegments,
+  type LayerMask,
+  type MapView,
+  type ViewRect,
+  type ViewportSize,
+} from './mapGeometry'
 import type { MapViewport } from './useMapViewport'
 
 /**
@@ -113,7 +119,12 @@ interface Frame {
 }
 
 /** Stroke one path per palette slot at a fixed opacity. Two calls make the floor slice. */
-function strokeAll(ctx: CanvasRenderingContext2D, paths: Path2D[], styles: string[], alpha: number): void {
+function strokeAll(
+  ctx: CanvasRenderingContext2D,
+  paths: Path2D[],
+  styles: string[],
+  alpha: number,
+): void {
   ctx.globalAlpha = alpha
   for (let i = 0; i < paths.length; i += 1) {
     ctx.strokeStyle = styles[i]
@@ -160,7 +171,13 @@ function paint(ctx: CanvasRenderingContext2D, f: Frame): void {
   strokeAll(ctx, paths, styles, 1)
 }
 
-export function MapCanvas({ lines, vp, layers, zBand = null, ink = DEFAULT_INK }: MapCanvasProps): React.JSX.Element {
+export function MapCanvas({
+  lines,
+  vp,
+  layers,
+  zBand = null,
+  ink = DEFAULT_INK,
+}: MapCanvasProps): React.JSX.Element {
   const ref = useRef<HTMLCanvasElement>(null)
   // ONE index buffer per loaded map, not per frame — grown only when a bigger zone arrives.
   // At everfrost's 26,383 segments a per-frame allocation would run at pointer rate.

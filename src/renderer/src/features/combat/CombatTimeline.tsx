@@ -8,7 +8,15 @@ import type { TimelineView } from '@shared/combat'
 import { EventTicks, LaneRows, MarkerRail, PinLabels, PinSpans, TimeAxis } from './TimelineChart'
 import { TimelineHoverLayer, type HoverHandle } from './TimelineHoverLayer'
 import { buildDpsSeries } from './dashboardData'
-import { MIN_PLOT_W, MIN_SPAN_MS, PAD, ZOOM_STEP, fmtDur, timelineMetrics, type WrapSize } from './timelineGeometry'
+import {
+  MIN_PLOT_W,
+  MIN_SPAN_MS,
+  PAD,
+  ZOOM_STEP,
+  fmtDur,
+  timelineMetrics,
+  type WrapSize,
+} from './timelineGeometry'
 import { useTimelineViewport, type TimelineViewport } from './useTimelineViewport'
 
 // Dense, dark, WarcraftLogs-style timeline (Task #51 v2): X = encounter time, Y = one row
@@ -71,7 +79,13 @@ function useWrapSize(ref: React.RefObject<HTMLDivElement>): WrapSize {
 }
 
 /** Title + the counts + the three zoom controls. */
-function TimelineToolbar({ tl, vp }: { tl: TimelineView; vp: TimelineViewport }): React.JSX.Element {
+function TimelineToolbar({
+  tl,
+  vp,
+}: {
+  tl: TimelineView
+  vp: TimelineViewport
+}): React.JSX.Element {
   const { view, span, zoomedIn } = vp
   return (
     <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
@@ -90,14 +104,22 @@ function TimelineToolbar({ tl, vp }: { tl: TimelineView; vp: TimelineViewport })
         </Typography>
         <MuiTooltip title="Zoom out">
           <span>
-            <IconButton size="small" onClick={() => vp.zoomAround((view.start + view.end) / 2, ZOOM_STEP)} disabled={!zoomedIn}>
+            <IconButton
+              size="small"
+              onClick={() => vp.zoomAround((view.start + view.end) / 2, ZOOM_STEP)}
+              disabled={!zoomedIn}
+            >
               <RemoveIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </span>
         </MuiTooltip>
         <MuiTooltip title="Zoom in">
           <span>
-            <IconButton size="small" onClick={() => vp.zoomAround((view.start + view.end) / 2, 1 / ZOOM_STEP)} disabled={span <= MIN_SPAN_MS}>
+            <IconButton
+              size="small"
+              onClick={() => vp.zoomAround((view.start + view.end) / 2, 1 / ZOOM_STEP)}
+              disabled={span <= MIN_SPAN_MS}
+            >
               <AddIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </span>
@@ -159,11 +181,14 @@ function CombatTimelineInner({ tl }: { tl: TimelineView }): React.JSX.Element {
   const visibleEvents = useMemo(
     // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives TimelineEvent. Becomes a view descriptor when the source lands.
     () => tl.events.filter((e) => e.t >= view.start - 1 && e.t <= view.end + 1),
-    [tl.events, view.start, view.end]
+    [tl.events, view.start, view.end],
   )
 
   return (
-    <Paper variant="outlined" sx={{ p: 1.5, flexGrow: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+    <Paper
+      variant="outlined"
+      sx={{ p: 1.5, flexGrow: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
+    >
       <TimelineToolbar tl={tl} vp={vp} />
       {/* TWO boxes, and the split is the flicker fix (2026-08-04). The OUTER one is what the
           ResizeObserver watches: it never scrolls, and its size is decided entirely by this
@@ -183,7 +208,12 @@ function CombatTimelineInner({ tl }: { tl: TimelineView }): React.JSX.Element {
             ref={svgRef}
             width={m.svgW}
             height={m.svgH}
-            style={{ display: 'block', fontFamily: 'inherit', cursor: zoomedIn ? 'grab' : 'default', touchAction: 'none' }}
+            style={{
+              display: 'block',
+              fontFamily: 'inherit',
+              cursor: zoomedIn ? 'grab' : 'default',
+              touchAction: 'none',
+            }}
             onPointerDown={vp.onPointerDown}
             onPointerMove={vp.onPointerMove}
             onPointerUp={vp.onPointerUp}
@@ -194,7 +224,7 @@ function CombatTimelineInner({ tl }: { tl: TimelineView }): React.JSX.Element {
                 <rect x={m.labelW} y={0} width={m.plotW + 1} height={m.totalH + PAD} />
               </clipPath>
             </defs>
-  
+
             {/* pinned stance / invocation spans, then the marker rail + its guides — BEFORE the
                 lanes, so a guide is a faint reference line behind the ticks, never over them */}
             <g clipPath="url(#tl-plot-clip)">
@@ -203,11 +233,11 @@ function CombatTimelineInner({ tl }: { tl: TimelineView }): React.JSX.Element {
             </g>
             {/* pin-row labels (outside the clip, in the gutter) */}
             <PinLabels pinRows={m.pinRows} />
-  
+
             {/* lane labels + gridlines */}
             <g transform={`translate(0, ${m.laneTop})`}>
               <LaneRows tl={tl} m={m} />
-  
+
               {/* event ticks (windowed to the visible time range) */}
               <g clipPath="url(#tl-plot-clip)" transform={`translate(0, ${-m.laneTop})`}>
                 <g transform={`translate(0, ${m.laneTop})`}>
@@ -215,7 +245,7 @@ function CombatTimelineInner({ tl }: { tl: TimelineView }): React.JSX.Element {
                 </g>
               </g>
             </g>
-  
+
             {/* time axis */}
             <g transform={`translate(0, ${m.laneTop + m.plotH})`}>
               <TimeAxis ticks={ticks} m={m} xOf={xOf} zoomedIn={zoomedIn} />

@@ -34,7 +34,7 @@ export interface MobDropsSplit {
 
 /** The one drops fold. A knowledge that says nothing yields two empty lists, never a claim. */
 export function splitMobDrops(
-  k: { dropsWiki?: MobDrop[]; dropsSeen?: MobSeenDrop[] } | null | undefined
+  k: { dropsWiki?: MobDrop[]; dropsSeen?: MobSeenDrop[] } | null | undefined,
 ): MobDropsSplit {
   const seen = k?.dropsSeen ?? []
   const wikiDrops = k?.dropsWiki ?? []

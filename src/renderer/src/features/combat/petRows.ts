@@ -149,7 +149,10 @@ function sum(sources: SourceView[], pick: (s: SourceView) => number): number {
  *  resisted, so they are not casts. */
 function spellHits(s: SourceView): number {
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives CategoryView. Becomes a view descriptor when the source lands.
-  return s.categories.reduce((n, c) => n + (c.category === 'spell' || c.category === 'dot' ? c.hits : 0), 0)
+  return s.categories.reduce(
+    (n, c) => n + (c.category === 'spell' || c.category === 'dot' ? c.hits : 0),
+    0,
+  )
 }
 
 /**
@@ -193,10 +196,10 @@ function combinedSelf(self: SourceView, pets: SourceView[]): SourceView {
       parry: sum(all, (s) => s.missBreakdown.parry),
       riposte: sum(all, (s) => s.missBreakdown.riposte),
       block: sum(all, (s) => s.missBreakdown.block),
-      absorb: sum(all, (s) => s.missBreakdown.absorb)
+      absorb: sum(all, (s) => s.missBreakdown.absorb),
     },
     resists,
-    resistPct: casts ? (resists / casts) * 100 : 0
+    resistPct: casts ? (resists / casts) * 100 : 0,
   }
 }
 
@@ -238,7 +241,7 @@ function toPetRow(p: SourceView): PetRow {
     hits: p.hits,
     crits: p.crits,
     misses: p.misses,
-    resists: p.resists
+    resists: p.resists,
   }
 }
 
@@ -266,10 +269,22 @@ function isCritlessPetRow(r: OwnRow): boolean {
  */
 export function nestedRows(source: SourceView | null, pets: SourceView[]): OwnRow[] {
   const skills: OwnRow[] = source
-    ? flattenSkills(source).map((s) => ({ kind: 'skill' as const, total: s.total, pct: 0, skill: s }))
+    ? flattenSkills(source).map((s) => ({
+        kind: 'skill' as const,
+        total: s.total,
+        pct: 0,
+        skill: s,
+      }))
     : []
-  const petRows: OwnRow[] = pets.map((p) => ({ kind: 'pet' as const, total: p.total, pct: 0, pet: toPetRow(p) }))
-  const ranked = [...skills, ...petRows].sort((a, b) => b.total - a.total || rowLabel(a).localeCompare(rowLabel(b)))
+  const petRows: OwnRow[] = pets.map((p) => ({
+    kind: 'pet' as const,
+    total: p.total,
+    pct: 0,
+    pet: toPetRow(p),
+  }))
+  const ranked = [...skills, ...petRows].sort(
+    (a, b) => b.total - a.total || rowLabel(a).localeCompare(rowLabel(b)),
+  )
   const merged = sortCritlessPetsLast(ranked, isCritlessPetRow)
   const max = Math.max(1, ...merged.map((r) => r.total))
   return merged.map((r) => {
@@ -290,7 +305,7 @@ export function ownBreakdown(entities: SourceView[], combine: boolean): OwnBreak
     pets,
     rows: nestedRows(self, pets),
     // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives SourceView. Becomes a view descriptor when the source lands.
-    total: (self?.total ?? 0) + pets.reduce((n, p) => n + p.total, 0)
+    total: (self?.total ?? 0) + pets.reduce((n, p) => n + p.total, 0),
   }
 }
 
@@ -419,20 +434,31 @@ function resolveSubject(entities: SourceView[], drill: MeterDrill): SourceView |
  * headline that SAYS what it covers may cover the segment; an unlabelled one sitting above the
  * rows must describe the rows.
  */
-export function panelTotals(panel: MeterPanel, total: number, dps: number): { total: number; dps: number } {
+export function panelTotals(
+  panel: MeterPanel,
+  total: number,
+  dps: number,
+): { total: number; dps: number } {
   if (panel.level === 1) return { total, dps }
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives SourceView. Becomes a view descriptor when the source lands.
   const shown = [panel.subject, ...panel.pets].reduce((n, s) => n + s.total, 0)
   return { total: shown, dps: total > 0 ? (dps * shown) / total : 0 }
 }
 
-export function meterPanel(entities: SourceView[], combine: boolean, drill: MeterDrill | null): MeterPanel {
+export function meterPanel(
+  entities: SourceView[],
+  combine: boolean,
+  drill: MeterDrill | null,
+): MeterPanel {
   const subject = drill ? resolveSubject(entities, drill) : undefined
   if (!subject) return { level: 1, sources: meterSources(entities, combine) }
   // Pets nest into YOUR row only: a pet inside a pet would be a fiction, and an enemy's row in
   // the Incoming direction has no pets of yours in it at all.
   const nestable = combine ? petSources(entities) : []
   const pets = subject.kind === 'you' ? nestable : []
-  const parent = subject.kind === 'pet' && nestable.some((p) => p.id === subject.id) ? selfSource(entities) : null
+  const parent =
+    subject.kind === 'pet' && nestable.some((p) => p.id === subject.id)
+      ? selfSource(entities)
+      : null
   return { level: 2, subject, parent, pets, rows: nestedRows(subject, pets) }
 }

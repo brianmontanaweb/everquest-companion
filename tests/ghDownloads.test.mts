@@ -30,23 +30,23 @@ const RELEASES: unknown = [
     assets: [
       { name: 'everquest-companion-Setup-0.5.0.exe', download_count: 61 },
       { name: 'everquest-companion-Setup-0.5.0.exe.blockmap', download_count: 940 },
-      { name: 'latest.yml', download_count: 5_400 }
-    ]
+      { name: 'latest.yml', download_count: 5_400 },
+    ],
   },
   {
     tag_name: 'v0.4.0',
     published_at: '2026-07-20T09:00:00Z',
     assets: [
       { name: 'everquest-companion-Setup-0.4.0.exe', download_count: 12 },
-      { name: 'latest.yml', download_count: 300 }
-    ]
+      { name: 'latest.yml', download_count: 300 },
+    ],
   },
   {
     tag_name: 'v0.6.0-draft',
     draft: true,
     published_at: '2026-08-04T09:00:00Z',
-    assets: [{ name: 'everquest-companion-Setup-0.6.0.exe', download_count: 0 }]
-  }
+    assets: [{ name: 'everquest-companion-Setup-0.6.0.exe', download_count: 0 }],
+  },
 ]
 
 test('the installer is counted apart from the yml/blockmap the updater fetches far more', () => {
@@ -63,7 +63,10 @@ test('drafts are dropped and the list reads newest first', () => {
   const rows = toDownloadRows(RELEASES)
   // A draft nobody could have downloaded would render as a zero row, which reads as a failed
   // launch rather than as an unpublished one.
-  assert.deepEqual(rows.map((r) => r.tag), ['v0.5.0', 'v0.4.0'])
+  assert.deepEqual(
+    rows.map((r) => r.tag),
+    ['v0.5.0', 'v0.4.0'],
+  )
   assert.equal(rows[0].publishedAt, '2026-08-01T10:00:00Z')
 })
 
@@ -72,7 +75,10 @@ test('an untrusted payload reduces to rows or to nothing — it never throws', (
   assert.deepEqual(toDownloadRows({ message: 'API rate limit exceeded' }), [])
   assert.deepEqual(toDownloadRows('[]'), [])
   const sparse = toDownloadRows([{ tag_name: 'v0.1.0' }, { assets: [{ name: 'x.exe' }] }, 7])
-  assert.deepEqual(sparse.map((r) => r.tag), ['v0.1.0', '(untagged)'])
+  assert.deepEqual(
+    sparse.map((r) => r.tag),
+    ['v0.1.0', '(untagged)'],
+  )
   for (const r of sparse) {
     assert.equal(r.exeDownloads, 0)
     assert.equal(r.totalDownloads, 0)
@@ -84,7 +90,7 @@ test('the digest section names the tags AND refuses to be read as installs', () 
   const text = downloadsLines({
     available: true,
     releases: toDownloadRows(RELEASES),
-    fetchedAtMs: 0
+    fetchedAtMs: 0,
   }).join('\n')
   assert.match(text, /NOT installs/)
   assert.match(text, /v0\.5\.0\s+61 installer/)
@@ -102,6 +108,6 @@ test('an unavailable section prints the reason; an absent one prints nothing at 
   assert.deepEqual(downloadsLines({ available: true, releases: [], fetchedAtMs: 0 }), [
     '',
     'GH DOWNLOADS (updater-inflated - NOT installs; global, never cohort-split)',
-    '  (no published releases)'
+    '  (no published releases)',
   ])
 })

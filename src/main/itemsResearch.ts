@@ -184,7 +184,7 @@ export interface ResearchedKnowledge extends Omit<ItemKnowledge, 'cached'> {
  */
 export function knowledgeWithResearch(
   entry: ItemDbEntry,
-  research: ItemResearchFile = ITEMS_RESEARCH
+  research: ItemResearchFile = ITEMS_RESEARCH,
 ): ResearchedKnowledge {
   const k = knowledgeFromDb(entry)
   const found = research[itemKey(k.name)]

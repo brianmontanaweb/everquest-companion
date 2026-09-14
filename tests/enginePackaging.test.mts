@@ -39,10 +39,7 @@ import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import {
-  ENGINE_BIN_NAME,
-  engineBinaryCandidates
-} from '../src/main/dataServer/engineProtocol'
+import { ENGINE_BIN_NAME, engineBinaryCandidates } from '../src/main/dataServer/engineProtocol'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -83,7 +80,9 @@ function listEntries(key: string): string[] {
 
 /** The one `extraResources` matcher, as the three fields that decide everything below. */
 function engineMatcher(): { from: string; to: string; filter: string } {
-  const block = /extraResources:\n\s*- from: (\S+)\n\s*to: (\S+)\n\s*filter:\n\s*- (\S+)\n/.exec(builderYml)
+  const block = /extraResources:\n\s*- from: (\S+)\n\s*to: (\S+)\n\s*filter:\n\s*- (\S+)\n/.exec(
+    builderYml,
+  )
   assert.ok(block, 'electron-builder.yml must ship the engine via an extraResources matcher')
   return { from: block[1], to: block[2], filter: block[3] }
 }
@@ -100,13 +99,13 @@ test('THE SHIPPED PATH IS THE PROBED PATH — composed, not restated', () => {
   const shipped = `RES/${to}/${filter}`
   const [firstPackagedCandidate] = engineBinaryCandidates({
     appPath: '',
-    resourcesPath: 'RES'
+    resourcesPath: 'RES',
   })
   assert.equal(
     shipped,
     firstPackagedCandidate,
     'electron-builder must put the engine where engineBinaryCandidates looks FIRST among the ' +
-      'packaged candidates — a mismatch here is a packaged app that silently runs with no engine'
+      'packaged candidates — a mismatch here is a packaged app that silently runs with no engine',
   )
   // …and the name is the resolver's own constant rather than a second spelling of it.
   assert.equal(filter, ENGINE_BIN_NAME)
@@ -133,11 +132,11 @@ test('the engine is NOT in `files`, and therefore needs no asarUnpack entry', ()
   assert.equal(
     files.some((entry) => entry.includes('engine')),
     false,
-    'the engine must not enter the asar'
+    'the engine must not enter the asar',
   )
   assert.equal(
     listEntries('asarUnpack').some((entry) => entry.includes('engine')),
-    false
+    false,
   )
 })
 
@@ -153,7 +152,7 @@ test('THE MATCHER IS A DIRECTORY — a file `from` would ship an UNSIGNED engine
   assert.equal(
     from.endsWith(ENGINE_BIN_NAME),
     false,
-    'extraResources `from` must be a DIRECTORY (with a filter) or the sign transformer is skipped'
+    'extraResources `from` must be a DIRECTORY (with a filter) or the sign transformer is skipped',
   )
 })
 
@@ -191,7 +190,7 @@ test('BOTH dist scripts build the engine BEFORE packaging', () => {
     assert.ok(script.includes('build:engine'), `${name} must build the engine`)
     assert.ok(
       script.indexOf('build:engine') < script.indexOf('electron-builder'),
-      `${name} must build the engine BEFORE electron-builder copies it`
+      `${name} must build the engine BEFORE electron-builder copies it`,
     )
   }
 })
@@ -213,7 +212,7 @@ test('ROUND TRIP: the resolver finds the engine in a real dist:dir output', (t) 
   const candidates = engineBinaryCandidates({
     appPath: join(unpacked, 'resources', 'app.asar'),
     resourcesPath: join(unpacked, 'resources'),
-    cwd: unpacked
+    cwd: unpacked,
   })
   const found = candidates.find((path) => existsSync(path))
   // The resolver joins with `/` and leaves the caller's separators alone, so this is the exact
@@ -222,7 +221,7 @@ test('ROUND TRIP: the resolver finds the engine in a real dist:dir output', (t) 
   assert.equal(
     found,
     `${join(unpacked, 'resources')}/engine/${ENGINE_BIN_NAME}`,
-    `the first candidate that exists must be the shipped engine; looked in ${candidates.join(', ')}`
+    `the first candidate that exists must be the shipped engine; looked in ${candidates.join(', ')}`,
   )
 })
 
@@ -233,6 +232,6 @@ test('both CI jobs that PACKAGE build the engine first', () => {
   assert.equal(
     (workflow.match(/^ {6}- name: Build the engine \(release\)$/gm) ?? []).length,
     2,
-    'the build job and the release job each need their own release engine build'
+    'the build job and the release job each need their own release engine build',
   )
 })

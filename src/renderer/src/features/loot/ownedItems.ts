@@ -35,7 +35,7 @@ import type { GroupRow } from './lootGrouping'
  */
 export function selectInvOnly(
   inventoryRows: readonly InventoryRow[],
-  lootCountKeys: ReadonlySet<string>
+  lootCountKeys: ReadonlySet<string>,
 ): InventoryRow[] {
   return inventoryRows.filter((r) => r.inv > 0 && !lootCountKeys.has(r.key))
 }
@@ -76,12 +76,7 @@ export interface OwnedRowsInput {
  * lifted starred names to the top. The star column left the loot window with the owner's ruling,
  * so this tail is handed back in the order it came in: no pass, nothing to explain.
  */
-export function buildOwnedRows({
-  source,
-  questOnly,
-  q,
-  isQuestItem
-}: OwnedRowsInput): GroupRow[] {
+export function buildOwnedRows({ source, questOnly, q, isQuestItem }: OwnedRowsInput): GroupRow[] {
   let list: readonly InventoryRow[] = source
   if (questOnly) list = list.filter((r) => isQuestItem(r.key))
   if (q) list = list.filter((r) => r.name.toLowerCase().includes(q))
@@ -93,6 +88,6 @@ export function buildOwnedRows({
     last: 0,
     zoneCount: 0,
     invOnly: true,
-    owned: r.inv
+    owned: r.inv,
   }))
 }

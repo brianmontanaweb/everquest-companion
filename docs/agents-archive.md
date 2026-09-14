@@ -3768,3 +3768,50 @@ your commit (6db8790 swept one; its wave's later commit completed it).
   settling") · 1 sighting (2026-08-13, JOS-294 worker six-spec sweep; green
   standalone and in the next full sweep) · NOT the resolved row's signature —
   unknown mechanism, watch for a second sighting before diagnosing.
+
+## Flake ledger — the perf_snapshot.rs row, full detail (2026-09-04)
+
+<!-- Moved verbatim from AGENTS.md (2026-09-13 distillation). -->
+
+- `engined tests/perf_snapshot.rs` · `perf.snapshot was refused: Unavailable
+  "the fold did not answer within 5000 ms"` from the `until` poll while the
+  engine is still loading its spell catalog on a starved CI runner · 1
+  sighting (2026-09-04, v1.16.0 tag run, two tests at once; the main-push
+  run of the same commit was green) · HARDENED same day: `until` reads that
+  one refusal as "not yet" and keeps polling to `PATIENCE`; every other
+  refusal still panics.
+
+## Flake ledger — the engined combat live-meter row, sighting 1, full detail (2026-09-04)
+
+<!-- Moved verbatim from AGENTS.md (2026-09-13 distillation). Sighting 2's
+     full detail (2026-09-10) and sighting 3 (2026-09-12, green) already
+     live earlier in this file, under "Flake ledger — the engined combat
+     live-meter row, sighting 2, full detail". -->
+
+- `engined tests/combat.rs` live-meter tests · the fight closes before the
+  test's hit lands (`Drop` op where an edit was expected; segment "fight"
+  not "current"), plus one harness connect timeout · 1 sighting (2026-09-04,
+  v1.16.0 tag engine job, second attempt, three tests; same commit green on
+  the main push) · MECHANISM KNOWN: `Staged::line` stamps relative to TEST
+  START while closure is judged on the wall clock (`FALLBACK_IDLE_MS` 60 s),
+  so a runner that takes over a minute to go live has already idled the
+  fight · chip filed: anchor live stamps to go-live.
+
+## Flake ledger — the combat.rs live-meter current-kind row, resolved, full detail (2026-08-30)
+
+<!-- Moved verbatim from AGENTS.md (2026-09-13 distillation). -->
+
+- `engined/tests/combat.rs` live-meter current-kind · expected `current`,
+  got closed `fight` after process startup consumed the fixed 18 s freshness
+  margin · 1 sighting (2026-08-30, JOS-531 CI; green standalone and full
+  combat suite locally) · **RESOLVED in the JOS-531 CI follow-up** — start
+  the engine before stamping the live fixture, so startup is outside the
+  world-time precondition.
+
+## Analytics cohort split migration method, at full length (2026-08-05)
+
+<!-- Moved verbatim from AGENTS.md (2026-09-13 distillation). -->
+
+The migration ran COPY-FIRST per owner ruling (staging tables, row-count AND
+sum(n) verification, swap via DSQL's documented `RENAME TO`; nothing dropped
+until its verified copy existed).

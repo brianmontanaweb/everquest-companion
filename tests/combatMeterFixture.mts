@@ -20,7 +20,7 @@ export function skill(name: string, over: Partial<SkillView> = {}): SkillView {
 
 export function cat(
   category: SourceView['categories'][number]['category'],
-  skills: SkillView[]
+  skills: SkillView[],
 ): SourceView['categories'][number] {
   return {
     category,
@@ -32,7 +32,7 @@ export function cat(
     max: Math.max(0, ...skills.map((s) => s.max)),
     resists: 0,
     resistPct: 0,
-    skills
+    skills,
   }
 }
 
@@ -50,12 +50,15 @@ export function source(
   id: string,
   name: string,
   kind: SourceView['kind'],
-  categories: SourceView['categories']
+  categories: SourceView['categories'],
 ): SourceView {
   const total = categories.reduce((n, c) => n + c.total, 0)
   const hits = categories.reduce((n, c) => n + c.hits, 0)
   const crits = categories.reduce((n, c) => n + c.crits, 0)
-  const misses = categories.reduce((n, c) => n + c.skills.reduce((m, s) => m + (s.misses ?? 0), 0), 0)
+  const misses = categories.reduce(
+    (n, c) => n + c.skills.reduce((m, s) => m + (s.misses ?? 0), 0),
+    0,
+  )
   const swings = hits + misses
   return {
     id,
@@ -75,7 +78,7 @@ export function source(
     resists: 0,
     resistPct: 0,
     skills: categories.flatMap((c) => c.skills),
-    categories
+    categories,
   }
 }
 
@@ -85,14 +88,14 @@ export const SEG_SECONDS = 60
 export const YOU = source('you', 'You', 'you', [
   cat('melee', [
     skill('Melee', { total: 5000, hits: 100, max: 120, min: 10, misses: 20 }),
-    skill('Backstab', { total: 3000, hits: 20, max: 400, min: 50 })
+    skill('Backstab', { total: 3000, hits: 20, max: 400, min: 50 }),
   ]),
-  cat('spell', [skill('Ancient Wrath', { total: 1000, hits: 4, max: 300, min: 200 })])
+  cat('spell', [skill('Ancient Wrath', { total: 1000, hits: 4, max: 300, min: 200 })]),
 ])
 
 /** A summoned pet's random proper name (law: pets are named Vebarn, Garer, …). */
 export const PET = source('pet:7', 'Vebarn', 'pet', [
-  cat('melee', [skill('Melee', { total: 7000, hits: 210, max: 90, min: 5, misses: 30 })])
+  cat('melee', [skill('Melee', { total: 7000, hits: 210, max: 90, min: 5, misses: 30 })]),
 ])
 
 /** Pet first, because the engine ranks by damage and the pet out-hits you here. */

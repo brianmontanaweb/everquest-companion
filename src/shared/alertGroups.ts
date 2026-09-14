@@ -86,7 +86,7 @@ const SOUND = {
    */
   tellReceived: 'input-required-input-required-04',
   /** "There. Tied with a neat little bow." — something worth stopping for hit your bags. */
-  moteLooted: 'task-complete-task-complete-10'
+  moteLooted: 'task-complete-task-complete-10',
 } as const
 
 /** Every group sound id, for the defaultPacks.ts cross-check + provisioning verification. */
@@ -249,7 +249,7 @@ const SLOW_LADDERS = [
   'Tagar.s Insects',
   'Togor.s Insects',
   'Turgur.s Insects',
-  'Tigir.s Insects'
+  'Tigir.s Insects',
 ]
 
 /** The two songs JOS-233 ruled in — mob side only; see the header for why not the on-you side. */
@@ -301,7 +301,7 @@ export const ALERT_GROUPS: AlertGroup[] = [
         soundId: SOUND.outOfRange,
         cooldownMs: 8000,
         line: 'Your target is too far away, get closer!',
-        observed: 3329
+        observed: 3329,
       },
       {
         // The SPELL-side twin — a different sentence entirely, and rarer (you notice a failed
@@ -312,7 +312,7 @@ export const ALERT_GROUPS: AlertGroup[] = [
         soundId: SOUND.outOfRange,
         cooldownMs: 8000,
         line: 'Your target is out of range, get closer!',
-        observed: 72
+        observed: 72,
       },
       {
         // Line of sight, not distance — the third way "you are attacking nothing" happens, and
@@ -323,9 +323,9 @@ export const ALERT_GROUPS: AlertGroup[] = [
         soundId: SOUND.outOfRange,
         cooldownMs: 8000,
         line: 'You cannot see your target.',
-        observed: 2600
-      }
-    ]
+        observed: 2600,
+      },
+    ],
   },
   {
     id: 'resists',
@@ -345,9 +345,9 @@ export const ALERT_GROUPS: AlertGroup[] = [
         soundId: SOUND.resisted,
         cooldownMs: 5000,
         line: '<target> resisted your <Spell>!',
-        observed: 1779
-      }
-    ]
+        observed: 1779,
+      },
+    ],
   },
   {
     id: 'charm',
@@ -365,9 +365,9 @@ export const ALERT_GROUPS: AlertGroup[] = [
         soundId: SOUND.charmBreak,
         cooldownMs: 3000,
         line: 'Your Allure spell has worn off of <mob>.',
-        observed: 379
-      }
-    ]
+        observed: 379,
+      },
+    ],
   },
   {
     id: 'cc',
@@ -389,9 +389,9 @@ export const ALERT_GROUPS: AlertGroup[] = [
         soundId: SOUND.ccBreak,
         cooldownMs: 3000,
         line: 'Your Mesmerization spell has worn off of <mob>.',
-        observed: 1738
-      }
-    ]
+        observed: 1738,
+      },
+    ],
   },
   {
     // THE SLOW EXPIRING IS THE MEZ BREAK'S QUIET COUSIN (JOS-69). A mez break is loud — the mob
@@ -432,7 +432,7 @@ export const ALERT_GROUPS: AlertGroup[] = [
           "Tagar's, Togor's, Turgur's, Tigir's) - so it keeps working when you out-level the " +
           'one you cast today. Tepid Deeds accounts for 3 more wear-offs in the reference log. ' +
           "The bard's binding songs count too (Largo's Melodic Binding and its level 51 upgrade " +
-          "Largo's Assonant Binding), because they slow the mob's swings as well as its feet."
+          "Largo's Assonant Binding), because they slow the mob's swings as well as its feet.",
       },
       {
         // THE ON-YOU SIDE, and it is a SHARED MESSAGE (world-model law 3), so the trigger is
@@ -461,7 +461,7 @@ export const ALERT_GROUPS: AlertGroup[] = [
         trigger: {
           type: 'event',
           kind: 'buffWearOff',
-          where: { spell: SLOW_SPELLS_SELF, target: 'self' }
+          where: { spell: SLOW_SPELLS_SELF, target: 'self' },
         },
         soundId: SOUND.slowExpired,
         cooldownMs: 5000,
@@ -472,9 +472,9 @@ export const ALERT_GROUPS: AlertGroup[] = [
         note:
           'Both sentences are shared by a whole slow family and name no spell, so this alert ' +
           'reports that a slow expired, never which one. The haste line "Your speed returns to ' +
-          'normal." is deliberately not included.'
-      }
-    ]
+          'normal." is deliberately not included.',
+      },
+    ],
   },
   {
     id: 'invis',
@@ -493,15 +493,15 @@ export const ALERT_GROUPS: AlertGroup[] = [
           type: 'any',
           conditions: [
             { type: 'raw', regex: '\\] You feel yourself starting to appear\\.$' },
-            { type: 'raw', regex: '\\] You become visible\\.$' }
-          ]
+            { type: 'raw', regex: '\\] You become visible\\.$' },
+          ],
         },
         soundId: SOUND.invisDrop,
         cooldownMs: 5000,
         line: 'You feel yourself starting to appear. / You become visible.',
-        observed: 241
-      }
-    ]
+        observed: 241,
+      },
+    ],
   },
   {
     id: 'castFail',
@@ -517,7 +517,7 @@ export const ALERT_GROUPS: AlertGroup[] = [
         soundId: SOUND.castFailed,
         cooldownMs: 4000,
         line: 'Your Chaotic Feedback spell fizzles!',
-        observed: 535
+        observed: 535,
       },
       {
         // The other half of a dead cast — moved, stunned, or bashed mid-cast.
@@ -527,7 +527,7 @@ export const ALERT_GROUPS: AlertGroup[] = [
         soundId: SOUND.castFailed,
         cooldownMs: 4000,
         line: 'Your Invisibility spell is interrupted.',
-        observed: 979
+        observed: 979,
       },
       {
         // A spell that was BLOCKED by a stronger/incompatible effect already on the target —
@@ -539,9 +539,9 @@ export const ALERT_GROUPS: AlertGroup[] = [
         soundId: SOUND.spellBlocked,
         cooldownMs: 5000,
         line: 'Your Arch Shielding spell did not take hold. (Blocked by Talisman of Altuna.)',
-        observed: 88
-      }
-    ]
+        observed: 88,
+      },
+    ],
   },
   {
     id: 'mana',
@@ -557,9 +557,9 @@ export const ALERT_GROUPS: AlertGroup[] = [
         soundId: SOUND.outOfMana,
         cooldownMs: 6000,
         line: 'Insufficient Mana to cast this spell!',
-        observed: 529
-      }
-    ]
+        observed: 529,
+      },
+    ],
   },
   {
     id: 'death',
@@ -574,9 +574,9 @@ export const ALERT_GROUPS: AlertGroup[] = [
         soundId: SOUND.playerDeath,
         cooldownMs: 5000,
         line: 'You have been slain by a magician!',
-        observed: 21
-      }
-    ]
+        observed: 21,
+      },
+    ],
   },
   {
     // ON-YOU VARIANT: DELIBERATELY ABSENT. Weakening Strike's msgCastOnYou is
@@ -650,9 +650,9 @@ export const ALERT_GROUPS: AlertGroup[] = [
           'Weakening Strike - the attack slow (3:30) granted by Weakening, Binding, Neurotoxic ' +
           'and Paralytic poison. Clumsiness Strike, the casting slow, is deliberately not ' +
           'included. Each mob gets its own 30-second quiet period: the first slow on a mob ' +
-          'always speaks, and only re-lands on that same mob are held back.'
-      }
-    ]
+          'always speaks, and only re-lands on that same mob are held back.',
+      },
+    ],
   },
   {
     // A LOOT FILTER, IN THE PATH OF EXILE SENSE (JOS-69): the drop that is worth looking up from
@@ -707,9 +707,9 @@ export const ALERT_GROUPS: AlertGroup[] = [
         note:
           'Every tier of Mote of Potential, from Infinitesimal to Ascendant - the currency the ' +
           'Item Upgrade System runs on. All tiers share one sound: nothing in the game or the ' +
-          'catalog states which tier outranks which.'
-      }
-    ]
+          'catalog states which tier outranks which.',
+      },
+    ],
   },
   {
     // A PLAYER IS TALKING TO YOU AND THE GAME SAYS SO ONCE, in a chat window you are not looking
@@ -765,16 +765,16 @@ export const ALERT_GROUPS: AlertGroup[] = [
         observed: 11,
         note:
           'Player tells only. NPC and pet tells use the past tense ("told you") and never fire ' +
-          'this; neither do channel tells, group chat, or the tells you send.'
-      }
-    ]
+          'this; neither do channel tells, group chat, or the tells you send.',
+      },
+    ],
   },
   // ---- NOT OFFERED --------------------------------------------------------------------
   // The refusal register: sets that were asked for and that no real log line can fire. They
   // live in shared/alertGroupsRefused.ts — same list, same `verified:false` contract, kept
   // apart because they are prose rather than triggers (and because this file is at its
   // factoring ceiling). VERIFIED_ALERT_GROUPS filters them out; G4 pins that they stay out.
-  ...REFUSED_ALERT_GROUPS
+  ...REFUSED_ALERT_GROUPS,
 ]
 
 /** The groups the surface actually renders — the unverified ones are documentation only. */
@@ -793,7 +793,7 @@ export function alertGroupDefs(group: AlertGroup, packId: string = GROUP_PACK_ID
       note:
         `Suggested group "${group.title}" - fires on: ${spec.line}` +
         (spec.line2 ? ` and: ${spec.line2}` : '') +
-        (spec.note ? ` ${spec.note}` : '')
+        (spec.note ? ` ${spec.note}` : ''),
     }
     // Written ONLY when it is not the default, so a group def that never asked for per-target
     // scope serializes byte-identically to how it always did (the same rule the voice fields

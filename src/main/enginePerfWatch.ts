@@ -49,7 +49,7 @@ import {
   ENGINE_PERF_INTERVAL_MS,
   type EnginePerfSample,
   type EngineProcessSay,
-  type EngineSupervisorSay
+  type EngineSupervisorSay,
 } from '../shared/enginePerf'
 import { enginePerfBudgets, enginePerfSnapshot } from './dataServer/engineClientHost'
 import { engineSupervisorStatus } from './dataServer/engineHost'
@@ -123,7 +123,7 @@ async function emit(): Promise<void> {
       // engine's; there is one fold. The field stays on the wire because the panel already draws
       // a null as "no verdict" and removing it would be a shared-shape change for a row that is
       // permanently empty.
-      parity: null
+      parity: null,
     }
     // The watch may have been stopped while the round trip was in flight; a push after the stop
     // would leave the section holding numbers after it had been told to hide.

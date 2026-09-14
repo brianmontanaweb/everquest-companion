@@ -63,14 +63,14 @@ export function mountGuard(page: Page, anchor: string): MountGuard {
       (a) => {
         document.querySelector(a.sel)?.setAttribute(a.attr, '1')
       },
-      { sel: anchor, attr: MOUNT_MARK }
+      { sel: anchor, attr: MOUNT_MARK },
     )
   }
 
   const intact = (): Promise<boolean> =>
     page.evaluate((a) => document.querySelector(`${a.sel}[${a.attr}]`) !== null, {
       sel: anchor,
-      attr: MOUNT_MARK
+      attr: MOUNT_MARK,
     })
 
   /**
@@ -91,7 +91,7 @@ export function mountGuard(page: Page, anchor: string): MountGuard {
         }
         return generation
       },
-      { timeoutMs: opts.timeoutMs ?? 30_000, stable: opts.stable ?? 8 }
+      { timeoutMs: opts.timeoutMs ?? 30_000, stable: opts.stable ?? 8 },
     )
   }
 
@@ -112,10 +112,14 @@ export function mountGuard(page: Page, anchor: string): MountGuard {
       await mark()
       if (await attempt()) return
       note(
-        `${what}: a character rebuild remounted the view mid-step — attempt ${String(i)} discarded (${String(rebuilds)} rebuilds seen while settling)`
+        `${what}: a character rebuild remounted the view mid-step — attempt ${String(i)} discarded (${String(rebuilds)} rebuilds seen while settling)`,
       )
     }
-    check(`${what}: the view held still long enough to be asked`, false, `${String(ATTEMPTS)} attempts, ${String(ATTEMPTS)} rebuilds`)
+    check(
+      `${what}: the view held still long enough to be asked`,
+      false,
+      `${String(ATTEMPTS)} attempts, ${String(ATTEMPTS)} rebuilds`,
+    )
   }
 
   return { mark, intact, settled, run }

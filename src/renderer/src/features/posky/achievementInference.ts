@@ -109,8 +109,8 @@ export const ACHIEVEMENT_REWARD_ALIASES: readonly AchievementRewardAlias[] = [
       'items.json carries `Windhowl` AND `Spirit Render` as separate pages, both eraTag Sky, both ' +
       'with questUses naming Beastlord Test of Claw; the scrape’s reward cell records only the ' +
       'first. This is the one row whose achievement text is not an item name at all, which is ' +
-      'exactly why it cannot be a rename or a reward correction.'
-  }
+      'exactly why it cannot be a rename or a reward correction.',
+  },
   // The Rogue row (`Griffon Wing Spauldors` → `Griffon Wing Spaulders`, verified 2026-08-20)
   // RETIRED 2026-08-22: the wiki retitled the item page to the game's spelling (the rescrape's
   // new-pages list carries `Griffon Wing Spaulders`), so scrape and achievements file now agree
@@ -148,7 +148,10 @@ const joinKey = (className: string, item: string): string =>
 export function achievementItemsFor(className: string, reward: string): string[] {
   const out = [reward]
   for (const a of ACHIEVEMENT_REWARD_ALIASES) {
-    if (classFold(a.className) === classFold(className) && itemFold(a.reward) === itemFold(reward)) {
+    if (
+      classFold(a.className) === classFold(className) &&
+      itemFold(a.reward) === itemFold(reward)
+    ) {
       out.push(a.achievementItem)
     }
   }
@@ -193,7 +196,7 @@ export interface AchievementVouchedQuests {
  */
 export function achievementVouchedQuests(
   quests: readonly Pick<PoskyQuest, 'className' | 'name' | 'reward'>[],
-  unlocks: readonly ClassUnlockClaim[] | undefined
+  unlocks: readonly ClassUnlockClaim[] | undefined,
 ): AchievementVouchedQuests {
   const vouched: AchievementVouchedQuests = { quest: new Set(), classUnlock: new Set() }
   if (!unlocks || unlocks.length === 0) return vouched

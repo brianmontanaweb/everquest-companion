@@ -28,7 +28,7 @@ import {
   OverruledChip,
   ProvenanceChip,
   SlotChips,
-  UncertainChip
+  UncertainChip,
 } from './ClassComboChips'
 import { levelRangeText, spanText, startFuzzText } from './ClassComboLabels'
 import ClassComboEditor from './ClassComboEditor'
@@ -54,7 +54,7 @@ function FuzzyMark({ interval }: { interval: ComboInterval }): JSX.Element | nul
 /** One interval. Everything on this row is a fact about the data, never about the method. */
 function IntervalRow({
   interval,
-  onEdit
+  onEdit,
 }: {
   interval: ComboInterval
   onEdit: (i: ComboInterval) => void
@@ -62,7 +62,14 @@ function IntervalRow({
   const levels = levelRangeText(interval)
   return (
     <Paper variant="outlined" sx={{ p: 1, mb: 0.75 }} data-testid="combo-interval-row">
-      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ minWidth: 0 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="center"
+        flexWrap="wrap"
+        useFlexGap
+        sx={{ minWidth: 0 }}
+      >
         <SlotChips slots={interval.slots} />
         <Box sx={{ flexGrow: 1 }} />
         <ProvenanceChip interval={interval} />
@@ -103,7 +110,13 @@ export function ClassComboSetting(): JSX.Element {
       <LoadoutOverride current={snap.current} />
       {!snap.ready && (
         <Tooltip title="This build ships no class knowledge tables.">
-          <Chip size="small" variant="outlined" color="warning" label="class tables unavailable" sx={{ alignSelf: 'flex-start', height: 20 }} />
+          <Chip
+            size="small"
+            variant="outlined"
+            color="warning"
+            label="class tables unavailable"
+            sx={{ alignSelf: 'flex-start', height: 20 }}
+          />
         </Tooltip>
       )}
       <Box
@@ -121,8 +134,8 @@ export function ClassComboSetting(): JSX.Element {
         )}
       </Box>
       <Typography variant="caption" color="text.secondary">
-        Edit any past range you know better - your correction wins over autodetection until a
-        /who row says otherwise, and the panel tells you when one does.
+        Edit any past range you know better - your correction wins over autodetection until a /who
+        row says otherwise, and the panel tells you when one does.
       </Typography>
       <ClassComboEditor interval={editing} onClose={() => setEditing(null)} />
     </Stack>

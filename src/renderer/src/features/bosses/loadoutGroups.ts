@@ -178,20 +178,23 @@ function speaker(members: readonly ComboInterval[]): ComboInterval | null {
       best = member
       continue
     }
-    const delta = PROVENANCE_RANK[intervalProvenance(member)] - PROVENANCE_RANK[intervalProvenance(best)]
+    const delta =
+      PROVENANCE_RANK[intervalProvenance(member)] - PROVENANCE_RANK[intervalProvenance(best)]
     if (delta < 0 || (delta === 0 && member.startTs < best.startTs)) best = member
   }
   return best
 }
 
 /** The hull of the members' observed level ranges — see the file header on why it is a hull. */
-function levelHull(members: readonly ComboInterval[]): Pick<LoadoutGrouping, 'levelLo' | 'levelHi'> {
+function levelHull(
+  members: readonly ComboInterval[],
+): Pick<LoadoutGrouping, 'levelLo' | 'levelHi'> {
   const isLevel = (n: number | null): n is number => n !== null
   const los = members.map((m) => m.levelLo).filter(isLevel)
   const his = members.map((m) => m.levelHi).filter(isLevel)
   return {
     levelLo: los.length > 0 ? Math.min(...los) : null,
-    levelHi: his.length > 0 ? Math.max(...his) : null
+    levelHi: his.length > 0 ? Math.max(...his) : null,
   }
 }
 
@@ -239,13 +242,17 @@ const UNCERTAIN_KEY = 'uncertain'
 export function loadoutGroups(
   intervals: readonly ComboInterval[],
   list: readonly TargetStatus[],
-  keep?: (card: TargetStatus) => boolean
+  keep?: (card: TargetStatus) => boolean,
 ): LoadoutGrouping[] {
   const byKey = new Map<string, Pending>()
   const ordered: Pending[] = []
   for (const group of groupByCombo(intervals, runRows(list))) {
     const gated = group.interval !== null && loadoutUncertain(group.interval)
-    const key = !group.interval ? UNKNOWN_KEY : gated ? UNCERTAIN_KEY : `combo:${loadoutKey(group.interval)}`
+    const key = !group.interval
+      ? UNKNOWN_KEY
+      : gated
+        ? UNCERTAIN_KEY
+        : `combo:${loadoutKey(group.interval)}`
     let pending = byKey.get(key)
     if (!pending) {
       pending = { key, members: [], rows: [] }
@@ -273,7 +280,7 @@ export function loadoutGroups(
       interval: uncertain ? null : speaker(members),
       intervals: members,
       ...levelHull(members),
-      rows
+      rows,
     })
   }
   return out

@@ -39,7 +39,7 @@ import {
   note,
   reportRun,
   settle,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture, type FixtureLog } from './logFixture.mjs'
@@ -78,7 +78,7 @@ const FOLDED_ITEM = 'Brain of Cazic Thule'
 function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
   return page.waitForSelector(sel, { timeout: ms }).then(
     () => true,
-    () => false
+    () => false,
   )
 }
 
@@ -86,7 +86,7 @@ function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
 async function textOf(page: Page, sel: string): Promise<string> {
   const raw = await page.evaluate(
     (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
-    sel
+    sel,
   )
   return raw.replace(/\s+/g, ' ').trim()
 }
@@ -113,34 +113,44 @@ async function stepCurrentMobCard(page: Page, log: FixtureLog): Promise<void> {
   const now = Date.now()
   log.appendAt(new Date(now - 3000), `You crush ${MOB} for 41 points of damage.`)
   log.appendAt(new Date(now - 1000), `You slash ${MOB} for 37 points of damage.`)
-  const name = await settle(() => textOf(page, MOB_NAME), (t) => t === MOB, { timeoutMs: 20_000 })
+  const name = await settle(
+    () => textOf(page, MOB_NAME),
+    (t) => t === MOB,
+    { timeoutMs: 20_000 },
+  )
   if (!check('a swing makes Cazic Thule the current target', name === MOB, name)) {
     note('the card never took the scripted target — the rest of this step cannot be asserted')
     return
   }
   // The drop list arrives an IPC round trip after the card mounts, so wait for the fold's own
   // affordance rather than for the clock. Its ABSENCE would be the bug, not a timing artifact.
-  if (!check('the card offers the folded rows as a disclosure', await appears(page, CARD_ERA_TOGGLE, 20_000))) return
+  if (
+    !check(
+      'the card offers the folded rows as a disclosure',
+      await appears(page, CARD_ERA_TOGGLE, 20_000),
+    )
+  )
+    return
   check(
     `…which names how many there are ("+${String(OUT_OF_ERA)} out of era")`,
     (await textOf(page, CARD_ERA_TOGGLE)) === `+${String(OUT_OF_ERA)} out of era`,
-    await textOf(page, CARD_ERA_TOGGLE)
+    await textOf(page, CARD_ERA_TOGGLE),
   )
   const collapsed = await textOf(page, MOB_CARD)
   check(
     'the rows it shows do NOT include the revamp table (the owner report)',
     !collapsed.includes(FOLDED_ITEM),
-    collapsed.slice(0, 160)
+    collapsed.slice(0, 160),
   )
   await page.click(CARD_ERA_TOGGLE, { timeout: 15_000 })
   const expanded = await settle(
     () => textOf(page, MOB_CARD),
     (t) => t.includes(FOLDED_ITEM),
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   )
   check(
     '…and one click still says what the wiki lists (a disclosure, not a deletion)',
-    expanded.includes(FOLDED_ITEM)
+    expanded.includes(FOLDED_ITEM),
   )
 }
 
@@ -163,13 +173,23 @@ async function openMobPage(page: Page): Promise<boolean> {
   //
   // The roster's disappearance is the honest signal — it is the mode switching, and it says nothing
   // about WHICH mob ranks first, so the assertion below still has something to prove.
-  await settle(() => countOf(page, ZONE_ROSTER), (n) => n === 0, { timeoutMs: 10_000 })
+  await settle(
+    () => countOf(page, ZONE_ROSTER),
+    (n) => n === 0,
+    { timeoutMs: 10_000 },
+  )
   if (!(await appears(page, RESULT_ROW))) return check(`the catalog finds ${MOB}`, false)
   // The catalog's own ranking puts the God page first (score ties break on drop count, and 18 is
   // the most of any Cazic-Thule row) — asserted rather than assumed, because the whole spec is
   // about THAT page's table.
   const first = await textOf(page, RESULT_ROW)
-  if (!check('the top hit is the creature itself, not something in its temple', first.startsWith(MOB), first)) {
+  if (
+    !check(
+      'the top hit is the creature itself, not something in its temple',
+      first.startsWith(MOB),
+      first,
+    )
+  ) {
     return false
   }
   await page.click(RESULT_ROW, { timeout: 15_000 })
@@ -185,18 +205,27 @@ async function openMobPage(page: Page): Promise<boolean> {
  */
 async function stepMobPage(page: Page): Promise<void> {
   if (!(await openMobPage(page))) return
-  const shown = await settle(() => countOf(page, DROP_ROW), (n) => n === IN_ERA, { timeoutMs: 15_000 })
-  check(`the page shows ${String(IN_ERA)} drops by default (it showed ${String(LISTED)})`, shown === IN_ERA, String(shown))
+  const shown = await settle(
+    () => countOf(page, DROP_ROW),
+    (n) => n === IN_ERA,
+    { timeoutMs: 15_000 },
+  )
+  check(
+    `the page shows ${String(IN_ERA)} drops by default (it showed ${String(LISTED)})`,
+    shown === IN_ERA,
+    String(shown),
+  )
   check(
     'none of the shown rows is chipped — they are all in era',
     (await countOf(page, ERA_CHIP)) === 0,
-    String(await countOf(page, ERA_CHIP))
+    String(await countOf(page, ERA_CHIP)),
   )
-  if (!check('the folded rows are offered as a disclosure', await appears(page, PAGE_ERA_TOGGLE))) return
+  if (!check('the folded rows are offered as a disclosure', await appears(page, PAGE_ERA_TOGGLE)))
+    return
   check(
     `…reading "+${String(OUT_OF_ERA)} out of era"`,
     (await textOf(page, PAGE_ERA_TOGGLE)) === `+${String(OUT_OF_ERA)} out of era`,
-    await textOf(page, PAGE_ERA_TOGGLE)
+    await textOf(page, PAGE_ERA_TOGGLE),
   )
 
   // The tally strip must agree with the list it heads, or the page states two answers to one
@@ -205,27 +234,43 @@ async function stepMobPage(page: Page): Promise<void> {
   check(
     'the Known drops card leads with what you can go and get',
     stat.startsWith(`${String(IN_ERA)} `) || stat.startsWith(`${String(IN_ERA)}\n`),
-    stat
+    stat,
   )
-  check('…and still states the folded ones beside it', stat.includes(`+${String(OUT_OF_ERA)} out of era`), stat)
+  check(
+    '…and still states the folded ones beside it',
+    stat.includes(`+${String(OUT_OF_ERA)} out of era`),
+    stat,
+  )
 
   await page.click(PAGE_ERA_TOGGLE, { timeout: 15_000 })
-  const all = await settle(() => countOf(page, DROP_ROW), (n) => n === LISTED, { timeoutMs: 10_000 })
+  const all = await settle(
+    () => countOf(page, DROP_ROW),
+    (n) => n === LISTED,
+    { timeoutMs: 10_000 },
+  )
   check(
     `expanding it restores the whole table (${String(IN_ERA)} + ${String(OUT_OF_ERA)} = ${String(LISTED)}, nothing deleted)`,
     all === LISTED,
-    String(all)
+    String(all),
   )
   check(
     'every restored row wears the era chip that says why it was folded',
     (await countOf(page, ERA_CHIP)) === OUT_OF_ERA,
-    String(await countOf(page, ERA_CHIP))
+    String(await countOf(page, ERA_CHIP)),
   )
   const revamp = await textOf(page, PAGE_ERA_TOGGLE)
-  check('the disclosure keeps its label while open', revamp === `+${String(OUT_OF_ERA)} out of era`, revamp)
+  check(
+    'the disclosure keeps its label while open',
+    revamp === `+${String(OUT_OF_ERA)} out of era`,
+    revamp,
+  )
 
   await page.click(PAGE_ERA_TOGGLE, { timeout: 15_000 })
-  const back = await settle(() => countOf(page, DROP_ROW), (n) => n === IN_ERA, { timeoutMs: 10_000 })
+  const back = await settle(
+    () => countOf(page, DROP_ROW),
+    (n) => n === IN_ERA,
+    { timeoutMs: 10_000 },
+  )
   check('…and closing it folds them away again', back === IN_ERA, String(back))
 }
 
@@ -248,7 +293,11 @@ async function main(): Promise<void> {
     await stepCurrentMobCard(page, log)
     await stepMobPage(page)
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
 
     if (failures.length) await dumpArtifacts(page, 'mob-drops-era-FAIL')
     else await dumpArtifacts(page, 'mob-drops-era-pass')

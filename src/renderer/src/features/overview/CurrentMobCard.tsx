@@ -101,7 +101,7 @@ function DropLine({ drop, seen }: { drop: MobDrop; seen?: { count: number } }): 
 function TapLine({
   onTap,
   testId,
-  children
+  children,
 }: {
   onTap: () => void
   testId?: string
@@ -140,7 +140,9 @@ function DropList({ state, onOpen }: { state: CurrentMobState; onOpen: () => voi
   // The SAME fold the mob page uses (JOS-196) — this card has no room for the breakdown and
   // deliberately does not offer it, but "3× yours" and "1× yours" cannot be two answers to one
   // question on two surfaces. Counting keys, so an upgrade annotates the row it belongs to.
-  const seenByKey = new Map(foldSeenVariants(state.knowledge?.dropsSeen ?? []).map((g) => [g.key, g]))
+  const seenByKey = new Map(
+    foldSeenVariants(state.knowledge?.dropsSeen ?? []).map((g) => [g.key, g]),
+  )
   const line = (d: MobDrop): JSX.Element => (
     <DropLine key={d.item} drop={d} seen={seenByKey.get(itemCountKey(d.item))} />
   )
@@ -182,7 +184,14 @@ export function CurrentMobCard({ state, onOpenMob }: CurrentMobCardProps): JSX.E
         </QuietNote>
       ) : (
         <>
-          <Stack direction="row" spacing={0.75} alignItems="baseline" flexWrap="wrap" useFlexGap sx={{ minWidth: 0 }}>
+          <Stack
+            direction="row"
+            spacing={0.75}
+            alignItems="baseline"
+            flexWrap="wrap"
+            useFlexGap
+            sx={{ minWidth: 0 }}
+          >
             {!live && (
               <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
                 Last target -
@@ -203,14 +212,19 @@ export function CurrentMobCard({ state, onOpenMob }: CurrentMobCardProps): JSX.E
                 cursor: 'pointer',
                 textDecoration: 'underline dotted',
                 textUnderlineOffset: 3,
-                '&:hover': { color: 'primary.main' }
+                '&:hover': { color: 'primary.main' },
               }}
             >
               {target.name}
             </Typography>
             {/* The encounter's OTHER engaged targets — the '+N' the fight name carries. */}
             {target.others > 0 && (
-              <Chip size="small" variant="outlined" label={`+${target.others}`} sx={{ height: 20 }} />
+              <Chip
+                size="small"
+                variant="outlined"
+                label={`+${target.others}`}
+                sx={{ height: 20 }}
+              />
             )}
             {live && <Chip size="small" color="primary" label="live" sx={{ height: 20 }} />}
           </Stack>

@@ -106,7 +106,7 @@ function reparse(): void {
   const parsed = data.rows.filter((r) => r.seconds !== undefined).length
   console.log(
     `reparse: ${String(data.rows.length)} rows → ${String(parsed)} parse ` +
-      `(+${String(gained)} newly read, -${String(lost)} newly refused)`
+      `(+${String(gained)} newly read, -${String(lost)} newly refused)`,
   )
 }
 
@@ -135,7 +135,8 @@ function dedupe(rows: readonly WikiRespawn[]): WikiRespawn[] {
   const byKey = new Map<string, WikiRespawn>()
   for (const row of rows) {
     const prior = byKey.get(row.key)
-    if (!prior || (prior.seconds === undefined && row.seconds !== undefined)) byKey.set(row.key, row)
+    if (!prior || (prior.seconds === undefined && row.seconds !== undefined))
+      byKey.set(row.key, row)
   }
   return [...byKey.values()].sort((a, b) => a.key.localeCompare(b.key))
 }
@@ -158,7 +159,7 @@ async function main(): Promise<void> {
       prop: 'revisions',
       rvprop: 'content',
       rvslots: 'main',
-      titles: titles.slice(i, i + BATCH).join('|')
+      titles: titles.slice(i, i + BATCH).join('|'),
     })
     rows.push(...rowsFromBatch(j.query?.pages ?? [], byTitle))
     if (i % 1000 < BATCH) console.log(`  … ${String(i)}/${String(titles.length)} pages`)
@@ -168,13 +169,13 @@ async function main(): Promise<void> {
   const data: WikiRespawnData = {
     source: 'eqlwiki.com — |respawn_time on every page in the committed mob catalog',
     scrapedAt: new Date().toISOString().slice(0, 10),
-    rows: out
+    rows: out,
   }
   writeFileSync(OUT_PATH, JSON.stringify(data, null, 1) + '\n')
   const parsed = out.filter((r) => r.seconds !== undefined).length
   console.log(
     `respawns: ${String(titles.length)} pages → ${String(out.length)} state a respawn, ` +
-      `${String(parsed)} parse to a duration, ${String(out.length - parsed)} do not`
+      `${String(parsed)} parse to a duration, ${String(out.length - parsed)} do not`,
   )
 }
 

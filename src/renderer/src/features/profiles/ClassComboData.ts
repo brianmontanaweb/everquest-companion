@@ -24,7 +24,11 @@ export function applyComboDelta(state: ComboSnap, delta: ComboDelta): ComboSnap 
   for (const interval of delta.changed) byId.set(interval.id, interval)
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives ComboInterval. Becomes a view descriptor when the source lands.
   const intervals = [...byId.values()].sort((a, b) => a.startTs - b.startTs)
-  return { intervals, current: intervals.length > 0 ? intervals[intervals.length - 1] : null, ready: state.ready }
+  return {
+    intervals,
+    current: intervals.length > 0 ? intervals[intervals.length - 1] : null,
+    ready: state.ready,
+  }
 }
 
 /** The live combo snapshot. Never null — an un-hydrated view shows the same empty state. */

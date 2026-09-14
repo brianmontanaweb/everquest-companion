@@ -43,7 +43,7 @@ export const DEFAULT_LOOT_SORT: LootSortKey = 'count'
 
 export const LOOT_SORT_OPTIONS: readonly { value: LootSortKey; label: string }[] = [
   { value: 'count', label: 'Times looted' },
-  { value: 'recent', label: 'Last looted' }
+  { value: 'recent', label: 'Last looted' },
 ]
 
 export function isLootSortKey(v: unknown): v is LootSortKey {
@@ -55,7 +55,9 @@ function byItem(a: SortableLootRow, b: SortableLootRow): number {
   return a.item.localeCompare(b.item)
 }
 
-export function compareLootRows(sort: LootSortKey): (a: SortableLootRow, b: SortableLootRow) => number {
+export function compareLootRows(
+  sort: LootSortKey,
+): (a: SortableLootRow, b: SortableLootRow) => number {
   switch (sort) {
     // The order this table always had, now with a name tiebreak underneath it.
     case 'count':
@@ -68,6 +70,9 @@ export function compareLootRows(sort: LootSortKey): (a: SortableLootRow, b: Sort
 }
 
 /** Non-mutating sort — the caller's array is tally output it may still be holding. */
-export function sortLootRows<T extends SortableLootRow>(rows: readonly T[], sort: LootSortKey): T[] {
+export function sortLootRows<T extends SortableLootRow>(
+  rows: readonly T[],
+  sort: LootSortKey,
+): T[] {
   return [...rows].sort(compareLootRows(sort))
 }

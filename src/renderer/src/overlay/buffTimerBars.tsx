@@ -68,7 +68,7 @@ export const DISMISS_ARM_MS = 3_000
 function DismissControl({
   row,
   onDismiss,
-  visible
+  visible,
 }: {
   row: BuffTimerRow
   onDismiss: (row: BuffTimerRow) => void
@@ -117,7 +117,7 @@ function DismissControl({
         opacity: shown ? 1 : 0,
         // The other half of guard 2: an invisible control must not be a target either. A
         // programmatic click (the e2e has no pointer to hover with) is unaffected.
-        pointerEvents: shown ? 'auto' : 'none'
+        pointerEvents: shown ? 'auto' : 'none',
       }}
     >
       {armed ? 'clear?' : '✕'}
@@ -144,7 +144,7 @@ function RowName({ row, showTarget }: { row: BuffTimerRow; showTarget: boolean }
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
         fontSize: 11,
-        color: '#f2f2f2'
+        color: '#f2f2f2',
       }}
     >
       {row.name}
@@ -154,7 +154,10 @@ function RowName({ row, showTarget }: { row: BuffTimerRow; showTarget: boolean }
           string, and `Swift Like the Wind IV` as an identity is what kept a suggested wears-off
           alert from ever firing. Absent for every row whose cast line named no rank. */}
       {rank != null && (
-        <span data-testid="buff-timer-rank" style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>
+        <span
+          data-testid="buff-timer-rank"
+          style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}
+        >
           {rank}
         </span>
       )}
@@ -162,7 +165,10 @@ function RowName({ row, showTarget }: { row: BuffTimerRow; showTarget: boolean }
           conventions). It appears when the landing sentence is shared by several spells and
           nothing the player cast narrowed it — JOS-84's law, on screen. */}
       {row.ambiguous === true && (
-        <span data-testid="buff-timer-ambiguous" style={{ color: 'rgba(255,255,255,0.45)', marginLeft: 4 }}>
+        <span
+          data-testid="buff-timer-ambiguous"
+          style={{ color: 'rgba(255,255,255,0.45)', marginLeft: 4 }}
+        >
           ~
         </span>
       )}
@@ -171,19 +177,28 @@ function RowName({ row, showTarget }: { row: BuffTimerRow; showTarget: boolean }
           row stands for all of them, and the chip is how it says so instead of pretending to
           be one. The clock is the OLDEST of them, which is the one the next wear-off closes. */}
       {row.count != null && row.count > 1 && (
-        <span data-testid="buff-timer-count" style={{ color: 'rgba(255,255,255,0.55)', marginLeft: 4 }}>
+        <span
+          data-testid="buff-timer-count"
+          style={{ color: 'rgba(255,255,255,0.55)', marginLeft: 4 }}
+        >
           {`x${row.count}`}
         </span>
       )}
       {/* Whose spell this is, when it is not yours (the externals allowlist). Absent for your
           own, which is nearly every row — a caster chip on all of them would be noise. */}
       {row.caster != null && (
-        <span data-testid="buff-timer-caster" style={{ color: 'rgba(255,255,255,0.4)', marginLeft: 4 }}>
+        <span
+          data-testid="buff-timer-caster"
+          style={{ color: 'rgba(255,255,255,0.4)', marginLeft: 4 }}
+        >
           {row.caster}
         </span>
       )}
       {showTarget && row.target != null && (
-        <span data-testid="buff-timer-target" style={{ color: 'rgba(255,255,255,0.45)', marginLeft: 6 }}>
+        <span
+          data-testid="buff-timer-target"
+          style={{ color: 'rgba(255,255,255,0.45)', marginLeft: 6 }}
+        >
           {row.target}
         </span>
       )}
@@ -195,7 +210,7 @@ export function BuffTimerBar({
   row,
   nowMs,
   showTarget = false,
-  onDismiss
+  onDismiss,
 }: {
   row: BuffTimerRow
   nowMs: number
@@ -237,13 +252,15 @@ export function BuffTimerBar({
         gap: 2,
         padding: '3px 4px 4px',
         borderLeft: `2px solid ${accent}`,
-        marginBottom: 3
+        marginBottom: 3,
       }}
     >
       {/* ONE ROW, never wrapping: a wrap turns overflow into height and a compact bar list is
           the whole point. The name group shrinks and ellipsizes (world-supplied text); the time
           never does. */}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'nowrap', minWidth: 0 }}>
+      <div
+        style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'nowrap', minWidth: 0 }}
+      >
         <RowName row={row} showTarget={showTarget} />
         <span
           data-testid="buff-timer-time"
@@ -251,7 +268,7 @@ export function BuffTimerBar({
             flexShrink: 0,
             fontSize: 11,
             fontVariantNumeric: 'tabular-nums',
-            color: r.overdue ? 'rgba(255,255,255,0.4)' : accent
+            color: r.overdue ? 'rgba(255,255,255,0.4)' : accent,
           }}
         >
           {timeLabel(row, nowMs)}
@@ -262,10 +279,21 @@ export function BuffTimerBar({
       {/* THE BAR, and only when a duration was STATED. Its absence on a count-up row is
           deliberate and is the honest half of this design. */}
       {countdown && (
-        <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+        <div
+          style={{
+            height: 3,
+            borderRadius: 2,
+            background: 'rgba(255,255,255,0.08)',
+            overflow: 'hidden',
+          }}
+        >
           <div
             data-testid="buff-timer-fill"
-            style={{ width: `${(r.fraction * 100).toFixed(1)}%`, height: '100%', background: accent }}
+            style={{
+              width: `${(r.fraction * 100).toFixed(1)}%`,
+              height: '100%',
+              background: accent,
+            }}
           />
         </div>
       )}
@@ -279,7 +307,7 @@ export function BuffTimerGroup({
   inferred,
   rows,
   nowMs,
-  onDismiss
+  onDismiss,
 }: {
   label: string
   inferred: boolean
@@ -299,7 +327,7 @@ export function BuffTimerGroup({
             letterSpacing: 0.6,
             textTransform: 'uppercase',
             color: 'rgba(255,255,255,0.45)',
-            padding: '0 4px 2px'
+            padding: '0 4px 2px',
           }}
         >
           {label}
@@ -309,7 +337,13 @@ export function BuffTimerGroup({
         </div>
       )}
       {rows.map((r) => (
-        <BuffTimerBar key={r.id} row={r} nowMs={nowMs} showTarget={label === ''} onDismiss={onDismiss} />
+        <BuffTimerBar
+          key={r.id}
+          row={r}
+          nowMs={nowMs}
+          showTarget={label === ''}
+          onDismiss={onDismiss}
+        />
       ))}
     </div>
   )

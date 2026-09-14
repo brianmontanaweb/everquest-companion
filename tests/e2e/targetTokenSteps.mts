@@ -47,14 +47,14 @@ interface Spoken {
 
 function spoken(page: Page): Promise<Spoken[]> {
   return page.evaluate(
-    () => (window as unknown as { __eqSpeech?: { spoken: Spoken[] } }).__eqSpeech?.spoken ?? []
+    () => (window as unknown as { __eqSpeech?: { spoken: Spoken[] } }).__eqSpeech?.spoken ?? [],
   ) as Promise<Spoken[]>
 }
 
 function textOf(page: Page, selector: string): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText ?? '',
-    selector
+    selector,
   )
 }
 
@@ -72,11 +72,11 @@ async function saveDef(page: Page): Promise<number> {
         sound: { packId: 'alan-rickman', soundId: 'task-error-task-error-08' },
         cooldownMs: 0,
         audio: 'speech',
-        speech: { mode: 'custom', phrase }
+        speech: { mode: 'custom', phrase },
       })
       return defs.length
     },
-    { id: ALERT_ID, phrase: PHRASE }
+    { id: ALERT_ID, phrase: PHRASE },
   )
 }
 
@@ -99,17 +99,21 @@ async function republish(page: Page): Promise<void> {
           (window as unknown as { eq: { listAlerts: () => Promise<{ id: string }[]> } }).eq
             .listAlerts()
             .then((d) => d.some((a) => a.id === id)),
-        ALERT_ID
+        ALERT_ID,
       ),
     (present) => present,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
 }
 
 /** The editor half: the plain condition editor announces the token it fills in for you. */
 async function assertHint(page: Page): Promise<void> {
   const row = `[data-alert-id="${ALERT_ID}"]`
-  await settle(() => countOf(page, row), (n) => n === 1, { timeoutMs: 15_000 })
+  await settle(
+    () => countOf(page, row),
+    (n) => n === 1,
+    { timeoutMs: 15_000 },
+  )
   await page.click(`${row} [data-testid="alert-edit"]`)
   await page.waitForSelector('[data-testid="alert-dialog"]', { timeout: 15_000 })
   // `innerText` is EMPTY for a node that is not laid out yet and MUI's Dialog fades in, so the
@@ -118,13 +122,13 @@ async function assertHint(page: Page): Promise<void> {
     await settle(
       () => textOf(page, '[data-testid="alert-speech-auto-tokens"]'),
       (t) => t.trim().length > 0,
-      { timeoutMs: 10_000 }
+      { timeoutMs: 10_000 },
     ).catch(() => '')
   ).replace(/\s+/g, ' ')
   check(
     'the editor offers {target} on a trigger that declares no capture group',
     hint.includes('{target}'),
-    hint.slice(0, 110) || '(no auto-token hint rendered)'
+    hint.slice(0, 110) || '(no auto-token hint rendered)',
   )
   await page.keyboard.press('Escape')
   await settleGone(page, '[data-testid="alert-dialog"]', { timeoutMs: 10_000 })
@@ -132,7 +136,7 @@ async function assertHint(page: Page): Promise<void> {
 
 export async function stepTargetToken(
   page: Page,
-  log: { appendAt: (at: Date, ...m: readonly string[]) => number }
+  log: { appendAt: (at: Date, ...m: readonly string[]) => number },
 ): Promise<void> {
   // ── RESTORED BY JOS-500 (owner ruling 27) — THE FRAME CARRIES THE ENTITY FIELDS ─────────────
   //
@@ -149,7 +153,13 @@ export async function stepTargetToken(
   // app deliberately does not re-make (`alertsAudioRules.ts`), so the ONLY honest proof that the
   // whole chain agrees is a real def, a real live-tailed line, and the sentence that comes out.
   const saved = await saveDef(page)
-  if (!check('a no-regex target alert saves through the app’s own IPC', saved > 0, `${String(saved)} defs stored`)) {
+  if (
+    !check(
+      'a no-regex target alert saves through the app’s own IPC',
+      saved > 0,
+      `${String(saved)} defs stored`,
+    )
+  ) {
     return
   }
   await republish(page)
@@ -161,15 +171,20 @@ export async function stepTargetToken(
   const all = await settle(
     () => spoken(page),
     (list) => list.slice(before).some((s) => s.text === EXPECTED),
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   ).catch(() => null)
   const hit = all?.slice(before).find((s) => s.text === EXPECTED)
   check(
     'the affected mob reaches the speech seam with no regex in the def — THE ACCEPTANCE',
     hit !== undefined,
-    hit ? `spoke "${hit.text}"` : `never spoke "${EXPECTED}"`
+    hit ? `spoke "${hit.text}"` : `never spoke "${EXPECTED}"`,
   )
-  if (hit) check('…and this channel stayed mute doing it', hit.uttered === false, `uttered=${String(hit.uttered)}`)
+  if (hit)
+    check(
+      '…and this channel stayed mute doing it',
+      hit.uttered === false,
+      `uttered=${String(hit.uttered)}`,
+    )
 
   await assertHint(page)
 }

@@ -43,7 +43,9 @@ const ENV: FeedbackEnv = {
   node: '20.18.0',
 }
 
-const GZ = gzipSync(Buffer.from('[Sat Aug 01 13:00:28 2026] You slash a froglok tad for 42 points of damage.\n'))
+const GZ = gzipSync(
+  Buffer.from('[Sat Aug 01 13:00:28 2026] You slash a froglok tad for 42 points of damage.\n'),
+)
 
 function metaFor(gz: Buffer): LogSliceMeta {
   return {
@@ -73,7 +75,9 @@ function request(over: Partial<SubmitRequest> = {}): SubmitRequest {
 
 /** A gzipped `/outputfile inventory` dump, in the real tab-separated shape (JOS-296). */
 const INV_GZ = gzipSync(
-  Buffer.from('Location\tName\tID\tCount\tSlots\r\nEar\tDrop of Crystallized Flame +7\t177839\t1\t10\r\n'),
+  Buffer.from(
+    'Location\tName\tID\tCount\tSlots\r\nEar\tDrop of Crystallized Flame +7\t177839\t1\t10\r\n',
+  ),
 )
 
 function invMetaFor(gz: Buffer): InventoryDumpMeta {
@@ -113,7 +117,10 @@ async function submit(stack: DevStack, body: unknown): Promise<Answer> {
     body: JSON.stringify(body),
   })
   const text = await res.text()
-  return { status: res.status, body: text.length === 0 ? {} : (JSON.parse(text) as Record<string, unknown>) }
+  return {
+    status: res.status,
+    body: text.length === 0 ? {} : (JSON.parse(text) as Record<string, unknown>),
+  }
 }
 
 async function setMode(stack: DevStack, patch: unknown): Promise<void> {
@@ -150,7 +157,14 @@ async function withStack(fn: (stack: DevStack) => Promise<void>, maxPerDay = 10)
 test('a submit with a log round-trips: 201, presign, upload, bytes on disk', async () => {
   await withStack(async (stack) => {
     // `title` rides along as a retired legacy field — the server must drop it, not reject it.
-    const req = request({ log: metaFor(GZ), draft: { type: 'bug', title: 'blank overlay', description: 'It goes blank after zoning, every time.' } as never })
+    const req = request({
+      log: metaFor(GZ),
+      draft: {
+        type: 'bug',
+        title: 'blank overlay',
+        description: 'It goes blank after zoning, every time.',
+      } as never,
+    })
     const a = await submit(stack, req)
 
     assert.equal(a.status, 201)
@@ -240,7 +254,10 @@ test('a submit with BOTH attachments mints two presigns and lands two objects', 
     const uploads = rows.filter((r) => r.t === 'upload')
     assert.equal(uploads.length, 2)
     assert.deepEqual(uploads.map((r) => r.kind).sort(), ['inventory', 'log'])
-    assert.equal(uploads.every((r) => r.shaMatches === true), true)
+    assert.equal(
+      uploads.every((r) => r.shaMatches === true),
+      true,
+    )
     const report = rows.find((r) => r.t === 'report')
     assert.equal(typeof report?.inventoryKey, 'string')
   })
@@ -261,7 +278,7 @@ test('all THREE attachments mint three presigns and land three distinct objects'
       request({
         log: metaFor(GZ),
         inventory: invMetaFor(INV_GZ),
-        achievements: achMetaFor(ACH_GZ)
+        achievements: achMetaFor(ACH_GZ),
       }),
     )
     assert.equal(a.status, 201)
@@ -291,7 +308,10 @@ test('all THREE attachments mint three presigns and land three distinct objects'
     const uploads = rows.filter((r) => r.t === 'upload')
     assert.equal(uploads.length, 3)
     assert.deepEqual(uploads.map((r) => r.kind).sort(), ['achievements', 'inventory', 'log'])
-    assert.equal(uploads.every((r) => r.shaMatches === true), true)
+    assert.equal(
+      uploads.every((r) => r.shaMatches === true),
+      true,
+    )
     const report = rows.find((r) => r.t === 'report')
     assert.equal(typeof report?.achievementsKey, 'string')
   })
@@ -307,10 +327,17 @@ test('an achievements export alone is a complete report, and its policy is the s
     assert.equal(await upload(ach.url, ach.fields, ACH_GZ), 204)
     // The pinned key and the two `eq` conditions, exactly as the other two legs enforce them.
     assert.equal(
-      await upload(ach.url, { ...ach.fields, key: 'achievements/2026/08/21/elsewhere.txt.gz' }, ACH_GZ),
+      await upload(
+        ach.url,
+        { ...ach.fields, key: 'achievements/2026/08/21/elsewhere.txt.gz' },
+        ACH_GZ,
+      ),
       403,
     )
-    assert.equal(await upload(ach.url, { ...ach.fields, 'Content-Type': 'text/plain' }, ACH_GZ), 403)
+    assert.equal(
+      await upload(ach.url, { ...ach.fields, 'Content-Type': 'text/plain' }, ACH_GZ),
+      403,
+    )
   })
 })
 
@@ -330,8 +357,18 @@ test('the dump’s upload leg enforces the same policy the slice’s does', asyn
     const a = await submit(stack, request({ inventory: invMetaFor(INV_GZ) }))
     const inv = a.body.inventoryUpload as PresignedUpload
     // The pinned key, and the two `eq` conditions — the presign is exact, not starts-with.
-    assert.equal(await upload(inv.url, { ...inv.fields, key: 'inventory/2026/08/13/elsewhere.txt.gz' }, INV_GZ), 403)
-    assert.equal(await upload(inv.url, { ...inv.fields, 'Content-Type': 'text/plain' }, INV_GZ), 403)
+    assert.equal(
+      await upload(
+        inv.url,
+        { ...inv.fields, key: 'inventory/2026/08/13/elsewhere.txt.gz' },
+        INV_GZ,
+      ),
+      403,
+    )
+    assert.equal(
+      await upload(inv.url, { ...inv.fields, 'Content-Type': 'text/plain' }, INV_GZ),
+      403,
+    )
     // content-length-range 1..MAX_UPLOAD_BYTES, the SERVER-side half of the cap.
     assert.equal(await upload(inv.url, inv.fields, Buffer.alloc(MAX_UPLOAD_BYTES + 1)), 400)
     assert.equal(await upload(inv.url, inv.fields, Buffer.alloc(0)), 400)
@@ -349,7 +386,10 @@ test('invalid payloads are 400 invalid_payload and NAME the field', async () => 
     assert.equal(short.body.error, 'invalid_payload')
     assert.equal(short.body.field, 'description')
 
-    const badType = await submit(stack, request({ draft: { type: 'praise', description: 'a'.repeat(30) } as never }))
+    const badType = await submit(
+      stack,
+      request({ draft: { type: 'praise', description: 'a'.repeat(30) } as never }),
+    )
     assert.equal(badType.status, 400)
     assert.equal(badType.body.field, 'type')
 
@@ -369,7 +409,10 @@ test('invalid payloads are 400 invalid_payload and NAME the field', async () => 
 
 test('an oversize body is 413 too_large, refused before it is parsed', async () => {
   await withStack(async (stack) => {
-    const a = await submit(stack, request({ draft: { type: 'bug', description: 'x'.repeat(40_000) } }))
+    const a = await submit(
+      stack,
+      request({ draft: { type: 'bug', description: 'x'.repeat(40_000) } }),
+    )
     assert.equal(a.status, 413)
     assert.equal(a.body.error, 'too_large')
   })
@@ -480,11 +523,20 @@ test('the upload leg enforces the pinned key and the two eq conditions, like the
     const a = await submit(stack, request({ log: metaFor(GZ) }))
     const up = upstairs(a)
 
-    assert.equal(await upload(up.url, { ...up.fields, key: 'logs/2026/08/03/somewhere-else.log.gz' }, GZ), 403)
+    assert.equal(
+      await upload(up.url, { ...up.fields, key: 'logs/2026/08/03/somewhere-else.log.gz' }, GZ),
+      403,
+    )
     assert.equal(await upload(up.url, { ...up.fields, 'Content-Type': 'text/plain' }, GZ), 403)
-    assert.equal(await upload(up.url, { ...up.fields, 'x-amz-server-side-encryption': 'none' }, GZ), 403)
+    assert.equal(
+      await upload(up.url, { ...up.fields, 'x-amz-server-side-encryption': 'none' }, GZ),
+      403,
+    )
     // An unminted report id has no presign behind it.
-    assert.equal(await upload(`http://127.0.0.1:${stack.port}/devstack/upload/01BOGUS`, up.fields, GZ), 403)
+    assert.equal(
+      await upload(`http://127.0.0.1:${stack.port}/devstack/upload/01BOGUS`, up.fields, GZ),
+      403,
+    )
     // The honest one still works afterwards.
     assert.equal(await upload(up.url, up.fields, GZ), 204)
   })
@@ -506,13 +558,18 @@ test('a sha256 mismatch is REPORTED, never rejected — S3 could not see it at a
     // The client declares one digest and uploads different bytes.
     const a = await submit(stack, request({ log: metaFor(GZ) }))
     const up = upstairs(a)
-    const other = gzipSync(Buffer.from('[Sat Aug 01 13:05:00 2026] You have entered The Plane of Sky.\n'))
+    const other = gzipSync(
+      Buffer.from('[Sat Aug 01 13:05:00 2026] You have entered The Plane of Sky.\n'),
+    )
     assert.equal(await upload(up.url, up.fields, other), 204)
 
     const lines = readFileSync(join(stack.dir, 'reports.jsonl'), 'utf8').trim().split('\n')
     const row = JSON.parse(lines[lines.length - 1] ?? '{}') as Record<string, unknown>
     assert.equal(row.t, 'upload')
     assert.equal(row.shaMatches, false)
-    assert.equal(statSync(join(stack.dir, 'uploads', `${String(a.body.reportId)}.log.gz`)).size, other.byteLength)
+    assert.equal(
+      statSync(join(stack.dir, 'uploads', `${String(a.body.reportId)}.log.gz`)).size,
+      other.byteLength,
+    )
   })
 })

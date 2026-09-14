@@ -42,7 +42,7 @@ test('the breadcrumb vocabulary still CONTAINS the parser kind list — the dupl
   assert.deepEqual(
     missing,
     [],
-    'shared/telemetry.ts duplicates ALL_LOG_EVENT_KINDS because it may import nothing — keep it a superset'
+    'shared/telemetry.ts duplicates ALL_LOG_EVENT_KINDS because it may import nothing — keep it a superset',
   )
 })
 
@@ -72,13 +72,16 @@ test('EVERY MODULE THE ENGINE FOLDS HAS A BREADCRUMB KIND — the list that was 
     }
   }
   walk(dir)
-  assert.ok(ids.size >= 15, `the audit found only ${String(ids.size)} module ids — the probe broke, not the list`)
+  assert.ok(
+    ids.size >= 15,
+    `the audit found only ${String(ids.size)} module ids — the probe broke, not the list`,
+  )
 
   const refused = [...ids].filter((id) => !isBreadcrumbKind(`module:${id}`)).sort()
   assert.deepEqual(
     refused,
     [],
-    'a module the engine folds produces a crumb the wire refuses — its cursors would be dropped in silence'
+    'a module the engine folds produces a crumb the wire refuses — its cursors would be dropped in silence',
   )
 })
 
@@ -87,7 +90,7 @@ test('…AND THE MODULE PATTERN STILL CANNOT CARRY A NAME', () => {
   // ever reach this event. Letters only, 24 max: no space, no separator, no digit, no punctuation.
   for (const bad of [
     'module:Innoruuk`s Chosen',
-    'module:Primitive',           // …a plain name IS admitted, and is checked below instead
+    'module:Primitive', // …a plain name IS admitted, and is checked below instead
     'module:loot/../../etc',
     'module:C:\\Users\\jmoye',
     'module:a b',
@@ -97,7 +100,7 @@ test('…AND THE MODULE PATTERN STILL CANNOT CARRY A NAME', () => {
     'module:',
     'module:' + 'x'.repeat(25),
     'modulesomething',
-    'engine:made-up'
+    'engine:made-up',
   ]) {
     const admitted = isBreadcrumbKind(bad)
     // A bare capitalised word IS shape-admissible — the bound is a SHAPE bound, and no shape check

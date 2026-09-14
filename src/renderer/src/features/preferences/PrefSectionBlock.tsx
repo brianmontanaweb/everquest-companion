@@ -27,14 +27,14 @@ const PULSE_SX = {
   '@keyframes eqcPrefsLand': {
     '0%': { boxShadow: '0 0 0 0 rgba(144,202,249,0)', borderColor: 'divider' },
     '25%': { boxShadow: '0 0 0 3px rgba(144,202,249,0.45)', borderColor: 'primary.main' },
-    '100%': { boxShadow: '0 0 0 0 rgba(144,202,249,0)', borderColor: 'divider' }
+    '100%': { boxShadow: '0 0 0 0 rgba(144,202,249,0)', borderColor: 'divider' },
   },
   animation: 'eqcPrefsLand 900ms ease-out 2',
   '@media (prefers-reduced-motion: reduce)': {
     animation: 'none',
     borderColor: 'primary.main',
-    boxShadow: '0 0 0 2px rgba(144,202,249,0.35)'
-  }
+    boxShadow: '0 0 0 2px rgba(144,202,249,0.35)',
+  },
 } as const
 
 /** How long the arrival highlight stays up. Two 900 ms pulses, then it is gone. */
@@ -102,20 +102,25 @@ export function paneFills(searching: boolean, shown: PrefSection[]): boolean {
   return !searching && shown.length === 1 && shown[0]?.fill === true
 }
 
-const FILL_BLOCK_SX = { flexGrow: 1, minHeight: 0, display: 'flex', flexDirection: 'column' } as const
+const FILL_BLOCK_SX = {
+  flexGrow: 1,
+  minHeight: 0,
+  display: 'flex',
+  flexDirection: 'column',
+} as const
 const FILL_CARD_SX = {
   flexGrow: 1,
   minHeight: 0,
   display: 'flex',
   flexDirection: 'column',
-  '& > :last-child': { flexGrow: 1, minHeight: 0 }
+  '& > :last-child': { flexGrow: 1, minHeight: 0 },
 } as const
 
 /** One section header plus its settings cards. `landed` runs the arrival pulse above; `fill`
  *  makes the block claim the pane's remaining height (see FILL_BLOCK_SX). */
 export default function PrefSectionBlock({
   section,
-  landed = false
+  landed = false,
 }: {
   section: PrefSection
   landed?: boolean

@@ -36,7 +36,15 @@
  * Run: `npm run test:e2e -- sky-class-unlocks`.
  */
 import type { Page } from 'playwright-core'
-import { buildIfStale, check, countOf, dumpArtifacts, failures, reportRun, settle } from './appHarness.mjs'
+import {
+  buildIfStale,
+  check,
+  countOf,
+  dumpArtifacts,
+  failures,
+  reportRun,
+  settle,
+} from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture, stageFixture, type FixtureLog } from './logFixture.mjs'
 
@@ -66,11 +74,11 @@ const GIVER = 'Animist Kratho'
 const ITEMS = ['Azarack Skin', 'Wind Rune Heda'] as const
 const LOOT = [
   `--You have looted an ${ITEMS[0]} from Protector of Sky's corpse.--`,
-  `--You have looted a ${ITEMS[1]} from an azarack's corpse.--`
+  `--You have looted a ${ITEMS[1]} from an azarack's corpse.--`,
 ]
 const TURN_IN = [
   ...ITEMS.map((i) => `You offered 1 ${i} to ${GIVER}.`),
-  `You complete the trade with ${GIVER}.`
+  `You complete the trade with ${GIVER}.`,
 ]
 
 /**
@@ -95,7 +103,7 @@ function progressOf(page: Page, cls: string): Promise<[number, number] | null> {
 function sourceOf(page: Page, cls: string): Promise<string | null> {
   return page.evaluate(
     (sel) => document.querySelector(sel)?.getAttribute('data-source') ?? null,
-    rowOf(cls)
+    rowOf(cls),
   )
 }
 
@@ -106,11 +114,13 @@ function rowText(page: Page, cls: string): Promise<string> {
 
 /** The class names in the order they are drawn. The order IS the feature, so it is read directly. */
 function rowOrder(page: Page): Promise<string[]> {
-  return page.evaluate((sel) =>
-    [...document.querySelectorAll(sel)].map((el) =>
-      (el.getAttribute('data-testid') ?? '').replace('class-unlock-row-', '')
-    )
-  , ROW)
+  return page.evaluate(
+    (sel) =>
+      [...document.querySelectorAll(sel)].map((el) =>
+        (el.getAttribute('data-testid') ?? '').replace('class-unlock-row-', ''),
+      ),
+    ROW,
+  )
 }
 
 /** Click a row's star. It is the row's first button, and the only one on it. */
@@ -125,14 +135,18 @@ async function openClasses(page: Page): Promise<boolean> {
   await page.click(TAB_CLASSES, { timeout: 15_000 })
   const shown = await page.waitForSelector(PANE, { timeout: 30_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   return check('the Classes tab opens onto its own pane', shown)
 }
 
 /** Every class in the committed data gets a row, and the tab says where its answers come from. */
 async function stepRows(page: Page): Promise<void> {
-  const rows = await settle(() => countOf(page, ROW), (n) => n > 0, { timeoutMs: 30_000 })
+  const rows = await settle(
+    () => countOf(page, ROW),
+    (n) => n > 0,
+    { timeoutMs: 30_000 },
+  )
   // 16 is what the committed scrape holds and what EQ has; a floor rather than an equality so a
   // future class cannot turn this red for being new.
   check('every class in the Sky data gets a row', rows >= 16, `rows=${String(rows)}`)
@@ -143,22 +157,28 @@ async function stepRows(page: Page): Promise<void> {
       note.includes('Star a class') &&
       note.includes('unlocked by a line in your log') &&
       note.includes('read from a complete set of turn-ins'),
-    note.slice(0, 240)
+    note.slice(0, 240),
   )
   check(
     '…and it says outright that a turn-in never claims an unlock by itself',
     note.includes('prints nothing about unlocking'),
-    note.slice(0, 240)
+    note.slice(0, 240),
   )
 }
 
 /** Fewest remaining first, read off the rows themselves rather than from the model. */
 async function stepOrder(page: Page): Promise<void> {
-  const remaining = await page.evaluate((sel) =>
-    [...document.querySelectorAll(sel)].map((el) => Number(el.getAttribute('data-remaining')))
-  , ROW)
+  const remaining = await page.evaluate(
+    (sel) =>
+      [...document.querySelectorAll(sel)].map((el) => Number(el.getAttribute('data-remaining'))),
+    ROW,
+  )
   const ordered = remaining.every((n, i) => i === 0 || remaining[i - 1] <= n)
-  check('CLOSEST TO DONE LEADS - the rows are ordered by tests remaining', ordered, remaining.join(','))
+  check(
+    'CLOSEST TO DONE LEADS - the rows are ordered by tests remaining',
+    ordered,
+    remaining.join(','),
+  )
 }
 
 /**
@@ -169,41 +189,67 @@ async function stepOrder(page: Page): Promise<void> {
  * observed source can produce that state, which is the whole reason the source exists.
  */
 async function stepObservedUnlock(page: Page, log: FixtureLog, at: Date): Promise<void> {
-  const before = await settle(() => progressOf(page, 'paladin'), (v) => v !== null, { timeoutMs: 20_000 })
+  const before = await settle(
+    () => progressOf(page, 'paladin'),
+    (v) => v !== null,
+    { timeoutMs: 20_000 },
+  )
   if (!check('the Paladin row is on screen with its turn-in count', before !== null)) return
-  check('…and the committed data gives Paladin four tests', before?.[1] === PALADIN_TOTAL, JSON.stringify(before))
-  check('…and it does not yet claim the log unlocked it', (await sourceOf(page, 'paladin')) !== 'observed')
+  check(
+    '…and the committed data gives Paladin four tests',
+    before?.[1] === PALADIN_TOTAL,
+    JSON.stringify(before),
+  )
+  check(
+    '…and it does not yet claim the log unlocked it',
+    (await sourceOf(page, 'paladin')) !== 'observed',
+  )
 
   log.appendAt(at, UNLOCK_LINE)
-  const src = await settle(() => sourceOf(page, 'paladin'), (s) => s === 'observed', { timeoutMs: 30_000 })
-  if (!check('ONE ACHIEVEMENT LINE UNLOCKS THE CLASS, LIVE', src === 'observed', `source=${String(src)}`)) return
+  const src = await settle(
+    () => sourceOf(page, 'paladin'),
+    (s) => s === 'observed',
+    { timeoutMs: 30_000 },
+  )
+  if (
+    !check(
+      'ONE ACHIEVEMENT LINE UNLOCKS THE CLASS, LIVE',
+      src === 'observed',
+      `source=${String(src)}`,
+    )
+  )
+    return
   check(
     '…and the row says so in words rather than only in an attribute',
     (await rowText(page, 'paladin')).includes('the log said so'),
-    (await rowText(page, 'paladin')).slice(0, 160)
+    (await rowText(page, 'paladin')).slice(0, 160),
   )
   const after = await progressOf(page, 'paladin')
   check(
     '…AND THE TURN-IN COUNT NEVER MOVED: the unlock was observed, not derived',
     after?.[0] === before?.[0] && after?.[1] === before?.[1],
-    `${JSON.stringify(before)} then ${JSON.stringify(after)}`
+    `${JSON.stringify(before)} then ${JSON.stringify(after)}`,
   )
 }
 
 /** A turn-in still moves the count it belongs to: the two sources are independent. */
 async function stepTurnInMovesCount(page: Page, log: FixtureLog, at: Date): Promise<void> {
-  const before = await settle(() => progressOf(page, 'beastlord'), (v) => v !== null, { timeoutMs: 20_000 })
+  const before = await settle(
+    () => progressOf(page, 'beastlord'),
+    (v) => v !== null,
+    { timeoutMs: 20_000 },
+  )
   if (!check('the Beastlord row is on screen', before !== null)) return
   log.appendAt(at, ...LOOT, ...TURN_IN)
   const after = await settle(
     () => progressOf(page, 'beastlord'),
     (v) => v !== null && v[0] > (before?.[0] ?? 0),
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
   check(
     'A LIVE TURN-IN ADVANCES ITS CLASS COUNT - the derived half is wired too',
     after !== null && after[0] === (before?.[0] ?? 0) + 1,
-    `${JSON.stringify(before)} then ${JSON.stringify(after)}`
+    `${JSON.stringify(before)} then ${JSON.stringify(after)}`,
   )
 }
 
@@ -219,22 +265,34 @@ async function stepPin(page: Page): Promise<void> {
   const furthest = order[order.length - 1]
   if (!check('there are rows to pin', order.length > 1, order.join(','))) return
   await star(page, furthest)
-  const pinned = await settle(() => rowOrder(page), (o) => o[0] === furthest, { timeoutMs: 15_000 })
+  const pinned = await settle(
+    () => rowOrder(page),
+    (o) => o[0] === furthest,
+    { timeoutMs: 15_000 },
+  )
   check(
     'STARRING THE FURTHEST-FROM-DONE CLASS PINS IT TO THE TOP',
     pinned[0] === furthest,
-    `${furthest} in ${pinned.slice(0, 4).join(',')}`
+    `${furthest} in ${pinned.slice(0, 4).join(',')}`,
   )
   await star(page, furthest)
-  const back = await settle(() => rowOrder(page), (o) => o[0] !== furthest, { timeoutMs: 15_000 })
-  check('…and un-starring puts the closest-first order straight back', back[0] !== furthest, back.slice(0, 4).join(','))
+  const back = await settle(
+    () => rowOrder(page),
+    (o) => o[0] !== furthest,
+    { timeoutMs: 15_000 },
+  )
+  check(
+    '…and un-starring puts the closest-first order straight back',
+    back[0] !== furthest,
+    back.slice(0, 4).join(','),
+  )
 }
 
 /** What is picked in a ChipMultiSelect right now, read off the chips the user can actually see. */
 function chipsOf(page: Page, sel: string): Promise<string[]> {
   return page.evaluate(
     (s) => [...document.querySelectorAll(`${s} .MuiChip-label`)].map((el) => el.textContent ?? ''),
-    sel
+    sel,
   )
 }
 
@@ -254,7 +312,7 @@ function storedClasses(page: Page): Promise<string[]> {
 function classNames(page: Page): Promise<string[]> {
   return page.evaluate(
     (sel) => [...document.querySelectorAll(sel)].map((el) => el.getAttribute('data-class') ?? ''),
-    ROW
+    ROW,
   )
 }
 
@@ -285,18 +343,23 @@ async function stepStarDoesNotNavigate(page: Page): Promise<void> {
   const cls = order[order.length - 1]
   if (!check('there is a row to star', !!cls, order.slice(0, 4).join(','))) return
   await star(page, cls.replace(/\s+/g, '-').toLowerCase())
-  const stillHere = await page
-    .waitForSelector(PANE, { timeout: 10_000 })
-    .then(() => true, () => false)
+  const stillHere = await page.waitForSelector(PANE, { timeout: 10_000 }).then(
+    () => true,
+    () => false,
+  )
   check('THE STAR NEVER NAVIGATES - the Classes tab is still the tab you are on', stillHere)
   check(
     '…and it wrote nothing to the class filter',
     JSON.stringify(await storedClasses(page)) === JSON.stringify(before),
-    JSON.stringify(await storedClasses(page))
+    JSON.stringify(await storedClasses(page)),
   )
   // Put the order back for whatever runs after this.
   await star(page, cls.replace(/\s+/g, '-').toLowerCase())
-  await settle(() => classNames(page), (o) => o[0] !== cls, { timeoutMs: 15_000 })
+  await settle(
+    () => classNames(page),
+    (o) => o[0] !== cls,
+    { timeoutMs: 15_000 },
+  )
 }
 
 /**
@@ -315,22 +378,26 @@ async function stepDrillDown(page: Page): Promise<void> {
   const order = await classNames(page)
   const first = order[0]
   const second = order.find((c) => c !== first)
-  if (!check('there are two classes to drill into', !!first && !!second, order.slice(0, 4).join(','))) return
+  if (
+    !check('there are two classes to drill into', !!first && !!second, order.slice(0, 4).join(','))
+  )
+    return
 
   await openRow(page, first.replace(/\s+/g, '-').toLowerCase())
-  const landed = await page
-    .waitForSelector(COUNTS, { timeout: 15_000 })
-    .then(() => true, () => false)
+  const landed = await page.waitForSelector(COUNTS, { timeout: 15_000 }).then(
+    () => true,
+    () => false,
+  )
   if (!check('CLICKING A CLASS ROW LANDS ON THE QUESTS TAB', landed)) return
   check(
     '…and the class filter shows exactly that class',
     JSON.stringify(await chipsOf(page, CLASS_FILTER)) === JSON.stringify([first]),
-    JSON.stringify(await chipsOf(page, CLASS_FILTER))
+    JSON.stringify(await chipsOf(page, CLASS_FILTER)),
   )
   check(
     '…and it wrote the SAME stored pick the class chip writes',
     JSON.stringify(await storedClasses(page)) === JSON.stringify([first]),
-    JSON.stringify(await storedClasses(page))
+    JSON.stringify(await storedClasses(page)),
   )
 
   // Something for a careless reset to destroy. The island facet stays empty on purpose: "left
@@ -342,27 +409,27 @@ async function stepDrillDown(page: Page): Promise<void> {
   const replaced = await settle(
     () => storedClasses(page),
     (v) => v.length === 1 && v[0] === second,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   check(
     'A SECOND DRILL-DOWN REPLACES THE CLASS RATHER THAN ADDING TO IT',
     JSON.stringify(replaced) === JSON.stringify([second]),
-    JSON.stringify(replaced)
+    JSON.stringify(replaced),
   )
   check(
     '…and the chip agrees with the storage',
     JSON.stringify(await chipsOf(page, CLASS_FILTER)) === JSON.stringify([second]),
-    JSON.stringify(await chipsOf(page, CLASS_FILTER))
+    JSON.stringify(await chipsOf(page, CLASS_FILTER)),
   )
   check(
     '…AND IT LEFT EVERY OTHER FILTER ALONE: the search text the user typed survives the trip',
     (await page.inputValue(SEARCH)) === 'rune',
-    await page.inputValue(SEARCH)
+    await page.inputValue(SEARCH),
   )
   check(
     '…and the island facet is still unpicked rather than reset to something',
     (await chipsOf(page, ISLAND_FILTER)).length === 0,
-    JSON.stringify(await chipsOf(page, ISLAND_FILTER))
+    JSON.stringify(await chipsOf(page, ISLAND_FILTER)),
   )
 }
 

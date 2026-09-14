@@ -48,7 +48,8 @@ export function isOverdue(elapsedMs: number, p75: number | null, n: number): boo
  */
 export function estimatorSourceTitle(src: string | undefined): string {
   if (src === 'db') return 'The spell-database baseline'
-  if (src === 'cluster') return 'From your logged casts - three clean casts agree it runs shorter than the baseline'
+  if (src === 'cluster')
+    return 'From your logged casts - three clean casts agree it runs shorter than the baseline'
   if (src === 'deathBound') {
     return 'At least this long - the target died still carrying it and no wear-off was ever printed'
   }
@@ -87,7 +88,7 @@ export function classAccent(cls: BuffClass): string {
  * on hostile mobs sit in their target's group but are styled distinct by `classAccent`.
  */
 export function groupKey(b: ActiveBuff): string {
-  return b.self ? 'self' : b.target ?? 'other'
+  return b.self ? 'self' : (b.target ?? 'other')
 }
 
 /** Human label for an entity group header. */

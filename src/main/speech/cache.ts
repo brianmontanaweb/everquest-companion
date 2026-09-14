@@ -57,7 +57,9 @@ export function speechCacheDir(userData: string): string {
  * literally named "undefined".
  */
 export function speechCacheKey(voiceId: string | null | undefined, text: string): string {
-  return createHash('sha256').update(`${voiceId ?? ''}\0${text}`, 'utf8').digest('hex')
+  return createHash('sha256')
+    .update(`${voiceId ?? ''}\0${text}`, 'utf8')
+    .digest('hex')
 }
 
 /** Whether a string is one of our hashes — the ONLY thing allowed to name a cache file. */
@@ -149,14 +151,14 @@ export function encodeWav(samples: Float32Array, sampleRate = KOKORO_SAMPLE_RATE
  */
 export const EQSPEECH_SCHEME_PRIVILEGES = {
   scheme: EQSPEECH_SCHEME,
-  privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
+  privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true },
 } as const
 
 /** The slice of Electron's `protocol` this file needs (structural, so tests can stub it). */
 export interface SpeechProtocolLike {
   handle(
     scheme: string,
-    handler: (request: GlobalRequest) => GlobalResponse | Promise<GlobalResponse>
+    handler: (request: GlobalRequest) => GlobalResponse | Promise<GlobalResponse>,
   ): void
 }
 
@@ -179,7 +181,7 @@ const NOT_FOUND = (): GlobalResponse => new Response(null, { status: 404, status
  */
 export function installSpeechCacheProtocol(
   protocol: SpeechProtocolLike,
-  opts: SpeechCacheOptions
+  opts: SpeechCacheOptions,
 ): void {
   const dir = speechCacheDir(opts.userData)
   const onError = opts.onError ?? ((): void => undefined)
@@ -197,8 +199,8 @@ export function installSpeechCacheProtocol(
         status: 200,
         headers: {
           'content-type': 'audio/wav',
-          'cache-control': 'public, max-age=31536000, immutable'
-        }
+          'cache-control': 'public, max-age=31536000, immutable',
+        },
       })
     } catch (err) {
       onError(`speech cache: could not read ${path}`, err)

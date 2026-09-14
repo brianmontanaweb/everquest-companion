@@ -43,7 +43,7 @@ import {
   LinearProgress,
   Link,
   Stack,
-  Typography
+  Typography,
 } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
@@ -107,7 +107,7 @@ function ProgressBar({ q }: { q: QuestProgress }): JSX.Element {
 function SharingQuestChip({
   sq,
   ambiguousNames,
-  onSelectQuest
+  onSelectQuest,
 }: {
   sq: SharingQuest
   ambiguousNames: Set<string>
@@ -135,7 +135,7 @@ function SharingQuestChip({
 function SharedItemsSection({
   shared,
   ambiguousNames,
-  onSelectQuest
+  onSelectQuest,
 }: {
   shared: SharedItem[]
   ambiguousNames: Set<string>
@@ -151,7 +151,14 @@ function SharedItemsSection({
       </Stack>
       <Stack spacing={0.5}>
         {shared.map((si) => (
-          <Stack key={si.key} direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
+          <Stack
+            key={si.key}
+            direction="row"
+            spacing={0.75}
+            alignItems="center"
+            flexWrap="wrap"
+            useFlexGap
+          >
             <Typography variant="caption" sx={{ fontWeight: 600, minWidth: 150 }}>
               {si.name}
             </Typography>
@@ -179,7 +186,7 @@ function QuestSummaryRow({
   favorited,
   onToggleFavorite,
   onToggleIgnore,
-  onOpenLoot
+  onOpenLoot,
 }: {
   q: QuestProgress
   killTargets: KillTarget[]
@@ -198,7 +205,13 @@ function QuestSummaryRow({
         <QuestStarButton favorited={favorited} onToggle={onToggleFavorite} />
         <QuestIgnoreButton ignored={false} onToggle={onToggleIgnore} />
       </Stack>
-      <Chip label={q.className} size="small" color="secondary" variant="outlined" sx={{ minWidth: 92 }} />
+      <Chip
+        label={q.className}
+        size="small"
+        color="secondary"
+        variant="outlined"
+        sx={{ minWidth: 92 }}
+      />
       <Box sx={{ minWidth: 220 }}>
         <Typography variant="subtitle2">{q.name}</Typography>
         {q.reward && (
@@ -207,7 +220,8 @@ function QuestSummaryRow({
                 quest's required items, so this tab knows no dropper for it — the card is the item
                 window plus whatever the item DB says it is for, which is the whole question here.
                 The scraped stat text is the fallback when the DB has no block of its own. */}
-            → <ItemNameLink name={q.reward} onOpenLoot={onOpenLoot} inSummary stats={q.rewardStats} />
+            →{' '}
+            <ItemNameLink name={q.reward} onOpenLoot={onOpenLoot} inSummary stats={q.rewardStats} />
           </Typography>
         )}
         {q.giver && (
@@ -239,7 +253,11 @@ function QuestSummaryRow({
         size="small"
         variant="outlined"
         color={q.missing.length === 0 ? 'success' : 'default'}
-        label={q.missing.length === 0 ? 'Ready to turn in' : `${q.missing.length} of ${q.items.length} missing`}
+        label={
+          q.missing.length === 0
+            ? 'Ready to turn in'
+            : `${q.missing.length} of ${q.items.length} missing`
+        }
       />
       <ProgressBar q={q} />
     </Stack>
@@ -251,7 +269,7 @@ function QuestSummaryRow({
 function QuestItemChips({
   q,
   isFavorite,
-  toggleFavorite
+  toggleFavorite,
 }: {
   q: QuestProgress
   isFavorite: (name: string) => boolean
@@ -283,13 +301,7 @@ function QuestItemChips({
                 variant={fav ? 'filled' : 'outlined'}
                 color={fav ? 'warning' : done ? 'success' : 'default'}
                 icon={
-                  fav ? (
-                    <StarIcon />
-                  ) : done ? (
-                    <CheckCircleIcon />
-                  ) : (
-                    <RadioButtonUncheckedIcon />
-                  )
+                  fav ? <StarIcon /> : done ? <CheckCircleIcon /> : <RadioButtonUncheckedIcon />
                 }
                 onClick={(e) => {
                   e.stopPropagation()
@@ -310,7 +322,7 @@ function QuestDetailsToolbar({
   q,
   wikiHref,
   onRecordTurnIn,
-  onUndoTurnIn
+  onUndoTurnIn,
 }: {
   q: QuestProgress
   wikiHref?: string
@@ -318,7 +330,14 @@ function QuestDetailsToolbar({
   onUndoTurnIn: () => void
 }): JSX.Element {
   return (
-    <Stack direction="row" spacing={2} sx={{ mb: 1 }} alignItems="center" flexWrap="wrap" useFlexGap>
+    <Stack
+      direction="row"
+      spacing={2}
+      sx={{ mb: 1 }}
+      alignItems="center"
+      flexWrap="wrap"
+      useFlexGap
+    >
       {q.rune && <Chip size="small" label={`Rune: ${q.rune}`} />}
       {q.giver && <Chip size="small" label={`Giver: ${q.giver}`} />}
       {wikiHref && (
@@ -371,7 +390,7 @@ function QuestAccordionRow({
   onOpenMob,
   onOpenLoot,
   onSetItemCount,
-  anchored = false
+  anchored = false,
 }: {
   q: QuestProgress
   shared: SharedItem[]
@@ -461,12 +480,21 @@ function QuestAccordionRow({
           onUndoTurnIn={() => onUndoTurnIn(q.key)}
         />
         {q.rewardStats && (
-          <Typography variant="caption" color="text.secondary" component="pre" sx={{ whiteSpace: 'pre-wrap', mb: 1 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            component="pre"
+            sx={{ whiteSpace: 'pre-wrap', mb: 1 }}
+          >
             {q.rewardStats}
           </Typography>
         )}
         {shared.length > 0 && (
-          <SharedItemsSection shared={shared} ambiguousNames={ambiguousNames} onSelectQuest={onSelectQuest} />
+          <SharedItemsSection
+            shared={shared}
+            ambiguousNames={ambiguousNames}
+            onSelectQuest={onSelectQuest}
+          />
         )}
         <QuestItemsTable
           q={q}

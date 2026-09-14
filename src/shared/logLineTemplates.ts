@@ -113,7 +113,7 @@ const COMBAT_SAFE: readonly RegExp[] = [
   // resists, all three directions (combat.rs:105-107)
   /^(.+?) resisted your (.+?)!$/,
   /^(.+?) resisted (.+?)'s (.+?)!$/,
-  /^You resist(?:ed)? (.+?)'s (.+?)!$/
+  /^You resist(?:ed)? (.+?)'s (.+?)!$/,
 ]
 
 // ---- Casts (engine/crates/eqlog/src/parse/casts.rs) ----
@@ -164,7 +164,7 @@ const CASTS_SAFE: readonly RegExp[] = [
   /^The poison dries from the blade\.$/,
   /^The venom drips away\.$/,
   // rogue poison procs (data.rs:123-174, POISON_PROCS — 10 fixed suffixes, target name is free)
-  /(?:'s limbs move slower!|'s fingers slow down\.|'s blessings wither!|'s feet won't budge!|stumbles, clutching their head!|begins to sway!|blinks, looking confused!|starts limping!|begins to bleed profusely!|screams as poison burns their veins!)$/
+  /(?:'s limbs move slower!|'s fingers slow down\.|'s blessings wither!|'s feet won't budge!|stumbles, clutching their head!|begins to sway!|blinks, looking confused!|starts limping!|begins to bleed profusely!|screams as poison burns their veins!)$/,
 ]
 
 // ---- Combat/mob status-effect flavor (measured against tests/fixtures/*.log, not the Rust ----
@@ -206,7 +206,7 @@ const MOB_STATUS_SAFE: readonly RegExp[] = [
   /^You overcome the stun!$/,
   /^You are stunned!$/,
   /^I have [0-9]+ percent of my hit points left\.$/,
-  /^A coat of shimmering runes surrounds you\.$/
+  /^A coat of shimmering runes surrounds you\.$/,
 ]
 
 // ---- System / UI messages (same measurement basis as MOB_STATUS_SAFE above) ----
@@ -329,7 +329,7 @@ const SYSTEM_UI_SAFE: readonly RegExp[] = [
   /^You are not currently in channel (.+?)$/,
   // channel system messages
   /^Channel .+? was too full to join$/,
-  /^Channels: .+$/
+  /^Channels: .+$/,
 ]
 
 // ---- Loot / currency / turn-ins (engine/crates/eqlog/src/parse/{world,acquire}.rs) ----
@@ -363,7 +363,7 @@ const LOOT_SAFE: readonly RegExp[] = [
   /^The item you are trying to add will not work, this mote is not sufficiently powerful to upgrade this item\.$/,
   /^The item you are trying to add will not work, you cannot fuse an item to itself\.$/,
   /^The item you are trying to add will not work, you cannot merge two different types of items\.$/,
-  /^Request to merge items canceled, both items remain unmodified\.$/
+  /^Request to merge items canceled, both items remain unmodified\.$/,
 ]
 
 // ---- Zone / level / experience / AA (engine/crates/eqlog/src/parse/world.rs) ----
@@ -382,7 +382,7 @@ const PROGRESS_SAFE: readonly RegExp[] = [
   // the one AA-potion landing sentence (world.rs:13, 477-484)
   /^You are filled with the spirit of alternate adventure\.$/,
   // instance-creation notice (world.rs:86-87, 234-247)
-  /^Player (.+?) creating instance (.+?) ([0-9]+)\.$/
+  /^Player (.+?) creating instance (.+?) ([0-9]+)\.$/,
 ]
 
 // ---- Death (engine/crates/eqlog/src/parse/world.rs:12, 88-91) ----
@@ -392,13 +392,13 @@ const DEATH_SAFE: readonly RegExp[] = [
   /^You have been slain by (.+?)!$/,
   /^You have slain (.+?)!$/,
   /^(.+?) has been slain by (.+?)!$/,
-  /^(.+?) died\.$/
+  /^(.+?) died\.$/,
 ]
 
 // ---- Consider (engine/crates/eqlog/src/parse/world.rs:112-115, data.rs:179-189) ----
 
 const CONSIDER_SAFE: readonly RegExp[] = [
-  /^(.+?)(?: - a rare creature -)? (?:regards you as an ally|looks upon you warmly|kindly considers you|judges you amiably|regards you indifferently|looks your way apprehensively|glowers at you dubiously|glares at you threateningly|scowls at you, ready to attack) -- (.+?)\s*\(Lvl: ([0-9]+)\)$/
+  /^(.+?)(?: - a rare creature -)? (?:regards you as an ally|looks upon you warmly|kindly considers you|judges you amiably|regards you indifferently|looks your way apprehensively|glowers at you dubiously|glares at you threateningly|scowls at you, ready to attack) -- (.+?)\s*\(Lvl: ([0-9]+)\)$/,
 ]
 
 // ---- System messages (engine/crates/eqlog/src/parse/{session,who}.rs) ----
@@ -417,7 +417,7 @@ const SYSTEM_SAFE: readonly RegExp[] = [
   // item activation (who.rs:42-45)
   /^Your (.+?) (?:shimmers briefly|feels alive with power)\.$/,
   // primary-class unlock (who.rs:10, 126-138)
-  /^You have completed achievement: Primary Class Unlock - .+$/
+  /^You have completed achievement: Primary Class Unlock - .+$/,
 ]
 
 // ---- Group membership (engine/crates/eqlog/src/parse/group.rs) ----
@@ -438,7 +438,7 @@ const GROUP_SAFE: readonly RegExp[] = [
   new RegExp(`^You remove ${GROUP_NAME} from the group\\.$`),
   new RegExp(`^${GROUP_NAME} is now the leader of your group\\.$`),
   new RegExp(`^You invite ${GROUP_NAME} to join your group\\.$`),
-  new RegExp(`^${GROUP_NAME} invites you to join a group\\.$`)
+  new RegExp(`^${GROUP_NAME} invites you to join a group\\.$`),
 ]
 
 /**
@@ -457,7 +457,7 @@ export const KNOWN_SAFE: readonly RegExp[] = [
   ...DEATH_SAFE,
   ...CONSIDER_SAFE,
   ...SYSTEM_SAFE,
-  ...GROUP_SAFE
+  ...GROUP_SAFE,
 ]
 
 // ---- Per-spell messages (src/main/data/spells.json) — see the header's "PER-SPELL MESSAGES" ----

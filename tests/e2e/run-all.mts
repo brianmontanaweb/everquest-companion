@@ -67,7 +67,7 @@ function runSpec(spec: string): Promise<Result> {
       // unreadable, so each spec's output is held and printed as one block when it finishes.
       stdio: serial ? 'inherit' : ['ignore', 'pipe', 'pipe'],
       detached: process.platform !== 'win32',
-      env: { ...process.env, EQ_E2E_RUN_ID: RUN_ID, EQ_E2E_SPEC: name }
+      env: { ...process.env, EQ_E2E_RUN_ID: RUN_ID, EQ_E2E_SPEC: name },
     })
     const out: string[] = []
     child.stdout?.on('data', (b: Buffer) => out.push(b.toString()))
@@ -198,14 +198,14 @@ function report(results: Result[], wallMs: number): number {
     writeFileSync(
       join(RUN_DIR, 'summary.json'),
       JSON.stringify({ runId: RUN_ID, concurrency: CONCURRENCY, wallMs, specs: rows }, null, 2),
-      'utf8'
+      'utf8',
     )
   } catch (err) {
     console.log(`[e2e] could not write summary.json — ${String(err)}`)
   }
   const green = results.length - failed.length
   console.log(
-    `\n[e2e] ${String(green)}/${String(results.length)} specs green · ${(wallMs / 1000).toFixed(1)}s wall · artifacts/${RUN_ID}/`
+    `\n[e2e] ${String(green)}/${String(results.length)} specs green · ${(wallMs / 1000).toFixed(1)}s wall · artifacts/${RUN_ID}/`,
   )
   return failed.length
 }
@@ -229,9 +229,10 @@ if (specs.length === 0) {
 // `engined.exe` would take the engine's ABSENCE path and go quietly green.
 buildIfStale()
 const reaped = reapOrphanUserData()
-if (reaped > 0) console.log(`[e2e] reaped ${String(reaped)} orphaned userData dir(s) older than 24h`)
+if (reaped > 0)
+  console.log(`[e2e] reaped ${String(reaped)} orphaned userData dir(s) older than 24h`)
 console.log(
-  `[e2e] ${String(specs.length)} spec(s), ${serial ? 'serial' : `${String(CONCURRENCY)} at a time`}, ${String(TIMEOUT_MS / 1000)}s cap each`
+  `[e2e] ${String(specs.length)} spec(s), ${serial ? 'serial' : `${String(CONCURRENCY)} at a time`}, ${String(TIMEOUT_MS / 1000)}s cap each`,
 )
 
 const started = Date.now()

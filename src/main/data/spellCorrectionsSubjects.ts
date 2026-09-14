@@ -383,8 +383,8 @@ export const SUBJECT_PLACEHOLDER_CORRECTIONS: readonly SpellCorrection[] = SUBJE
     from: d.from,
     to: d.to,
     attribution: d.attribution ?? 'sole',
-    evidence: d.evidence ?? defaultEvidence(d)
-  })
+    evidence: d.evidence ?? defaultEvidence(d),
+  }),
 )
 
 /**
@@ -402,6 +402,8 @@ export const SUBJECT_PLACEHOLDER_CORRECTIONS: readonly SpellCorrection[] = SUBJE
  * and it has moved into the table above. THE PRECEDENCE CASE in this file's header carries the
  * measurement, and also why `looks powerful.` is not the same case and stays here.
  */
-export const SUBJECT_DRIFT_REFUSED: readonly { spell: string; suffix: string; claimedBy: string }[] = [
-  { spell: 'Infusion of Spirit', suffix: 'looks powerful.', claimedBy: 'spellEmote' }
-]
+export const SUBJECT_DRIFT_REFUSED: readonly {
+  spell: string
+  suffix: string
+  claimedBy: string
+}[] = [{ spell: 'Infusion of Spirit', suffix: 'looks powerful.', claimedBy: 'spellEmote' }]

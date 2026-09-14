@@ -52,7 +52,18 @@
 // 1073 is the same branch of the same breakpoint — one width proves the branch.
 
 import type { ElectronApplication, Page } from 'playwright-core'
-import { check, countOf, hoverAt, note, pageOverflow, settle, settleCount, settleGone, settleStable, sleep } from './appHarness.mjs'
+import {
+  check,
+  countOf,
+  hoverAt,
+  note,
+  pageOverflow,
+  settle,
+  settleCount,
+  settleGone,
+  settleStable,
+  sleep,
+} from './appHarness.mjs'
 
 /** The app's own minimum window width (src/main/windows.ts) — the narrowest a user can get. */
 const MIN_W = 900
@@ -103,7 +114,10 @@ export async function dismissFirstRunNotice(page: Page): Promise<void> {
   await page.waitForSelector(notice, { timeout: 30_000 }).catch(() => undefined)
   if ((await countOf(page, notice)) === 0) return
   await page.click('[data-testid="telemetry-notice-off"]')
-  check('the analytics first-run notice can be answered out of the way', await settleGone(page, notice, { timeoutMs: 8_000 }))
+  check(
+    'the analytics first-run notice can be answered out of the way',
+    await settleGone(page, notice, { timeoutMs: 8_000 }),
+  )
 }
 
 /** A top-level panel of the tab, as the user SEES it: clipped by every scroller above it. */
@@ -149,7 +163,7 @@ function visibleBands(page: Page): Promise<Band[]> {
         x: Math.round(x0),
         y: Math.round(y0),
         w: Math.round(x1 - x0),
-        h: Math.round(y1 - y0)
+        h: Math.round(y1 - y0),
       })
     }
     return out
@@ -166,7 +180,8 @@ function collisionsOf(bands: Band[]): string[] {
       if (a.w <= 0 || a.h <= 0 || b.w <= 0 || b.h <= 0) continue
       const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)
       const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y)
-      if (ox > 1 && oy > 1) hits.push(`"${a.name}" over "${b.name}" (${String(ox)}x${String(oy)}px)`)
+      if (ox > 1 && oy > 1)
+        hits.push(`"${a.name}" over "${b.name}" (${String(ox)}x${String(oy)}px)`)
     }
   }
   return hits
@@ -194,10 +209,11 @@ function columnsInfo(page: Page): Promise<ColumnsInfo | null> {
           y: Math.round(r.y),
           h: Math.round(r.height),
           spill: box.scrollHeight - box.clientHeight,
-          scrolls: ov === 'auto' || ov === 'scroll'
+          scrolls: ov === 'auto' || ov === 'scroll',
         }
       }),
-      regionScrolls: el.scrollHeight > el.clientHeight + 1 && getComputedStyle(el).overflowY === 'auto'
+      regionScrolls:
+        el.scrollHeight > el.clientHeight + 1 && getComputedStyle(el).overflowY === 'auto',
     }
   })
 }
@@ -229,18 +245,26 @@ function hitTest(page: Page, sel: string): Promise<string> {
  * twice while writing this, both times reporting the old width as if it were the new one. So the
  * renderer's own viewport is read first, and only then are the boxes allowed to stop moving.
  */
-async function resizeTo(app: ElectronApplication, page: Page, width: number, height: number): Promise<number> {
+async function resizeTo(
+  app: ElectronApplication,
+  page: Page,
+  width: number,
+  height: number,
+): Promise<number> {
   const win = await app.browserWindow(page)
-  await win.evaluate((w, b) => {
-    // Below the app's own minimum nothing here would even be reachable; lifting it is how the
-    // combat dashboard's narrow step exercises the same CSS, and it is put back at the end.
-    w.setMinimumSize(360, 360)
-    w.setBounds({ ...w.getBounds(), width: b.w, height: b.h })
-  }, { w: width, h: height })
+  await win.evaluate(
+    (w, b) => {
+      // Below the app's own minimum nothing here would even be reachable; lifting it is how the
+      // combat dashboard's narrow step exercises the same CSS, and it is put back at the end.
+      w.setMinimumSize(360, 360)
+      w.setBounds({ ...w.getBounds(), width: b.w, height: b.h })
+    },
+    { w: width, h: height },
+  )
   const got = await settle(
     () => page.evaluate(() => document.documentElement.clientWidth),
     (v) => Math.abs(v - width) <= 24,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   await settleStable(() => visibleBands(page).then((b) => JSON.stringify(b)), { timeoutMs: 15_000 })
   return got
@@ -276,7 +300,7 @@ function innerScrollers(page: Page): Promise<InnerScroller[]> {
       out.push({
         id: node.getAttribute('data-testid') ?? '',
         what: `${node.tagName.toLowerCase()}.${String(node.className).slice(0, 40)}`,
-        spill
+        spill,
       })
     }
     return out
@@ -284,7 +308,9 @@ function innerScrollers(page: Page): Promise<InnerScroller[]> {
 }
 
 /** The app content area's scroll geometry — the one scroller the tab is supposed to grow. */
-function contentScroll(page: Page): Promise<{ top: number; height: number; client: number } | null> {
+function contentScroll(
+  page: Page,
+): Promise<{ top: number; height: number; client: number } | null> {
   return page.evaluate((s) => {
     const el = document.querySelector(s) as HTMLElement | null
     return el ? { top: el.scrollTop, height: el.scrollHeight, client: el.clientHeight } : null
@@ -300,7 +326,7 @@ async function scrollContentToBottom(page: Page): Promise<number> {
   return settle(
     () => contentScroll(page).then((c) => (c ? Math.round(c.top) : -1)),
     (v) => v > 0,
-    { timeoutMs: 5_000 }
+    { timeoutMs: 5_000 },
   )
 }
 
@@ -310,7 +336,11 @@ async function resetContentScroll(page: Page): Promise<void> {
     const el = document.querySelector(s) as HTMLElement | null
     if (el) el.scrollTop = 0
   }, CONTENT)
-  await settle(() => contentScroll(page).then((c) => (c ? Math.round(c.top) : -1)), (v) => v === 0, { timeoutMs: 5_000 })
+  await settle(
+    () => contentScroll(page).then((c) => (c ? Math.round(c.top) : -1)),
+    (v) => v === 0,
+    { timeoutMs: 5_000 },
+  )
 }
 
 /** Is `sel` fully inside the content area's visible box right now? */
@@ -323,11 +353,12 @@ function fullyInContent(page: Page, sel: string): Promise<string> {
       const r = el.getBoundingClientRect()
       const b = box.getBoundingClientRect()
       if (r.height < 1) return 'collapsed to nothing'
-      if (r.bottom > b.bottom + 2) return `${String(Math.round(r.bottom - b.bottom))}px below the fold`
+      if (r.bottom > b.bottom + 2)
+        return `${String(Math.round(r.bottom - b.bottom))}px below the fold`
       if (r.top < b.top - 2) return `${String(Math.round(b.top - r.top))}px above the fold`
       return 'in view'
     },
-    { sel, content: CONTENT }
+    { sel, content: CONTENT },
   )
 }
 
@@ -355,7 +386,7 @@ export async function stepPageScroll(page: Page): Promise<void> {
   check(
     'the WINDOW itself never scrolls (the shell is 100vh; a document scrollbar means the chrome moved)',
     over.doc === 0,
-    `document +${String(over.doc)}px`
+    `document +${String(over.doc)}px`,
   )
 
   const inner = await innerScrollers(page)
@@ -364,19 +395,24 @@ export async function stepPageScroll(page: Page): Promise<void> {
     'no panel on the Leveling tab shows an internal vertical scrollbar (the page is the scroller)',
     unjustified.length === 0,
     unjustified.length
-      ? unjustified.map((s) => `${s.id || s.what} +${String(s.spill)}px`).slice(0, 4).join(' · ')
-      : `${String(inner.length)} declared scroller(s), all justified`
+      ? unjustified
+          .map((s) => `${s.id || s.what} +${String(s.spill)}px`)
+          .slice(0, 4)
+          .join(' · ')
+      : `${String(inner.length)} declared scroller(s), all justified`,
   )
 
   const before = await contentScroll(page)
   if (!check('the app content area is measurable', before !== null) || !before) return
   if (before.height <= before.client + 1) {
     note(
-      `this log's Leveling tab fits the window without scrolling (${String(before.height)}px of content in ${String(before.client)}px) — there is nothing for a page scroll to reach, which is the honest state and not a clamp`
+      `this log's Leveling tab fits the window without scrolling (${String(before.height)}px of content in ${String(before.client)}px) — there is nothing for a page scroll to reach, which is the honest state and not a clamp`,
     )
     return
   }
-  note(`the tab is ${String(before.height)}px tall in a ${String(before.client)}px window — it grew the page, as JOS-289 asks`)
+  note(
+    `the tab is ${String(before.height)}px tall in a ${String(before.client)}px window — it grew the page, as JOS-289 asks`,
+  )
 
   // CLAIM 3, about the PAGE and nothing else: it can be driven to its own bottom. Deliberately
   // not asserted against any panel since JOS-300 — the deepest pixel belongs to whichever column
@@ -385,23 +421,33 @@ export async function stepPageScroll(page: Page): Promise<void> {
   check(
     'the page scrolls to its own bottom (the content area is the scroller that grew)',
     landed > 0,
-    `scrollTop ${String(landed)} of ${String(before.height - before.client)}px of travel`
+    `scrollTop ${String(landed)} of ${String(before.height - before.client)}px of travel`,
   )
   await resetContentScroll(page)
 
   // CLAIM 4: the deep-link panel is below the fold, and PAGE scroll is what brings it into view.
   const beforeReach = await fullyInContent(page, DEEPEST)
   if (beforeReach === 'in view') {
-    note('the "New at this level" panel already sits fully on the first screen of this tab — a short left column is an honest state, and there is no page-scroll reach to measure')
+    note(
+      'the "New at this level" panel already sits fully on the first screen of this tab — a short left column is an honest state, and there is no page-scroll reach to measure',
+    )
     return
   }
-  await page.locator(DEEPEST).first().scrollIntoViewIfNeeded({ timeout: 5_000 }).catch(() => undefined)
-  const reach = await settle(() => fullyInContent(page, DEEPEST), (v) => v === 'in view', { timeoutMs: 5_000 })
+  await page
+    .locator(DEEPEST)
+    .first()
+    .scrollIntoViewIfNeeded({ timeout: 5_000 })
+    .catch(() => undefined)
+  const reach = await settle(
+    () => fullyInContent(page, DEEPEST),
+    (v) => v === 'in view',
+    { timeoutMs: 5_000 },
+  )
   const moved = await contentScroll(page)
   check(
     'scrolling the PAGE reaches the "New at this level" panel at the bottom of the left column',
     reach === 'in view' && (moved?.top ?? 0) > 0,
-    `${beforeReach} → ${reach} at scrollTop ${String(Math.round(moved?.top ?? -1))}`
+    `${beforeReach} → ${reach} at scrollTop ${String(Math.round(moved?.top ?? -1))}`,
   )
   await resetContentScroll(page)
 }
@@ -417,14 +463,25 @@ export async function stepPageScroll(page: Page): Promise<void> {
 export async function stepSpellCard(page: Page): Promise<void> {
   const names = await countOf(page, SPELL_NAME)
   if (names === 0) {
-    note('the level on screen unlocks no SPELLS for this loadout (skills-only, or an unresolved combo) — there is no spell name here to hover')
+    note(
+      'the level on screen unlocks no SPELLS for this loadout (skills-only, or an unresolved combo) — there is no spell name here to hover',
+    )
     return
   }
-  if (!check('a spell name in the per-level readout is reachable to hover', await hoverAt(page, SPELL_NAME, 0.5, 0.5))) {
+  if (
+    !check(
+      'a spell name in the per-level readout is reachable to hover',
+      await hoverAt(page, SPELL_NAME, 0.5, 0.5),
+    )
+  ) {
     return
   }
   const cards = await settleCount(page, SPELL_CARD, 1, { timeoutMs: 8_000 })
-  check('…and hovering it opens the full spell card', cards > 0, `${String(cards)} card(s) over ${String(names)} spell rows`)
+  check(
+    '…and hovering it opens the full spell card',
+    cards > 0,
+    `${String(cards)} card(s) over ${String(names)} spell rows`,
+  )
   // CLOSE IT, AND WAIT FOR IT — MEASURED, not tidiness. A MUI popper is portalled to `document.body`
   // and absolutely positioned, so a card still open over a panel two screens down grows the
   // DOCUMENT's scrollHeight: the first run of this step left one behind and `stepPageScroll` read
@@ -466,7 +523,7 @@ function spellNamePoints(page: Page, n: number): Promise<{ x: number; y: number 
       }
       return out
     },
-    { sel: SPELL_NAME, n }
+    { sel: SPELL_NAME, n },
   )
 }
 
@@ -521,31 +578,34 @@ interface CardWatch {
  * 5ms is far finer than it needs to be: a card that opens stays open for its 60ms `leaveDelay`.
  */
 function startCardWatch(page: Page): Promise<void> {
-  return page.evaluate((a) => {
-    const w = window as unknown as CardWatch
-    w.__eqCardsMax = 0
-    w.__eqGaps = []
-    w.__eqPrevCards = document.querySelectorAll(a.card).length
-    w.__eqLastEnter = undefined
-    w.__eqCardAbort = new AbortController()
-    document.addEventListener(
-      'pointerover',
-      (e) => {
-        const t = e.target
-        if (t instanceof Element && t.closest(a.name)) w.__eqLastEnter = performance.now()
-      },
-      { capture: true, signal: w.__eqCardAbort.signal }
-    )
-    w.__eqCardWatch = window.setInterval(() => {
-      const n = document.querySelectorAll(a.card).length
-      if (n > (w.__eqCardsMax ?? 0)) w.__eqCardsMax = n
-      // A card APPEARING is the event: the gap is from the pointer arriving on a name to this.
-      if (n > (w.__eqPrevCards ?? 0) && w.__eqLastEnter !== undefined) {
-        ;(w.__eqGaps ??= []).push(Math.round(performance.now() - w.__eqLastEnter))
-      }
-      w.__eqPrevCards = n
-    }, 5)
-  }, { card: SPELL_CARD, name: SPELL_NAME })
+  return page.evaluate(
+    (a) => {
+      const w = window as unknown as CardWatch
+      w.__eqCardsMax = 0
+      w.__eqGaps = []
+      w.__eqPrevCards = document.querySelectorAll(a.card).length
+      w.__eqLastEnter = undefined
+      w.__eqCardAbort = new AbortController()
+      document.addEventListener(
+        'pointerover',
+        (e) => {
+          const t = e.target
+          if (t instanceof Element && t.closest(a.name)) w.__eqLastEnter = performance.now()
+        },
+        { capture: true, signal: w.__eqCardAbort.signal },
+      )
+      w.__eqCardWatch = window.setInterval(() => {
+        const n = document.querySelectorAll(a.card).length
+        if (n > (w.__eqCardsMax ?? 0)) w.__eqCardsMax = n
+        // A card APPEARING is the event: the gap is from the pointer arriving on a name to this.
+        if (n > (w.__eqPrevCards ?? 0) && w.__eqLastEnter !== undefined) {
+          ;(w.__eqGaps ??= []).push(Math.round(performance.now() - w.__eqLastEnter))
+        }
+        w.__eqPrevCards = n
+      }, 5)
+    },
+    { card: SPELL_CARD, name: SPELL_NAME },
+  )
 }
 
 /** Stop it and hand back what it saw. */
@@ -592,7 +652,9 @@ function stopCardWatch(page: Page): Promise<{ max: number; gaps: number[] }> {
 async function checkHoverCrossing(page: Page): Promise<void> {
   const pts = await spellNamePoints(page, 3)
   if (pts.length < 3) {
-    note(`only ${String(pts.length)} spell names are visible at this level — a crossing needs three, so this claim is not measurable here`)
+    note(
+      `only ${String(pts.length)} spell names are visible at this level — a crossing needs three, so this claim is not measurable here`,
+    )
     return
   }
   // THE WATCHER SAMPLES IN THE PAGE, AND THAT IS THE FIX FOR A MEASUREMENT THAT ATE ITSELF. The
@@ -610,39 +672,62 @@ async function checkHoverCrossing(page: Page): Promise<void> {
   const elapsed = Date.now() - began
   const { max, gaps } = await stopCardWatch(page)
   // The instrument has to have seen something, or the assertion below is vacuous.
-  if (!check('crossing three spell names after one card had opened opens cards at all', gaps.length > 0, `${String(gaps.length)} card opening(s) seen in ${String(elapsed)}ms`)) {
+  if (
+    !check(
+      'crossing three spell names after one card had opened opens cards at all',
+      gaps.length > 0,
+      `${String(gaps.length)} card opening(s) seen in ${String(elapsed)}ms`,
+    )
+  ) {
     return
   }
   const instant = gaps.filter((g) => g < ENTER_FLOOR_MS)
   check(
     'crossing a spell name straight after a card closed still makes it WAIT — none opens on contact',
     instant.length === 0,
-    `enter gaps ${gaps.map(String).join('/')}ms against a ${String(ENTER_FLOOR_MS)}ms floor · ${String(max)} card(s) open at once`
+    `enter gaps ${gaps.map(String).join('/')}ms against a ${String(ENTER_FLOOR_MS)}ms floor · ${String(max)} card(s) open at once`,
   )
-  note(`the crossing itself took ${String(elapsed)}ms of harness time for 3 real pointer moves — the gaps above are the PAGE's own clock, which is why that does not matter`)
+  note(
+    `the crossing itself took ${String(elapsed)}ms of harness time for 3 real pointer moves — the gaps above are the PAGE's own clock, which is why that does not matter`,
+  )
   // THE CONTROL: the pointer is still resting on the third name, so a card must arrive.
   const opened = await settleCount(page, SPELL_CARD, 1, { timeoutMs: 8_000 })
-  check('…and the card still opens when the pointer STAYS on a name', opened > 0, `${String(opened)} card(s) after resting`)
+  check(
+    '…and the card still opens when the pointer STAYS on a name',
+    opened > 0,
+    `${String(opened)} card(s) after resting`,
+  )
   await page.mouse.move(2, 2)
   await settleGone(page, SPELL_CARD, { timeoutMs: 5_000 })
 }
 
 /** The claims that only hold once the tab has stopped sharing one height between two rows. */
 function checkNarrow(cols: ColumnsInfo, bands: Band[]): void {
-  check('narrow: the two columns STACK — one on top of the other, not side by side', cols.bands.length === 2 && cols.bands[0].x === cols.bands[1].x, cols.bands.map((b) => `x=${String(b.x)} h=${String(b.h)}`).join(' | '))
+  check(
+    'narrow: the two columns STACK — one on top of the other, not side by side',
+    cols.bands.length === 2 && cols.bands[0].x === cols.bands[1].x,
+    cols.bands.map((b) => `x=${String(b.x)} h=${String(b.h)}`).join(' | '),
+  )
   check(
     'narrow: …and each band takes the height its panels need, so nothing is crushed out of it',
     cols.bands.every((b) => b.spill <= 1),
-    cols.bands.map((b) => `spill +${String(b.spill)}px${b.scrolls ? ' (scroller)' : ''}`).join(' | ')
+    cols.bands
+      .map((b) => `spill +${String(b.spill)}px${b.scrolls ? ' (scroller)' : ''}`)
+      .join(' | '),
   )
   // INVERTED BY JOS-289. The stack used to be the scroller below `lg` — that was JOS-151's fix for
   // the collision, and it is exactly the "mini content area" the owner ruled against.
-  check('narrow: the STACK is NOT a scroller — the page carries the height, at every width', !cols.regionScrolls)
+  check(
+    'narrow: the STACK is NOT a scroller — the page carries the height, at every width',
+    !cols.regionScrolls,
+  )
   const hits = collisionsOf(bands)
   check(
     'narrow: no two panels on the tab draw over each other',
     hits.length === 0,
-    hits.length ? `${String(hits.length)} collisions: ${hits.slice(0, 3).join(' · ')}` : `${String(bands.length)} panels, all clear`
+    hits.length
+      ? `${String(hits.length)} collisions: ${hits.slice(0, 3).join(' · ')}`
+      : `${String(bands.length)} panels, all clear`,
   )
 }
 
@@ -665,7 +750,9 @@ export async function stepNarrowLayout(app: ElectronApplication, page: Page): Pr
   // there two columns to collide". A one-band row is the chart-less tab, honestly drawn.
   const present = await columnsInfo(page)
   if (!present || present.bands.length < 2) {
-    note('this log draws no charts, so the tab renders its empty state and there is no second column to collide with')
+    note(
+      'this log draws no charts, so the tab renders its empty state and there is no second column to collide with',
+    )
     return
   }
 
@@ -675,20 +762,41 @@ export async function stepNarrowLayout(app: ElectronApplication, page: Page): Pr
   if (cols) checkNarrow(cols, await visibleBands(page))
 
   const over = await pageOverflow(page)
-  check('narrow: …and the WINDOW still does not scroll (only the content area inside it does)', over.doc === 0, `document +${String(over.doc)}px`)
-  const narrowInner = (await innerScrollers(page)).filter((s) => !JUSTIFIED_SCROLLERS.includes(s.id))
+  check(
+    'narrow: …and the WINDOW still does not scroll (only the content area inside it does)',
+    over.doc === 0,
+    `document +${String(over.doc)}px`,
+  )
+  const narrowInner = (await innerScrollers(page)).filter(
+    (s) => !JUSTIFIED_SCROLLERS.includes(s.id),
+  )
   check(
     'narrow: no panel grows an internal scrollbar at the app minimum either',
     narrowInner.length === 0,
-    narrowInner.map((s) => `${s.id || s.what} +${String(s.spill)}px`).slice(0, 4).join(' · ')
+    narrowInner
+      .map((s) => `${s.id || s.what} +${String(s.spill)}px`)
+      .slice(0, 4)
+      .join(' · '),
   )
-  check('narrow: the timeslice control is still the thing at its own centre', (await hitTest(page, '[data-testid="leveling-slice-all"]')) === 'hit', await hitTest(page, '[data-testid="leveling-slice-all"]'))
+  check(
+    'narrow: the timeslice control is still the thing at its own centre',
+    (await hitTest(page, '[data-testid="leveling-slice-all"]')) === 'hit',
+    await hitTest(page, '[data-testid="leveling-slice-all"]'),
+  )
   // Scroll to it first: since JOS-289 this panel legitimately lives below the fold, and asking
   // `elementFromPoint` about a box outside the viewport answers about whatever is at those
   // coordinates instead. Reachability is the claim; being on the first screen never was.
-  await page.locator('[data-testid="new-at-level-next"]').first().scrollIntoViewIfNeeded({ timeout: 5_000 }).catch(() => undefined)
+  await page
+    .locator('[data-testid="new-at-level-next"]')
+    .first()
+    .scrollIntoViewIfNeeded({ timeout: 5_000 })
+    .catch(() => undefined)
   await settleStable(() => visibleBands(page).then((b) => JSON.stringify(b)), { timeoutMs: 10_000 })
-  check('narrow: …and so is the unlock stepper the spilling panels used to bury', (await hitTest(page, '[data-testid="new-at-level-next"]')) === 'hit', await hitTest(page, '[data-testid="new-at-level-next"]'))
+  check(
+    'narrow: …and so is the unlock stepper the spilling panels used to bury',
+    (await hitTest(page, '[data-testid="new-at-level-next"]')) === 'hit',
+    await hitTest(page, '[data-testid="new-at-level-next"]'),
+  )
 
   // Back to where it started: the wide layout is two columns SIDE BY SIDE. The window's own
   // minimum goes back LAST — `resizeTo` lowers it every time — so this step cannot leak a
@@ -699,7 +807,12 @@ export async function stepNarrowLayout(app: ElectronApplication, page: Page): Pr
   check(
     'restored wide: the two columns are side by side again',
     !!restored && restored.bands.length === 2 && restored.bands[0].x !== restored.bands[1].x,
-    restored ? restored.bands.map((b) => `x=${String(b.x)} h=${String(b.h)}`).join(' | ') : 'no stack'
+    restored
+      ? restored.bands.map((b) => `x=${String(b.x)} h=${String(b.h)}`).join(' | ')
+      : 'no stack',
   )
-  check('restored wide: no two panels draw over each other either', collisionsOf(await visibleBands(page)).length === 0)
+  check(
+    'restored wide: no two panels draw over each other either',
+    collisionsOf(await visibleBands(page)).length === 0,
+  )
 }

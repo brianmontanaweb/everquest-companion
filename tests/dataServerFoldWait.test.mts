@@ -31,7 +31,7 @@ import {
   stillFolding,
   waitForFold,
   type FoldHealth,
-  type FoldWaitDeps
+  type FoldWaitDeps,
 } from '../src/main/dataServer/foldWait'
 
 /** The budget that used to end this loop. It is gone; the number survives here as the thing every
@@ -44,7 +44,12 @@ const OLD_BUDGET_POLLS = OLD_BUDGET_MS / FOLD_POLL_MS
 const GB = 1024 * 1024 * 1024
 
 function folding(offset: number, events: number): FoldHealth {
-  return { status: 'folding', epoch: 2, events, mark: { logPath: 'eqlog_Primitive_freeport.txt', offset } }
+  return {
+    status: 'folding',
+    epoch: 2,
+    events,
+    mark: { logPath: 'eqlog_Primitive_freeport.txt', offset },
+  }
 }
 
 function live(offset: number, events: number): FoldHealth {
@@ -91,8 +96,8 @@ function rig(answers: (FoldHealth | Error)[], over?: Partial<FoldWaitDeps>): Rig
       saw: (health) => saw.push(health),
       note: (line) => notes.push(line),
       logSize: () => null,
-      ...over
-    }
+      ...over,
+    },
   }
   return r
 }
@@ -118,7 +123,11 @@ test('AN ENGINE STILL FOLDING WELL PAST THE OLD 120s BUDGET ARMS THE SERVE PATH 
   // and the point of this whole ticket is that it is reached at all.
   assert.equal(r.saw.length, polls + 1)
   assert.equal(r.saw[r.saw.length - 1]?.status, 'live')
-  assert.equal(r.rests.every((ms) => ms === FOLD_POLL_MS), true, 'the ordinary beat is the poll')
+  assert.equal(
+    r.rests.every((ms) => ms === FOLD_POLL_MS),
+    true,
+    'the ordinary beat is the poll',
+  )
 })
 
 test('a fold that never lands never stops being waited on, and never stops SAYING so', async () => {
@@ -132,7 +141,7 @@ test('a fold that never lands never stops being waited on, and never stops SAYIN
     mine: () => {
       asked += 1
       return asked < halfHourPolls
-    }
+    },
   })
 
   assert.equal(await waitForFold(r.deps), null, 'a superseded turn says nothing')
@@ -141,7 +150,7 @@ test('a fold that never lands never stops being waited on, and never stops SAYIN
   const expected = Math.floor(halfHourPolls / 2 / FOLD_NARRATE_EVERY)
   assert.ok(
     narrations.length >= expected - 1 && narrations.length <= expected + 1,
-    `${String(narrations.length)} lines over half an hour, expected about ${String(expected)}`
+    `${String(narrations.length)} lines over half an hour, expected about ${String(expected)}`,
   )
   assert.ok(narrations.length > 0, 'a long fold that says nothing is the defect this replaces')
 })
@@ -163,7 +172,7 @@ test('A CONNECTION THAT DIES ENDS THE TURN, and does not hang', async () => {
   assert.equal(r.saw.length, 0)
   assert.ok(
     r.notes.some((line) => line.includes('times running')),
-    `the giving-up is unexplained: ${r.notes.join(' | ')}`
+    `the giving-up is unexplained: ${r.notes.join(' | ')}`,
   )
   // The retries are SPACED, and by the refusal pause rather than the ordinary beat: a refusal is
   // not a measurement that came back uninteresting.
@@ -175,7 +184,10 @@ test('A TRANSIENTLY REFUSED POLL RETRIES AND THEN ARMS', async () => {
   // session exactly as permanently as the budget did. A refusal is the one failure here that is
   // routinely transient, because the client's own per-request deadline turns a slow answer into a
   // rejection.
-  const refused = new EngineError('timeout', 'the engine did not answer session.health within 15000 ms')
+  const refused = new EngineError(
+    'timeout',
+    'the engine did not answer session.health within 15000 ms',
+  )
   const r = rig([refused, refused, folding(2048, 20), live(4096, 40)])
 
   const landed = await waitForFold(r.deps)
@@ -209,7 +221,7 @@ test('a turn superseded WHILE a poll was in flight says nothing about the answer
       live = false
       return Promise.resolve(folding(1, 1))
     },
-    mine: () => live
+    mine: () => live,
   })
   assert.equal(await waitForFold(r.deps), null)
   assert.deepEqual(r.saw, [])

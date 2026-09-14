@@ -43,7 +43,7 @@ import {
   resetUpdateLogWarnings,
   routeUpdaterLibraryError,
   updateFailureLine,
-  type UpdateLogSinks
+  type UpdateLogSinks,
 } from '../src/main/updateLog'
 import {
   INTERRUPTED_ERROR_CODES,
@@ -52,7 +52,7 @@ import {
   describeUpdateFailure,
   isInterruptedFailure,
   updateFailureCode,
-  updateHttpStatus
+  updateHttpStatus,
 } from '../src/shared/update'
 import { caughtFields } from '../src/shared/errorReportLocation'
 import { errorCodeOf, errorNameOf, redactMessage } from '../src/shared/errorReport'
@@ -76,7 +76,7 @@ function httpError(status: number, statusMessage: string): Error {
   const err = new Error(
     `${String(status)} ${statusMessage}\n` +
       'method: GET url: https://github.com/jmoyers/everquest-companion/releases/latest\n' +
-      '          Data:\n          \n          \nHeaders: {"content-type":"application/json"}'
+      '          Data:\n          \n          \nHeaders: {"content-type":"application/json"}',
   )
   err.name = 'HttpError'
   return Object.assign(err, { statusCode: status, code: `HTTP_ERROR_${String(status)}` })
@@ -111,7 +111,7 @@ function recorder(): Recorder {
     filed,
     warned,
     error: (source, payload) => filed.push({ source, payload }),
-    warn: (...args) => warned.push(args)
+    warn: (...args) => warned.push(args),
   }
 }
 
@@ -128,7 +128,10 @@ test('an ANSWER from GitHub is an http failure, and its status is readable', () 
   // hands us the same failure.
   assert.equal(updateHttpStatus(new Error('HttpError: HTTP_ERROR_429 Too many requests')), 429)
   // …and an HttpError whose status we cannot read is still an answer, not an outage.
-  assert.equal(classifyUpdateFailure(Object.assign(new Error('boom'), { name: 'HttpError' })), 'http')
+  assert.equal(
+    classifyUpdateFailure(Object.assign(new Error('boom'), { name: 'HttpError' })),
+    'http',
+  )
   // A status outside 4xx/5xx is not a status we will state.
   assert.equal(updateHttpStatus(Object.assign(new Error('x'), { statusCode: 302 })), null)
   assert.equal(updateHttpStatus(new Error('plain failure')), null)
@@ -144,10 +147,10 @@ test('THE MASKED STATUS is its own class, and it is never mistaken for an outage
   assert.equal(
     classifyUpdateFailure(
       Object.assign(new Error('Cannot parse releases feed'), {
-        code: 'ERR_UPDATER_INVALID_RELEASE_FEED'
-      })
+        code: 'ERR_UPDATER_INVALID_RELEASE_FEED',
+      }),
     ),
-    'parse'
+    'parse',
   )
 })
 
@@ -164,7 +167,7 @@ test('UNREACHABLE means the request never left the machine - both executors spel
 test('an answer OUTRANKS a socket word in the same message, and the unknown is REPORTED', () => {
   // A 502 whose body quotes ECONNRESET is still GitHub answering us. Precedence, not luck.
   const err = Object.assign(httpError(502, 'Bad gateway'), {
-    message: '502 Bad gateway\nHeaders: {"x":"upstream ECONNRESET"}'
+    message: '502 Bad gateway\nHeaders: {"x":"upstream ECONNRESET"}',
   })
   assert.equal(classifyUpdateFailure(err), 'http')
   // TLS is deliberately NOT unreachable: a MITM proxy or an expired root is diagnosable, and the
@@ -172,10 +175,10 @@ test('an answer OUTRANKS a socket word in the same message, and the unknown is R
   assert.equal(
     classifyUpdateFailure(
       Object.assign(new Error('unable to verify the first certificate'), {
-        code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE'
-      })
+        code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+      }),
     ),
-    'other'
+    'other',
   )
   assert.equal(classifyUpdateFailure(new Error('something nobody has seen yet')), 'other')
   assert.equal(classifyUpdateFailure(null), 'other')
@@ -194,7 +197,7 @@ test('an answer OUTRANKS a socket word in the same message, and the unknown is R
 /** Chromium's shapes, both ways they can arrive: a `code` property, or inside the message. */
 const suspendedByMessage = new Error('net::ERR_NETWORK_IO_SUSPENDED')
 const suspendedByCode = Object.assign(new Error('net::ERR_NETWORK_IO_SUSPENDED (-61)'), {
-  code: 'ERR_NETWORK_IO_SUSPENDED'
+  code: 'ERR_NETWORK_IO_SUSPENDED',
 })
 const networkChanged = new Error('net::ERR_NETWORK_CHANGED')
 
@@ -216,7 +219,10 @@ test('AN INTERRUPTION IS ITS OWN KIND, and it is asked FIRST', () => {
   assert.equal(updateHttpStatus(suspendedByCode), null)
   // AWAITING-SAMPLE: only the codes that have been MEASURED or named are in the list. `ERR_ABORTED`
   // also covers a request we cancelled ourselves, so it stays out and stays reported.
-  assert.deepEqual([...INTERRUPTED_ERROR_CODES], ['ERR_NETWORK_IO_SUSPENDED', 'ERR_NETWORK_CHANGED'])
+  assert.deepEqual(
+    [...INTERRUPTED_ERROR_CODES],
+    ['ERR_NETWORK_IO_SUSPENDED', 'ERR_NETWORK_CHANGED'],
+  )
   assert.equal(classifyUpdateFailure(new Error('net::ERR_ABORTED')), 'other')
   // …and a machine that moved is not an offline one: the two must not be conflated, because only
   // one of them is fixed by waiting a moment.
@@ -256,9 +262,9 @@ test('THE THIRD SPELLING OF A STATUS: `HttpError: <n>` interpolated into a sente
   const linux = Object.assign(
     new Error(
       'Cannot find latest-linux.yml in the latest release artifacts ' +
-        '(https://github.com/jmoyers/everquest-companion/releases/latest): HttpError: 404 Not Found'
+        '(https://github.com/jmoyers/everquest-companion/releases/latest): HttpError: 404 Not Found',
     ),
-    { code: 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND' }
+    { code: 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND' },
   )
   assert.equal(updateHttpStatus(linux), 404)
   assert.equal(classifyUpdateFailure(linux), 'http')
@@ -295,7 +301,8 @@ test('an OFFLINE machine costs one console line per code per session, and never 
 test('the warn gate itself is bounded - a pathological machine cannot grow it', () => {
   resetUpdateLogWarnings()
   const r = recorder()
-  for (const code of UNREACHABLE_ERROR_CODES) logUpdateFailure('check', 'final', offlineError(code), r)
+  for (const code of UNREACHABLE_ERROR_CODES)
+    logUpdateFailure('check', 'final', offlineError(code), r)
   assert.ok(UNREACHABLE_ERROR_CODES.length > MAX_WARNED_UPDATE_CODES, 'the ceiling is reachable')
   assert.equal(r.warned.length, MAX_WARNED_UPDATE_CODES)
   assert.equal(r.filed.length, 0)
@@ -339,7 +346,9 @@ test('the payload carries the RAW error, untouched, plus the three facts it cann
   logUpdateFailure('check', 'final', masked, r)
   const parsePayload = r.filed[1].payload as Record<string, unknown>
   assert.equal(parsePayload.error, masked)
-  assert.ok(!JSON.stringify({ ...parsePayload, error: undefined }).includes(describeUpdateFailure(masked)))
+  assert.ok(
+    !JSON.stringify({ ...parsePayload, error: undefined }).includes(describeUpdateFailure(masked)),
+  )
   assert.match(String(parsePayload.message), /Unexpected end of JSON input|JSON/)
   resetUpdateLogWarnings()
 })
@@ -375,8 +384,14 @@ test('THE STORE ROW READS: which step, which attempt, which status, which error'
 
 test('the line names the kind even when there is no status to name', () => {
   const parse = maskedStatusError('')
-  assert.match(updateFailureLine('check', 'retrying', 'parse', parse), /^update check failed \(retrying, parse\): /)
-  assert.match(updateFailureLine('download', 'final', 'other', new Error('boom')), /\(final, other\): boom$/)
+  assert.match(
+    updateFailureLine('check', 'retrying', 'parse', parse),
+    /^update check failed \(retrying, parse\): /,
+  )
+  assert.match(
+    updateFailureLine('download', 'final', 'other', new Error('boom')),
+    /\(final, other\): boom$/,
+  )
   // ONE LINE, whatever the error carries: a stack or a headers dump must not become a paragraph
   // in a store row (the file keeps the whole thing through the nested error).
   const fat = new Error(`first line\n${'  at frame\n'.repeat(200)}`)
@@ -394,12 +409,12 @@ test("the library's echo of an error event is DROPPED - one failure is one row",
   // A fallback that costs bandwidth and never correctness (research §4) is console-only…
   assert.equal(
     routeUpdaterLibraryError('Cannot download differentially, fallback to full download: …'),
-    'warn'
+    'warn',
   )
   // …and everything else the library calls an error IS one.
   assert.equal(
     routeUpdaterLibraryError('updaterCacheDirName is not specified in app-update.yml'),
-    'error'
+    'error',
   )
   assert.equal(routeUpdaterLibraryError('spawn UNKNOWN'), 'error')
   assert.equal(routeUpdaterLibraryError(undefined), 'error')
@@ -412,11 +427,11 @@ test('THE INSTALLED LIBRARY still formats that echo the way the drop expects', (
   // own (AGENTS.md), so the path has to come from node's own resolution and not from TEST_ROOT.
   const lib = readFileSync(
     createRequire(import.meta.url).resolve('electron-updater/out/AppUpdater.js'),
-    'utf8'
+    'utf8',
   )
   assert.ok(
     lib.includes('this._logger.error(') && lib.includes('Error: ${error.stack'),
-    'AppUpdater no longer logs `Error: <stack>` for every emitted error event'
+    'AppUpdater no longer logs `Error: <stack>` for every emitted error event',
   )
   // And the default logger really is `console` — the whole reason assigning ours is worth doing.
   assert.match(lib, /this\._logger = console/)
@@ -426,18 +441,21 @@ test('THE INSTALLED LIBRARY still formats that echo the way the drop expects', (
 
 test('THE WIRING: the raw error is routed BEFORE the sanitizer, on every path', () => {
   const src = read('src/main/updater.ts')
-  const handler = src.slice(src.indexOf("autoUpdater.on('error'"), src.indexOf('/**\n * Initialize'))
+  const handler = src.slice(
+    src.indexOf("autoUpdater.on('error'"),
+    src.indexOf('/**\n * Initialize'),
+  )
   assert.ok(handler.length > 0, 'found the error handler')
   // The swallowed attempt is logged and says so.
   assert.ok(handler.indexOf("logUpdateFailure(step, 'retrying', err, LOG_SINKS)") > 0)
   assert.ok(
     handler.indexOf("logUpdateFailure(step, 'retrying', err, LOG_SINKS)") <
-      handler.indexOf('retryPending = true')
+      handler.indexOf('retryPending = true'),
   )
   // …and the final one is logged BEFORE `describeUpdateFailure` gets to replace it.
   assert.ok(
     handler.indexOf("logUpdateFailure(step, 'final', err, LOG_SINKS)") <
-      handler.indexOf('describeUpdateFailure(err)')
+      handler.indexOf('describeUpdateFailure(err)'),
   )
   // The rejection path — the failures the event handler did NOT account for — takes the same rule,
   // and only for the unaccounted ones (or every failure would be filed twice). It lives in
@@ -449,9 +467,12 @@ test('THE WIRING: the raw error is routed BEFORE the sanitizer, on every path', 
   const route = src.slice(src.indexOf('function routeCheckRejection('))
   assert.ok(
     route.indexOf("logUpdateFailure('check', 'final', err, LOG_SINKS)") <
-      route.indexOf('describeUpdateFailure(err)')
+      route.indexOf('describeUpdateFailure(err)'),
   )
-  assert.match(route, /shouldRetryCheck\(err, checkAttempts\)\) \{\s+logUpdateFailure\('check', 'retrying'/)
+  assert.match(
+    route,
+    /shouldRetryCheck\(err, checkAttempts\)\) \{\s+logUpdateFailure\('check', 'retrying'/,
+  )
   // NEVER the sanitized text as a payload: the whole ticket is that the sentence is not the error.
   assert.doesNotMatch(src, /logUpdateFailure\([^)]*describeUpdateFailure/)
   // The bounded telemetry signal is NOT gated on any of this: `noteUpdate` still records one
@@ -459,7 +480,7 @@ test('THE WIRING: the raw error is routed BEFORE the sanitizer, on every path', 
   // fleet countable without an error storm.
   assert.ok(
     handler.indexOf("logUpdateFailure(step, 'final', err, LOG_SINKS)") <
-      handler.indexOf("noteUpdate(step, err ?? 'unknown error')")
+      handler.indexOf("noteUpdate(step, err ?? 'unknown error')"),
   )
 })
 
@@ -487,10 +508,14 @@ test('THE WIRING: an interruption counts no failure, stamps no check, and re-anc
   const handler = src.slice(src.indexOf("autoUpdater.on('error'"))
   assert.ok(
     handler.indexOf('isInterruptedFailure(err)') > 0 &&
-      handler.indexOf('isInterruptedFailure(err)') < handler.indexOf('shouldRetryCheck(err, checkAttempts)')
+      handler.indexOf('isInterruptedFailure(err)') <
+        handler.indexOf('shouldRetryCheck(err, checkAttempts)'),
   )
   const route = src.slice(src.indexOf('function routeCheckRejection('))
-  assert.ok(route.indexOf('isInterruptedFailure(err)') < route.indexOf('shouldRetryCheck(err, checkAttempts)'))
+  assert.ok(
+    route.indexOf('isInterruptedFailure(err)') <
+      route.indexOf('shouldRetryCheck(err, checkAttempts)'),
+  )
 
   // AND THE HALF THAT COVERS THE COMMON CASE: most sleeps produce no error at all, they just
   // freeze a setTimeout. The wake itself has to re-anchor the poll.
@@ -504,8 +529,14 @@ test("THE WIRING: the library's logger is ours, at the levels errorLog.ts allows
   const logger = src.slice(src.indexOf('const LIBRARY_LOGGER'), src.indexOf('let timer'))
   // info/warn are CONSOLE ONLY. errors.log exists so a blank window is never silent; burying it
   // under "Checking for update" every four hours would defeat it (errorLog.ts's law).
-  assert.match(logger, /info: \(message\?: unknown\): void => \{\s*\n\s*logInfo\(UPDATER_LOG_PREFIX, message\)/)
-  assert.match(logger, /warn: \(message\?: unknown\): void => \{\s*\n\s*logWarn\(UPDATER_LOG_PREFIX, message\)/)
+  assert.match(
+    logger,
+    /info: \(message\?: unknown\): void => \{\s*\n\s*logInfo\(UPDATER_LOG_PREFIX, message\)/,
+  )
+  assert.match(
+    logger,
+    /warn: \(message\?: unknown\): void => \{\s*\n\s*logWarn\(UPDATER_LOG_PREFIX, message\)/,
+  )
   // error goes through the router, so the echo and the differential fallback cannot reach the file.
   assert.match(logger, /switch \(routeUpdaterLibraryError\(message\)\)/)
   assert.match(logger, /logError\(UPDATER_LIBRARY_SOURCE, message\)/)

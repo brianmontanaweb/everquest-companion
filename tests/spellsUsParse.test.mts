@@ -73,7 +73,7 @@ function row(spec: {
     resistAdj: 0,
     classes: {} as Record<number, number>,
     slots: '',
-    ...spec
+    ...spec,
   }
   const f = new Array<string>(173).fill('0')
   f[0] = String(s.id)
@@ -102,44 +102,207 @@ const NEC = 10
 const WIZ = 11
 
 // Verbatim from the owner's install, 2026-08-16.
-const TASHANI = row({ id: 677, name: 'Tashani', castMs: 1000, resistType: 0, targetType: 5, classes: { [ENC]: 20 }, slots: '1|36|1|0|100|0$2|50|-10|0|101|23' })
-const MALAISEMENT = row({ id: 111, name: 'Malaisement', castMs: 4000, resistType: 1, targetType: 5, resistAdj: -5, classes: { [ENC]: 39 }, slots: '1|10|0|0|100|0$2|47|-20|0|101|40$3|50|-20|0|101|40$4|48|-20|0|101|40$5|46|-20|0|101|40' })
-const MESMERIZATION = row({ id: 307, name: 'Mesmerization', castMs: 3000, resistType: 1, targetType: 8, classes: { [ENC]: 16 }, slots: '1|31|2|0|100|55' })
-const CHAOS_FLUX = row({ id: 350, name: 'Chaos Flux', castMs: 3000, resistType: 1, targetType: 5, classes: { [ENC]: 21 }, slots: '1|0|-110|0|103|175$2|21|1000|500|100|55' })
-const CHAOS_FLUX_NPC = row({ id: 6850, name: 'Chaos Flux', castMs: 0, resistType: 1, targetType: 5, slots: '1|0|-95|0|103|150$2|21|1000|500|100|0' })
-const SMITING_STRIKE = row({ id: 74037, name: 'Smiting Strike', castMs: 0, resistType: 1, targetType: 5, resistAdj: -250, slots: '1|535|20|-3500|100|1' })
-const SCORCHING_ARROW = row({ id: 74042, name: 'Scorching Arrow', castMs: 500, resistType: 2, targetType: 5, slots: '1|79|-210|0|100|210$2|0|-105|0|100|105' })
-const SCORCHING_ARROW_IV = row({ id: 74045, name: 'Scorching Arrow IV', castMs: 500, resistType: 2, targetType: 5, slots: '1|79|-420|0|100|420$2|0|-210|0|100|210' })
-const CHORDS = row({ id: 703, name: 'Chords of Dissonance', castMs: 3000, resistType: 1, targetType: 5, resistAdj: -100, classes: { [BRD]: 2 }, slots: '1|334|-2|0|109|0' })
-const SMITE = row({ id: 1234, name: 'Divine Might Strike', castMs: 0, resistType: 1, targetType: 5, resistAdj: -150, classes: { [PAL]: 30 }, slots: '1|0|-40|0|100|40' })
+const TASHANI = row({
+  id: 677,
+  name: 'Tashani',
+  castMs: 1000,
+  resistType: 0,
+  targetType: 5,
+  classes: { [ENC]: 20 },
+  slots: '1|36|1|0|100|0$2|50|-10|0|101|23',
+})
+const MALAISEMENT = row({
+  id: 111,
+  name: 'Malaisement',
+  castMs: 4000,
+  resistType: 1,
+  targetType: 5,
+  resistAdj: -5,
+  classes: { [ENC]: 39 },
+  slots: '1|10|0|0|100|0$2|47|-20|0|101|40$3|50|-20|0|101|40$4|48|-20|0|101|40$5|46|-20|0|101|40',
+})
+const MESMERIZATION = row({
+  id: 307,
+  name: 'Mesmerization',
+  castMs: 3000,
+  resistType: 1,
+  targetType: 8,
+  classes: { [ENC]: 16 },
+  slots: '1|31|2|0|100|55',
+})
+const CHAOS_FLUX = row({
+  id: 350,
+  name: 'Chaos Flux',
+  castMs: 3000,
+  resistType: 1,
+  targetType: 5,
+  classes: { [ENC]: 21 },
+  slots: '1|0|-110|0|103|175$2|21|1000|500|100|55',
+})
+const CHAOS_FLUX_NPC = row({
+  id: 6850,
+  name: 'Chaos Flux',
+  castMs: 0,
+  resistType: 1,
+  targetType: 5,
+  slots: '1|0|-95|0|103|150$2|21|1000|500|100|0',
+})
+const SMITING_STRIKE = row({
+  id: 74037,
+  name: 'Smiting Strike',
+  castMs: 0,
+  resistType: 1,
+  targetType: 5,
+  resistAdj: -250,
+  slots: '1|535|20|-3500|100|1',
+})
+const SCORCHING_ARROW = row({
+  id: 74042,
+  name: 'Scorching Arrow',
+  castMs: 500,
+  resistType: 2,
+  targetType: 5,
+  slots: '1|79|-210|0|100|210$2|0|-105|0|100|105',
+})
+const SCORCHING_ARROW_IV = row({
+  id: 74045,
+  name: 'Scorching Arrow IV',
+  castMs: 500,
+  resistType: 2,
+  targetType: 5,
+  slots: '1|79|-420|0|100|420$2|0|-210|0|100|210',
+})
+const CHORDS = row({
+  id: 703,
+  name: 'Chords of Dissonance',
+  castMs: 3000,
+  resistType: 1,
+  targetType: 5,
+  resistAdj: -100,
+  classes: { [BRD]: 2 },
+  slots: '1|334|-2|0|109|0',
+})
+const SMITE = row({
+  id: 1234,
+  name: 'Divine Might Strike',
+  castMs: 0,
+  resistType: 1,
+  targetType: 5,
+  resistAdj: -150,
+  classes: { [PAL]: 30 },
+  slots: '1|0|-40|0|100|40',
+})
 // JOS-396, verbatim from the owner's install 2026-08-16. THE TICKET'S CASE: the wiki's slot table
 // for Odium lists `Increase Curse Counter by 8` and no hitpoint line at all; the client carries
 // both, and slot 2 is the damage the shaman actually does.
-const ODIUM = row({ id: 4093, name: 'Odium', castMs: 3000, recovery: 1500, recastMs: 6000, durationFormula: 7, duration: 5, mana: 409, resistType: 1, targetType: 5, classes: { [SHM]: 43 }, slots: '1|116|8|0|100|0$2|0|-217|0|103|325' })
+const ODIUM = row({
+  id: 4093,
+  name: 'Odium',
+  castMs: 3000,
+  recovery: 1500,
+  recastMs: 6000,
+  durationFormula: 7,
+  duration: 5,
+  mana: 409,
+  resistType: 1,
+  targetType: 5,
+  classes: { [SHM]: 43 },
+  slots: '1|116|8|0|100|0$2|0|-217|0|103|325',
+})
 // A PERMANENT duration (formula 50) over a per-tick drain — the necromancer's Lich. The client
 // states a RATE and no length, which is a total nobody can compute; the fold refuses it, and the
 // parse's job is only to record the 50 faithfully so the fold can.
-const LICH = row({ id: 1735, name: 'Lich', castMs: 6000, durationFormula: 50, duration: 0, resistType: 0, targetType: 6, classes: { [NEC]: 49 }, slots: '1|0|-22|0|100|0$2|15|10|0|100|0' })
+const LICH = row({
+  id: 1735,
+  name: 'Lich',
+  castMs: 6000,
+  durationFormula: 50,
+  duration: 0,
+  resistType: 0,
+  targetType: 6,
+  classes: { [NEC]: 49 },
+  slots: '1|0|-22|0|100|0$2|15|10|0|100|0',
+})
 // THREE effect-0 slots on one row (id 14234, cleric 77). 523 rows in the owner's file carry more
 // than one, which is why `hp` is a list and `hpSlot` — the estimator's single-slot reader — could
 // never have been widened in place.
-const DIVINE_CENSURE = row({ id: 14234, name: 'Divine Censure', castMs: 3000, resistType: 1, targetType: 5, classes: { [PAL]: 77 }, slots: '1|0|-2164|635|100|2164$2|0|-2878|603|100|2878$3|0|-2575|118|100|2575' })
+const DIVINE_CENSURE = row({
+  id: 14234,
+  name: 'Divine Censure',
+  castMs: 3000,
+  resistType: 1,
+  targetType: 5,
+  classes: { [PAL]: 77 },
+  slots: '1|0|-2164|635|100|2164$2|0|-2878|603|100|2878$3|0|-2575|118|100|2575',
+})
 // JOS-444, verbatim from the owner's install 2026-08-22. THE TICKET'S PIN: a 3.0s cast with a 1.5s
 // re-use timer in field 10, which is the number the wiki's `recast_time` states for the same spell.
 // Field 9 reads 1500 as well, and that coincidence is exactly why the column had to be picked by
 // cross-checking a spell where the two DISAGREE (Odium below, 6000).
-const GARRISON = row({ id: 2552, name: "Garrison's Mighty Mana Shock", castMs: 3000, recovery: 1500, recastMs: 1500, resistType: 1, targetType: 5, classes: { [WIZ]: 18 }, slots: '1|0|-200|0|105|333' })
+const GARRISON = row({
+  id: 2552,
+  name: "Garrison's Mighty Mana Shock",
+  castMs: 3000,
+  recovery: 1500,
+  recastMs: 1500,
+  resistType: 1,
+  targetType: 5,
+  classes: { [WIZ]: 18 },
+  slots: '1|0|-200|0|105|333',
+})
 // The other half of the discrimination: field 9 says 1500 and field 10 says 0. Complete Heal has
 // NO re-use timer, and a parser reading field 9 would give it one.
-const COMPLETE_HEAL = row({ id: 1292, name: 'Complete Heal', castMs: 1000, recovery: 1500, recastMs: 0, durationFormula: 3, duration: 75, mana: 350, resistType: 0, targetType: 5, slots: '1|101|1|0|100|1' })
+const COMPLETE_HEAL = row({
+  id: 1292,
+  name: 'Complete Heal',
+  castMs: 1000,
+  recovery: 1500,
+  recastMs: 0,
+  durationFormula: 3,
+  duration: 75,
+  mana: 350,
+  resistType: 0,
+  targetType: 5,
+  slots: '1|101|1|0|100|1',
+})
 // JOS-451, verbatim from the owner's install 2026-08-23. THE TICKET'S CASE: the wiki's page for
 // this spell states `Increase Hitpoints by 10 per tick` and the client states a level curve whose
 // BASE is that 10 — plus two a level, capped at 100, four ticks. And the slot is EFFECT 100, the
 // heal-over-time spelling, which the effect-0-only reader could never see at all.
-const ETHEREAL_CLEANSING = row({ id: 3683, name: 'Ethereal Cleansing', castMs: 1500, recovery: 1500, recastMs: 30000, durationFormula: 3, duration: 4, mana: 150, resistType: 0, targetType: 51, classes: { [PAL]: 44 }, slots: '1|100|10|0|103|100' })
+const ETHEREAL_CLEANSING = row({
+  id: 3683,
+  name: 'Ethereal Cleansing',
+  castMs: 1500,
+  recovery: 1500,
+  recastMs: 30000,
+  durationFormula: 3,
+  duration: 4,
+  mana: 150,
+  resistType: 0,
+  targetType: 51,
+  classes: { [PAL]: 44 },
+  slots: '1|100|10|0|103|100',
+})
 
 const TABLE = parseSpellsUs(
-  [TASHANI, MALAISEMENT, MESMERIZATION, CHAOS_FLUX, CHAOS_FLUX_NPC, SMITING_STRIKE, SCORCHING_ARROW, SCORCHING_ARROW_IV, CHORDS, SMITE, ODIUM, LICH, DIVINE_CENSURE, GARRISON, COMPLETE_HEAL, ETHEREAL_CLEANSING].join('\n') + '\n'
+  [
+    TASHANI,
+    MALAISEMENT,
+    MESMERIZATION,
+    CHAOS_FLUX,
+    CHAOS_FLUX_NPC,
+    SMITING_STRIKE,
+    SCORCHING_ARROW,
+    SCORCHING_ARROW_IV,
+    CHORDS,
+    SMITE,
+    ODIUM,
+    LICH,
+    DIVINE_CENSURE,
+    GARRISON,
+    COMPLETE_HEAL,
+    ETHEREAL_CLEANSING,
+  ].join('\n') + '\n',
 )
 
 test('the axis comes from field 29, and the four unmodellable kinds come back null', () => {
@@ -187,17 +350,21 @@ test('AN EFFECT SLOT IS slot|effect|base|limit|CALC|MAX, and Tashani proves it',
 test('a malo moves every axis at once, through effect 111 or through four slots', () => {
   const slots = TABLE.malaisement.debuffSlots
   assert.ok(slots)
-  assert.deepEqual(
-    slots.map((s) => s.axis).sort(),
-    ['cold', 'fire', 'magic', 'poison']
-  )
+  assert.deepEqual(slots.map((s) => s.axis).sort(), ['cold', 'fire', 'magic', 'poison'])
   for (const s of slots) assert.equal(s.max, 40)
 })
 
 test('a one-point resist rider is not a resist debuff', () => {
   // A charm that shaves a point off magic resistance is a charm. Opening an eleven-minute debuff
   // window for it would file every later observation under a condition that never mattered.
-  const rider = parseSpellsUs(row({ id: 750, name: "Solon's Bewitching Bravura", resistType: 1, slots: '1|22|1|0|100|51$2|50|-1|0|119|0' }))
+  const rider = parseSpellsUs(
+    row({
+      id: 750,
+      name: "Solon's Bewitching Bravura",
+      resistType: 1,
+      slots: '1|22|1|0|100|51$2|50|-1|0|119|0',
+    }),
+  )
   assert.equal(rider["solon's bewitching bravura"].debuffSlots, undefined)
 })
 
@@ -258,7 +425,7 @@ test('JOS-396: every effect-0 slot comes through, in file order', () => {
   assert.deepEqual(TABLE['divine censure'].hp, [
     { base: -2164, max: 2164, calc: 100, perTick: false },
     { base: -2878, max: 2878, calc: 100, perTick: false },
-    { base: -2575, max: 2575, calc: 100, perTick: false }
+    { base: -2575, max: 2575, calc: 100, perTick: false },
   ])
   // …and the single-slot reader still answers with the FIRST of them, unchanged.
   assert.deepEqual(TABLE['divine censure'].hpSlot, { base: -2164, max: 2164, calc: 100 })
@@ -288,12 +455,16 @@ test('JOS-451: the mana cost is FIELD 14, and a zero there is an absence', () =>
 test('JOS-451: a HITPOINT SLOT is effect 0, 100 or 334 — and `hpSlot` is still effect 0 alone', () => {
   // Effect 100 is the heal-over-time spelling and effect 0 is not used for one. Ethereal Cleansing
   // has NO effect-0 slot, so before this ticket the whole spell carried no client facts at all.
-  assert.deepEqual(TABLE['ethereal cleansing'].hp, [{ base: 10, max: 100, calc: 103, perTick: true }])
+  assert.deepEqual(TABLE['ethereal cleansing'].hp, [
+    { base: 10, max: 100, calc: 103, perTick: true },
+  ])
   assert.deepEqual(TABLE['ethereal cleansing'].hpDuration, { formula: 3, value: 4 })
   // Effect 334 is the bard's pulsing hitpoint effect: five wiki pages name a 334 slot's magnitude
   // as a hitpoint change, and Chords of Dissonance is one of them (`Decrease Hitpoints by 2 per
   // tick`, client `1|334|-2|0|109|0`).
-  assert.deepEqual(TABLE['chords of dissonance'].hp, [{ base: -2, max: 0, calc: 109, perTick: false }])
+  assert.deepEqual(TABLE['chords of dissonance'].hp, [
+    { base: -2, max: 0, calc: 109, perTick: false },
+  ])
   // AND THE RESIST ESTIMATOR'S READER IS UNTOUCHED. `hpSlot` answers one question — is this
   // spell's damage a fixed number — and neither a HoT nor a bard pulse is a spell it fits from.
   assert.equal(TABLE['ethereal cleansing'].hpSlot, undefined)

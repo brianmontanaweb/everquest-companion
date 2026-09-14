@@ -90,7 +90,7 @@ export function searchMobs(text: string, limit: number = DEFAULT_LIMIT): MobHit[
     (a, b) =>
       b.score - a.score ||
       (b.entry.drops?.length ?? 0) - (a.entry.drops?.length ?? 0) ||
-      (a.entry.page < b.entry.page ? -1 : a.entry.page > b.entry.page ? 1 : 0)
+      (a.entry.page < b.entry.page ? -1 : a.entry.page > b.entry.page ? 1 : 0),
   )
   return limit > 0 ? hits.slice(0, limit) : hits
 }

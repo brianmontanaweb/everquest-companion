@@ -38,7 +38,7 @@ import {
   note,
   reportRun,
   settle,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -66,14 +66,14 @@ const AXES = ['magic', 'fire', 'cold', 'poison', 'disease'] as const
 function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
   return page.waitForSelector(sel, { timeout: ms }).then(
     () => true,
-    () => false
+    () => false,
   )
 }
 
 async function textOf(page: Page, sel: string): Promise<string> {
   const raw = await page.evaluate(
     (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
-    sel
+    sel,
   )
   return raw.replace(/\s+/g, ' ').trim()
 }
@@ -95,7 +95,11 @@ async function openMobPage(page: Page): Promise<boolean> {
   // WAIT FOR THE MODE, NOT FOR "A ROW" — the browse view's zone roster is already on screen and
   // draws the same testid, so a bare "a row appeared" is answered by the current zone's first mob.
   // See ZONE_ROSTER above and mob-drops-era.e2e.mts for the whole story.
-  await settle(() => countOf(page, ZONE_ROSTER), (n) => n === 0, { timeoutMs: 10_000 })
+  await settle(
+    () => countOf(page, ZONE_ROSTER),
+    (n) => n === 0,
+    { timeoutMs: 10_000 },
+  )
   if (!(await appears(page, RESULT_ROW))) return check(`the catalog finds ${MOB}`, false)
   const first = await textOf(page, RESULT_ROW)
   if (!check(`the top hit is ${MOB}`, first.toLowerCase().startsWith(MOB), first)) return false
@@ -106,14 +110,22 @@ async function openMobPage(page: Page): Promise<boolean> {
 /** The degraded branch: no client spell data, so the card says so and draws no rows. */
 async function stepNoSpellData(page: Page): Promise<void> {
   const text = await textOf(page, CARD)
-  check('the card says the spell data is missing rather than drawing an empty grid', text.includes('Spell data unavailable'), text)
+  check(
+    'the card says the spell data is missing rather than drawing an empty grid',
+    text.includes('Spell data unavailable'),
+    text,
+  )
   check('and it draws no axis rows at all', (await countOf(page, ROWS)) === 0)
 }
 
 async function stepFiveRows(page: Page): Promise<void> {
-  const rows = await settle(() => countOf(page, '[data-testid^="resist-row-"]'), (n) => n === AXES.length, {
-    timeoutMs: 15_000
-  })
+  const rows = await settle(
+    () => countOf(page, '[data-testid^="resist-row-"]'),
+    (n) => n === AXES.length,
+    {
+      timeoutMs: 15_000,
+    },
+  )
   check(`five axis rows, always (saw ${String(rows)})`, rows === AXES.length, String(rows))
   for (const axis of AXES) {
     check(`  ${axis} has a row`, (await countOf(page, `[data-testid="resist-row-${axis}"]`)) === 1)
@@ -130,15 +142,25 @@ async function stepNumbers(page: Page): Promise<void> {
   // and the arithmetic a player scales their own case from.
   const tag = await textOf(page, '[data-testid="resist-tag-magic"]')
   const word = tag.split(' · ')[0]
-  check('and a plain-language word beside it', ['weak', 'normal', 'resistant', 'very resistant'].includes(word), tag)
+  check(
+    'and a plain-language word beside it',
+    ['weak', 'normal', 'resistant', 'very resistant'].includes(word),
+    tag,
+  )
   const guidance = await textOf(page, '[data-testid="resist-guidance-magic"]')
   check(
     'with the guidance sentence under it',
-    ['should land', 'needs overchannel', 'may not land even with overchannel'].includes(guidance.replace('· ', '').trim()),
-    guidance
+    ['should land', 'needs overchannel', 'may not land even with overchannel'].includes(
+      guidance.replace('· ', '').trim(),
+    ),
+    guidance,
   )
   const bench = await textOf(page, '[data-testid="resist-bench-magic"]')
-  check('and BOTH percentages, so a player can scale their own case', /lands \d+% · with overchannel \d+%/.test(bench), bench)
+  check(
+    'and BOTH percentages, so a player can scale their own case',
+    /lands \d+% · with overchannel \d+%/.test(bench),
+    bench,
+  )
   const row = await textOf(page, '[data-testid="resist-row-magic"]')
   check('and the count it rests on', /n=\d+/.test(row), row)
   check('and where the evidence came from', /baseline \d+/.test(row), row)
@@ -155,13 +177,13 @@ async function stepNumbers(page: Page): Promise<void> {
   check(
     'the magic count separates what could have been resisted from what could not',
     /n=\d+ informative · \d+ total/.test(row),
-    row
+    row,
   )
   const counts = /n=(\d+) informative · (\d+) total/.exec(row)
   if (counts) {
     check(
       `  and the informative half is the smaller one (${counts[1]} of ${counts[2]})`,
-      Number(counts[1]) < Number(counts[2])
+      Number(counts[1]) < Number(counts[2]),
     )
   }
 }
@@ -181,7 +203,8 @@ async function stepNumbers(page: Page): Promise<void> {
  */
 async function stepThinRow(page: Page): Promise<void> {
   const empty = await countOf(page, '[data-testid^="resist-empty-"]')
-  if (empty === 0) note('every axis on this mob has some evidence - no empty row to check on this build')
+  if (empty === 0)
+    note('every axis on this mob has some evidence - no empty row to check on this build')
   else {
     const text = await textOf(page, '[data-testid^="resist-empty-"]')
     check('an axis nothing was ever cast at says so, in two words', text === 'no data', text)
@@ -194,12 +217,18 @@ async function stepThinRow(page: Page): Promise<void> {
   const caveat = await textOf(page, '[data-testid^="resist-low-"]')
   check('a thin axis is QUALIFIED, never replaced', /low samples/.test(caveat), caveat)
   // …and the answer it qualifies is still on the row: the whole point of the ruling.
-  const axis = (await page.evaluate(
-    (sel) => document.querySelector(sel)?.getAttribute('data-testid') ?? '',
-    '[data-testid^="resist-low-"]'
-  )).replace('resist-low-', '')
+  const axis = (
+    await page.evaluate(
+      (sel) => document.querySelector(sel)?.getAttribute('data-testid') ?? '',
+      '[data-testid^="resist-low-"]',
+    )
+  ).replace('resist-low-', '')
   const value = await textOf(page, `[data-testid="resist-value-${axis}"]`)
-  check(`…with its number and interval still printed (${axis})`, /^R \d+ \(\d+-\d+\)$/.test(value), value)
+  check(
+    `…with its number and interval still printed (${axis})`,
+    /^R \d+ \(\d+-\d+\)$/.test(value),
+    value,
+  )
 }
 
 /**
@@ -218,7 +247,11 @@ async function stepDoesNotFit(page: Page): Promise<void> {
     return
   }
   const text = await textOf(page, '[data-testid^="resist-nofit-"]')
-  check('a cell the model cannot fit says so, with the count behind it', /does not fit the model: \d+ of \d+ resisted/.test(text), text)
+  check(
+    'a cell the model cannot fit says so, with the count behind it',
+    /does not fit the model: \d+ of \d+ resisted/.test(text),
+    text,
+  )
 }
 
 async function stepEvidence(page: Page): Promise<void> {
@@ -227,7 +260,13 @@ async function stepEvidence(page: Page): Promise<void> {
     return
   }
   await page.click('[data-testid="resist-expand-magic"]', { timeout: 15_000 })
-  if (!check('the magic row expands', await appears(page, '[data-testid="resist-evidence-magic"]', 10_000))) return
+  if (
+    !check(
+      'the magic row expands',
+      await appears(page, '[data-testid="resist-evidence-magic"]', 10_000),
+    )
+  )
+    return
   const text = await textOf(page, '[data-testid="resist-evidence-magic"]')
   check('and lists per-spell evidence', /: \d+ casts?/.test(text), text.slice(0, 120))
 
@@ -237,19 +276,29 @@ async function stepEvidence(page: Page): Promise<void> {
   check(
     'a spell that could never have been resisted says so',
     /cannot be resisted at this level: -\d+ adjust/.test(text),
-    text.slice(0, 200)
+    text.slice(0, 200),
   )
   const first = text.split(/\s(?=[A-Z][a-z]+(?:'s)?[^:]*: \d+ casts?)/)[0]
-  check('…and it is not the first line, however many times it was cast', !first.includes('Smiting Strike'), first)
+  check(
+    '…and it is not the first line, however many times it was cast',
+    !first.includes('Smiting Strike'),
+    first,
+  )
 
   // JOS-387's ACCEPTANCE, on the surface it names: a ranked cast is modelled at -15 a rank and an
   // overchannel cast at -150 or more, and the drilldown says so on the spell's own line. Which of
   // the two this mob's magic evidence carries depends on the committed baseline, so each is checked
   // when it is there and noted when it is not.
-  if (/rank \d+ at -\d+ adjust/.test(text)) check('a ranked cast is modelled at its rank, and the line says so', true)
-  else note('no ranked spell in this mob’s magic evidence - the rank clause has nothing to show here')
-  if (/in overchannel at -\d+ adjust/.test(text)) check('an overchannel cast says which adjust it was modelled at', true)
-  else note('nothing was cast at this mob in overchannel - the invocation clause has nothing to show here')
+  if (/rank \d+ at -\d+ adjust/.test(text))
+    check('a ranked cast is modelled at its rank, and the line says so', true)
+  else
+    note('no ranked spell in this mob’s magic evidence - the rank clause has nothing to show here')
+  if (/in overchannel at -\d+ adjust/.test(text))
+    check('an overchannel cast says which adjust it was modelled at', true)
+  else
+    note(
+      'nothing was cast at this mob in overchannel - the invocation clause has nothing to show here',
+    )
 }
 
 /**
@@ -276,8 +325,16 @@ async function stepNpcEvidence(page: Page): Promise<string | null> {
     return null
   }
   const text = await textOf(page, line)
-  check('the card names what pets and other creatures contributed', /Pets and other creatures: \d+ casts?/.test(text), text)
-  check('…and does not say it was left out, because the switch ships ON', !text.includes('not included'), text)
+  check(
+    'the card names what pets and other creatures contributed',
+    /Pets and other creatures: \d+ casts?/.test(text),
+    text,
+  )
+  check(
+    '…and does not say it was left out, because the switch ships ON',
+    !text.includes('not included'),
+    text,
+  )
   return await textOf(page, '[data-testid="resist-value-cold"]')
 }
 
@@ -304,7 +361,11 @@ async function stepSwitchOff(page: Page, before: string | null): Promise<void> {
   check('and it can be turned off', !(await page.isChecked(toggle)))
 
   if (!(await openMobPage(page))) return
-  await settle(() => textOf(page, CARD), (t) => !t.includes('Reading what'), { timeoutMs: 30_000 })
+  await settle(
+    () => textOf(page, CARD),
+    (t) => !t.includes('Reading what'),
+    { timeoutMs: 30_000 },
+  )
   await page.click('[data-testid="resist-expand-cold"]', { timeout: 15_000 })
   if (!(await appears(page, '[data-testid="resist-npc-cold"]', 10_000))) {
     check('the creature-cast line survives the switch', false)
@@ -312,11 +373,23 @@ async function stepSwitchOff(page: Page, before: string | null): Promise<void> {
   }
   const text = await textOf(page, '[data-testid="resist-npc-cold"]')
   // DECLINED, NOT DELETED: the count is still there and the parenthesis carries the difference.
-  check('with the switch off the same line says the family was not included', text.includes('(not included)'), text)
-  check('…and it still states the count, so the user can see what they turned off', /\d+ casts?/.test(text), text)
+  check(
+    'with the switch off the same line says the family was not included',
+    text.includes('(not included)'),
+    text,
+  )
+  check(
+    '…and it still states the count, so the user can see what they turned off',
+    /\d+ casts?/.test(text),
+    text,
+  )
   if (before === null) return
   const after = await textOf(page, '[data-testid="resist-value-cold"]')
-  check(`the cold number is re-derived from the smaller evidence (${before} -> ${after})`, after !== before, `${before} vs ${after}`)
+  check(
+    `the cold number is re-derived from the smaller evidence (${before} -> ${after})`,
+    after !== before,
+    `${before} vs ${after}`,
+  )
 }
 
 async function stepNoAcronyms(page: Page, populated: boolean): Promise<void> {
@@ -350,7 +423,11 @@ async function main(): Promise<void> {
     await stepReady(page)
     if (await openMobPage(page)) {
       // Give the client spell table its one-off parse before reading the card.
-      await settle(() => textOf(page, CARD), (t) => !t.includes('Reading what'), { timeoutMs: 30_000 })
+      await settle(
+        () => textOf(page, CARD),
+        (t) => !t.includes('Reading what'),
+        { timeoutMs: 30_000 },
+      )
       const card = await textOf(page, CARD)
       note(`card: ${card.slice(0, 200)}`)
       const populated = !card.includes('Spell data unavailable')
@@ -371,7 +448,11 @@ async function main(): Promise<void> {
       }
     }
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     await dumpArtifacts(page, failures.length ? 'mob-resists-FAIL' : 'mob-resists-pass')
   } finally {
     await close()

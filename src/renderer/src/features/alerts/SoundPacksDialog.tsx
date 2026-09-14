@@ -11,14 +11,7 @@
 // The row markup lives in SoundPackRow.tsx; this file is the dialog chrome plus
 // the three state machines behind it (registry fetch, install/uninstall, preview).
 
-import {
-  type JSX,
-  useCallback,
-  useDeferredValue,
-  useEffect,
-  useMemo,
-  useState
-} from 'react'
+import { type JSX, useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import {
   Alert,
   Box,
@@ -30,13 +23,18 @@ import {
   LinearProgress,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import type { PackInstallProgress, RegistryPackView, SoundPack } from '@shared/types'
 import { currentPrefs } from './player'
-import { invalidateSoundCaches, playPreviewSound, revokePreviewCache, stopPreview } from './soundCache'
+import {
+  invalidateSoundCaches,
+  playPreviewSound,
+  revokePreviewCache,
+  stopPreview,
+} from './soundCache'
 import SoundPackRow, { type PreviewState } from './SoundPackRow'
 
 interface RegistryState {
@@ -86,7 +84,7 @@ interface InstallState {
 /** Per-pack live progress + busy flags, keyed by pack name. */
 function usePackInstall(
   load: (force?: boolean) => Promise<void>,
-  onInstalledChange: () => void
+  onInstalledChange: () => void,
 ): InstallState {
   const [progress, setProgress] = useState<Record<string, PackInstallProgress>>({})
   const [busy, setBusy] = useState<Set<string>>(new Set())
@@ -113,7 +111,7 @@ function usePackInstall(
           // and dropping the flag here would repaint a rate limit as a red error.
           setProgress((prev) => ({
             ...prev,
-            [name]: { name, phase: 'error', message: res.error, retryable: res.retryable }
+            [name]: { name, phase: 'error', message: res.error, retryable: res.retryable },
           }))
         }
       } finally {
@@ -124,7 +122,7 @@ function usePackInstall(
         })
       }
     },
-    [load, onInstalledChange]
+    [load, onInstalledChange],
   )
 
   const uninstall = useCallback(
@@ -154,7 +152,7 @@ function usePackInstall(
         })
       }
     },
-    [load, onInstalledChange]
+    [load, onInstalledChange],
   )
 
   return { progress, busy, install, uninstall }
@@ -205,13 +203,13 @@ function usePackPreviews(open: boolean): PreviewsState {
           .then((res) => {
             setPreviews((p) => ({
               ...p,
-              [name]: { loading: false, sounds: res.sounds, error: res.error }
+              [name]: { loading: false, sounds: res.sounds, error: res.error },
             }))
           })
           .catch((e: unknown) => {
             setPreviews((p) => ({
               ...p,
-              [name]: { loading: false, error: e instanceof Error ? e.message : String(e) }
+              [name]: { loading: false, error: e instanceof Error ? e.message : String(e) },
             }))
           })
         return { ...cur, [name]: { loading: true } }
@@ -221,21 +219,24 @@ function usePackPreviews(open: boolean): PreviewsState {
   }, [])
 
   // Play one preview sound at the global alert volume (respect mute; one at a time).
-  const playPreview = useCallback(async (name: string, file: string) => {
-    const k = `${name}::${file}`
-    const prefs = currentPrefs()
-    if (prefs.muted) return
-    // Toggle-off if this exact one is already playing.
-    if (playingKey === k) {
-      stopPreview()
-      setPlayingKey(null)
-      return
-    }
-    setLoadingKey(k)
-    const ok = await playPreviewSound(name, file, prefs.globalVolume)
-    setLoadingKey((cur) => (cur === k ? null : cur))
-    setPlayingKey(ok ? k : null)
-  }, [playingKey])
+  const playPreview = useCallback(
+    async (name: string, file: string) => {
+      const k = `${name}::${file}`
+      const prefs = currentPrefs()
+      if (prefs.muted) return
+      // Toggle-off if this exact one is already playing.
+      if (playingKey === k) {
+        stopPreview()
+        setPlayingKey(null)
+        return
+      }
+      setLoadingKey(k)
+      const ok = await playPreviewSound(name, file, prefs.globalVolume)
+      setLoadingKey((cur) => (cur === k ? null : cur))
+      setPlayingKey(ok ? k : null)
+    },
+    [playingKey],
+  )
 
   return { expanded, previews, playingKey, loadingKey, toggleExpand, playPreview }
 }
@@ -258,9 +259,11 @@ function usePackSearch(packs: RegistryPackView[]): {
     () =>
       packs.map((p) => ({
         p,
-        key: [p.display_name, p.name, p.description ?? '', p.categories.join(' ')].join(' ').toLowerCase()
+        key: [p.display_name, p.name, p.description ?? '', p.categories.join(' ')]
+          .join(' ')
+          .toLowerCase(),
       })),
-    [packs]
+    [packs],
   )
 
   const filtered = useMemo(() => {
@@ -285,7 +288,7 @@ function usePackSearch(packs: RegistryPackView[]): {
 function DefaultPackRow({
   packs,
   defaultPackId,
-  onClear
+  onClear,
 }: {
   packs: SoundPack[]
   defaultPackId: string | undefined
@@ -327,7 +330,7 @@ function DefaultPackRow({
 /** The registry error banner — cached-list warning vs. a hard failure. */
 function RegistryError({
   error,
-  fromCache
+  fromCache,
 }: {
   error: string | null
   fromCache: boolean
@@ -348,7 +351,7 @@ export default function SoundPacksDialog({
   defaultPackId,
   onSetDefault,
   onClose,
-  onInstalledChange
+  onInstalledChange,
 }: {
   open: boolean
   /** Installed packs — how this dialog knows whether the chosen default is actually here. */
@@ -426,15 +429,17 @@ export default function SoundPacksDialog({
               ))}
               {!registry.loading && filtered.length === 0 && (
                 <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
-                  {registry.packs.length === 0 ? 'No packs available.' : 'No packs match your search.'}
+                  {registry.packs.length === 0
+                    ? 'No packs available.'
+                    : 'No packs match your search.'}
                 </Typography>
               )}
             </Stack>
           </Box>
 
           <Typography variant="caption" color="text.secondary">
-            Packs from openpeon.com (PeonPing/og-packs) - game-audio packs are typically
-            CC-BY-NC; personal use.
+            Packs from openpeon.com (PeonPing/og-packs) - game-audio packs are typically CC-BY-NC;
+            personal use.
           </Typography>
         </Stack>
       </DialogContent>

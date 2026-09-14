@@ -19,7 +19,12 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { buildAnalytics } from '../src/main/triage/analytics'
-import { addDays, type FunnelRow, type InstallRow, type UsageRow } from '../src/main/triage/usageRows'
+import {
+  addDays,
+  type FunnelRow,
+  type InstallRow,
+  type UsageRow,
+} from '../src/main/triage/usageRows'
 import { USAGE_METRICS } from '../src/shared/telemetryRollup'
 import { liveTiles } from '../src/renderer/src/features/triage/analyticsRows'
 import { renderAnalyticsDigest } from '../scripts/analyticsDigest.mjs'
@@ -34,21 +39,24 @@ const u = (d: string, metric: string, dim: string, n: number): UsageRow => ({
   cohort: 'user',
   metric,
   dim,
-  n
+  n,
 })
 
 const build = (
   usage: UsageRow[] = [],
   funnels: FunnelRow[] = [],
   installs: InstallRow[] = [],
-  days = 30
+  days = 30,
 ) => buildAnalytics({ usage, funnels, installs, windowDays: days, nowMs: NOW })
 
 test('the LIVE tiles are the only ones that say "now", and they degrade to a reason', () => {
   // Unavailable is a TILE, not an omission: "CloudWatch did not answer" and "nobody is in the
   // app" are opposite facts and an absent tile would let them share a rendering.
   const dark = liveTiles({ available: false, reason: 'no credentials' })
-  assert.deepEqual(dark.map((t) => [t.label, t.value]), [['Live now', '-']])
+  assert.deepEqual(
+    dark.map((t) => [t.label, t.value]),
+    [['Live now', '-']],
+  )
   assert.match(dark[0].note, /no credentials/)
 
   // Nobody alive: a zero and NO age tile. An empty fleet has no age, and a 0 there would read as
@@ -59,9 +67,12 @@ test('the LIVE tiles are the only ones that say "now", and they degrade to a rea
     asOfMs: 0,
     avgAgeMs: null,
     ageIsFloor: false,
-    lookbackMs: 3_600_000
+    lookbackMs: 3_600_000,
   })
-  assert.deepEqual(quiet.map((t) => t.value), ['0'])
+  assert.deepEqual(
+    quiet.map((t) => t.value),
+    ['0'],
+  )
 
   // Alive, with an age the lookback truncated: ONE word of caveat plus the ≥ that says floor.
   const busy = liveTiles({
@@ -70,9 +81,12 @@ test('the LIVE tiles are the only ones that say "now", and they degrade to a rea
     asOfMs: 0,
     avgAgeMs: 45 * 60_000,
     ageIsFloor: true,
-    lookbackMs: 12 * 3_600_000
+    lookbackMs: 12 * 3_600_000,
   })
-  assert.deepEqual(busy.map((t) => t.value), ['7', '≥45 min'])
+  assert.deepEqual(
+    busy.map((t) => t.value),
+    ['7', '≥45 min'],
+  )
   assert.match(busy[1].note, /est\./)
   // …and no ≥ when the derivation finished inside the window.
   const settled = liveTiles({
@@ -81,7 +95,7 @@ test('the LIVE tiles are the only ones that say "now", and they degrade to a rea
     asOfMs: 0,
     avgAgeMs: 45 * 60_000,
     ageIsFloor: false,
-    lookbackMs: 12 * 3_600_000
+    lookbackMs: 12 * 3_600_000,
   })
   assert.equal(settled[1].value, '45 min')
   assert.deepEqual(liveTiles(undefined), [], 'no live read was made ⇒ no tiles at all')
@@ -98,7 +112,7 @@ test("'today' means the CLOCK's UTC day, not the last day with data", () => {
   const busyYesterday = build([
     u(day(1), USAGE_METRICS.newInstalls, '-', 4),
     u(day(1), USAGE_METRICS.upgrades, '-', 9),
-    u(day(1), USAGE_METRICS.activeInstalls, '-', 20)
+    u(day(1), USAGE_METRICS.activeInstalls, '-', 20),
   ]).pulse
   assert.equal(busyYesterday.dau, 20, 'DAU still reads the last day with data')
   assert.equal(busyYesterday.installsToday, 0)
@@ -107,7 +121,7 @@ test("'today' means the CLOCK's UTC day, not the last day with data", () => {
   const today = build([
     u(TODAY, USAGE_METRICS.newInstalls, '-', 2),
     u(day(1), USAGE_METRICS.newInstalls, '-', 4),
-    u(TODAY, USAGE_METRICS.upgrades, '-', 7)
+    u(TODAY, USAGE_METRICS.upgrades, '-', 7),
   ]).pulse
   assert.equal(today.installsToday, 2, 'only today, never the window')
   assert.equal(today.upgradesToday, 7)
@@ -117,7 +131,7 @@ test('lines parsed is a WINDOW sum, and the digest labels the re-reads', () => {
   const d = build([
     u(TODAY, USAGE_METRICS.linesParsed, '-', 120_000),
     u(day(2), USAGE_METRICS.linesParsed, '-', 30_000),
-    u(day(1), USAGE_METRICS.sessions, '-', 3)
+    u(day(1), USAGE_METRICS.sessions, '-', 3),
   ])
   assert.equal(d.pulse.linesParsed, 150_000)
   const text = renderAnalyticsDigest(d)
@@ -130,7 +144,7 @@ test('the digest LIVE line is absent, a reason, or a number — never a silent z
   assert.equal(renderAnalyticsDigest(d).includes('live sessions'), false, 'no read ⇒ no line')
   assert.match(
     renderAnalyticsDigest(d, 'user', undefined, { available: false, reason: 'no credentials' }),
-    /live sessions: \(unavailable: no credentials\)/
+    /live sessions: \(unavailable: no credentials\)/,
   )
   assert.match(
     renderAnalyticsDigest(d, 'user', undefined, {
@@ -139,9 +153,9 @@ test('the digest LIVE line is absent, a reason, or a number — never a silent z
       asOfMs: NOW,
       avgAgeMs: 40 * 60_000,
       ageIsFloor: true,
-      lookbackMs: 12 * 3_600_000
+      lookbackMs: 12 * 3_600_000,
     }),
-    /live sessions 4 right now · avg age ≥40\.0 min est\./
+    /live sessions 4 right now · avg age ≥40\.0 min est\./,
   )
   // Alive but ageless cannot come out of the derivation; if it ever did, the line degrades to the
   // count alone rather than printing a fabricated zero.
@@ -152,8 +166,8 @@ test('the digest LIVE line is absent, a reason, or a number — never a silent z
       asOfMs: NOW,
       avgAgeMs: null,
       ageIsFloor: false,
-      lookbackMs: 3_600_000
+      lookbackMs: 3_600_000,
     }),
-    /live sessions 4 right now\n/
+    /live sessions 4 right now\n/,
   )
 })

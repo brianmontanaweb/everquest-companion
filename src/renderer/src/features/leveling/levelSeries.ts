@@ -62,7 +62,9 @@ export function latestLevel(sorted: readonly LevelPoint[]): number | null {
 
 /** The highest level ever reported (a real, separate fact — labeled as "peak", not current). */
 export function peakLevel(sorted: readonly LevelPoint[]): number | null {
-  return sorted.length ? sorted.reduce((m, p) => (p.level > m ? p.level : m), sorted[0].level) : null
+  return sorted.length
+    ? sorted.reduce((m, p) => (p.level > m ? p.level : m), sorted[0].level)
+    : null
 }
 
 /** Split the series at every downward transition; each break is one class swap. */
@@ -97,7 +99,7 @@ export function levelFeedEntries(sorted: readonly LevelPoint[]): LevelFeedEntry[
       ts: p.ts,
       level: p.level,
       afterSwap,
-      sinceMs: prev && !afterSwap ? p.ts - prev.ts : null
+      sinceMs: prev && !afterSwap ? p.ts - prev.ts : null,
     }
   })
 }

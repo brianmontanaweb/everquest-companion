@@ -31,9 +31,14 @@ import {
   levelAxis,
   paddedAxis,
   yOf,
-  type PlotBand
+  type PlotBand,
 } from '../src/renderer/src/features/leveling/levelChartGeometry'
-import { BAND_H, PAD_X, bandStripStyle, type ZoneBandRect } from '../src/renderer/src/features/leveling/zoneBands'
+import {
+  BAND_H,
+  PAD_X,
+  bandStripStyle,
+  type ZoneBandRect,
+} from '../src/renderer/src/features/leveling/zoneBands'
 
 /** The AA chart's band and its padding rule, as levelCharts.tsx configures them. */
 const AA_BAND: PlotBand = { top: 18, bottom: 142 }
@@ -83,7 +88,10 @@ test('a window with no gain at all draws its flat line across the MIDDLE, not al
   // The old rule divided by `max(1, top - base)` with the data at the bottom of it, so a gainless
   // window put the line on the floor — indistinguishable from "you have nothing".
   const axis = paddedAxis(442, 442, AA_BAND, AA_PAD)
-  assert.ok(Math.abs(place(axis, 442) - 0.5) < 0.001, `sat at ${place(axis, 442).toFixed(3)} of the band`)
+  assert.ok(
+    Math.abs(place(axis, 442) - 0.5) < 0.001,
+    `sat at ${place(axis, 442).toFixed(3)} of the band`,
+  )
   assert.ok(axis.hi - axis.lo >= AA_PAD.minSpan, 'and the box has a domain to be a box over')
 })
 
@@ -99,7 +107,10 @@ test('a window inside one level is that level and the next — not the one below
   const axis = levelAxis(22, 22.4, LEVEL_BAND)
   assert.deepEqual({ lo: axis.lo, hi: axis.hi }, { lo: 22, hi: 23 })
   // Which is the whole point: the curve now covers 40% of the plot instead of a fifth of it.
-  assert.ok(place(axis, 22) - place(axis, 22.4) > 0.35, 'the curve owns a readable share of the box')
+  assert.ok(
+    place(axis, 22) - place(axis, 22.4) > 0.35,
+    'the curve owns a readable share of the box',
+  )
 })
 
 test('the bottom of the axis is the level the bottom LABEL names', () => {
@@ -156,7 +167,10 @@ test('one zone covering the whole window is drawn as quiet context, not a slab',
 })
 
 test('two zones put it back to full weight — that strip is telling something apart', () => {
-  const style = bandStripStyle([rect(PAD_X, PLOT_W / 2), rect(PAD_X + PLOT_W / 2, PLOT_W / 2, 'y')], SCALE)
+  const style = bandStripStyle(
+    [rect(PAD_X, PLOT_W / 2), rect(PAD_X + PLOT_W / 2, PLOT_W / 2, 'y')],
+    SCALE,
+  )
   assert.equal(style.kind, 'full')
   assert.equal(style.height, BAND_H)
 })

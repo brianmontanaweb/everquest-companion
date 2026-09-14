@@ -88,7 +88,7 @@ function queryKey(query: SpellCatalogueQuery): string {
     query.category,
     query.subcategory,
     [...query.classes],
-    query.limit
+    query.limit,
   ])
 }
 
@@ -102,7 +102,7 @@ function queryKey(query: SpellCatalogueQuery): string {
  */
 export function useSpellCatalogue(
   query: SpellCatalogueQuery,
-  enabled: boolean
+  enabled: boolean,
 ): SpellCatalogueState {
   const client = useContext(EngineClientContext)
   const [state, setState] = useState<SpellCatalogueState>(IDLE)
@@ -133,7 +133,7 @@ export function useSpellCatalogue(
           category: asked.category ?? undefined,
           subcategory: asked.subcategory ?? undefined,
           classes: [...asked.classes],
-          limit: asked.limit
+          limit: asked.limit,
         })
         .then(
           (result) => {
@@ -146,9 +146,9 @@ export function useSpellCatalogue(
               result: null,
               loading: false,
               offline: false,
-              error: reason instanceof Error ? reason.message : 'the engine refused that question'
+              error: reason instanceof Error ? reason.message : 'the engine refused that question',
             })
-          }
+          },
         )
     }, DEBOUNCE_MS)
     return () => {

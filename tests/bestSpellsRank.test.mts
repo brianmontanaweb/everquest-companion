@@ -20,7 +20,7 @@ import {
   bestSpellsAt,
   defaultSorts,
   type BestSpellRow,
-  type BestSpellsView
+  type BestSpellsView,
 } from '../src/shared/bestSpells'
 import { comboClassesOf, type LevelUnlockData } from '../src/shared/levelUnlocks'
 import { spellLineKey } from '../src/shared/spellLines'
@@ -33,7 +33,7 @@ const slot = (candidates: ClassAbbr[]): ComboSlot => ({
   candidates,
   confidence: candidates.length === 1 ? 1 : 0.4,
   provenance: 'inferred',
-  because: []
+  because: [],
 })
 
 function interval(slots: ComboSlot[]): ComboInterval {
@@ -51,7 +51,7 @@ function interval(slots: ComboSlot[]): ComboInterval {
     levelLo: null,
     levelHi: null,
     evidenceCount: slots.length,
-    userLocked: false
+    userLocked: false,
   }
 }
 
@@ -71,21 +71,21 @@ const DATA: LevelUnlockData = {
       at: [{ cls: 'WIZ', level: 18 }],
       mana: 100,
       castTimeMs: 3000,
-      hpLines: ['Decrease Hitpoints by 100 (L18) to 300 (L34)']
+      hpLines: ['Decrease Hitpoints by 100 (L18) to 300 (L34)'],
     },
     {
       name: 'Flat Bolt',
       at: [{ cls: 'WIZ', level: 20 }],
       mana: 50,
       castTimeMs: 1000,
-      hpLines: ['Decrease Hitpoints by 150']
+      hpLines: ['Decrease Hitpoints by 150'],
     },
     {
       name: 'Mend',
       at: [{ cls: 'CLR', level: 10 }],
       mana: 40,
       castTimeMs: 2000,
-      hpLines: ['Increase Hitpoints by 200']
+      hpLines: ['Increase Hitpoints by 200'],
     },
     {
       // ONE SPELL, TWO SIDES: an instant hit plus a heal over five ticks. Its damage must move with
@@ -95,10 +95,10 @@ const DATA: LevelUnlockData = {
       mana: 80,
       castTimeMs: 2000,
       durationMs: 30_000,
-      hpLines: ['Decrease Hitpoints by 60', 'Increase Hitpoints by 15 per tick']
-    }
+      hpLines: ['Decrease Hitpoints by 60', 'Increase Hitpoints by 15 per tick'],
+    },
   ],
-  skills: {}
+  skills: {},
 }
 
 /** The named row, which MUST be there — so an assertion reads about the row, not about a null. */
@@ -123,7 +123,10 @@ function ranksOf(entries: Record<string, number>): ObservedSpellRanksSnap {
 test('a row with no observed rank and no slider is the base spell, exactly as before the ticket', () => {
   const wiz = comboOf(['WIZ'])
   const plain = rowOf(bestSpellsAt(DATA, wiz, 35, BOTH).tabs.dd.shown, 'Flat Bolt')
-  const nulled = rowOf(bestSpellsAt(DATA, wiz, 35, view({ observed: null })).tabs.dd.shown, 'Flat Bolt')
+  const nulled = rowOf(
+    bestSpellsAt(DATA, wiz, 35, view({ observed: null })).tabs.dd.shown,
+    'Flat Bolt',
+  )
   assert.equal(plain.metrics.damage, 150)
   assert.equal(plain.rank, 0)
   assert.equal(plain.observedRank, 0)
@@ -148,7 +151,10 @@ test('the JOIN is by spell LINE, so a numeral on either side finds the same row'
   // the same line, which is the only join that works against a catalog that mostly omits numerals.
   const snap = ranksOf({ 'Flat Bolt III': 4 })
   assert.deepEqual(Object.keys(snap), ['flat bolt'])
-  const row = rowOf(bestSpellsAt(DATA, wiz, 35, view({ observed: snap })).tabs.dd.shown, 'Flat Bolt')
+  const row = rowOf(
+    bestSpellsAt(DATA, wiz, 35, view({ observed: snap })).tabs.dd.shown,
+    'Flat Bolt',
+  )
   assert.equal(row.rank, 4)
   assert.equal(row.metrics.damage, 186, '150 + floor(150 * 24 / 100)')
 })
@@ -157,7 +163,7 @@ test('rank 1 is base at the join, because the fold cannot tell `X I` from `X`', 
   const wiz = comboOf(['WIZ'])
   const row = rowOf(
     bestSpellsAt(DATA, wiz, 35, view({ observed: ranksOf({ 'Flat Bolt': 1 }) })).tabs.dd.shown,
-    'Flat Bolt'
+    'Flat Bolt',
   )
   assert.equal(row.observedRank, 0)
   assert.equal(row.metrics.damage, 150)
@@ -171,7 +177,7 @@ test('the SLIDER lifts every row, and MAX keeps a better observed rank where the
     DATA,
     wiz,
     35,
-    view({ observed: ranksOf({ 'Flat Bolt': 8 }), simulate: 4 })
+    view({ observed: ranksOf({ 'Flat Bolt': 8 }), simulate: 4 }),
   )
   const owned = rowOf(best.tabs.dd.shown, 'Flat Bolt')
   const simulated = rowOf(best.tabs.dd.shown, 'Ramp Bolt')
@@ -185,11 +191,12 @@ test('the SLIDER lifts every row, and MAX keeps a better observed rank where the
 test('a rank lifts the row`s own derived figures, not only its total', () => {
   const wiz = comboOf(['WIZ'])
   const base = bestSpellsAt(DATA, wiz, 35, BOTH).tabs.dd.shown
-  const lifted = bestSpellsAt(DATA, wiz, 35, view({ observed: ranksOf({ 'Flat Bolt': 10 }) })).tabs.dd.shown
+  const lifted = bestSpellsAt(DATA, wiz, 35, view({ observed: ranksOf({ 'Flat Bolt': 10 }) })).tabs
+    .dd.shown
   assert.equal(rowOf(lifted, 'Flat Bolt').metrics.damage, 240, '150 + floor(150 * 60 / 100)')
   assert.ok(
     (rowOf(lifted, 'Flat Bolt').metrics.dps ?? 0) > (rowOf(base, 'Flat Bolt').metrics.dps ?? 0),
-    'the sustained figure moves with it, since the casting cycle did not change'
+    'the sustained figure moves with it, since the casting cycle did not change',
   )
   // dmg/mana moves too, because the mana is still the BASE cost in v1 - spellScale.ts's header
   // states that this makes the ratio read LOW for a levelled spell rather than high.
@@ -207,11 +214,15 @@ test('each side moves at ITS measured rate: six percent for damage, three for he
   assert.equal(mend.rank, 8, 'observed 8 beats the simulated 6')
   assert.equal(mend.metrics.heal, 248, '200 + floor(200 * 24/100) at three percent a rank')
   // The two-sided spell proves the split inside ONE row: each side scales by its own rate.
-  assert.equal(rowOf(at.tabs.dd.shown, 'Splitting Word').metrics.damage, 81, '60 + floor(60 * 36/100)')
+  assert.equal(
+    rowOf(at.tabs.dd.shown, 'Splitting Word').metrics.damage,
+    81,
+    '60 + floor(60 * 36/100)',
+  )
   assert.equal(
     rowOf(at.tabs.hot.shown, 'Splitting Word').metrics.heal,
     85,
-    'five ticks of 17: each tick is 15 + floor(15 * 18/100)'
+    'five ticks of 17: each tick is 15 + floor(15 * 18/100)',
   )
 })
 
@@ -230,7 +241,11 @@ test('JOS-447 acceptance: the owner`s Garrisons at VIII reads 492 and tops his d
   // wear, and these figures have never included worn anything (spellMetrics.ts's header).
   const wiz = comboOf(['WIZ'])
   const flat = rowOf(bestSpellsAt(REAL, wiz, 35, BOTH).tabs.dd.shown, GARRISONS)
-  assert.equal(flat.metrics.damage, 333, 'base, which is what the owner was shown before this ticket')
+  assert.equal(
+    flat.metrics.damage,
+    333,
+    'base, which is what the owner was shown before this ticket',
+  )
   assert.equal(flat.observedRank, 0)
 
   const at = bestSpellsAt(REAL, wiz, 35, view({ observed: ranksOf({ [GARRISONS]: 8 }) }))
@@ -240,7 +255,10 @@ test('JOS-447 acceptance: the owner`s Garrisons at VIII reads 492 and tops his d
   assert.equal(
     at.tabs.dd.shown[0].name,
     GARRISONS,
-    `it should lead by dps: ${at.tabs.dd.shown.slice(0, 3).map((r) => r.name).join(' | ')}`
+    `it should lead by dps: ${at.tabs.dd.shown
+      .slice(0, 3)
+      .map((r) => r.name)
+      .join(' | ')}`,
   )
 
   // AND THE TABLE REALLY RE-RANKS, which is the whole reason the rank is in the model. On the
@@ -252,17 +270,36 @@ test('JOS-447 acceptance: the owner`s Garrisons at VIII reads 492 and tops his d
   // above a 492 that no rank can lift past them. The dps assertion above is untouched by the same
   // change, and that is the honest reading of it: a rain totals more per cast and arrives on a 12s
   // re-use timer, so it leads on `dmg` and loses on `dps`. Two columns, two answers.
-  const byDamage: BestSpellsView = { sorts: { ...BOTH.sorts, dd: { column: 'damage', desc: true } } }
+  const byDamage: BestSpellsView = {
+    sorts: { ...BOTH.sorts, dd: { column: 'damage', desc: true } },
+  }
   const was = bestSpellsAt(REAL, wiz, 35, byDamage).tabs.dd.shown
   const now = bestSpellsAt(REAL, wiz, 35, {
     ...byDamage,
-    observed: ranksOf({ [GARRISONS]: 8 })
+    observed: ranksOf({ [GARRISONS]: 8 }),
   }).tabs.dd.shown
-  assert.equal(was.findIndex((r) => r.name === GARRISONS), 5, was.slice(0, 6).map((r) => r.name).join(' | '))
-  assert.equal(now.findIndex((r) => r.name === GARRISONS), 2, now.slice(0, 3).map((r) => r.name).join(' | '))
+  assert.equal(
+    was.findIndex((r) => r.name === GARRISONS),
+    5,
+    was
+      .slice(0, 6)
+      .map((r) => r.name)
+      .join(' | '),
+  )
+  assert.equal(
+    now.findIndex((r) => r.name === GARRISONS),
+    2,
+    now
+      .slice(0, 3)
+      .map((r) => r.name)
+      .join(' | '),
+  )
   // The two rains he cannot out-rank on the total, named so the next reader of this pin knows why
   // it is not 0: they are the same spell measured per cast rather than per second.
-  assert.deepEqual(now.slice(0, 2).map((r) => r.name), ['Lava Storm', 'Energy Storm'])
+  assert.deepEqual(
+    now.slice(0, 2).map((r) => r.name),
+    ['Lava Storm', 'Energy Storm'],
+  )
 })
 
 test('JOS-447: simulating a rank lifts the WHOLE real table without disturbing its membership', () => {
@@ -286,7 +323,11 @@ test('JOS-447: a simulated rank lifts the healing tabs at the half rate, members
   const base = bestSpellsAt(REAL, clr, 35, BOTH)
   const sim = bestSpellsAt(REAL, clr, 35, view({ simulate: 10 }))
   assert.ok(base.tabs.heal.shown.length >= 5)
-  assert.equal(sim.tabs.heal.shown.length, base.tabs.heal.shown.length, 'figures move, membership never')
+  assert.equal(
+    sim.tabs.heal.shown.length,
+    base.tabs.heal.shown.length,
+    'figures move, membership never',
+  )
   for (const row of sim.tabs.heal.shown) {
     const was = rowOf(base.tabs.heal.shown, row.name)
     assert.equal(row.rank, 10, row.name)

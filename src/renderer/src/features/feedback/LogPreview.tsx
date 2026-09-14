@@ -55,7 +55,7 @@ export function sliceMetaText(slice: FeedbackSlicePreview, requestedMinutes: num
     `${count(slice.lines)} lines`,
     span,
     `${count(slice.dropped)} lines removed`,
-    `${formatBytes(slice.bytes)} compressed`
+    `${formatBytes(slice.bytes)} compressed`,
   ]
   // The window is a REQUEST, not a promise: main halves it (up to three times) to fit the 2 MB
   // upload cap. Say so, rather than letting a "60 min" button sit above a 15-minute span.
@@ -72,7 +72,7 @@ export function sliceMetaText(slice: FeedbackSlicePreview, requestedMinutes: num
  */
 export function PreviewLines({
   lines,
-  testId = 'feedback-preview'
+  testId = 'feedback-preview',
 }: {
   lines: readonly string[]
   testId?: string
@@ -93,7 +93,7 @@ export function PreviewLines({
         fontSize: 11,
         lineHeight: `${ROW_HEIGHT.toString()}px`,
         whiteSpace: 'pre',
-        color: 'text.secondary'
+        color: 'text.secondary',
       }}
     >
       <div style={{ height: win.topPad }} />
@@ -124,7 +124,7 @@ export default function LogPreview({
   loading,
   onSaveCopy,
   saving,
-  savedPath
+  savedPath,
 }: LogPreviewProps): JSX.Element {
   if (loading && !slice) {
     return (

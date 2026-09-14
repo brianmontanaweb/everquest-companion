@@ -22,7 +22,7 @@ import type {
   SoundPack,
   UserSound,
   UserSoundImportResult,
-  UserSoundRemoveResult
+  UserSoundRemoveResult,
 } from '../shared/types'
 import type { SoundPackPrefs } from '../shared/soundPacks'
 
@@ -78,5 +78,5 @@ export const soundsBridge = {
     const listener = (_e: unknown, p: PackInstallProgress): void => cb(p)
     ipcRenderer.on(IPC.onPackProgress, listener)
     return () => ipcRenderer.removeListener(IPC.onPackProgress, listener)
-  }
+  },
 }

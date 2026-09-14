@@ -197,45 +197,45 @@ export const POLARITY_RULINGS: readonly PolarityRuling[] = [
     spells: ['Lull', 'Soothe', 'Calm', 'Pacify', 'Wake of Tranquility'],
     family: 'pacify',
     evidence:
-      'THE REPORTED SPELL and its own ladder (Cleric 1/5/15/36/55, Enchanter 1/6/18/35/51, Paladin 10/25/43/49). Effect list `Frenzy Radius` / `Reaction Radius` / `Pacify`: it suppresses a mob`s aggro for a stated duration and does nothing else. Owner log: 215 casts of the four rungs he has scribed (Pacify 90, Soothe 61, Calm 53, Lull 11), 204 of them followed inside 12 s by `<mob> looks less aggressive.` — 210 lines whole-log.'
+      'THE REPORTED SPELL and its own ladder (Cleric 1/5/15/36/55, Enchanter 1/6/18/35/51, Paladin 10/25/43/49). Effect list `Frenzy Radius` / `Reaction Radius` / `Pacify`: it suppresses a mob`s aggro for a stated duration and does nothing else. Owner log: 215 casts of the four rungs he has scribed (Pacify 90, Soothe 61, Calm 53, Lull 11), 204 of them followed inside 12 s by `<mob> looks less aggressive.` — 210 lines whole-log.',
   },
   {
     spells: ['Lull Animal', 'Calm Animal', 'Harmony', 'Harmony of Nature'],
     family: 'pacify',
     evidence:
-      'The DRUID/RANGER rungs of the same ladder (Druid 1/15/5/29, Ranger 4/31/22/39) — the line the Reddit report names. Same effect list, same mechanic. Three of the four print no landing sentence at all and so can open no bar; see THE DRUID HALF in this file`s header for the 212-cast measurement and why that is a separate defect from the polarity.'
+      'The DRUID/RANGER rungs of the same ladder (Druid 1/15/5/29, Ranger 4/31/22/39) — the line the Reddit report names. Same effect list, same mechanic. Three of the four print no landing sentence at all and so can open no bar; see THE DRUID HALF in this file`s header for the 212-cast measurement and why that is a separate defect from the polarity.',
   },
   {
     spells: ['Numb the Dead', 'Rest the Dead'],
     family: 'both',
     evidence:
-      'The NECRO/SK undead rungs (Necromancer 2/23, Shadow Knight 9/52), printing `<mob> looks ambivalent.` — ZERO lines in the owner log, who is neither class, so the claim rests on the effect list alone as the `db` route allows. `Rest the Dead` states `Pacify` AND `Memblur`, which is the DB`s own witness that the two effect classes are one family.'
+      'The NECRO/SK undead rungs (Necromancer 2/23, Shadow Knight 9/52), printing `<mob> looks ambivalent.` — ZERO lines in the owner log, who is neither class, so the claim rests on the effect list alone as the `db` route allows. `Rest the Dead` states `Pacify` AND `Memblur`, which is the DB`s own witness that the two effect classes are one family.',
   },
   {
     spells: ["Kelin's Lugubrious Lament"],
     family: 'pacify',
     evidence:
-      'The BARD rung (Bard 8), printing `<mob> looks sad.` — 13 lines in the owner log, none of them his (he has never sung it). Same `Reduce Aggro Radius` / `Reaction Radius` / `Pacify` effect list as the spell ladder; a song rather than a spell changes nothing about what it does to the mob.'
+      'The BARD rung (Bard 8), printing `<mob> looks sad.` — 13 lines in the owner log, none of them his (he has never sung it). Same `Reduce Aggro Radius` / `Reaction Radius` / `Pacify` effect list as the spell ladder; a song rather than a spell changes nothing about what it does to the mob.',
   },
   // --- the memory-wipe line: `Memblur`, the aggro RESET ------------------------------------------
   {
     spells: ['Reoccurring Amnesia'],
     family: 'memblur',
     evidence:
-      'THE SECOND REPORTED SPELL (Enchanter 45). Effect list `Memblur(25%)` and nothing else: it wipes a mob`s memory of who hit it. The only rung of either family that states a duration AND a keyable landing sentence and was still on the buffs side — `Someone blinks a few times.` is not a calm-line sentence, so JOS-213`s routing could never reach it.'
+      'THE SECOND REPORTED SPELL (Enchanter 45). Effect list `Memblur(25%)` and nothing else: it wipes a mob`s memory of who hit it. The only rung of either family that states a duration AND a keyable landing sentence and was still on the buffs side — `Someone blinks a few times.` is not a calm-line sentence, so JOS-213`s routing could never reach it.',
   },
   {
     spells: ['Memory Blur', 'Mind Wipe', 'Blanket of Forgetfulness', 'Memory Flux'],
     family: 'memblur',
     evidence:
-      'The rest of the enchanter memory-wipe ladder (10/36/46/55), sharing `Someone blinks a few times.` with the reported spell — 6 lines whole-log in the owner log, four of them following one of his own four Memory Blur casts inside 12 s. All four rungs state `Instant`, so none can open a bar in either window; what moves for them is the Buffs section, the spell search and the alert chips.'
+      'The rest of the enchanter memory-wipe ladder (10/36/46/55), sharing `Someone blinks a few times.` with the reported spell — 6 lines whole-log in the owner log, four of them following one of his own four Memory Blur casts inside 12 s. All four rungs state `Instant`, so none can open a bar in either window; what moves for them is the Buffs section, the spell search and the alert chips.',
   },
   {
     spells: ['Atone'],
     family: 'memblur',
     evidence:
-      'The CLERIC rung (Cleric 32), effect list `Memblur(30%)`, printing `<mob> calms down.` — a calm-line sentence in JOS-213`s roster although the effect is a memory wipe, which is the row that proves the two rosters ask different questions. ZERO lines in the owner log. Instant, so no bar either.'
-  }
+      'The CLERIC rung (Cleric 32), effect list `Memblur(30%)`, printing `<mob> calms down.` — a calm-line sentence in JOS-213`s roster although the effect is a memory wipe, which is the row that proves the two rosters ask different questions. ZERO lines in the owner log. Instant, so no bar either.',
+  },
 ]
 
 /**
@@ -251,7 +251,7 @@ export const POLARITY_CORRECTIONS: readonly SpellCorrection[] = POLARITY_RULINGS
   from: WIKI_POLARITY,
   to: RULED_POLARITY,
   attribution: 'db' as const,
-  evidence: r.evidence
+  evidence: r.evidence,
 }))
 
 /**
@@ -266,16 +266,16 @@ export const POLARITY_NO_LANDING: readonly { spell: string; measured: string }[]
   {
     spell: 'Harmony of Nature',
     measured:
-      'Owner log 2026-08-19, 2,147,672 lines: 212 `You begin casting Harmony of Nature.`, 0 family landing sentences within 12 s of any of them, and 200 `Your Harmony of Nature spell has worn off of <mob>.` The spell lands and prints nothing when it does.'
+      'Owner log 2026-08-19, 2,147,672 lines: 212 `You begin casting Harmony of Nature.`, 0 family landing sentences within 12 s of any of them, and 200 `Your Harmony of Nature spell has worn off of <mob>.` The spell lands and prints nothing when it does.',
   },
   {
     spell: 'Harmony',
     measured:
-      'The same spell one rung down (Druid 5 / Ranger 22), same empty wiki fields, and 0 casts in the owner log — so the refusal rests on its sibling`s 212 rather than on its own silence.'
+      'The same spell one rung down (Druid 5 / Ranger 22), same empty wiki fields, and 0 casts in the owner log — so the refusal rests on its sibling`s 212 rather than on its own silence.',
   },
   {
     spell: 'Lull Animal',
     measured:
-      'The bottom rung (Druid 1 / Ranger 4), same empty wiki fields, 0 casts in the owner log. Its own upgrade `Calm Animal` DOES state `Someone looks less aggressive.`, which is what makes restoring a sentence here tempting and is not evidence about THIS row.'
-  }
+      'The bottom rung (Druid 1 / Ranger 4), same empty wiki fields, 0 casts in the owner log. Its own upgrade `Calm Animal` DOES state `Someone looks less aggressive.`, which is what makes restoring a sentence here tempting and is not evidence about THIS row.',
+  },
 ]

@@ -11,4 +11,5 @@
 
 import type { MobKnowledge } from '@shared/types'
 
-export const overlayMobLookup = (name: string): Promise<MobKnowledge> => window.eqOverlay.lookupMob(name)
+export const overlayMobLookup = (name: string): Promise<MobKnowledge> =>
+  window.eqOverlay.lookupMob(name)

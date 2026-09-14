@@ -86,7 +86,7 @@ const cursorApi = {
     const listener = (_e: unknown, p: CursorPoint): void => cb(p)
     ipcRenderer.on(IPC.onCursorPoint, listener)
     return () => ipcRenderer.removeListener(IPC.onCursorPoint, listener)
-  }
+  },
 }
 
 export type EqCursorApi = typeof cursorApi

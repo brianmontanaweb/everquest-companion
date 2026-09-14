@@ -31,7 +31,7 @@ import {
   normalizeBuffAllowPrefs,
   sameBuffAllowPrefs,
   type BuffAllowPatch,
-  type BuffAllowPrefs
+  type BuffAllowPrefs,
 } from '../../../../shared/buffAllow'
 
 /**
@@ -132,12 +132,19 @@ export function useBuffAllow(bridge: BuffAllowBridge | undefined): BuffAllowStat
       adopt(applyBuffAllowPatch(prefs, p))
       void bridge?.setBuffAllow?.(p)
     },
-    [bridge]
+    [bridge],
   )
-  const setOptIn = useCallback((optIn: boolean) => { patch({ optIn }) }, [patch])
+  const setOptIn = useCallback(
+    (optIn: boolean) => {
+      patch({ optIn })
+    },
+    [patch],
+  )
   const setLine = useCallback(
-    (key: string, checked: boolean) => { patch(buffAllowCheck(key, checked)) },
-    [patch]
+    (key: string, checked: boolean) => {
+      patch(buffAllowCheck(key, checked))
+    },
+    [patch],
   )
 
   return { prefs, setOptIn, setLine }

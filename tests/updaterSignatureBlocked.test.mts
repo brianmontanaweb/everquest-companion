@@ -35,14 +35,14 @@ import {
   SIGNATURE_BLOCKED_PAUSED_MESSAGE,
   classifyUpdateFailure,
   describeUpdateFailure,
-  isSignatureCheckBlocked
+  isSignatureCheckBlocked,
 } from '../src/shared/update'
 import {
   UPDATE_DOWNLOAD_SOURCE,
   logUpdateFailure,
   resetUpdateLogWarnings,
   updateFailureLine,
-  type UpdateLogSinks
+  type UpdateLogSinks,
 } from '../src/main/updateLog'
 
 const TEST_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -60,7 +60,7 @@ function recorder(): Recorder {
     filed,
     warned,
     error: (source, payload) => filed.push({ source, payload }),
-    warn: (...args) => warned.push(args)
+    warn: (...args) => warned.push(args),
   }
 }
 
@@ -96,7 +96,7 @@ function blockedParseFailure(): Error {
 function blockedCommandFailure(): Error {
   const cmd =
     'set "PSModulePath=" & chcp 65001 >NUL & powershell.exe -NoProfile -NonInteractive ' +
-    '-InputFormat None -Command "Get-AuthenticodeSignature -LiteralPath \'C:\\x\\installer.exe\'' +
+    "-InputFormat None -Command \"Get-AuthenticodeSignature -LiteralPath 'C:\\x\\installer.exe'" +
     ' | ConvertTo-Json -Compress"'
   return Object.assign(new Error(`Command failed: ${cmd}\n`), { cmd, code: 1 })
 }
@@ -118,7 +118,7 @@ test('A BLOCKED POWERSHELL IS ITS OWN KIND, and it is asked before the parse arm
   // The line an operator reads names the new class, not `parse` or `other`.
   assert.match(
     updateFailureLine('download', 'final', 'blocked', blockedParseFailure()),
-    /^update download failed \(final, blocked\): /
+    /^update download failed \(final, blocked\): /,
   )
 })
 
@@ -154,9 +154,9 @@ test('THE INSTALLED VERIFIER still fails the way this classification assumes', (
   // `node_modules` of its own (AGENTS.md).
   const src = readFileSync(
     createRequire(import.meta.url).resolve(
-      'electron-updater/out/windowsExecutableCodeSignatureVerifier.js'
+      'electron-updater/out/windowsExecutableCodeSignatureVerifier.js',
     ),
-    'utf8'
+    'utf8',
   )
   // The command line shape two quotes verbatim.
   assert.ok(src.includes('set "PSModulePath=" & chcp 65001 >NUL & powershell.exe'))
@@ -175,7 +175,10 @@ test('THE INSTALLED VERIFIER still fails the way this classification assumes', (
 
 test('THE WIRING: a blocked PowerShell walks no backoff and names its cause', () => {
   const src = read('src/main/updater.ts')
-  const handler = src.slice(src.indexOf("autoUpdater.on('error'"), src.indexOf('/**\n * Initialize'))
+  const handler = src.slice(
+    src.indexOf("autoUpdater.on('error'"),
+    src.indexOf('/**\n * Initialize'),
+  )
   // The routing decision is READ BACK — `logUpdateFailure` returns the kind, so there is exactly
   // one classifier and the wiring cannot form a second opinion about the same error.
   assert.match(handler, /const kind = logUpdateFailure\(step, 'final', err, LOG_SINKS\)/)
@@ -183,7 +186,7 @@ test('THE WIRING: a blocked PowerShell walks no backoff and names its cause', ()
   // Ticking `consecutiveFailures` would back the FEED off for four hours over the antivirus.
   assert.match(
     handler,
-    /if \(kind === 'blocked'\) downloadBlocked = true\s*\n\s*else consecutiveFailures\+\+/
+    /if \(kind === 'blocked'\) downloadBlocked = true\s*\n\s*else consecutiveFailures\+\+/,
   )
   // The bounded telemetry outcome is NOT skipped: a frozen cohort has to stay countable somewhere,
   // and `updateOutcome` is the honest home the demotion leaves the count in (JOS-310's rule).

@@ -126,7 +126,7 @@ export function mobRows(zoneRaw: string, catalog: MobEntry[]): MobPaneRow[] {
       pins: ambiguous ? [] : mobPins(m),
       zoneCount,
       unattributable: ambiguous && (m.loc?.length ?? 0) > 0,
-      searchKey: `${m.name} ${m.level ?? ''}`.toLowerCase()
+      searchKey: `${m.name} ${m.level ?? ''}`.toLowerCase(),
     }
   })
 }
@@ -146,7 +146,7 @@ export function labelRows(points: readonly MapPoint[]): LabelPaneRow[] {
       id: `${p.label}#${String(p.x)},${String(p.y)},${String(p.layer)}`,
       name: p.display,
       point: p,
-      searchKey: p.display.toLowerCase()
+      searchKey: p.display.toLowerCase(),
     })
   }
   return out
@@ -201,7 +201,7 @@ export interface PlacedPin {
  */
 export function pinsForRows(
   rows: readonly MobPaneRow[],
-  limit: number = MAX_PINS
+  limit: number = MAX_PINS,
 ): { pins: PlacedPin[]; capped: boolean } {
   const pins: PlacedPin[] = []
   for (const row of rows) {
@@ -221,10 +221,13 @@ export interface PaneCounts {
   labels: number
 }
 
-export function paneCounts(mobs: readonly MobPaneRow[], labels: readonly LabelPaneRow[]): PaneCounts {
+export function paneCounts(
+  mobs: readonly MobPaneRow[],
+  labels: readonly LabelPaneRow[],
+): PaneCounts {
   return {
     mobs: mobs.length,
     located: mobs.reduce((n, m) => n + (m.pins.length > 0 ? 1 : 0), 0),
-    labels: labels.length
+    labels: labels.length,
   }
 }

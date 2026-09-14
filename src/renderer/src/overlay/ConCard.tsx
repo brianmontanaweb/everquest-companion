@@ -55,10 +55,15 @@ import {
   benchmarkText,
   countText,
   estimateText,
-  resistRateText
+  resistRateText,
 } from '../features/resists/resistRow'
 import { CARD_ENTER_MS, CARD_EXIT_MS } from './cardQueue'
-import { CON_CARD_OPEN_HINT, conCardTotalN, notableChips, type ConCardNotableChip } from './conCardRows'
+import {
+  CON_CARD_OPEN_HINT,
+  conCardTotalN,
+  notableChips,
+  type ConCardNotableChip,
+} from './conCardRows'
 
 const MUTED = '#a8b0c6'
 const DIM = '#7c8397'
@@ -98,8 +103,8 @@ function motionStyle(entering: boolean, exiting: boolean): CSSProperties {
     opacity: hidden ? 0 : 1,
     transform: hidden ? 'translateY(-6px)' : 'translateY(0)',
     transition: `opacity ${String(exiting ? CARD_EXIT_MS : CARD_ENTER_MS)}ms ease-out, transform ${String(
-      exiting ? CARD_EXIT_MS : CARD_ENTER_MS
-    )}ms ease-out`
+      exiting ? CARD_EXIT_MS : CARD_ENTER_MS,
+    )}ms ease-out`,
   }
 }
 
@@ -116,7 +121,7 @@ function Identity({ payload, linked }: { payload: ConCardPayload; linked: boolea
   const facts = [
     payload.level === undefined ? null : `Level ${String(payload.level)}`,
     payload.rare === true ? 'rare creature' : null,
-    payload.zone ?? null
+    payload.zone ?? null,
   ].filter((f): f is string => f !== null)
   return (
     <div style={{ minWidth: 0 }}>
@@ -134,9 +139,9 @@ function Identity({ payload, linked }: { payload: ConCardPayload; linked: boolea
                 textDecoration: 'underline',
                 textDecorationColor: `${GOLD}88`,
                 textDecorationThickness: 1,
-                textUnderlineOffset: 3
+                textUnderlineOffset: 3,
               }
-            : {})
+            : {}),
         }}
       >
         {payload.name}
@@ -170,11 +175,14 @@ function Chip({ chip }: { chip: ConCardNotableChip }): JSX.Element {
         padding: '4px 6px',
         borderRadius: 6,
         border: `1px solid ${color}66`,
-        background: `${color}1f`
+        background: `${color}1f`,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
-        <span aria-hidden style={{ width: 8, height: 8, borderRadius: 2, background: color, flex: '0 0 auto' }} />
+        <span
+          aria-hidden
+          style={{ width: 8, height: 8, borderRadius: 2, background: color, flex: '0 0 auto' }}
+        />
         <span style={{ color, fontSize: 11, fontWeight: 700 }}>{RESIST_AXIS_WORDS[chip.axis]}</span>
       </div>
       {/* THE BAND IS WORDS, ALWAYS. `overflowWrap` rather than an ellipsis: "may not land even
@@ -209,10 +217,16 @@ function Chip({ chip }: { chip: ConCardNotableChip }): JSX.Element {
           evidence that could have gone either way. The mob page prints the total beside it because
           it has a column to print it in; a 9px chip does not. The total still crosses the wire
           (`chip.nTotal`) — a layout decision, not a shorter truth. */}
-      <div data-testid={`con-chip-bench-${chip.axis}`} style={{ color: MUTED, fontSize: 10, marginTop: 1 }}>
+      <div
+        data-testid={`con-chip-bench-${chip.axis}`}
+        style={{ color: MUTED, fontSize: 10, marginTop: 1 }}
+      >
         {chip.benchmark ? benchmarkText(chip.benchmark) : FROM_RESIST_RATE_NOTE}
       </div>
-      <div data-testid={`con-chip-detail-${chip.axis}`} style={{ color: DIM, fontSize: 9, marginTop: 1 }}>
+      <div
+        data-testid={`con-chip-detail-${chip.axis}`}
+        style={{ color: DIM, fontSize: 9, marginTop: 1 }}
+      >
         {chip.fit ? `${estimateText(chip.fit)} ${countText(chip.n)}` : countText(chip.n)}
         {chip.npcOnly && ` · ${NPC_ONLY_NOTE}`}
       </div>
@@ -237,13 +251,15 @@ function Chips({ payload }: { payload: ConCardPayload }): JSX.Element {
     <div data-testid="con-card-resists">
       {!payload.spellData && (
         <div style={{ color: DIM, fontSize: 10, marginBottom: 3 }}>
-          Resists need your EverQuest install&apos;s spells_us.txt - resistance below is what the log
-          alone can say.
+          Resists need your EverQuest install&apos;s spells_us.txt - resistance below is what the
+          log alone can say.
         </div>
       )}
       {chips.length === 0 ? (
         <div data-testid="con-card-no-resists" style={{ color: DIM, fontSize: 11 }}>
-          {totalN > 0 ? `no notable resists · ${countText(totalN)}` : 'no notable resists · nothing seen yet'}
+          {totalN > 0
+            ? `no notable resists · ${countText(totalN)}`
+            : 'no notable resists · nothing seen yet'}
         </div>
       ) : (
         /* A GRID OF COLUMNS AS WIDE AS A CHIP NEEDS, as many as fit (JOS-406).
@@ -271,7 +287,7 @@ function Chips({ payload }: { payload: ConCardPayload }): JSX.Element {
             display: 'grid',
             gridTemplateColumns: `repeat(auto-fill, minmax(${String(CHIP_MIN_PX)}px, 1fr))`,
             gap: 4,
-            alignItems: 'stretch'
+            alignItems: 'stretch',
           }}
         >
           {chips.map((c) => (
@@ -290,7 +306,7 @@ export function ConCard({
   linked,
   onHover,
   onOpen,
-  onDismiss
+  onDismiss,
 }: {
   payload: ConCardPayload
   exiting: boolean
@@ -347,7 +363,7 @@ export function ConCard({
         backdropFilter: 'blur(6px)',
         boxShadow: '0 6px 18px rgba(0,0,0,0.45)',
         cursor: linked ? 'pointer' : 'default',
-        ...motionStyle(entering, exiting)
+        ...motionStyle(entering, exiting),
       }}
     >
       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
@@ -373,7 +389,7 @@ export function ConCard({
             background: 'transparent',
             color: MUTED,
             fontSize: 13,
-            cursor: 'pointer'
+            cursor: 'pointer',
           }}
         >
           ×

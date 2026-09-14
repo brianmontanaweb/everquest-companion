@@ -75,7 +75,7 @@ const NOT_CODE = new Set(['shared/releaseNotes.ts'])
 const SAYS_POWERSHELL = new Set([
   "Security software on this PC blocked the update's PowerShell signature check, so the new version could not be verified. Nothing is wrong with your install - the next check will try again.",
   "Security software on this PC keeps blocking the update's PowerShell signature check. Automatic updates are paused - allow PowerShell, or install the new version by hand.",
-  "security software or policy is blocking this PC's PowerShell signature check - the next check retries, and the user is told"
+  "security software or policy is blocking this PC's PowerShell signature check - the next check retries, and the user is told",
 ])
 
 /** A path relative to src/, spelled the same way on every platform. */
@@ -145,7 +145,7 @@ test('NO SHIPPED CODE CAN NAME POWERSHELL — the watcher launches nothing at al
   assert.deepEqual(
     [...saidPowerShell].sort(),
     [...SAYS_POWERSHELL].sort(),
-    'every exempt sentence is still shipped verbatim — reword one and re-argue it here'
+    'every exempt sentence is still shipped verbatim — reword one and re-argue it here',
   )
 })
 

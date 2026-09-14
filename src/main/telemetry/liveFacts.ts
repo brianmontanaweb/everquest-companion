@@ -28,7 +28,7 @@ import {
   WORKING_SET_MB_EDGES,
   type LiveStallStats,
   type SessionStateStats,
-  type TailReadStats
+  type TailReadStats,
 } from '../../shared/telemetryLive'
 import { percentile } from '../../shared/perf'
 import type { LiveStallFold } from '../../shared/perfLive'
@@ -37,7 +37,7 @@ import {
   type GcStallStats,
   type GcTally,
   type SeamStallStats,
-  type SeamTally
+  type SeamTally,
 } from '../../shared/perfSeams'
 import type { TailIoSample, TailIoSummary } from '../log/tailIoStats'
 
@@ -65,7 +65,7 @@ export function liveStallStats(fold: LiveStallFold & { coincident?: number }): L
     p95Bucket: bucketOf(fold.p95Ms, LIVE_STALL_MS_EDGES),
     maxBucket: bucketOf(fold.maxMs, LIVE_STALL_MS_EDGES),
     over100: count(fold.over100),
-    over500: count(fold.over500)
+    over500: count(fold.over500),
   }
   if (fold.coincident !== undefined) stats.coincident = count(fold.coincident)
   return stats
@@ -86,7 +86,7 @@ export function gcStallStats(tally: GcTally): GcStallStats {
     majorPauses: count(tally.majorPauses),
     maxBucket: bucketOf(tally.maxMs, LIVE_STALL_MS_EDGES),
     totalBucket: bucketOf(tally.totalMs, LIVE_STALL_MS_EDGES),
-    over100: count(tally.over100)
+    over100: count(tally.over100),
   }
 }
 
@@ -108,7 +108,7 @@ export function seamStallStats(tally: SeamTally): SeamStallStats {
     out[seam] = {
       calls: count(entry.calls),
       maxBucket: bucketOf(entry.maxMs, LIVE_STALL_MS_EDGES),
-      over100: count(entry.over100Calls)
+      over100: count(entry.over100Calls),
     }
   }
   return out
@@ -146,7 +146,7 @@ export function tailReadStats(facts: TailFacts): TailReadStats {
     over100: count(facts.summary.over100),
     over500: count(facts.summary.over500),
     deltaBytesBucket: bucketOf(maxDelta, NEW_BYTES_EDGES),
-    logSizeBucket: bucketOf(facts.logBytes, LOG_SIZE_BYTES_EDGES)
+    logSizeBucket: bucketOf(facts.logBytes, LOG_SIZE_BYTES_EDGES),
   }
 }
 
@@ -170,6 +170,6 @@ export function sessionStateStats(facts: StateFacts): SessionStateStats {
     presenceOn: facts.presenceOn,
     ringOn: facts.ringOn,
     freeMemBucket: bucketOf((facts.freeMemKb * KB) / GB, FREE_MEM_GB_EDGES),
-    workingSetBucket: bucketOf((facts.workingSetKb * KB) / MB, WORKING_SET_MB_EDGES)
+    workingSetBucket: bucketOf((facts.workingSetKb * KB) / MB, WORKING_SET_MB_EDGES),
   }
 }

@@ -22,12 +22,7 @@ import { Box, Button, Chip, FormControlLabel, Stack, Switch, Typography } from '
 import SpeedIcon from '@mui/icons-material/Speed'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import { DEV_TOOLS } from '../../devFlags'
-import {
-  formatMs,
-  type PerfHudPrefs,
-  type StartupPhase,
-  type StartupProfile
-} from '@shared/perf'
+import { formatMs, type PerfHudPrefs, type StartupPhase, type StartupProfile } from '@shared/perf'
 import type { ProcessPriorityPrefs } from '@shared/processPriority'
 import { formatDateTime } from '../../lib/formatDate'
 import { recordPref, usePrefsSeed } from './prefsHydration'
@@ -43,7 +38,7 @@ const PHASE_LABEL: Record<StartupPhase, string> = {
   windowCreated: 'Window created',
   tailAttached: 'Log session started',
   replayDone: 'Log history replayed',
-  rendererHydrated: 'Interface drawn'
+  rendererHydrated: 'Interface drawn',
 }
 
 /** The switch, SEEDED from the pane's hydration snapshot and written back on change. The reply is
@@ -134,7 +129,7 @@ function PhaseBar({ label, ms, share }: { label: string; ms: number; share: numb
             width: `${String(Math.max(share * 100, share > 0 ? 1 : 0))}%`,
             height: '100%',
             bgcolor: 'primary.main',
-            borderRadius: 1
+            borderRadius: 1,
           }}
         />
       </Box>
@@ -293,16 +288,16 @@ export function perfSection(): PrefSection {
         label: 'Game priority',
         keywords:
           'priority cpu processor yield game foreground below normal lag stutter freeze hitch fps performance smooth background scheduling',
-        content: <YieldCpuSetting />
+        content: <YieldCpuSetting />,
       },
       {
         id: 'perf-hud',
         label: 'Performance HUD',
         keywords:
           'performance perf cpu memory ram hud meter monitor lag stutter freeze slow jank fps startup boot launch profile speed diagnostics',
-        content: <PerfSetting />
-      }
-    ]
+        content: <PerfSetting />,
+      },
+    ],
   }
 }
 

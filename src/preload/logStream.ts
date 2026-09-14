@@ -37,5 +37,5 @@ export const logStreamBridge = {
     const listener = (_e: unknown, n: LogSwitchNudge): void => cb(n)
     ipcRenderer.on(IPC.onLogSwitchNudge, listener)
     return () => ipcRenderer.removeListener(IPC.onLogSwitchNudge, listener)
-  }
+  },
 }

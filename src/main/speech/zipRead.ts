@@ -68,7 +68,7 @@ export function readZipEntries(buf: Buffer): ZipEntry[] | null {
       method: buf.readUInt16LE(p + 10),
       compressedSize: buf.readUInt32LE(p + 20),
       uncompressedSize: buf.readUInt32LE(p + 24),
-      localHeaderOffset: buf.readUInt32LE(p + 42)
+      localHeaderOffset: buf.readUInt32LE(p + 42),
     })
     p += 46 + nameLen + extraLen + commentLen
   }

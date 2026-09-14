@@ -30,13 +30,13 @@ import type {
   TriageOpsState,
   TriagePatch,
   TriageRow,
-  TriageSlice
+  TriageSlice,
 } from '../../shared/triage'
 import {
   clusterReports,
   parseSince,
   renderDigest,
-  type TriageReport
+  type TriageReport,
 } from '../../../scripts/triageCluster.mjs'
 import {
   deleteSlice,
@@ -65,7 +65,7 @@ import {
   toTriageReport,
   unreachable,
   type Clients,
-  type ListFilter
+  type ListFilter,
 } from './store'
 import { toDetail, toOps, toRow } from './rows'
 import { buildAnalytics } from './analytics'
@@ -79,7 +79,7 @@ import {
   toFunnelRows,
   toInstallRows,
   toPerfRows,
-  toUsageRows
+  toUsageRows,
 } from './usageRows'
 import type { UsageCohort } from '../../shared/telemetryRollup'
 
@@ -113,7 +113,7 @@ function toFilter(q: TriageListQuery, now: number): ListFilter {
     sinceMs: parseSince(q.since, now),
     limit: q.limit,
     ...(q.status === undefined ? {} : { status: q.status }),
-    ...(q.type === undefined ? {} : { type: q.type })
+    ...(q.type === undefined ? {} : { type: q.type }),
   }
 }
 
@@ -158,7 +158,7 @@ async function readSlice(c: Clients, reportId: string): Promise<TriageSlice | nu
     path: re.path,
     rescrubDropped: re.dropped,
     rescrubCleaned: re.cleaned,
-    rescrubUnknown: re.fromLegacyCache
+    rescrubUnknown: re.fromLegacyCache,
   }
 }
 
@@ -190,7 +190,7 @@ async function readSlice(c: Clients, reportId: string): Promise<TriageSlice | nu
 async function readAnalytics(
   c: Clients,
   days: number,
-  includeOwner: boolean
+  includeOwner: boolean,
 ): Promise<TriageAnalytics> {
   const nowMs = Date.now()
   const since = addDays(dayOf(nowMs), -(days - 1))
@@ -219,7 +219,7 @@ async function readAnalytics(
       // a cluster that has not run the migration adding `perf_daily` degrades through the
       // identical `missingTable` arm and the tab names the missing table — rather than this one
       // read failing quietly and the cross-tab simply never showing a row.
-      readPerfDaily(c, since)
+      readPerfDaily(c, since),
     ])
     const usage = toUsageRows(rawUsage)
     const funnels = toFunnelRows(rawFunnels)
@@ -236,13 +236,13 @@ async function readAnalytics(
         issues: ofCohort(issues, cohort),
         perf: ofCohort(perf, cohort),
         windowDays: days,
-        nowMs
+        nowMs,
       })
     return {
       available: true,
       data: build('user'),
       owner: includeOwner ? build('owner') : null,
-      ownerPresent: anyOwner(usage) || anyOwner(funnels) || anyOwner(installs)
+      ownerPresent: anyOwner(usage) || anyOwner(funnels) || anyOwner(installs),
     }
   } catch (err) {
     const missing = missingTable(err) ?? missingColumn(err)
@@ -255,7 +255,7 @@ async function readAnalytics(
           `This cluster does not have '${missing}', which the usage-analytics readout selects. ` +
           'The tables and the user/owner `cohort` column both ship in infra/schema.sql - run ' +
           '`npx tsx scripts/triage-feedback.mts migrate --refresh` after the apply that ' +
-          'carries them.'
+          'carries them.',
       }
     }
     if (!unreachable(err)) throw err
@@ -266,7 +266,7 @@ async function readAnalytics(
         'The DSQL cluster stopped answering while the readout was reading it (the connection ' +
         'dropped). Nothing is wrong with the schema and nothing needs migrating - the next ' +
         'attempt opens a fresh connection. If it keeps happening, check that this shell still ' +
-        'holds valid credentials for the triage role.'
+        'holds valid credentials for the triage role.',
     }
   }
 }
@@ -278,7 +278,7 @@ async function readAnalytics(
  * instead of only ever being observed in production the way the second one was.
  */
 export function awsBackend(
-  open: () => Clients = () => makeClients(loadStack(), { profile: TRIAGE_PROFILE })
+  open: () => Clients = () => makeClients(loadStack(), { profile: TRIAGE_PROFILE }),
 ): TriageBackend {
   let held: Clients | null = null
   const clients = (): Clients => {
@@ -336,7 +336,7 @@ export function awsBackend(
       const markdown = renderDigest(reports, clusters, {
         sinceMs: filter.sinceMs,
         nowMs: Date.now(),
-        channel: q.channel
+        channel: q.channel,
       })
       return { markdown, clusters, reportCount: reports.length }
     },
@@ -348,6 +348,6 @@ export function awsBackend(
       const open = held
       held = null
       if (open) await open.close()
-    }
+    },
   }
 }

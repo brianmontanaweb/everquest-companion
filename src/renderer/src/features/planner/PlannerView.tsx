@@ -94,7 +94,13 @@ function ClassFilter({ classes }: { classes: BrowseClassesApi }): JSX.Element {
  * it thinks and the click is the user's. Applying does NOT un-pin the filter either — accepting one
  * answer is not handing it back to inference.
  */
-function DetectedChip({ offer, onApply }: { offer: ClassAbbr[]; onApply: () => void }): JSX.Element {
+function DetectedChip({
+  offer,
+  onApply,
+}: {
+  offer: ClassAbbr[]
+  onApply: () => void
+}): JSX.Element {
   return (
     // No popper (JOS-143). This chip renders IMMEDIATELY after ClassFilter on a nowrap row, so its
     // card opened into the same space the chip-select's option list uses — which is the hover box
@@ -147,7 +153,7 @@ export default function PlannerView({ onOpenLoot }: PlannerViewProps = {}): JSX.
 
   const wished = useMemo(
     () => new Set(wishlist.list.entries.map((e) => e.itemKey)),
-    [wishlist.list]
+    [wishlist.list],
   )
   // JOS-343 — ONE GESTURE, BOTH DIRECTIONS. The owner overruled the disabled-when-wished button on
   // 2026-08-13: a second click on a donor already on the list TAKES IT OFF. The removal door is
@@ -169,7 +175,10 @@ export default function PlannerView({ onOpenLoot }: PlannerViewProps = {}): JSX.
   const donorToggle = wishlist.ready ? toggleDonor : undefined
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }} data-testid="planner-view">
+    <Box
+      sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}
+      data-testid="planner-view"
+    >
       <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'nowrap', mb: 1.5 }}>
         <ClassFilter classes={classes} />
         {offer !== null && <DetectedChip offer={offer} onApply={() => classes.adopt(offer)} />}

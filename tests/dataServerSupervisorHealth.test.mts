@@ -23,7 +23,7 @@ import {
   ENGINE_LOCAL_SOCKET_STREAK,
   ENGINE_QUICK_EXIT_STREAK,
   ENGINE_RESUME_GRACE_MS,
-  engineRestartDelayMs
+  engineRestartDelayMs,
 } from '../src/main/dataServer/engineProtocol'
 import { harness, launched, settle, type Harness } from './dataServerSupervisorHarness.mts'
 
@@ -44,7 +44,7 @@ test('A TRANSIENT FAILURE IS CONFIRMED BEFORE IT KILLS — two asks, then the ve
   assert.deepEqual(
     h.reports[0].healthReasons,
     ['closed', 'closed'],
-    'the report says how the verdict was reached: both asks, as enums'
+    'the report says how the verdict was reached: both asks, as enums',
   )
 })
 
@@ -58,7 +58,11 @@ test('A CONFIRMATION THAT PASSES FORGIVES THE STRIKE — the false kill this exi
   await settle()
   h.clock.advance(ENGINE_HEALTH_TIMEOUT_MS)
   await settle()
-  assert.equal(h.reports.length, 0, 'a launch that answered the second ask is a launch that is serving')
+  assert.equal(
+    h.reports.length,
+    0,
+    'a launch that answered the second ask is a launch that is serving',
+  )
   assert.equal(h.supervisor.state, 'ready')
   assert.equal(h.children.length, 1, 'and nothing was respawned')
 })
@@ -88,7 +92,7 @@ test('THE WATCHDOG KEEPS ITS CADENCE AFTER A FORGIVEN STRIKE', async () => {
 
 for (const [behaviour, reason] of [
   ['mismatch', 'protocolMismatch'],
-  ['deny', 'refused']
+  ['deny', 'refused'],
 ] as const) {
   test(`\`${behaviour}\` IS FATAL ON THE FIRST ASK — a second one cannot change the answer`, async () => {
     const h = harness({ behaviour })
@@ -142,7 +146,11 @@ test('RESUME RE-PROBES AFTER THE GRACE, and not a millisecond before', async () 
   h.resume()
   h.clock.advance(ENGINE_RESUME_GRACE_MS - 1)
   await settle()
-  assert.equal(h.connects.length, 1, 'the machine is still coming back; a no from it is not a diagnosis')
+  assert.equal(
+    h.connects.length,
+    1,
+    'the machine is still coming back; a no from it is not a diagnosis',
+  )
   h.clock.advance(1)
   await settle()
   assert.equal(h.connects.length, 2)
@@ -163,9 +171,12 @@ test('THE REPORT SAYS HOW LONG AGO THE MACHINE WOKE', async () => {
   assert.equal(
     h.reports[0].resumedAgoMs,
     ENGINE_RESUME_GRACE_MS,
-    'the number that tells a fleet whether the remaining timeouts are sleep-adjacent'
+    'the number that tells a fleet whether the remaining timeouts are sleep-adjacent',
   )
-  assert.match(h.reports[0].message, new RegExp(`${String(ENGINE_RESUME_GRACE_MS)} ms after resume`))
+  assert.match(
+    h.reports[0].message,
+    new RegExp(`${String(ENGINE_RESUME_GRACE_MS)} ms after resume`),
+  )
 })
 
 test('A SESSION WITH NO SLEEP SAYS SO — null, never a zero that reads as “just woke”', async () => {
@@ -228,19 +239,27 @@ test('A LOCAL SOCKET FAILURE NEVER KILLS THE ENGINE — the launch-loop shape, a
   await localBeat(h)
   await localBeat(h)
   await localBeat(h)
-  assert.equal(h.children.length, 1, 'one engine, still running: a respawn cannot supply a local port')
+  assert.equal(
+    h.children.length,
+    1,
+    'one engine, still running: a respawn cannot supply a local port',
+  )
   assert.equal(h.children[0].kills, 0)
   assert.equal(h.children[0].stdin.ended, false, 'and it was never retired')
   assert.equal(
     h.reports.filter((r) => r.name === 'EngineUnhealthy' || r.name === 'EngineLaunchLoop').length,
     0,
-    'the engine is not the one that failed, so it is not the one reported'
+    'the engine is not the one that failed, so it is not the one reported',
   )
 })
 
 test('IT IS ASKED AGAIN ON A GRACE — an immediate second ask is the same instant, same pool', async () => {
   const h = await launchedWithNoSocket()
-  assert.equal(h.connects.length, 1, 'no confirmation: the two-strike rule is for reasons the engine gave')
+  assert.equal(
+    h.connects.length,
+    1,
+    'no confirmation: the two-strike rule is for reasons the engine gave',
+  )
   h.clock.advance(ENGINE_LOCAL_SOCKET_GRACE_MS - 1)
   await settle()
   assert.equal(h.connects.length, 1)
@@ -255,7 +274,11 @@ test('THE SAME ENGINE REACHES READY WHEN THE MACHINE RECOVERS — no respawn, no
   await localBeat(h)
   assert.equal(h.supervisor.state, 'ready')
   assert.equal(h.children.length, 1)
-  assert.equal(h.readies.filter((r) => r !== null).length, 1, 'one READY edge, from the launch that announced')
+  assert.equal(
+    h.readies.filter((r) => r !== null).length,
+    1,
+    'one READY edge, from the launch that announced',
+  )
   assert.equal(h.reports.length, 0)
 })
 
@@ -275,7 +298,11 @@ test('ONE ENTRY, THEN THE ORDINARY CADENCE — a drip is not a flood to report',
   for (let i = 1; i < ENGINE_LOCAL_SOCKET_STREAK; i += 1) await localBeat(h)
   const asked = h.connects.length
   await localBeat(h)
-  assert.equal(h.connects.length, asked, 'the short grace is spent; the interval owns the cadence now')
+  assert.equal(
+    h.connects.length,
+    asked,
+    'the short grace is spent; the interval owns the cadence now',
+  )
   h.clock.advance(ENGINE_HEALTH_INTERVAL_MS)
   await settle()
   assert.equal(h.connects.length, asked + 1)
@@ -308,10 +335,14 @@ async function threeLaunches(h: Harness): Promise<void> {
 test('THE REPORTED LOOP, BOTH WAYS — a peer refusal collapses a trail, a local socket does not', async () => {
   const peer = harness({ behaviour: { connectFails: 'ECONNREFUSED' } })
   await threeLaunches(peer)
-  assert.equal(peer.children.length, ENGINE_QUICK_EXIT_STREAK + 1, 'three failed launches and the next')
+  assert.equal(
+    peer.children.length,
+    ENGINE_QUICK_EXIT_STREAK + 1,
+    'three failed launches and the next',
+  )
   assert.ok(
     peer.reports.some((r) => r.name === 'EngineLaunchLoop'),
-    'a connect the ENGINE caused is still a launch loop, and is still collapsed'
+    'a connect the ENGINE caused is still a launch loop, and is still collapsed',
   )
   // The same three launches, the same instant, the same message — but the errno says the connect
   // never left this process, and the field report's `EADDRINUSE` is that errno.
@@ -327,7 +358,11 @@ test('A LOCAL SOCKET ON THE CONFIRMATION DROPS THE STRIKE — it confirmed nothi
   h.queueBehaviours('closed', { connectFails: 'EADDRINUSE' })
   h.clock.advance(ENGINE_HEALTH_INTERVAL_MS)
   await settle()
-  assert.equal(h.reports.length, 0, 'a socket that never opened is not a second opinion about a stall')
+  assert.equal(
+    h.reports.length,
+    0,
+    'a socket that never opened is not a second opinion about a stall',
+  )
   assert.equal(h.supervisor.state, 'ready')
   assert.equal(h.children.length, 1)
 })

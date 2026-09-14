@@ -111,7 +111,7 @@ import {
   currentLevel,
   levelEta,
   type EtaBlocked,
-  type LevelEta
+  type LevelEta,
 } from '../../../../shared/levelEta'
 // "What level am I" is its own derivation now (JOS-192): the tail of the dings is silent across a
 // loadout swap, so the card reads the STATED fact — ding or your own `/who`, whichever spoke last
@@ -123,7 +123,12 @@ import { NONE, activeIdleText, idleRuleCaption, offlineText } from '../leveling/
 import { fmtDelta, fmtDuration } from '../leveling/levelChartGeometry'
 import { formatKillRate, formatLevelRate } from '../../lib/formatRate'
 import { formatTime } from '../../lib/formatDate'
-import { levelingSpark, levelingTiles, type LevelingSpark, type LevelingTile } from './overviewLevelingTiles'
+import {
+  levelingSpark,
+  levelingTiles,
+  type LevelingSpark,
+  type LevelingTile,
+} from './overviewLevelingTiles'
 
 /** Window A's length: the last hour of LOG time. */
 export const HEADLINE_WINDOW_MS = 60 * 60_000
@@ -243,7 +248,12 @@ export function recentLevelSpans(snap: ProgressionSnap, max: number = HISTORY_MA
     const toLevel = snap.levelValue[i]
     if (toLevel <= fromLevel) break
     const offlineMs = offlineMsIn(snap, snap.levelTs[i - 1], snap.levelTs[i])
-    spans.push({ fromLevel, toLevel, ms: snap.levelTs[i] - snap.levelTs[i - 1] - offlineMs, offlineMs })
+    spans.push({
+      fromLevel,
+      toLevel,
+      ms: snap.levelTs[i] - snap.levelTs[i - 1] - offlineMs,
+      offlineMs,
+    })
   }
   return spans.reverse()
 }
@@ -261,7 +271,7 @@ export type PaceVerdict = 'ahead' | 'even' | 'behind'
 const VERDICT_TEXT: Record<PaceVerdict, string> = {
   ahead: 'ahead of your recent pace',
   even: 'about your recent pace',
-  behind: 'behind your recent pace'
+  behind: 'behind your recent pace',
 }
 
 /** Wall ms per level at a wall levels/hour rate, or null when there is no usable rate. */
@@ -275,7 +285,10 @@ function msPerLevel(levelsPerHourWall: number | null): number | null {
  * comparison is ONLINE wall against ONLINE wall — the recent levels include everything you did
  * while logged in, so the last hour has to as well, and neither side counts a logout.
  */
-export function paceVerdict(spans: readonly LevelSpan[], levelsPerHourWall: number | null): PaceVerdict | null {
+export function paceVerdict(
+  spans: readonly LevelSpan[],
+  levelsPerHourWall: number | null,
+): PaceVerdict | null {
   if (spans.length < 2) return null
   const now = msPerLevel(levelsPerHourWall)
   if (now == null) return null
@@ -315,7 +328,8 @@ function zoneCompareText(zones: readonly ZoneRangeRow[]): string | null {
   // `rangeStats` names the pre-first-zone remainder 'unknown'; it is a placeholder, not a camp.
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives ZoneRangeRow. Becomes a view descriptor when the source lands.
   const named = zones.filter(
-    (z): z is ZoneRangeRow & { levelsPerHourActive: number } => z.zone !== 'unknown' && z.levelsPerHourActive != null
+    (z): z is ZoneRangeRow & { levelsPerHourActive: number } =>
+      z.zone !== 'unknown' && z.levelsPerHourActive != null,
   )
   if (named.length < 2) return null
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives ZoneRangeRow & { levelsPerHourActive: number; }. Becomes a view descriptor when the source lands.
@@ -436,7 +450,7 @@ function emptyState(): OverviewLevelingState {
     // No window means no columns to draw: an empty spark, never twelve zero bars implying a
     // measured-quiet hour that was never measured.
     tiles: [],
-    spark: { buckets: [], peak: 0, stated: 0, unstated: 0 }
+    spark: { buckets: [], peak: 0, stated: 0, unstated: 0 },
   }
 }
 
@@ -447,7 +461,7 @@ function emptyState(): OverviewLevelingState {
  */
 function levelFields(
   stated: LevelStatement | null | undefined,
-  snap: ProgressionSnap
+  snap: ProgressionSnap,
 ): { level: number | null; levelTitle: string; levelCue: string } {
   const read = currentLevelRead(stated, snap)
   if (!read) return { level: null, levelTitle: '', levelCue: '' }
@@ -470,7 +484,7 @@ function zoneLineText(stats: RangeStats, zone: string): string {
  */
 export function overviewLeveling(
   snap: ProgressionSnap,
-  stated?: LevelStatement | null
+  stated?: LevelStatement | null,
 ): OverviewLevelingState {
   const { hour, zone } = levelingWindows(snap)
   if (!hour) return emptyState()
@@ -504,7 +518,7 @@ export function overviewLeveling(
     idleCaption,
     kills: a.kills,
     tiles: levelingTiles({ ...lv, hour: a, eta, rateText }),
-    spark: levelingSpark(snap, hour)
+    spark: levelingSpark(snap, hour),
   }
 }
 

@@ -49,7 +49,7 @@ export function inventoryMetaText(dump: DumpPreview, now: number = Date.now()): 
   const parts = [
     outputAgeLabel(dump.meta.updatedAt, now),
     `${count(dump.meta.lines)} rows`,
-    `${formatBytes(dump.meta.bytes)} compressed`
+    `${formatBytes(dump.meta.bytes)} compressed`,
   ]
   if (dump.fileName !== null) parts.splice(2, 0, dump.fileName)
   return parts.join(' · ')
@@ -83,7 +83,7 @@ function DumpPreviewBody({
   dump,
   loading,
   onRefresh,
-  copy
+  copy,
 }: {
   dump: DumpPreview | null
   loading: boolean
@@ -154,13 +154,13 @@ function DumpPreviewBody({
 const INVENTORY_COPY: DumpKindCopy = {
   stem: 'inventory',
   reading: 'Reading your inventory export…',
-  problem: inventoryProblem
+  problem: inventoryProblem,
 }
 
 const ACHIEVEMENTS_COPY: DumpKindCopy = {
   stem: 'achievements',
   reading: 'Reading your achievements export…',
-  problem: achievementsProblem
+  problem: achievementsProblem,
 }
 
 export default function InventoryPreview(props: InventoryPreviewProps): JSX.Element {

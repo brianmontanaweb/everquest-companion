@@ -35,7 +35,7 @@ import {
   buildPlannerDonors,
   buildPlannerIndex,
   buildSpellFacts,
-  searchPlannerItems
+  searchPlannerItems,
 } from '../src/main/planner/effectIndex'
 import { effectOneLiner } from '../src/shared/planner/effectText'
 import { EQUIP_SLOTS, SOCKET_TYPES } from '../src/shared/planner/types'
@@ -45,7 +45,7 @@ import {
   ITEMS_RESEARCH,
   isUnfarmable,
   knowledgeWithResearch,
-  type ItemResearchFile
+  type ItemResearchFile,
 } from '../src/main/itemsResearch'
 
 const file = itemsJson as unknown as ItemDbFile
@@ -65,7 +65,7 @@ test('the corpus yields a populated donor index (per-socket floors)', () => {
   for (const [socket, floor] of Object.entries(FLOORS)) {
     assert.ok(
       bySocket(socket) >= floor,
-      `only ${bySocket(socket)} ${socket} donors — expected >= ${floor}`
+      `only ${bySocket(socket)} ${socket} donors — expected >= ${floor}`,
     )
   }
   // D2: the wiki spells procs `Combat Effect:`, so `kind:'proc'` is 0 in the corpus and every
@@ -116,10 +116,17 @@ test('V6: most donor rows can say what their effect DOES, and a miss says nothin
   console.log('planner effect one-liners', {
     joined: index.stats.spellJoined,
     of: donors.length,
-    pct: ((100 * said.length) / donors.length).toFixed(1)
+    pct: ((100 * said.length) / donors.length).toFixed(1),
   })
-  assert.ok(said.length * 2 > donors.length, `only ${said.length} of ${donors.length} rows say anything`)
-  assert.equal(index.stats.spellJoined, said.length, 'the stat must count the rows the UI can describe')
+  assert.ok(
+    said.length * 2 > donors.length,
+    `only ${said.length} of ${donors.length} rows say anything`,
+  )
+  assert.equal(
+    index.stats.spellJoined,
+    said.length,
+    'the stat must count the rows the UI can describe',
+  )
 
   // A MISS IS SILENT. No placeholder, no partial guess: a row the spell DB never named carries
   // none of the three fields, so the renderer draws nothing rather than "unknown" (law 1).
@@ -134,7 +141,7 @@ test('V6: most donor rows can say what their effect DOES, and a miss says nothin
   // so folding "Improved Healing I" onto "Improved Healing III" would state the wrong duration.
   const facts = buildSpellFacts([
     { name: 'Improved Healing III', durationMs: null, illusion: false, spellType: 'Beneficial' },
-    { name: 'Improved Healing III', durationMs: null, illusion: false, spellType: 'Detrimental' }
+    { name: 'Improved Healing III', durationMs: null, illusion: false, spellType: 'Detrimental' },
   ])
   assert.equal(facts.get('improved healing i'), undefined, 'ranks must not fold together')
   assert.equal(facts.get('improved healing iii')?.spellType, 'Beneficial', 'first page wins')
@@ -155,14 +162,17 @@ test('R2 has real work to do: a large slotless minority can never legally donate
   // every one of those numbers.
   const slotless = donors.filter((d) => d.slots.length === 0)
   const per = Object.fromEntries(
-    SOCKET_TYPES.map((s) => [s, slotless.filter((d) => d.socket === s).length])
+    SOCKET_TYPES.map((s) => [s, slotless.filter((d) => d.socket === s).length]),
   )
   console.log('planner slotless donors', { total: slotless.length, ...per })
 
-  assert.ok(slotless.length >= 150, `only ${slotless.length} slotless donors — the filter would be pointless`)
+  assert.ok(
+    slotless.length >= 150,
+    `only ${slotless.length} slotless donors — the filter would be pointless`,
+  )
   assert.ok(
     slotless.length * 2 < donors.length,
-    `${slotless.length} of ${donors.length} rows are slotless — a default filter must never hide the majority`
+    `${slotless.length} of ${donors.length} rows are slotless — a default filter must never hide the majority`,
   )
   // The shape of the mass, as an IDENTITY rather than a count: the consumable sockets carry it.
   // Focus and worn effects only ever appear on things you wear, and if that ever stops being true
@@ -196,7 +206,10 @@ test('the anchor row: Improved Healing is a FOCUS donor extractable at +1', () =
     assert.equal(d.hasteLocked, false)
   }
   // R3's other half, on the same principle: haste effects are FLAGGED, never dropped.
-  assert.ok(donors.some((d) => d.hasteLocked), 'no haste-locked donors — R3 is not being applied')
+  assert.ok(
+    donors.some((d) => d.hasteLocked),
+    'no haste-locked donors — R3 is not being applied',
+  )
 })
 
 test('donors carry the item page’s OWN drop sources (`|dropsfrom`)', () => {
@@ -222,7 +235,7 @@ test('donors carry the item page’s OWN drop sources (`|dropsfrom`)', () => {
   // no zone, and that is kept rather than dropped.
   assert.ok(
     withWiki.some((d) => d.wikiSources?.some((s) => s.zone === undefined)),
-    'no zone-less wiki sources at all — the mob-only shape stopped parsing'
+    'no zone-less wiki sources at all — the mob-only shape stopped parsing',
   )
 })
 
@@ -236,13 +249,15 @@ test('the Coldain anchor: a Velious donor the mob catalog cannot place', () => {
   assert.deepEqual(
     sword.wikiSources?.map((s) => s.zone),
     ['Eastern Wastes'],
-    'the sword must still name its zone'
+    'the sword must still name its zone',
   )
   assert.equal(zoneEra('Eastern Wastes'), 'velious')
 
   // …and the general form: donors whose only stated zone is Velious content exist in numbers.
   const velious = donors.filter(
-    (d) => (d.wikiSources?.length ?? 0) > 0 && d.wikiSources?.every((s) => s.zone !== undefined && zoneEra(s.zone) === 'velious')
+    (d) =>
+      (d.wikiSources?.length ?? 0) > 0 &&
+      d.wikiSources?.every((s) => s.zone !== undefined && zoneEra(s.zone) === 'velious'),
   )
   assert.ok(velious.length >= 50, `only ${velious.length} donors are Velious-only by wiki source`)
 })
@@ -265,7 +280,11 @@ test('donors carry the page-top era banner (`eraTag`) — the last-resort witnes
   assert.ok(covered >= 95, `eraFromTag maps only ${covered.toFixed(1)}% of tagged donors`)
 
   for (const d of tagged) {
-    assert.doesNotMatch(d.eraTag ?? '', /[{}|]|\bEra\b/, `${d.name}: raw markup in eraTag "${d.eraTag ?? ''}"`)
+    assert.doesNotMatch(
+      d.eraTag ?? '',
+      /[{}|]|\bEra\b/,
+      `${d.name}: raw markup in eraTag "${d.eraTag ?? ''}"`,
+    )
     assert.equal(d.eraTag, (d.eraTag ?? '').trim(), `${d.name}: untrimmed eraTag`)
   }
 })
@@ -327,23 +346,42 @@ test('V9: summoned and GM-handed-out items are dropped from the DONOR index, and
   assert.ok(index.stats.excludedPages >= 30, `only ${index.stats.excludedPages} pages excluded`)
 
   const summonedDonors = donors.filter((d) => /^summoned:/i.test(d.name))
-  assert.deepEqual(summonedDonors.map((d) => d.name), [], 'a summoned item is offering an effect')
+  assert.deepEqual(
+    summonedDonors.map((d) => d.name),
+    [],
+    'a summoned item is offering an effect',
+  )
 
   // …and they are STILL items: a summoned item is a real thing to look up and a legal host to
   // search for. Excluding it from the donor list is a statement about donation, nothing else.
   const summonedItems = index.items.filter((i) => /^summoned:/i.test(i.name))
-  assert.ok(summonedItems.length >= 50, `only ${summonedItems.length} summoned rows in the item index`)
-  assert.ok(searchPlannerItems(index.items, 'summoned:').length > 0, 'summoned items stopped being searchable')
+  assert.ok(
+    summonedItems.length >= 50,
+    `only ${summonedItems.length} summoned rows in the item index`,
+  )
+  assert.ok(
+    searchPlannerItems(index.items, 'summoned:').length > 0,
+    'summoned items stopped being searchable',
+  )
 
   // The committed layer's own entries, whatever they are today: each must be excluded from donors,
   // present as an item, and carry its provenance (an entry with no source reads like scraped fact).
-  const flagged = Object.entries(ITEMS_RESEARCH).filter(([, r]) => r.summoned === true || isUnfarmable(r))
+  const flagged = Object.entries(ITEMS_RESEARCH).filter(
+    ([, r]) => r.summoned === true || isUnfarmable(r),
+  )
   assert.ok(flagged.length > 0, 'the curated layer seeds no exclusions at all')
   for (const [key, entry] of flagged) {
     assert.ok(entry.source.length > 0, `${key}: a curated entry with no source`)
     assert.match(entry.checkedAt, /^\d{4}-\d{2}-\d{2}/, `${key}: no checkedAt date`)
-    assert.equal(donors.find((d) => d.key === key), undefined, `${key} is still a donor`)
-    assert.ok(index.items.some((i) => i.key === key), `${key} fell out of the item index entirely`)
+    assert.equal(
+      donors.find((d) => d.key === key),
+      undefined,
+      `${key} is still a donor`,
+    )
+    assert.ok(
+      index.items.some((i) => i.key === key),
+      `${key} fell out of the item index entirely`,
+    )
   }
 })
 
@@ -355,25 +393,59 @@ test('the additive layer merges OVER the wiki record, and drives the exclusion f
     source: 'fixture',
     count: 4,
     items: {
-      ghoulbane: { page: 'Ghoulbane', stats: { effects: [{ kind: 'click', name: 'Nullify Undead', detail: 'Must Equip' }], slot: 'PRIMARY' } },
-      'summoned: waterstone': { page: 'Summoned: Waterstone', stats: { effects: [{ kind: 'click', name: 'Enduring Breath', detail: 'Any Slot' }], slot: 'PRIMARY' } },
-      'gm sword': { page: 'GM Sword', stats: { effects: [{ kind: 'worn', name: 'Regeneration', detail: 'Worn' }], slot: 'PRIMARY' } },
-      'gm wand': { page: 'GM Wand', stats: { effects: [{ kind: 'click', name: 'Gate', detail: 'Any Slot' }], slot: 'PRIMARY' } }
-    }
+      ghoulbane: {
+        page: 'Ghoulbane',
+        stats: {
+          effects: [{ kind: 'click', name: 'Nullify Undead', detail: 'Must Equip' }],
+          slot: 'PRIMARY',
+        },
+      },
+      'summoned: waterstone': {
+        page: 'Summoned: Waterstone',
+        stats: {
+          effects: [{ kind: 'click', name: 'Enduring Breath', detail: 'Any Slot' }],
+          slot: 'PRIMARY',
+        },
+      },
+      'gm sword': {
+        page: 'GM Sword',
+        stats: {
+          effects: [{ kind: 'worn', name: 'Regeneration', detail: 'Worn' }],
+          slot: 'PRIMARY',
+        },
+      },
+      'gm wand': {
+        page: 'GM Wand',
+        stats: { effects: [{ kind: 'click', name: 'Gate', detail: 'Any Slot' }], slot: 'PRIMARY' },
+      },
+    },
   } as unknown as ItemDbFile
   // Both GM provenances, because `excludedDonor` reads the layer's `isUnfarmable` verdict rather
   // than one named flag (JOS-64) — a fixture that only ever exercised `gmEvent` would go green
   // against a consumer that had forgotten the other half.
   const research: ItemResearchFile = {
     'gm sword': { gmEvent: true, source: 'fixture', checkedAt: '2026-08-05' },
-    'gm wand': { gmOnly: true, source: 'fixture', checkedAt: '2026-08-06' }
+    'gm wand': { gmOnly: true, source: 'fixture', checkedAt: '2026-08-06' },
   }
 
   const built = buildPlannerIndex(fixture, research)
-  assert.deepEqual(built.donors.map((d) => d.key), ['ghoulbane'], 'exactly the un-excluded item donates')
-  assert.equal(built.stats.excludedPages, 3, 'every exclusion must be COUNTED, never silently dropped')
+  assert.deepEqual(
+    built.donors.map((d) => d.key),
+    ['ghoulbane'],
+    'exactly the un-excluded item donates',
+  )
+  assert.equal(
+    built.stats.excludedPages,
+    3,
+    'every exclusion must be COUNTED, never silently dropped',
+  )
   // All four stay searchable — the item index is not the donor index.
-  assert.deepEqual(built.items.map((i) => i.key).sort(), ['ghoulbane', 'gm sword', 'gm wand', 'summoned: waterstone'])
+  assert.deepEqual(built.items.map((i) => i.key).sort(), [
+    'ghoulbane',
+    'gm sword',
+    'gm wand',
+    'summoned: waterstone',
+  ])
 
   // With no layer at all the name prefix still fires and the curated ones no longer do: the two
   // witnesses are independent.
@@ -400,7 +472,7 @@ test('host search: substring, prefix-first, shortest-first, capped', () => {
   assert.ok(cloaks.length > 1)
   assert.ok(
     cloaks[0].name.toLowerCase().startsWith('cloak of'),
-    `prefix hit expected first, got ${cloaks[0].name}`
+    `prefix hit expected first, got ${cloaks[0].name}`,
   )
   const prefixRun = cloaks.findIndex((h) => !h.name.toLowerCase().startsWith('cloak of'))
   assert.ok(prefixRun === -1 || prefixRun > 0, 'prefix hits must come before mid-name hits')
@@ -410,7 +482,7 @@ test('host search: substring, prefix-first, shortest-first, capped', () => {
   assert.deepEqual(searchPlannerItems(index.items, '   '), [])
   assert.deepEqual(
     searchPlannerItems(index.items, 'GHOULBANE')[0],
-    searchPlannerItems(index.items, 'ghoulbane')[0]
+    searchPlannerItems(index.items, 'ghoulbane')[0],
   )
 
   // The host picker searches EVERY item, not just effect-bearing ones — a plain sword is a

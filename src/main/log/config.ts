@@ -1,7 +1,12 @@
 import { existsSync, readdirSync, statSync } from 'fs'
 import { basename, join } from 'path'
 import type { CharacterRef } from '../../shared/types'
-import { clearEqDiscoveredRoot, getEqDiscoveredRoot, getEqInstallDir, setEqDiscoveredRoot } from '../store'
+import {
+  clearEqDiscoveredRoot,
+  getEqDiscoveredRoot,
+  getEqInstallDir,
+  setEqDiscoveredRoot,
+} from '../store'
 import {
   EQ_ROOT,
   countCharacterLogs,
@@ -19,7 +24,7 @@ import {
   type DiscoveryProbes,
   type LogsDirRead,
   type NormalizedEqDir,
-  type OverrideProbes
+  type OverrideProbes,
 } from './discovery'
 
 /**
@@ -46,7 +51,7 @@ export {
   type DiscoveryProbes,
   type LogsDirRead,
   type NormalizedEqDir,
-  type OverrideProbes
+  type OverrideProbes,
 }
 
 /**
@@ -88,10 +93,10 @@ function realProbes(): DiscoveryProbes {
     hasLogs: rootHasLogs,
     extraCandidates: () => [
       ...envCandidates(),
-      ...registryInstallCandidates(Date.now() + DISCOVERY_BUDGET_MS)
+      ...registryInstallCandidates(Date.now() + DISCOVERY_BUDGET_MS),
     ],
     fixedDrives,
-    budgetMs: DISCOVERY_BUDGET_MS
+    budgetMs: DISCOVERY_BUDGET_MS,
   }
 }
 
@@ -138,7 +143,7 @@ function discoverOnce(): string | null {
     hasLogs: rootHasLogs,
     sweep: () => discoverEqRoot(realProbes()),
     persist: setEqDiscoveredRoot,
-    dropPersisted: clearEqDiscoveredRoot
+    dropPersisted: clearEqDiscoveredRoot,
   })
   return discoveredRoot
 }
@@ -169,7 +174,7 @@ export function refreshEqDiscoveryCheaply(): void {
     hasLogs: rootHasLogs,
     extraCandidates: envCandidates,
     fixedDrives,
-    budgetMs: DISCOVERY_BUDGET_MS
+    budgetMs: DISCOVERY_BUDGET_MS,
   })
   // A positive find is persisted too (JOS-112), so the install this rescan finally caught is
   // skipped-to directly on the next launch rather than re-swept.
@@ -201,10 +206,9 @@ export interface ResolvedEqDir {
 }
 
 /** Fold one `readLogsDir` answer into the count + verdict every consumer reads. */
-function describeLogsDir(logsDir: string): Pick<
-  ResolvedEqDir,
-  'characterCount' | 'readable' | 'readError'
-> {
+function describeLogsDir(
+  logsDir: string,
+): Pick<ResolvedEqDir, 'characterCount' | 'readable' | 'readError'> {
   const read = readLogsDir(logsDir)
   if (read.ok) return { characterCount: read.count, readable: 'ok' }
   if (read.reason === 'missing') return { characterCount: 0, readable: 'missing' }

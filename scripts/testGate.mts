@@ -43,7 +43,7 @@ const POOLS: Record<string, { slots: number; staleMs: number }> = {
   // staleMs backs up the pid-liveness check (pid reuse can fake a live owner): a unit suite is
   // ~1 min, a FULL e2e sweep ~25 min — both stale bounds are several times their run's length.
   unit: { slots: Number(process.env.EQC_UNIT_SLOTS ?? 2), staleMs: 30 * 60_000 },
-  e2e: { slots: Number(process.env.EQC_E2E_SLOTS ?? 2), staleMs: 90 * 60_000 }
+  e2e: { slots: Number(process.env.EQC_E2E_SLOTS ?? 2), staleMs: 90 * 60_000 },
 }
 
 const [poolName, dashDash, ...cmd] = process.argv.slice(2)
@@ -60,7 +60,9 @@ if (!pool || dashDash !== '--' || cmd.length === 0) {
 // unbounded concurrency starved the desktop); a machine with fewer cores keeps its native count.
 const CONCURRENCY_TOKEN = '--test-concurrency=auto'
 const resolved = cmd.map((a) =>
-  a === CONCURRENCY_TOKEN ? `--test-concurrency=${String(Math.min(10, availableParallelism()))}` : a
+  a === CONCURRENCY_TOKEN
+    ? `--test-concurrency=${String(Math.min(10, availableParallelism()))}`
+    : a,
 )
 
 const dir = join(homedir(), '.eqc-test-gate', poolName)
@@ -98,9 +100,13 @@ function tryAcquire(): string | null {
   for (let i = 0; i < pool.slots; i++) {
     const slot = join(dir, `slot-${String(i)}.json`)
     try {
-      writeFileSync(slot, JSON.stringify({ pid: process.pid, started: Date.now(), label: cmd.join(' ') }), {
-        flag: 'wx'
-      })
+      writeFileSync(
+        slot,
+        JSON.stringify({ pid: process.pid, started: Date.now(), label: cmd.join(' ') }),
+        {
+          flag: 'wx',
+        },
+      )
       return slot
     } catch {
       // Held. Steal it only from the dead or the implausibly old; otherwise probe the next slot.
@@ -115,7 +121,9 @@ let slot = tryAcquire()
 while (slot === null) {
   await new Promise((r) => setTimeout(r, 2000))
   if ((Date.now() - started) % 16000 < 2000)
-    console.error(`[test-gate] waiting for a ${poolName} slot (${String(pool.slots)} busy, ${String(Math.round((Date.now() - started) / 1000))}s)`)
+    console.error(
+      `[test-gate] waiting for a ${poolName} slot (${String(pool.slots)} busy, ${String(Math.round((Date.now() - started) / 1000))}s)`,
+    )
   slot = tryAcquire()
 }
 

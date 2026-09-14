@@ -146,7 +146,7 @@ async function findReport(
   c: Clients,
   nonce: string,
   sinceMs: number,
-  deadline: number
+  deadline: number,
 ): Promise<Row | null> {
   for (;;) {
     const rows = await listReports(c, { channel: 'all', sinceMs, limit: 100 })
@@ -208,12 +208,12 @@ function checkSliceText(slicePath: string, nonce: string): void {
   check(
     'slice-carries-nonce',
     body.includes(nonce),
-    `(combat lines with '${nonce}' survived the scrub)`
+    `(combat lines with '${nonce}' survived the scrub)`,
   )
   check(
     'slice-scrubbed-chat',
     !body.includes(CHAT_MARKER),
-    `(no '${CHAT_MARKER}' anywhere in the uploaded slice)`
+    `(no '${CHAT_MARKER}' anywhere in the uploaded slice)`,
   )
 }
 
@@ -230,7 +230,7 @@ function checkSliceText(slicePath: string, nonce: string): void {
 async function cleanup(
   c: Clients,
   ids: { reportId: string; installId: string; logKey: string },
-  slicePath: string
+  slicePath: string,
 ): Promise<void> {
   await deleteSlice(c, ids.logKey)
   await stampRedacted(c, ids.reportId)
@@ -259,7 +259,11 @@ interface VerifyOpts {
 async function runVerify(c: Clients, opts: VerifyOpts): Promise<void> {
   note(`looking for a report whose description contains '${opts.nonce}'...`)
   const row = await findReport(c, opts.nonce, opts.sinceMs, opts.deadline)
-  check('report-row-found', row !== null, row === null ? '(nothing matched before the timeout)' : '')
+  check(
+    'report-row-found',
+    row !== null,
+    row === null ? '(nothing matched before the timeout)' : '',
+  )
   if (row === null) return
 
   const reportId = text(row.report_id)
@@ -338,32 +342,52 @@ async function findSessionMetric(c: Clients, day: string): Promise<string | null
 
 async function runVerifyTelemetry(
   c: Clients,
-  opts: { id: string; deadline: number; cleanupOnPass: boolean }
+  opts: { id: string; deadline: number; cleanupOnPass: boolean },
 ): Promise<TelemetryLegVerdict> {
   const accepting = telemetryAccepting(await getFeedbackConfig(c))
   if (!accepting) {
     note('telemetry_accepting is CLOSED: every batch the VM sent was answered 503 by design.')
-    note('That is the switch working, and flipping it is the owner\'s call, not this test\'s.')
+    note("That is the switch working, and flipping it is the owner's call, not this test's.")
     return telemetryLegVerdict({ accepting, installRow: false, sessionMetric: null })
   }
 
   const day = utcDay(Date.now())
   note(`looking for analytics_install '${opts.id}' and a session counter for ${day}...`)
   const row = await findInstallRow(c, opts.id, opts.deadline)
-  check('analytics-install-row', row !== null, row === null ? '(nothing landed before the timeout)' : '')
+  check(
+    'analytics-install-row',
+    row !== null,
+    row === null ? '(nothing landed before the timeout)' : '',
+  )
   if (row !== null) {
     note(
       `install row: first_seen=${text(row.first_seen_day)} last_seen=${text(row.last_seen_day)}` +
-        ` days=${String(row.days_seen)} version=${text(row.app_version)} channel=${text(row.channel)}`
+        ` days=${String(row.days_seen)} version=${text(row.app_version)} channel=${text(row.channel)}`,
     )
-    check('analytics-install-channel-prod', text(row.channel) === 'prod', `(channel='${text(row.channel)}')`)
-    check('analytics-install-version-semver', APP_VERSION_RE.test(text(row.app_version)), text(row.app_version))
+    check(
+      'analytics-install-channel-prod',
+      text(row.channel) === 'prod',
+      `(channel='${text(row.channel)}')`,
+    )
+    check(
+      'analytics-install-version-semver',
+      APP_VERSION_RE.test(text(row.app_version)),
+      text(row.app_version),
+    )
   }
 
   const metric = await findSessionMetric(c, day)
-  check('usage-daily-session-metric', metric !== null, metric === null ? `(no session counter for ${day})` : `(${metric})`)
+  check(
+    'usage-daily-session-metric',
+    metric !== null,
+    metric === null ? `(no session counter for ${day})` : `(${metric})`,
+  )
 
-  const verdict = telemetryLegVerdict({ accepting, installRow: row !== null, sessionMetric: metric })
+  const verdict = telemetryLegVerdict({
+    accepting,
+    installRow: row !== null,
+    sessionMetric: metric,
+  })
   if (verdict === 'pass' && opts.cleanupOnPass) await wipeAnalytics(c, opts.id)
   else if (verdict === 'pass') note('--no-cleanup: the analytics_install row was left in place.')
   else note('LEFT IN PLACE for inspection: the analytics_install row was NOT wiped.')
@@ -384,7 +408,7 @@ async function wipeAnalytics(c: Clients, id: string): Promise<void> {
 }
 
 async function cmdVerifyTelemetry(
-  args: Record<string, string | boolean | undefined>
+  args: Record<string, string | boolean | undefined>,
 ): Promise<TelemetryLegVerdict> {
   const id = text(args['analytics-id'])
   if (!isAnalyticsId(id)) {
@@ -451,7 +475,7 @@ async function main(): Promise<void> {
   } else {
     console.log(
       'usage: smoke-feedback.mts <gen-log|verify|verify-telemetry> [--nonce N] [--out P]' +
-        ' [--analytics-id UUID] [--profile eqc]'
+        ' [--analytics-id UUID] [--profile eqc]',
     )
     failed = true
   }

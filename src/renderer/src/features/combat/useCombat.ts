@@ -105,7 +105,7 @@ export function useCombat(): UseCombat {
         selectedId: selection === LIVE ? undefined : selection,
         showUnparsed,
         maxSegments,
-        timeline: wantTimeline
+        timeline: wantTimeline,
       })
       if (alive) setSnap(s)
     }
@@ -155,6 +155,6 @@ export function useCombat(): UseCombat {
     maxSegments,
     loadMore,
     wantTimeline,
-    setWantTimeline
+    setWantTimeline,
   }
 }

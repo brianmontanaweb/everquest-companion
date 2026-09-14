@@ -37,7 +37,7 @@ import {
   reportRun,
   settle,
   settleGone,
-  settleStable
+  settleStable,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -94,8 +94,16 @@ let accounted = 0
  * which is how "nobody asked" becomes information instead of a bet on IPC latency.
  */
 async function checkAsks(app: ElectronApplication, name: string, want: number): Promise<void> {
-  await settle(() => maximizeAsks(app), (n) => n - accounted >= want, { timeoutMs: 6_000, pollMs: 100 })
-  const now = await settleStable(() => maximizeAsks(app), { timeoutMs: 6_000, pollMs: 100, stable: 3 })
+  await settle(
+    () => maximizeAsks(app),
+    (n) => n - accounted >= want,
+    { timeoutMs: 6_000, pollMs: 100 },
+  )
+  const now = await settleStable(() => maximizeAsks(app), {
+    timeoutMs: 6_000,
+    pollMs: 100,
+    stable: 3,
+  })
   const delta = now - accounted
   accounted = now
   check(name, delta === want, `asked ${String(delta)}x, expected ${String(want)}`)
@@ -118,7 +126,7 @@ function insideBar(page: Page, sel: string): Promise<boolean> {
       const other = document.querySelector(otherSel)
       return bar != null && other != null && bar.contains(other)
     },
-    [BAR, sel] as const
+    [BAR, sel] as const,
   )
 }
 
@@ -136,7 +144,7 @@ async function stepOverlayMenu(app: ElectronApplication, page: Page): Promise<vo
   check(
     'the overlay menu is a PORTAL — its rows are not inside the title bar in the DOM',
     !(await insideBar(page, OVERLAY_ROW)),
-    'if this is ever false the rest of this spec is asserting nothing'
+    'if this is ever false the rest of this spec is asserting nothing',
   )
 
   // Two quick clicks on a row: the report's gesture. It toggles that overlay on and back off,
@@ -164,14 +172,14 @@ async function stepCharacterPicker(app: ElectronApplication, page: Page): Promis
   check(
     "the character picker's dropdown is a portal too",
     !(await insideBar(page, PICKER_SUBHEADER)),
-    ''
+    '',
   )
   // The subheader is a row that selects nothing, so this changes no character.
   await page.dblclick(PICKER_SUBHEADER, { timeout: 15_000 })
   await checkAsks(
     app,
     'double-clicking inside it never asks to maximize either — the fix is not menu-specific',
-    0
+    0,
   )
   await page.keyboard.press('Escape')
   await settleGone(page, PICKER_SUBHEADER, { timeoutMs: 8_000 })
@@ -194,7 +202,7 @@ async function stepControlsInBar(app: ElectronApplication, page: Page): Promise<
   await checkAsks(
     app,
     'double-clicking a control INSIDE the bar never asks either — data-no-drag still holds',
-    0
+    0,
   )
 }
 
@@ -211,7 +219,7 @@ async function stepDragSurfaceStillMaximizes(app: ElectronApplication, page: Pag
   await checkAsks(
     app,
     'double-clicking the drag surface DOES ask to maximize — the feature survived the fix',
-    1
+    1,
   )
 }
 
@@ -221,7 +229,7 @@ async function stepNeverMaximized(page: Page): Promise<void> {
   check(
     'the caption button still offers Maximize — main never told this window it was maximized',
     label === 1,
-    `${String(label)} maximize buttons`
+    `${String(label)} maximize buttons`,
   )
 }
 
@@ -254,9 +262,15 @@ async function main(): Promise<void> {
     await removeUserData(userData)
   }
 
-  check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+  check(
+    'no renderer console errors',
+    consoleErrors.length === 0,
+    consoleErrors.slice(0, 3).join(' | '),
+  )
   if (failures.length === 0) {
-    note('two different MUI portals double-clicked in a real window; neither reached the drag surface')
+    note(
+      'two different MUI portals double-clicked in a real window; neither reached the drag surface',
+    )
   }
   reportRun()
 }

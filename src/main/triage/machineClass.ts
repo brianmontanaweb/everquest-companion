@@ -19,7 +19,7 @@ import {
   CPU_COUNT_EDGES,
   DISPLAY_COUNT_EDGES,
   PRIMARY_SCALE_EDGES,
-  TOTAL_MEM_GB_EDGES
+  TOTAL_MEM_GB_EDGES,
 } from '../../shared/telemetry'
 import { USAGE_METRICS } from '../../shared/telemetryRollup'
 import type { TriageMixRow } from '../../shared/triage'
@@ -56,7 +56,7 @@ export function buildMachineClass(usage: readonly UsageRow[]): TriageMixRow[] {
     ...mix(USAGE_METRICS.setupSafeMode, 'safe mode'),
     ...ladder(USAGE_METRICS.setupDisplays, 'displays', DISPLAY_COUNT_EDGES, ''),
     ...ladder(USAGE_METRICS.setupScale, 'scale', PRIMARY_SCALE_EDGES, '%'),
-    ...mix(USAGE_METRICS.setupEqWindowMode, 'EQ')
+    ...mix(USAGE_METRICS.setupEqWindowMode, 'EQ'),
   ]
 }
 

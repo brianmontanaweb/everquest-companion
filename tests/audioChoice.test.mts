@@ -31,7 +31,7 @@ import {
   withPhrase,
   withSoundId,
   withSpeechMode,
-  writeBase
+  writeBase,
 } from '../src/renderer/src/features/alerts/audioChoice'
 
 function def(over: Partial<AlertDef> = {}): AlertDef {
@@ -41,7 +41,7 @@ function def(over: Partial<AlertDef> = {}): AlertDef {
     enabled: true,
     trigger: { type: 'event', kind: 'uncharm' },
     sound: { packId: 'alan-rickman', soundId: 'attention' },
-    ...over
+    ...over,
   }
 }
 
@@ -50,13 +50,13 @@ function pack(id: string, sounds: string[]): SoundPack {
     id,
     name: id,
     source: 'bundled',
-    sounds: Object.fromEntries(sounds.map((s) => [s, { label: s, file: `${s}.wav` }]))
+    sounds: Object.fromEntries(sounds.map((s) => [s, { label: s, file: `${s}.wav` }])),
   }
 }
 
 const PACKS: SoundPack[] = [
   pack('alan-rickman', ['attention', 'charm-break']),
-  pack('peon', ['ready', 'attention'])
+  pack('peon', ['ready', 'attention']),
 ]
 
 // ------------------------------------------------------------------ reading a def
@@ -67,7 +67,7 @@ test('a def with no audio fields flattens to the sound-only defaults', () => {
     packId: 'alan-rickman',
     soundId: 'attention',
     mode: 'alertName',
-    phrase: ''
+    phrase: '',
   })
 })
 
@@ -130,7 +130,7 @@ test('choosing a pack IS choosing sound-only, and re-seeds a sound that pack has
   const other = withOutput(
     audioChoiceOf(def({ sound: { packId: 'alan-rickman', soundId: 'charm-break' } })),
     'peon',
-    PACKS
+    PACKS,
   )
   assert.equal(other.soundId, 'ready', 'peon has no charm-break — take its first sound')
 })

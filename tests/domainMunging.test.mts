@@ -28,7 +28,7 @@ import {
   DOMAIN_MODULES,
   MUNGERS,
   NOT_DOMAIN_MODULES,
-  NOT_DOMAIN_TYPES
+  NOT_DOMAIN_TYPES,
 } from '../eslint.domainMunging.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -79,7 +79,7 @@ test('the domain roots exist too, and the two lists do not contradict each other
   for (const m of NOT_DOMAIN_MODULES) {
     assert.ok(
       DOMAIN_MODULES.some((root) => m.startsWith(root)),
-      `${m} is carved out of a domain root it does not belong to — one of the two lists is wrong`
+      `${m} is carved out of a domain root it does not belong to — one of the two lists is wrong`,
     )
   }
 })
@@ -92,7 +92,7 @@ test('the carved-out TYPE still lives in the module the carve-out assumes', () =
   for (const name of NOT_DOMAIN_TYPES) {
     assert.ok(
       respawn.includes(`interface ${name}`) || respawn.includes(`type ${name}`),
-      `${name} is carved out by name but is no longer declared in shared/respawn.ts`
+      `${name} is carved out by name but is no longer declared in shared/respawn.ts`,
     )
   }
 })
@@ -133,13 +133,13 @@ test('THE EXEMPTION COUNT ONLY EVER SHRINKS', () => {
     `ruling 4 has ${String(n)} exemptions and landed with ${String(EXEMPTIONS_WHEN_THE_LAW_LANDED)}. ` +
       'This number may only go DOWN. A new site that needs one is a surface that should have asked ' +
       'the engine for a view instead — and if it genuinely cannot yet, lower this constant in the ' +
-      'same change that raises the count, deliberately, with the argument in the commit message.'
+      'same change that raises the count, deliberately, with the argument in the commit message.',
   )
   // …and when it shrinks, the constant comes with it, or the ratchet stops meaning anything.
   assert.equal(
     n,
     EXEMPTIONS_WHEN_THE_LAW_LANDED,
     'exemptions were removed without lowering EXEMPTIONS_WHEN_THE_LAW_LANDED — do both, so the ' +
-      'next reader sees the real ceiling rather than a stale one'
+      'next reader sees the real ceiling rather than a stale one',
   )
 })

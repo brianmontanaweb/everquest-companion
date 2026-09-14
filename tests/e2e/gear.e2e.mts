@@ -102,7 +102,7 @@ import {
   pageOverflow,
   reportRun,
   settle,
-  settleCount
+  settleCount,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture, type FixtureLog } from './logFixture.mjs'
@@ -116,10 +116,16 @@ import {
   resetColumns,
   stepGearColumns,
   stepGearColumnsRelaunched,
-  type GearColumnFixture
+  type GearColumnFixture,
 } from './gearColumnSteps.mjs'
 // JOS-302's class, slot-union and weapon-type steps, likewise.
-import { clearPicks, pickIn, stepGearClassFilter, stepGearSlotPicks, stepGearWeaponTypes } from './gearFilterSteps.mjs'
+import {
+  clearPicks,
+  pickIn,
+  stepGearClassFilter,
+  stepGearSlotPicks,
+  stepGearWeaponTypes,
+} from './gearFilterSteps.mjs'
 // JOS-336's EFFECTIVE HP step: pick the derived column, sort it, and move the slider under it.
 import { stepGearEffectiveHp } from './gearEffectiveHpSteps.mjs'
 // JOS-335's wish gesture — a module for the same reason, and it spans two tabs (its header argues
@@ -202,7 +208,7 @@ const THELVORN_BASE: GearRow = {
   quest: false,
   playerCrafted: false,
   stats: { WIS: 15, DMG: 20, DELAY: 26, WEIGHT: 3 },
-  effects: []
+  effects: [],
 }
 
 /** "Tier 2   3 / 4" — the owner screenshot every phase-0 number in this repo is verified against. */
@@ -215,17 +221,25 @@ const CHECKPOINT: ItemUpgradeState = { full: 2, fraction: 3 }
  */
 const COLUMNS: GearColumnFixture = { row: THELVORN_BASE, state: CHECKPOINT }
 
-const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> => settle(fn, (ok) => ok, { timeoutMs: ms })
+const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> =>
+  settle(fn, (ok) => ok, { timeoutMs: ms })
 
 const textOf = (page: Page, sel: string): Promise<string> =>
   page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
 
 /** Box + scroll geometry — enough to prove a growing list is a BOUNDED scroller. */
-function boxOf(page: Page, sel: string): Promise<{ h: number; scrollH: number; clientH: number } | null> {
+function boxOf(
+  page: Page,
+  sel: string,
+): Promise<{ h: number; scrollH: number; clientH: number } | null> {
   return page.evaluate((s) => {
     const el = document.querySelector(s)
     if (!el) return null
-    return { h: Math.round(el.getBoundingClientRect().height), scrollH: el.scrollHeight, clientH: el.clientHeight }
+    return {
+      h: Math.round(el.getBoundingClientRect().height),
+      scrollH: el.scrollHeight,
+      clientH: el.clientHeight,
+    }
   }, sel)
 }
 
@@ -252,7 +266,7 @@ async function typeAndSettle(page: Page, sel: string, value: string): Promise<nu
       return stable
     },
     (ok) => ok,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   return last
 }
@@ -261,7 +275,7 @@ async function typeAndSettle(page: Page, sel: string, value: string): Promise<nu
 async function stepMount(page: Page): Promise<boolean> {
   const hasRow = await page.waitForSelector(NAV, { timeout: 60_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!check('the nav drawer has a Gear row', hasRow)) return false
   const label = (await textOf(page, NAV)).replace(/\s+/g, ' ').trim()
@@ -278,7 +292,8 @@ async function stepMount(page: Page): Promise<boolean> {
   if (!mounted) {
     const noLogs = (await textOf(page, 'main')).includes('No EverQuest logs found')
     check('clicking Gear mounts the table (or the no-logs empty state explains why not)', noLogs)
-    if (noLogs) note('no character logs on this machine — the app shows its fresh-machine empty state')
+    if (noLogs)
+      note('no character logs on this machine — the app shows its fresh-machine empty state')
     return false
   }
   check('clicking the Gear nav row mounts the table with no plan and no selection first', mounted)
@@ -288,27 +303,35 @@ async function stepMount(page: Page): Promise<boolean> {
 /** 2. THE TABLE IS THE COMMITTED CORPUS, IN A BOUNDED SCROLLER. */
 async function stepRows(page: Page): Promise<boolean> {
   const listed = (await settleCount(page, ROW, 1, { timeoutMs: 60_000 })) > 0
-  if (!check('the gear table renders rows from the committed item index', listed, await textOf(page, EMPTY))) {
+  if (
+    !check(
+      'the gear table renders rows from the committed item index',
+      listed,
+      await textOf(page, EMPTY),
+    )
+  ) {
     return false
   }
   const { shown, total } = await counts(page)
   check(
     'the table states how much of the index it is showing',
     total >= 6000 && shown > 0 && shown <= total,
-    `${String(shown)} of ${String(total)}`
+    `${String(shown)} of ${String(total)}`,
   )
   // WINDOWED: the mounted rows are a screenful, not the answer — the count readout is the answer.
   const mounted = await countOf(page, ROW)
   check(
     'the list is windowed — the DOM holds a screenful, never the whole result',
     mounted < shown || shown < 60,
-    `${String(mounted)} rows mounted for ${String(shown)} matches`
+    `${String(mounted)} rows mounted for ${String(shown)} matches`,
   )
   const box = await boxOf(page, LIST)
   check(
     'the gear list is its own scroller (a growing list never grows the page)',
     box !== null && box.h > 0 && box.scrollH >= box.clientH,
-    box ? `${String(box.h)}px tall · scrollHeight ${String(box.scrollH)} vs clientHeight ${String(box.clientH)}` : 'absent'
+    box
+      ? `${String(box.h)}px tall · scrollHeight ${String(box.scrollH)} vs clientHeight ${String(box.clientH)}`
+      : 'absent',
   )
   return true
 }
@@ -328,7 +351,7 @@ async function stepEra(page: Page): Promise<void> {
   check(
     'the Current era filter is ON by default and switching it off reveals more of the corpus',
     grew,
-    `${String(before)} in era → ${String(after)} in total`
+    `${String(before)} in era → ${String(after)} in total`,
   )
 }
 
@@ -343,33 +366,43 @@ async function stepEra(page: Page): Promise<void> {
 async function stepOwnedCells(page: Page, log: FixtureLog): Promise<void> {
   // The `/outputfile` freshness line, RE-USED rather than restated: this tab renders JOS-253/268's
   // own component, so the dump's two instants have exactly one author on this screen.
-  check('the Gear tab carries the /outputfile freshness line rather than its own age', (await countOf(page, DUMP_LINE)) === 1)
+  check(
+    'the Gear tab carries the /outputfile freshness line rather than its own age',
+    (await countOf(page, DUMP_LINE)) === 1,
+  )
 
   await typeAndSettle(page, SEARCH, 'thelvorn')
   const owned = await cellText(page, THELVORN_KEY, 'owned')
   check(
     'a row the staged dump names says WHERE it is and at what +N',
     owned === THELVORN_OWNED,
-    `reads "${owned}", wanted "${THELVORN_OWNED}"`
+    `reads "${owned}", wanted "${THELVORN_OWNED}"`,
   )
   // The same row has a `(Exaltation)` child in the dump. One copy, not two — rule 2 of the join.
-  check('…and the item`s own (Exaltation) row did not become a second copy', !owned.includes(' · '), owned)
+  check(
+    '…and the item`s own (Exaltation) row did not become a second copy',
+    !owned.includes(' · '),
+    owned,
+  )
 
   const hint = await page.getAttribute(OWNED_HEADER, 'title', { timeout: 15_000 })
   check(
     'the Owned header admits which key rings the fold does not count - "not counted" is not "not owned"',
     (hint ?? '').includes(UNCOUNTED_RING),
-    (hint ?? '').slice(-160)
+    (hint ?? '').slice(-160),
   )
 
   // THE SECOND WITNESS, written into the very log the app is tailing.
   log.append(`--You have looted a ${LOOTED_ITEM} from a decaying skeleton corpse.--`)
   await typeAndSettle(page, SEARCH, LOOTED_ITEM)
-  const looted = await until(async () => (await cellText(page, LOOTED_KEY, 'owned')) === 'Looted', 30_000)
+  const looted = await until(
+    async () => (await cellText(page, LOOTED_KEY, 'owned')) === 'Looted',
+    30_000,
+  )
   check(
     'an item the LOG saw looted and the dump does not name reads Looted, live',
     looted,
-    `reads "${await cellText(page, LOOTED_KEY, 'owned')}"`
+    `reads "${await cellText(page, LOOTED_KEY, 'owned')}"`,
   )
 }
 
@@ -386,23 +419,29 @@ async function stepOwnedFilter(page: Page): Promise<void> {
   check(
     'Owned or looted narrows the corpus to what this character has actually handled',
     narrowed && shown > 0,
-    `${String(all)} in era → ${String(shown)} owned or looted`
+    `${String(all)} in era → ${String(shown)} owned or looted`,
   )
 
   // THE INVARIANT: every surviving row has something to say. A blank Owned cell under this filter
   // would mean a row got through that the join knows nothing about.
   const blanks = await page.evaluate(
-    (sel) => [...document.querySelectorAll(sel)].filter((c) => (c as HTMLElement).innerText.trim() === '').length,
-    OWNED_CELL
+    (sel) =>
+      [...document.querySelectorAll(sel)].filter((c) => (c as HTMLElement).innerText.trim() === '')
+        .length,
+    OWNED_CELL,
   )
-  check('every row the filter keeps states where it is or that it was looted', blanks === 0, `${String(blanks)} blank`)
+  check(
+    'every row the filter keeps states where it is or that it was looted',
+    blanks === 0,
+    `${String(blanks)} blank`,
+  )
 
   // The looted-but-not-in-the-dump arm — the one the checkbox exists for, and the one an ownership
   // index alone cannot answer.
   await typeAndSettle(page, SEARCH, LOOTED_ITEM)
   check(
     'a looted item the dump never named survives the filter on the log`s word alone',
-    (await countOf(page, `${ROW}[data-item-key="${LOOTED_KEY}"]`)) === 1
+    (await countOf(page, `${ROW}[data-item-key="${LOOTED_KEY}"]`)) === 1,
   )
 
   // …and something neither witness has ever seen is gone, and comes back when the filter is off.
@@ -413,7 +452,7 @@ async function stepOwnedFilter(page: Page): Promise<void> {
   check(
     'an item neither the dump nor the log has seen is hidden by the filter and returns without it',
     hiddenWhenOn === 0 && backWhenOff,
-    `${String(hiddenWhenOn)} rows with the filter on`
+    `${String(hiddenWhenOn)} rows with the filter on`,
   )
   await typeAndSettle(page, SEARCH, '')
   check('…and turning it off restores the whole corpus', (await counts(page)).shown === all)
@@ -423,9 +462,17 @@ async function stepOwnedFilter(page: Page): Promise<void> {
 async function stepSearch(page: Page): Promise<boolean> {
   const total = (await counts(page)).shown
   const shown = await typeAndSettle(page, SEARCH, 'thelvorn')
-  check('typing narrows the table', shown > 0 && shown < total, `${String(shown)} of ${String(total)}`)
+  check(
+    'typing narrows the table',
+    shown > 0 && shown < total,
+    `${String(shown)} of ${String(total)}`,
+  )
   const found = await countOf(page, `${ROW}[data-item-key="${THELVORN_KEY}"]`)
-  check('…to the item that was typed, keyed by the corpus join key', found === 1, `${String(found)} matching rows`)
+  check(
+    '…to the item that was typed, keyed by the corpus join key',
+    found === 1,
+    `${String(found)} matching rows`,
+  )
   return found === 1
 }
 
@@ -453,14 +500,14 @@ async function stepFilters(page: Page): Promise<void> {
   check(
     'two filters COMBINE — slot AND weapon type, never one replacing the other',
     combined && afterBoth > 0,
-    `${String(afterSlot)} primaries → ${String(afterBoth)} that are also one-handers, of ${String(all)}`
+    `${String(afterSlot)} primaries → ${String(afterBoth)} that are also one-handers, of ${String(all)}`,
   )
   // …and the second one comes back off, leaving the PRIMARY narrowing the steps below expect.
   await clearPicks(page, WEAPON_PICKER)
   check(
     '…and dropping the second leaves the first exactly as it was',
     await until(async () => (await counts(page)).shown === afterSlot, 15_000),
-    `${String((await counts(page)).shown)} of ${String(afterSlot)}`
+    `${String((await counts(page)).shown)} of ${String(afterSlot)}`,
   )
 }
 
@@ -471,28 +518,33 @@ async function stepSort(page: Page): Promise<void> {
     const values = await page.evaluate(() =>
       [...document.querySelectorAll('[data-testid="gear-cell-RATIO"]')]
         .map((c) => (c as HTMLElement).innerText.trim())
-        .filter((t) => t !== '')
+        .filter((t) => t !== ''),
     )
     return values.length > 1
   }, 15_000)
   if (!check('sorting by ratio leaves weapons on screen with ratios to compare', ratios)) return
 
   const values = await page.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="gear-cell-RATIO"]')].map((c) => (c as HTMLElement).innerText.trim())
+    [...document.querySelectorAll('[data-testid="gear-cell-RATIO"]')].map((c) =>
+      (c as HTMLElement).innerText.trim(),
+    ),
   )
   const numbers = values.filter((t) => t !== '').map(Number)
   const descending = numbers.every((n, i) => i === 0 || numbers[i - 1] >= n)
   check(
     'a ratio sort ranks the visible rows highest first',
     descending,
-    numbers.slice(0, 5).map((n) => n.toFixed(2)).join(' ')
+    numbers
+      .slice(0, 5)
+      .map((n) => n.toFixed(2))
+      .join(' '),
   )
   // …and NOTHING that lacks a ratio is ranked among them: an absent value sorts last, never as 0.
   const firstBlank = values.indexOf('')
   check(
     'a row with no ratio never outranks one that has a ratio',
     firstBlank === -1 || values.slice(firstBlank).every((t) => t === ''),
-    `first blank at ${String(firstBlank)} of ${String(values.length)}`
+    `first blank at ${String(firstBlank)} of ${String(values.length)}`,
   )
 }
 
@@ -513,7 +565,7 @@ async function screenAt(page: Page): Promise<{ dmg: string; wis: string; ratio: 
   return {
     dmg: await cellText(page, THELVORN_KEY, 'DMG'),
     wis: await cellText(page, THELVORN_KEY, 'WIS'),
-    ratio: await cellText(page, THELVORN_KEY, 'RATIO')
+    ratio: await cellText(page, THELVORN_KEY, 'RATIO'),
   }
 }
 
@@ -524,7 +576,10 @@ async function screenAt(page: Page): Promise<{ dmg: string; wis: string; ratio: 
  */
 async function setCheckpoint(page: Page): Promise<void> {
   await driveSlider(page, TIER_SLIDER, ['Home', 'ArrowRight', 'ArrowRight'])
-  const fractionAppeared = await until(async () => (await countOf(page, FRACTION_SLIDER)) > 0, 10_000)
+  const fractionAppeared = await until(
+    async () => (await countOf(page, FRACTION_SLIDER)) > 0,
+    10_000,
+  )
   check('a tier with exp to bank offers the fraction slider beside it', fractionAppeared)
   if (fractionAppeared) await driveSlider(page, FRACTION_SLIDER, ['End'])
 
@@ -555,14 +610,17 @@ async function stepUpgrade(page: Page): Promise<void> {
   await pickColumns(page, ['DMG', 'WIS'])
   await typeAndSettle(page, SEARCH, 'thelvorn')
   const onScreen = (await countOf(page, `${ROW}[data-item-key="${THELVORN_KEY}"]`)) === 1
-  if (!check('the upgrade step has its row, with the three columns it asked the picker for', onScreen)) return
+  if (
+    !check('the upgrade step has its row, with the three columns it asked the picker for', onScreen)
+  )
+    return
 
   const base = expectedAt({ full: 0, fraction: 0 })
   const atBase = await screenAt(page)
   check(
     'at base the table states the corpus’s own numbers',
     atBase.dmg === base.dmg && atBase.wis === base.wis,
-    `screen DMG ${atBase.dmg} WIS ${atBase.wis} ratio ${atBase.ratio}`
+    `screen DMG ${atBase.dmg} WIS ${atBase.wis} ratio ${atBase.ratio}`,
   )
 
   await setCheckpoint(page)
@@ -573,13 +631,13 @@ async function stepUpgrade(page: Page): Promise<void> {
   check(
     'moving the global selector restates every displayed number at that plus — scaleGearRow’s answer, exactly',
     got.dmg === want.dmg && got.wis === want.wis && got.ratio === want.ratio,
-    `screen ${got.dmg}/${got.wis}/${got.ratio} · scaleGearRow ${want.dmg}/${want.wis}/${want.ratio}`
+    `screen ${got.dmg}/${got.wis}/${got.ratio} · scaleGearRow ${want.dmg}/${want.wis}/${want.ratio}`,
   )
   // DELAY never scales, which is the whole reason the ratio moved — 0.77 at base, 0.96 here.
   check(
     '…and the ratio moved because the damage did and the delay did not',
     want.ratio !== base.ratio,
-    `${base.ratio} → ${want.ratio}`
+    `${base.ratio} → ${want.ratio}`,
   )
   // HAND THE COLUMNS BACK TO THE DERIVATION. `stepGearColumns` below starts from whatever choice it
   // is handed and TOGGLES, so a list left here would silently un-pick two of the keys it picks.
@@ -645,7 +703,7 @@ async function steps(app: ElectronApplication, page: Page, log: FixtureLog): Pro
   check(
     'Gear never scrolls the page (its table clips inside its own box)',
     over.doc === 0 && over.content === 0,
-    `document +${String(over.doc)}px · content area +${String(over.content)}px`
+    `document +${String(over.doc)}px · content area +${String(over.content)}px`,
   )
 }
 
@@ -706,7 +764,11 @@ async function main(): Promise<void> {
     await log.dispose()
   }
 
-  check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+  check(
+    'no renderer console errors',
+    consoleErrors.length === 0,
+    consoleErrors.slice(0, 3).join(' | '),
+  )
   reportRun()
 }
 

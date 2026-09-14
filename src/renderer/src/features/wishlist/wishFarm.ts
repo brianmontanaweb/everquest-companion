@@ -63,7 +63,7 @@ function unknownItem(entry: WishEntry): ItemFacts {
     classes: [],
     slots: [],
     quest: false,
-    playerCrafted: false
+    playerCrafted: false,
   }
 }
 
@@ -74,7 +74,7 @@ function factsOfDonor(row: DonorRow): ItemFacts {
     classes: row.classes,
     slots: row.slots,
     quest: row.quest,
-    playerCrafted: row.playerCrafted
+    playerCrafted: row.playerCrafted,
   }
   if (row.wikiSources !== undefined) facts.wikiSources = row.wikiSources
   return facts
@@ -87,7 +87,7 @@ function factsOfGear(row: GearRow): ItemFacts {
     classes: row.classes,
     slots: row.slots,
     quest: row.quest,
-    playerCrafted: row.playerCrafted
+    playerCrafted: row.playerCrafted,
   }
   if (row.wikiSources !== undefined) facts.wikiSources = row.wikiSources
   return facts
@@ -119,7 +119,8 @@ function factsFor(entry: WishEntry, index: WishIndices): ItemFacts {
  */
 function tierFor(entry: WishEntry, index: WishIndices): ExtractTier | undefined {
   if (entry.kind !== 'donor') return undefined
-  const donor = entry.effect === undefined ? null : donorFor(index.donors, entry.itemKey, entry.effect)
+  const donor =
+    entry.effect === undefined ? null : donorFor(index.donors, entry.itemKey, entry.effect)
   if (donor !== null) return donor.tierRequired
   return entry.socket === undefined ? undefined : extractionTier(entry.socket)
 }
@@ -152,7 +153,7 @@ export function indexGear(rows: readonly GearRow[]): Map<string, GearRow> {
 export function collectWishNeeds(
   entries: readonly WishEntry[],
   index: WishIndices,
-  progressOf: (itemKey: string, tierRequired: ExtractTier) => DonorProgress
+  progressOf: (itemKey: string, tierRequired: ExtractTier) => DonorProgress,
 ): FarmNeed[] {
   return entries.map((entry) => {
     const facts = factsFor(entry, index)
@@ -169,7 +170,7 @@ export function collectWishNeeds(
       playerCrafted: facts.playerCrafted,
       sources,
       zones: [...new Set(sources.flatMap((s) => s.zones))],
-      progress: progressOf(entry.itemKey, tierRequired ?? 1)
+      progress: progressOf(entry.itemKey, tierRequired ?? 1),
     }
     if (entry.effect !== undefined) need.effect = entry.effect
     if (entry.socket !== undefined) need.socket = entry.socket

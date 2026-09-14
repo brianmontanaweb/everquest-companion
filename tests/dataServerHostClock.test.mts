@@ -26,17 +26,23 @@ function at(offsetMin: number): Date {
 test('the hint carries the host name and minutes EAST of UTC', () => {
   // `Date.getTimezoneOffset()` counts the other way — 420 for Los Angeles — and the wire counts
   // east, so the sign flip happens here and nowhere else.
-  assert.deepEqual(hostClockHint(at(-420), () => 'America/Los_Angeles'), {
-    tz: 'America/Los_Angeles',
-    utcOffsetMin: -420
-  })
+  assert.deepEqual(
+    hostClockHint(at(-420), () => 'America/Los_Angeles'),
+    {
+      tz: 'America/Los_Angeles',
+      utcOffsetMin: -420,
+    },
+  )
 })
 
 test('an east-of-UTC host states a positive offset', () => {
-  assert.deepEqual(hostClockHint(at(120), () => 'Europe/Berlin'), {
-    tz: 'Europe/Berlin',
-    utcOffsetMin: 120
-  })
+  assert.deepEqual(
+    hostClockHint(at(120), () => 'Europe/Berlin'),
+    {
+      tz: 'Europe/Berlin',
+      utcOffsetMin: 120,
+    },
+  )
 })
 
 test('a host that cannot name a zone still states its offset', () => {
@@ -46,10 +52,19 @@ test('a host that cannot name a zone still states its offset', () => {
     throw new Error('no ICU data')
   }
   assert.deepEqual(hostClockHint(at(-420), throwing), { utcOffsetMin: -420 })
-  assert.deepEqual(hostClockHint(at(-420), () => undefined), { utcOffsetMin: -420 })
-  assert.deepEqual(hostClockHint(at(-420), () => ''), { utcOffsetMin: -420 })
+  assert.deepEqual(
+    hostClockHint(at(-420), () => undefined),
+    { utcOffsetMin: -420 },
+  )
+  assert.deepEqual(
+    hostClockHint(at(-420), () => ''),
+    { utcOffsetMin: -420 },
+  )
 })
 
 test('UTC is a real answer and not an absent one', () => {
-  assert.deepEqual(hostClockHint(at(0), () => 'UTC'), { tz: 'UTC', utcOffsetMin: 0 })
+  assert.deepEqual(
+    hostClockHint(at(0), () => 'UTC'),
+    { tz: 'UTC', utcOffsetMin: 0 },
+  )
 })

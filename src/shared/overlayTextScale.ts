@@ -88,7 +88,7 @@ export interface OverlayTextSizePrefs {
 export const DEFAULT_OVERLAY_TEXT_SIZE: OverlayTextSizePrefs = {
   shared: TEXT_SCALE_DEFAULT,
   independent: false,
-  seeded: false
+  seeded: false,
 }
 
 /**
@@ -100,7 +100,7 @@ export function normalizeOverlayTextSize(v: unknown): OverlayTextSizePrefs {
   return {
     shared: clampTextScale(raw.shared),
     independent: raw.independent === true,
-    seeded: raw.seeded === true
+    seeded: raw.seeded === true,
   }
 }
 
@@ -112,7 +112,7 @@ export function normalizeOverlayTextSize(v: unknown): OverlayTextSizePrefs {
  */
 export function mergeOverlayTextSize(
   patch: unknown,
-  base: OverlayTextSizePrefs = DEFAULT_OVERLAY_TEXT_SIZE
+  base: OverlayTextSizePrefs = DEFAULT_OVERLAY_TEXT_SIZE,
 ): OverlayTextSizePrefs {
   const p = (patch ?? {}) as Partial<OverlayTextSizePrefs>
   return {
@@ -121,7 +121,7 @@ export function mergeOverlayTextSize(
     // ONE-WAY: bookkeeping a renderer must not be able to un-set. Nothing on the bridge sends it,
     // and a hand-edited `false` over a stored `true` would re-seed twelve windows from a value
     // their owner had already moved away from.
-    seeded: base.seeded === true || p.seeded === true
+    seeded: base.seeded === true || p.seeded === true,
   }
 }
 
@@ -134,7 +134,7 @@ export function mergeOverlayTextSize(
  */
 export function effectiveOverlayTextScale(
   prefs: OverlayTextSizePrefs,
-  kindTextScale: unknown
+  kindTextScale: unknown,
 ): number {
   return prefs.independent ? clampTextScale(kindTextScale) : clampTextScale(prefs.shared)
 }

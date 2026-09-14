@@ -19,7 +19,7 @@ import {
   TOAST_EXIT_MS,
   TOAST_GRACE_MS,
   toastReduce,
-  type ToastCardState
+  type ToastCardState,
 } from '../src/renderer/src/overlay/toastQueue'
 import type { ToastPayload } from '../src/shared/toast'
 
@@ -27,8 +27,10 @@ function payload(id: string, durationMs = 6000): ToastPayload {
   return { id, kind: 'bossKill', title: `${id} defeated`, durationMs }
 }
 
-const show = (s: ToastCardState[], p: ToastPayload): ToastCardState[] => toastReduce(s, { type: 'show', payload: p })
-const tick = (s: ToastCardState[], dtMs: number): ToastCardState[] => toastReduce(s, { type: 'tick', dtMs })
+const show = (s: ToastCardState[], p: ToastPayload): ToastCardState[] =>
+  toastReduce(s, { type: 'show', payload: p })
+const tick = (s: ToastCardState[], dtMs: number): ToastCardState[] =>
+  toastReduce(s, { type: 'tick', dtMs })
 const hover = (s: ToastCardState[], id: string, over: boolean): ToastCardState[] =>
   toastReduce(s, { type: 'hover', id, over })
 

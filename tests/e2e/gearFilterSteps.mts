@@ -39,13 +39,14 @@ const MISMATCH = '[data-testid="planner-mismatch-chip"]'
 /** Thelvorn, Blade of Light — PAL-only, PRIMARY, `Skill: 1H Slashing`. The whole fixture, in one row. */
 const THELVORN_KEY = 'thelvorn, blade of light'
 
-const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> => settle(fn, (ok) => ok, { timeoutMs: ms })
+const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> =>
+  settle(fn, (ok) => ok, { timeoutMs: ms })
 
 /** `"212 of 6,814 items"` → 212. The readout is the only place the filtered total is stated. */
 async function shownCount(page: Page): Promise<number> {
   const text = await page.evaluate(
     (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
-    COUNT
+    COUNT,
   )
   return Number((/[\d,]+/.exec(text)?.[0] ?? '0').replace(/,/g, ''))
 }
@@ -61,7 +62,7 @@ async function settled(page: Page): Promise<number> {
       return stable
     },
     (ok) => ok,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   return last
 }
@@ -74,8 +75,9 @@ async function search(page: Page, value: string): Promise<number> {
 /** The chips a picker is showing, in order — what the user SEES their filter to be. */
 function chipsIn(page: Page, picker: string): Promise<string[]> {
   return page.evaluate(
-    (sel) => [...document.querySelectorAll(`${sel} .MuiChip-label`)].map((n) => n.textContent ?? ''),
-    picker
+    (sel) =>
+      [...document.querySelectorAll(`${sel} .MuiChip-label`)].map((n) => n.textContent ?? ''),
+    picker,
   )
 }
 
@@ -117,7 +119,9 @@ async function thelvornShown(page: Page): Promise<boolean> {
  */
 export async function stepGearClassFilter(page: Page): Promise<void> {
   const detected = await chipsIn(page, CLASSES)
-  note(`the class picker mounted holding ${detected.length === 0 ? 'nothing' : detected.join(' ')} — whatever the log inferred`)
+  note(
+    `the class picker mounted holding ${detected.length === 0 ? 'nothing' : detected.join(' ')} — whatever the log inferred`,
+  )
 
   await search(page, '')
   await clearPicks(page, CLASSES)
@@ -136,18 +140,21 @@ export async function stepGearClassFilter(page: Page): Promise<void> {
   check(
     'picking a class REMOVES the gear that class cannot use - it is not chipped and left on screen',
     narrowed && shown > 0,
-    `${String(all)} items → ${String(shown)} a rogue can use`
+    `${String(all)} items → ${String(shown)} a rogue can use`,
   )
 
   await search(page, 'thelvorn')
   check(
     'a PAL-only weapon is GONE from a rogue`s table (the owner`s report, as an assertion)',
     !(await thelvornShown(page)),
-    'the row is still listed while the class filter says Rogue'
+    'the row is still listed while the class filter says Rogue',
   )
   // THE DELETED CHIP. `planner-mismatch-chip` still exists and two other surfaces still draw it;
   // what must never happen again is a gear SEARCH row wearing one.
-  check('…and no search row wears an off-filter chip any more', (await countOf(page, MISMATCH)) === 0)
+  check(
+    '…and no search row wears an off-filter chip any more',
+    (await countOf(page, MISMATCH)) === 0,
+  )
 
   // The class it CAN be, on the same search — so the narrowing is a filter and not a lost row.
   await clearPicks(page, CLASSES)
@@ -159,14 +166,21 @@ export async function stepGearClassFilter(page: Page): Promise<void> {
   check(
     'the picked class wears its whole name, never the /who code',
     (await chipsIn(page, CLASSES)).join() === 'Paladin',
-    (await chipsIn(page, CLASSES)).join()
+    (await chipsIn(page, CLASSES)).join(),
   )
 
   await clearPicks(page, CLASSES)
   await search(page, '')
   const restored = await until(async () => (await shownCount(page)) === all, 15_000)
-  check('clearing the picker restores every row it was holding back', restored, `${String(await shownCount(page))} of ${String(all)}`)
-  if (!restored) note('the steps below were written against an unfiltered corpus and may now be reading a narrowed one')
+  check(
+    'clearing the picker restores every row it was holding back',
+    restored,
+    `${String(await shownCount(page))} of ${String(all)}`,
+  )
+  if (!restored)
+    note(
+      'the steps below were written against an unfiltered corpus and may now be reading a narrowed one',
+    )
 }
 
 /**
@@ -185,7 +199,11 @@ export async function stepGearSlotPicks(page: Page, all: number): Promise<number
   await pickIn(page, SLOT, 'PRIMARY')
   const narrowed = await until(async () => (await shownCount(page)) < all, 15_000)
   const primaries = await shownCount(page)
-  check('the slot filter narrows the table to one equipment slot', narrowed, `${String(primaries)} primaries`)
+  check(
+    'the slot filter narrows the table to one equipment slot',
+    narrowed,
+    `${String(primaries)} primaries`,
+  )
 
   await pickIn(page, SLOT, 'SECONDARY')
   const union = await until(async () => (await shownCount(page)) > primaries, 15_000)
@@ -193,12 +211,16 @@ export async function stepGearSlotPicks(page: Page, all: number): Promise<number
   check(
     'a SECOND slot is a UNION - the table shows rows matching ANY chosen slot, never both at once',
     union && both < all,
-    `${String(primaries)} primaries → ${String(both)} primaries or secondaries, of ${String(all)}`
+    `${String(primaries)} primaries → ${String(both)} primaries or secondaries, of ${String(all)}`,
   )
 
   await clearPicks(page, SLOT)
   const emptied = await until(async () => (await shownCount(page)) === all, 15_000)
-  check('…and clearing the picker returns the full corpus', emptied, `${String(await shownCount(page))} of ${String(all)}`)
+  check(
+    '…and clearing the picker returns the full corpus',
+    emptied,
+    `${String(await shownCount(page))} of ${String(all)}`,
+  )
 
   await pickIn(page, SLOT, 'PRIMARY')
   await until(async () => (await shownCount(page)) === primaries, 15_000)
@@ -222,7 +244,7 @@ export async function stepGearWeaponTypes(page: Page): Promise<void> {
   check(
     'picking a weapon type narrows the table to weapons of that skill',
     narrowed && oneHandSlash > 0,
-    `${String(all)} items → ${String(oneHandSlash)} 1H slashers`
+    `${String(all)} items → ${String(oneHandSlash)} 1H slashers`,
   )
   await search(page, 'thelvorn')
   check('…and the corpus`s own `Skill: 1H Slashing` row is one of them', await thelvornShown(page))
@@ -233,7 +255,11 @@ export async function stepGearWeaponTypes(page: Page): Promise<void> {
   await pickIn(page, WEAPON, 'Two-handed')
   await until(async () => (await shownCount(page)) < all, 15_000)
   const category = await shownCount(page)
-  check('a category pick narrows the table too', category > 0 && category < all, `${String(category)} two-handers`)
+  check(
+    'a category pick narrows the table too',
+    category > 0 && category < all,
+    `${String(category)} two-handers`,
+  )
 
   await search(page, 'thelvorn')
   check('…and a one-hander is not among them', !(await thelvornShown(page)))
@@ -245,7 +271,7 @@ export async function stepGearWeaponTypes(page: Page): Promise<void> {
   check(
     'A CATEGORY IS EXACTLY THE UNION OF ITS MEMBER TYPES - the same rows, picked two ways',
     members === category,
-    `Two-handed showed ${String(category)}, its three types show ${String(members)}`
+    `Two-handed showed ${String(category)}, its three types show ${String(members)}`,
   )
 
   // IN ADDITION TO THE SLOT, which is the ticket's own words for how this composes.
@@ -257,12 +283,16 @@ export async function stepGearWeaponTypes(page: Page): Promise<void> {
   check(
     'the weapon type ANDs with the slot rather than replacing it',
     withSlot && (await shownCount(page)) > 0,
-    `${String(oneHand)} one-handers → ${String(await shownCount(page))} that can go in the off hand`
+    `${String(oneHand)} one-handers → ${String(await shownCount(page))} that can go in the off hand`,
   )
 
   // Hand the tab back the way the steps below expect to find it.
   await clearPicks(page, SLOT)
   await clearPicks(page, WEAPON)
   const cleared = await until(async () => (await shownCount(page)) === all, 15_000)
-  check('clearing both pickers returns the whole corpus', cleared, `${String(await shownCount(page))} of ${String(all)}`)
+  check(
+    'clearing both pickers returns the whole corpus',
+    cleared,
+    `${String(await shownCount(page))} of ${String(all)}`,
+  )
 }

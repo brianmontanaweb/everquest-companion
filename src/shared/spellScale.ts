@@ -149,7 +149,7 @@ export function scaleSpellHeal(amount: number, rank: number | null | undefined):
  */
 export function effectiveSpellRank(
   observed: number | null | undefined,
-  simulated: number | null | undefined
+  simulated: number | null | undefined,
 ): number {
   return Math.max(normalizeSpellRank(observed), normalizeSpellRank(simulated))
 }

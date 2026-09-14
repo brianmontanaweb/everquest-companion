@@ -29,5 +29,5 @@ export const graphicsBridge = {
    * that would let them pretend otherwise.
    */
   setGraphicsPrefs: (patch: Partial<GraphicsPrefs>): Promise<GraphicsPrefs> =>
-    ipcRenderer.invoke(IPC.graphicsPrefsSet, patch)
+    ipcRenderer.invoke(IPC.graphicsPrefsSet, patch),
 }

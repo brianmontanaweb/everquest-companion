@@ -26,7 +26,7 @@ import {
   MAX_REPLAY_EVENTS,
   NEW_BYTES_EDGES,
   STUTTER_MS_EDGES,
-  type StartupReplayStats
+  type StartupReplayStats,
 } from './telemetry'
 
 /** The raw facts the producer holds, before any of them is a legal wire value. */
@@ -66,8 +66,11 @@ export function startupReplayStats(input: StartupReplayInput): StartupReplayStat
     dutyPct: wall > 0 ? Math.round((work / wall) * 100) : 0,
     maxBlockMs: clampWhole(input.maxBlockMs, MAX_DURATION_MS),
     blocksOver50: clampWhole(input.blocksOver50, MAX_COUNT),
-    logSizeBucket: bucketOf(clampWhole(input.logBytes, Number.MAX_SAFE_INTEGER), LOG_SIZE_BYTES_EDGES),
-    ...startupDiscriminators(input)
+    logSizeBucket: bucketOf(
+      clampWhole(input.logBytes, Number.MAX_SAFE_INTEGER),
+      LOG_SIZE_BYTES_EDGES,
+    ),
+    ...startupDiscriminators(input),
   }
 }
 
@@ -86,14 +89,14 @@ function startupDiscriminators(input: StartupReplayInput): Partial<StartupReplay
   if (input.newBytes !== undefined && Number.isFinite(input.newBytes) && input.newBytes >= 0) {
     out.newBytesBucket = bucketOf(
       clampWhole(input.newBytes, Number.MAX_SAFE_INTEGER),
-      NEW_BYTES_EDGES
+      NEW_BYTES_EDGES,
     )
   }
   if (input.stutter !== undefined) {
     out.stutter = {
       p50Bucket: bucketOf(clampWhole(input.stutter.p50Ms, MAX_DURATION_MS), STUTTER_MS_EDGES),
       p95Bucket: bucketOf(clampWhole(input.stutter.p95Ms, MAX_DURATION_MS), STUTTER_MS_EDGES),
-      latePct: clampWhole(input.stutter.latePct, 100)
+      latePct: clampWhole(input.stutter.latePct, 100),
     }
   }
   if (input.firstMbMs !== undefined) {

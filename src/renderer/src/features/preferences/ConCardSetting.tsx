@@ -25,7 +25,7 @@ import { FormControlLabel, MenuItem, Select, Stack, Switch, Typography } from '@
 import {
   CON_CARD_NEVER_HIDES,
   DEFAULT_CON_CARD_CONFIG,
-  type ConCardOverlayConfig
+  type ConCardOverlayConfig,
 } from '@shared/conCard'
 import { recordPref, usePrefsSeed, type ConCardSeed } from './prefsHydration'
 
@@ -67,10 +67,16 @@ function useConCardState(): [CardState, (patch: Partial<CardState>) => void] {
   useEffect(() => {
     let alive = true
     const hydrate = (): void => {
-      void Promise.all([window.eq.getOverlayState(), window.eq.getConCardConfig()]).then(([open, cfg]) => {
-        if (!alive) return
-        setState({ open: open.conCard, locked: cfg.locked, cfg: cfg.conCard ?? DEFAULT_CON_CARD_CONFIG })
-      })
+      void Promise.all([window.eq.getOverlayState(), window.eq.getConCardConfig()]).then(
+        ([open, cfg]) => {
+          if (!alive) return
+          setState({
+            open: open.conCard,
+            locked: cfg.locked,
+            cfg: cfg.conCard ?? DEFAULT_CON_CARD_CONFIG,
+          })
+        },
+      )
     }
     window.addEventListener('focus', hydrate)
     const off = window.eq.onOverlayState((s) => {
@@ -124,7 +130,11 @@ export function ConCardSetting(): JSX.Element {
         {/* JOS-405. Two 1.4.0 reports about this card said the text was too small and that the
             text size options did not affect it - and this card's own Preferences entry is where
             they looked. One sentence, state not process, pointing at the control that moves it. */}
-        <Typography variant="caption" color="text.secondary" data-testid="pref-con-card-text-size-note">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          data-testid="pref-con-card-text-size-note"
+        >
           Its text size and transparency are Appearance → Overlays.
         </Typography>
       </Stack>

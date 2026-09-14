@@ -10,7 +10,7 @@ import {
   IconButton,
   Paper,
   Stack,
-  Typography
+  Typography,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import type { ItemKnowledge, LootEvent } from '@shared/types'
@@ -61,7 +61,15 @@ function useItemKnowledge(item: string, open: boolean): ItemKnowledgeState {
   return { data, loading }
 }
 
-function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }): JSX.Element {
+function StatCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string
+  value: string
+  hint?: string
+}): JSX.Element {
   return (
     <Paper variant="outlined" sx={{ p: 1.5, flex: 1, minWidth: 120 }}>
       <Typography variant="h5" sx={{ color: 'primary.main', lineHeight: 1.1 }}>
@@ -83,7 +91,7 @@ function Bar({
   label,
   value,
   max,
-  right
+  right,
 }: {
   label: string
   value: number
@@ -127,7 +135,8 @@ function Timeline({ events }: { events: LootEvent[] }): JSX.Element {
     return { counts, from, to }
   }, [events])
 
-  if (bins.counts.length === 0) return <Typography variant="caption">No dated loot events.</Typography>
+  if (bins.counts.length === 0)
+    return <Typography variant="caption">No dated loot events.</Typography>
   const max = Math.max(...bins.counts, 1)
   const W = 640
   const H = 60
@@ -186,7 +195,9 @@ function aggregateLoot(events: LootEvent[]): LootBreakdown {
   const sources = [...bySource.entries()]
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count)
-  const zones = [...byZone.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
+  const zones = [...byZone.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
   return { sources, zones }
 }
 
@@ -196,7 +207,7 @@ function aggregateLoot(events: LootEvent[]): LootBreakdown {
 function ItemWindowColumn({
   item,
   stats,
-  knowledge
+  knowledge,
 }: {
   item: string
   stats?: string
@@ -212,7 +223,12 @@ function ItemWindowColumn({
         flavor={knowledge.data?.summary}
       />
       {knowledge.loading && !knowledge.data && (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1, color: 'text.secondary' }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{ mt: 1, color: 'text.secondary' }}
+        >
           <CircularProgress size={14} />
           <Typography variant="caption">Looking up this item…</Typography>
         </Stack>
@@ -243,7 +259,9 @@ function DroppedByColumn({ sources, max }: { sources: LootTally[]; max: number }
   return (
     <Box sx={{ flex: 1, minWidth: 0 }}>
       <ObservedHead title="Dropped by" hint="(times seen)" />
-      {sources.length === 0 && <Typography variant="caption">You have not looted this yet.</Typography>}
+      {sources.length === 0 && (
+        <Typography variant="caption">You have not looted this yet.</Typography>
+      )}
       {sources.map((s) => (
         <Bar key={s.name} label={s.name} value={s.count} max={max} right={`${s.count}× seen`} />
       ))}
@@ -264,7 +282,7 @@ function ObservedColumn({
   knowledge,
   item,
   zoneRates,
-  owned
+  owned,
 }: {
   events: LootEvent[]
   agg: LootBreakdown
@@ -284,7 +302,11 @@ function ObservedColumn({
             behind a bare "Times looted 0". */}
         <StatCard label="Times looted" value={String(events.length)} />
         {owned !== undefined && owned > 0 && (
-          <StatCard label="In your inventory export" value={String(owned)} hint="from /outputfile inventory" />
+          <StatCard
+            label="In your inventory export"
+            value={String(owned)}
+            hint="from /outputfile inventory"
+          />
         )}
         <StatCard label="Distinct mobs" value={String(agg.sources.length)} />
         <StatCard label="Zones seen" value={String(agg.zones.length)} />
@@ -297,7 +319,11 @@ function ObservedColumn({
           count alone cannot tell eleven-in-an-evening from eleven-over-a-fortnight. */}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
         <DroppedByColumn sources={agg.sources} max={agg.sources[0]?.count ?? 1} />
-        <ItemZoneTable rows={zoneRates.rows} clipped={zoneRates.clipped} looted={events.length > 0} />
+        <ItemZoneTable
+          rows={zoneRates.rows}
+          clipped={zoneRates.clipped}
+          looted={events.length > 0}
+        />
       </Stack>
 
       <ItemDbSources item={item} knowledge={knowledge.data} />
@@ -352,7 +378,7 @@ export function ItemDetailContent({
   stats,
   active,
   slice,
-  owned
+  owned,
 }: Omit<ItemDetailProps, 'isQuestItem'> & { active: boolean }): JSX.Element {
   /**
    * EVERY NUMBER BELOW IS ABOUT LOOTING, so the destroys come out here (JOS-401, the census).
@@ -392,7 +418,7 @@ export function ItemDetailDialog({
   item,
   events,
   stats,
-  isQuestItem
+  isQuestItem,
 }: ItemDetailProps & { open: boolean; onClose: () => void }): JSX.Element {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -401,7 +427,9 @@ export function ItemDetailDialog({
           <Box component="span" sx={{ color: EQ_ITEM_COLORS.name }}>
             {item}
           </Box>
-          {isQuestItem && <Chip size="small" color="primary" variant="outlined" label="Plane of Sky" />}
+          {isQuestItem && (
+            <Chip size="small" color="primary" variant="outlined" label="Plane of Sky" />
+          )}
         </Stack>
         <IconButton onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
           <CloseIcon />

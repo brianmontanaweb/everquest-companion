@@ -19,7 +19,7 @@ import type {
   AlertSpeech,
   AlertTrigger,
   OverlayKind,
-  SpeechMode
+  SpeechMode,
 } from './types'
 import { ALERT_AUDIO_ACTIONS, MAX_SPEECH_CHARS, SPEECH_MODES } from './speechText'
 import { normalizeEarlyWarnSec } from './earlyWarning'
@@ -99,7 +99,7 @@ export const EXPORTABLE_OVERLAY_KINDS: OverlayKind[] = [
   'overall',
   'heal-fight',
   'heal-overall',
-  'events'
+  'events',
 ]
 
 /**
@@ -128,7 +128,11 @@ export const UI_PREF_SPECS: readonly UiPrefSpec[] = [
   // like `eq.combat.scope` above; 'replace' because it is a scalar the importer opts into. The
   // renderer re-derives the label from the LOCAL character's name on read, so importing '1' from
   // a stranger's bundle shows YOUR name, never theirs.
-  { key: 'eq.combat.selfMeterName', label: 'Show my character name in the damage meter', merge: 'replace' },
+  {
+    key: 'eq.combat.selfMeterName',
+    label: 'Show my character name in the damage meter',
+    merge: 'replace',
+  },
   { key: 'eq.bossDensity', label: 'Raid target list density', merge: 'replace' },
   { key: 'eq.countSource', label: 'Item count source', merge: 'replace' },
   { key: 'eq.profile', label: 'Game profile (server ruleset)', merge: 'replace' },
@@ -139,7 +143,7 @@ export const UI_PREF_SPECS: readonly UiPrefSpec[] = [
   // last surface ever went away, this row would STAY: a bundle written by another install carries
   // whatever that install's UI knew about, and the parser's job is to accept and preserve the
   // field, never to strip it because this build has nothing to render it with.
-  { key: 'eq.favorites', label: 'Favorited items', merge: 'union' }
+  { key: 'eq.favorites', label: 'Favorited items', merge: 'union' },
 ] as const
 
 /** Max sizes — a pasted string is UNTRUSTED input, so every list and string is bounded. */
@@ -156,7 +160,7 @@ export const SHARE_LIMITS = {
   maxWhereFields: 12,
   maxUiValueChars: 20 * 1024,
   /** A voice id is an engine-scoped opaque string (a SAPI voice URI is the long shape). */
-  maxVoiceIdChars: 256
+  maxVoiceIdChars: 256,
 } as const
 
 // ------------------------------------------------------------------ canonical JSON + checksum
@@ -204,7 +208,7 @@ export function makeEnvelope<K extends ShareKind, B>(
   kind: K,
   body: B,
   appVersion: string,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): ShareEnvelope<K, B> {
   return {
     v: SHARE_SCHEMA_VERSION,
@@ -212,7 +216,7 @@ export function makeEnvelope<K extends ShareKind, B>(
     app: appVersion || 'unknown',
     at: now.toISOString(),
     sum: checksum(canonicalJson(body)),
-    body
+    body,
   }
 }
 
@@ -237,12 +241,11 @@ export const SHARE_ERROR_TEXT: Record<ShareDecodeError, string> = {
   checksum: 'That share string failed its integrity check - copy it again, in full.',
   'newer-version': 'That share string was made by a newer version of the app. Update, then import.',
   'unknown-kind': "That share string carries something this version doesn't understand.",
-  'empty-payload': 'That share string is valid but contains nothing to import.'
+  'empty-payload': 'That share string is valid but contains nothing to import.',
 }
 
 export type ShareValidation<T = unknown> =
-  | { ok: true; envelope: ShareEnvelope<ShareKind, T> }
-  | { ok: false; error: ShareDecodeError }
+  { ok: true; envelope: ShareEnvelope<ShareKind, T> } | { ok: false; error: ShareDecodeError }
 
 /** Untrusted → a bounded string ('' for anything that isn't one). */
 export function clampStr(v: unknown, max: number): string {
@@ -375,7 +378,7 @@ export function sanitizeAlertDef(v: unknown): AlertDef | null {
     name,
     enabled: r.enabled !== false,
     trigger,
-    sound
+    sound,
   }
   if (r.volume !== undefined) def.volume = clamp01(r.volume, 1)
   applyTimingFields(def, r)
@@ -456,7 +459,7 @@ function applyBannerFields(def: AlertDef, r: Record<string, unknown>): void {
 
 /** The three header fields that must be present and well-typed before anything else is read. */
 function hasEnvelopeHeader(
-  r: Record<string, unknown>
+  r: Record<string, unknown>,
 ): r is Record<string, unknown> & { v: number; kind: string; sum: string } {
   return typeof r.v === 'number' && typeof r.kind === 'string' && typeof r.sum === 'string'
 }
@@ -483,7 +486,7 @@ export function validateEnvelope(raw: unknown): ShareValidation {
       app: clampStr(r.app, 40),
       at: clampStr(r.at, 40),
       sum: r.sum,
-      body: r.body
-    }
+      body: r.body,
+    },
   }
 }

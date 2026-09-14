@@ -79,7 +79,7 @@ export interface ArmVerdict {
 export function armVerdict(_defs: readonly AlertDef[]): ArmVerdict {
   return {
     arm: true,
-    line: 'data-server alerts: the ENGINE now plays alert audio; this process’s evaluator is silent'
+    line: 'data-server alerts: the ENGINE now plays alert audio; this process’s evaluator is silent',
   }
 }
 

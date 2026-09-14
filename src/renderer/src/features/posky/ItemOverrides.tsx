@@ -69,7 +69,7 @@ function CountEditor({
   value,
   onValue,
   onCommit,
-  onCancel
+  onCancel,
 }: {
   value: string
   onValue: (v: string) => void
@@ -100,7 +100,12 @@ function CountEditor({
       >
         <CheckIcon fontSize="inherit" />
       </IconButton>
-      <IconButton size="small" data-testid="posky-item-count-cancel" title="Leave the count alone" onClick={onCancel}>
+      <IconButton
+        size="small"
+        data-testid="posky-item-count-cancel"
+        title="Leave the count alone"
+        onClick={onCancel}
+      >
         <CloseIcon fontSize="inherit" />
       </IconButton>
     </Stack>
@@ -148,7 +153,7 @@ function DumpBlindNote(): JSX.Element {
  */
 export function ItemHaveCell({
   it,
-  onSetItemCount
+  onSetItemCount,
 }: {
   it: ItemProgress
   /** absent in a tree mounted without the store — the cell then simply states the number */
@@ -163,7 +168,12 @@ export function ItemHaveCell({
   }
   if (editing && onSetItemCount) {
     return (
-      <CountEditor value={text} onValue={setText} onCommit={commit} onCancel={() => setEditing(false)} />
+      <CountEditor
+        value={text}
+        onValue={setText}
+        onCommit={commit}
+        onCancel={() => setEditing(false)}
+      />
     )
   }
   return (
@@ -204,7 +214,7 @@ export function ItemHaveCell({
  * Nothing at all when nothing is stated, which is every user who has never used the control.
  */
 export function OverrideSummaryChip({
-  overrides
+  overrides,
 }: {
   overrides: readonly ItemCountOverride[]
 }): JSX.Element | null {

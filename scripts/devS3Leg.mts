@@ -77,5 +77,9 @@ export function policyViolation(parts: Map<string, Buffer>, key: string): Res | 
   ]
   const bad = pinned.find(([name, want]) => field(name) !== want)
   if (bad === undefined) return null
-  return s3Error(403, 'AccessDenied', `Invalid according to Policy: Policy Condition failed: ["eq", "$${bad[0]}", ...]`)
+  return s3Error(
+    403,
+    'AccessDenied',
+    `Invalid according to Policy: Policy Condition failed: ["eq", "$${bad[0]}", ...]`,
+  )
 }

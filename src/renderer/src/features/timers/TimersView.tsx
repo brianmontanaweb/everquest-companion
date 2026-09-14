@@ -89,7 +89,7 @@ import {
   TextField,
   ToggleButton,
   ToggleButtonGroup,
-  Typography
+  Typography,
 } from '@mui/material'
 import {
   filterRespawnCandidates,
@@ -98,7 +98,7 @@ import {
   respawnInZone,
   type RespawnCandidate,
   type RespawnPrefs,
-  type RespawnRow
+  type RespawnRow,
 } from '@shared/respawn'
 import Tooltip from '../../lib/Tooltip'
 import { MOB_CARD_SLOT_PROPS, MobCard } from '../../lib/hoverCards'
@@ -110,14 +110,19 @@ import {
   useRespawnSnap,
   useSecondsClock,
   useSetRespawnPrefs,
-  useUnwatch
+  useUnwatch,
 } from './useRespawn'
 
 /** Which zone the page is showing. Component state: a view mode, not a preference. */
 type Scope = 'zone' | 'all'
 
 /** Add or update one watch, leaving the rest of the list alone. */
-function withWatch(prefs: RespawnPrefs, key: string, display: string, customSec?: number): RespawnPrefs {
+function withWatch(
+  prefs: RespawnPrefs,
+  key: string,
+  display: string,
+  customSec?: number,
+): RespawnPrefs {
   const rest = prefs.watches.filter((w) => w.key !== key)
   const entry = customSec === undefined ? { key, display } : { key, display, customSec }
   return { ...prefs, watches: [...rest, entry] }
@@ -135,7 +140,7 @@ function withWatch(prefs: RespawnPrefs, key: string, display: string, customSec?
 const CandidateRow = memo(function CandidateRow({
   cand,
   onWatch,
-  onUnwatch
+  onUnwatch,
 }: {
   cand: RespawnCandidate
   onWatch: (key: string, display: string) => void
@@ -146,7 +151,9 @@ const CandidateRow = memo(function CandidateRow({
       // ROUND 7: the same card the clock rows draw — the mob's drop table with your own loot counts
       // riding it — because "is this worth watching" is the same question as "is it worth waiting
       // for", asked one decision earlier. The note is the shorter one: a candidate has no rung.
-      title={<MobCard mob={cand.display} note={respawnCandidateNote(cand)} lookup={mainMobLookup} />}
+      title={
+        <MobCard mob={cand.display} note={respawnCandidateNote(cand)} lookup={mainMobLookup} />
+      }
       slotProps={MOB_CARD_SLOT_PROPS}
       disableInteractive
       placement="top-start"
@@ -212,7 +219,7 @@ const CandidateRow = memo(function CandidateRow({
  * does not exist here.
  */
 const RecentSearch = memo(function RecentSearch({
-  onQuery
+  onQuery,
 }: {
   onQuery: (q: string) => void
 }): JSX.Element {
@@ -240,7 +247,7 @@ function ClocksPanel({
   zoneName,
   onConfirmSighting,
   onUnwatch,
-  onSetCustom
+  onSetCustom,
 }: {
   rows: RespawnRow[]
   nowMs: number
@@ -289,7 +296,7 @@ function ScopeSwitch({
   onScope,
   zoneName,
   here,
-  total
+  total,
 }: {
   scope: Scope
   onScope: (s: Scope) => void
@@ -324,7 +331,7 @@ function RecentEmpty({
   query,
   scoped,
   anyRecent,
-  zoneName
+  zoneName,
 }: {
   query: string
   scoped: boolean
@@ -364,7 +371,7 @@ function DiscoveryPanel({
   scoped,
   zoneName,
   onWatch,
-  onUnwatch
+  onUnwatch,
 }: {
   recent: RespawnCandidate[]
   /** How many candidates the fold holds in total, so the scoped empty state can say where they are. */
@@ -394,7 +401,12 @@ function DiscoveryPanel({
       ) : (
         <Stack data-testid="respawn-recent" divider={<Divider flexItem />}>
           {shown.map((c) => (
-            <CandidateRow key={`${c.zone}::${c.key}`} cand={c} onWatch={onWatch} onUnwatch={onUnwatch} />
+            <CandidateRow
+              key={`${c.zone}::${c.key}`}
+              cand={c}
+              onWatch={onWatch}
+              onUnwatch={onUnwatch}
+            />
           ))}
         </Stack>
       )}
@@ -423,13 +435,13 @@ export default function TimersView(): JSX.Element {
     (key: string, display: string) => {
       setPrefs(withWatch(prefsRef.current, key, display))
     },
-    [setPrefs]
+    [setPrefs],
   )
   const onSetCustom = useCallback(
     (key: string, display: string, sec?: number) => {
       setPrefs(withWatch(prefsRef.current, key, display, sec))
     },
-    [setPrefs]
+    [setPrefs],
   )
 
   // The zone name as the switch and the empty states say it. The fold has no zone before the log

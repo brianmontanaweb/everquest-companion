@@ -101,7 +101,7 @@ function foldIssues(rows: readonly Row[], cohort: UsageCohort): Issue[] {
       lastSeen: r.day,
       errorName: str(ex?.errorName, 'Error'),
       message: str(ex?.redactedMessage, '(no example stored)'),
-      exemplar: ex
+      exemplar: ex,
     })
   }
   return [...bag.values()].sort((a, b) => b.count - a.count)
@@ -118,7 +118,9 @@ function parseExemplar(raw: string): Record<string, unknown> | null {
   if (raw === '') return null
   try {
     const v = validateTelemetryEvent(JSON.parse(raw))
-    return v.ok && v.value.t === 'errorReport' ? (v.value as unknown as Record<string, unknown>) : null
+    return v.ok && v.value.t === 'errorReport'
+      ? (v.value as unknown as Record<string, unknown>)
+      : null
   } catch {
     return null
   }
@@ -146,7 +148,7 @@ async function cmdList(ctx: ErrorsCtx): Promise<void> {
     for (const i of issues) {
       console.log(
         `  ${i.count.toString().padStart(6)}×  ${i.version.padEnd(10)} ${i.fingerprint}  ` +
-          `${i.firstSeen}${i.firstSeen === i.lastSeen ? '' : `→${i.lastSeen}`}`
+          `${i.firstSeen}${i.firstSeen === i.lastSeen ? '' : `→${i.lastSeen}`}`,
       )
       console.log(`          ${i.errorName}: ${i.message}`)
     }
@@ -186,7 +188,7 @@ function printLocation(ex: Record<string, unknown>, mapsDir: string): void {
     str(ex.frameOrigin) === 'capture'
       ? 'CAPTURE SITE (the throw carried no stack — this is where it was CAUGHT):'
       : 'frames:',
-    mapsDir
+    mapsDir,
   )
   // NOT symbolicated, and cannot be: these name a package or a Node module, not a bundle
   // position, so there is no sourcemap of ours they could be resolved against.
@@ -195,7 +197,7 @@ function printLocation(ex: Record<string, unknown>, mapsDir: string): void {
     for (const f of external) console.log(`    at ${f.func} (${f.file}:${f.line}:${f.col})`)
   }
   if (frames.length > 0 && mapsDir === '') {
-    console.log('\n  (pass --maps <dir> with that version\'s sourcemaps for source terms)')
+    console.log("\n  (pass --maps <dir> with that version's sourcemaps for source terms)")
   }
 }
 
@@ -207,7 +209,7 @@ function printExemplar(ex: Record<string, unknown>, mapsDir: string): void {
     `mode=${str(ex.mode)}`,
     `view=${str(ex.view)}`,
     `sessionAge=bucket ${String(ex.sessionAgeBucket)}`,
-    ...(code === '' ? [] : [`code=${code}`])
+    ...(code === '' ? [] : [`code=${code}`]),
   ]
   console.log(`  ${bits.join(' · ')}`)
   if (components !== '') console.log(`  React components, innermost first: ${components}`)
@@ -215,7 +217,9 @@ function printExemplar(ex: Record<string, unknown>, mapsDir: string): void {
   const crumbs = (ex.breadcrumbs ?? []) as { kind: string; offsetMs: number }[]
   if (crumbs.length > 0) {
     console.log('\n  log events just before, newest first (offsets in LOG time):')
-    console.log(`    ${crumbs.map((c) => (c.offsetMs === 0 ? c.kind : `${c.kind} -${String(c.offsetMs)}ms`)).join(' · ')}`)
+    console.log(
+      `    ${crumbs.map((c) => (c.offsetMs === 0 ? c.kind : `${c.kind} -${String(c.offsetMs)}ms`)).join(' · ')}`,
+    )
   }
 }
 
@@ -230,7 +234,7 @@ async function cmdShow(ctx: ErrorsCtx): Promise<void> {
       found = true
       console.log(
         `\n=== ${i.fingerprint} · ${i.version} · ${cohort} cohort · ${String(i.count)} occurrence(s) · ` +
-          `${i.firstSeen}${i.firstSeen === i.lastSeen ? '' : ` → ${i.lastSeen}`}`
+          `${i.firstSeen}${i.firstSeen === i.lastSeen ? '' : ` → ${i.lastSeen}`}`,
       )
       if (i.exemplar === null) {
         console.log('\n  No example was stored for this fingerprint — the count is still real.')
@@ -242,14 +246,14 @@ async function cmdShow(ctx: ErrorsCtx): Promise<void> {
   if (!found) {
     throw new Error(
       `errors show: no issue ${fingerprint} in the last ${String(num(ctx.args.days, 14))} days ` +
-        '(widen with --days, or add --cohort all if it was the owner\'s own install)'
+        "(widen with --days, or add --cohort all if it was the owner's own install)",
     )
   }
 }
 
 const ERRORS_SUBCOMMANDS: Record<string, (ctx: ErrorsCtx) => Promise<void>> = {
   list: cmdList,
-  show: cmdShow
+  show: cmdShow,
 }
 
 /**
@@ -263,7 +267,7 @@ const ERRORS_SUBCOMMANDS: Record<string, (ctx: ErrorsCtx) => Promise<void>> = {
  */
 export async function runErrors(
   ctx: ErrorsCtx,
-  translate: (err: unknown) => unknown
+  translate: (err: unknown) => unknown,
 ): Promise<void> {
   const run = errorsSubcommand(ctx.rest[0])
   if (run === null) {
@@ -280,5 +284,3 @@ export async function runErrors(
 function errorsSubcommand(name: string | undefined): ((ctx: ErrorsCtx) => Promise<void>) | null {
   return name === undefined ? null : (ERRORS_SUBCOMMANDS[name] ?? null)
 }
-
-

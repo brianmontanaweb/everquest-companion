@@ -23,7 +23,7 @@ import {
   reportRun,
   settle,
   settleCount,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture } from './logFixture.mjs'
@@ -46,7 +46,7 @@ async function openCombat(page: Page): Promise<boolean> {
   await page.click(NAV_COMBAT, { timeout: 30_000 })
   return page.waitForSelector(DASH, { timeout: 60_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
 }
 
@@ -72,7 +72,13 @@ async function turnOnTheNamePref(page: Page): Promise<boolean> {
   // The testid sits on the MUI Switch root; the clickable control is the input inside it.
   await page.click(`${TOGGLE} input`, { timeout: 15_000 })
   // `useBoolPref` writes '1'/'0' (never removes) — so "on" is exactly '1' in localStorage.
-  return (await settle(() => stored(page), (v) => v === '1', { timeoutMs: 8_000 })) === '1'
+  return (
+    (await settle(
+      () => stored(page),
+      (v) => v === '1',
+      { timeoutMs: 8_000 },
+    )) === '1'
+  )
 }
 
 async function main(): Promise<void> {
@@ -89,7 +95,10 @@ async function main(): Promise<void> {
     try {
       const page = await mainWindow(app)
       await page.waitForSelector(NAV_PREFS, { timeout: 60_000 })
-      check('hydration completes (replay hands off to the live tail)', !(await waitHydrated(page)).snap.hydrating)
+      check(
+        'hydration completes (replay hands off to the live tail)',
+        !(await waitHydrated(page)).snap.hydrating,
+      )
 
       check('the Combat tab opens', await openCombat(page))
       const rows = await settleCount(page, ROW)
@@ -101,14 +110,18 @@ async function main(): Promise<void> {
       check(
         'a fresh install shows the bare "You" on the self row (not the name)',
         beforeText.includes('You') && !beforeText.includes('(You)'),
-        beforeText || 'empty'
+        beforeText || 'empty',
       )
       check('…and the pref key is absent (never touched)', (await stored(page)) === null)
 
       check(`the Combat → name toggle stores '1'`, await turnOnTheNamePref(page))
 
       check('the Combat tab reopens', await openCombat(page))
-      const namedText = await settle(() => firstRowText(page), (t) => t.includes(NAMED), { timeoutMs: 10_000 })
+      const namedText = await settle(
+        () => firstRowText(page),
+        (t) => t.includes(NAMED),
+        { timeoutMs: 10_000 },
+      )
       check(`the self row now reads "${NAMED}"`, namedText.includes(NAMED), namedText || 'empty')
 
       if (failures.length) await dumpArtifacts(page, 'self-meter-name-launch1-FAIL')
@@ -124,16 +137,21 @@ async function main(): Promise<void> {
     try {
       const page = await mainWindow(app)
       await page.waitForSelector(NAV_PREFS, { timeout: 60_000 })
-      check(
-        'hydration completes on the second launch',
-        !(await waitHydrated(page)).snap.hydrating
-      )
+      check('hydration completes on the second launch', !(await waitHydrated(page)).snap.hydrating)
       check('the stored pref crossed the process boundary', (await stored(page)) === '1')
 
       check('the Combat tab opens after a restart', await openCombat(page))
       check('the restart still ranks a source', (await settleCount(page, ROW)) > 0)
-      const stillNamed = await settle(() => firstRowText(page), (t) => t.includes(NAMED), { timeoutMs: 15_000 })
-      check(`THE NAMED SELF ROW SURVIVES A FULL RESTART — "${NAMED}"`, stillNamed.includes(NAMED), stillNamed || 'empty')
+      const stillNamed = await settle(
+        () => firstRowText(page),
+        (t) => t.includes(NAMED),
+        { timeoutMs: 15_000 },
+      )
+      check(
+        `THE NAMED SELF ROW SURVIVES A FULL RESTART — "${NAMED}"`,
+        stillNamed.includes(NAMED),
+        stillNamed || 'empty',
+      )
 
       if (failures.length) await dumpArtifacts(page, 'self-meter-name-launch2-FAIL')
     } finally {

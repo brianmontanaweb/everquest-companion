@@ -25,7 +25,16 @@
  * Run: `npm run test:e2e -- loadout-override`
  */
 import type { Page } from 'playwright-core'
-import { buildIfStale, check, countOf, dumpArtifacts, failures, note, reportRun, settle } from './appHarness.mjs'
+import {
+  buildIfStale,
+  check,
+  countOf,
+  dumpArtifacts,
+  failures,
+  note,
+  reportRun,
+  settle,
+} from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture } from './logFixture.mjs'
 
@@ -48,10 +57,7 @@ async function openLoadoutSetting(page: Page): Promise<void> {
 
 /** The control's whole visible text — chips, source line and any notice, as a user reads it. */
 function controlText(page: Page): Promise<string> {
-  return page.evaluate(
-    (sel) => document.querySelector(sel)?.textContent?.trim() ?? '',
-    CONTROL
-  )
+  return page.evaluate((sel) => document.querySelector(sel)?.textContent?.trim() ?? '', CONTROL)
 }
 
 /** True once the control shows exactly the classes the user set, as their own setting. */
@@ -78,13 +84,13 @@ async function main(): Promise<void> {
 
       const before = await settle(
         () => controlText(page as Page),
-        (t) => t.length > 0 && !/No loadout read yet/.test(t)
+        (t) => t.length > 0 && !/No loadout read yet/.test(t),
       )
       if (
         !check(
           'Preferences → Profiles states the loadout in effect and where it came from',
           /Autodetected/.test(before),
-          `control=${before.slice(0, 160)}`
+          `control=${before.slice(0, 160)}`,
         )
       ) {
         // Everything below drives that control; there is nothing honest to report past here.
@@ -93,11 +99,11 @@ async function main(): Promise<void> {
       }
       check(
         '…and offers to set the classes by hand, without opening a history row first',
-        (await countOf(page, OPEN)) === 1
+        (await countOf(page, OPEN)) === 1,
       )
       check(
         '…with no "back to autodetect" yet, because nothing has been overridden',
-        (await countOf(page, CLEAR)) === 0
+        (await countOf(page, CLEAR)) === 0,
       )
 
       // The whole user journey, in the clicks a person makes.
@@ -106,21 +112,21 @@ async function main(): Promise<void> {
       // THE PICKER SPEAKS IN CLASS NAMES (JOS-402), while its testid — and everything it writes —
       // stays the /who code. Asked before the clicks because it is the words a user picks BY.
       const shdChip = await page.evaluate(
-        () => document.querySelector('[data-testid="combo-class-SHD"]')?.textContent?.trim() ?? ''
+        () => document.querySelector('[data-testid="combo-class-SHD"]')?.textContent?.trim() ?? '',
       )
       check(
         'the class picker offers whole class names, not /who codes',
         shdChip === 'Shadow Knight',
-        `the SHD chip reads ${shdChip}`
+        `the SHD chip reads ${shdChip}`,
       )
       for (const cls of MINE) await page.click(`[data-testid="combo-class-${cls}"]`)
       const count = await page.evaluate(
-        () => document.querySelector('[data-testid="loadout-override-count"]')?.textContent ?? ''
+        () => document.querySelector('[data-testid="loadout-override-count"]')?.textContent ?? '',
       )
       check(
         'the picker states the pick back before it is saved',
         /Shadow Knight \/ Rogue \/ Druid/.test(count) && /3 of 3/.test(count),
-        `count=${count}`
+        `count=${count}`,
       )
       await page.click(SAVE)
 
@@ -128,16 +134,16 @@ async function main(): Promise<void> {
       check(
         'THE REPORTED SYMPTOM IS FIXABLE — the loadout is what the user said it is',
         showsOverride(after),
-        `control=${after.slice(0, 200)}`
+        `control=${after.slice(0, 200)}`,
       )
       check(
         '…and the app says the setting is theirs, not a detection that happened to agree',
         /will not change it/.test(after),
-        `control=${after.slice(0, 200)}`
+        `control=${after.slice(0, 200)}`,
       )
       check(
         '…with a way back to autodetection offered beside it',
-        (await countOf(page, CLEAR)) === 1
+        (await countOf(page, CLEAR)) === 1,
       )
       if (failures.length) await dumpArtifacts(page, 'loadout-override-FAIL')
     } finally {
@@ -156,7 +162,7 @@ async function main(): Promise<void> {
       check(
         'ACCEPTANCE: the override survives a restart — a second process, the same store',
         showsOverride(restarted),
-        `control=${restarted.slice(0, 200)}`
+        `control=${restarted.slice(0, 200)}`,
       )
       note('the whole log was replayed again on this launch, and re-inference did not reclaim it')
 
@@ -164,17 +170,14 @@ async function main(): Promise<void> {
       await back.click(CLEAR)
       const cleared = await settle(
         () => controlText(back as Page),
-        (t) => /Autodetected/.test(t)
+        (t) => /Autodetected/.test(t),
       )
       check(
         '"Back to autodetect" really hands the loadout back',
         /Autodetected/.test(cleared) && !/Set by you/.test(cleared),
-        `control=${cleared.slice(0, 200)}`
+        `control=${cleared.slice(0, 200)}`,
       )
-      check(
-        '…and the undo button goes with it',
-        (await countOf(back, CLEAR)) === 0
-      )
+      check('…and the undo button goes with it', (await countOf(back, CLEAR)) === 0)
       check('…while the source line is still stated at all', (await countOf(back, SOURCE)) === 1)
 
       if (failures.length) await dumpArtifacts(back, 'loadout-override-FAIL')

@@ -63,7 +63,8 @@ const DELAY_MS = 1000
 const MAX_RETRIES = 5
 /** MEASURED anonymous multi-value limit (see header) — 60 ids silently returns nothing. */
 const BATCH = 50
-const SOURCE = 'eqlwiki.com — embeddedin Template:Itempage (ns0), filtered to pages opening {{Itempage}}'
+const SOURCE =
+  'eqlwiki.com — embeddedin Template:Itempage (ns0), filtered to pages opening {{Itempage}}'
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
 
@@ -134,10 +135,12 @@ async function embeddedIn(template: string): Promise<Member[]> {
       list: 'embeddedin',
       eititle: template,
       einamespace: '0',
-      eilimit: '500'
+      eilimit: '500',
     }
     if (cont) params.eicontinue = cont
-    const j = await api<{ query?: { embeddedin?: Member[] }; continue?: { eicontinue?: string } }>(params)
+    const j = await api<{ query?: { embeddedin?: Member[] }; continue?: { eicontinue?: string } }>(
+      params,
+    )
     out.push(...(j.query?.embeddedin ?? []))
     cont = j.continue?.eicontinue
     if (!cont) break
@@ -191,7 +194,7 @@ async function fetchBatch(slice: Member[]): Promise<RevPage[]> {
     prop: 'revisions',
     rvprop: 'content',
     rvslots: 'main',
-    pageids: slice.map((p) => p.pageid).join('|')
+    pageids: slice.map((p) => p.pageid).join('|'),
   })
   const pages = j.query?.pages ?? []
   // Write only AFTER a complete response: a half-written batch must never look cached.
@@ -308,9 +311,7 @@ async function collectPages(): Promise<Member[]> {
   }
   console.log('Enumerating embeddedin Template:Itempage…')
   const members = await embeddedIn('Template:Itempage')
-  const pages = members
-    .filter((m) => m.ns === 0)
-    .sort((a, b) => a.title.localeCompare(b.title))
+  const pages = members.filter((m) => m.ns === 0).sort((a, b) => a.title.localeCompare(b.title))
   writeCache('item-pages.json', pages)
   console.log(`Item pages: ${pages.length}`)
   return pages
@@ -321,9 +322,11 @@ function printSummary(stats: RunStats, keys: number, bytes: number, startedAt: n
   console.log(`\nWrote ${stats.entries} items (${keys} keys) → ${OUT_PATH}  (${mins} min)`)
   console.log(
     `  pages enumerated: ${stats.pages}   parsed as items: ${stats.entries}   ` +
-      `not an item page: ${stats.notItem}   empty template: ${stats.empty}   missing: ${stats.missing}`
+      `not an item page: ${stats.notItem}   empty template: ${stats.empty}   missing: ${stats.missing}`,
   )
-  console.log(`  name aliases: ${stats.aliases}   key collisions (richer record wins): ${stats.collisions}`)
+  console.log(
+    `  name aliases: ${stats.aliases}   key collisions (richer record wins): ${stats.collisions}`,
+  )
   console.log(`  raw size: ${(bytes / 1048576).toFixed(2)} MB (inlined into the main bundle)`)
 }
 
@@ -335,7 +338,13 @@ async function main(): Promise<void> {
 
   const items = new Map<string, ItemDbEntry>()
   const stats: RunStats = {
-    pages: pages.length, entries: 0, notItem: 0, missing: 0, empty: 0, aliases: 0, collisions: 0
+    pages: pages.length,
+    entries: 0,
+    notItem: 0,
+    missing: 0,
+    empty: 0,
+    aliases: 0,
+    collisions: 0,
   }
   for (let i = 0; i < pages.length; i += BATCH) {
     for (const p of await fetchBatch(pages.slice(i, i + BATCH))) foldPage(p, items, stats)
@@ -349,7 +358,7 @@ async function main(): Promise<void> {
     scrapedAt: new Date().toISOString(),
     source: SOURCE,
     count: stats.entries,
-    items: sorted
+    items: sorted,
   }
   // No pretty-printing: this file is INLINED into every user's main bundle, and indentation
   // is ~30% of it. It is generated, and `git diff` on a scraped 8 MB dataset is a review of

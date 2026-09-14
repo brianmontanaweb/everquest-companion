@@ -29,7 +29,7 @@ const PLACEHOLDER = 'Search spells: name, class, level or range (27-28 cleric sh
 /** The box. Controlled by the panel, because the panel is what switches body on the same state. */
 export function UnlockSearchField({
   query,
-  onChange
+  onChange,
 }: {
   query: string
   onChange: (q: string) => void
@@ -40,7 +40,12 @@ export function UnlockSearchField({
       value={query}
       onChange={(e) => onChange(e.target.value)}
       placeholder={PLACEHOLDER}
-      sx={{ width: '100%', maxWidth: 380, mb: 0.75, '& .MuiInputBase-input': { fontSize: 12, py: 0.5 } }}
+      sx={{
+        width: '100%',
+        maxWidth: 380,
+        mb: 0.75,
+        '& .MuiInputBase-input': { fontSize: 12, py: 0.5 },
+      }}
       slotProps={{
         htmlInput: { 'data-testid': 'new-at-level-search', 'aria-label': 'search spells' },
         input: {
@@ -61,8 +66,8 @@ export function UnlockSearchField({
                   <ClearIcon sx={{ fontSize: 14 }} />
                 </IconButton>
               </InputAdornment>
-            )
-        }
+            ),
+        },
       }}
     />
   )
@@ -79,7 +84,7 @@ export function UnlockSearchResultsList({
   results,
   resolved,
   sets,
-  ranks
+  ranks,
 }: {
   results: UnlockSearchResults
   resolved: ReadonlySet<string>
@@ -100,7 +105,12 @@ export function UnlockSearchResultsList({
       />
       {results.hidden > 0 && (
         <Box>
-          <Typography variant="caption" color="text.disabled" data-testid="new-at-level-more" sx={{ fontSize: 10.5 }}>
+          <Typography
+            variant="caption"
+            color="text.disabled"
+            data-testid="new-at-level-more"
+            sx={{ fontSize: 10.5 }}
+          >
             +{results.hidden} more, refine your search
           </Typography>
         </Box>

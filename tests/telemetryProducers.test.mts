@@ -33,7 +33,7 @@ import {
   LOG_SIZE_BYTES_EDGES,
   MAX_COUNT,
   TELEMETRY_FUNNEL_STEPS,
-  type TelemetryEvent
+  type TelemetryEvent,
 } from '../src/shared/telemetry'
 // The producer moved out of the contract file when JOS-57's scope addition pushed it past the
 // 400-line ceiling; the reading it builds is unchanged, and so is every assertion below.
@@ -48,7 +48,7 @@ import {
   BLOCK_MS_EDGES,
   DIM_NONE,
   REPLAY_MS_EDGES,
-  USAGE_METRICS
+  USAGE_METRICS,
 } from '../src/shared/telemetryRollup'
 import type { TelemetryBatch } from '../src/shared/telemetry'
 
@@ -71,7 +71,7 @@ test('every failure class is reached by a message a real producer actually emits
     ['The operation was aborted due to timeout', 'timeout'],
     ['connect ETIMEDOUT 140.82.121.4:443', 'timeout'],
     ['Cannot find channel "main"', 'other'],
-    ['', 'other']
+    ['', 'other'],
   ]
   for (const [message, expected] of cases) {
     assert.equal(classifyFailure(message), expected, message)
@@ -126,8 +126,14 @@ const ID = '2b1b5c33-6a1a-4d3e-8f0b-2c9a5d1e7f40'
 function batchOf(events: TelemetryEvent[]): TelemetryBatch {
   return {
     v: 1,
-    env: { analyticsId: ID, appVersion: '0.6.0', channel: 'prod', platform: 'win32', tzOffsetBucket: -5 },
-    events: events.map((ev) => ({ ts: 1_754_000_000_000, ev }))
+    env: {
+      analyticsId: ID,
+      appVersion: '0.6.0',
+      channel: 'prod',
+      platform: 'win32',
+      tzOffsetBucket: -5,
+    },
+    events: events.map((ev) => ({ ts: 1_754_000_000_000, ev })),
   }
 }
 
@@ -145,14 +151,20 @@ test('linesParsed is OPTIONAL on both session reports — absent survives, prese
   const bare = validateTelemetryEvent({ t: 'sessionHeartbeat', uptimeMs: 300_000 })
   assert.ok(bare.ok && !('linesParsed' in bare.value))
 
-  const carried = validateTelemetryEvent({ t: 'sessionHeartbeat', uptimeMs: 300_000, linesParsed: 4_212 })
-  assert.ok(carried.ok && carried.value.t === 'sessionHeartbeat' && carried.value.linesParsed === 4_212)
+  const carried = validateTelemetryEvent({
+    t: 'sessionHeartbeat',
+    uptimeMs: 300_000,
+    linesParsed: 4_212,
+  })
+  assert.ok(
+    carried.ok && carried.value.t === 'sessionHeartbeat' && carried.value.linesParsed === 4_212,
+  )
 
   const ended = validateTelemetryEvent({
     t: 'sessionEnd',
     durationMs: 60_000,
     viewsVisited: 2,
-    linesParsed: 9
+    linesParsed: 9,
   })
   assert.ok(ended.ok && ended.value.t === 'sessionEnd' && ended.value.linesParsed === 9)
 
@@ -172,7 +184,7 @@ test('the fleet counter is a SUM OF DELTAS from both events, and an absent field
     { t: 'sessionHeartbeat', uptimeMs: 600_000, linesParsed: 250 },
     // A heartbeat from a session that parsed nothing (an idle log) — legal, and adds nothing.
     { t: 'sessionHeartbeat', uptimeMs: 900_000 },
-    { t: 'sessionEnd', durationMs: 950_000, viewsVisited: 3, linesParsed: 17 }
+    { t: 'sessionEnd', durationMs: 950_000, viewsVisited: 3, linesParsed: 17 },
   ])
   assert.equal(counterOf(rolled, USAGE_METRICS.linesParsed), 1_267)
   // The heartbeat count is untouched by the passenger field: three heartbeats, three heartbeats.
@@ -196,7 +208,7 @@ test('the reading is BUILT, not hand-assembled: duty is computed, sizes become b
     restMs: 2_000,
     maxBlockMs: 88.6,
     blocksOver50: 3,
-    logBytes: 71_000_000
+    logBytes: 71_000_000,
   })
   assert.deepEqual(s, {
     replayMs: 6_241,
@@ -206,7 +218,7 @@ test('the reading is BUILT, not hand-assembled: duty is computed, sizes become b
     maxBlockMs: 89,
     blocksOver50: 3,
     // 71 MB: past the 10 MB edge, below the 100 MB one.
-    logSizeBucket: 2
+    logSizeBucket: 2,
   })
   // A launch that folded nothing has no duty — it had no work — so 0, never a division by zero.
   assert.equal(
@@ -217,9 +229,9 @@ test('the reading is BUILT, not hand-assembled: duty is computed, sizes become b
       restMs: 0,
       maxBlockMs: 0,
       blocksOver50: 0,
-      logBytes: 0
+      logBytes: 0,
     }).dutyPct,
-    0
+    0,
   )
 })
 
@@ -232,7 +244,7 @@ test('THE BUCKET EDGES: a log size lands in the bucket its own edge opens, and 0
       restMs: 0,
       maxBlockMs: 0,
       blocksOver50: 0,
-      logBytes
+      logBytes,
     }).logSizeBucket
   // Half-open `[lo, hi)`: the edge value itself belongs to the bucket ABOVE it, which is what
   // `bucketOf` promises and what TELEMETRY.md prints. One assertion per edge, plus both ends.
@@ -257,7 +269,7 @@ test('a 1.35M-line replay is reported IN FULL — MAX_COUNT is not this field’
     restMs: 10_000,
     maxBlockMs: 120,
     blocksOver50: 41,
-    logBytes: 600_000_000
+    logBytes: 600_000_000,
   })
   assert.equal(s.eventsReplayed, 1_352_119)
   assert.ok(s.eventsReplayed > MAX_COUNT)
@@ -275,7 +287,7 @@ test('the reading is ALL SIX FIELDS OR NONE, and absent survives an older schema
     dutyPct: 80,
     maxBlockMs: 60,
     blocksOver50: 1,
-    logSizeBucket: 1
+    logSizeBucket: 1,
   }
   const carried = validateTelemetryEvent({ t: 'sessionHeartbeat', uptimeMs: 1, startup: full })
   assert.ok(carried.ok && carried.value.t === 'sessionHeartbeat')
@@ -284,7 +296,12 @@ test('the reading is ALL SIX FIELDS OR NONE, and absent survives an older schema
   // ABSENT IS THE OLD CLIENT AND THE OLD SERVER AT ONCE — the same argument `linesParsed` makes.
   const bare = validateTelemetryEvent({ t: 'sessionHeartbeat', uptimeMs: 1 })
   assert.ok(bare.ok && !('startup' in bare.value))
-  const nulled = validateTelemetryEvent({ t: 'sessionEnd', durationMs: 1, viewsVisited: 0, startup: null })
+  const nulled = validateTelemetryEvent({
+    t: 'sessionEnd',
+    durationMs: 1,
+    viewsVisited: 0,
+    startup: null,
+  })
   assert.ok(nulled.ok && !('startup' in nulled.value))
 
   // A PARTIAL reading is refused rather than repaired: every field describes the same seconds,
@@ -298,7 +315,7 @@ test('the reading is ALL SIX FIELDS OR NONE, and absent survives an older schema
   const extra = validateTelemetryEvent({
     t: 'sessionHeartbeat',
     uptimeMs: 1,
-    startup: { ...full, logPath: 'C:/Users/x/eqlog_Primitive_freeport.txt' }
+    startup: { ...full, logPath: 'C:/Users/x/eqlog_Primitive_freeport.txt' },
   })
   assert.ok(extra.ok && extra.value.t === 'sessionHeartbeat')
   assert.ok(!('logPath' in (extra.value.startup ?? {})))
@@ -306,7 +323,7 @@ test('the reading is ALL SIX FIELDS OR NONE, and absent survives an older schema
   const silly = validateTelemetryEvent({
     t: 'sessionHeartbeat',
     uptimeMs: 1,
-    startup: { ...full, dutyPct: 101 }
+    startup: { ...full, dutyPct: 101 },
   })
   assert.ok(!silly.ok && silly.field === 'startup.dutyPct')
 })
@@ -322,14 +339,14 @@ test('the fleet rollup keys the reading BY BUILD, and the launch count is its de
       dutyPct: 70,
       maxBlockMs: 60,
       blocksOver50: 2,
-      logSizeBucket: 2
+      logSizeBucket: 2,
     },
-    ...over
+    ...over,
   })
   const rolled = rollupBatch(batchOf([reading(), reading()]), {
     firstOfDay: false,
     newInstall: false,
-    upgraded: false
+    upgraded: false,
   })
   const rowOf = (metric: string, dim: string): number =>
     rolled.counters.find((c) => c.metric === metric && c.dim === dim)?.n ?? 0
@@ -337,8 +354,14 @@ test('the fleet rollup keys the reading BY BUILD, and the launch count is its de
   // The version comes from the ENVELOPE — no event carries one — and `batchOf` sends 0.6.0.
   assert.equal(rowOf(USAGE_METRICS.startupReplays, '0.6.0'), 2)
   // 6 s: past the 5 s edge, below 10 s ⇒ the 5-10 s bucket. 60 ms ⇒ the 50-100 ms one.
-  assert.equal(rowOf(USAGE_METRICS.startupReplayMs, `0.6.0:${String(bucketOf(6_000, REPLAY_MS_EDGES))}`), 2)
-  assert.equal(rowOf(USAGE_METRICS.startupBlockMs, `0.6.0:${String(bucketOf(60, BLOCK_MS_EDGES))}`), 2)
+  assert.equal(
+    rowOf(USAGE_METRICS.startupReplayMs, `0.6.0:${String(bucketOf(6_000, REPLAY_MS_EDGES))}`),
+    2,
+  )
+  assert.equal(
+    rowOf(USAGE_METRICS.startupBlockMs, `0.6.0:${String(bucketOf(60, BLOCK_MS_EDGES))}`),
+    2,
+  )
   // The sums, whose divisor is `startupReplays` at read time.
   assert.equal(rowOf(USAGE_METRICS.startupDutyPct, '0.6.0'), 140)
   assert.equal(rowOf(USAGE_METRICS.startupEventsReplayed, '0.6.0'), 800_000)
@@ -349,18 +372,15 @@ test('the fleet rollup keys the reading BY BUILD, and the launch count is its de
   // BOTH carriers fold identically — which is what makes "whichever report drains it" safe.
   const viaHeartbeat = rollupBatch(
     batchOf([reading({ t: 'sessionHeartbeat', uptimeMs: 300_000 } as never)]),
-    { firstOfDay: false, newInstall: false, upgraded: false }
+    { firstOfDay: false, newInstall: false, upgraded: false },
   )
-  assert.equal(
-    viaHeartbeat.counters.find((c) => c.metric === USAGE_METRICS.startupReplays)?.n,
-    1
-  )
+  assert.equal(viaHeartbeat.counters.find((c) => c.metric === USAGE_METRICS.startupReplays)?.n, 1)
   // A session report with NO reading writes no startup row at all — an absent row and a zero one
   // read the same to a SUM, and "nobody measured" must not look like "everybody launched fast".
   const none = rollupBatch(batchOf([{ t: 'sessionEnd', durationMs: 1, viewsVisited: 0 }]), {
     firstOfDay: false,
     newInstall: false,
-    upgraded: false
+    upgraded: false,
   })
   assert.ok(!none.counters.some((c) => c.metric.startsWith('startup')))
 })
@@ -395,8 +415,7 @@ test('a batch with no line counts at all produces NO linesParsed row, rather tha
   assert.equal(counterOf(rolled, USAGE_METRICS.linesParsed), 0)
   assert.ok(
     !rollupBatch(rolled, { firstOfDay: false, newInstall: false }).counters.some(
-      (c) => c.metric === USAGE_METRICS.linesParsed
-    )
+      (c) => c.metric === USAGE_METRICS.linesParsed,
+    ),
   )
 })
-

@@ -42,7 +42,7 @@ import {
   DEFAULT_CON_CARD_CONFIG,
   conCardHoldMs,
   type ConCardOverlayConfig,
-  type ConCardPayload
+  type ConCardPayload,
 } from '@shared/conCard'
 import type { OverlayConfig } from '@shared/types'
 import { ConCard } from './ConCard'
@@ -82,7 +82,7 @@ function DragFrame({
   textScale,
   bgAlpha,
   patch,
-  noDrag
+  noDrag,
 }: {
   onDone: () => void
   textScale: number
@@ -104,10 +104,12 @@ function DragFrame({
         border: `1px dashed ${GOLD}`,
         background: 'rgba(15,17,21,0.65)',
         color: GOLD,
-        fontSize: 11
+        fontSize: 11,
       }}
     >
-      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span
+        style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+      >
         Drag me where mob cards should appear
       </span>
       <BgAlphaSlider bgAlpha={bgAlpha} patch={patch} noDrag={noDrag} />
@@ -124,7 +126,7 @@ function DragFrame({
           color: GOLD,
           fontSize: 11,
           padding: '2px 8px',
-          cursor: 'pointer'
+          cursor: 'pointer',
         }}
       >
         Done
@@ -213,7 +215,7 @@ function useFitWindowHeight(el: HTMLElement | null, quiet: boolean): void {
     () => () => {
       if (timer.current !== null) clearTimeout(timer.current)
     },
-    []
+    [],
   )
 }
 
@@ -239,7 +241,13 @@ export default function ConCardOverlay(): JSX.Element {
       data-testid="con-card-overlay"
       /* 100%, NOT 100vw/100vh — a viewport unit inside the scaled card is resolved against the
          window and then zoomed (overlayScale). */
-      style={{ width: '100%', height: '100%', padding: PAD, boxSizing: 'border-box', ...chrome.dragRegion }}
+      style={{
+        width: '100%',
+        height: '100%',
+        padding: PAD,
+        boxSizing: 'border-box',
+        ...chrome.dragRegion,
+      }}
     >
       {/* THE MEASURED BOX (JOS-386): everything the window has to be tall enough for, and nothing
           that is sized BY the window. `fit-content`, never the root's 100% — a box that filled the

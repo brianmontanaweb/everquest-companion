@@ -93,12 +93,12 @@ test('ONE HOOK, BOTH BUNDLES: both preload bridges expose onModuleChanged, on th
     assert.match(
       mod,
       /ipcRenderer\.on\(IPC\.onModuleChanged, listener\)/,
-      `${bridge} subscribes onModuleChanged to some other channel`
+      `${bridge} subscribes onModuleChanged to some other channel`,
     )
     assert.match(
       mod,
       /removeListener\(IPC\.onModuleChanged, listener\)/,
-      `${bridge} hands back a way to stop listening that does not stop this listener`
+      `${bridge} hands back a way to stop listening that does not stop this listener`,
     )
   }
 })
@@ -110,9 +110,6 @@ test('the world-change id is one nothing registers, so it can never collide with
 })
 
 // ── 2. each folder rides exactly one channel, and the SNAPSHOT decides which ────────────
-
-
-
 
 test('a cursor that raced the hydrate is remembered, not dropped', () => {
   // UNCHANGED IN SUBSTANCE BY JOS-499, and worth keeping for exactly that reason: this was the
@@ -132,7 +129,7 @@ test('a cursor that raced the hydrate is remembered, not dropped', () => {
   assert.match(
     store,
     /if \(entry\.pendingSeq > entry\.seq\) markDirty\(/,
-    'the store stopped re-asking after a reply that landed behind the cursor'
+    'the store stopped re-asking after a reply that landed behind the cursor',
   )
 })
 
@@ -140,7 +137,7 @@ test('a world change re-hydrates unconditionally — it is the one frame with no
   assert.match(
     code(OVERLAY_HOOK),
     /if \(c\.moduleId === MODULE_WORLD_CHANGED\) \{\s*hydrate\(\)/,
-    `${OVERLAY_HOOK}: a world change is filtered by moduleId like an ordinary cursor`
+    `${OVERLAY_HOOK}: a world change is filtered by moduleId like an ordinary cursor`,
   )
   // The store answers the same frame for EVERY module it is holding rather than for the one it is
   // bound to, because it is bound to all of them — but the shape of the claim is unchanged: this
@@ -149,14 +146,21 @@ test('a world change re-hydrates unconditionally — it is the one frame with no
   const branch = /if \(c\.moduleId === MODULE_WORLD_CHANGED\) \{([\s\S]*?)\n {4}\}/.exec(store)
   assert.ok(branch, `${APP_STORE}: a world change is filtered by moduleId like an ordinary cursor`)
   assert.match(branch[1], /markDirty\(id\)/, 'a world change stopped re-asking for what is watched')
-  assert.doesNotMatch(branch[1], /c\.seq/, 'a world change started comparing a cursor it has not got')
+  assert.doesNotMatch(
+    branch[1],
+    /c\.seq/,
+    'a world change started comparing a cursor it has not got',
+  )
 })
-
 
 test('every subscription is unsubscribed — an arm that leaked one would fold a dead module', () => {
   const overlay = code(OVERLAY_HOOK)
   assert.match(overlay, /const offChanged = window\.eqOverlay\.onModuleChanged\(/, OVERLAY_HOOK)
-  assert.match(overlay, /offChanged\(\)/, `${OVERLAY_HOOK}: the cursor subscription is never released`)
+  assert.match(
+    overlay,
+    /offChanged\(\)/,
+    `${OVERLAY_HOOK}: the cursor subscription is never released`,
+  )
 
   const store = code(APP_STORE)
   assert.match(store, /const offChanged = bridge\.onModuleChanged\(/, APP_STORE)
@@ -167,7 +171,7 @@ test('every subscription is unsubscribed — an arm that leaked one would fold a
   assert.doesNotMatch(
     code('../src/renderer/src/lib/useModule.ts'),
     /onModuleChanged|onCharacter/,
-    'the hook subscribed to the bridge itself again — that is one listener per call site'
+    'the hook subscribed to the bridge itself again — that is one listener per call site',
   )
 })
 
@@ -181,7 +185,6 @@ test('the cursor fan-out reaches the SAME windows the increments do', () => {
   assert.match(mod, /sendToModuleOverlays\(IPC\.onModuleChanged, frame\)/)
   assert.doesNotMatch(mod, /OVERLAY_KINDS/, 'the overlay list was copied instead of reused')
 })
-
 
 // ── the character-switch signal reaches the damage-meter overlay too (self-row name) ───────
 //
@@ -197,17 +200,22 @@ test('the world-rebuilt signal reaches the damage-meter overlay, without widenin
 
   // The character-aware list is the module-reading set PLUS the two meter kinds — built FROM
   // MODULE_READING_OVERLAYS, never a hand-copied literal (JOS-172's lesson, one list).
+  // Prettier's trailing-comma style may add a comma after 'overall' when this array wraps.
   assert.match(
     mod,
-    /CHARACTER_AWARE_OVERLAYS:\s*OverlayKind\[\]\s*=\s*\[\.\.\.MODULE_READING_OVERLAYS,\s*'fight',\s*'overall'\]/,
-    'CHARACTER_AWARE_OVERLAYS must extend MODULE_READING_OVERLAYS with fight + overall'
+    /CHARACTER_AWARE_OVERLAYS:\s*OverlayKind\[\]\s*=\s*\[\s*\.\.\.MODULE_READING_OVERLAYS,\s*'fight',\s*'overall',?\s*\]/,
+    'CHARACTER_AWARE_OVERLAYS must extend MODULE_READING_OVERLAYS with fight + overall',
   )
 
   // sendWorldRebuilt sends onCharacter through the character-aware fan-out, NOT the module set.
   const body = /export function sendWorldRebuilt\([\s\S]*?\n\}/.exec(mod)
   assert.ok(body, 'sendWorldRebuilt not found')
   assert.match(body[0], /sendToCharacterAwareOverlays\(IPC\.onCharacter, character\)/)
-  assert.doesNotMatch(body[0], /sendToModuleOverlays\(/, 'the rebuild still uses the module-only fan-out')
+  assert.doesNotMatch(
+    body[0],
+    /sendToModuleOverlays\(/,
+    'the rebuild still uses the module-only fan-out',
+  )
   assert.match(body[0], /timeSeam\('worldRebuilt'/, 'the perf seam bracket was dropped')
 
   // The character-aware helper iterates the character-aware list; the module helper is untouched.
@@ -224,7 +232,7 @@ test('the world-rebuilt signal reaches the damage-meter overlay, without widenin
   assert.doesNotMatch(
     moduleFanout[0],
     /CHARACTER_AWARE_OVERLAYS|'fight'|'overall'/,
-    'the ~10x/s cursor firehose must NOT gain the meter overlay'
+    'the ~10x/s cursor firehose must NOT gain the meter overlay',
   )
 })
 
@@ -236,7 +244,6 @@ test('the ~10x/s cursor firehose still targets the module-reading set only, not 
   assert.doesNotMatch(mod, /sendToCharacterAwareOverlays|CHARACTER_AWARE_OVERLAYS/)
 })
 
-
 test('a cursor from a replaced connection, or from an engine that is not serving reads, is not forwarded', () => {
   const host = code('../src/main/dataServer/engineClientHost.ts')
   const listener = /client\.onModuleChanged\(\(changed\) => \{([\s\S]*?)\n {2}\}\)/.exec(host)
@@ -246,12 +253,16 @@ test('a cursor from a replaced connection, or from an engine that is not serving
   // on every world rebuild, so the listener went permanently silent the moment this process's own
   // fold landed — a loot line played into the log never reached the ledger and a watched respawn
   // never drew a clock. Identity, not generation.
-  assert.match(listener[1], /if \(live\?\.client !== client\) return/, 'the listener is turn-scoped again')
+  assert.match(
+    listener[1],
+    /if \(live\?\.client !== client\) return/,
+    'the listener is turn-scoped again',
+  )
   assert.doesNotMatch(listener[1], /gen !== mine/, 'the generation guard came back — see above')
   assert.match(
     listener[1],
     /if \(!engineServeReadiness\(\)\.ok\) return/,
-    'a cursor is forwarded while the READ path is answering from the app’s own fold'
+    'a cursor is forwarded while the READ path is answering from the app’s own fold',
   )
 })
 
@@ -260,7 +271,11 @@ test('both edges where the serving world changes hands are announced', () => {
   // Going live: the shim starts serving, so windows holding main's own state should take the
   // engine's. Taken once per turn, off the `first` test, because the health loop can run many times.
   assert.match(host, /const first = engineLiveOn === null/)
-  assert.match(host, /if \(first\) \{\s*pushWorldChanged\(\)/, 'the announce is still off the `first` test')
+  assert.match(
+    host,
+    /if \(first\) \{\s*pushWorldChanged\(\)/,
+    'the announce is still off the `first` test',
+  )
   // …AND MAIN'S OWN SYNCHRONOUS READERS ARE PRIMED ON THE SAME EDGE (JOS-496). It has to be this
   // one and not the first read: the engine publishes a cursor when a module MOVES, and a module
   // that has finished folding and gone quiet will not move again for minutes — so a mirror waiting
@@ -290,25 +305,30 @@ test('THE ENGINE’S COMMAND CARRIES THE INSTANT MAIN ALREADY STAMPED', () => {
   // pins that the third holder of the boundary got THAT number and not one of its own.
   assert.match(mod, /serveSessionMark\(at\)/, 'the engine is told some other instant, or none')
   const command = code('../src/main/dataServer/serveCommands.ts')
-  assert.doesNotMatch(command, /Date\.now\(\)/, 'the command file started stamping its own boundary')
+  assert.doesNotMatch(
+    command,
+    /Date\.now\(\)/,
+    'the command file started stamping its own boundary',
+  )
   assert.match(command, /engineRequest\('sessionMarks\.add', \{ at \}\)/)
 })
 
-
 test('the press never waits on the socket, and a refusal is not an error', () => {
   const command = code('../src/main/dataServer/serveCommands.ts')
-  assert.match(command, /export function serveSessionMark\(at: number\): void/, 'the press became async')
+  assert.match(
+    command,
+    /export function serveSessionMark\(at: number\): void/,
+    'the press became async',
+  )
   assert.match(command, /void engineRequest\(/, 'the round trip is awaited somewhere')
   // `accepted: false` is the protocol's honest "not now" while the historical fold runs — the same
   // state this process's own `combat.sessionMark` refuses in. It is a line, never a throw.
-  assert.match(command, /ack\.accepted \?/)
+  // Prettier may wrap this ternary onto its own line; collapse whitespace before pinning.
+  assert.match(command.replace(/\s+/g, ' '), /ack\.accepted \?/)
   assert.doesNotMatch(command, /\bthrow\b/)
 })
 
-
 // ── 3b. the second command (JOS-494) ───────────────────────────────────────────────────
-
-
 
 test('a confirm is a COMMAND, not app knowledge — it does not ride the define push', () => {
   // The line between the two files is what a push MEANS. A define is a preference the engine's
@@ -319,7 +339,7 @@ test('a confirm is a COMMAND, not app knowledge — it does not ride the define 
   assert.equal(
     (ipc.match(/pushAppKnowledge\('respawn\.define'\)/g) ?? []).length,
     2,
-    'the two preference setters stopped announcing the family'
+    'the two preference setters stopped announcing the family',
   )
   assert.doesNotMatch(ipc, /pushAppKnowledge\('respawn\.confirmSighting'/)
   const push = code('../src/main/dataServer/definePush.ts')
@@ -333,19 +353,31 @@ test('the graft uses the mtime the ENGINE served, and this process never stats t
   assert.match(shim, /const mtime = engineLogMtimeMs\(\)/, 'the graft lost its source')
   // Ruling 21: the app could stat the file in one line, and doing so would prove nothing about who
   // owns the fact. Quoting the served one is what makes the answer evidence.
-  assert.doesNotMatch(shim, /statSync|node:fs/, 'the shim started deriving the fact it is meant to quote')
+  assert.doesNotMatch(
+    shim,
+    /statSync|node:fs/,
+    'the shim started deriving the fact it is meant to quote',
+  )
 })
 
 test('absent stays absent — a missing mtime never becomes a lastPlayed of 1970', () => {
   const shim = code('../src/main/dataServer/serveShim.ts')
   assert.match(shim, /if \(mtime === null\) return state/)
   const host = code('../src/main/dataServer/engineClientHost.ts')
-  assert.match(host, /engineLogMtime = health\.logMtimeMs \?\? null/, 'the health read stopped recording it')
+  assert.match(
+    host,
+    /engineLogMtime = health\.logMtimeMs \?\? null/,
+    'the health read stopped recording it',
+  )
   // It dies with the turn, exactly as `engineLiveOn` does: an mtime measured on a world somebody has
   // since replaced is a fact about a different file.
   const bump = /function bumpGen\(\): number \{([\s\S]*?)\n\}/.exec(host)
   assert.ok(bump, 'bumpGen is gone')
-  assert.match(bump[1], /engineLogMtime = null/, 'the served mtime outlives the turn that measured it')
+  assert.match(
+    bump[1],
+    /engineLogMtime = null/,
+    'the served mtime outlives the turn that measured it',
+  )
 })
 
 test('ONLY the character module is grafted, and only that one field', () => {
@@ -358,7 +390,6 @@ test('ONLY the character module is grafted, and only that one field', () => {
   // of what an instrument is for.
   assert.equal((graft[1].match(/lastPlayed/g) ?? []).length, 1)
 })
-
 
 test('the served snapshot SAYS it was served, and the app’s own arm never does', () => {
   const shim = code('../src/main/dataServer/serveShim.ts')
@@ -377,15 +408,16 @@ test('the served snapshot SAYS it was served, and the app’s own arm never does
 // goes permanently silent in exactly the tree `engineHost.ts`'s header promises "exactly the app it
 // got before this ticket", and in any packaged build whose engine failed to spawn.
 
-
-
 test('the engine card takes the engine’s HEADER, and the chips are still joined here', () => {
   const card = code('../src/main/conCard.ts')
   // Verdict 2's full form is "resist profile joined engine-side", and verdict 8 (the client spell
   // table) has not landed — so `engined/src/concard.rs` honestly sends the five EMPTY chips.
   // Carrying those through would make every card under serve read "nothing seen yet" forever while
   // the app holds a ledger that can answer: a regression wearing a cutover's clothes.
-  assert.match(card, /const \{ chips, spellData \} = chipsFor\(card\.name, await servedMobLevel\(card\.name\)\)/)
+  assert.match(
+    card,
+    /const \{ chips, spellData \} = chipsFor\(card\.name, await servedMobLevel\(card\.name\)\)/,
+  )
   const serve = code('../src/main/dataServer/conCardServe.ts')
   assert.doesNotMatch(serve, /chips/, 'the engine’s empty chips started being carried across')
   // …AND THE ONE INPUT THAT DID MOVE (JOS-497 item 1). The chips are still built here, off the
@@ -397,7 +429,7 @@ test('the engine card takes the engine’s HEADER, and the chips are still joine
   assert.doesNotMatch(
     code('../src/main/ipc/resist.ts'),
     /levelOf: \(key, display\) => resistModule\.levelOf\(key, display\),/,
-    'the unconditional synchronous levelOf came back — see JOS-497 item 1'
+    'the unconditional synchronous levelOf came back — see JOS-497 item 1',
   )
 })
 

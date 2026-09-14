@@ -86,7 +86,11 @@ test('RETRY forgives the trail, cancels the backoff and launches NOW', () => {
   h.children[h.children.length - 1].exit(1)
   assert.equal(h.supervisor.state, 'backoff')
   h.supervisor.restart()
-  assert.equal(h.children.length, spawned + 1, 'it launched immediately rather than waiting out 30 s')
+  assert.equal(
+    h.children.length,
+    spawned + 1,
+    'it launched immediately rather than waiting out 30 s',
+  )
   // AND THE TRAIL IS FORGIVEN, which is the half that is invisible and matters most: a collapsed
   // trail carried across a retry would swallow the report for the next real failure. Three fresh
   // fast failures must produce a fresh diagnosis, exemplars and all.
@@ -117,14 +121,18 @@ test('RETRY on an ABSENCE re-probes the disk — the button after restoring a qu
     timer: clock.timer,
     now: clock.now,
     debug: () => undefined,
-    report: () => undefined
+    report: () => undefined,
   })
   supervisor.start()
   assert.equal(supervisor.state, 'absent')
   assert.equal(children.length, 0)
   onDisk = 'C:/repo/engine/target/debug/engined.exe'
   supervisor.restart()
-  assert.equal(children.length, 1, 'the retry asked the disk again rather than trusting the last answer')
+  assert.equal(
+    children.length,
+    1,
+    'the retry asked the disk again rather than trusting the last answer',
+  )
 })
 
 test('RETRY leaves a launch that is already in flight alone', async () => {

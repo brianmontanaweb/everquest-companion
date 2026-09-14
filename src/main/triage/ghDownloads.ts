@@ -76,13 +76,13 @@ export function toDownloadRows(payload: unknown): TriageDownloadRow[] {
           .filter(isInstaller)
           .reduce((sum, a) => sum + count(a.download_count), 0),
         totalDownloads: assets.reduce((sum, a) => sum + count(a.download_count), 0),
-        publishedAt: text(r.published_at)
+        publishedAt: text(r.published_at),
       }
     })
     .sort(
       (a, b) =>
         (b.publishedAt ?? '').localeCompare(a.publishedAt ?? '') ||
-        b.tag.localeCompare(a.tag, undefined, { numeric: true })
+        b.tag.localeCompare(a.tag, undefined, { numeric: true }),
     )
 }
 
@@ -110,19 +110,22 @@ export async function fetchGhDownloads(nowMs: number = Date.now()): Promise<Tria
   try {
     const res = await fetch(RELEASES_URL, {
       headers: { accept: 'application/vnd.github+json', 'user-agent': UA },
-      signal: ctrl.signal
+      signal: ctrl.signal,
     })
     if (!res.ok) {
       return {
         available: false,
-        reason: httpReason(res.status, res.statusText, res.headers.get('x-ratelimit-remaining'))
+        reason: httpReason(res.status, res.statusText, res.headers.get('x-ratelimit-remaining')),
       }
     }
     const payload: unknown = await res.json()
     return { available: true, releases: toDownloadRows(payload), fetchedAtMs: nowMs }
   } catch (err) {
     if (ctrl.signal.aborted) {
-      return { available: false, reason: `github did not answer within ${String(TIMEOUT_MS / 1000)}s` }
+      return {
+        available: false,
+        reason: `github did not answer within ${String(TIMEOUT_MS / 1000)}s`,
+      }
     }
     return { available: false, reason: err instanceof Error ? err.message : String(err) }
   } finally {

@@ -33,24 +33,10 @@
 // main's mob lookup. No IPC, no network, works offline.
 
 import { type JSX, useDeferredValue, useEffect, useMemo, useState } from 'react'
-import {
-  Box,
-  Button,
-  Chip,
-  Paper,
-  Stack,
-  TextField,
-  Typography
-} from '@mui/material'
+import { Box, Button, Chip, Paper, Stack, TextField, Typography } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import PetsIcon from '@mui/icons-material/Pets'
-import type {
-  CharacterSnap,
-  ConsiderSnap,
-  KillMap,
-  KillsSnap,
-  MobEntry
-} from '@shared/types'
+import type { CharacterSnap, ConsiderSnap, KillMap, KillsSnap, MobEntry } from '@shared/types'
 import { killIndex, killsFor } from '@shared/kills'
 import type { NavBack } from '../../appRouting'
 import { useBackTarget } from '../../appBack'
@@ -76,12 +62,11 @@ function useKills(): KillMap {
   return useMemo(() => killIndex(snap?.mobs ?? {}), [snap])
 }
 
-
 /** ONE search result. The catalog row IS the row — level, zones and drop count, all local. */
 function MobResultRow({
   entry,
   kills,
-  onOpen
+  onOpen,
 }: {
   entry: MobEntry
   kills: KillMap
@@ -109,7 +94,7 @@ function MobResultRow({
         borderRadius: 1,
         cursor: 'pointer',
         minWidth: 0,
-        '&:hover': { bgcolor: 'action.hover' }
+        '&:hover': { bgcolor: 'action.hover' },
       }}
     >
       <Typography variant="body2" sx={{ fontWeight: 600, flexShrink: 0 }}>
@@ -165,7 +150,7 @@ function ZoneRoster({
   zone,
   rows,
   kills,
-  onOpen
+  onOpen,
 }: {
   zone: string
   rows: MobEntry[]
@@ -229,7 +214,7 @@ function NoZoneYet({ hasConsidered }: { hasConsidered: boolean }): JSX.Element {
         justifyContent: 'center',
         gap: 1,
         color: 'text.secondary',
-        textAlign: 'center'
+        textAlign: 'center',
       }}
     >
       {!hasConsidered && <PetsIcon sx={{ fontSize: 44, opacity: 0.5 }} />}
@@ -258,7 +243,7 @@ function MobDrill({
   target,
   kills,
   nav,
-  onClose
+  onClose,
 }: {
   target: MobTarget
   kills: KillMap
@@ -305,7 +290,7 @@ export default function MobsView({
   target,
   targetNonce,
   onTargetConsumed,
-  nav
+  nav,
 }: {
   target?: MobTarget | null
   targetNonce?: number
@@ -344,7 +329,8 @@ export default function MobsView({
   // when you zone, so memoize on the zone string.
   const zoneRows = useMemo(() => (zone ? mobsInZone(zone, MOB_CATALOG) : []), [zone])
 
-  if (drill) return <MobDrill target={drill} kills={kills} nav={nav} onClose={() => setDrill(null)} />
+  if (drill)
+    return <MobDrill target={drill} kills={kills} nav={nav} onClose={() => setDrill(null)} />
 
   return (
     <Stack spacing={1.5} sx={{ height: '100%' }}>
@@ -365,7 +351,12 @@ export default function MobsView({
                 {hits.length} of {MOB_CATALOG.length} mobs
               </Typography>
               {hits.map((h) => (
-                <MobResultRow key={h.entry.page} entry={h.entry} kills={kills} onOpen={openNative} />
+                <MobResultRow
+                  key={h.entry.page}
+                  entry={h.entry}
+                  kills={kills}
+                  onOpen={openNative}
+                />
               ))}
             </>
           ) : (

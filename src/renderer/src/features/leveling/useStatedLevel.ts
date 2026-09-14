@@ -15,7 +15,6 @@ import type { CharacterSnap, ProgressionSnap } from '@shared/types'
 import { currentLevelRead } from '@shared/currentLevel'
 import { useModule } from '../../lib/useModule'
 
-
 export interface StatedLevel {
   /** the level the log last stated, or null when nothing ever has */
   level: number | null

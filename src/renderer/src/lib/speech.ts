@@ -43,14 +43,14 @@ import type {
   SpeechSayResult,
   SpeechUnavailableReason,
   SpeechVoice,
-  VoicePrefs
+  VoicePrefs,
 } from '@shared/types'
 import {
   DEFAULT_VOICE_PREFS,
   MAX_SPEECH_RATE,
   MIN_SPEECH_RATE,
   resolveAlertAudio,
-  speechTextFor
+  speechTextFor,
 } from '../../../shared/speechText'
 
 // ------------------------------------------------------------------ the pure decisions
@@ -101,7 +101,7 @@ const SOUND_ONLY: SpeechPlan = { sound: true, speak: null }
 export function speechPlan(
   def: Pick<AlertDef, 'name' | 'audio' | 'speech'>,
   firing: Pick<FiredAlert, 'spell'> | null,
-  muted: boolean
+  muted: boolean,
 ): SpeechPlan {
   if (muted) return SILENT
   const action: AlertAudioChoice = resolveAlertAudio(def)
@@ -141,13 +141,16 @@ export function voiceIdOf(voice: VoiceLike): string {
  */
 export function pickVoice<T extends VoiceLike>(
   voices: readonly T[],
-  wanted: string | null | undefined
+  wanted: string | null | undefined,
 ): T | null {
   if (!wanted) return null
   const exact = voices.find((v) => voiceIdOf(v) === wanted || v.name === wanted)
   if (exact) return exact
   const lower = wanted.toLowerCase()
-  return voices.find((v) => voiceIdOf(v).toLowerCase() === lower || v.name.toLowerCase() === lower) ?? null
+  return (
+    voices.find((v) => voiceIdOf(v).toLowerCase() === lower || v.name.toLowerCase() === lower) ??
+    null
+  )
 }
 
 /** Clamp a number into [lo, hi]; anything non-finite becomes `fallback`. */
@@ -202,7 +205,9 @@ const VOICES_TIMEOUT_MS = 2000
 let voicesPromise: Promise<SpeechSynthesisVoice[]> | null = null
 
 function synth(): SpeechSynthesis | null {
-  return typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis : null
+  return typeof window !== 'undefined' && 'speechSynthesis' in window
+    ? window.speechSynthesis
+    : null
 }
 
 export function loadSystemVoices(): Promise<SpeechSynthesisVoice[]> {
@@ -251,7 +256,7 @@ export async function listVoices(engine: SpeechEngine): Promise<SpeechVoice[]> {
     id: voiceIdOf(v),
     label: v.name,
     engine: 'system' as const,
-    ...(v.lang ? { lang: v.lang } : {})
+    ...(v.lang ? { lang: v.lang } : {}),
   }))
 }
 
@@ -282,7 +287,8 @@ export async function listVoices(engine: SpeechEngine): Promise<SpeechVoice[]> {
  *
  * Null means there is nothing to say about setup.
  */
-export type SpeechSetupGap = 'engine-not-installed' | 'no-voices' | 'engine-failed' | 'engine-unloadable'
+export type SpeechSetupGap =
+  'engine-not-installed' | 'no-voices' | 'engine-failed' | 'engine-unloadable'
 
 /** The subset of the above that only a failed utterance can reveal. */
 export type SpeechEngineFault = 'engine-failed' | 'engine-unloadable'
@@ -295,7 +301,10 @@ export type SpeechEngineFault = 'engine-failed' | 'engine-unloadable'
  * `voiceschanged` dance means "not yet", not "none", and flashing "no voices" for 200 ms on every
  * row would be a lie with a UI attached (see `useSpeechSetup`).
  */
-export function speechSetupGap(engine: SpeechEngine, voices: readonly unknown[]): SpeechSetupGap | null {
+export function speechSetupGap(
+  engine: SpeechEngine,
+  voices: readonly unknown[],
+): SpeechSetupGap | null {
   if (voices.length > 0) return null
   return engine === 'kokoro' ? 'engine-not-installed' : 'no-voices'
 }
@@ -312,13 +321,14 @@ export function speechSetupGap(engine: SpeechEngine, voices: readonly unknown[])
  * cannot see which happened.
  */
 export const SPEECH_SETUP_NOTES: Record<SpeechSetupGap, string> = {
-  'engine-not-installed': 'The natural voice isn’t downloaded - a Windows voice speaks until it is.',
+  'engine-not-installed':
+    'The natural voice isn’t downloaded - a Windows voice speaks until it is.',
   'no-voices': 'This machine has no speech voices installed.',
   'engine-failed':
     'The natural voice is downloaded but could not speak - a Windows voice is speaking instead.',
   'engine-unloadable':
     'The natural voice is downloaded but will not start on this PC - a Windows voice is speaking ' +
-    'instead. Installing the Microsoft Visual C++ x64 runtime usually fixes it.'
+    'instead. Installing the Microsoft Visual C++ x64 runtime usually fixes it.',
 }
 
 // ------------------------------------------------------- the engine fault, once it has spoken
@@ -353,7 +363,7 @@ export function speechEngineFault(): SpeechEngineFault | null {
  * that can UNDO one. See `clearSpeechEngineFault`.
  */
 export function onSpeechEngineFault(
-  listener: (fault: SpeechEngineFault | null) => void
+  listener: (fault: SpeechEngineFault | null) => void,
 ): () => void {
   faultListeners.add(listener)
   return () => faultListeners.delete(listener)
@@ -467,7 +477,7 @@ function warnKokoroFallback(reason: string): void {
   // eslint-disable-next-line no-console
   console.warn(
     `[everquest-companion] voice: the downloaded speech engine is unavailable (${reason}) - ` +
-      'speaking with the system voice instead.'
+      'speaking with the system voice instead.',
   )
 }
 
@@ -477,7 +487,11 @@ function warnKokoroFallback(reason: string): void {
  * Resolves once the utterance has been HANDED to an engine, not when it finishes — an alert
  * must not make the firing path wait on speech synthesis.
  */
-export async function speak(text: string, voicePrefs: VoicePrefs, opts: SpeakOptions = {}): Promise<void> {
+export async function speak(
+  text: string,
+  voicePrefs: VoicePrefs,
+  opts: SpeakOptions = {},
+): Promise<void> {
   const said = text.trim()
   if (!said) return
   const voiceId = voicePrefs.voiceId
@@ -497,7 +511,7 @@ export async function speak(text: string, voicePrefs: VoicePrefs, opts: SpeakOpt
 async function sayThroughEngine(
   text: string,
   voicePrefs: VoicePrefs,
-  opts: SpeakOptions
+  opts: SpeakOptions,
 ): Promise<boolean> {
   let result: SpeechSayResult
   try {
@@ -530,7 +544,12 @@ function speakSystem(text: string, voicePrefs: VoicePrefs, opts: SpeakOptions): 
   const s = synth()
   if (!s) return
   const utterance = new SpeechSynthesisUtterance(text)
-  utterance.rate = clamp(voicePrefs.rate, MIN_SPEECH_RATE, MAX_SPEECH_RATE, DEFAULT_VOICE_PREFS.rate)
+  utterance.rate = clamp(
+    voicePrefs.rate,
+    MIN_SPEECH_RATE,
+    MAX_SPEECH_RATE,
+    DEFAULT_VOICE_PREFS.rate,
+  )
   utterance.volume = clamp(voicePrefs.volume * (opts.gain ?? 1), 0, 1, 1)
   // The voice list may still be loading on the very first alert of a session; in that case the
   // utterance goes out in the engine's default voice rather than waiting (an alert is late or

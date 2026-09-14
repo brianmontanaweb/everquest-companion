@@ -128,7 +128,10 @@ function isCombat(message: ClientMessage): message is CombatMessage {
  * disjoint by TYPE rather than by a runtime string test — `knowledge.define` is EXCLUDED here and
  * lands in `describeDefine`, which is where its ack shape says it belongs.
  */
-type KnowledgeMessage = Exclude<Extract<ClientMessage, { op: `knowledge.${string}` }>, DefineMessage>
+type KnowledgeMessage = Exclude<
+  Extract<ClientMessage, { op: `knowledge.${string}` }>,
+  DefineMessage
+>
 
 function isKnowledge(message: ClientMessage): message is KnowledgeMessage {
   return message.op.startsWith('knowledge.')
@@ -201,7 +204,7 @@ function describeCore(
   message: Exclude<
     ClientMessage,
     DefineMessage | CombatMessage | KnowledgeMessage | PerfMessage | SpellsMessage
-  >
+  >,
 ): string {
   switch (message.op) {
     case 'hello':

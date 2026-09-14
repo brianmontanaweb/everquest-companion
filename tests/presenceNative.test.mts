@@ -42,28 +42,36 @@ function surface(): PresenceNative {
   return native
 }
 
-test('THE SURFACE LOADS AT ALL — three system libraries and ten exports', { skip: NOT_WINDOWS }, () => {
-  // The whole error path of `presenceNative.ts`. If this throws on a machine, the watcher says
-  // `X|native-unavailable`, exits, and the app fails open — so this test is also the statement of
-  // what "unavailable" means: not a bad answer, an absent one.
-  assert.doesNotThrow(() => surface())
-})
+test(
+  'THE SURFACE LOADS AT ALL — three system libraries and ten exports',
+  { skip: NOT_WINDOWS },
+  () => {
+    // The whole error path of `presenceNative.ts`. If this throws on a machine, the watcher says
+    // `X|native-unavailable`, exits, and the app fails open — so this test is also the statement of
+    // what "unavailable" means: not a bad answer, an absent one.
+    assert.doesNotThrow(() => surface())
+  },
+)
 
-test('the CURSOR answers a boolean, and answers it fast enough to gate an 8 ms stream', {
-  skip: NOT_WINDOWS
-}, () => {
-  // This is the one call that runs on every tick (JOS-120), so "does it work" and "is it cheap"
-  // are the same question. The budget is deliberately loose — a CI runner is not this machine, and
-  // the number that matters (0.43 us measured locally) is recorded in presenceProtocol.ts's
-  // cadence note. What this catches is a regression of a different ORDER: a marshalling change
-  // that turns a syscall into something with allocation in it.
-  const s = surface()
-  assert.equal(typeof s.cursorShowing(), 'boolean')
-  const t0 = process.hrtime.bigint()
-  for (let i = 0; i < 2000; i++) s.cursorShowing()
-  const usPerCall = Number(process.hrtime.bigint() - t0) / 2000 / 1000
-  assert.ok(usPerCall < 50, `a tick-rate call cost ${usPerCall.toFixed(2)} us`)
-})
+test(
+  'the CURSOR answers a boolean, and answers it fast enough to gate an 8 ms stream',
+  {
+    skip: NOT_WINDOWS,
+  },
+  () => {
+    // This is the one call that runs on every tick (JOS-120), so "does it work" and "is it cheap"
+    // are the same question. The budget is deliberately loose — a CI runner is not this machine, and
+    // the number that matters (0.43 us measured locally) is recorded in presenceProtocol.ts's
+    // cadence note. What this catches is a regression of a different ORDER: a marshalling change
+    // that turns a syscall into something with allocation in it.
+    const s = surface()
+    assert.equal(typeof s.cursorShowing(), 'boolean')
+    const t0 = process.hrtime.bigint()
+    for (let i = 0; i < 2000; i++) s.cursorShowing()
+    const usPerCall = Number(process.hrtime.bigint() - t0) / 2000 / 1000
+    assert.ok(usPerCall < 50, `a tick-rate call cost ${usPerCall.toFixed(2)} us`)
+  },
+)
 
 test('the FOREGROUND WINDOW comes back as a pid and a rectangle', { skip: NOT_WINDOWS }, () => {
   const fg = surface().foreground()
@@ -72,7 +80,12 @@ test('the FOREGROUND WINDOW comes back as a pid and a rectangle', { skip: NOT_WI
   // locked build agent is a flake, not a guard.
   if (fg === null) return
   assert.ok(Number.isInteger(fg.pid) && fg.pid >= 0, `pid ${String(fg.pid)}`)
-  for (const [name, v] of Object.entries({ x: fg.x, y: fg.y, width: fg.width, height: fg.height })) {
+  for (const [name, v] of Object.entries({
+    x: fg.x,
+    y: fg.y,
+    width: fg.width,
+    height: fg.height,
+  })) {
     // NEGATIVE COORDINATES ARE ORDINARY — a window on a left or upper secondary monitor has them,
     // which is why nothing downstream clamps them. Only non-integers would be a decode bug.
     assert.ok(Number.isInteger(v), `${name} is not an integer: ${String(v)}`)
@@ -83,34 +96,46 @@ test('the FOREGROUND WINDOW comes back as a pid and a rectangle', { skip: NOT_WI
   assert.equal(fg.title.includes('\0'), false, 'no NUL padding leaked out of the reused buffer')
 })
 
-test('IMAGE PATHS answer for this process, and answer EMPTY for one that is not there', {
-  skip: NOT_WINDOWS
-}, () => {
-  // `QueryFullProcessImageNameW` on a PROCESS_QUERY_LIMITED_INFORMATION handle is what replaced
-  // .NET's `.MainModule.FileName` in JOS-164, because that opened the process and THREW for every
-  // protected one. It answers for far more processes and costs less — and, critically, it has one
-  // failure value rather than an exception.
-  const s = surface()
-  const self = s.imagePath(process.pid)
-  assert.match(self.toLowerCase(), /\\(node|electron)\.exe$/, `a full image path, not a name: ${self}`)
-  assert.equal(s.imagePath(NO_SUCH_PID), '', 'a pid that is not there answers empty, not garbage')
-})
+test(
+  'IMAGE PATHS answer for this process, and answer EMPTY for one that is not there',
+  {
+    skip: NOT_WINDOWS,
+  },
+  () => {
+    // `QueryFullProcessImageNameW` on a PROCESS_QUERY_LIMITED_INFORMATION handle is what replaced
+    // .NET's `.MainModule.FileName` in JOS-164, because that opened the process and THREW for every
+    // protected one. It answers for far more processes and costs less — and, critically, it has one
+    // failure value rather than an exception.
+    const s = surface()
+    const self = s.imagePath(process.pid)
+    assert.match(
+      self.toLowerCase(),
+      /\\(node|electron)\.exe$/,
+      `a full image path, not a name: ${self}`,
+    )
+    assert.equal(s.imagePath(NO_SUCH_PID), '', 'a pid that is not there answers empty, not garbage')
+  },
+)
 
-test('THE RUNNING SCAN finds a process under a given root, and never confuses -1 with 0', {
-  skip: NOT_WINDOWS
-}, () => {
-  // The scan that decides `eqRunning`, and therefore — with the shipped `hideWhenNotRunning`
-  // default — whether every overlay is on screen. On JOS-164's reporting machine the .NET version
-  // of this answered 0 for a machine with the game running, which hides every overlay forever.
-  const s = surface()
-  const ownRoot = eqRootPrefix(dirname(process.execPath))
-  assert.equal(s.eqRunning(ownRoot), 1, 'this very process lives under that root')
+test(
+  'THE RUNNING SCAN finds a process under a given root, and never confuses -1 with 0',
+  {
+    skip: NOT_WINDOWS,
+  },
+  () => {
+    // The scan that decides `eqRunning`, and therefore — with the shipped `hideWhenNotRunning`
+    // default — whether every overlay is on screen. On JOS-164's reporting machine the .NET version
+    // of this answered 0 for a machine with the game running, which hides every overlay forever.
+    const s = surface()
+    const ownRoot = eqRootPrefix(dirname(process.execPath))
+    assert.equal(s.eqRunning(ownRoot), 1, 'this very process lives under that root')
 
-  // NOT asserted as 0: the machine running this suite may have EverQuest open, and that is a
-  // legitimate 1. What must never happen is -1, which is the enumeration itself failing — the
-  // value the loop reads as "hold the last answer" rather than "the game vanished".
-  assert.notEqual(s.eqRunning('ZZ:\\nowhere\\'), -1, 'the enumeration works')
-  // An empty root disables path matching entirely and leaves only the client image name, which is
-  // the posture on an install whose EQ directory could not be resolved.
-  assert.notEqual(s.eqRunning(''), -1)
-})
+    // NOT asserted as 0: the machine running this suite may have EverQuest open, and that is a
+    // legitimate 1. What must never happen is -1, which is the enumeration itself failing — the
+    // value the loop reads as "hold the last answer" rather than "the game vanished".
+    assert.notEqual(s.eqRunning('ZZ:\\nowhere\\'), -1, 'the enumeration works')
+    // An empty root disables path matching entirely and leaves only the client image name, which is
+    // the posture on an install whose EQ directory could not be resolved.
+    assert.notEqual(s.eqRunning(''), -1)
+  },
+)

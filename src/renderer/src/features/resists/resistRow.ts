@@ -193,7 +193,7 @@ export function spellDisplayName(key: string): string {
     .map((word, i) =>
       i > 0 && SMALL_WORDS.has(word)
         ? word
-        : word.replace(/(^|-)([a-z])/g, (_m, lead: string, ch: string) => lead + ch.toUpperCase())
+        : word.replace(/(^|-)([a-z])/g, (_m, lead: string, ch: string) => lead + ch.toUpperCase()),
     )
     .join(' ')
 }
@@ -238,11 +238,13 @@ export function castTermsText(ev: ResistSpellEvidence): string[] {
       ev.overchannel.casterClasses > 0
         ? ` (${String(ev.overchannel.casterClasses)} caster classes)`
         : ' (your caster classes were never stated, so only the flat 150 is counted)'
-    parts.push(`${String(ev.overchannel.casts)} in overchannel at ${String(ev.overchannel.adj)} adjust${tail}`)
+    parts.push(
+      `${String(ev.overchannel.casts)} in overchannel at ${String(ev.overchannel.adj)} adjust${tail}`,
+    )
   }
   if (ev.unknownInvocation > 0) {
     parts.push(
-      `${String(ev.unknownInvocation)} before the log said which invocation was up - counted, not in the number`
+      `${String(ev.unknownInvocation)} before the log said which invocation was up - counted, not in the number`,
     )
   }
   return parts

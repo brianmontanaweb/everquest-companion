@@ -41,13 +41,7 @@
 
 /** Every `/outputfile` kind this app knows the name of. */
 export type OutputKindId =
-  | 'inventory'
-  | 'guild'
-  | 'raid'
-  | 'spellbook'
-  | 'factions'
-  | 'achievements'
-  | 'alternateadv'
+  'inventory' | 'guild' | 'raid' | 'spellbook' | 'factions' | 'achievements' | 'alternateadv'
 
 export interface OutputKindDef {
   id: OutputKindId
@@ -104,8 +98,8 @@ export const OUTPUT_KINDS: readonly OutputKindDef[] = [
       'Open Dragon’s Hoard too - it only dumps while its window is open.',
       'Open your Tradeskill Depot once if you keep anything in it.',
       'Type /outputfile inventory.',
-      'Wind Runes and other currency-tab items are never in the dump - the game leaves them out.'
-    ]
+      'Wind Runes and other currency-tab items are never in the dump - the game leaves them out.',
+    ],
   },
   {
     id: 'guild',
@@ -115,7 +109,7 @@ export const OUTPUT_KINDS: readonly OutputKindDef[] = [
     fileKindVerified: false,
     status: 'awaiting-sample',
     note: 'Guild roster dump - no verified sample; run /outputfile guild and commit a fixture.',
-    steps: []
+    steps: [],
   },
   {
     id: 'raid',
@@ -125,7 +119,7 @@ export const OUTPUT_KINDS: readonly OutputKindDef[] = [
     fileKindVerified: false,
     status: 'awaiting-sample',
     note: 'Raid roster dump - no verified sample; run /outputfile raid and commit a fixture.',
-    steps: []
+    steps: [],
   },
   {
     id: 'spellbook',
@@ -135,7 +129,7 @@ export const OUTPUT_KINDS: readonly OutputKindDef[] = [
     fileKindVerified: false,
     status: 'awaiting-sample',
     note: 'Spellbook dump - no verified sample; run /outputfile spellbook and commit a fixture.',
-    steps: []
+    steps: [],
   },
   {
     id: 'factions',
@@ -145,7 +139,7 @@ export const OUTPUT_KINDS: readonly OutputKindDef[] = [
     fileKindVerified: false,
     status: 'awaiting-sample',
     note: 'Faction standings dump - no verified sample; run /outputfile factions and commit a fixture.',
-    steps: []
+    steps: [],
   },
   {
     id: 'achievements',
@@ -160,7 +154,7 @@ export const OUTPUT_KINDS: readonly OutputKindDef[] = [
     // (bank/hoard/depot windows). This one is not: the server already knows which achievements you
     // have, no window has to be open, and it can be typed anywhere. Saying nothing is the honest
     // answer; inventing a ritual would be a caveat with no fact under it.
-    steps: []
+    steps: [],
   },
   {
     id: 'alternateadv',
@@ -170,8 +164,8 @@ export const OUTPUT_KINDS: readonly OutputKindDef[] = [
     fileKindVerified: false,
     status: 'awaiting-sample',
     note: 'Alternate-advancement dump - no verified sample; run /outputfile alternateadv and commit a fixture.',
-    steps: []
-  }
+    steps: [],
+  },
 ]
 
 export function outputKind(id: OutputKindId): OutputKindDef {
@@ -218,7 +212,7 @@ export interface OutputFileStatus {
  */
 export function outputFileStatus(
   def: OutputKindDef,
-  found: { path: string; updatedAt: string } | null
+  found: { path: string; updatedAt: string } | null,
 ): OutputFileStatus {
   return {
     kind: def.id,
@@ -228,7 +222,7 @@ export function outputFileStatus(
     steps: def.steps,
     supported: def.status === 'supported',
     path: found?.path ?? null,
-    updatedAt: found?.updatedAt ?? null
+    updatedAt: found?.updatedAt ?? null,
   }
 }
 
@@ -243,7 +237,7 @@ export function outputFileStatus(
 export function outputFileNames(
   def: OutputKindDef,
   characterName?: string,
-  server?: string
+  server?: string,
 ): string[] {
   const names: string[] = []
   if (characterName && server) names.push(`${characterName}_${server}-${def.fileKind}.txt`)
@@ -270,7 +264,7 @@ export function preferredOutputFile(
   filesNewestFirst: readonly string[],
   def: OutputKindDef,
   characterName?: string,
-  server?: string
+  server?: string,
 ): string | null {
   if (filesNewestFirst.length === 0) return null
   for (const want of outputFileNames(def, characterName, server)) {

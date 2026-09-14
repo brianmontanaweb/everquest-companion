@@ -18,5 +18,5 @@ export const overlaySnapBridge = {
   getOverlaySnap: (): Promise<OverlaySnapPrefs> => ipcRenderer.invoke(IPC.overlaySnapGet),
   /** Merge-patch it; the next drag of an already-open overlay obeys the new value. */
   setOverlaySnap: (patch: Partial<OverlaySnapPrefs>): Promise<OverlaySnapPrefs> =>
-    ipcRenderer.invoke(IPC.overlaySnapSet, patch)
+    ipcRenderer.invoke(IPC.overlaySnapSet, patch),
 }

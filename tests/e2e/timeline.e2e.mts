@@ -52,7 +52,7 @@ import {
   snapshot,
   sleep,
   timelineDisabled,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -62,7 +62,7 @@ const SIZES = [
   { width: 900, height: 420 },
   { width: 760, height: 640 },
   { width: 620, height: 360 },
-  { width: 520, height: 320 }
+  { width: 520, height: 320 },
 ]
 
 /** One sample of the timeline's geometry: what was measured, and what got drawn. */
@@ -90,7 +90,7 @@ function timelineGeom(page: Page): Promise<TlGeom | null> {
       fh: Math.round(frame.clientHeight),
       overflow: `${s.overflowX}/${s.overflowY}`,
       sw: Math.round(Number(svg.getAttribute('width') ?? 0)),
-      sh: Math.round(Number(svg.getAttribute('height') ?? 0))
+      sh: Math.round(Number(svg.getAttribute('height') ?? 0)),
     }
   })
 }
@@ -128,7 +128,13 @@ async function checkAtSize(page: Page, tag: string): Promise<void> {
     if (g) samples.push(g)
     await sleep(SAMPLE_GAP_MS)
   }
-  if (!check(`[${tag}] the timeline chart is mounted`, samples.length === 6, `${String(samples.length)}/6 samples`)) {
+  if (
+    !check(
+      `[${tag}] the timeline chart is mounted`,
+      samples.length === 6,
+      `${String(samples.length)}/6 samples`,
+    )
+  ) {
     return
   }
   const keys = samples.map((s) => `${String(s.fw)}x${String(s.fh)}→${String(s.sw)}x${String(s.sh)}`)
@@ -137,18 +143,26 @@ async function checkAtSize(page: Page, tag: string): Promise<void> {
   // new lanes cannot change (they make it taller). A constant width at a fixed window size is
   // therefore the sharp assertion; the revisit test below is the general one.
   const widths = [...new Set(samples.map((s) => `${String(s.fw)}/${String(s.sw)}`))]
-  check(`[${tag}] the chart's WIDTH never moves at a fixed window size`, widths.length === 1, widths.join(' | '))
+  check(
+    `[${tag}] the chart's WIDTH never moves at a fixed window size`,
+    widths.length === 1,
+    widths.join(' | '),
+  )
   const back = revisited(keys)
-  check(`[${tag}] no geometry is revisited — the measure→scrollbar→measure loop is gone`, back === '', back)
+  check(
+    `[${tag}] no geometry is revisited — the measure→scrollbar→measure loop is gone`,
+    back === '',
+    back,
+  )
   check(
     `[${tag}] the MEASURED frame is not a scroller, so no scrollbar can change it`,
     samples[0].overflow === 'visible/visible',
-    samples[0].overflow
+    samples[0].overflow,
   )
   check(
     `[${tag}] …and the frame keeps a usable box (it never collapses to 0)`,
     samples[0].fh >= 120 && samples[0].fw >= 100,
-    `${String(samples[0].fw)}x${String(samples[0].fh)}`
+    `${String(samples[0].fw)}x${String(samples[0].fh)}`,
   )
 }
 
@@ -169,18 +183,26 @@ async function run(app: ElectronApplication, page: Page): Promise<void> {
   const settledWorld = await settle(
     () => snapshot(page),
     (s) => !s.segments.some((seg) => seg.kind === 'current'),
-    { timeoutMs: 90_000, pollMs: 500 }
+    { timeoutMs: 90_000, pollMs: 500 },
   )
   check(
     'the fixture’s last fight has closed — nothing but the window can move the chart now',
     !settledWorld.segments.some((s) => s.kind === 'current'),
-    settledWorld.segments.find((s) => s.kind === 'current')?.name ?? 'none open'
+    settledWorld.segments.find((s) => s.kind === 'current')?.name ?? 'none open',
   )
 
   // The Timeline is only offered once a selection HAS an event ring; that resolution is a couple
   // of IPC hops after the handoff, so wait for the answer instead of sleeping past it.
-  if (await settle(() => timelineDisabled(page), (d) => !d, { timeoutMs: 15_000 })) {
-    note('no selection with an event ring in this fixture — the Timeline view is disabled, so its sizing cannot be measured')
+  if (
+    await settle(
+      () => timelineDisabled(page),
+      (d) => !d,
+      { timeoutMs: 15_000 },
+    )
+  ) {
+    note(
+      'no selection with an event ring in this fixture — the Timeline view is disabled, so its sizing cannot be measured',
+    )
     return
   }
   await page.click('[data-testid="view-toggle"] button:nth-child(2)')
@@ -188,7 +210,9 @@ async function run(app: ElectronApplication, page: Page): Promise<void> {
 
   const win = await app.browserWindow(page)
   const wide = await win.evaluate((w) => w.getBounds())
-  await win.evaluate((w) => { w.setMinimumSize(400, 300) })
+  await win.evaluate((w) => {
+    w.setMinimumSize(400, 300)
+  })
   for (const size of SIZES) {
     // The resize, the ResizeObserver callback and React's render all have to land BEFORE the
     // samples start, or the first sample legitimately differs from the rest and reads as a
@@ -197,8 +221,17 @@ async function run(app: ElectronApplication, page: Page): Promise<void> {
     // (MEASURED 2026-08-06: a 602→462 step inside the sample window, reported as a moving width).
     // So: wait for the frame to actually BE the new size, and only then for it to hold still.
     const was = (await timelineGeom(page))?.fw ?? -1
-    await win.evaluate((w, b) => { w.setBounds(b) }, { ...wide, ...size })
-    await settle(() => timelineGeom(page), (g) => g !== null && g.fw !== was, { timeoutMs: 15_000 })
+    await win.evaluate(
+      (w, b) => {
+        w.setBounds(b)
+      },
+      { ...wide, ...size },
+    )
+    await settle(
+      () => timelineGeom(page),
+      (g) => g !== null && g.fw !== was,
+      { timeoutMs: 15_000 },
+    )
     // …and then HOLD STILL, which is the part that has to be generous here.
     //
     // The frame takes the window's new size SYNCHRONOUSLY; the SVG is redrawn by React off the
@@ -236,7 +269,11 @@ async function main(): Promise<void> {
 
     await run(app, page)
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     if (failures.length) await dumpArtifacts(page, 'timeline-FAIL')
   } finally {
     await close()

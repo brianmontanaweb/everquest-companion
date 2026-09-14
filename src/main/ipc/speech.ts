@@ -55,10 +55,15 @@ import {
   ensureVcRuntimePlacement,
   findOnnxBindingDir,
   onnxBindingRoots,
-  provisionVcRuntime
+  provisionVcRuntime,
 } from '../speech/vcRuntime'
 import { getVoicePrefs, setVoicePrefs } from '../store'
-import { classifyFailure, markFunnelStep, noteSpeechFailure, recordFunnelFailure } from '../telemetry'
+import {
+  classifyFailure,
+  markFunnelStep,
+  noteSpeechFailure,
+  recordFunnelFailure,
+} from '../telemetry'
 import { sendToMain } from '../windows'
 import type { SpeechInstallProgress } from '../../shared/alertTypes'
 import type { SpeechEngine } from '../speech/engine'
@@ -66,7 +71,7 @@ import type {
   SpeechInstallResult,
   SpeechSayResult,
   SpeechVoice,
-  VoicePrefs
+  VoicePrefs,
 } from '../../shared/types'
 
 /** Longest voice id this app will accept from the renderer. SAPI voice URIs are the long ones
@@ -110,7 +115,9 @@ function onnxBindingDir(): string | null {
   // would not do — it would re-probe the filesystem on every call for the one install that
   // cannot find its binding.
   if (bindingDir === undefined) {
-    bindingDir = findOnnxBindingDir(onnxBindingRoots({ appPath: app.getAppPath(), cwd: process.cwd() }))
+    bindingDir = findOnnxBindingDir(
+      onnxBindingRoots({ appPath: app.getAppPath(), cwd: process.cwd() }),
+    )
   }
   return bindingDir
 }
@@ -134,7 +141,7 @@ function speechEngine(): SpeechEngine {
     // both dev and a packaged build.
     workerPath: join(__dirname, 'speechWorker.js'),
     onError: (message, err) => logError('main:speech', { message, err }),
-    onInfo: (message) => logInfo(message)
+    onInfo: (message) => logInfo(message),
   })
   return engine
 }
@@ -183,7 +190,7 @@ function noteDownloadOutcome(result: SpeechInstallResult): void {
 async function installVcRuntime(): Promise<void> {
   const result = await provisionVcRuntime({
     userData: app.getPath('userData'),
-    bindingDir: onnxBindingDir()
+    bindingDir: onnxBindingDir(),
   })
   if (result.message !== undefined) {
     logError('main:speech', { message: `vc runtime provisioning: ${result.message}` })
@@ -192,7 +199,7 @@ async function installVcRuntime(): Promise<void> {
   if (result.placed > 0) {
     logInfo(
       `[everquest-companion] Speech: installed the Microsoft Visual C++ runtime beside the ` +
-        `engine (${result.placed} files)`
+        `engine (${result.placed} files)`,
     )
     speechEngine().retryAfterRepair()
   }
@@ -211,8 +218,8 @@ function startInstall(): Promise<SpeechInstallResult> {
       provisionKokoro({
         userData: app.getPath('userData'),
         onProgress: (progress: SpeechInstallProgress) =>
-          sendToMain(IPC.onSpeechInstallProgress, progress)
-      })
+          sendToMain(IPC.onSpeechInstallProgress, progress),
+      }),
     )
     .catch((err: unknown): SpeechInstallResult => {
       // provisionKokoro is written not to reject; this is the belt, so one unexpected throw
@@ -266,7 +273,8 @@ export function registerSpeechIpc(): void {
     // The system tier is the renderer's own `speechSynthesis`; there is nothing to provision,
     // and it is always there. Answering ok keeps the caller from special-casing it.
     if (engineId === 'system') return { ok: true }
-    if (E2E) return { ok: false, reason: 'not-implemented', message: 'downloads are disabled in e2e' }
+    if (E2E)
+      return { ok: false, reason: 'not-implemented', message: 'downloads are disabled in e2e' }
     return installing ?? startInstall()
   })
 
@@ -274,7 +282,8 @@ export function registerSpeechIpc(): void {
     // The price of the download, read from the same pinned table the downloader uses — so the
     // "~115 MB" the button promises is the sum of the two assets it will actually fetch. The
     // system tier downloads nothing, and so does an engine id we do not recognize.
-    if (typeof engineId !== 'string' || !(SPEECH_ENGINES as readonly string[]).includes(engineId)) return 0
+    if (typeof engineId !== 'string' || !(SPEECH_ENGINES as readonly string[]).includes(engineId))
+      return 0
     return engineId === 'kokoro' ? KOKORO_TOTAL_BYTES : 0
   })
 

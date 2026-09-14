@@ -40,14 +40,16 @@ export const plannerApi = {
   /** What the active character is WEARING, from their newest `/outputfile inventory` dump —
    *  `null` when no dump exists. Re-ask on `onInventoryReload` and the tab fills itself the
    *  moment the command is typed in game. */
-  plannerInventory: (): Promise<PlannerInventory | null> => ipcRenderer.invoke(IPC.plannerInventory),
+  plannerInventory: (): Promise<PlannerInventory | null> =>
+    ipcRenderer.invoke(IPC.plannerInventory),
 
   /** The active character's saved exaltation sets — `[]` when it has none. */
   getExaltPlans: (): Promise<ExaltPlan[]> => ipcRenderer.invoke(IPC.plannerGetPlans),
 
   /** Replace the whole set list for the active character. Main re-validates every field against
    *  the closed slot/socket/class allowlists and silently drops what does not fit. */
-  setExaltPlans: (plans: ExaltPlan[]): Promise<void> => ipcRenderer.invoke(IPC.plannerSetPlans, plans),
+  setExaltPlans: (plans: ExaltPlan[]): Promise<void> =>
+    ipcRenderer.invoke(IPC.plannerSetPlans, plans),
 
   // ---- gear planner (JOS-283 phase 2, JOS-285 phase 4) ----
 
@@ -91,5 +93,5 @@ export const plannerApi = {
   /** Replace the whole wish list for the active character. Main re-validates every entry — the
    *  item key, the two kinds, the closed socket allowlist — and silently drops what does not fit.
    *  Whole-document, because the list and the two facts about it must move together. */
-  setWishlist: (list: WishList): Promise<void> => ipcRenderer.invoke(IPC.wishlistSet, list)
+  setWishlist: (list: WishList): Promise<void> => ipcRenderer.invoke(IPC.wishlistSet, list),
 }

@@ -203,7 +203,9 @@ export function scopedStats(args: ScopeArgs): ScopedStats {
   // THE DRAG IS CLAMPED TO THE RECORD (JOS-454, rule 3): the same `statsRangeFor` a window goes
   // through, for the same reason a window goes through it — the drawn edge the user dragged to
   // sits in the trailing gutter, and the gutter is not time anybody played.
-  const range = selection ? statsRangeFor(selection, bounds) : (args.range ?? statsRangeFor(win, bounds))
+  const range = selection
+    ? statsRangeFor(selection, bounds)
+    : (args.range ?? statsRangeFor(win, bounds))
   // A DRAG NARROWS TIME AND NOTHING ELSE (JOS-130). The zone half of a slice is a different
   // dimension from the range half, so a selection drawn while `Zone` is in force still describes
   // that zone — and the wording says both, rather than letting one silently outrank the other.
@@ -219,6 +221,6 @@ export function scopedStats(args: ScopeArgs): ScopedStats {
     zoneExactKey,
     zoneName,
     zoneCaption,
-    stats: rangeStats({ snap, range, combo, zoneKey, zoneExactKey })
+    stats: rangeStats({ snap, range, combo, zoneKey, zoneExactKey }),
   }
 }

@@ -37,6 +37,8 @@
     "lint:fix": "eslint . --fix --cache --cache-location node_modules/.cache/eslint/",
     "lint:measure": "tsx scripts/lint-report.mts --measure",
     "lint:ratchet": "tsx scripts/lint-report.mts --ratchet",
+    "format": "prettier --write \"**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}\"",
     "test": "node --import tsx scripts/testGate.mts unit -- node --import tsx --test --test-concurrency=auto tests/*.test.mts",
     "test:e2e": "node --import tsx scripts/testGate.mts e2e -- node --import tsx tests/e2e/run-all.mts",
     "smoke:release": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sandbox/run-smoke-feedback.ps1",
@@ -52,7 +54,8 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "build:engine": "tsx scripts/build-engine.mts",
     "dist": "npm run build && npm run build:engine && electron-builder --win",
-    "dist:dir": "npm run build && npm run build:engine && electron-builder --win --dir"
+    "dist:dir": "npm run build && npm run build:engine && electron-builder --win --dir",
+    "prepare": "husky"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
@@ -89,11 +92,15 @@
     "electron-vite": "^5.0.0",
     "esbuild": "^0.25.12",
     "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^15.15.0",
+    "husky": "^9.1.7",
     "json-schema-to-typescript": "^15.0.4",
+    "lint-staged": "^17.5.1",
     "pg": "^8.22.0",
     "playwright-core": "^1.62.1",
+    "prettier": "^3.9.6",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.65.0",
@@ -108,5 +115,8 @@
     "electron-vite": {
       "esbuild": "$esbuild"
     }
+  },
+  "lint-staged": {
+    "*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}": "prettier --write"
   }
 }

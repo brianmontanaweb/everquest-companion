@@ -66,13 +66,13 @@ import {
   type FunnelCounter,
   type RollupResult,
   type UsageCohort,
-  type UsageCounter
+  type UsageCounter,
 } from '../../src/shared/telemetryRollup'
 import {
   perfDimsFromEvents,
   perfDimsOf,
   type PerfCubeRow,
-  type PerfInstallDims
+  type PerfInstallDims,
 } from '../../src/shared/telemetryPerfCube'
 
 /** Warm invocations reuse the CONFIG row for this long instead of re-reading it. */
@@ -122,12 +122,7 @@ function pickShard(): number {
   return Math.floor(Math.random() * SHARD_COUNT)
 }
 
-type TelemetryErrorCode =
-  | 'too_large'
-  | 'invalid_event'
-  | 'closed'
-  | 'quota_exceeded'
-  | 'internal'
+type TelemetryErrorCode = 'too_large' | 'invalid_event' | 'closed' | 'quota_exceeded' | 'internal'
 
 interface HttpEvent {
   body?: string
@@ -153,7 +148,7 @@ interface TelemetryConfig {
  */
 const DEFAULT_CONFIG: TelemetryConfig = {
   accepting: false,
-  maxEventsPerIdPerDay: FALLBACK_MAX_EVENTS_PER_DAY
+  maxEventsPerIdPerDay: FALLBACK_MAX_EVENTS_PER_DAY,
 }
 
 let configCache: { at: number; value: TelemetryConfig } | null = null
@@ -170,7 +165,7 @@ function toConfig(row: ConfigRow | undefined): TelemetryConfig {
   return {
     accepting: accepting === true,
     maxEventsPerIdPerDay:
-      typeof max === 'number' && max > 0 ? max : DEFAULT_CONFIG.maxEventsPerIdPerDay
+      typeof max === 'number' && max > 0 ? max : DEFAULT_CONFIG.maxEventsPerIdPerDay,
   }
 }
 
@@ -178,7 +173,7 @@ function json(statusCode: number, body: unknown): HttpResult {
   return {
     statusCode,
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
   }
 }
 
@@ -186,7 +181,7 @@ function fail(
   statusCode: number,
   error: TelemetryErrorCode,
   message: string,
-  extra?: { field?: string }
+  extra?: { field?: string },
 ): HttpResult {
   return json(statusCode, { ok: false, error, message, ...extra })
 }
@@ -316,7 +311,7 @@ const PRIOR_VERSION_SQL = 'SELECT app_version FROM analytics_install WHERE analy
 
 async function priorVersion(analyticsId: string): Promise<string | null> {
   const rows = await withRetry('priorVersion', () =>
-    query<{ app_version: string | null }>(PRIOR_VERSION_SQL, [analyticsId])
+    query<{ app_version: string | null }>(PRIOR_VERSION_SQL, [analyticsId]),
   )
   const version = rows[0]?.app_version
   return typeof version === 'string' ? version : null
@@ -334,7 +329,7 @@ async function touchInstall(
   batch: TelemetryBatch,
   config: TelemetryConfig,
   day: string,
-  prior: string | null
+  prior: string | null,
 ): Promise<InstallFacts | null> {
   const events = batch.events.length
   // NULL when this batch carried no `setupSnapshot`, which is most of them — the UPSERT's
@@ -350,8 +345,8 @@ async function touchInstall(
       config.maxEventsPerIdPerDay,
       cohortForChannel(batch.env.channel),
       stated?.machineClass ?? null,
-      stated?.windowMode ?? null
-    ])
+      stated?.windowMode ?? null,
+    ]),
   )
   const row = rows[0]
   if (row === undefined) return null
@@ -366,7 +361,7 @@ async function touchInstall(
     cohort: cohortOf(row.cohort),
     // The POST-UPDATE row, so this is the same answer the statement just committed — the
     // `cohort` argument above, applied to the two dims beside it.
-    perf: perfDimsOf(row.machine_class, row.window_mode)
+    perf: perfDimsOf(row.machine_class, row.window_mode),
   }
 }
 
@@ -417,8 +412,7 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
  * `usage_daily` IS NOT WRITTEN ANY MORE and is not dropped either: it freezes at cutover and
  * `usage_daily_all` adds it back to every read. infra/schema.sql carries the whole argument.
  */
-const COUNTER_HEAD =
-  'INSERT INTO usage_daily_sharded (day, cohort, shard, metric, dim, n) VALUES '
+const COUNTER_HEAD = 'INSERT INTO usage_daily_sharded (day, cohort, shard, metric, dim, n) VALUES '
 const COUNTER_TAIL =
   ' ON CONFLICT (shard, day, cohort, metric, dim) DO UPDATE' +
   ' SET n = usage_daily_sharded.n + EXCLUDED.n'
@@ -498,7 +492,7 @@ async function writeCounters(day: string, cohort: UsageCohort, roll: RollupResul
         for (const r of rows) params.push(r.metric, r.dim, r.n)
         await c.query(
           `${COUNTER_HEAD}${tuples(rows.length, 3, SHARDED_PARAMS)}${COUNTER_TAIL}`,
-          params
+          params,
         )
       }
       for (const rows of funnelChunks) {
@@ -506,7 +500,7 @@ async function writeCounters(day: string, cohort: UsageCohort, roll: RollupResul
         for (const r of rows) params.push(r.funnel, r.step, r.outcome, r.appVersion, r.n)
         await c.query(
           `${FUNNEL_HEAD}${tuples(rows.length, 5, SHARED_PARAMS)}${FUNNEL_TAIL}`,
-          params
+          params,
         )
       }
       // IN THE SAME TRANSACTION as the counters, for the reason the header gives: a batch is
@@ -529,7 +523,7 @@ async function writeCounters(day: string, cohort: UsageCohort, roll: RollupResul
         }
         await c.query(`${PERF_HEAD}${tuples(rows.length, 6, SHARDED_PARAMS)}${PERF_TAIL}`, params)
       }
-    })
+    }),
   )
 }
 
@@ -567,12 +561,16 @@ function emitMetrics(batch: TelemetryBatch, roll: RollupResult, now: number): vo
       // free, and it is adding a DIMENSION that would orphan the dashboard's widgets (the note
       // below about the cohort split). It is the "is the fleet on fire right now" signal the
       // stored per-fingerprint rows cannot be, because those are keyed on a DAY.
-      { name: 'ErrorsReported', value: counterOf(roll, USAGE_METRICS.errors) }
+      { name: 'ErrorsReported', value: counterOf(roll, USAGE_METRICS.errors) },
     ],
-    now
+    now,
   )
   for (const f of roll.funnels.slice(0, MAX_FUNNEL_EMF)) {
-    emit({ Funnel: f.funnel, Step: f.step, Outcome: f.outcome }, [{ name: 'FunnelStep', value: f.n }], now)
+    emit(
+      { Funnel: f.funnel, Step: f.step, Outcome: f.outcome },
+      [{ name: 'FunnelStep', value: f.n }],
+      now,
+    )
   }
 }
 
@@ -621,7 +619,7 @@ async function accept(batch: TelemetryBatch, now: number): Promise<HttpResult> {
     firstOfDay: facts.firstOfDay,
     // A BOOLEAN, never the two versions: this log is counts only, and a version pair plus a
     // timestamp is a good deal more identifying than a count.
-    upgraded: facts.upgraded
+    upgraded: facts.upgraded,
   })
   return json(202, { ok: true, accepted: batch.events.length })
 }
@@ -673,4 +671,3 @@ export async function handler(event: HttpEvent): Promise<HttpResult> {
     return fail(500, 'internal', 'Something went wrong on our side.')
   }
 }
-

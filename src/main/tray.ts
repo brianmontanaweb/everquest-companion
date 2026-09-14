@@ -51,7 +51,7 @@ import {
   closeIntent,
   shouldShowTrayNotice,
   trayNoticeBounds,
-  type CloseToTrayPrefs
+  type CloseToTrayPrefs,
 } from '../shared/closeToTray'
 import { E2E } from './e2e'
 import { logError } from './errorLog'
@@ -102,7 +102,7 @@ export function hideMainWindowToTray(e: Electron.Event): boolean {
   const intent = closeIntent({
     enabled: getCloseToTray().enabled,
     quitting,
-    trayAvailable: trayAvailable()
+    trayAvailable: trayAvailable(),
   })
   if (intent === 'close') {
     // A REAL CLOSE TAKES THE CARD WITH IT, and this line is not tidiness — it is the difference
@@ -174,10 +174,10 @@ function buildMenu(prefs: CloseToTrayPrefs): Menu {
       checked: prefs.enabled,
       click: (item) => {
         applyCloseToTray({ enabled: item.checked })
-      }
+      },
     },
     { type: 'separator' },
-    { label: 'Quit', click: requestQuit }
+    { label: 'Quit', click: requestQuit },
   ])
 }
 
@@ -310,11 +310,11 @@ function createTrayNoticeWindow(): BrowserWindow {
     backgroundColor: '#0f1115',
     title: 'EQ Legends Companion',
     // ONE definition of the trust boundary, for every window in this app (windows.ts).
-    webPreferences: WEB_PREFERENCES(join(__dirname, '../preload/tray.js'))
+    webPreferences: WEB_PREFERENCES(join(__dirname, '../preload/tray.js')),
   })
   noticeWindow = w
   w.webContents.on('preload-error', (_e, preloadPath, error) =>
-    logError('trayNotice:preload-error', { preloadPath, error })
+    logError('trayNotice:preload-error', { preloadPath, error }),
   )
   // Dismissed WITHOUT acknowledging: clicking anywhere else is not an answer.
   w.on('blur', dismissTrayNotice)

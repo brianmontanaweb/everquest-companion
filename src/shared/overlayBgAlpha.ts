@@ -132,7 +132,7 @@ export interface OverlayBgAlphaPrefs {
 export const DEFAULT_OVERLAY_BG_ALPHA: OverlayBgAlphaPrefs = {
   shared: BG_ALPHA_DEFAULT,
   independent: false,
-  seeded: false
+  seeded: false,
 }
 
 /**
@@ -144,7 +144,7 @@ export function normalizeOverlayBgAlpha(v: unknown): OverlayBgAlphaPrefs {
   return {
     shared: clampBgAlpha(raw.shared),
     independent: raw.independent === true,
-    seeded: raw.seeded === true
+    seeded: raw.seeded === true,
   }
 }
 
@@ -156,7 +156,7 @@ export function normalizeOverlayBgAlpha(v: unknown): OverlayBgAlphaPrefs {
  */
 export function mergeOverlayBgAlpha(
   patch: unknown,
-  base: OverlayBgAlphaPrefs = DEFAULT_OVERLAY_BG_ALPHA
+  base: OverlayBgAlphaPrefs = DEFAULT_OVERLAY_BG_ALPHA,
 ): OverlayBgAlphaPrefs {
   const p = (patch ?? {}) as Partial<OverlayBgAlphaPrefs>
   return {
@@ -165,7 +165,7 @@ export function mergeOverlayBgAlpha(
     // ONE-WAY: bookkeeping a renderer must not be able to un-set. Nothing on the bridge sends it,
     // and a hand-edited `false` over a stored `true` would re-seed twelve windows from a value
     // their owner had already moved away from.
-    seeded: base.seeded === true || p.seeded === true
+    seeded: base.seeded === true || p.seeded === true,
   }
 }
 

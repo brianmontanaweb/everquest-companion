@@ -23,7 +23,7 @@ import {
   EngineError,
   OPS_ARE_EXHAUSTIVE,
   RESULT_GUARDS,
-  type RequestOp
+  type RequestOp,
 } from '../src/shared/dataServer/ops'
 import { fixture, flush, rig, shakeHands } from './dataServerRig.mjs'
 import type {
@@ -31,7 +31,7 @@ import type {
   EngineMessage,
   ModuleSnapshotRequest,
   Reply,
-  ReplyResult
+  ReplyResult,
 } from '../src/shared/dataServer/protocol.generated'
 
 /** Every op the schema's client union names, read off the committed conversation's own shapes. */
@@ -64,7 +64,7 @@ const EVERY_OP: RequestOp[] = [
   'resist.spell',
   'spells.search',
   'logs.setDir',
-  'logs.list'
+  'logs.list',
 ]
 
 test('the registry names every op, and the compile-time pin agrees', () => {
@@ -103,9 +103,9 @@ test('EVERY GUARD IS DISCRIMINATING — no two ops accept each other’s result'
           label: 'fold rate',
           limit: 'at least 1.0 MB/s',
           verdict: 'unmeasured',
-          note: 'nothing has folded yet'
-        }
-      ]
+          note: 'nothing has folded yet',
+        },
+      ],
     },
     'perf.timeline': { epoch: 2, capacity: 30, cadenceMs: 10_000, timeline: [] },
     'view.subscribe': { subscription: 7, subscribed: true },
@@ -144,13 +144,13 @@ test('EVERY GUARD IS DISCRIMINATING — no two ops accept each other’s result'
       domain: 'item',
       name: "Rune of Al'Kabor",
       found: true,
-      record: { name: "Rune of Al'Kabor", lore: true, quest: true, questUses: [] }
+      record: { name: "Rune of Al'Kabor", lore: true, quest: true, questUses: [] },
     },
     'knowledge.mob': {
       domain: 'mob',
       name: 'a sand giant',
       found: true,
-      record: { name: 'a sand giant', cached: true }
+      record: { name: 'a sand giant', cached: true },
     },
     // A MISS IS A LEGAL ANSWER AND THE MATRIX SAYS SO: `found: false` with a record that is still a
     // card. A guard that read `found` rather than `record` would call this the wrong shape.
@@ -158,12 +158,12 @@ test('EVERY GUARD IS DISCRIMINATING — no two ops accept each other’s result'
       domain: 'spell',
       name: 'Spell Of Nothing',
       found: false,
-      record: { queried: 'Spell Of Nothing', found: false, illusion: false }
+      record: { queried: 'Spell Of Nothing', found: false, illusion: false },
     },
     'knowledge.search': {
       query: 'rune',
       total: 41,
-      hits: [{ domain: 'item', name: "Rune of Al'Kabor", page: "Rune of Al'Kabor" }]
+      hits: [{ domain: 'item', name: "Rune of Al'Kabor", page: "Rune of Al'Kabor" }],
     },
     // …and the push-back is a `DefineAck` with no `count`, because one entry is not a list.
     'knowledge.define': { applied: true },
@@ -181,7 +181,7 @@ test('EVERY GUARD IS DISCRIMINATING — no two ops accept each other’s result'
     'resist.spell': {
       spellName: 'Tashani',
       table: 'missing',
-      path: 'C:/nowhere/EverQuest Legends/spells_us.txt'
+      path: 'C:/nowhere/EverQuest Legends/spells_us.txt',
     },
     // THE CATALOGUE SEARCH (JOS-507), and its EMPTY shape for the same reason `resist.levels`'s and
     // `logs.list`'s are empty: a filter that excludes everything is a real answer, and so is an
@@ -195,7 +195,7 @@ test('EVERY GUARD IS DISCRIMINATING — no two ops accept each other’s result'
       limit: 50,
       categories: [],
       spellTable: 'missing',
-      path: 'C:/nowhere/EverQuest Legends/spells_us.txt'
+      path: 'C:/nowhere/EverQuest Legends/spells_us.txt',
     },
     // LOG DISCOVERY (JOS-498). The push answers with the ack six ops already share — one directory
     // is not a list, so there is no `count`, and it joins the family below rather than pretending to
@@ -206,7 +206,7 @@ test('EVERY GUARD IS DISCRIMINATING — no two ops accept each other’s result'
     // read `characters` for truthiness rather than with `in` would call the correct picker's own
     // reply a wrong shape. The `dir` and `readable` beside it are what make it an ANSWER rather than
     // a silence, and they are deliberately NOT what the guard reads.
-    'logs.list': { dir: 'C:/EverQuest Legends/Logs', readable: 'ok', characters: [] }
+    'logs.list': { dir: 'C:/EverQuest Legends/Logs', readable: 'ok', characters: [] },
   }
   for (const op of EVERY_OP) {
     assert.equal(RESULT_GUARDS[op](shapes[op]), true, `${op} refused its own result`)
@@ -234,11 +234,11 @@ test('EVERY GUARD IS DISCRIMINATING — no two ops accept each other’s result'
       // (JOS-498): it is a define BY SHAPE and not by LAW — one directory rather than a whole set,
       // and no fold input at all — and one directory is not a list, so its ack carries no `count`
       // and nothing could tell it from `buffTrust.define`'s.
-      'logs.setDir'
+      'logs.setDir',
     ]),
     // The three lookups mean one shape. They are separable by VALUE (`domain`) and not by guard,
     // which is the honest place to draw that line: a guard is a shape check, not a content check.
-    new Set<RequestOp>(['knowledge.item', 'knowledge.mob', 'knowledge.spell'])
+    new Set<RequestOp>(['knowledge.item', 'knowledge.mob', 'knowledge.spell']),
   ]
   const shareShape = (a: RequestOp, b: RequestOp): boolean =>
     families.some((family) => family.has(a) && family.has(b))
@@ -249,7 +249,7 @@ test('EVERY GUARD IS DISCRIMINATING — no two ops accept each other’s result'
       assert.equal(
         RESULT_GUARDS[op](shapes[other]),
         false,
-        `${op}'s guard accepted ${other}'s result`
+        `${op}'s guard accepted ${other}'s result`,
       )
     }
   }
@@ -270,7 +270,7 @@ test('module.snapshot travels the client as the registry says it does', async ()
     (frame) =>
       frame.dir === 'engine' &&
       (frame.message as Reply).kind === 'reply' &&
-      ((frame.message as Reply).result as { module?: string }).module === 'kills'
+      ((frame.message as Reply).result as { module?: string }).module === 'kills',
   )
   assert.ok(committed, 'the moment carries a kills snapshot')
   r.deliver({ ...(committed.message as Reply), id: sent.id } as EngineMessage)
@@ -280,10 +280,13 @@ test('module.snapshot travels the client as the registry says it does', async ()
   assert.equal(result.seq, 139859)
   // The state is the MODULE's shape, not the protocol's — so this reads a field the protocol has
   // never heard of, which is exactly the point of the open type.
-  assert.deepEqual((result.state as { mobs: Record<string, { count: number }> }).mobs['a sand giant'], {
-    count: 41,
-    lastTs: 1787181707000
-  })
+  assert.deepEqual(
+    (result.state as { mobs: Record<string, { count: number }> }).mobs['a sand giant'],
+    {
+      count: 41,
+      lastTs: 1787181707000,
+    },
+  )
 })
 
 test('module.snapshot carries an ARRAY state through the client unchanged', async () => {
@@ -298,7 +301,7 @@ test('module.snapshot carries an ARRAY state through the client unchanged', asyn
     kind: 'reply',
     id: sent.id,
     ok: true,
-    result: { module: 'loot', seq: 12, state: [{ item: 'Rune of Al`Kabor', qty: 2 }] }
+    result: { module: 'loot', seq: 12, state: [{ item: 'Rune of Al`Kabor', qty: 2 }] },
   })
   const result = await answer
   assert.ok(Array.isArray(result.state))
@@ -314,7 +317,7 @@ test('an unknown module is a notFound the caller can branch on', async () => {
     kind: 'error',
     id: sent.id,
     ok: false,
-    error: { code: 'notFound', message: 'this engine folds no module named "loot.ledger"' }
+    error: { code: 'notFound', message: 'this engine folds no module named "loot.ledger"' },
   })
   await assert.rejects(answer, (e: unknown) => {
     assert.ok(e instanceof EngineError)
@@ -334,7 +337,7 @@ test('a reply carrying ANOTHER op’s result is refused rather than handed over'
     kind: 'reply',
     id: sent.id,
     ok: true,
-    result: { subscription: sent.id, subscribed: true }
+    result: { subscription: sent.id, subscribed: true },
   })
   await assert.rejects(answer, (e: unknown) => {
     assert.ok(e instanceof EngineError)
@@ -356,7 +359,7 @@ test('HEALTH’S NEW FIELDS ARE OPTIONAL, and absent is not zero', async () => {
     kind: 'reply',
     id: first.id,
     ok: true,
-    result: { status: 'idle', epoch: 1, uptimeMs: 12 }
+    result: { status: 'idle', epoch: 1, uptimeMs: 12 },
   })
   const before = await fresh
   assert.equal(before.mark, undefined)
@@ -375,8 +378,8 @@ test('HEALTH’S NEW FIELDS ARE OPTIONAL, and absent is not zero', async () => {
       uptimeMs: 925,
       mark: { log: 'C:\\EQ\\Logs\\eqlog_Primitive_freeport.txt', offset: 9185240 },
       events: 139860,
-      lastEventTs: 1787181707000
-    }
+      lastEventTs: 1787181707000,
+    },
   })
   const after = await live
   assert.equal(after.mark?.offset, 9185240)

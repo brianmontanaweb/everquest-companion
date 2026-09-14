@@ -15,23 +15,23 @@ import {
   exportSettingsString,
   previewShare,
   shareFileName,
-  type ShareSelection
+  type ShareSelection,
 } from '../share'
 import { pushAppKnowledge } from '../dataServer/definePush'
 import { getMainWindow } from '../windows'
 
 export function registerShareIpc(): void {
   ipcMain.handle(IPC.shareExportSettings, (_e, ui: Record<string, string>) =>
-    exportSettingsString(app.getVersion(), ui ?? {})
+    exportSettingsString(app.getVersion(), ui ?? {}),
   )
   ipcMain.handle(IPC.shareExportAlerts, (_e, ids?: string[]) =>
-    exportAlertsString(app.getVersion(), ids)
+    exportAlertsString(app.getVersion(), ids),
   )
   ipcMain.handle(IPC.shareSaveFile, async (_e, text: string, suggestedName: string) => {
     const opts = {
       title: 'Save share file',
       defaultPath: join(app.getPath('documents'), suggestedName || shareFileName('settings')),
-      filters: [{ name: 'EQ Companion share', extensions: ['eqshare', 'txt'] }]
+      filters: [{ name: 'EQ Companion share', extensions: ['eqshare', 'txt'] }],
     }
     const mainWindow = getMainWindow()
     const res = mainWindow
@@ -54,8 +54,8 @@ export function registerShareIpc(): void {
       properties: ['openFile' as const],
       filters: [
         { name: 'EQ Companion share', extensions: ['eqshare', 'txt'] },
-        { name: 'All files', extensions: ['*'] }
-      ]
+        { name: 'All files', extensions: ['*'] },
+      ],
     }
     const mainWindow = getMainWindow()
     const res = mainWindow
@@ -70,7 +70,7 @@ export function registerShareIpc(): void {
     }
   })
   ipcMain.handle(IPC.sharePreview, (_e, text: string, ui: Record<string, string>) =>
-    previewShare(text ?? '', ui ?? {})
+    previewShare(text ?? '', ui ?? {}),
   )
   ipcMain.handle(
     IPC.shareApply,
@@ -80,6 +80,6 @@ export function registerShareIpc(): void {
       // and a full-set replace is exactly what a `*.define` is.
       if (result.added > 0) pushAppKnowledge('alerts.define')
       return result
-    }
+    },
   )
 }

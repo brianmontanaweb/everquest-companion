@@ -42,14 +42,14 @@ import {
   EXTERNAL_FILE_PATTERN,
   MAX_COMPONENT_DEPTH,
   MAX_EXTERNAL_FRAMES,
-  MAX_MESSAGE_SKELETON
+  MAX_MESSAGE_SKELETON,
 } from '../src/shared/errorReportLocation'
 import {
   COMPONENT_PATH_RE,
   EXTERNAL_FRAME_FILE_RE,
   MAX_COMPONENT_DEPTH_WIRE,
   MAX_EXTERNAL_FRAMES_WIRE,
-  type EvErrorReport
+  type EvErrorReport,
 } from '../src/shared/telemetry'
 import { validateTelemetryEvent } from '../src/shared/telemetryValidate'
 
@@ -70,7 +70,7 @@ function sample(over: Partial<EvErrorReport> = {}): Record<string, unknown> {
     sessionAgeBucket: 2,
     mode: 'live',
     count: 1,
-    ...over
+    ...over,
   }
 }
 
@@ -94,7 +94,7 @@ test('an EXTERNAL frame may name a public module and may not name anything else'
     'node:internal/fs/promises',
     'node_modules/chokidar',
     'node_modules/@aws-sdk/client-s3',
-    'electron/js2c/renderer_init'
+    'electron/js2c/renderer_init',
   ]) {
     assert.equal(ok(ext(file)), true, `${file} names something every install has`)
   }
@@ -108,20 +108,20 @@ test('an EXTERNAL frame may name a public module and may not name anything else'
     'node_modules/chokidar/lib/fsevents-handler.js',
     'out/main/index.js',
     'node:internal/fs/promises/deep/deeper',
-    'a mob said hello'
+    'a mob said hello',
   ]) {
     refused(ext(file), 'externalFrames[0].file', file)
   }
   refused(
     sample({ externalFrames: [{ file: 'node:fs', line: 1, col: 1, func: 'a Nisch Mas Mender' }] }),
     'externalFrames[0].func',
-    'a function name with spaces'
+    'a function name with spaces',
   )
   const six = Array.from({ length: MAX_EXTERNAL_FRAMES_WIRE + 1 }, (_, i) => ({
     file: 'node:fs',
     line: i + 1,
     col: 1,
-    func: 'f'
+    func: 'f',
   }))
   refused(sample({ externalFrames: six }), 'externalFrames', 'a sixth external frame')
   assert.equal(ok(sample({ externalFrames: six.slice(0, MAX_EXTERNAL_FRAMES_WIRE) })), true)
@@ -135,7 +135,7 @@ test('componentPath is component NAMES and can never be prose', () => {
     'Tooltip > InventoryRow',
     'Plane of Sky',
     'Tooltip>',
-    '<script>alert(1)</script>'
+    '<script>alert(1)</script>',
   ]) {
     refused(sample({ componentPath: path }), 'componentPath', path)
   }
@@ -156,7 +156,7 @@ test('the three JOS-111 fields are ADDITIVE: absent is the whole old contract', 
   }
   for (const nulled of [undefined, null]) {
     const r = validateTelemetryEvent(
-      sample({ frameOrigin: nulled, externalFrames: nulled, componentPath: nulled })
+      sample({ frameOrigin: nulled, externalFrames: nulled, componentPath: nulled }),
     )
     assert.equal(r.ok, true, 'null and undefined both mean absent')
   }
@@ -168,8 +168,14 @@ test('the three JOS-111 fields are ADDITIVE: absent is the whole old contract', 
 
 test('the CLASSIFIER truncates to the package, and an unrecognizable location is dropped', () => {
   const cases: [string, string | null][] = [
-    ['C:\\Users\\jmoye\\AppData\\Local\\Programs\\eqc\\node_modules\\chokidar\\lib\\handler.js', 'node_modules/chokidar'],
-    ['/home/josh/app/node_modules/@aws-sdk/client-s3/dist-cjs/index.js', 'node_modules/@aws-sdk/client-s3'],
+    [
+      'C:\\Users\\jmoye\\AppData\\Local\\Programs\\eqc\\node_modules\\chokidar\\lib\\handler.js',
+      'node_modules/chokidar',
+    ],
+    [
+      '/home/josh/app/node_modules/@aws-sdk/client-s3/dist-cjs/index.js',
+      'node_modules/@aws-sdk/client-s3',
+    ],
     // A NESTED dependency resolves to the package that actually holds the frame, and the LAST
     // boundary is what guarantees nothing to the left of it can survive.
     ['/app/node_modules/a/node_modules/b/index.js', 'node_modules/b'],
@@ -178,13 +184,16 @@ test('the CLASSIFIER truncates to the package, and an unrecognizable location is
     // Truncated at three segments, so a deep internal path cannot grow without bound.
     ['node:internal/streams/readable/extra/more', 'node:internal/streams/readable'],
     ['node:electron/js2c/renderer_init', 'electron/js2c/renderer_init'],
-    ['file:///C:/Users/jmoye/eqc/node_modules/electron/dist/resources/x.js', 'node_modules/electron'],
+    [
+      'file:///C:/Users/jmoye/eqc/node_modules/electron/dist/resources/x.js',
+      'node_modules/electron',
+    ],
     // Nothing recognizable: refused rather than repaired. A location we cannot classify is a
     // location we cannot promise is not somebody's home directory.
     ['C:\\Users\\jmoye\\Documents\\thing.js', null],
     ['/home/josh/secret/plan.js', null],
     ['<anonymous>', null],
-    ['out/main/index.js', null]
+    ['out/main/index.js', null],
   ]
   for (const [raw, want] of cases) {
     assert.equal(classifyExternalFrameFile(raw), want, raw)
@@ -204,15 +213,19 @@ test('a stack with no bundle in it still yields EXTERNAL frames, newest first', 
     '    at Object.readFileSync (node:fs:452:20)',
     '    at async open (node:internal/fs/promises:601:12)',
     '    at FSWatcher._handle (C:\\Users\\jmoye\\eqc\\node_modules\\chokidar\\lib\\handler.js:88:9)',
-    '    at Timeout._onTimeout (C:\\Users\\jmoye\\Documents\\private.js:1:1)'
+    '    at Timeout._onTimeout (C:\\Users\\jmoye\\Documents\\private.js:1:1)',
   ].join('\n')
-  assert.deepEqual(parseStackFrames(stack), [], 'nothing in the bundle — this is the frameless case')
+  assert.deepEqual(
+    parseStackFrames(stack),
+    [],
+    'nothing in the bundle — this is the frameless case',
+  )
   assert.deepEqual(parseExternalFrames(stack), [
     { file: 'node:fs', line: 452, col: 20, func: 'Object.readFileSync' },
     // `async open` has a SPACE in it, so it degrades to `<anonymous>` exactly as an app frame
     // would: the location is the diagnostic half and losing a frame over its label is worse.
     { file: 'node:internal/fs/promises', line: 601, col: 12, func: '<anonymous>' },
-    { file: 'node_modules/chokidar', line: 88, col: 9, func: 'FSWatcher._handle' }
+    { file: 'node_modules/chokidar', line: 88, col: 9, func: 'FSWatcher._handle' },
   ])
   assert.equal(JSON.stringify(parseExternalFrames(stack)).includes('jmoye'), false)
 })
@@ -240,16 +253,19 @@ test('the message SKELETON groups by shape and never carries what the message di
   // Two occurrences of one failure, one issue…
   assert.equal(
     messageSkeleton('Failed to load resource: the server responded with a status of 404'),
-    messageSkeleton('Failed to load resource: the server responded with a status of 503')
+    messageSkeleton('Failed to load resource: the server responded with a status of 503'),
   )
   // …and two different failures, two.
   assert.notEqual(
     messageSkeleton('Failed to load resource'),
-    messageSkeleton('did-fail-load errorCode -105')
+    messageSkeleton('did-fail-load errorCode -105'),
   )
   // Its input is the ALREADY-REDACTED message, so the placeholders survive as themselves and
   // there is nothing in it the redactor had already taken out.
-  assert.equal(messageSkeleton('ENOENT: open <path> after 3 tries'), 'enoent open <path> after 0 tries')
+  assert.equal(
+    messageSkeleton('ENOENT: open <path> after 3 tries'),
+    'enoent open <path> after 0 tries',
+  )
   assert.ok(messageSkeleton('x'.repeat(500)).length <= MAX_MESSAGE_SKELETON)
 })
 
@@ -264,7 +280,8 @@ test('the location bounds and patterns are one copy each', () => {
   assert.equal(COMPONENT_PATH_PATTERN, COMPONENT_PATH_RE.source)
   // …and the depth in COMPONENT_PATH_RE is that same number, spelled in a regex where it cannot
   // be a constant. Exactly MAX names passes; one more does not.
-  const names = (n: number): string => Array.from({ length: n }, (_, i) => `C${String(i)}`).join('>')
+  const names = (n: number): string =>
+    Array.from({ length: n }, (_, i) => `C${String(i)}`).join('>')
   assert.ok(COMPONENT_PATH_RE.test(names(MAX_COMPONENT_DEPTH_WIRE)))
   assert.equal(COMPONENT_PATH_RE.test(names(MAX_COMPONENT_DEPTH_WIRE + 1)), false)
 })
@@ -279,8 +296,14 @@ test('the component-stack marker is the one ErrorBoundary.tsx actually writes', 
   // Four today: the parked crash prefill, the IPC report, the console line, and the visible
   // fallback. The two that matter to this ticket are the report and the console line, and holding
   // ALL of them to the marker is what makes a future fifth site correct by default.
-  assert.ok(sites.length >= 3, `expected the boundary to interpolate the stack, found ${String(sites.length)}`)
+  assert.ok(
+    sites.length >= 3,
+    `expected the boundary to interpolate the stack, found ${String(sites.length)}`,
+  )
   for (const site of sites) {
-    assert.ok(site.includes(`${COMPONENT_STACK_MARKER}\${info.componentStack}`), `unmarked: ${site}`)
+    assert.ok(
+      site.includes(`${COMPONENT_STACK_MARKER}\${info.componentStack}`),
+      `unmarked: ${site}`,
+    )
   }
 })

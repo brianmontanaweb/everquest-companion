@@ -34,17 +34,8 @@
 // what they need without prop-drilling.
 
 import { useEffect } from 'react'
-import type {
-  AlertDef,
-  AlertPrefs,
-  AppSignal,
-  FiredAlert
-} from '@shared/types'
-import {
-  alertBannerText,
-  alertShowsOnScreen,
-  type AlertBannerPayload
-} from '@shared/alertBanner'
+import type { AlertDef, AlertPrefs, AppSignal, FiredAlert } from '@shared/types'
+import { alertBannerText, alertShowsOnScreen, type AlertBannerPayload } from '@shared/alertBanner'
 import { playSound } from './soundCache'
 import { currentVoicePrefs, loadVoicePrefs, speak, speechPlan } from '../../lib/speech'
 import { audioIdentity, coalesceAudio, type AudioWindow } from './audioThrottle'
@@ -81,7 +72,7 @@ export async function refreshAlertStore(): Promise<void> {
     window.eq.listAlerts(),
     window.eq.getAlertPrefs(),
     // Hydrates lib/speech's own cache — the engine seam owns that copy, not this module.
-    loadVoicePrefs()
+    loadVoicePrefs(),
   ])
   defs = d
   prefs = p
@@ -116,7 +107,10 @@ function effectiveVolume(def: AlertDef): number {
  * of the same alert stacks a second line rather than re-clocking the first — which is what the
  * reporter asked for: a banner is a short-lived record of what just happened, not a status field.
  */
-function showAlertBanner(def: AlertDef, firing?: Pick<FiredAlert, 'spell' | 'captures' | 'dueAt'>): void {
+function showAlertBanner(
+  def: AlertDef,
+  firing?: Pick<FiredAlert, 'spell' | 'captures' | 'dueAt'>,
+): void {
   if (!alertShowsOnScreen(def)) return
   const text = alertBannerText(def)
   if (!text) return
@@ -147,7 +141,7 @@ function showAlertBanner(def: AlertDef, firing?: Pick<FiredAlert, 'spell' | 'cap
  */
 export function playAlertNow(
   def: AlertDef,
-  firing?: Pick<FiredAlert, 'spell' | 'captures' | 'dueAt'>
+  firing?: Pick<FiredAlert, 'spell' | 'captures' | 'dueAt'>,
 ): void {
   // THE BANNER GOES FIRST, AND OUTSIDE EVERYTHING BELOW (JOS-378). Two rules the owner ruled on
   // are enforced by that one placement:
@@ -167,7 +161,7 @@ export function playAlertNow(
   // and two alerts with different voice lines are two things to hear (JOS-347).
   const gate = coalesceAudio(def, Date.now(), audioWindow, {
     allAlwaysPlay: prefs.alwaysPlayAll === true,
-    heard: audioIdentity(def, plan)
+    heard: audioIdentity(def, plan),
   })
   audioWindow = gate.window
   if (!gate.play) return

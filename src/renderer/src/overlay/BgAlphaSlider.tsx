@@ -30,7 +30,7 @@ const GOLD = '#d9b25f'
 export function BgAlphaSlider({
   bgAlpha,
   patch,
-  noDrag
+  noDrag,
 }: {
   bgAlpha: number
   patch: OverlayChrome['patch']
@@ -52,7 +52,9 @@ export function BgAlphaSlider({
         max={BG_ALPHA_MAX}
         step={BG_ALPHA_STEP}
         value={bgAlpha}
-        onChange={(e) => { patch({ bgAlpha: Number(e.target.value) }) }}
+        onChange={(e) => {
+          patch({ bgAlpha: Number(e.target.value) })
+        }}
         style={{ width: 64, flexShrink: 0, accentColor: GOLD, height: 4 }}
       />
     </span>

@@ -65,11 +65,13 @@ export function cargoBinary(): string {
 export function buildEngineRelease(): string {
   const res = spawnSync(cargoBinary(), ['build', '--release', '-p', 'engined'], {
     cwd: ENGINE_DIR,
-    stdio: 'inherit'
+    stdio: 'inherit',
   })
   if (res.error) throw new Error(`build:engine: could not run cargo — ${res.error.message}`)
   if (res.status !== 0) {
-    throw new Error(`build:engine: cargo build --release -p engined failed (exit ${String(res.status)})`)
+    throw new Error(
+      `build:engine: cargo build --release -p engined failed (exit ${String(res.status)})`,
+    )
   }
   if (!existsSync(ENGINE_RELEASE_BIN)) {
     throw new Error(`build:engine: cargo reported success but ${ENGINE_RELEASE_BIN} is missing`)

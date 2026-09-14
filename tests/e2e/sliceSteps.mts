@@ -51,7 +51,10 @@ const NEW_DROP = 'Mote of Major Potential'
 const NARROW_ORDER = ['h1', 'h6', 'h24', 'd7', 'session', 'zone'] as const
 
 /** Where a mounted box sits, in viewport coordinates; null when it isn't mounted. */
-function boxOf(page: Page, sel: string): Promise<{ top: number; bottom: number; h: number } | null> {
+function boxOf(
+  page: Page,
+  sel: string,
+): Promise<{ top: number; bottom: number; h: number } | null> {
   return page.evaluate((s) => {
     const el = document.querySelector(s)
     if (!el) return null
@@ -62,16 +65,22 @@ function boxOf(page: Page, sel: string): Promise<{ top: number; bottom: number; 
 
 /** Rendered text of the first match; '' when the node isn't mounted. */
 function textOf(page: Page, sel: string): Promise<string> {
-  return page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
+  return page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    sel,
+  )
 }
 
 /** The slice ids one surface's control is offering. No SliceId carries a hyphen, which is what
  *  lets this drop the caption (`-window`) and the custom range's two inputs from the same prefix. */
 function offeredSlices(page: Page, prefix: string): Promise<string[]> {
-  return page.evaluate((p) =>
-    Array.from(document.querySelectorAll(`[data-testid^="${p}-"]`))
-      .map((e) => (e.getAttribute('data-testid') ?? '').replace(`${p}-`, ''))
-      .filter((id) => id.length > 0 && id !== 'window' && !id.includes('-')), prefix)
+  return page.evaluate(
+    (p) =>
+      Array.from(document.querySelectorAll(`[data-testid^="${p}-"]`))
+        .map((e) => (e.getAttribute('data-testid') ?? '').replace(`${p}-`, ''))
+        .filter((id) => id.length > 0 && id !== 'window' && !id.includes('-')),
+    prefix,
+  )
 }
 
 /**
@@ -92,25 +101,31 @@ async function checkScopeRow(page: Page): Promise<void> {
   const tier = await boxOf(page, '[data-testid="leveling-tier"]')
   const basis = await boxOf(page, '[data-testid="leveling-basis"]')
   const caption = await boxOf(page, CAPTION)
-  if (!check('the scope draws its three controls and one caption line', !!slice && !!tier && !!basis && !!caption)) return
+  if (
+    !check(
+      'the scope draws its three controls and one caption line',
+      !!slice && !!tier && !!basis && !!caption,
+    )
+  )
+    return
   // Rounded tops within a couple of pixels: they are centred in one flex row and the two toggle
   // groups are the same height, so this is an alignment claim and not a font measurement.
   const level = Math.max(Math.abs(tier.top - slice.top), Math.abs(basis.top - slice.top))
   check(
     'every control sits on ONE level — the buttons are one row, not three stacked bars',
     level <= 2,
-    `slice y=${String(slice.top)} · tier y=${String(tier.top)} · basis y=${String(basis.top)}`
+    `slice y=${String(slice.top)} · tier y=${String(tier.top)} · basis y=${String(basis.top)}`,
   )
   check(
     '…and the description is on its own line BELOW them, not inline with the buttons',
     caption.top >= slice.bottom,
-    `controls end at ${String(slice.bottom)}, caption starts at ${String(caption.top)}`
+    `controls end at ${String(slice.bottom)}, caption starts at ${String(caption.top)}`,
   )
   const words = (await textOf(page, CAPTION)).replace(/\s+/g, ' ')
   check(
     '…carrying BOTH clauses as one sentence — which stretch, and per hour of what',
     words.includes('→') && /rates per hour of (elapsed|active) time/.test(words),
-    words
+    words,
   )
   // One LINE, not a paragraph: the caption keeps the compact-bar contract, so a second line of it
   // would be the imbalance coming straight back in the other direction.
@@ -135,40 +150,45 @@ async function checkScopeRow(page: Page): Promise<void> {
  */
 async function checkToggleTitles(page: Page): Promise<void> {
   const titles = await page.evaluate(() =>
-    ['leveling-tier-allTiers', 'leveling-tier-exactTier', 'leveling-basis-elapsed', 'leveling-basis-active'].map(
-      (id) => {
-        const el = document.querySelector(`[data-testid="${id}"]`)
-        return { id, title: el?.getAttribute('title') ?? '' }
-      }
-    )
+    [
+      'leveling-tier-allTiers',
+      'leveling-tier-exactTier',
+      'leveling-basis-elapsed',
+      'leveling-basis-active',
+    ].map((id) => {
+      const el = document.querySelector(`[data-testid="${id}"]`)
+      return { id, title: el?.getAttribute('title') ?? '' }
+    }),
   )
   const bare = titles.filter((t) => t.title.length === 0).map((t) => t.id)
   check(
     'every toggle in the scope carries its own native hover, selected or not',
     bare.length === 0,
-    bare.length > 0 ? `no title on ${bare.join(', ')}` : titles.map((t) => t.id).join(', ')
+    bare.length > 0 ? `no title on ${bare.join(', ')}` : titles.map((t) => t.id).join(', '),
   )
   // And the words are the two SIDES of each difference, not one sentence repeated: the tier pair
   // talks about which visits count, the basis pair about which hour divides.
   const by = (id: string): string => titles.find((t) => t.id === id)?.title ?? ''
   check(
     '…and the tier pair states the difference from either side',
-    /at any tier/.test(by('leveling-tier-allTiers')) && /only the tier you are standing in/.test(by('leveling-tier-exactTier')),
-    `${by('leveling-tier-allTiers')} || ${by('leveling-tier-exactTier')}`
+    /at any tier/.test(by('leveling-tier-allTiers')) &&
+      /only the tier you are standing in/.test(by('leveling-tier-exactTier')),
+    `${by('leveling-tier-allTiers')} || ${by('leveling-tier-exactTier')}`,
   )
   check(
     '…as does the basis pair, each carrying the definition of its own hour',
-    /Elapsed time = /.test(by('leveling-basis-elapsed')) && /Active time = /.test(by('leveling-basis-active')),
-    `${by('leveling-basis-elapsed')} || ${by('leveling-basis-active')}`
+    /Elapsed time = /.test(by('leveling-basis-elapsed')) &&
+      /Active time = /.test(by('leveling-basis-active')),
+    `${by('leveling-basis-elapsed')} || ${by('leveling-basis-active')}`,
   )
 }
 
 /** An element's attribute, or '' when the node is not mounted at all. */
 function attrOf(page: Page, sel: string, attr: string): Promise<string> {
-  return page.evaluate(
-    ([s, a]) => document.querySelector(s)?.getAttribute(a) ?? '',
-    [sel, attr] as const
-  )
+  return page.evaluate(([s, a]) => document.querySelector(s)?.getAttribute(a) ?? '', [
+    sel,
+    attr,
+  ] as const)
 }
 
 /**
@@ -187,7 +207,11 @@ function attrOf(page: Page, sel: string, attr: string): Promise<string> {
  * inside `stepZoneSlice` at the moment picking `Zone` brings it out, which no log can skip.
  */
 export async function stepScopeDefaults(page: Page): Promise<void> {
-  const basis = await settle(() => attrOf(page, BASIS, 'data-basis'), (b) => b !== '', { timeoutMs: 8000 })
+  const basis = await settle(
+    () => attrOf(page, BASIS, 'data-basis'),
+    (b) => b !== '',
+    { timeoutMs: 8000 },
+  )
   check('the tab opens on the ELAPSED hour', basis === 'elapsed', basis)
   const tier = await attrOf(page, TIER, 'data-scope')
   if (tier === '') {
@@ -196,7 +220,11 @@ export async function stepScopeDefaults(page: Page): Promise<void> {
   }
   check('…and on THIS TIER, the tier you are standing in', tier === 'exactTier', tier)
   const words = (await textOf(page, CAPTION)).replace(/\s+/g, ' ')
-  check('…and the caption says so, over the numbers it is about', words.includes('this tier only'), words)
+  check(
+    '…and the caption says so, over the numbers it is about',
+    words.includes('this tier only'),
+    words,
+  )
 }
 
 /**
@@ -221,41 +249,73 @@ export async function stepScopeDefaults(page: Page): Promise<void> {
  * genuinely different answers here, and `exactTier` is the strictly narrower one.
  */
 async function checkTierScopedElapsed(page: Page): Promise<void> {
-  const exact = await settle(() => textOf(page, DURATION), (t) => t !== '', { timeoutMs: 8000 })
+  const exact = await settle(
+    () => textOf(page, DURATION),
+    (t) => t !== '',
+    { timeoutMs: 8000 },
+  )
   check('the panel states the elapsed span its numbers cover', exact !== '', exact)
-  check('…on THIS TIER, which is what the tab opened on', (await attrOf(page, TIER, 'data-scope')) === 'exactTier')
+  check(
+    '…on THIS TIER, which is what the tab opened on',
+    (await attrOf(page, TIER, 'data-scope')) === 'exactTier',
+  )
 
   await page.click('[data-testid="leveling-tier-allTiers"]', { timeout: 10_000 })
-  const every = await settle(() => textOf(page, DURATION), (t) => t !== exact, { timeoutMs: 8000 })
+  const every = await settle(
+    () => textOf(page, DURATION),
+    (t) => t !== exact,
+    { timeoutMs: 8000 },
+  )
   check(
     'pressing "every tier" WIDENS the elapsed span — the other tiers of the camp are back in',
     every !== exact,
-    `this tier ${exact} → every tier ${every}`
+    `this tier ${exact} → every tier ${every}`,
   )
   const captionEvery = (await textOf(page, CAPTION)).replace(/\s+/g, ' ')
-  check('…and the caption says which membership the span belongs to', captionEvery.includes('every tier'), captionEvery)
+  check(
+    '…and the caption says which membership the span belongs to',
+    captionEvery.includes('every tier'),
+    captionEvery,
+  )
 
   // JOS-454, ON THE PANEL ITSELF. The caption above is a different box, and the owner's report was
   // that the elapsed number contradicted the two instants printed beside it with nothing in
   // between: a 1h51m selection reading `15m`, and no zone or tier named anywhere on the panel. So
   // the shortfall is stated where the shortfall is — the same line, one look.
   const short = (await textOf(page, MEMBERSHIP)).replace(/\s+/g, ' ')
-  check('the panel says how much of the range that span left out, beside the span', short !== '', short)
-  check('…and names the membership that left it out, in the same words the caption used', /every tier/.test(short), short)
+  check(
+    'the panel says how much of the range that span left out, beside the span',
+    short !== '',
+    short,
+  )
+  check(
+    '…and names the membership that left it out, in the same words the caption used',
+    /every tier/.test(short),
+    short,
+  )
 
   // THE BROADCAST PATH, not the click path: this is exactly what the overlay's footer button does.
   await page.evaluate(() =>
-    (window as unknown as { eq: { setScopeSelection: (p: unknown) => void } }).eq.setScopeSelection({
-      zoneScope: 'exactTier'
-    })
+    (window as unknown as { eq: { setScopeSelection: (p: unknown) => void } }).eq.setScopeSelection(
+      {
+        zoneScope: 'exactTier',
+      },
+    ),
   )
-  const back = await settle(() => textOf(page, DURATION), (t) => t === exact, { timeoutMs: 8000 })
+  const back = await settle(
+    () => textOf(page, DURATION),
+    (t) => t === exact,
+    { timeoutMs: 8000 },
+  )
   check(
     'a flip made OUTSIDE this row moves it, and restores the narrowed span byte for byte',
     back === exact,
-    `${every} → ${back}`
+    `${every} → ${back}`,
   )
-  check('…including the buttons themselves', (await attrOf(page, TIER, 'data-scope')) === 'exactTier')
+  check(
+    '…including the buttons themselves',
+    (await attrOf(page, TIER, 'data-scope')) === 'exactTier',
+  )
 }
 
 /**
@@ -264,25 +324,42 @@ async function checkTierScopedElapsed(page: Page): Promise<void> {
  * `readDashboard` is the spec's own readout of every scoped number on the tab — passed in rather
  * than re-implemented, so "byte for byte" means the same bytes here as it does over there.
  */
-export async function stepZoneSlice(page: Page, readDashboard: () => Promise<string>): Promise<void> {
+export async function stepZoneSlice(
+  page: Page,
+  readDashboard: () => Promise<string>,
+): Promise<void> {
   if (!(await offeredSlices(page, 'leveling-slice')).includes('zone')) {
-    note('this log has no zone line, so there is no current zone and the Zone preset is not offered')
+    note(
+      'this log has no zone line, so there is no current zone and the Zone preset is not offered',
+    )
     return
   }
   const allReadout = await readDashboard()
   const before = await textOf(page, TS_WINDOW)
 
   await page.click('[data-testid="leveling-slice-zone"]', { timeout: 10_000 })
-  const after = await settle(() => textOf(page, TS_WINDOW), (t) => t !== before, { timeoutMs: 8000 })
-  check('picking "Zone" names the zone in the caption', after.includes('·'), after.replace(/\s+/g, ' '))
+  const after = await settle(
+    () => textOf(page, TS_WINDOW),
+    (t) => t !== before,
+    { timeoutMs: 8000 },
+  )
+  check(
+    'picking "Zone" names the zone in the caption',
+    after.includes('·'),
+    after.replace(/\s+/g, ' '),
+  )
   check(
     '…and leaves the drawn window where it was — a zone is a place, not a stretch of time',
     after.startsWith(before.trim()),
-    `${before} → ${after}`.replace(/\s+/g, ' ')
+    `${before} → ${after}`.replace(/\s+/g, ' '),
   )
   check(
     '…while the numbers under it are re-derived for that zone alone',
-    (await settle(() => readDashboard(), (t) => t !== allReadout, { timeoutMs: 8000 })) !== allReadout
+    (await settle(
+      () => readDashboard(),
+      (t) => t !== allReadout,
+      { timeoutMs: 8000 },
+    )) !== allReadout,
   )
 
   // THE OPENING, at the one moment no log can skip: the tier group has just been drawn for the
@@ -291,7 +368,7 @@ export async function stepZoneSlice(page: Page, readDashboard: () => Promise<str
   check(
     '…and the membership it comes out on is THIS TIER, the owner ruled opening',
     (await attrOf(page, TIER, 'data-scope')) === 'exactTier',
-    await attrOf(page, TIER, 'data-scope')
+    await attrOf(page, TIER, 'data-scope'),
   )
 
   // Measured HERE because this is the one moment all three controls are on the tab at once.
@@ -300,7 +377,11 @@ export async function stepZoneSlice(page: Page, readDashboard: () => Promise<str
   await checkTierScopedElapsed(page)
 
   await page.click('[data-testid="leveling-slice-all"]', { timeout: 10_000 })
-  const restored = await settle(() => readDashboard(), (t) => t === allReadout, { timeoutMs: 8000 })
+  const restored = await settle(
+    () => readDashboard(),
+    (t) => t === allReadout,
+    { timeoutMs: 8000 },
+  )
   check('returning to All restores every number, byte for byte', restored === allReadout)
 }
 
@@ -318,23 +399,39 @@ export async function stepZoneSlice(page: Page, readDashboard: () => Promise<str
  * (`stepLootRates` below states what it checks and why a unit test cannot).
  */
 export async function stepLootSlice(page: Page): Promise<void> {
-  if (!check('the timeslice control is mounted on the Loot tab', (await countOf(page, LOOT_SLICE)) === 1)) return
+  if (
+    !check(
+      'the timeslice control is mounted on the Loot tab',
+      (await countOf(page, LOOT_SLICE)) === 1,
+    )
+  )
+    return
   const all = await textOf(page, LOOT_SUMMARY)
-  check('…and the ledger comes up on ALL TIME, hiding nothing', !all.includes('all time'), all.replace(/\s+/g, ' '))
+  check(
+    '…and the ledger comes up on ALL TIME, hiding nothing',
+    !all.includes('all time'),
+    all.replace(/\s+/g, ' '),
+  )
   const allRates = await stepLootRates(page)
 
   const offered = await offeredSlices(page, 'loot-slice')
   const narrow = NARROW_ORDER.find((id) => offered.includes(id))
   if (!narrow) {
-    note(`this log defines no slice narrower than All — the ledger offers only [${offered.join(', ')}]`)
+    note(
+      `this log defines no slice narrower than All — the ledger offers only [${offered.join(', ')}]`,
+    )
     return
   }
   await page.click(`[data-testid="loot-slice-${narrow}"]`, { timeout: 10_000 })
-  const cut = await settle(() => textOf(page, LOOT_SUMMARY), (t) => t !== all, { timeoutMs: 8000 })
+  const cut = await settle(
+    () => textOf(page, LOOT_SUMMARY),
+    (t) => t !== all,
+    { timeoutMs: 8000 },
+  )
   check(
     `picking "${narrow}" states the sliced count BESIDE the all-time one`,
     cut.includes('all time'),
-    cut.replace(/\s+/g, ' ')
+    cut.replace(/\s+/g, ' '),
   )
   // The rate line follows the SAME pick — the whole reason it is on this tab is "how fast is the
   // grind I am in paying", and a rate that stayed on the whole log while the counts narrowed would
@@ -345,14 +442,25 @@ export async function stepLootSlice(page: Page): Promise<void> {
     check(
       `…and the loot-per-hour line describes the ${narrow} slice too`,
       cutRates === '' || /drops\/hr .*active/.test(cutRates),
-      `${allRates} → ${cutRates}`.replace(/\s+/g, ' ')
+      `${allRates} → ${cutRates}`.replace(/\s+/g, ' '),
     )
   }
 
   await page.click('[data-testid="loot-slice-all"]', { timeout: 10_000 })
-  const back = await settle(() => textOf(page, LOOT_SUMMARY), (t) => t === all, { timeoutMs: 8000 })
-  check('…and All restores the whole ledger, caption and all', back === all, back.replace(/\s+/g, ' '))
-  check('…including the loot-per-hour line, byte for byte', (await textOf(page, LOOT_RATES)) === allRates)
+  const back = await settle(
+    () => textOf(page, LOOT_SUMMARY),
+    (t) => t === all,
+    { timeoutMs: 8000 },
+  )
+  check(
+    '…and All restores the whole ledger, caption and all',
+    back === all,
+    back.replace(/\s+/g, ' '),
+  )
+  check(
+    '…including the loot-per-hour line, byte for byte',
+    (await textOf(page, LOOT_RATES)) === allRates,
+  )
 }
 
 /** The two numbers the ledger caption states: how many rows are in the slice, and how many the
@@ -360,8 +468,12 @@ export async function stepLootSlice(page: Page): Promise<void> {
  *  null there is the caption being honest rather than a parse failure. */
 async function summaryCounts(page: Page): Promise<{ sliced: number; total: number | null }> {
   const text = (await textOf(page, LOOT_SUMMARY)).replace(/\s+/g, ' ')
-  const num = (m: RegExpMatchArray | null): number | null => (m ? Number(m[1].replace(/,/g, '')) : null)
-  return { sliced: num(/^([\d,]+) loot events/.exec(text)) ?? -1, total: num(/of ([\d,]+) all time/.exec(text)) }
+  const num = (m: RegExpMatchArray | null): number | null =>
+    m ? Number(m[1].replace(/,/g, '')) : null
+  return {
+    sliced: num(/^([\d,]+) loot events/.exec(text)) ?? -1,
+    total: num(/of ([\d,]+) all time/.exec(text)),
+  }
 }
 
 /** `<input type="datetime-local">`'s own spelling of an instant — local wall time, no zone. The
@@ -395,44 +507,73 @@ function localInput(at: Date): string {
  * mark, by construction rather than by timing luck.
  */
 export async function stepNewSession(page: Page, log: FixtureLog): Promise<void> {
-  if (!check('the ledger carries a one-click "New session"', (await countOf(page, NEW_SESSION)) === 1)) return
+  if (
+    !check('the ledger carries a one-click "New session"', (await countOf(page, NEW_SESSION)) === 1)
+  )
+    return
   check(
     '…and no session picker before the first press — one stretch of play is not a choice',
-    (await countOf(page, SESSION_LIST)) === 0
+    (await countOf(page, SESSION_LIST)) === 0,
   )
   const before = await summaryCounts(page)
-  if (!check('the ledger is on All, so its count IS the whole record', before.total === null, String(before.total))) {
+  if (
+    !check(
+      'the ledger is on All, so its count IS the whole record',
+      before.total === null,
+      String(before.total),
+    )
+  ) {
     return
   }
 
   await page.click(NEW_SESSION, { timeout: 10_000 })
   const at = new Date(Math.ceil((Date.now() + 1000) / 1000) * 1000)
-  const cut = await settle(() => textOf(page, LOOT_SUMMARY), (t) => /session 2/.test(t), { timeoutMs: 8000 })
-  check('pressing it opens session 2, and the caption says which session you are reading', /session 2/.test(cut),
-    cut.replace(/\s+/g, ' '))
-  check('…and the picker appears, now that there are two stretches to choose between',
-    (await countOf(page, SESSION_LIST)) === 1)
+  const cut = await settle(
+    () => textOf(page, LOOT_SUMMARY),
+    (t) => /session 2/.test(t),
+    { timeoutMs: 8000 },
+  )
+  check(
+    'pressing it opens session 2, and the caption says which session you are reading',
+    /session 2/.test(cut),
+    cut.replace(/\s+/g, ' '),
+  )
+  check(
+    '…and the picker appears, now that there are two stretches to choose between',
+    (await countOf(page, SESSION_LIST)) === 1,
+  )
   const opened = await summaryCounts(page)
   check(
     '…holding nothing yet: the new session starts at the CLICK, not at the newest log line',
     opened.sliced === 0 && opened.total === before.sliced,
-    `${String(opened.sliced)} of ${String(opened.total)} · was ${String(before.sliced)}`
+    `${String(opened.sliced)} of ${String(opened.total)} · was ${String(before.sliced)}`,
   )
 
   log.appendAt(at, `--You have looted a ${NEW_DROP} from a decaying skeleton corpse.--`)
-  const grown = await settle(() => summaryCounts(page), (c) => c.sliced > 0, { timeoutMs: 25_000 })
+  const grown = await settle(
+    () => summaryCounts(page),
+    (c) => c.sliced > 0,
+    { timeoutMs: 25_000 },
+  )
   check(
     'a drop looted AFTER the click accrues to the new session, and only to it',
     grown.sliced === 1,
-    `${String(grown.sliced)} of ${String(grown.total)} all time`
+    `${String(grown.sliced)} of ${String(grown.total)} all time`,
   )
 
   await stepBrowseOldSession(page, before.sliced)
   await stepFutureEndSticks(page)
   await page.click('[data-testid="loot-slice-all"]', { timeout: 10_000 })
-  const back = await settle(() => summaryCounts(page), (c) => c.total === null, { timeoutMs: 8000 })
-  check('All restores the whole ledger, the new drop included', back.sliced === before.sliced + 1,
-    `${String(back.sliced)} · was ${String(before.sliced)}`)
+  const back = await settle(
+    () => summaryCounts(page),
+    (c) => c.total === null,
+    { timeoutMs: 8000 },
+  )
+  check(
+    'All restores the whole ledger, the new drop included',
+    back.sliced === before.sliced + 1,
+    `${String(back.sliced)} · was ${String(before.sliced)}`,
+  )
 }
 
 /**
@@ -445,19 +586,29 @@ export async function stepNewSession(page: Page, log: FixtureLog): Promise<void>
 async function stepBrowseOldSession(page: Page, atClick: number): Promise<void> {
   await page.click(SESSION_BUTTON, { timeout: 10_000 })
   await page.click('[data-testid="loot-slice-session-opt-1"]', { timeout: 10_000 })
-  const said = await settle(() => textOf(page, LOOT_SUMMARY), (t) => /session 1/.test(t), { timeoutMs: 8000 })
-  if (!check('the history picker offers the closed session, and picking it names it in the caption',
-    /session 1/.test(said), said.replace(/\s+/g, ' '))) return
+  const said = await settle(
+    () => textOf(page, LOOT_SUMMARY),
+    (t) => /session 1/.test(t),
+    { timeoutMs: 8000 },
+  )
+  if (
+    !check(
+      'the history picker offers the closed session, and picking it names it in the caption',
+      /session 1/.test(said),
+      said.replace(/\s+/g, ' '),
+    )
+  )
+    return
   const read = await summaryCounts(page)
   check(
     'the session the reset closed is still selectable, holding exactly what it held at the click',
     read.sliced === atClick,
-    `session 1 has ${String(read.sliced)}, the ledger had ${String(atClick)} when the button was pressed`
+    `session 1 has ${String(read.sliced)}, the ledger had ${String(atClick)} when the button was pressed`,
   )
   check(
     '…and the two sessions tile the record — every drop is in exactly one of them',
     read.total !== null && read.sliced + 1 === read.total,
-    `${String(read.sliced)} + 1 vs ${String(read.total)} all time`
+    `${String(read.sliced)} + 1 vs ${String(read.total)} all time`,
   )
 }
 
@@ -485,11 +636,15 @@ async function stepFutureEndSticks(page: Page): Promise<void> {
   // out from under what was typed — and only claim it did not happen once the reading has stopped
   // being given a chance to. The snap-back this covers used to be immediate, on the very next
   // React commit.
-  const kept = await settle(() => page.inputValue(field), (v) => v !== typed, { timeoutMs: 3000 })
+  const kept = await settle(
+    () => page.inputValue(field),
+    (v) => v !== typed,
+    { timeoutMs: 3000 },
+  )
   check(
     'an end time in the future STAYS typed — it no longer snaps back to the last log line',
     kept === typed,
-    `typed ${typed}, field reads ${kept}`
+    `typed ${typed}, field reads ${kept}`,
   )
 }
 
@@ -505,23 +660,31 @@ async function stepFutureEndSticks(page: Page): Promise<void> {
  * failure) so the caller can prove the slice moves it and All restores it.
  */
 async function stepLootRates(page: Page): Promise<string> {
-  const text = await settle(() => textOf(page, LOOT_RATES), (t) => t !== '', { timeoutMs: 8000 })
+  const text = await settle(
+    () => textOf(page, LOOT_RATES),
+    (t) => t !== '',
+    { timeoutMs: 8000 },
+  )
   if (text === '') {
     note('this fixture has no loot at all, so the ledger states no rate — the honest empty state')
     return ''
   }
-  check('the ledger states loot per hour for the slice in force', /drops\/hr/.test(text), text.replace(/\s+/g, ' '))
+  check(
+    'the ledger states loot per hour for the slice in force',
+    /drops\/hr/.test(text),
+    text.replace(/\s+/g, ' '),
+  )
   check(
     '…over BOTH denominators, each named, so neither reading can pass for the other',
     text.includes('active') && text.includes('elapsed'),
-    text.replace(/\s+/g, ' ')
+    text.replace(/\s+/g, ' '),
   )
   // Rule 2 of lootRateText.ts: a rate that outran its span would be a confident claim about ten
   // minutes of play. Every rate the line prints carries the span it divided by.
   check(
     '…and every rate carries the span it was measured over',
     !/[\d.]+ drops\/hr(?! over)/.test(text),
-    text.replace(/\s+/g, ' ')
+    text.replace(/\s+/g, ' '),
   )
   return text
 }

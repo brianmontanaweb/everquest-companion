@@ -20,14 +20,14 @@ import {
   eqWindowModeOf,
   gpuCompositingOf,
   gpuVendorOf,
-  type SetupFacts
+  type SetupFacts,
 } from '../src/main/telemetry/setupFacts'
 import {
   GPU_LOSS_ERROR_NAME,
   noteChildProcessGone,
   watchChildProcessGone,
   type ChildLossReport,
-  type ChildProcessGoneEmitter
+  type ChildProcessGoneEmitter,
 } from '../src/main/childProcessGone'
 import { peekHealth, resetHealth } from '../src/main/telemetry/health'
 import { validateTelemetryEvent } from '../src/shared/telemetryValidate'
@@ -35,7 +35,7 @@ import {
   CPU_COUNT_EDGES,
   DISPLAY_COUNT_EDGES,
   PRIMARY_SCALE_EDGES,
-  TOTAL_MEM_GB_EDGES
+  TOTAL_MEM_GB_EDGES,
 } from '../src/shared/telemetry'
 
 /** The install half, with nothing interesting in it: every machine-class assertion below varies
@@ -49,7 +49,7 @@ const BASE: SetupFacts = {
   autoHide: false,
   voiceEngine: 'kokoro',
   soundPackCount: 2,
-  updateChannel: 'main'
+  updateChannel: 'main',
 }
 
 test('THE GPU VENDOR MAP: three ids, an other, and an honest unknown', () => {
@@ -110,7 +110,7 @@ test('THE eqclient.ini PARSE: TRUE, FALSE, missing, garbage — and nothing else
     'WindowedHeight=1440',
     'FullscreenBitsPerPixel=32',
     'FullscreenRefreshRate=144',
-    'Fullscreen=1'
+    'Fullscreen=1',
   ].join('\r\n')
   assert.equal(eqWindowModeOf(legends), 'fullscreen')
   // The offsets are a window POSITION, not a mode: alone they answer `unknown`, never `windowed`.
@@ -155,7 +155,7 @@ test('every machine-class field is OMITTED when the machine did not answer', () 
     'safeMode',
     'displayCountBucket',
     'primaryScaleBucket',
-    'eqWindowMode'
+    'eqWindowMode',
   ] as const) {
     assert.equal(ev[field], undefined, `${field} was invented from nothing`)
     assert.ok(!(field in ev), `${field} is present as an explicit undefined`)
@@ -174,7 +174,7 @@ test('a fully answered machine folds to buckets and enums, and the validator acc
     safeMode: false,
     displayCount: 2,
     primaryScaleFactor: 1.5,
-    eqClientIni: 'WindowedMode=FALSE'
+    eqClientIni: 'WindowedMode=FALSE',
   })
   assert.equal(ev.cpuCountBucket, 4, `edges ${CPU_COUNT_EDGES.join(',')} ⇒ 8 lands at index 4`)
   assert.equal(ev.totalMemBucket, 6, '34 GB of silicon is 31.7 GiB usable ⇒ the 32 GB bucket')
@@ -195,7 +195,7 @@ test('overlaysEnabled is a deduped SET, and the counts are clamped to the wire�
   const ev = buildSetupSnapshot({
     ...BASE,
     overlaysEnabled: ['fight', 'fight', 'events'],
-    soundPackCount: -3
+    soundPackCount: -3,
   })
   assert.deepEqual(ev.overlaysEnabled, ['fight', 'events'])
   assert.equal(ev.soundPackCount, 0, 'a negative count is a bug upstream, never a wire value')
@@ -225,7 +225,7 @@ function fakeApp(): ChildProcessGoneEmitter & { fire(details: unknown): void } {
     },
     fire(details) {
       listener?.(null, details)
-    }
+    },
   }
 }
 
@@ -244,8 +244,8 @@ test('a GPU process loss is COUNTED and files exactly one exemplar', () => {
       message: 'GPU process gone: reason=crashed, exitCode=5',
       code: 5,
       reason: 'crashed',
-      exitCode: 5
-    }
+      exitCode: 5,
+    },
   ])
   app.fire({ type: 'GPU', reason: 'oom', exitCode: 9 })
   assert.equal(peekHealth().gpuProcessGone, 2)
@@ -300,19 +300,25 @@ test('WHICH CHILD: Chromium name, then mojo name, and neither if it is not name-
   noteChildProcessGone({ type: 'GPU', reason: 'crashed', exitCode: 1, name: 'GPU Process' }, report)
   noteChildProcessGone(
     { type: 'GPU', reason: 'crashed', exitCode: 1, serviceName: 'viz.mojom.VizMain' },
-    report
+    report,
   )
   // The human name wins when both are there: `Audio Service` is what a reader can act on.
   noteChildProcessGone(
-    { type: 'GPU', reason: 'oom', exitCode: 2, name: 'Audio Service', serviceName: 'audio.mojom.X' },
-    report
+    {
+      type: 'GPU',
+      reason: 'oom',
+      exitCode: 2,
+      name: 'Audio Service',
+      serviceName: 'audio.mojom.X',
+    },
+    report,
   )
   // …and a value that is not Chromium-constant-shaped is DROPPED, not repaired. This is the same
   // bright line `describeChildLoss`'s header states: nothing that could spell a path, a character
   // name or a line of anyone's log reaches the sentence.
   noteChildProcessGone(
     { type: 'GPU', reason: 'crashed', exitCode: 1, name: "C:\\Users\\someone\\'Primitive'" },
-    report
+    report,
   )
   assert.deepEqual(
     seen.map((i) => i.message),
@@ -320,8 +326,8 @@ test('WHICH CHILD: Chromium name, then mojo name, and neither if it is not name-
       'GPU process (GPU Process) gone: reason=crashed, exitCode=1',
       'GPU process (viz.mojom.VizMain) gone: reason=crashed, exitCode=1',
       'GPU process (Audio Service) gone: reason=oom, exitCode=2',
-      'GPU process gone: reason=crashed, exitCode=1'
-    ]
+      'GPU process gone: reason=crashed, exitCode=1',
+    ],
   )
   assert.equal(seen[3].child, undefined, 'the refused name is absent, not blanked')
   resetHealth()
@@ -332,7 +338,12 @@ test('a UTILITY loss is counted and files NOTHING — it is not an error', () =>
   const seen: unknown[] = []
   const app = fakeApp()
   watchChildProcessGone(app, (info) => seen.push(info))
-  app.fire({ type: 'Utility', reason: 'crashed', exitCode: 1, serviceName: 'audio.mojom.AudioService' })
+  app.fire({
+    type: 'Utility',
+    reason: 'crashed',
+    exitCode: 1,
+    serviceName: 'audio.mojom.AudioService',
+  })
   assert.equal(peekHealth().utilityProcessGone, 1)
   assert.equal(peekHealth().gpuProcessGone, 0)
   assert.deepEqual(seen, [], 'a helper that comes and goes by design does not file an error')
@@ -371,8 +382,8 @@ test('an unrecognised payload is ignored rather than counted under a guess', () 
       message: 'GPU process gone: reason=unknown, exitCode=-1',
       code: -1,
       reason: 'unknown',
-      exitCode: -1
-    }
+      exitCode: -1,
+    },
   ])
   resetHealth()
 })

@@ -81,7 +81,7 @@ export function loadInventory(
   characterName?: string,
   server?: string,
   writtenAt: (file: string) => number | null = () => null,
-  now: () => number = Date.now
+  now: () => number = Date.now,
 ): InventoryLoadResult | null {
   const loaded = loadInventoryDump(characterName, server)
   if (!loaded) return null
@@ -98,12 +98,12 @@ export function loadInventory(
     // A dump is an instant AND a scope: which storages it actually spoke about (JOS-128, on the
     // JOS-132 spike's finding that some are written only conditionally — which is the evidence
     // that later sank the reset, JOS-141).
-    storagesCovered: storagesCoveredBy(loaded.dump)
+    storagesCovered: storagesCoveredBy(loaded.dump),
   }
   return {
     path: loaded.path,
     counts: heldCountsFromDump(loaded.dump),
     loadedAt: loaded.loadedAt,
-    source
+    source,
   }
 }

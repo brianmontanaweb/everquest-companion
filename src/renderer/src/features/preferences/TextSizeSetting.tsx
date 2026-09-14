@@ -30,7 +30,13 @@
 import { type JSX, useCallback, useState } from 'react'
 import { Stack, Typography } from '@mui/material'
 import FormatSizeIcon from '@mui/icons-material/FormatSize'
-import { UI_SCALE_MAX, UI_SCALE_MIN, normalizeUiScale, stepUiScale, uiScalePercent } from '@shared/uiScale'
+import {
+  UI_SCALE_MAX,
+  UI_SCALE_MIN,
+  normalizeUiScale,
+  stepUiScale,
+  uiScalePercent,
+} from '@shared/uiScale'
 import { PrefStepper } from './PrefStepper'
 import { recordPref, usePrefsSeed } from './prefsHydration'
 // The OVERLAYS' appearance (JOS-405, JOS-407, folded into one card by JOS-408), which is the second
@@ -108,7 +114,7 @@ export function appearanceSection(): PrefSection {
         id: 'ui-scale',
         label: 'In-app text size',
         keywords: `${SIZE_WORDS} window app main`,
-        content: <TextSizeSetting />
+        content: <TextSizeSetting />,
       },
       // ONE CARD for the overlays' size, their transparency, and the switch that decides whether
       // either is shared — because they pertain to the same twelve windows (owner, 2026-08-17).
@@ -116,9 +122,9 @@ export function appearanceSection(): PrefSection {
         id: 'overlays-appearance',
         label: 'Overlays',
         keywords: `${SIZE_WORDS} ${ALPHA_WORDS} ${OVERLAY_WORDS}`,
-        content: <OverlaysAppearanceSetting />
-      }
-    ]
+        content: <OverlaysAppearanceSetting />,
+      },
+    ],
   }
 }
 

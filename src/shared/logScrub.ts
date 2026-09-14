@@ -147,8 +147,7 @@
 import { KNOWN_SAFE, isKnownSpellMessage } from './logLineTemplates'
 
 /** The owner-only pet-claim tell — an NPC pet's binding signal, NOT a person's words. */
-export const PET_CLAIM_RE =
-  /told you, '(?:Attacking .+ Master|I am unable to wake .+?, Master)\.'$/
+export const PET_CLAIM_RE = /told you, '(?:Attacking .+ Master|I am unable to wake .+?, Master)\.'$/
 
 /**
  * THE PET-RESPONSE VOCABULARY — the six exact sentences a pet says OUT LOUD, in the order the
@@ -167,7 +166,7 @@ export const PET_SAY_LINES = [
   ['calm', 'Sorry, Master... calming down.'],
   ['hold', 'Now holding, Master.  I will not start new attacks until ordered.'],
   ['comply', 'As you wish, oh great one.'],
-  ['illegalTarget', 'I beg forgiveness, Master.  That is not a legal target.']
+  ['illegalTarget', 'I beg forgiveness, Master.  That is not a legal target.'],
 ] as const
 
 /** Regex metacharacters in the sentences are literal (`...`, `.`). */
@@ -181,7 +180,7 @@ function reEscape(s: string): string {
  * ("None shall defile the realm of our master!") can never match. Capture 1 is the speaker.
  */
 export const PET_SAY_RE = new RegExp(
-  `^(.+?) says, '(${PET_SAY_LINES.map(([, s]) => reEscape(s)).join('|')})'$`
+  `^(.+?) says, '(${PET_SAY_LINES.map(([, s]) => reEscape(s)).join('|')})'$`,
 )
 
 /**

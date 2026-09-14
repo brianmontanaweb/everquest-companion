@@ -57,7 +57,9 @@ function castValor(log: FixtureLog): void {
 /** Every drop notice currently on the window. */
 function dropNotices(overlay: Page): Promise<string[]> {
   return overlay.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="buff-timer-drop"]')].map((e) => e.textContent?.trim() ?? '')
+    [...document.querySelectorAll('[data-testid="buff-timer-drop"]')].map(
+      (e) => e.textContent?.trim() ?? '',
+    ),
   )
 }
 
@@ -65,7 +67,7 @@ function dropNotices(overlay: Page): Promise<string[]> {
 function modeOn(page: Page): Promise<boolean> {
   return page.evaluate(
     (sel) => document.querySelector(sel)?.getAttribute('data-opt-in') === 'true',
-    MODE
+    MODE,
   )
 }
 
@@ -75,9 +77,9 @@ function boxes(page: Page): Promise<{ line: string; checked: boolean }[]> {
     (sel) =>
       [...document.querySelectorAll(sel)].map((el) => ({
         line: el.getAttribute('data-line') ?? '',
-        checked: el.getAttribute('data-checked') === 'true'
+        checked: el.getAttribute('data-checked') === 'true',
       })),
-    BOX
+    BOX,
   )
 }
 
@@ -85,7 +87,7 @@ function boxes(page: Page): Promise<{ line: string; checked: boolean }[]> {
 function statsSpells(page: Page): Promise<string[]> {
   return page.evaluate(
     (sel) => [...document.querySelectorAll(sel)].map((el) => el.getAttribute('data-spell') ?? ''),
-    STATS_ROW
+    STATS_ROW,
   )
 }
 
@@ -115,12 +117,16 @@ export async function stepAllowList(page: Page, overlay: Page, log: FixtureLog):
   // agree with an already-single list. Put back at the end.
   await setShowPermanent(overlay, true)
   const fresh = (n: string): boolean => n === SPELL
-  const before = await settle(() => drawn(overlay), (r) => r.some(fresh) && r.length > 1, { timeoutMs: 30_000 })
+  const before = await settle(
+    () => drawn(overlay),
+    (r) => r.some(fresh) && r.length > 1,
+    { timeoutMs: 30_000 },
+  )
   if (
     !check(
       'the buffs window is drawing the spell we cast AND at least one other, so a filter has a choice to make',
       before.some(fresh) && before.length > 1,
-      JSON.stringify(before)
+      JSON.stringify(before),
     )
   ) {
     return
@@ -129,7 +135,11 @@ export async function stepAllowList(page: Page, overlay: Page, log: FixtureLog):
 
   // ---- 1. THE TAB, AND THE SHIPPED ANSWER -------------------------------------------------
   await page.click('[data-testid="nav-buffs"]', { timeout: 15_000 })
-  const mounted = await settle(() => countOf(page, MODE), (n) => n === 1, { timeoutMs: 20_000 })
+  const mounted = await settle(
+    () => countOf(page, MODE),
+    (n) => n === 1,
+    { timeoutMs: 20_000 },
+  )
   if (!check('the Buffs tab carries the tracking-mode switch', mounted === 1)) return
   check('…and it is OFF on an install that has never touched it', (await modeOn(page)) === false)
 
@@ -139,32 +149,44 @@ export async function stepAllowList(page: Page, overlay: Page, log: FixtureLog):
   check(
     'with the mode OFF there is no checkbox on any card or durations row - off means no choice',
     boxesAtRest.length === 0,
-    JSON.stringify(boxesAtRest.map((b) => b.line).slice(0, 12))
+    JSON.stringify(boxesAtRest.map((b) => b.line).slice(0, 12)),
   )
   const modelCounts = await headerCounts(page)
   check('…and the header states what the model believes', modelCounts !== '', modelCounts)
 
   // ---- 2. OPT-IN, WITH NOTHING CHECKED ----------------------------------------------------
   await page.click(MODE, { timeout: 15_000 })
-  const emptied = await settle(() => drawn(overlay), (r) => r.length === 0, { timeoutMs: 20_000 })
+  const emptied = await settle(
+    () => drawn(overlay),
+    (r) => r.length === 0,
+    { timeoutMs: 20_000 },
+  )
   check(
     'turning the mode ON empties the overlay — an unset spell is OFF in opt-in mode',
     emptied.length === 0,
-    JSON.stringify(emptied)
+    JSON.stringify(emptied),
   )
-  const boxesOn = await settle(() => boxes(page), (b) => b.length > 0, { timeoutMs: 20_000 })
+  const boxesOn = await settle(
+    () => boxes(page),
+    (b) => b.length > 0,
+    { timeoutMs: 20_000 },
+  )
   check(
     '…and the boxes APPEAR - the switch is what enables them',
     boxesOn.length > 0 && boxesOn.some((b) => b.line === LINE),
-    JSON.stringify(boxesOn.map((b) => b.line).slice(0, 12))
+    JSON.stringify(boxesOn.map((b) => b.line).slice(0, 12)),
   )
   // …AND THE TAB IS UNTOUCHED. This is JOS-215's law for the second preference: a display filter
   // over one window may not take a row off another surface or move a count.
   check(
     'the Buffs tab still lists the buff the overlay stopped drawing',
-    (await countOf(page, `${BOX}[data-line="${LINE}"]`)) > 0
+    (await countOf(page, `${BOX}[data-line="${LINE}"]`)) > 0,
   )
-  check('…and the header count did not move with the window', (await headerCounts(page)) === modelCounts, modelCounts)
+  check(
+    '…and the header count did not move with the window',
+    (await headerCounts(page)) === modelCounts,
+    modelCounts,
+  )
 
   // ---- 3. THE SEARCH, AND CHECKING FROM IT ------------------------------------------------
   const allRows = await statsSpells(page)
@@ -172,28 +194,37 @@ export async function stepAllowList(page: Page, overlay: Page, log: FixtureLog):
   const narrowed = await settle(
     () => statsSpells(page),
     (rows) => rows.length > 0 && rows.every((s) => s.toLowerCase().includes(LINE)),
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   )
   check(
     'searching the durations list narrows it across every class',
-    narrowed.length > 0 && narrowed.length < allRows.length && narrowed.every((s) => s.toLowerCase().includes(LINE)),
-    `${String(allRows.length)} rows → ${JSON.stringify(narrowed)}`
+    narrowed.length > 0 &&
+      narrowed.length < allRows.length &&
+      narrowed.every((s) => s.toLowerCase().includes(LINE)),
+    `${String(allRows.length)} rows → ${JSON.stringify(narrowed)}`,
   )
   const row = `${STATS_ROW}[data-spell="${SPELL}"] ${BOX}`
   if (!check(`…and the ${SPELL} row is one of them`, (await countOf(page, row)) === 1)) return
-  check('…with its box UNCHECKED, because opt-in mode means nothing is on yet', (await boxes(page)).every((b) => !b.checked))
+  check(
+    '…with its box UNCHECKED, because opt-in mode means nothing is on yet',
+    (await boxes(page)).every((b) => !b.checked),
+  )
 
   await page.click(row, { timeout: 15_000 })
-  const only = await settle(() => drawn(overlay), (r) => r.length > 0, { timeoutMs: 20_000 })
+  const only = await settle(
+    () => drawn(overlay),
+    (r) => r.length > 0,
+    { timeoutMs: 20_000 },
+  )
   check(
     `checking ${SPELL} from the search draws it on the overlay within one delta`,
     only.includes(SPELL),
-    JSON.stringify(only)
+    JSON.stringify(only),
   )
   check(
     '…and NOTHING else — the window draws only what was checked, out of the rows it had',
     only.every(fresh) && only.length < before.length,
-    `${JSON.stringify(before)} → ${JSON.stringify(only)}`
+    `${JSON.stringify(before)} → ${JSON.stringify(only)}`,
   )
 
   // ---- 4. A PREFERENCE IS NOT A SPELL WEARING OFF ------------------------------------------
@@ -201,31 +232,47 @@ export async function stepAllowList(page: Page, overlay: Page, log: FixtureLog):
   check(
     'no drop notice was raised by any of this — a box the user pressed is not a buff dropping',
     noticesAfter.every((t) => noticesBefore.includes(t)),
-    JSON.stringify(noticesAfter)
+    JSON.stringify(noticesAfter),
   )
 
   // ---- 5. FLIPPING BACK RESTORES EVERYTHING, AND LOSES NO CHOICE ---------------------------
   await page.click(MODE, { timeout: 15_000 })
-  const restored = await settle(() => drawn(overlay), (r) => r.length > only.length, { timeoutMs: 20_000 })
+  const restored = await settle(
+    () => drawn(overlay),
+    (r) => r.length > only.length,
+    { timeoutMs: 20_000 },
+  )
   check(
     'turning the mode back OFF restores every row it was hiding',
     restored.length >= before.length,
-    `${String(before.length)} before → ${String(only.length)} in opt-in → ${String(restored.length)} after`
+    `${String(before.length)} before → ${String(only.length)} in opt-in → ${String(restored.length)} after`,
   )
   check('…and the mode switch says so', (await modeOn(page)) === false)
   const gone = await settleStable(() => boxes(page), { timeoutMs: 10_000 })
-  check('…and the boxes are gone again with it', gone.length === 0, JSON.stringify(gone.slice(0, 5)))
+  check(
+    '…and the boxes are gone again with it',
+    gone.length === 0,
+    JSON.stringify(gone.slice(0, 5)),
+  )
   // The tick must SURVIVE the round trip: on again, and the one spell we checked is still the
   // one that draws - the switch hides the boxes, it does not forget them.
   await page.click(MODE, { timeout: 15_000 })
-  const kept = await settle(() => boxes(page), (b) => b.length > 0, { timeoutMs: 20_000 })
+  const kept = await settle(
+    () => boxes(page),
+    (b) => b.length > 0,
+    { timeoutMs: 20_000 },
+  )
   check(
     `…while the explicit ${SPELL} verdict SURVIVED the flip — a mode change loses no choice`,
     kept.some((b) => b.line === LINE && b.checked),
-    JSON.stringify(kept.filter((b) => b.line === LINE))
+    JSON.stringify(kept.filter((b) => b.line === LINE)),
   )
   await page.click(MODE, { timeout: 15_000 })
-  await settle(() => modeOn(page), (on) => !on, { timeoutMs: 15_000 })
+  await settle(
+    () => modeOn(page),
+    (on) => !on,
+    { timeoutMs: 15_000 },
+  )
   // Put the roster back where the step before this one left it, so nothing downstream inherits a
   // window preference this step only borrowed.
   await setShowPermanent(overlay, false)
@@ -246,21 +293,21 @@ export async function stepAllowSurvivesRestart(page: Page, overlay: Page | null)
     getBuffAllow: () => Promise<{ optIn: boolean; lines: Record<string, boolean> }>
   }
   const stored = await page.evaluate(() =>
-    (window as unknown as { eq: AllowBridge }).eq.getBuffAllow()
+    (window as unknown as { eq: AllowBridge }).eq.getBuffAllow(),
   )
   check(
     `the ${SPELL} verdict survived the restart and the whole-world rebuild`,
     stored.lines[LINE] === true,
-    JSON.stringify(stored)
+    JSON.stringify(stored),
   )
   check('…and so did the mode the run ended in', stored.optIn === false, JSON.stringify(stored))
   if (!overlay) return
   const inWindow = await overlay.evaluate(() =>
-    (window as unknown as { eqOverlay: AllowBridge }).eqOverlay.getBuffAllow()
+    (window as unknown as { eqOverlay: AllowBridge }).eqOverlay.getBuffAllow(),
   )
   check(
     '…and the overlay window hydrates the same answer on its own, without a module delta',
     inWindow.lines[LINE] === true && inWindow.optIn === false,
-    JSON.stringify(inWindow)
+    JSON.stringify(inWindow),
   )
 }

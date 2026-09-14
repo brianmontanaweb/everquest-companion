@@ -89,7 +89,7 @@ test('the app-window answer only ever applies to OUR OWN pid', () => {
   assert.equal(foregroundSide(eqWindow, self, EQ_ROOT), 'eq')
   assert.equal(
     foregroundSide({ pid: 9, exePath: 'C:\\Chrome\\chrome.exe', title: '' }, self, EQ_ROOT),
-    'other'
+    'other',
   )
 })
 
@@ -99,7 +99,10 @@ test('ONLY the game moves the bounds — the ring must not jump onto one of our 
   const notTheGame: ForegroundSide[] = ['own-accessory', 'own-app', 'other']
   // Explicit lambda: `map(focusCountsAsEq)` would pass the INDEX as the JOS-427 raise-grace
   // argument, and index 1 is exactly the own-app row.
-  assert.deepEqual(notTheGame.map((s) => focusCountsAsEq(s)), [true, false, false])
+  assert.deepEqual(
+    notTheGame.map((s) => focusCountsAsEq(s)),
+    [true, false, false],
+  )
 })
 
 // ------------------------------------------------------------------ nothing here moves the focus
@@ -139,7 +142,7 @@ test('THE WHOLE APP HAS ONE setFocusable CALL, and it is the guarded one', () =>
   assert.deepEqual(
     hits.map((h) => h.slice(h.indexOf(': ') + 2)),
     ['w.setFocusable(focusable)'],
-    `expected exactly one call site; found:\n${hits.join('\n')}`
+    `expected exactly one call site; found:\n${hits.join('\n')}`,
   )
 })
 
@@ -149,7 +152,7 @@ test('THE CALL IS SKIPPED WHEN THE VALUE DID NOT CHANGE — the alt-tab fix itse
   // the sameness guard comes FIRST, so an unchanged value never reaches Electron at all.
   assert.ok(
     helper.indexOf('w.isFocusable() === focusable) return') < helper.indexOf('w.setFocusable('),
-    'the sameness guard precedes the call'
+    'the sameness guard precedes the call',
   )
 })
 
@@ -164,7 +167,7 @@ test('AUTO-HIDE TOUCHES FOCUSABILITY NOWHERE — not on the way down, not on the
   assert.equal(
     (hide.match(/applyOverlayLocked\(kind, getOverlayConfig\(kind\)\.locked\)/g) ?? []).length,
     2,
-    'the locked mode is still re-applied in both directions'
+    'the locked mode is still re-applied in both directions',
   )
   const locked = body(windows, 'export function applyOverlayLocked(')
   assert.match(locked, /setOverlayIgnoreMouse\(kind, locked\)/, 'the mouse half is unconditional')

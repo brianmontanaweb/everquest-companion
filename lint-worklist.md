@@ -10,7 +10,7 @@ only; run the full `npm test` + `npm run typecheck` after each wave; engine wave
 file comes clean, DELETE its block from `eslint.ratchet.mjs` — the ratchet only
 shrinks, and `npm run lint` is what proves the deletion was earned.
 
-Baseline: **0 files**, **0 file×rule entries**, **0 violations**.
+Baseline: **100 files**, **105 file×rule entries**, **105 violations**.
 
 `linterOptions/reportUnusedDisableDirectives` is not a rule — it means the file
 carries a stale `eslint-disable` comment written before this config existed.
@@ -22,16 +22,148 @@ _clean — nothing suppressed._
 
 ## Wave B — src/main/** (rest) — main process
 
-_clean — nothing suppressed._
+8 files · 8 file×rule entries · 8 violations
+
+| rule | violations |
+| --- | ---: |
+| `max-lines` | 7 |
+| `max-lines-per-function` | 1 |
+
+| file | violations | rules |
+| --- | ---: | --- |
+| `src/main/data/spellCorrectionsList.ts` | 1 | `max-lines` |
+| `src/main/data/spellCorrectionsSubjectsList.ts` | 1 | `max-lines` |
+| `src/main/data/spellDb.ts` | 1 | `max-lines` |
+| `src/main/dataServer/supervisor.ts` | 1 | `max-lines` |
+| `src/main/maps/packs.ts` | 1 | `max-lines-per-function` |
+| `src/main/store.ts` | 1 | `max-lines` |
+| `src/main/triage/analytics.ts` | 1 | `max-lines` |
+| `src/main/windows.ts` | 1 | `max-lines` |
 
 ## Wave C — src/renderer/src/features/combat/** — combat UI
 
-_clean — nothing suppressed._
+4 files · 4 file×rule entries · 4 violations
+
+| rule | violations |
+| --- | ---: |
+| `max-lines-per-function` | 2 |
+| `max-lines` | 2 |
+
+| file | violations | rules |
+| --- | ---: | --- |
+| `src/renderer/src/features/combat/CombatTimeline.tsx` | 1 | `max-lines-per-function` |
+| `src/renderer/src/features/combat/combatShared.tsx` | 1 | `max-lines` |
+| `src/renderer/src/features/combat/dashboardData.ts` | 1 | `max-lines` |
+| `src/renderer/src/features/combat/useTimelineViewport.ts` | 1 | `max-lines-per-function` |
 
 ## Wave D — src/renderer/** (rest) + overlay
 
-_clean — nothing suppressed._
+21 files · 25 file×rule entries · 25 violations
+
+| rule | violations |
+| --- | ---: |
+| `max-lines-per-function` | 16 |
+| `max-lines` | 9 |
+
+| file | violations | rules |
+| --- | ---: | --- |
+| `src/renderer/src/features/leveling/LevelingView.tsx` | 2 | `max-lines`, `max-lines-per-function` |
+| `src/renderer/src/features/leveling/levelCharts.tsx` | 2 | `max-lines`, `max-lines-per-function` |
+| `src/renderer/src/overlay/BuffsOverlay.tsx` | 2 | `max-lines`, `max-lines-per-function` |
+| `src/renderer/src/overlay/XpOverlay.tsx` | 2 | `max-lines`, `max-lines-per-function` |
+| `src/renderer/src/components/OutputFileLine.tsx` | 1 | `max-lines-per-function` |
+| `src/renderer/src/components/TitleBar.tsx` | 1 | `max-lines-per-function` |
+| `src/renderer/src/features/bosses/BossSections.tsx` | 1 | `max-lines` |
+| `src/renderer/src/features/bosses/BossView.tsx` | 1 | `max-lines-per-function` |
+| `src/renderer/src/features/gear/GearView.tsx` | 1 | `max-lines-per-function` |
+| `src/renderer/src/features/leveling/NewAtLevelPanel.tsx` | 1 | `max-lines-per-function` |
+| `src/renderer/src/features/loot/LootView.tsx` | 1 | `max-lines-per-function` |
+| `src/renderer/src/features/planner/EffectFilterBar.tsx` | 1 | `max-lines-per-function` |
+| `src/renderer/src/features/planner/EffectRows.tsx` | 1 | `max-lines-per-function` |
+| `src/renderer/src/features/posky/useQuestList.ts` | 1 | `max-lines-per-function` |
+| `src/renderer/src/features/preferences/PreferencesView.tsx` | 1 | `max-lines` |
+| `src/renderer/src/features/profiles/ShareImportDialog.tsx` | 1 | `max-lines` |
+| `src/renderer/src/features/resists/ResistProfile.tsx` | 1 | `max-lines-per-function` |
+| `src/renderer/src/features/timers/RespawnRowBar.tsx` | 1 | `max-lines-per-function` |
+| `src/renderer/src/features/triage/AnalyticsBits.tsx` | 1 | `max-lines` |
+| `src/renderer/src/features/wishlist/WishlistView.tsx` | 1 | `max-lines-per-function` |
+| `src/renderer/src/lib/ItemWindow.tsx` | 1 | `max-lines` |
 
 ## Wave E — src/shared + src/preload + scripts + tests
 
-_clean — nothing suppressed._
+67 files · 68 file×rule entries · 68 violations
+
+| rule | violations |
+| --- | ---: |
+| `max-lines` | 67 |
+| `max-lines-per-function` | 1 |
+
+| file | violations | rules |
+| --- | ---: | --- |
+| `scripts/scrape-page-era.ts` | 2 | `max-lines`, `max-lines-per-function` |
+| `scripts/dev-feedback-server.mts` | 1 | `max-lines` |
+| `scripts/triage-feedback.mts` | 1 | `max-lines` |
+| `src/preload/index.ts` | 1 | `max-lines` |
+| `src/shared/spellMetrics.ts` | 1 | `max-lines` |
+| `src/shared/telemetry.ts` | 1 | `max-lines` |
+| `src/shared/telemetryDocEvents.ts` | 1 | `max-lines` |
+| `src/shared/telemetryRollup.ts` | 1 | `max-lines` |
+| `src/shared/types.ts` | 1 | `max-lines` |
+| `tests/analyticsExport.test.mts` | 1 | `max-lines` |
+| `tests/bestSpells.test.mts` | 1 | `max-lines` |
+| `tests/combatCopyText.test.mts` | 1 | `max-lines` |
+| `tests/conCard.test.mts` | 1 | `max-lines` |
+| `tests/dataServerEngineProtocol.test.mts` | 1 | `max-lines` |
+| `tests/devFeedbackServer.test.mts` | 1 | `max-lines` |
+| `tests/e2e/appHarness.mts` | 1 | `max-lines` |
+| `tests/e2e/bestSpellsSteps.mts` | 1 | `max-lines` |
+| `tests/e2e/bosses-week.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/buffs-overlay.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/character-switch-storm.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/combat-dashboard.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/combatSteps.mts` | 1 | `max-lines` |
+| `tests/e2e/con-card.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/curveSteps.mts` | 1 | `max-lines` |
+| `tests/e2e/feedback.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/gear.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/leveling.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/levelingLayoutSteps.mts` | 1 | `max-lines` |
+| `tests/e2e/maps.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/overlay-sync.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/overlaysAppearanceSteps.mts` | 1 | `max-lines` |
+| `tests/e2e/overview.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/planner.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/respawn-timers.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/sky-cleanup.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/sky-filters.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/sky-inventory-autoload.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/sky-turnin.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/sliceSteps.mts` | 1 | `max-lines` |
+| `tests/e2e/spell-card.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/telemetry.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/voice-alerts.e2e.mts` | 1 | `max-lines` |
+| `tests/e2e/xp-overlay.e2e.mts` | 1 | `max-lines` |
+| `tests/errorReportContract.test.mts` | 1 | `max-lines` |
+| `tests/feedbackContract.test.mts` | 1 | `max-lines` |
+| `tests/gearFilter.test.mts` | 1 | `max-lines` |
+| `tests/levelUnlocks.test.mts` | 1 | `max-lines` |
+| `tests/levelingWindowScope.test.mts` | 1 | `max-lines` |
+| `tests/overviewLeveling.test.mts` | 1 | `max-lines` |
+| `tests/questTurnIns.test.mts` | 1 | `max-lines` |
+| `tests/rangeStats.test.mts` | 1 | `max-lines` |
+| `tests/rangeStatsRows.test.mts` | 1 | `max-lines` |
+| `tests/rateBasis.test.mts` | 1 | `max-lines` |
+| `tests/resistModel.test.mts` | 1 | `max-lines` |
+| `tests/sessionSegments.test.mts` | 1 | `max-lines` |
+| `tests/shareProfiles.test.mts` | 1 | `max-lines` |
+| `tests/skyItemOverrides.test.mts` | 1 | `max-lines` |
+| `tests/skyTargets.test.mts` | 1 | `max-lines` |
+| `tests/spellEffectClass.test.mts` | 1 | `max-lines` |
+| `tests/spellMetrics.test.mts` | 1 | `max-lines` |
+| `tests/spellSearch.test.mts` | 1 | `max-lines` |
+| `tests/storeMigrations.test.mts` | 1 | `max-lines` |
+| `tests/telemetryRollup.test.mts` | 1 | `max-lines` |
+| `tests/timeslice.test.mts` | 1 | `max-lines` |
+| `tests/updateCadence.test.mts` | 1 | `max-lines` |
+| `tests/usageAnalytics.test.mts` | 1 | `max-lines` |
+| `tests/wireSanitize.test.mts` | 1 | `max-lines` |

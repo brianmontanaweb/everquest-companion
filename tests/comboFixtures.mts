@@ -30,7 +30,7 @@ export function interval(
   id: string,
   startTs: number,
   endTs: number | null,
-  over: IntervalOver = {}
+  over: IntervalOver = {},
 ): ComboInterval {
   const { classes = [], ...fields } = over
   return {
@@ -48,7 +48,7 @@ export function interval(
     levelHi: null,
     evidenceCount: 1,
     userLocked: false,
-    ...fields
+    ...fields,
   }
 }
 

@@ -27,7 +27,7 @@ import {
   EQUIP_SLOTS,
   type EquipSlot,
   type PlannerDonor,
-  type PlannerItemHit
+  type PlannerItemHit,
 } from '../../../../shared/planner/types'
 import { classesMismatch } from './plannerClasses'
 

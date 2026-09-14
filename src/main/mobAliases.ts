@@ -122,7 +122,7 @@ export interface CachedVerdict {
  */
 export function poisonedAliasKeys(
   id: MobIdentity,
-  cache: ReadonlyMap<string, { data: CachedVerdict }>
+  cache: ReadonlyMap<string, { data: CachedVerdict }>,
 ): string[] {
   if (!id.aliased) return []
   const canonical = mobKey(id.canonical)

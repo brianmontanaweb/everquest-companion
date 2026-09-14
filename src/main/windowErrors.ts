@@ -40,7 +40,12 @@ import { join } from 'path'
 import { consoleForward } from './consoleForward'
 import { logError, logWarn } from './errorLog'
 import { noteRendererCrash } from './telemetry'
-import { DID_FAIL_LOAD_ERROR_NAME, didFailLoadMessage, numericOr, renderGoneReport } from './windowGone'
+import {
+  DID_FAIL_LOAD_ERROR_NAME,
+  didFailLoadMessage,
+  numericOr,
+  renderGoneReport,
+} from './windowGone'
 
 /** How the capture reaches the window it may need to reload. Injected rather than imported so
  *  this module does not import `windows.ts` back and close a cycle. */
@@ -124,7 +129,7 @@ export function captureMainWindowErrors(wc: Electron.WebContents, window: Window
       errorCode,
       errorDescription,
       validatedURL,
-      isMainFrame
+      isMainFrame,
     })
     const win = window()
     if (isMainFrame && !didFailReloaded && win && !win.isDestroyed()) {

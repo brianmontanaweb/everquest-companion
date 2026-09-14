@@ -37,7 +37,7 @@ import { heldCountsFromDump, walkEntries } from '../src/shared/outputs/inventory
 
 const REAL_DUMP = readFileSync(
   join(import.meta.dirname, 'fixtures', 'Primitive_freeport-Inventory.txt'),
-  'utf8'
+  'utf8',
 )
 const dump = parseInventoryDump(REAL_DUMP)
 const { rows, lanes } = carryAll(dump)
@@ -57,11 +57,16 @@ test('every non-empty row of the dump is carried, exactly once, in FILE ORDER', 
 
   const lineNumbers = rows.map((r) => r.line)
   assert.equal(new Set(lineNumbers).size, rows.length, 'two rows claim one line of the file')
-  assert.deepEqual(lineNumbers, [...lineNumbers].sort((a, b) => a - b), 'rows are not in file order')
+  assert.deepEqual(
+    lineNumbers,
+    [...lineNumbers].sort((a, b) => a - b),
+    'rows are not in file order',
+  )
 })
 
 test('the name is the dump’s own spelling - the ` +N`, the `*` and the `(Exaltation)`', () => {
-  const byName = (name: string): (typeof rows)[number] | undefined => rows.find((r) => r.name === name)
+  const byName = (name: string): (typeof rows)[number] | undefined =>
+    rows.find((r) => r.name === name)
 
   // A worn item at +7. The suffix is the whole reason this column is verbatim.
   const flame = byName('Drop of Crystallized Flame +7')
@@ -73,7 +78,11 @@ test('the name is the dump’s own spelling - the ` +N`, the `*` and the `(Exalt
   assert.equal(rows.filter((r) => r.name.startsWith('Moonstone Ring')).length, 4)
   assert.ok(byName('Moonstone Ring +1'), 'the +1 in a bag')
   assert.ok(byName('Moonstone Ring +3'), 'the +3 in a bag')
-  assert.equal(rows.filter((r) => r.name === 'Moonstone Ring (Exaltation)').length, 2, 'two sockets')
+  assert.equal(
+    rows.filter((r) => r.name === 'Moonstone Ring (Exaltation)').length,
+    2,
+    'two sockets',
+  )
 
   // The trailing `*`, whose meaning the file never states and which is therefore never stripped.
   const bandages = byName('Bandages*')
@@ -92,7 +101,8 @@ test('the search key is the NAME ALONE - the chips own location, the box owns th
 })
 
 test('a count of 0 reads as 1 - the same rule heldCountsFromDump has always used', () => {
-  for (const row of rows) assert.ok(row.count >= 1, `${row.name} carries a count of ${String(row.count)}`)
+  for (const row of rows)
+    assert.ok(row.count >= 1, `${row.name} carries a count of ${String(row.count)}`)
   // Stated counts survive: the stack of 86 daggers and the depot's two Griffenne Blood.
   assert.equal(rows.find((r) => r.name === 'Tiny Dagger')?.count, 86)
   assert.equal(rows.find((r) => r.name === 'Griffenne Blood')?.count, 2)
@@ -110,11 +120,7 @@ test('a count of 0 reads as 1 - the same rule heldCountsFromDump has always used
 })
 
 test('an Empty row is a slot the client enumerated, and is NOT a thing you carry', () => {
-  assert.equal(
-    rows.filter((r) => r.name === 'Empty').length,
-    0,
-    'an Empty row reached the ledger'
-  )
+  assert.equal(rows.filter((r) => r.name === 'Empty').length, 0, 'an Empty row reached the ledger')
   // The measured proof it matters: the owner's dump enumerates all 24 bank and 6 shared-bank slots
   // and every one of them is Empty, so the Bank lane holds nothing and gets no chip at all.
   assert.ok(REAL_DUMP.includes('Bank1\tEmpty'), 'the fixture no longer proves the point')
@@ -128,13 +134,16 @@ test('the lanes partition the rows - every row in exactly one, and the counts ad
   const total = lanes.reduce((n, l) => n + l.count, 0)
   assert.equal(total, rows.length)
   for (const lane of lanes) assert.equal(lane.count, inLane(lane.id).length)
-  assert.ok(lanes.every((l) => l.count > 0), 'a lane with no rows was emitted')
+  assert.ok(
+    lanes.every((l) => l.count > 0),
+    'a lane with no rows was emitted',
+  )
 })
 
 test('the real dump’s lanes are Worn, Bags, Depot and Key rings, in chip order', () => {
   assert.deepEqual(
     lanes.map((l) => `${l.id}:${l.label}:${String(l.count)}`),
-    ['worn:Worn:28', 'bags:Bags:57', 'depot:Depot:1', 'keyring:Key rings:37']
+    ['worn:Worn:28', 'bags:Bags:57', 'depot:Depot:1', 'keyring:Key rings:37'],
   )
 })
 
@@ -147,10 +156,13 @@ test('WORN is the equipment slots and their sockets - and nothing filed elsewher
   for (const row of worn) {
     assert.ok(
       !/^(General|Bank|SharedBank|Personal-Depot)/.test(row.location),
-      `${row.name} is worn but filed at ${row.location}`
+      `${row.name} is worn but filed at ${row.location}`,
     )
   }
-  assert.ok(worn.some((r) => r.location === 'Face-Slot7'), 'the socketed mask lost its path')
+  assert.ok(
+    worn.some((r) => r.location === 'Face-Slot7'),
+    'the socketed mask lost its path',
+  )
 })
 
 test('BAGS is the numbered General containers, at any depth', () => {
@@ -158,7 +170,10 @@ test('BAGS is the numbered General containers, at any depth', () => {
   for (const row of bags) assert.match(row.location, /^General \d+/)
   // A bag row, the item in it, and the exaltation socketed into THAT item — three depths, one lane,
   // and each row's location path says exactly where it sits.
-  assert.ok(bags.some((r) => r.location === 'General 1'), 'the rucksack itself is a thing you carry')
+  assert.ok(
+    bags.some((r) => r.location === 'General 1'),
+    'the rucksack itself is a thing you carry',
+  )
   assert.ok(bags.some((r) => r.location === 'General 1-Slot9'))
   assert.ok(bags.some((r) => r.location === 'General 1-Slot9-Slot7'))
 })
@@ -182,7 +197,10 @@ test('KEY RINGS lists every category, including the one held counts refuse', () 
   // holds a copy or a receipt) and deliberately IN here: this table lists what the file lists, which
   // is a weaker claim than "you own this" and does not need that evidence.
   const activated = keyring.filter((r) => r.location.endsWith('Activated'))
-  assert.deepEqual(activated.map((r) => r.name), ['Guise of the Deceiver'])
+  assert.deepEqual(
+    activated.map((r) => r.name),
+    ['Guise of the Deceiver'],
+  )
   assert.equal(heldCountsFromDump(dump)['guise of the deceiver'], undefined)
 
   // A keyring row has no Count column at all, so a copy is one row — which is how the owner's dump
@@ -207,7 +225,7 @@ test('SYNTHETIC: a second item-shaped section becomes a lane labelled with its O
     'Head\tValorium Helmet +1\t1\t1\t10',
     '',
     "Dragon's Hoard\tName\tID\tCount\tSlots",
-    "Dragon's Hoard1\tGolden Efreeti Boots\t4407\t1\t10"
+    "Dragon's Hoard1\tGolden Efreeti Boots\t4407\t1\t10",
   )
   const out = carryAll(parseInventoryDump(text))
   const id = `${SECTION_LANE_PREFIX}Dragon's Hoard`
@@ -215,8 +233,8 @@ test('SYNTHETIC: a second item-shaped section becomes a lane labelled with its O
     out.lanes.map((l) => [l.id, l.label, l.count]),
     [
       ['worn', 'Worn', 1],
-      [id, "Dragon's Hoard", 1]
-    ]
+      [id, "Dragon's Hoard", 1],
+    ],
   )
   // The location says which table it came from, since the base token alone would not.
   const hoard = out.rows.find((r) => r.lane === id)
@@ -231,22 +249,24 @@ test('SYNTHETIC: an unclassifiable base token in the Location table lands in ELS
   const text = synth(
     'Location\tName\tID\tCount\tSlots',
     'Head\tValorium Helmet +1\t1\t1\t10',
-    'DragonHoard3\tGolden Efreeti Boots\t4407\t1\t10'
+    'DragonHoard3\tGolden Efreeti Boots\t4407\t1\t10',
   )
   const out = carryAll(parseInventoryDump(text))
   assert.deepEqual(
     out.lanes.map((l) => [l.id, l.label, l.count]),
     [
       ['worn', 'Worn', 1],
-      ['elsewhere', 'Elsewhere', 1]
-    ]
+      ['elsewhere', 'Elsewhere', 1],
+    ],
   )
   // Surfaced under the file's own spelling rather than dropped — the point of having the lane.
   assert.equal(out.rows.find((r) => r.lane === 'elsewhere')?.location, 'DragonHoard3')
 })
 
 test('SYNTHETIC: a dump with nothing in it produces no rows and no chips', () => {
-  const out = carryAll(parseInventoryDump(synth('Location\tName\tID\tCount\tSlots', 'Head\tEmpty\t0\t0\t0')))
+  const out = carryAll(
+    parseInventoryDump(synth('Location\tName\tID\tCount\tSlots', 'Head\tEmpty\t0\t0\t0')),
+  )
   assert.deepEqual(out.rows, [])
   assert.deepEqual(out.lanes, [])
 })

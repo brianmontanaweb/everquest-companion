@@ -77,7 +77,7 @@ import {
   basisRead,
   pickRate,
   type BasisRead,
-  type RateBasis
+  type RateBasis,
 } from '../../../shared/rateBasis'
 import { AA_EST, aaEtaValue } from '../features/leveling/aaPaceRows'
 import { NONE, basisSpanText } from '../features/leveling/rangeStatsRows'
@@ -174,7 +174,9 @@ function rate(n: number | null, fmt: (v: number) => string): string {
 /** The LEVELS pace. Drawn while the game is still stating a level-bar percentage; see the header
  *  for why it is absent at the cap rather than an em-dash. */
 function levelsRow(stats: RangeStats, read: BasisRead): XpOverlayRow {
-  const r = split(rate(pickRate(read, stats.levelsPerHourActive, stats.levelsPerHourWall), formatLevelRate))
+  const r = split(
+    rate(pickRate(read, stats.levelsPerHourActive, stats.levelsPerHourWall), formatLevelRate),
+  )
   return {
     id: 'xp',
     row: 'xp',
@@ -182,7 +184,7 @@ function levelsRow(stats: RangeStats, read: BasisRead): XpOverlayRow {
     value: r.value,
     unit: r.unit || 'lvl/hr',
     detail: '',
-    inferred: false
+    inferred: false,
   }
 }
 
@@ -204,7 +206,7 @@ function aaRow(stats: RangeStats, read: BasisRead): XpOverlayRow {
     value: r.value,
     unit: r.unit || 'AA/hr',
     detail: points == null ? '' : formatPointRate(points),
-    inferred: false
+    inferred: false,
   }
 }
 
@@ -238,7 +240,7 @@ function aaWaitRow(snap: ProgressionSnap, stats: RangeStats): XpOverlayRow {
     value: value ?? NONE,
     unit: '',
     detail: value === null ? '' : AA_EST,
-    inferred: true
+    inferred: true,
   }
 }
 
@@ -254,7 +256,7 @@ function etaRow(
   snap: ProgressionSnap,
   stats: RangeStats,
   level: LevelStatement | null | undefined,
-  read: BasisRead
+  read: BasisRead,
 ): XpOverlayRow {
   // `capped` is `atCap(stats)`, recomputed rather than passed: this function is at the repo's
   // measured `max-params` ceiling of 4 and the answer is a pure function of an argument it has.
@@ -272,7 +274,7 @@ function etaRow(
       value: NONE,
       unit: '',
       detail: '',
-      inferred: false
+      inferred: false,
     }
   }
   if (capped) return aaWaitRow(snap, stats)
@@ -285,7 +287,7 @@ function etaRow(
       value: NONE,
       unit: '',
       detail: '',
-      inferred: false
+      inferred: false,
     }
   }
   // Past a day the estimate is a HORIZON rather than a duration — the Overview card's own rule,
@@ -298,7 +300,7 @@ function etaRow(
     value: absurd ? '>1 day' : `~${fmtDuration(eta.ms)}`,
     unit: '',
     detail: `to ${eta.toLevel}`,
-    inferred: false
+    inferred: false,
   }
 }
 
@@ -317,7 +319,7 @@ function moteRows(
   loot: readonly LootEvent[],
   slice: Timeslice,
   stats: RangeStats,
-  read: BasisRead
+  read: BasisRead,
 ): XpOverlayRow[] {
   const rows = moteRates({
     events: loot,
@@ -328,7 +330,7 @@ function moteRows(
     // denominator it was never measured over.
     spans: stats,
     zoneKey: slice.zoneKey,
-    zoneExactKey: slice.zoneExactKey
+    zoneExactKey: slice.zoneExactKey,
   })
   if (rows.length === 0) {
     return [
@@ -339,8 +341,8 @@ function moteRows(
         value: NONE,
         unit: '',
         detail: 'none here',
-        inferred: false
-      }
+        inferred: false,
+      },
     ]
   }
   return rows.map((m) => {
@@ -355,7 +357,7 @@ function moteRows(
       value: r.value,
       unit: r.unit || 'drops/hr',
       detail: `${m.drops.toLocaleString()}×`,
-      inferred: false
+      inferred: false,
     }
   })
 }
@@ -387,7 +389,7 @@ export function xpOverlayView(args: XpRowsArgs): XpOverlayView {
     snap,
     range: slice.range,
     zoneKey: slice.zoneKey,
-    zoneExactKey: slice.zoneExactKey
+    zoneExactKey: slice.zoneExactKey,
   })
   const capped = atCap(stats)
   // ONE BASIS READ FOR THE WHOLE WINDOW, resolved beside the one `rangeStats` call and handed to
@@ -407,6 +409,6 @@ export function xpOverlayView(args: XpRowsArgs): XpOverlayView {
     level: read?.level ?? null,
     levelCue: read?.cue ?? '',
     levelTitle: read?.title ?? '',
-    atCap: capped
+    atCap: capped,
   }
 }

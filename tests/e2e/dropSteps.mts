@@ -38,7 +38,10 @@ export const ITEM_ZONE_ROW = '[data-testid="item-zone-row"]'
 
 /** Rendered text of the first match; '' when the node isn't mounted. */
 function textOf(page: Page, sel: string): Promise<string> {
-  return page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
+  return page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    sel,
+  )
 }
 
 /**
@@ -52,7 +55,12 @@ function textOf(page: Page, sel: string): Promise<string> {
  * Returns the row text, or null when the panel never filled (which downstream steps need to know).
  */
 async function stepDropsPanel(page: Page, log: FixtureLog): Promise<string | null> {
-  if (!check('the in-window drops panel is mounted with the Leveling tab', (await countOf(page, DROPS)) === 1)) {
+  if (
+    !check(
+      'the in-window drops panel is mounted with the Leveling tab',
+      (await countOf(page, DROPS)) === 1,
+    )
+  ) {
     return null
   }
   const before = await countOf(page, DROP_ROW)
@@ -60,7 +68,7 @@ async function stepDropsPanel(page: Page, log: FixtureLog): Promise<string | nul
     check(
       '…and with no loot in range it STATES the empty window rather than drawing a blank box',
       (await countOf(page, DROPS_EMPTY)) === 1,
-      (await textOf(page, DROPS_EMPTY)).replace(/\s+/g, ' ')
+      (await textOf(page, DROPS_EMPTY)).replace(/\s+/g, ' '),
     )
   }
 
@@ -68,7 +76,13 @@ async function stepDropsPanel(page: Page, log: FixtureLog): Promise<string | nul
   // IPC → render, exactly as a real pull's would.
   const written = playLootDrops(log)
   const rows = await settleCount(page, DROP_ROW, before + 1, { timeoutMs: 20_000 })
-  if (!check(`${String(written)} looted lines reach the panel through the live tail`, rows > before, `${String(before)} → ${String(rows)} rows`)) {
+  if (
+    !check(
+      `${String(written)} looted lines reach the panel through the live tail`,
+      rows > before,
+      `${String(before)} → ${String(rows)} rows`,
+    )
+  ) {
     return null
   }
 
@@ -88,11 +102,19 @@ async function stepDropsPanel(page: Page, log: FixtureLog): Promise<string | nul
     await settle(
       () => textOf(page, DROP_ROW),
       (t) => t.replace(/\s+/g, ' ').includes(`${String(DROP_COUNT)}×`),
-      { timeoutMs: 20_000 }
+      { timeoutMs: 20_000 },
     )
   ).replace(/\s+/g, ' ')
-  check('…ordered by observed drops — the item that dropped three times is the top row', top.includes(DROP_ITEM), top)
-  check(`…stating its in-window count exactly (${String(DROP_COUNT)} of them were written)`, top.includes(`${String(DROP_COUNT)}×`), top)
+  check(
+    '…ordered by observed drops — the item that dropped three times is the top row',
+    top.includes(DROP_ITEM),
+    top,
+  )
+  check(
+    `…stating its in-window count exactly (${String(DROP_COUNT)} of them were written)`,
+    top.includes(`${String(DROP_COUNT)}×`),
+    top,
+  )
   // A RATE NEVER APPEARS WITHOUT ITS SPAN, AND THE SPAN NAMES ITS HOUR: the panel's single caption
   // is the denominator every row divides by, and the row itself carries either a rate or the
   // em-dash. Since JOS-288 that hour is the tab's basis pick rather than always the active one —
@@ -103,9 +125,13 @@ async function stepDropsPanel(page: Page, log: FixtureLog): Promise<string | nul
   check(
     '…over a STATED span that names its hour (a rate without its denominator is a claim, not a measurement)',
     /over .+ (elapsed|active)/.test(panel),
-    panel.slice(0, 120)
+    panel.slice(0, 120),
   )
-  check('…and every row carries a rate or an honest em-dash, never a bare count', /drops\/hr|—/.test(top), top)
+  check(
+    '…and every row carries a rate or an honest em-dash, never a bare count',
+    /drops\/hr|—/.test(top),
+    top,
+  )
   return top
 }
 
@@ -127,23 +153,37 @@ async function stepDropRoundTrip(page: Page): Promise<void> {
   const box = await rectOf(page, DROP_ITEM_LINK)
   const clicked = await page.click(`${DROP_ITEM_LINK} >> nth=0`, { timeout: 15_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
-  if (!check('clicking an item in the drops panel navigates', clicked, box ? `${String(box.w)}×${String(box.h)}px` : 'no box')) {
+  if (
+    !check(
+      'clicking an item in the drops panel navigates',
+      clicked,
+      box ? `${String(box.w)}×${String(box.h)}px` : 'no box',
+    )
+  ) {
     return
   }
   const opened = await page.waitForSelector(LOOT_DETAIL, { timeout: 30_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!check('…opening that item’s Loot drill-down', opened)) return
-  check('…on the item that was clicked', (await textOf(page, LOOT_TITLE)).includes(DROP_ITEM), await textOf(page, LOOT_TITLE))
+  check(
+    '…on the item that was clicked',
+    (await textOf(page, LOOT_TITLE)).includes(DROP_ITEM),
+    await textOf(page, LOOT_TITLE),
+  )
 
   // THE DRILL'S OWN HALF OF THE TICKET: where it drops for you, with a rate.
   const table = await settleCount(page, ITEM_ZONE_TABLE, 1, { timeoutMs: 15_000 })
   if (check('the drill-down draws the per-zone drop table', table === 1)) {
     const zoneRows = await settleCount(page, ITEM_ZONE_ROW, 1, { timeoutMs: 15_000 })
-    check('…with a row for the zone it was just looted in', zoneRows > 0, `${String(zoneRows)} zone rows`)
+    check(
+      '…with a row for the zone it was just looted in',
+      zoneRows > 0,
+      `${String(zoneRows)} zone rows`,
+    )
     // THE SAME CORRECTION AS THE PANEL ABOVE (JOS-490), and for the same reason: `settleCount`
     // settles on the ROW existing, and what is asserted is what the row SAYS. This table's rate is
     // divided by ACTIVE time, which lands a beat after the row itself does, so the existing wait
@@ -153,21 +193,36 @@ async function stepDropRoundTrip(page: Page): Promise<void> {
       await settle(
         () => textOf(page, ITEM_ZONE_TABLE),
         (t) => /drops\/hr|—/.test(t),
-        { timeoutMs: 20_000 }
+        { timeoutMs: 20_000 },
       )
     ).replace(/\s+/g, ' ')
-    check('…and each row states a rate or an honest em-dash', /drops\/hr|—/.test(text), text.slice(0, 140))
+    check(
+      '…and each row states a rate or an honest em-dash',
+      /drops\/hr|—/.test(text),
+      text.slice(0, 140),
+    )
   }
 
   // The affordance states its destination BEFORE it is pressed — the assertion that cannot pass
   // by accident.
   const label = (await page.getAttribute(LOOT_BACK, 'aria-label')) ?? ''
-  check('the drill’s Back NAMES the tab it will return to', label === 'Back to Leveling', `"${label}"`)
+  check(
+    'the drill’s Back NAMES the tab it will return to',
+    label === 'Back to Leveling',
+    `"${label}"`,
+  )
   await page.click(LOOT_BACK, { timeout: 15_000 })
-  const home = await settle(() => countOf(page, LEVELING_VIEW), (n) => n > 0, { timeoutMs: 20_000 })
+  const home = await settle(
+    () => countOf(page, LEVELING_VIEW),
+    (n) => n > 0,
+    { timeoutMs: 20_000 },
+  )
   check('…and pressing it returns to the Leveling tab', home > 0)
   const backPanel = await settleCount(page, DROPS, 1, { timeoutMs: 15_000 })
-  if (backPanel !== 1) note('the drops panel did not re-mount on return — the tab re-derives its scope on arrival, so this is worth a look')
+  if (backPanel !== 1)
+    note(
+      'the drops panel did not re-mount on return — the tab re-derives its scope on arrival, so this is worth a look',
+    )
   check('…with the drops panel still there', backPanel === 1)
 }
 

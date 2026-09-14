@@ -10,7 +10,13 @@ import { useModule } from '../../lib/useModule'
 import { peakLevel, swapCount, type LevelSegment } from './levelSeries'
 // Every fold over the `leveling` snapshot — see that file's header for why they left this one.
 import { useLevelingSeries } from './useLevelingSeries'
-import { AreaChart, LevelStepChart, SWAP_COLOR, ZoneLegendStrip, type ChartChrome } from './levelCharts'
+import {
+  AreaChart,
+  LevelStepChart,
+  SWAP_COLOR,
+  ZoneLegendStrip,
+  type ChartChrome,
+} from './levelCharts'
 import { CHART_W, fmtDelta, type AaPoint } from './levelChartGeometry'
 // THE FRACTIONAL CURVE (JOS-292): the dings are anchors now, and the percentages the game states
 // between them are the rest of the picture. Derived HERE, in the same memo layer as the bands and
@@ -20,13 +26,25 @@ import { PAD_X, mergeZoneBands, zoneLegend, type DataBounds, type ZoneLegend } f
 // The window math (JOS-71): the pad, the bucket grid and the two series clips. Since JOS-130 the
 // PICK is no longer this tab's own — it is the app-wide timeslice, and these are the drawing rules
 // whatever slice is in force.
-import { visibleFrom, visibleSegments, windowFor, windowOver, type TimescaleId } from './chartWindow'
+import {
+  visibleFrom,
+  visibleSegments,
+  windowFor,
+  windowOver,
+  type TimescaleId,
+} from './chartWindow'
 // THE TIMESLICE (JOS-130): the one control every loot and xp analysis surface reads. It absorbed
 // this tab's timescale — the duration rungs are four more slices in the same id space — so a
 // reader who narrows to this session on the Loot ledger finds the xp rates already narrowed.
 import { ScopeBar } from '../timeslice/ScopeBar'
 import { useTimesliceOn } from '../timeslice/useTimeslice'
-import { TAIL_MS, sliceDurationMs, type SliceId, type SliceRange, type Timeslice } from '@shared/timeslice'
+import {
+  TAIL_MS,
+  sliceDurationMs,
+  type SliceId,
+  type SliceRange,
+  type Timeslice,
+} from '@shared/timeslice'
 // The SCOPE (JOS-75): which stretch of the log every number on this tab describes. The timescale
 // moved the curves; this moves the arithmetic with them — one `rangeStats` call over one range,
 // narrowed by a drag when there is one. Nothing here re-derives a rate.
@@ -76,7 +94,7 @@ function AaOverTimePanel({
   points,
   drawn,
   aaEarned,
-  chrome
+  chrome,
 }: {
   /** the WHOLE series — it decides whether this character has a curve at all. */
   points: AaPoint[]
@@ -90,8 +108,8 @@ function AaOverTimePanel({
     <Paper variant="outlined" sx={{ p: 2 }}>
       <Typography variant="subtitle2">AA gained over time</Typography>
       <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-        cumulative gain lines - the final value can run ahead of the{' '}
-        {aaEarned.toLocaleString()} earned headline
+        cumulative gain lines - the final value can run ahead of the {aaEarned.toLocaleString()}{' '}
+        earned headline
       </Typography>
       <AreaChart points={drawn} color="#6fb3d2" chrome={chrome} />
     </Paper>
@@ -113,7 +131,7 @@ function LevelOverTimePanel({
   swaps,
   aaPoints,
   chrome,
-  legend
+  legend,
 }: {
   /** the runs inside the chosen timescale (the whole history at `All`). */
   segments: LevelSegment[]
@@ -135,10 +153,21 @@ function LevelOverTimePanel({
       <Typography variant="subtitle2">Level over time</Typography>
       <Typography variant="caption" color="text.secondary" gutterBottom display="block">
         the curve is your last level-up plus every percentage the game has stated since; a{' '}
-        <Box component="span" sx={{ color: SWAP_COLOR }}>shaded span</Box> is experience the log did not state
-        {swaps > 0 ? ', and a dashed break is a class swap - the level is re-reported for the new loadout, not lost' : ''}
+        <Box component="span" sx={{ color: SWAP_COLOR }}>
+          shaded span
+        </Box>{' '}
+        is experience the log did not state
+        {swaps > 0
+          ? ', and a dashed break is a class swap - the level is re-reported for the new loadout, not lost'
+          : ''}
       </Typography>
-      <LevelStepChart segments={segments} curve={curve} color="#d9b25f" aaPoints={aaPoints} chrome={chrome} />
+      <LevelStepChart
+        segments={segments}
+        curve={curve}
+        color="#d9b25f"
+        aaPoints={aaPoints}
+        chrome={chrome}
+      />
       <ZoneLegendStrip legend={legend} fmtDuration={fmtDelta} />
     </Paper>
   )
@@ -207,23 +236,40 @@ function useLevelingCharts(o: {
   }, [bounds, slice, fixed])
   // The two windowed series. Both charts and both hover layers read exactly these.
   const aaVisible = useMemo(() => (scale ? visibleFrom(aas, scale.t0) : []), [aas, scale])
-  const segVisible = useMemo(() => (scale ? visibleSegments(segments, scale.t0) : []), [segments, scale])
+  const segVisible = useMemo(
+    () => (scale ? visibleSegments(segments, scale.t0) : []),
+    [segments, scale],
+  )
   // THE CURVE, DERIVED WHERE EVERY OTHER WINDOWED SERIES IS. It is one ascending pass over the
   // CAPPED exp column (~7k rows for a 1.64M-line log — JOS-290 measured the cap, and this memo
   // re-measures the pass in tests/levelCurve.test.mts), then a collapse to at most two vertices
   // per pixel column. It depends on the snapshot and the scale and on NOTHING a pointer does, so
   // a drag still re-renders the two selection bands and nothing else.
   const curve = useMemo(
-    () => (scale ? levelCurve({ snap: prog, segments: segVisible, t0: scale.t0, t1: scale.t1 }, scale) : null),
-    [prog, segVisible, scale]
+    () =>
+      scale
+        ? levelCurve({ snap: prog, segments: segVisible, t0: scale.t0, t1: scale.t1 }, scale)
+        : null,
+    [prog, segVisible, scale],
   )
-  const bands = useMemo(() => (scale ? mergeZoneBands(prog, scale.t0, scale.t1) : []), [prog, scale])
+  const bands = useMemo(
+    () => (scale ? mergeZoneBands(prog, scale.t0, scale.t1) : []),
+    [prog, scale],
+  )
   const legend = useMemo(() => zoneLegend(bands), [bands])
   // `draft` is a STORE, not a value (JOS-290): it rides down into `ChartChrome` untouched and
   // this component is never re-rendered by a pointermove again. `sel` and `dragging` are still
   // ordinary state — they move on pointer-up and once per gesture respectively.
-  const { sel, draft, dragging, clear, onPointerDown, onPointerMove, onPointerUp, onPointerCancel } =
-    useChartSelection(scale)
+  const {
+    sel,
+    draft,
+    dragging,
+    clear,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerCancel,
+  } = useChartSelection(scale)
   // The combo seam (progressionStats §ComboSource). `rangeStats` declared the SHAPE it needs and
   // never imports the combo module, so the adapter beside this file is what reconciles the two
   // `ComboInterval` types — and passing it here is the whole reason the range panel's combo chip
@@ -255,10 +301,10 @@ function useLevelingCharts(o: {
             zoneCaption: slice.zoneCaption,
             label: slice.caption,
             selection: sel,
-            combo
+            combo,
           })
         : null,
-    [scale, bounds, prog, slice, fixed, sel, combo]
+    [scale, bounds, prog, slice, fixed, sel, combo],
   )
   // Rebuilt narrow, NOT the whole SelectionApi: the charts spread this straight onto a DOM
   // element, so anything else on the object would land there as an unknown attribute.
@@ -269,14 +315,14 @@ function useLevelingCharts(o: {
   // member of `chrome` below, which every chart, band and hover layer on the tab reads.
   const pointer = useMemo(
     () => ({ onPointerDown, onPointerMove, onPointerUp, onPointerCancel }),
-    [onPointerDown, onPointerMove, onPointerUp, onPointerCancel]
+    [onPointerDown, onPointerMove, onPointerUp, onPointerCancel],
   )
   // …AND SO IS THE CHROME. It is the object both plots and both hover layers take, so a fresh one
   // per render is a changed prop on every chart in the column whatever moved. Its members are all
   // memoized or ordinary state now, so this identity moves exactly when the picture does.
   const chrome = useMemo(
     () => (scale ? { scale, bands, range: sel, draft, suppressed: dragging, pointer } : null),
-    [scale, bands, sel, draft, dragging, pointer]
+    [scale, bands, sel, draft, dragging, pointer],
   )
   return { chrome, legend, scope, clear, aaVisible, segVisible, curve }
 }
@@ -301,13 +347,20 @@ function useScopedReads(o: {
 }): { feed: FeedItem[]; pace: AaPace | null } {
   const { scope, feed, state, prog } = o
   const scoped = useMemo(
-    () => (scope ? feed.filter((f) => f.ts >= scope.range.t0 && f.ts <= scope.range.t1) : feed).slice(0, FEED_MAX),
-    [feed, scope]
+    () =>
+      (scope ? feed.filter((f) => f.ts >= scope.range.t0 && f.ts <= scope.range.t1) : feed).slice(
+        0,
+        FEED_MAX,
+      ),
+    [feed, scope],
   )
   // Null before the snapshot has folded anything at all, and for a character with no AA in the log.
   const pace = useMemo(
-    () => (scope && state.aaGains.length > 0 ? aaPace({ leveling: state, prog, window: scope.stats }) : null),
-    [scope, prog, state]
+    () =>
+      scope && state.aaGains.length > 0
+        ? aaPace({ leveling: state, prog, window: scope.stats })
+        : null,
+    [scope, prog, state],
   )
   return { feed: scoped, pace }
 }
@@ -324,7 +377,7 @@ function useScopedReads(o: {
  */
 function chartedOf(
   nothing: boolean,
-  charts: LevelingCharts
+  charts: LevelingCharts,
 ): { chrome: ChartChrome; scope: ScopedStats; curve: LevelCurve } | null {
   const { chrome, scope, curve } = charts
   return !nothing && chrome && scope && curve ? { chrome, scope, curve } : null
@@ -385,7 +438,12 @@ function ChartsColumn(p: {
         custom={p.custom}
         testId="leveling"
       />
-      <AaOverTimePanel points={p.aaPoints} drawn={charts.aaVisible} aaEarned={p.aaEarned} chrome={chrome} />
+      <AaOverTimePanel
+        points={p.aaPoints}
+        drawn={charts.aaVisible}
+        aaEarned={p.aaEarned}
+        chrome={chrome}
+      />
       <LevelOverTimePanel
         segments={charts.segVisible}
         curve={p.curve}
@@ -397,7 +455,12 @@ function ChartsColumn(p: {
       />
       {/* ALWAYS mounted since JOS-75: it is the window's own read, narrowed by a drag while one
           exists. Below the plots it explains, so the picture stays the first thing on the tab. */}
-      <RangeStatsPanel stats={scope.stats} scope={scope.kind} zoneCaption={scope.zoneCaption} onClear={charts.clear} />
+      <RangeStatsPanel
+        stats={scope.stats}
+        scope={scope.kind}
+        zoneCaption={scope.zoneCaption}
+        onClear={charts.clear}
+      />
     </Stack>
   )
 }
@@ -469,7 +532,7 @@ export default function LevelingView({
   focusLevel = null,
   focusNonce = 0,
   onFocusConsumed,
-  onOpenLoot
+  onOpenLoot,
 }: LevelingViewProps): JSX.Element {
   const state = useModule<LevelingSnap>('leveling') ?? EMPTY_LEVELING
   const { aaSpends: spends } = state
@@ -511,8 +574,18 @@ export default function LevelingView({
   // own subscription; `useTimesliceOn` resolves the slice against THAT snapshot instead of opening
   // a second `useModule('progression')` beside it. Two subscriptions were two hydrations at mount
   // and two renders per progression push, over a ~7k-row snapshot.
-  const { bounds, available, slice, setId, setCustom, custom } = useTimesliceOn(prog, extraTs, 'zoneSession')
-  const charts = useLevelingCharts({ prog, aas: aaCumulative, segments: levelSegments, slice, bounds })
+  const { bounds, available, slice, setId, setCustom, custom } = useTimesliceOn(
+    prog,
+    extraTs,
+    'zoneSession',
+  )
+  const charts = useLevelingCharts({
+    prog,
+    aas: aaCumulative,
+    segments: levelSegments,
+    slice,
+    bounds,
+  })
   // The SCOPE on its own — the only one of the three the reads below need before the charted gate
   // has been asked. `chrome` and `curve` are null on exactly the same condition it is, and all
   // three are tested together, once, by `chartedOf`.
@@ -545,9 +618,9 @@ export default function LevelingView({
       viewed,
       focusLevel,
       focusNonce,
-      onFocusConsumed: onFocusConsumed ?? ((): void => undefined)
+      onFocusConsumed: onFocusConsumed ?? ((): void => undefined),
     }),
-    [currentLevel, viewed, focusLevel, focusNonce, onFocusConsumed]
+    [currentLevel, viewed, focusLevel, focusNonce, onFocusConsumed],
   )
 
   return (
@@ -619,7 +692,8 @@ export default function LevelingView({
             />
           ) : (
             <Typography color="text.secondary" sx={{ p: 2 }} data-testid="leveling-empty">
-              No level-ups or AA gains found in this character&apos;s log yet. They&apos;ll appear here live as you play.
+              No level-ups or AA gains found in this character&apos;s log yet. They&apos;ll appear
+              here live as you play.
             </Typography>
           )}
 

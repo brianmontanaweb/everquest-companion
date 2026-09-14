@@ -59,7 +59,7 @@ const NAME_HEADERS = new Set([
   'discipline',
   'discipline name',
   'poison',
-  'ability'
+  'ability',
 ])
 
 /** `style="…" | Foo` → `Foo`; a wiki cell may carry attributes before its content. */
@@ -110,7 +110,7 @@ function pageHeadings(wt: string): Heading[] {
     depth: h[1].length,
     name: h[2],
     from: h.index + h[0].length,
-    to: i + 1 < heads.length ? heads[i + 1].index : wt.length
+    to: i + 1 < heads.length ? heads[i + 1].index : wt.length,
   }))
 }
 
@@ -172,14 +172,20 @@ function parseRow(ctx: RowContext, chunk: string): ClassUnlock[] {
   const rawName = cells[ctx.cols.name]
   const rawLevel = cells[ctx.cols.level]
   if (/<s>/i.test(rawName) || /<s>/i.test(rawLevel)) {
-    ctx.skipped.push(`${ctx.where}: '${plain(rawName)}' is struck through (not on Legends) — dropped`)
+    ctx.skipped.push(
+      `${ctx.where}: '${plain(rawName)}' is struck through (not on Legends) — dropped`,
+    )
     return []
   }
   const level = levelOf(rawLevel)
-  const bare = plain(rawName).replace(/\s*\*+$/, '').trim()
+  const bare = plain(rawName)
+    .replace(/\s*\*+$/, '')
+    .trim()
   if (bare.length === 0 || bare.length > 40) return []
   if (level === null) {
-    ctx.skipped.push(`${ctx.where}: '${bare}' states no numeric level ('${plain(rawLevel)}') — dropped`)
+    ctx.skipped.push(
+      `${ctx.where}: '${bare}' states no numeric level ('${plain(rawLevel)}') — dropped`,
+    )
     return []
   }
   const kind: UnlockKind = ctx.innate.has(bare.toLowerCase()) ? 'innate' : ctx.kind
@@ -217,7 +223,9 @@ function sectionUnlocks(block: string, ctx: SectionContext): ClassUnlock[] {
     const rows = tableRows(segment)
     if (cols === null) {
       if (rows.length >= 3) {
-        ctx.skipped.push(`${ctx.where}: a ${rows.length}-row table names no level+name columns — skipped`)
+        ctx.skipped.push(
+          `${ctx.where}: a ${rows.length}-row table names no level+name columns — skipped`,
+        )
       }
       continue
     }
@@ -284,10 +292,12 @@ export function unlockSections(unlocks: Map<string, ClassUnlock[]>): {
  */
 export function disciplineDisputes(
   discWt: string | null,
-  discUnlocks: Map<string, ClassUnlock[]>
+  discUnlocks: Map<string, ClassUnlock[]>,
 ): string[] {
   if (discWt == null) {
-    return ['discUnlocks: the Disciplines page was unavailable — the class pages are uncorroborated']
+    return [
+      'discUnlocks: the Disciplines page was unavailable — the class pages are uncorroborated',
+    ]
   }
   const claim = /only [^.\n]*are on Legends[^.\n]*\./i.exec(discWt)?.[0]
   if (claim === undefined) return []
@@ -297,7 +307,7 @@ export function disciplineDisputes(
     const n = discUnlocks.get(abbr)?.length ?? 0
     out.push(
       `discUnlocks '${abbr}': the class page states ${n} discipline(s) with levels, but the Disciplines ` +
-        `page strikes its whole ${abbr} table through and states "${claim}" — kept, labeled disputed`
+        `page strikes its whole ${abbr} table through and states "${claim}" — kept, labeled disputed`,
     )
   }
   return out

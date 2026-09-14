@@ -21,7 +21,7 @@ import type {
   TriageLiveSessions,
   TriageMixRow,
   TriagePerfSlice,
-  TriageStartupRow
+  TriageStartupRow,
 } from '../src/shared/triage'
 
 const pct = (v: number): string => `${(v * 100).toFixed(1)}%`
@@ -39,7 +39,11 @@ function bar(label: string, n: number, max: number, width = 24): string {
 /** A `dim -> n` list as a bar chart, capped. Empty renders as one honest line. */
 /** `empty` is overridable because "nothing recorded" is sometimes a fact worth naming: a mix that
  *  is empty because the READING is new says so, rather than looking like a table nobody filled. */
-function mixBlock(rows: readonly TriageMixRow[], limit = 10, empty = '(nothing recorded)'): string[] {
+function mixBlock(
+  rows: readonly TriageMixRow[],
+  limit = 10,
+  empty = '(nothing recorded)',
+): string[] {
   if (rows.length === 0) return [`  ${empty}`]
   const max = Math.max(...rows.map((r) => r.n))
   return rows.slice(0, limit).map((r) => bar(r.id, r.n, max))
@@ -50,7 +54,7 @@ function funnelBlock(steps: readonly TriageFunnelStepRow[]): string[] {
   return steps.map(
     (s) =>
       `  ${s.step.padEnd(22)} ${String(s.n).padStart(8)}  ${pct(s.conversion).padStart(7)} of step 1` +
-      (s.dropOff > 0 ? `  (−${pct(s.dropOff)} here)` : '')
+      (s.dropOff > 0 ? `  (−${pct(s.dropOff)} here)` : ''),
   )
 }
 
@@ -91,7 +95,10 @@ function adoptionLines(d: TriageAnalyticsData): string[] {
   const a = d.adoption
   const views = a.views
     .slice(0, 8)
-    .map((v) => `  ${v.id.padEnd(22)} ${pct(v.share).padStart(7)} of dwell · ${String(v.visits)} visits`)
+    .map(
+      (v) =>
+        `  ${v.id.padEnd(22)} ${pct(v.share).padStart(7)} of dwell · ${String(v.visits)} visits`,
+    )
   const features =
     a.features.length === 0
       ? ['  (nothing recorded)']
@@ -99,7 +106,7 @@ function adoptionLines(d: TriageAnalyticsData): string[] {
           .slice(0, 12)
           .map(
             (f) =>
-              `  ${f.id.padEnd(22)} ${String(f.uses).padStart(8)} uses · ${f.perSession.toFixed(2)}/session`
+              `  ${f.id.padEnd(22)} ${String(f.uses).padStart(8)} uses · ${f.perSession.toFixed(2)}/session`,
           )
   return [
     '',
@@ -155,7 +162,7 @@ function errorHonestyLines(h: TriageAnalyticsData['health']): string[] {
   const images = n('imageFetchFailures')
   const out = [
     `  error log lines: ${String(written)} written · ${String(suppressed)} suppressed as repeats` +
-      ` · ${String(written + suppressed)} occurrences`
+      ` · ${String(written + suppressed)} occurrences`,
   ]
   if (images > 0) {
     out.push(`  (imageFetchFailures is a handled condition, excluded from the release health rate)`)
@@ -175,7 +182,7 @@ function healthLines(d: TriageAnalyticsData): string[] {
     ...h.update.map(
       (u) =>
         `  ${u.step.padEnd(22)} ok ${String(u.ok).padStart(6)} · failed ${String(u.failed).padStart(6)}` +
-        ` · ${u.rate === null ? '-' : pct(u.rate)}`
+        ` · ${u.rate === null ? '-' : pct(u.rate)}`,
     ),
     ...(h.updateFailures.length > 0
       ? ['  update failure classes', ...mixBlock(h.updateFailures, 6)]
@@ -267,7 +274,10 @@ function liveStallLines(d: TriageAnalyticsData): string[] {
  */
 function perfLines(d: TriageAnalyticsData): string[] {
   const p = d.perf
-  const head = ['', `STALLS BY … (worst tick ${p.stallLabel}; three cuts of ONE population, never summed)`]
+  const head = [
+    '',
+    `STALLS BY … (worst tick ${p.stallLabel}; three cuts of ONE population, never summed)`,
+  ]
   if (p.reports === 0) {
     return [...head, '  (the perf cube has no rows in this window - there is no backfill: JOS-372)']
   }
@@ -276,7 +286,7 @@ function perfLines(d: TriageAnalyticsData): string[] {
     ...rows.map(
       (r) =>
         `  ${r.id.padEnd(22)} ${String(r.stalls).padStart(7)} / ${String(r.reports).padEnd(7)}` +
-        ` ${(r.rate === null ? '-' : pct(r.rate)).padStart(7)}`
+        ` ${(r.rate === null ? '-' : pct(r.rate)).padStart(7)}`,
     ),
   ]
   return [
@@ -284,7 +294,10 @@ function perfLines(d: TriageAnalyticsData): string[] {
     `  fleet: ${String(p.stalls)} of ${String(p.reports)} reports · ${p.rate === null ? '-' : pct(p.rate)}` +
       ' - every rate below is read against this one',
     ...block('by EQ window mode', p.byWindowMode),
-    ...block('by machine class (tier is the WEAKER of cores/RAM x integrated|discrete GPU)', p.byMachineClass),
+    ...block(
+      'by machine class (tier is the WEAKER of cores/RAM x integrated|discrete GPU)',
+      p.byMachineClass,
+    ),
     ...block('by locked overlay (locked = the process-wide mouse hook is ARMED)', p.byLocked),
   ]
 }
@@ -321,7 +334,7 @@ function versionLines(d: TriageAnalyticsData): string[] {
         (v) =>
           `  ${v.version.padEnd(14)} ${String(v.installs).padStart(6)} installs · peak ${pct(v.peakShare).padStart(7)}` +
           ` · first ${v.firstSeenDay ?? '-'} · majority ${v.majorityDay ?? '-'}` +
-          ` · ${v.daysToAdopt === null ? 'not adopted' : `${String(v.daysToAdopt)}d to adopt`}`
+          ` · ${v.daysToAdopt === null ? 'not adopted' : `${String(v.daysToAdopt)}d to adopt`}`,
       ),
   ]
 }
@@ -349,7 +362,7 @@ export function downloadsLines(gh: TriageDownloads | undefined): string[] {
         (r) =>
           `  ${r.tag.padEnd(14)} ${String(r.exeDownloads).padStart(6)} installer` +
           ` · ${String(r.totalDownloads).padStart(6)} all assets` +
-          ` · published ${r.publishedAt?.slice(0, 10) ?? '-'}`
+          ` · published ${r.publishedAt?.slice(0, 10) ?? '-'}`,
       ),
   ]
 }
@@ -380,17 +393,19 @@ function coverageLines(d: TriageAnalyticsData, gh: TriageDownloads | undefined):
     out.push(
       ...c.byVersion.map(
         (v) =>
-          `  ${v.version.padEnd(14)} ${String(v.optOuts).padStart(5)}   ${String(v.optIns).padStart(5)}`
-      )
+          `  ${v.version.padEnd(14)} ${String(v.optOuts).padStart(5)}   ${String(v.optIns).padStart(5)}`,
+      ),
     )
   }
-  out.push(`  installs that ever reported: ${String(c.reportingInstalls)} (all time, not the window)`)
+  out.push(
+    `  installs that ever reported: ${String(c.reportingInstalls)} (all time, not the window)`,
+  )
   if (gh?.available === true) {
     const fetches = gh.releases.reduce((sum, r) => sum + r.exeDownloads, 0)
     out.push(
       `  ESTIMATE: ${String(fetches)} installer fetches vs ${String(c.reportingInstalls)} reporting installs.`,
       '    Downloads are NOT installs (updater re-fetches, re-downloads, curiosity clicks) and one',
-      '    machine updated four times is four of them. The gap is shown, never subtracted.'
+      '    machine updated four times is four of them. The gap is shown, never subtracted.',
     )
   }
   return out
@@ -407,7 +422,7 @@ function retentionLines(d: TriageAnalyticsData): string[] {
     ...d.retention.map(
       (c) =>
         `  ${c.cohortDay}  ${String(c.installs).padStart(6)}  ${cell(c.d1, c.installs)}  ` +
-        `${cell(c.d7, c.installs)}  ${cell(c.d30, c.installs)}`
+        `${cell(c.d7, c.installs)}  ${cell(c.d30, c.installs)}`,
     ),
   ]
 }
@@ -451,7 +466,7 @@ export function renderAnalyticsDigest(
   d: TriageAnalyticsData,
   cohort = 'user',
   downloads?: TriageDownloads,
-  live?: TriageLiveSessions
+  live?: TriageLiveSessions,
 ): string {
   const head = [
     `usage analytics - last ${String(d.windowDays)} days (${d.days[0] ?? '?'} → ${d.days.at(-1) ?? '?'})`,
@@ -477,4 +492,3 @@ export function renderAnalyticsDigest(
     '',
   ].join('\n')
 }
-

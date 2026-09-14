@@ -31,7 +31,7 @@ import {
   overlayIndependent,
   reconcileOverlayIndependent,
   setOverlayIndependent,
-  type IndependentIo
+  type IndependentIo,
 } from '../src/shared/overlayIndependent'
 
 const src = (rel: string): string => readFileSync(new URL(rel, import.meta.url), 'utf8')
@@ -51,7 +51,11 @@ const code = (rel: string): string =>
  * `storeOverlayTextSize.ts` / `storeOverlayBgAlpha.ts` do, and `writes` records the order so a test
  * can say which door was opened as well as what ended up stored.
  */
-function fakeStores(text: boolean, bg: boolean, alreadySeeded = { text: false, bg: false }): {
+function fakeStores(
+  text: boolean,
+  bg: boolean,
+  alreadySeeded = { text: false, bg: false },
+): {
   io: IndependentIo
   state: () => { text: boolean; bg: boolean; seededText: boolean; seededBg: boolean }
   writes: string[]
@@ -73,7 +77,7 @@ function fakeStores(text: boolean, bg: boolean, alreadySeeded = { text: false, b
       writes.push(`bg=${String(on)}`)
       if (on && !seededBg) seededBg = true
       b = on
-    }
+    },
   }
   return { io, state: () => ({ text: t, bg: b, seededText, seededBg }), writes }
 }
@@ -170,10 +174,16 @@ test('main applies it through the FEATURES’ OWN setters, never a raw store wri
   const store = src('../src/main/storeOverlayIndependent.ts')
   // The seed lives inside those setters; a `settingsStore.set` here would flip the flag and skip
   // it, which is exactly how "opting in changes nothing on screen" would stop being true.
-  assert.match(store, /setText: \(independent\) => \{\s*\n\s*setOverlayTextSize\(\{ independent \}\)/)
+  assert.match(
+    store,
+    /setText: \(independent\) => \{\s*\n\s*setOverlayTextSize\(\{ independent \}\)/,
+  )
   assert.match(store, /setBg: \(independent\) => \{\s*\n\s*setOverlayBgAlpha\(\{ independent \}\)/)
-  assert.doesNotMatch(code('../src/main/storeOverlayIndependent.ts'), /settingsStore/,
-    'this module owns no store access of its own')
+  assert.doesNotMatch(
+    code('../src/main/storeOverlayIndependent.ts'),
+    /settingsStore/,
+    'this module owns no store access of its own',
+  )
   // ONCE. A migration that runs twice is a bug waiting for a hand-edited store between reads.
   assert.match(store, /if \(reconciled\) return false\s*\n\s*reconciled = true/)
 })
@@ -183,7 +193,7 @@ test('the reconcile runs at STARTUP, before any window exists — so it needs no
   assert.match(
     index,
     /reconcileOverlayIndependentOnce\(\)[\s\S]{0,400}?createMainWindow\(\)/,
-    'it must run before the first window is created'
+    'it must run before the first window is created',
   )
 })
 
@@ -193,21 +203,35 @@ test('ONE CHANNEL carries the pair, and the handler broadcasts only after BOTH w
   // size flip and re-resolve against a transparency flag that had not moved yet.
   assert.match(
     ipc,
-    /overlayIndependentSet[\s\S]*?applyOverlayIndependent\(on === true\)[\s\S]*?broadcastOverlayTextSize\(text\)[\s\S]*?broadcastOverlayBgAlpha\(bg\)/
+    /overlayIndependentSet[\s\S]*?applyOverlayIndependent\(on === true\)[\s\S]*?broadcastOverlayTextSize\(text\)[\s\S]*?broadcastOverlayBgAlpha\(bg\)/,
   )
   // …and it tells the per-kind lists too, because the seed just wrote all twelve of each.
-  assert.match(ipc, /overlayIndependentSet[\s\S]*?broadcastOverlayTextScales\(\)[\s\S]*?broadcastOverlayBgAlphas\(\)/)
+  assert.match(
+    ipc,
+    /overlayIndependentSet[\s\S]*?broadcastOverlayTextScales\(\)[\s\S]*?broadcastOverlayBgAlphas\(\)/,
+  )
   // The eight existing channels are untouched; this is a ninth, not a replacement.
   const chan = src('../src/shared/ipc.ts')
   assert.match(chan, /overlayIndependentSet: 'overlayIndependent:set'/)
-  for (const keep of ['overlayTextSizeSet', 'overlayBgAlphaSet', 'overlayTextScalesGet', 'overlayBgAlphasGet']) {
+  for (const keep of [
+    'overlayTextSizeSet',
+    'overlayBgAlphaSet',
+    'overlayTextScalesGet',
+    'overlayBgAlphasGet',
+  ]) {
     assert.match(chan, new RegExp(`${keep}:`), `${keep} must survive the collapse`)
   }
 })
 
 test('the CARD reads the derived boolean and writes through the one call', () => {
   const card = src('../src/renderer/src/features/preferences/OverlaysAppearanceSetting.tsx')
-  assert.match(card, /overlayIndependent\(\{ text: size\.prefs\.independent, bg: alpha\.prefs\.independent \}\)/)
+  // Prettier may wrap this object literal onto its own lines (with a trailing comma on the last
+  // property); collapse whitespace runs to a single space and tolerate that comma so the pin
+  // survives the wrap. A LOCAL copy — `card` below still needs its real newlines.
+  assert.match(
+    card.replace(/\s+/g, ' '),
+    /overlayIndependent\(\{ text: size\.prefs\.independent, bg: alpha\.prefs\.independent,? \}\)/,
+  )
   assert.match(card, /window\.eq\.setOverlayIndependent\(on\)/)
   // ONE switch on the page, and the two the review objected to are gone.
   assert.match(card, /data-testid="pref-overlay-independent"/)
@@ -229,7 +253,8 @@ test('WHERE A PRESS CANNOT MOVE ANYTHING YET, THE CARD SAYS SO — both shapes',
   // …and for the two SHARED steppers, whose equivalent is every window being closed. Only in that
   // shape: with the switch on, twelve rows already carry their own tag.
   assert.match(card, /const nothingOpen = OVERLAY_LABEL_ORDER\.every\(\(kind\) => !open\[kind\]\)/)
-  assert.match(card, /!independent && nothingOpen &&/)
+  // Prettier may wrap this JSX condition onto its own line; collapse whitespace before pinning.
+  assert.match(card.replace(/\s+/g, ' '), /!independent && nothingOpen &&/)
   // The open-state is LIVE, not a snapshot: overlays are opened from the title bar's menu while
   // this pane is on screen, and App.tsx keeps the warm snapshot right for the next mount.
   assert.match(card, /window\.eq\.onOverlayState/)
@@ -241,7 +266,12 @@ test('the transparency stepper’s accessible names are whole sentences', () => 
   // "More see-through the overlays" — a screen reader announces exactly that string, so the
   // missing preposition is the entire sentence a blind user gets. Both kinds end in `for`.
   const stepper = src('../src/renderer/src/features/preferences/PrefStepper.tsx')
-  for (const name of ['Smaller text for', 'Larger text for', 'More see-through for', 'More solid for']) {
+  for (const name of [
+    'Smaller text for',
+    'Larger text for',
+    'More see-through for',
+    'More solid for',
+  ]) {
     assert.ok(stepper.includes(`'${name}'`), `${name} is not the label`)
   }
   assert.match(stepper, /aria-label=\{`\$\{words\.lessName\} \$\{name\}`\}/)
@@ -264,7 +294,7 @@ test('NOTHING IN THE SECTION IS DISABLED EXCEPT A STEPPER AT A CLAMP', () => {
   for (const dead of ['OverlayTextSizeSetting', 'OverlayBgAlphaSetting', 'PerOverlaySetting']) {
     assert.throws(
       () => src(`../src/renderer/src/features/preferences/${dead}.tsx`),
-      `${dead}.tsx survived the fold`
+      `${dead}.tsx survived the fold`,
     )
   }
 })

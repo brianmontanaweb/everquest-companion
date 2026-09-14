@@ -74,5 +74,5 @@ export const perfBridge = {
     } catch {
       // A missing startup mark is a missing measurement, never a broken window.
     }
-  }
+  },
 }

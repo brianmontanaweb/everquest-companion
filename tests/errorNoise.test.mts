@@ -46,19 +46,19 @@ import {
   errorRepeat,
   errorRepeatKey,
   errorRepeatTracked,
-  resetErrorRepeat
+  resetErrorRepeat,
 } from '../src/main/errorRepeat'
 import {
   describeFetchFailure,
   imageFetchHost,
   resetImageFetchWarnings,
-  takeImageFetchWarning
+  takeImageFetchWarning,
 } from '../src/main/imageCache'
 import {
   noteImageFetchFailure,
   noteSuppressedErrorLine,
   resetHealth,
-  takeHealth
+  takeHealth,
 } from '../src/main/telemetry/health'
 import { HEALTH_NON_ERROR_FIELDS, isErrorHealthField } from '../src/shared/telemetryRollup'
 
@@ -89,7 +89,10 @@ test('the first five copies are written, then one notice, then nothing — and e
   // instead of ten thousand — which is the file rotating away all of its context, twice over.
   assert.equal(lines.length, MAX_IDENTICAL_ERROR_LINES + 1)
   assert.equal(lines.filter((l) => l.startsWith('TypeError')).length, MAX_IDENTICAL_ERROR_LINES)
-  assert.match(lines[MAX_IDENTICAL_ERROR_LINES], /errorRepeat.*written 5 times.*counted, not written/)
+  assert.match(
+    lines[MAX_IDENTICAL_ERROR_LINES],
+    /errorRepeat.*written 5 times.*counted, not written/,
+  )
 
   // THE HONEST TOTAL. 10,000 occurrences = 5 written + 9,995 suppressed. The notice is not one of
   // the 9,995: it replaced the sixth occurrence, and that occurrence is counted as suppressed.
@@ -119,7 +122,11 @@ test('"identical" means source AND payload — two different faults do not share
   // …and two messages from one source are two faults.
   assert.equal(drive('main:x', 'first', 5).length, 5)
   assert.equal(drive('main:x', 'second', 5).length, 5)
-  assert.equal(takeHealth().suppressedErrorLines, 0, 'nothing was suppressed — none of them repeated')
+  assert.equal(
+    takeHealth().suppressedErrorLines,
+    0,
+    'nothing was suppressed — none of them repeated',
+  )
   assert.equal(errorRepeatTracked(), 4)
   resetHealth()
   resetErrorRepeat()
@@ -208,7 +215,10 @@ test('the host gate and the failure description are TOTAL — they run inside a 
   assert.equal(imageFetchHost('not a url'), 'not a url')
   assert.equal(imageFetchHost(''), '')
   assert.equal(describeFetchFailure(new Error('offline')), 'Error')
-  assert.equal(describeFetchFailure(Object.assign(new Error('x'), { name: 'TimeoutError' })), 'TimeoutError')
+  assert.equal(
+    describeFetchFailure(Object.assign(new Error('x'), { name: 'TimeoutError' })),
+    'TimeoutError',
+  )
   // Nothing that is not an Error can put text into the line — including a thrown string, which is
   // the one shape that could otherwise carry a URL or a path into dev stdout uninvited.
   for (const junk of [undefined, null, 'a string', 42, {}] as unknown[]) {
@@ -240,7 +250,7 @@ test('an image fetch failure is COUNTED but is not an ERROR — the release rate
   // swamp every real signal in it and would move with a wiki's uptime rather than with a release.
   assert.deepEqual(
     [...HEALTH_NON_ERROR_FIELDS],
-    ['imageFetchFailures', 'imageCacheReadFailures', 'utilityProcessGone']
+    ['imageFetchFailures', 'imageCacheReadFailures', 'utilityProcessGone'],
   )
   assert.equal(isErrorHealthField('imageFetchFailures'), false)
   // JOS-266's, exempt for the same reason with a stronger claim: a cached image that will not read

@@ -38,7 +38,7 @@ import {
   serializeDrillMemory,
   withAbility,
   withDrill,
-  type DrillMemory
+  type DrillMemory,
 } from './combatPrefs'
 import type { Drill } from './dashboardData'
 
@@ -77,18 +77,21 @@ export function useDrillMemory(surface: string): DrillMemoryApi {
       if (next === prev) return
       setRaw(serializeDrillMemory(next))
     },
-    [setRaw]
+    [setRaw],
   )
 
-  const setDrill = useCallback((d: Drill | null) => write(withDrill(memory, d), memory), [write, memory])
+  const setDrill = useCallback(
+    (d: Drill | null) => write(withDrill(memory, d), memory),
+    [write, memory],
+  )
   const setOpen = useCallback(
     (category: string, name: string, open: boolean) =>
       write(withAbility(memory, abilityKey(category, name), open), memory),
-    [write, memory]
+    [write, memory],
   )
   const isOpen = useCallback(
     (category: string, name: string) => memory.abilities.includes(abilityKey(category, name)),
-    [memory]
+    [memory],
   )
 
   return { drill: memory.drill, setDrill, isOpen, setOpen }

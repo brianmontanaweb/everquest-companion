@@ -31,7 +31,11 @@ import { type JSX, useCallback, useEffect, useState } from 'react'
 import { Button, IconButton, Link, Paper, Snackbar, Typography } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 
-export function TelemetryNotice({ onOpenDetails }: { onOpenDetails: () => void }): JSX.Element | null {
+export function TelemetryNotice({
+  onOpenDetails,
+}: {
+  onOpenDetails: () => void
+}): JSX.Element | null {
   // `null` = not asked yet. The bar must not flash open for the ~1 frame before main answers.
   const [show, setShow] = useState<boolean | null>(null)
 
@@ -65,7 +69,11 @@ export function TelemetryNotice({ onOpenDetails }: { onOpenDetails: () => void }
         sx={{ px: 2, py: 1, width: '100%', display: 'flex', alignItems: 'center', gap: 1.5 }}
         data-testid="telemetry-notice"
       >
-        <Typography variant="body2" sx={{ flexGrow: 1, minWidth: 0 }} data-testid="telemetry-notice-text">
+        <Typography
+          variant="body2"
+          sx={{ flexGrow: 1, minWidth: 0 }}
+          data-testid="telemetry-notice-text"
+        >
           We collect completely anonymous usage data.
         </Typography>
 

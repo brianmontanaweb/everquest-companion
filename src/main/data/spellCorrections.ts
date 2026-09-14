@@ -130,7 +130,7 @@ interface Pass {
  */
 export function applySpellCorrections(
   spells: readonly SpellEntry[],
-  corrections: readonly SpellCorrection[] = SPELL_CORRECTIONS
+  corrections: readonly SpellCorrection[] = SPELL_CORRECTIONS,
 ): { spells: SpellEntry[]; report: CorrectionsReport } {
   const byName = new Map<string, number[]>()
   spells.forEach((s, i) => {
@@ -141,7 +141,7 @@ export function applySpellCorrections(
   const pass: Pass = {
     out: spells.map((s) => s),
     byName,
-    report: { applied: 0, satisfied: 0, stale: [], unknownSpells: [] }
+    report: { applied: 0, satisfied: 0, stale: [], unknownSpells: [] },
   }
   for (const c of corrections) {
     for (const name of c.spells) applyOne(pass, c, name)
@@ -182,7 +182,7 @@ export function applySpellCorrections(
 function rowsFor(
   byName: ReadonlyMap<string, number[]>,
   field: SpellCorrectionField,
-  name: string
+  name: string,
 ): number[] {
   const all = byName.get(name)
   if (!all) return []

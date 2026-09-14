@@ -19,7 +19,11 @@
 
 import { type JSX, useEffect, useState } from 'react'
 import type { FeedConsider, MobKnowledge } from '@shared/types'
-import { CONSIDER_FACTION_COLOR, CONSIDER_FACTION_LABEL, considerDifficultyShort } from '@shared/logEvents'
+import {
+  CONSIDER_FACTION_COLOR,
+  CONSIDER_FACTION_LABEL,
+  considerDifficultyShort,
+} from '@shared/logEvents'
 import { splitMobDrops } from '@shared/mobDrops'
 
 /** Card palette — the same semantics as EQ_ITEM_COLORS, respelled here so importing it
@@ -35,7 +39,13 @@ export const LABEL_STYLE: React.CSSProperties = { color: CARD_LABEL, fontSize: 1
 export const TEXT_STYLE: React.CSSProperties = { color: CARD_TEXT, fontSize: 10, lineHeight: 1.4 }
 
 /** A titled block of card rows, above a hairline. Renders nothing when the source said nothing. */
-export function CardSection({ label, children }: { label: string; children: React.ReactNode }): JSX.Element {
+export function CardSection({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}): JSX.Element {
   return (
     <div style={{ marginTop: 6, paddingTop: 5, borderTop: '1px solid rgba(255,255,255,0.12)' }}>
       <div style={LABEL_STYLE}>{label}</div>
@@ -92,9 +102,11 @@ function lookupMobCached(name: string, lookup: MobLookup): Promise<MobKnowledge 
  */
 export function useMobKnowledge(
   name: string,
-  lookup: MobLookup
+  lookup: MobLookup,
 ): { data: MobKnowledge | null; loading: boolean } {
-  const [data, setData] = useState<MobKnowledge | null>(() => MOB_KNOWLEDGE.get(name.toLowerCase()) ?? null)
+  const [data, setData] = useState<MobKnowledge | null>(
+    () => MOB_KNOWLEDGE.get(name.toLowerCase()) ?? null,
+  )
   const [loading, setLoading] = useState(() => !MOB_KNOWLEDGE.get(name.toLowerCase()))
 
   useEffect(() => {
@@ -149,7 +161,11 @@ function PageLevelZone({ data }: { data: MobKnowledge | null }): JSX.Element | n
 }
 
 /** THE DROP TABLE (definitive), with your own counts riding on the matching rows. */
-function WikiDrops({ wiki }: { wiki: ReturnType<typeof splitMobDrops>['wiki'] }): JSX.Element | null {
+function WikiDrops({
+  wiki,
+}: {
+  wiki: ReturnType<typeof splitMobDrops>['wiki']
+}): JSX.Element | null {
   if (wiki.length === 0) return null
   return (
     <CardSection label="Drops:">
@@ -168,7 +184,11 @@ function WikiDrops({ wiki }: { wiki: ReturnType<typeof splitMobDrops>['wiki'] })
 }
 
 /** Evidence the page doesn't carry — secondary by construction. */
-function ExtraSeenDrops({ extraSeen }: { extraSeen: { item: string; count: number }[] }): JSX.Element | null {
+function ExtraSeenDrops({
+  extraSeen,
+}: {
+  extraSeen: { item: string; count: number }[]
+}): JSX.Element | null {
   if (extraSeen.length === 0) return null
   return (
     <CardSection label="Also looted by you:">
@@ -206,7 +226,7 @@ function MobQuests({ quests }: { quests: { quest: string; zone?: string }[] }): 
 function MobCardFooter({
   data,
   loading,
-  wikiCount
+  wikiCount,
 }: {
   data: MobKnowledge | null
   loading: boolean
@@ -220,7 +240,9 @@ function MobCardFooter({
         <div style={{ ...LABEL_STYLE, marginTop: 4 }}>its wiki page lists no loot</div>
       )}
       {data?.offline === true && (
-        <div style={{ ...LABEL_STYLE, marginTop: 4 }}>offline - showing what&apos;s known locally</div>
+        <div style={{ ...LABEL_STYLE, marginTop: 4 }}>
+          offline - showing what&apos;s known locally
+        </div>
       )}
     </>
   )
@@ -265,7 +287,7 @@ export interface MobCardNote {
  * only shaped for it.
  */
 export const MOB_CARD_SLOT_PROPS = {
-  tooltip: { sx: { p: 0, bgcolor: 'transparent', maxWidth: 'none' } }
+  tooltip: { sx: { p: 0, bgcolor: 'transparent', maxWidth: 'none' } },
 } as const
 
 /**
@@ -284,7 +306,7 @@ export function MobCard({
   mob,
   con,
   note,
-  lookup
+  lookup,
 }: {
   mob: string
   con?: FeedConsider
@@ -308,7 +330,7 @@ export function MobCard({
         padding: 8,
         maxWidth: 300,
         fontFamily: CARD_MONO,
-        boxShadow: '0 6px 20px rgba(0,0,0,0.6)'
+        boxShadow: '0 6px 20px rgba(0,0,0,0.6)',
       }}
     >
       <div style={{ color: factionColor, fontSize: 12, fontWeight: 700 }}>

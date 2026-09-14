@@ -331,12 +331,25 @@ export class ResistFold {
         this.onMelee(ev.attacker, ev.target, ev.ts)
         return
       case 'buffApply':
-        if (ev.target === 'self') this.songs.onSelfLanding(ev.ts, ev.candidates.map((c) => c.name))
-        else this.onEmote(ev.target, ev.ts, ev.candidates.map((c) => c.name))
+        if (ev.target === 'self')
+          this.songs.onSelfLanding(
+            ev.ts,
+            ev.candidates.map((c) => c.name),
+          )
+        else
+          this.onEmote(
+            ev.target,
+            ev.ts,
+            ev.candidates.map((c) => c.name),
+          )
         return
       case 'cc':
       case 'charm':
-        this.onEmote(ev.mob, ev.ts, ev.candidates?.map((c) => c.name))
+        this.onEmote(
+          ev.mob,
+          ev.ts,
+          ev.candidates?.map((c) => c.name),
+        )
         return
       default:
         return
@@ -496,7 +509,8 @@ export class ResistFold {
   private cancelDeferred(mobDisplay: string, spellKey: string): void {
     const d = this.deferred
     if (!d) return
-    if (d.spellKey === spellKey && this.names.key(d.mob) === this.names.key(mobDisplay)) this.deferred = null
+    if (d.spellKey === spellKey && this.names.key(d.mob) === this.names.key(mobDisplay))
+      this.deferred = null
   }
 
   // ---- outcomes ------------------------------------------------------------------------
@@ -558,7 +572,7 @@ export class ResistFold {
   private onSpellDamage(
     ev: Extract<LogEvent, { kind: 'damage' }>,
     attacker: string,
-    kind: ResistCasterKind
+    kind: ResistCasterKind,
   ): void {
     // BEFORE the target test, not after: this is what makes a proper-named creature you have
     // nuked a creature, and it is the evidence the catalog most often lacks.

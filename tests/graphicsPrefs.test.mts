@@ -31,7 +31,7 @@ import {
   overlayBackgroundColor,
   resolveGraphics,
   resolveGraphicsSwitch,
-  type GraphicsSwitch
+  type GraphicsSwitch,
 } from '../src/shared/graphicsPrefs'
 import { CURRENT_SCHEMA_VERSION, migrateStoreData } from '../src/main/storeMigrations'
 
@@ -41,13 +41,13 @@ test('both switches default to AUTO — the app may notice a machine, never pres
   // every ordinary machine gets hardware acceleration and see-through overlays.
   assert.deepEqual(resolveGraphics(DEFAULT_GRAPHICS_PREFS, NO_GRAPHICS_AUTO), {
     safeMode: { on: false, source: 'default' },
-    opaqueOverlays: { on: false, source: 'default' }
+    opaqueOverlays: { on: false, source: 'default' },
   })
   // The default recommendation is the one an ordinary machine produces, so the argument is
   // optional and means the same thing.
   assert.deepEqual(resolveGraphics(DEFAULT_GRAPHICS_PREFS), {
     safeMode: { on: false, source: 'default' },
-    opaqueOverlays: { on: false, source: 'default' }
+    opaqueOverlays: { on: false, source: 'default' },
   })
 })
 
@@ -56,24 +56,24 @@ test('the normalizer answers with a COMPLETE block from anything at all', () => 
     assert.deepEqual(
       normalizeGraphicsPrefs(junk),
       DEFAULT_GRAPHICS_PREFS,
-      `${JSON.stringify(junk) ?? 'undefined'} must default rather than half-parse`
+      `${JSON.stringify(junk) ?? 'undefined'} must default rather than half-parse`,
     )
   }
   // Every legal spelling survives, field by field — including one switch set and the other left.
   for (const value of GRAPHICS_SWITCHES) {
     assert.deepEqual(normalizeGraphicsPrefs({ safeMode: value }), {
       safeMode: value,
-      opaqueOverlays: 'auto'
+      opaqueOverlays: 'auto',
     })
   }
   assert.deepEqual(normalizeGraphicsPrefs({ safeMode: 'on', opaqueOverlays: 'off' }), {
     safeMode: 'on',
-    opaqueOverlays: 'off'
+    opaqueOverlays: 'off',
   })
   // Unknown keys are dropped rather than carried: the blob is a closed shape.
   assert.deepEqual(normalizeGraphicsPrefs({ safeMode: 'on', gpu: 'off' }), {
     safeMode: 'on',
-    opaqueOverlays: 'auto'
+    opaqueOverlays: 'auto',
   })
 })
 
@@ -83,7 +83,7 @@ test('a BOOLEAN is read as the literal choice it looks like — history lives in
   // else — a v10 store, where it was equally the value nobody touched — is the 10 → 11 step below.
   assert.deepEqual(normalizeGraphicsPrefs({ safeMode: true, opaqueOverlays: false }), {
     safeMode: 'on',
-    opaqueOverlays: 'off'
+    opaqueOverlays: 'off',
   })
 })
 
@@ -109,19 +109,19 @@ test('…and the two switches resolve INDEPENDENTLY — one override never moves
   const both = { safeMode: true, opaqueOverlays: true }
   assert.deepEqual(resolveGraphics({ safeMode: 'off', opaqueOverlays: 'auto' }, both), {
     safeMode: { on: false, source: 'user' },
-    opaqueOverlays: { on: true, source: 'auto' }
+    opaqueOverlays: { on: true, source: 'auto' },
   })
   assert.deepEqual(resolveGraphics({ safeMode: 'auto', opaqueOverlays: 'off' }, both), {
     safeMode: { on: true, source: 'auto' },
-    opaqueOverlays: { on: false, source: 'user' }
+    opaqueOverlays: { on: false, source: 'user' },
   })
   // A recommendation that speaks to only one switch leaves the other at the default.
   assert.deepEqual(
     resolveGraphics(DEFAULT_GRAPHICS_PREFS, { safeMode: false, opaqueOverlays: true }),
     {
       safeMode: { on: false, source: 'default' },
-      opaqueOverlays: { on: true, source: 'auto' }
-    }
+      opaqueOverlays: { on: true, source: 'auto' },
+    },
   )
 })
 
@@ -186,7 +186,7 @@ test('10 → 11: a stored `false` was the DEFAULT, so it becomes auto; a `true` 
   const both = migrateStoreData({
     schemaVersion: 10,
     byCharacter: {},
-    graphics: { safeMode: false, opaqueOverlays: false }
+    graphics: { safeMode: false, opaqueOverlays: false },
   })
   assert.deepEqual(both.data.graphics, { safeMode: 'auto', opaqueOverlays: 'auto' })
 
@@ -195,13 +195,17 @@ test('10 → 11: a stored `false` was the DEFAULT, so it becomes auto; a `true` 
   const chosen = migrateStoreData({
     schemaVersion: 10,
     byCharacter: {},
-    graphics: { safeMode: true, opaqueOverlays: false }
+    graphics: { safeMode: true, opaqueOverlays: false },
   })
   assert.deepEqual(chosen.data.graphics, { safeMode: 'on', opaqueOverlays: 'auto' })
 
   // A hand-edited or absent block is repaired to the default rather than coerced into a switch
   // nobody set.
-  const junk = migrateStoreData({ schemaVersion: 10, byCharacter: {}, graphics: { safeMode: 'yes' } })
+  const junk = migrateStoreData({
+    schemaVersion: 10,
+    byCharacter: {},
+    graphics: { safeMode: 'yes' },
+  })
   assert.deepEqual(junk.data.graphics, DEFAULT_GRAPHICS_PREFS)
   const missing = migrateStoreData({ schemaVersion: 10, byCharacter: {} })
   assert.deepEqual(missing.data.graphics, DEFAULT_GRAPHICS_PREFS)
@@ -214,7 +218,7 @@ test('…and the 9 → 10 step still emits the v10 BOOLEAN shape it always emitt
   // every one of them as 'auto', silently discarding the JOS-40 users who turned a switch ON.
   const out = migrateStoreData(
     { schemaVersion: 9, byCharacter: {}, graphics: { safeMode: true, opaqueOverlays: 'nonsense' } },
-    { target: 10 }
+    { target: 10 },
   )
   assert.equal(out.to, 10)
   assert.deepEqual(out.data.graphics, { safeMode: true, opaqueOverlays: false })

@@ -122,7 +122,7 @@ export function errorBudget(fingerprint: string): BudgetVerdict {
       report: false,
       notice:
         `[errorBudget] ${String(MAX_BUDGETED_FINGERPRINTS)} distinct errors have been reported ` +
-        'this session; further NEW ones are counted, not reported'
+        'this session; further NEW ones are counted, not reported',
     }
   }
   const n = (before ?? 0) + 1
@@ -140,7 +140,7 @@ export function errorBudget(fingerprint: string): BudgetVerdict {
       notice:
         `[errorBudget] ${fingerprint} has now been reported ` +
         `${String(MAX_REPORTS_PER_FINGERPRINT)} times this session; further occurrences are ` +
-        'counted, not reported'
+        'counted, not reported',
     }
   }
   return SILENT

@@ -32,12 +32,28 @@ import { procListRows, procSummary, type ProcListRow } from './procRows'
 /** `Smiting Strike ······ 4.0 ppm  ×214`. The count is exact; the rate may be an honest dash. */
 function ProcRow({ row }: { row: ProcListRow }): React.JSX.Element {
   return (
-    <Box data-testid="proc-row" sx={{ display: 'flex', alignItems: 'center', gap: 0.75, py: '1px', minWidth: 0 }}>
-      <Box sx={{ width: 6, height: 6, borderRadius: '2px', bgcolor: ORIGIN_COLOR[row.origin], flexShrink: 0 }} />
+    <Box
+      data-testid="proc-row"
+      sx={{ display: 'flex', alignItems: 'center', gap: 0.75, py: '1px', minWidth: 0 }}
+    >
+      <Box
+        sx={{
+          width: 6,
+          height: 6,
+          borderRadius: '2px',
+          bgcolor: ORIGIN_COLOR[row.origin],
+          flexShrink: 0,
+        }}
+      />
       <Typography variant="caption" noWrap sx={{ flexGrow: 1, minWidth: 0 }}>
         {row.ambiguous ? `~ ${row.name}` : row.name}
       </Typography>
-      <Typography variant="caption" color="text.secondary" noWrap sx={{ width: 62, textAlign: 'right', flexShrink: 0 }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        noWrap
+        sx={{ width: 62, textAlign: 'right', flexShrink: 0 }}
+      >
         {row.ppm}
       </Typography>
       <Typography variant="caption" noWrap sx={{ width: 48, textAlign: 'right', flexShrink: 0 }}>

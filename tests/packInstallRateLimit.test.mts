@@ -47,13 +47,13 @@ import {
   parseRetryAfterMs,
   planPackInstallRetry,
   rateLimitDelayMs,
-  runPackInstallAttempts
+  runPackInstallAttempts,
 } from '../src/shared/packInstall'
 import {
   RATE_LIMITED_WARN_CODE,
   logPackInstallFailure,
   resetPackInstallWarnings,
-  type PackInstallLogSinks
+  type PackInstallLogSinks,
 } from '../src/main/packInstallLog'
 
 const TEST_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -87,7 +87,7 @@ function recorder(): Recorder {
     filed,
     warned,
     error: (source, payload) => filed.push({ source, payload }),
-    warn: (...args) => warned.push(args)
+    warn: (...args) => warned.push(args),
   }
 }
 
@@ -120,7 +120,9 @@ test('RETRY-AFTER WINS WHEN IT EXISTS, and is never shortened', () => {
   assert.equal(rateLimitDelayMs(4, { retryAfterMs: 90_000, random: never }), 90_000)
   // Longer than our OWN ceiling is still honoured: the server knows when its window reopens and we
   // do not. Whether the run can AFFORD it is the budget's question, asked in planPackInstallRetry.
-  assert.ok(rateLimitDelayMs(1, { retryAfterMs: 10 * 60_000, random: never }) > RATE_LIMIT_MAX_DELAY_MS)
+  assert.ok(
+    rateLimitDelayMs(1, { retryAfterMs: 10 * 60_000, random: never }) > RATE_LIMIT_MAX_DELAY_MS,
+  )
   // `Retry-After: 0` is still a "not yet".
   assert.equal(rateLimitDelayMs(1, { retryAfterMs: 0, random: never }), MIN_RATE_LIMIT_DELAY_MS)
 })
@@ -134,7 +136,10 @@ test('WITHOUT A HEADER THE BACKOFF IS JITTERED, and it is measured in minutes', 
     const low = rateLimitDelayMs(attempt, { random: () => 0 })
     const high = rateLimitDelayMs(attempt, { random: () => 0.999_999 })
     assert.equal(low, ceiling / 2, `attempt ${String(attempt)} floor is half the ceiling`)
-    assert.ok(high < ceiling && high > ceiling * 0.9, `attempt ${String(attempt)} spreads to the ceiling`)
+    assert.ok(
+      high < ceiling && high > ceiling * 0.9,
+      `attempt ${String(attempt)} spreads to the ceiling`,
+    )
   }
   // THE SCHEDULE THE TICKET IS ABOUT: the OLD one spent 4.5 s over three attempts. This one starts
   // where that one ended and grows to minutes, and never past its cap.
@@ -142,7 +147,10 @@ test('WITHOUT A HEADER THE BACKOFF IS JITTERED, and it is measured in minutes', 
   assert.ok(rateLimitDelayMs(3, { random: () => 0 }) >= 60_000, 'by the third it is minutes')
   assert.ok(rateLimitDelayMs(9, { random: () => 0.999_999 }) <= RATE_LIMIT_MAX_DELAY_MS)
   // Two clients that failed in the same second do not return in the same second.
-  assert.notEqual(rateLimitDelayMs(2, { random: () => 0.1 }), rateLimitDelayMs(2, { random: () => 0.9 }))
+  assert.notEqual(
+    rateLimitDelayMs(2, { random: () => 0.1 }),
+    rateLimitDelayMs(2, { random: () => 0.9 }),
+  )
 })
 
 // ------------------------------------------------------------------------------------- the budget
@@ -152,7 +160,7 @@ test('A 429 WIDENS THE BUDGET AND NOTHING NARROWS IT', () => {
     err: rateLimitError(30),
     attempt: 1,
     waitedMs: 0,
-    attempts: MAX_INSTALL_ATTEMPTS
+    attempts: MAX_INSTALL_ATTEMPTS,
   })
   assert.equal(plan.retry, true)
   assert.equal(plan.rateLimited, true)
@@ -164,13 +172,23 @@ test('A 429 WIDENS THE BUDGET AND NOTHING NARROWS IT', () => {
     err: statusError(503),
     attempt: 4,
     waitedMs: 60_000,
-    attempts: MAX_RATE_LIMITED_ATTEMPTS
+    attempts: MAX_RATE_LIMITED_ATTEMPTS,
   })
   assert.equal(after.attempts, MAX_RATE_LIMITED_ATTEMPTS)
   assert.equal(after.retry, true)
   // The general path is UNCHANGED: same budget, same doubling, no jitter, no rate-limit flag.
-  const plain = planPackInstallRetry({ err: statusError(503), attempt: 1, waitedMs: 0, attempts: 3 })
-  assert.deepEqual(plain, { retry: true, delayMs: INSTALL_RETRY_BASE_MS, attempts: 3, rateLimited: false })
+  const plain = planPackInstallRetry({
+    err: statusError(503),
+    attempt: 1,
+    waitedMs: 0,
+    attempts: 3,
+  })
+  assert.deepEqual(plain, {
+    retry: true,
+    delayMs: INSTALL_RETRY_BASE_MS,
+    attempts: 3,
+    rateLimited: false,
+  })
   const dead = planPackInstallRetry({ err: statusError(404), attempt: 1, waitedMs: 0, attempts: 3 })
   assert.equal(dead.retry, false)
   assert.equal(dead.stop, 'not-transient')
@@ -182,7 +200,7 @@ test('THE HORIZON IS THE REAL BOUND — an unaffordable wait ends the run instea
     err: rateLimitError(60 * 60),
     attempt: 1,
     waitedMs: 0,
-    attempts: MAX_INSTALL_ATTEMPTS
+    attempts: MAX_INSTALL_ATTEMPTS,
   })
   assert.equal(parked.retry, false)
   assert.equal(parked.stop, 'budget')
@@ -193,7 +211,7 @@ test('THE HORIZON IS THE REAL BOUND — an unaffordable wait ends the run instea
     attempt: 2,
     waitedMs: RATE_LIMIT_BUDGET_MS - 1_000,
     attempts: MAX_RATE_LIMITED_ATTEMPTS,
-    random: () => 0.5
+    random: () => 0.5,
   })
   assert.equal(spent.retry, false)
   assert.equal(spent.stop, 'budget')
@@ -209,7 +227,7 @@ function scriptedInstall(errs: unknown[]): { install: () => Promise<void>; calls
       const err = errs[n++]
       return err === undefined ? Promise.resolve() : Promise.reject(err as Error)
     },
-    calls: () => n
+    calls: () => n,
   }
 }
 
@@ -224,7 +242,7 @@ test('ACCEPTANCE: a 429 with Retry-After waits exactly that long and succeeds on
     },
     random: () => {
       throw new Error('the server named the time; nothing here is random')
-    }
+    },
   })
   assert.deepEqual(waits, [45_000, 90_000], 'the server’s numbers, honoured verbatim')
   assert.equal(script.calls(), 3)
@@ -242,14 +260,17 @@ test('ACCEPTANCE: a 429 with NO header uses the jittered backoff, over minutes, 
       waits.push(ms)
       return Promise.resolve()
     },
-    random: () => rolls[roll++ % rolls.length]
+    random: () => rolls[roll++ % rolls.length],
   })
   assert.equal(res.ok, true)
   assert.equal(res.attempts, 6, 'the rate-limited budget, not the general three')
   assert.equal(waits.length, 5)
   for (const [i, ms] of waits.entries()) {
     const ceiling = Math.min(RATE_LIMIT_BASE_MS * 2 ** i, RATE_LIMIT_MAX_DELAY_MS)
-    assert.ok(ms >= ceiling / 2 && ms < ceiling, `wait ${String(i)}: ${String(ms)} outside its window`)
+    assert.ok(
+      ms >= ceiling / 2 && ms < ceiling,
+      `wait ${String(i)}: ${String(ms)} outside its window`,
+    )
   }
   // The whole point, in one number: the old schedule spent 4.5 SECONDS on this.
   const total = waits.reduce((a, b) => a + b, 0)
@@ -266,14 +287,17 @@ test('ACCEPTANCE: a NON-429 failure keeps the old behaviour exactly', async () =
     sleep: (ms) => {
       waits.push(ms)
       return Promise.resolve()
-    }
+    },
   })
   assert.deepEqual(waits, [INSTALL_RETRY_BASE_MS, INSTALL_RETRY_BASE_MS * 2], 'unchanged 1.5s / 3s')
   assert.deepEqual(res, { ok: true, attempts: 3 })
 
   // Three attempts and no more, and the failure is reported as it always was.
   const doomed = scriptedInstall([statusError(503), statusError(503), statusError(503)])
-  const gaveUp = await runPackInstallAttempts({ install: doomed.install, sleep: () => Promise.resolve() })
+  const gaveUp = await runPackInstallAttempts({
+    install: doomed.install,
+    sleep: () => Promise.resolve(),
+  })
   assert.equal(doomed.calls(), MAX_INSTALL_ATTEMPTS)
   assert.equal(gaveUp.ok, false)
   assert.equal(gaveUp.rateLimited, false)
@@ -285,7 +309,7 @@ test('ACCEPTANCE: a NON-429 failure keeps the old behaviour exactly', async () =
     install: gone.install,
     sleep: () => {
       throw new Error('a 404 must never sleep')
-    }
+    },
   })
   assert.equal(gone.calls(), 1)
   assert.equal(dead.attempts, 1)
@@ -296,7 +320,7 @@ test('OUT OF BUDGET, THE SENTENCE IS THE TRUE ONE — and the install is still j
   const res = await runPackInstallAttempts({
     install: script.install,
     sleep: () => Promise.resolve(),
-    random: () => 0.999
+    random: () => 0.999,
   })
   assert.equal(res.ok, false)
   assert.equal(res.attempts, MAX_RATE_LIMITED_ATTEMPTS)
@@ -308,11 +332,20 @@ test('OUT OF BUDGET, THE SENTENCE IS THE TRUE ONE — and the install is still j
   assert.match(res.error ?? '', /try again/i)
   assert.ok((res.error ?? '').length <= MAX_INSTALL_MESSAGE_CHARS)
   // Every other failure keeps saying exactly what it said before.
-  assert.equal(packInstallUserMessage(statusError(404)), describePackInstallFailure(statusError(404)))
+  assert.equal(
+    packInstallUserMessage(statusError(404)),
+    describePackInstallFailure(statusError(404)),
+  )
 })
 
 test('EVERY ATTEMPT IS ANNOUNCED, retried or not — the wait is what the row renders', async () => {
-  const seen: { attempt: number; attempts: number; final: boolean; rateLimited: boolean; delayMs: number }[] = []
+  const seen: {
+    attempt: number
+    attempts: number
+    final: boolean
+    rateLimited: boolean
+    delayMs: number
+  }[] = []
   const script = scriptedInstall([rateLimitError(20), statusError(404)])
   await runPackInstallAttempts({
     install: script.install,
@@ -320,13 +353,13 @@ test('EVERY ATTEMPT IS ANNOUNCED, retried or not — the wait is what the row re
     onFailure: ({ attempt, attempts, final, rateLimited, delayMs, err }) => {
       assert.ok(err instanceof Error)
       seen.push({ attempt, attempts, final, rateLimited, delayMs })
-    }
+    },
   })
   assert.deepEqual(seen, [
     { attempt: 1, attempts: 6, final: false, rateLimited: true, delayMs: 20_000 },
     // The budget the 429 widened does not narrow when the next answer is a 404 — and a 404 is
     // final on the attempt it happened, whatever the budget says.
-    { attempt: 2, attempts: 6, final: true, rateLimited: false, delayMs: 0 }
+    { attempt: 2, attempts: 6, final: true, rateLimited: false, delayMs: 0 },
   ])
 })
 
@@ -340,7 +373,10 @@ test('A RATE LIMIT IS NOT AN INSTALL FAILURE — the downgrade', () => {
   resetPackInstallWarnings()
   const r = recorder()
   for (let i = 0; i < 50; i++) {
-    logPackInstallFailure({ pack: 'p', attempt: 6, attempts: 6, final: true, err: rateLimitError(60) }, r)
+    logPackInstallFailure(
+      { pack: 'p', attempt: 6, attempts: 6, final: true, err: rateLimitError(60) },
+      r,
+    )
   }
   assert.equal(r.filed.length, 0, 'not one rate-limit report reaches the store')
   assert.equal(r.warned.length, 1, 'and the console hears it once')
@@ -348,10 +384,16 @@ test('A RATE LIMIT IS NOT AN INSTALL FAILURE — the downgrade', () => {
   assert.match(String(r.warned[0][1]), /not logged$/)
   // The gate is its OWN code: a rate limit and a dead DNS must not silence each other.
   assert.notEqual(RATE_LIMITED_WARN_CODE, 'unreachable')
-  logPackInstallFailure({ pack: 'p', attempt: 3, attempts: 3, final: true, err: offlineError('ENOTFOUND') }, r)
+  logPackInstallFailure(
+    { pack: 'p', attempt: 3, attempts: 3, final: true, err: offlineError('ENOTFOUND') },
+    r,
+  )
   assert.equal(r.warned.length, 2)
   // A 404 in the same session is STILL filed — the downgrade is one status wide.
-  logPackInstallFailure({ pack: 'p', attempt: 1, attempts: 3, final: true, err: statusError(404) }, r)
+  logPackInstallFailure(
+    { pack: 'p', attempt: 1, attempts: 3, final: true, err: statusError(404) },
+    r,
+  )
   assert.equal(r.filed.length, 1)
   resetPackInstallWarnings()
 })
@@ -369,7 +411,7 @@ const ASSET = {
   name: 'model.onnx',
   url: 'https://github.com/x/y/releases/download/model-files-v1.0/model.onnx',
   sha256: createHash('sha256').update(BODY).digest('hex'),
-  bytes: BODY.length
+  bytes: BODY.length,
 }
 
 /** A fetch that answers 429 for the first `count` requests, then serves the real body. */
@@ -398,7 +440,7 @@ test('THE VOICE MODEL DOWNLOAD HONOURS THE SAME CLOCK — four refusals and it s
     sleep: (ms) => {
       waits.push(ms)
       return Promise.resolve()
-    }
+    },
   })
   // The old budget of three would have given up on the third refusal, six seconds in.
   assert.deepEqual(result, { ok: true })
@@ -423,12 +465,15 @@ test('…and with no header it backs off over minutes, then says the true thing'
     sleep: (ms) => {
       waits.push(ms)
       return Promise.resolve()
-    }
+    },
   })
   assert.equal(result.ok, false)
   assert.equal(calls, MAX_RATE_LIMITED_ATTEMPTS, 'the rate-limited budget, not the general three')
   assert.equal(waits.length, MAX_RATE_LIMITED_ATTEMPTS - 1)
-  assert.ok(waits.every((ms) => ms >= 15_000), 'every wait is a real wait, not 2 seconds')
+  assert.ok(
+    waits.every((ms) => ms >= 15_000),
+    'every wait is a real wait, not 2 seconds',
+  )
   assert.ok(waits.reduce((a, b) => a + b, 0) > 5 * 60_000, 'a minutes-scale horizon')
   // NOT `HTTP 429 for model.onnx`: the download is fine and the bytes fetched are kept.
   assert.match(result.message ?? '', /rate limiting/i)
@@ -439,7 +484,10 @@ test('THE WIRING: the header is parsed where it exists, and the wait is said out
   // `Retry-After` lives on the response and NOWHERE downstream, so a missed parse here is a lost
   // clock — and the constructor that reads it is shared so a second downloader cannot re-spell it.
   const registry = read('src/main/packRegistry.ts')
-  assert.match(registry, /reject\(packInstallHttpError\(url, status, res\.headers\['retry-after'\]\)\)/)
+  assert.match(
+    registry,
+    /reject\(packInstallHttpError\(url, status, res\.headers\['retry-after'\]\)\)/,
+  )
 
   // A stopped progress bar and a bar waiting out a rate limit look identical; one of them says so.
   const runner = read('src/main/packInstallRun.ts')
@@ -451,5 +499,6 @@ test('THE WIRING: the header is parsed where it exists, and the wait is said out
   assert.match(ipc, /retryable: res\.rateLimited/)
   const row = read('src/renderer/src/features/alerts/SoundPackRow.tsx')
   assert.match(row, /case 'waiting'/)
-  assert.match(row, /p\.retryable \?/)
+  // Prettier may wrap this ternary onto its own line; collapse whitespace before pinning.
+  assert.match(row.replace(/\s+/g, ' '), /p\.retryable \?/)
 })

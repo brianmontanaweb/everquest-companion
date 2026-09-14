@@ -55,7 +55,7 @@ import type {
   KnowledgeDefineParams,
   KnowledgeMissMessage,
   KnowledgePushDomain,
-  KnowledgeRecord
+  KnowledgeRecord,
 } from '../../shared/dataServer/protocol.generated'
 
 /**

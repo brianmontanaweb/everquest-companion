@@ -18,17 +18,20 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import type { EqConfig } from '@shared/types'
 import { recordPref, usePrefsSeed } from './prefsHydration'
 
-const SOURCE_CHIP: Record<EqConfig['source'], { label: string; color: 'success' | 'info' | 'warning' }> = {
+const SOURCE_CHIP: Record<
+  EqConfig['source'],
+  { label: string; color: 'success' | 'info' | 'warning' }
+> = {
   manual: { label: 'manual', color: 'info' },
   auto: { label: 'auto-detected', color: 'success' },
-  default: { label: 'default (unverified)', color: 'warning' }
+  default: { label: 'default (unverified)', color: 'warning' },
 }
 
 /** One labelled monospace path row. */
 function PathRow({
   label,
   path,
-  testId
+  testId,
 }: {
   label: string
   path: string | undefined
@@ -75,7 +78,7 @@ function EqFolderPath({ config }: { config: EqConfig | null }): JSX.Element {
         flexWrap: 'wrap',
         p: 1.25,
         borderRadius: 1,
-        bgcolor: 'action.hover'
+        bgcolor: 'action.hover',
       }}
     >
       <Stack spacing={0.75} sx={{ minWidth: 0, flexGrow: 1 }}>
@@ -107,16 +110,16 @@ function EqFolderCheck({ config }: { config: EqConfig | null }): JSX.Element | n
     return (
       <Alert severity="error" variant="standard" data-testid="eq-folder-check">
         This folder could not be read ({config.readError ?? 'unknown error'}). Its files may be
-        blocked by permissions or security software, or it may be a broken shortcut. Try
-        choosing one of the log files directly.
+        blocked by permissions or security software, or it may be a broken shortcut. Try choosing
+        one of the log files directly.
       </Alert>
     )
   }
   if (config.readable === 'missing') {
     return (
       <Alert severity="warning" variant="standard" data-testid="eq-folder-check">
-        This folder doesn&apos;t exist. Pick the folder your <code>eqlog_*.txt</code> files are
-        in - or pick one of the files itself.
+        This folder doesn&apos;t exist. Pick the folder your <code>eqlog_*.txt</code> files are in -
+        or pick one of the files itself.
       </Alert>
     )
   }
@@ -127,8 +130,8 @@ function EqFolderCheck({ config }: { config: EqConfig | null }): JSX.Element | n
     </Alert>
   ) : (
     <Alert severity="warning" variant="standard" data-testid="eq-folder-check">
-      No character logs (eqlog_*.txt) found here. Make sure EverQuest logging is enabled
-      (/log on), then pick the folder those files are in - or pick one of the files itself.
+      No character logs (eqlog_*.txt) found here. Make sure EverQuest logging is enabled (/log on),
+      then pick the folder those files are in - or pick one of the files itself.
     </Alert>
   )
 }

@@ -21,7 +21,7 @@ function badgeFlags(knowledge: ItemKnowledge, isPosky: boolean): BadgeFlags {
     recipes,
     hasQuests,
     showQuest: (knowledge.quest || hasQuests) && !isPosky && !tradeskillOnly,
-    showTradeskill: tradeskillOnly && !isPosky
+    showTradeskill: tradeskillOnly && !isPosky,
   }
 }
 
@@ -36,7 +36,7 @@ function badgeFlags(knowledge: ItemKnowledge, isPosky: boolean): BadgeFlags {
 // drill-down shows once you click through.
 export function KnowledgeBadge({
   knowledge,
-  isPosky
+  isPosky,
 }: {
   knowledge?: ItemKnowledge
   isPosky: boolean
@@ -47,13 +47,31 @@ export function KnowledgeBadge({
   return (
     <Stack direction="row" spacing={0.5} alignItems="center" component="span">
       {knowledge.lore && (
-        <Chip size="small" color="warning" variant="outlined" label="LORE" sx={{ height: 18, fontSize: 10 }} />
+        <Chip
+          size="small"
+          color="warning"
+          variant="outlined"
+          label="LORE"
+          sx={{ height: 18, fontSize: 10 }}
+        />
       )}
       {flags.showQuest && (
-        <Chip size="small" color="secondary" variant="outlined" label="quest" sx={{ height: 18, fontSize: 10 }} />
+        <Chip
+          size="small"
+          color="secondary"
+          variant="outlined"
+          label="quest"
+          sx={{ height: 18, fontSize: 10 }}
+        />
       )}
       {flags.showTradeskill && (
-        <Chip size="small" color="info" variant="outlined" label="tradeskill" sx={{ height: 18, fontSize: 10 }} />
+        <Chip
+          size="small"
+          color="info"
+          variant="outlined"
+          label="tradeskill"
+          sx={{ height: 18, fontSize: 10 }}
+        />
       )}
     </Stack>
   )

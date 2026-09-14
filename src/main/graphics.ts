@@ -49,7 +49,7 @@ import {
   NO_GRAPHICS_AUTO,
   envDisablesGpu,
   resolveGraphics,
-  type ResolvedGraphics
+  type ResolvedGraphics,
 } from '../shared/graphicsPrefs'
 
 /**
@@ -107,7 +107,7 @@ const SAFE_MODE_REASON: Record<SafeModeSource, string> = {
   user: 'Preferences → Graphics',
   // The one a support reply needs to be able to read back off a user's errors.log without asking
   // them what they clicked: nobody clicked anything.
-  auto: 'detected automatically - see the wine: line above'
+  auto: 'detected automatically - see the wine: line above',
 }
 
 export function applyGraphicsSafeMode(): void {
@@ -117,7 +117,7 @@ export function applyGraphicsSafeMode(): void {
     app.disableHardwareAcceleration()
     safeModeActive = source
     logInfo(
-      `[everquest-companion] Graphics safe mode is ON for this launch (${SAFE_MODE_REASON[source]}): drawing without hardware acceleration.`
+      `[everquest-companion] Graphics safe mode is ON for this launch (${SAFE_MODE_REASON[source]}): drawing without hardware acceleration.`,
     )
   } catch (err) {
     logError('main:graphics', err)
@@ -155,7 +155,7 @@ export function applyGraphicsCompatibilityFlags(): void {
     logInfo(
       `[everquest-companion] Graphics compatibility flags for this launch (detected automatically - see the wine: line above): ${flags
         .map((f) => `--${f}`)
-        .join(' ')}.`
+        .join(' ')}.`,
     )
   } catch (err) {
     logError('main:graphics', err)

@@ -63,7 +63,11 @@ export function WhatsNewTeaser({ onOpen }: { onOpen: () => void }): JSX.Element 
         sx={{ px: 2, py: 1, width: '100%', display: 'flex', alignItems: 'center', gap: 1.5 }}
         data-testid="whats-new-teaser"
       >
-        <Typography variant="body2" sx={{ flexGrow: 1, minWidth: 0 }} data-testid="whats-new-teaser-text">
+        <Typography
+          variant="body2"
+          sx={{ flexGrow: 1, minWidth: 0 }}
+          data-testid="whats-new-teaser-text"
+        >
           Updated to v{version}
         </Typography>
 

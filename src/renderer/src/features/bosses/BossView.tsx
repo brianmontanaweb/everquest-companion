@@ -16,7 +16,7 @@ import {
   TextField,
   ToggleButton,
   ToggleButtonGroup,
-  Typography
+  Typography,
 } from '@mui/material'
 import { getBossData } from '../../data'
 import { useBossKills } from './useBossKills'
@@ -76,7 +76,7 @@ function BossToolbar({
   filters,
   density,
   onDensityChange,
-  tally
+  tally,
 }: {
   mode: Mode
   onModeChange: (m: Mode | null) => void
@@ -165,7 +165,7 @@ function BossToolbar({
  */
 function weekManualClear(
   weekClears: WeekClearsApi,
-  week: LockoutWindow
+  week: LockoutWindow,
 ): {
   baseTs: (s: TargetStatus) => number | undefined
   canMarkBase: (s: TargetStatus) => boolean
@@ -174,7 +174,7 @@ function weekManualClear(
   return {
     baseTs: (s) => weekClears.liveBaseTs(bossClearKey(s.target.name), week),
     canMarkBase: (s) => weekClears.canToggle && hasCreditedAmbiguousKill(s.tiers, week),
-    onToggleBase: (s) => weekClears.toggle(bossClearKey(s.target.name), week)
+    onToggleBase: (s) => weekClears.toggle(bossClearKey(s.target.name), week),
   }
 }
 
@@ -182,7 +182,11 @@ function weekManualClear(
  * @param onOpenMob  route a roster card to the app-wide mob page (the Mobs tab). This view no
  *                   longer owns a detail surface of its own — one mob, one page, everywhere.
  */
-export default function BossView({ onOpenMob }: { onOpenMob: (t: MobTarget) => void }): JSX.Element {
+export default function BossView({
+  onOpenMob,
+}: {
+  onOpenMob: (t: MobTarget) => void
+}): JSX.Element {
   const [mode, setMode] = useState<Mode>(loadMode)
   const [query, setQuery] = useState('')
   const [defeatedOnly, setDefeatedOnly] = useState(false)
@@ -190,7 +194,7 @@ export default function BossView({ onOpenMob }: { onOpenMob: (t: MobTarget) => v
   // loadout you were running. A DISPLAY choice; nothing about the kills themselves changes.
   const [byLoadout, setByLoadout] = useState(false)
   const [density, setDensity] = useState<Density>(
-    () => (localStorage.getItem(DENSITY_KEY) as Density) || 'compact'
+    () => (localStorage.getItem(DENSITY_KEY) as Density) || 'compact',
   )
   // Names of bosses currently flashing, and the id of the active confetti burst.
   const [flashing, setFlashing] = useState<Set<string>>(new Set())
@@ -234,18 +238,24 @@ export default function BossView({ onOpenMob }: { onOpenMob: (t: MobTarget) => v
   // The manual base-rung clear (section 2a): one per-card bundle for the week view. `useMemo` only
   // for a stable identity — the reads inside are cheap (per boss per render, fine at roster scale).
   const weekClears = useWeekClears()
-  const manualClear = useMemo(() => (mode === 'week' ? weekManualClear(weekClears, week) : undefined), [mode, week, weekClears])
+  const manualClear = useMemo(
+    () => (mode === 'week' ? weekManualClear(weekClears, week) : undefined),
+    [mode, week, weekClears],
+  )
 
   /**
    * WHAT THE SWITCH FILTERS ON, and the whole of JOS-237 (rosterFilter.ts carries the argument).
    * The all-time flag is right for the OVERALL roster and wrong for the week view, which is about
    * this reset week and nothing else — so the predicate is the mode's, not the roster's.
    */
-  const defeated = useMemo(() => (mode === 'week' ? defeatedThisWeek(week) : everDefeated), [mode, week])
+  const defeated = useMemo(
+    () => (mode === 'week' ? defeatedThisWeek(week) : everDefeated),
+    [mode, week],
+  )
 
   const filtered = useMemo(
     () => filterRoster(statuses, { query, defeatedOnly, defeated }),
-    [statuses, query, defeatedOnly, defeated]
+    [statuses, query, defeatedOnly, defeated],
   )
 
   const byCategory = useMemo(() => {
@@ -256,7 +266,7 @@ export default function BossView({ onOpenMob }: { onOpenMob: (t: MobTarget) => v
       map.set(s.target.category, arr)
     }
     return [...map.entries()].sort(
-      (a, b) => (CATEGORY_ORDER.indexOf(a[0]) + 1 || 99) - (CATEGORY_ORDER.indexOf(b[0]) + 1 || 99)
+      (a, b) => (CATEGORY_ORDER.indexOf(a[0]) + 1 || 99) - (CATEGORY_ORDER.indexOf(b[0]) + 1 || 99),
     )
   }, [filtered])
 
@@ -273,7 +283,7 @@ export default function BossView({ onOpenMob }: { onOpenMob: (t: MobTarget) => v
     minCol: compact ? 116 : 180,
     flashing,
     onOpenMob,
-    ...(mode === 'week' ? { lockOf, manualClear } : {})
+    ...(mode === 'week' ? { lockOf, manualClear } : {}),
   }
 
   // `data-week-clears-ready` (week view only): whether useWeekClears has learned the character. A
@@ -281,7 +291,12 @@ export default function BossView({ onOpenMob }: { onOpenMob: (t: MobTarget) => v
   // "nothing eligible this week" (fine) from "the store never bootstrapped" (Critical 1 regressed).
   const weekClearsReady = mode === 'week' ? String(weekClears.canToggle) : undefined
   return (
-    <Stack data-testid="boss-view" data-week-clears-ready={weekClearsReady} spacing={1.5} sx={{ height: '100%', position: 'relative' }}>
+    <Stack
+      data-testid="boss-view"
+      data-week-clears-ready={weekClearsReady}
+      spacing={1.5}
+      sx={{ height: '100%', position: 'relative' }}
+    >
       {burst != null && <Confetti key={burst} onDone={() => setBurst(null)} />}
       <BossToolbar
         mode={mode}
@@ -298,7 +313,7 @@ export default function BossView({ onOpenMob }: { onOpenMob: (t: MobTarget) => v
           defeatedOnly,
           onDefeatedOnlyChange: setDefeatedOnly,
           byLoadout,
-          onByLoadoutChange: setByLoadout
+          onByLoadoutChange: setByLoadout,
         }}
         density={density}
         onDensityChange={setDensityPersist}

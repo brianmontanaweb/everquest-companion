@@ -32,7 +32,7 @@ import {
   foldFeedbackPerf,
   formatPerfBlock,
   validatePerf,
-  type FeedbackPerfState
+  type FeedbackPerfState,
 } from '../src/shared/feedbackPerf'
 import {
   MAX_SEAM_COUNT,
@@ -42,7 +42,7 @@ import {
   foldPerfSeams,
   type FeedbackPerfSeam,
   type PerfSeamSample,
-  type PerfWindow
+  type PerfWindow,
 } from '../src/shared/feedbackPerfSeams'
 
 const NOW = 1_800_000_000_000
@@ -60,7 +60,7 @@ const BLOCK_STATE: FeedbackPerfState = {
   totalMemGb: 32,
   gpuVendor: 'nvidia',
   gpuCompositing: 'hardware',
-  eqWindowMode: 'fullscreen'
+  eqWindowMode: 'fullscreen',
 }
 
 /** Wall clock for the start of row `i` of a ten-minute, sixty-row block ending at NOW. */
@@ -68,23 +68,23 @@ const atRow = (i: number): number => NOW - 60 * PERF_INTERVAL_MS + i * PERF_INTE
 const WINDOW: PerfWindow = {
   start: NOW - 60 * PERF_INTERVAL_MS,
   spanMs: 60 * PERF_INTERVAL_MS,
-  rowMs: PERF_INTERVAL_MS
+  rowMs: PERF_INTERVAL_MS,
 }
 const fold = (samples: PerfSeamSample[]): FeedbackPerfSeam[] => foldPerfSeams(samples, WINDOW)
 
 /** A block with whatever attribution the case is about, over the same window. */
-function block(over: Partial<Parameters<typeof foldFeedbackPerf>[0]> = {}): NonNullable<
-  ReturnType<typeof foldFeedbackPerf>
-> {
+function block(
+  over: Partial<Parameters<typeof foldFeedbackPerf>[0]> = {},
+): NonNullable<ReturnType<typeof foldFeedbackPerf>> {
   const perf = foldFeedbackPerf(
     {
       main: [{ at: atRow(54), lateMs: 1_190 }],
       worker: [],
       tail: [],
       state: BLOCK_STATE,
-      ...over
+      ...over,
     },
-    NOW
+    NOW,
   )
   assert.ok(perf !== null)
   return perf
@@ -104,11 +104,11 @@ test('THE CULPRIT IS FIRST — seams come back worst-first, so every reader name
   const seams = fold([
     { at: atRow(10), seam: 'combatSnapshot', ms: 140 },
     { at: atRow(54), seam: 'worldRebuilt', ms: 1_186 },
-    { at: atRow(20), seam: 'registryFlush', ms: 300 }
+    { at: atRow(20), seam: 'registryFlush', ms: 300 },
   ])
   assert.deepEqual(
     seams.map((s) => s.seam),
-    ['worldRebuilt', 'registryFlush', 'combatSnapshot']
+    ['worldRebuilt', 'registryFlush', 'combatSnapshot'],
   )
   assert.equal(seams[0].maxMs, 1_186)
 })
@@ -120,7 +120,7 @@ test('a seam `t` ADDRESSES A ROW — the worst call lands on the block grid, not
   // a reader who sees the spike in row 54 looks here and finds what was running in row 54.
   const seams = fold([
     { at: atRow(54) + 3_000, seam: 'worldRebuilt', ms: 900 },
-    { at: atRow(12), seam: 'worldRebuilt', ms: 40 }
+    { at: atRow(12), seam: 'worldRebuilt', ms: 40 },
   ])
   assert.equal(seams[0].t, 540)
   assert.equal(seams[0].lateCalls, 2)
@@ -130,7 +130,7 @@ test('a seam `t` ADDRESSES A ROW — the worst call lands on the block grid, not
 test('samples outside the window are dropped rather than piled onto row 0', () => {
   const seams = fold([
     { at: WINDOW.start - 60_000, seam: 'worldRebuilt', ms: 5_000 },
-    { at: atRow(0), seam: 'worldRebuilt', ms: 40 }
+    { at: atRow(0), seam: 'worldRebuilt', ms: 40 },
   ])
   assert.equal(seams[0].maxMs, 40)
 })
@@ -147,9 +147,9 @@ test('the GC fold answers null when nothing was recorded — a report is about a
   const gc = foldPerfGc(
     [
       { at: atRow(30), ms: 640, kind: 'major' },
-      { at: atRow(31), ms: 30, kind: 'minor' }
+      { at: atRow(31), ms: 30, kind: 'minor' },
     ],
-    WINDOW
+    WINDOW,
   )
   assert.equal(gc?.pauses, 2)
   assert.equal(gc?.majorPauses, 1)
@@ -164,7 +164,7 @@ test('the GC fold answers null when nothing was recorded — a report is about a
 test('THE OWNER LINE names the seam, its cost and where in the window it happened', () => {
   const perf = block({
     seams: [{ at: atRow(54), seam: 'worldRebuilt', ms: 1_186 }],
-    gc: [{ at: atRow(54), ms: 40, kind: 'minor' }]
+    gc: [{ at: atRow(54), ms: 40, kind: 'minor' }],
   })
   const owner = formatPerfBlock(perf).split('\n')[3]
   assert.match(owner, /owner: worldRebuilt 1186ms @t=540s \(1 over 25ms\)/)
@@ -187,7 +187,7 @@ test('AN UNOWNED WINDOW SAYS SO — absence is a finding, not a missing line', (
 test('the block round-trips its two new groups through its own validator unchanged', () => {
   const perf = block({
     seams: [{ at: atRow(54), seam: 'worldRebuilt', ms: 1_186 }],
-    gc: [{ at: atRow(54), ms: 640, kind: 'major' }]
+    gc: [{ at: atRow(54), ms: 640, kind: 'major' }],
   })
   const back = validatePerf(perf)
   assert.equal(back.ok, true)
@@ -197,7 +197,7 @@ test('the block round-trips its two new groups through its own validator unchang
 test('A FORGED SEAM NAME IS A NAMED 400 at the validator, not a stored free-text field', () => {
   const forged = {
     ...block(),
-    seams: [{ seam: 'C:/Users/someone/Logs/eqlog.txt', lateCalls: 1, maxMs: 40, t: 0 }]
+    seams: [{ seam: 'C:/Users/someone/Logs/eqlog.txt', lateCalls: 1, maxMs: 40, t: 0 }],
   }
   const res = validatePerf(forged)
   assert.equal(res.ok, false)
@@ -207,7 +207,7 @@ test('A FORGED SEAM NAME IS A NAMED 400 at the validator, not a stored free-text
 test('a `t` outside the block\u2019s own window is refused — it names no row that exists', () => {
   const res = validatePerf({
     ...block(),
-    seams: [{ seam: 'worldRebuilt', lateCalls: 1, maxMs: 40, t: MAX_SEAM_T_S + 1 }]
+    seams: [{ seam: 'worldRebuilt', lateCalls: 1, maxMs: 40, t: MAX_SEAM_T_S + 1 }],
   })
   assert.equal(res.ok, false)
   assert.equal((res as { field: string }).field, 'env.perf.seams[0].t')

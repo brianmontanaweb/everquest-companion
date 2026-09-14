@@ -78,7 +78,10 @@ export function questMatchesQuery(q: SearchQuest, needle: string): boolean {
  * returns the SAME array untouched, so the default path costs one comparison and allocates
  * nothing — the `filterByFacets` contract, restated for the other half of the filter bar.
  */
-export function filterByQuery<T extends SearchQuest>(quests: readonly T[], query: string): readonly T[] {
+export function filterByQuery<T extends SearchQuest>(
+  quests: readonly T[],
+  query: string,
+): readonly T[] {
   const needle = query.trim().toLowerCase()
   if (!needle) return quests
   return quests.filter((q) => questMatchesQuery(q, needle))

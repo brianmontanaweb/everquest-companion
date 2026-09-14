@@ -24,7 +24,7 @@ import {
   parseTopTable,
   splitSections,
   stripMarkup,
-  transclusionTargets
+  transclusionTargets,
 } from '../scripts/sources/questPage'
 import { MAX_ATTACHED_REWARDS, buildQuestItemIndex, questItemKey } from '../src/main/questItemIndex'
 import questsJson from '../src/renderer/src/data/eqlegends/quests.json'
@@ -132,8 +132,8 @@ const ITEMS = new Set(
     'Guard Bracelet',
     'Bunker Battle Blade',
     'Fine Steel Dagger',
-    'Bone Chips'
-  ].map((s) => s.toLowerCase())
+    'Bone Chips',
+  ].map((s) => s.toLowerCase()),
 )
 const isItem = (t: string): boolean => ITEMS.has(t.toLowerCase())
 
@@ -180,19 +180,24 @@ test('Bone Chips Quests: a disambiguation hub parses to nothing and is flagged, 
   // [[Bone Chips]] IS an item, so the hub isn't literally empty of item links — the
   // "empty" verdict is about quest FIELDS (no table, no giver, no zone, no reward).
   assert.equal(q.giver, undefined)
-  assert.equal(
-    isEmptyParse({ ...q, requiredItems: [] }),
-    true
-  )
+  assert.equal(isEmptyParse({ ...q, requiredItems: [] }), true)
 })
 
 test('link/transclusion extraction: labels vs targets, namespaces skipped, dedupe', () => {
-  assert.deepEqual(linkTargets('[[Freeport|East Freeport]] and [[Dwarven Ale]]'), ['Freeport', 'Dwarven Ale'])
-  assert.deepEqual(linkTargets('[[File:x.png|frame|Cap]] [[Category:Quests]] [[Bone Chips]]'), ['Bone Chips'])
-  assert.deepEqual(transclusionTargets('<li> {{:Small Tattered Belt}} </li>{{Classic Era}}'), [
-    'Small Tattered Belt'
+  assert.deepEqual(linkTargets('[[Freeport|East Freeport]] and [[Dwarven Ale]]'), [
+    'Freeport',
+    'Dwarven Ale',
   ])
-  assert.deepEqual(dedupe(['Bone Chips', 'bone chips', 'Rusty Dagger']), ['Bone Chips', 'Rusty Dagger'])
+  assert.deepEqual(linkTargets('[[File:x.png|frame|Cap]] [[Category:Quests]] [[Bone Chips]]'), [
+    'Bone Chips',
+  ])
+  assert.deepEqual(transclusionTargets('<li> {{:Small Tattered Belt}} </li>{{Classic Era}}'), [
+    'Small Tattered Belt',
+  ])
+  assert.deepEqual(dedupe(['Bone Chips', 'bone chips', 'Rusty Dagger']), [
+    'Bone Chips',
+    'Rusty Dagger',
+  ])
   assert.equal(stripMarkup("''' [[Freeport|East  Freeport]] '''"), 'East Freeport')
 })
 
@@ -205,7 +210,7 @@ test('splitSections separates the lead from == Heading == blocks', () => {
   assert.match(lead, /questTopTable/)
   assert.deepEqual(
     sections.map((s) => s.heading),
-    ['Reward', 'Walkthrough']
+    ['Reward', 'Walkthrough'],
   )
 })
 
@@ -231,7 +236,10 @@ test('quests.json loads with a sane, non-empty catalog', () => {
   }
   // Deterministic output: sorted by page title.
   const pages = data.quests.map((q) => q.page)
-  assert.deepEqual(pages, [...pages].sort((a, b) => a.localeCompare(b)))
+  assert.deepEqual(
+    pages,
+    [...pages].sort((a, b) => a.localeCompare(b)),
+  )
   // No duplicate quest pages.
   assert.equal(new Set(pages).size, pages.length)
 })
@@ -245,15 +253,19 @@ test('the byItem index answers classic turn-in items the ITEM pages never link',
     assert.ok(uses.length >= 1, `${item} should resolve to at least one quest`)
     assert.ok(
       uses.some((u) => u.role === 'required'),
-      `${item} should be a turn-in for at least one quest`
+      `${item} should be a turn-in for at least one quest`,
     )
   }
 })
 
 test('the index carries BOTH roles: reward items resolve too', () => {
-  const rewardItems = [...byItem.entries()].filter(([, uses]) => uses.some((u) => u.role === 'reward'))
+  const rewardItems = [...byItem.entries()].filter(([, uses]) =>
+    uses.some((u) => u.role === 'reward'),
+  )
   assert.ok(rewardItems.length > 50, 'quest rewards should be indexed, not just turn-ins')
-  const requiredItems = [...byItem.entries()].filter(([, uses]) => uses.some((u) => u.role === 'required'))
+  const requiredItems = [...byItem.entries()].filter(([, uses]) =>
+    uses.some((u) => u.role === 'required'),
+  )
   assert.ok(requiredItems.length > 50, 'turn-in items should be indexed')
 })
 
@@ -269,7 +281,9 @@ test('a required-role use carries its quest rewards; a reward-role use never doe
   for (const q of data.quests) {
     const rewardNames = (q.rewards ?? []).map((r) => r.name.trim()).filter(Boolean)
     for (const it of q.requiredItems ?? []) {
-      const use = (byItem.get(questItemKey(it)) ?? []).find((u) => u.page === q.page && u.role === 'required')
+      const use = (byItem.get(questItemKey(it)) ?? []).find(
+        (u) => u.page === q.page && u.role === 'required',
+      )
       assert.ok(use, `${it} should carry a required use for ${q.page}`)
       if (rewardNames.length === 0) {
         // Law 1: a quest whose page names no reward attaches NOTHING, not an empty list.
@@ -280,12 +294,17 @@ test('a required-role use carries its quest rewards; a reward-role use never doe
       }
     }
     for (const r of q.rewards ?? []) {
-      const use = (byItem.get(questItemKey(r.name)) ?? []).find((u) => u.page === q.page && u.role === 'reward')
+      const use = (byItem.get(questItemKey(r.name)) ?? []).find(
+        (u) => u.page === q.page && u.role === 'reward',
+      )
       assert.ok(use, `${r.name} should carry a reward use for ${q.page}`)
       assert.equal(use.rewards, undefined, 'a reward item is its own outcome — never re-listed')
     }
   }
-  assert.ok(checkedRequired > 20, `expected many turn-ins to name an outcome, got ${checkedRequired}`)
+  assert.ok(
+    checkedRequired > 20,
+    `expected many turn-ins to name an outcome, got ${checkedRequired}`,
+  )
 })
 
 test('attached rewards are capped and are real, non-empty names', () => {
@@ -294,7 +313,8 @@ test('attached rewards are capped and are real, non-empty names', () => {
       if (!u.rewards) continue
       assert.equal(u.role, 'required')
       assert.ok(u.rewards.length > 0 && u.rewards.length <= MAX_ATTACHED_REWARDS)
-      for (const r of u.rewards) assert.ok(r.trim().length > 0 && !r.includes('[['), `clean reward name: ${r}`)
+      for (const r of u.rewards)
+        assert.ok(r.trim().length > 0 && !r.includes('[['), `clean reward name: ${r}`)
     }
   }
 })
@@ -313,7 +333,8 @@ test('quest metadata survives the scrape (givers, zones, levels are real values)
     assert.ok(q.giver && q.giver.length > 1 && !q.giver.includes('[['), `clean giver on ${q.page}`)
   }
   for (const q of data.quests) {
-    if (q.minLevel != null) assert.ok(q.minLevel >= 0 && q.minLevel <= 100, `sane minLevel on ${q.page}`)
+    if (q.minLevel != null)
+      assert.ok(q.minLevel >= 0 && q.minLevel <= 100, `sane minLevel on ${q.page}`)
     for (const z of q.relatedZones ?? []) assert.ok(!/^none$/i.test(z))
   }
 })

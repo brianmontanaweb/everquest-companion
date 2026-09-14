@@ -26,7 +26,7 @@ import {
   cpuPercentBetween,
   createProcessSampler,
   processSampleIsSupported,
-  type ProcessReading
+  type ProcessReading,
 } from '../src/main/processSample'
 import {
   CLOCK_SKEW_WARN_MS,
@@ -38,7 +38,7 @@ import {
   formatEngineState,
   formatMicros,
   formatParity,
-  type EnginePerfSample
+  type EnginePerfSample,
 } from '../src/shared/enginePerf'
 import { useEnginePerf } from '../src/renderer/src/lib/enginePerfHud'
 import type { PerfSnapshotResult } from '../src/shared/dataServer/protocol.generated'
@@ -71,7 +71,7 @@ function fake(): {
     tick: (ms) => {
       clock += ms
     },
-    reads
+    reads,
   }
 }
 
@@ -183,7 +183,7 @@ function sample(over: Partial<EnginePerfSample> = {}): EnginePerfSample {
     // draws every row above them.
     budgets: null,
     parity: null,
-    ...over
+    ...over,
   }
 }
 
@@ -229,7 +229,10 @@ test('freshness is the HOST clock minus the LOG clock, and absent when nothing h
 
 test('the state line names the status and the epoch, and says so when nobody answered', () => {
   assert.equal(formatEngineState(sample()), 'live · epoch 2')
-  assert.equal(formatEngineState(sample({ engine: null, supervisor: 'backoff' })), 'backoff · not answering')
+  assert.equal(
+    formatEngineState(sample({ engine: null, supervisor: 'backoff' })),
+    'backoff · not answering',
+  )
 })
 
 test('the clock line names the zone, where it came from, and how far it disagrees', () => {
@@ -242,28 +245,26 @@ test('the clock line names the zone, where it came from, and how far it disagree
         engine: snapshot({
           clockZone: 'America/Los_Angeles',
           clockSource: 'host',
-          clockSkewMs: 412
-        })
-      })
+          clockSkewMs: 412,
+        }),
+      }),
     ),
-    { text: 'America/Los_Angeles (host) · skew 412 ms', warning: false }
+    { text: 'America/Los_Angeles (host) · skew 412 ms', warning: false },
   )
   // A tail that has folded no fresh line has measured no skew, and says the zone alone.
   assert.deepEqual(
-    formatEngineClock(
-      sample({ engine: snapshot({ clockZone: '-07:00', clockSource: 'offset' }) })
-    ),
-    { text: '-07:00 (offset)', warning: false }
+    formatEngineClock(sample({ engine: snapshot({ clockZone: '-07:00', clockSource: 'offset' }) })),
+    { text: '-07:00 (offset)', warning: false },
   )
   // A fixed-offset zone reads as a stamp in the future when the host is east of the log's; the sign
   // is kept, because which way the two clocks disagree is half the reading.
   assert.deepEqual(
     formatEngineClock(
       sample({
-        engine: snapshot({ clockZone: 'UTC', clockSource: 'utc', clockSkewMs: -2_500 })
-      })
+        engine: snapshot({ clockZone: 'UTC', clockSource: 'utc', clockSkewMs: -2_500 }),
+      }),
     ),
-    { text: 'UTC (utc) · skew -2.5 s', warning: false }
+    { text: 'UTC (utc) · skew -2.5 s', warning: false },
   )
   // Nothing has attached, so there is no zone to name. Absent, never a guess.
   assert.equal(formatEngineClock(sample()), null)
@@ -279,29 +280,39 @@ test('past half an hour the clock line stops measuring and warns', () => {
       engine: snapshot({
         clockZone: 'UTC',
         clockSource: 'utc',
-        clockSkewMs: 25_217_204
-      })
-    })
+        clockSkewMs: 25_217_204,
+      }),
+    }),
   )
   assert.deepEqual(line, {
     text: "The log's clock disagrees with this machine's by 7h 0m. Fights and timers will be wrong.",
-    warning: true
+    warning: true,
   })
   // The mirror failure: an east-of-UTC host reads the log AHEAD, and warns just the same.
   assert.equal(
     formatEngineClock(
-      sample({ engine: snapshot({ clockZone: 'UTC', clockSource: 'utc', clockSkewMs: -CLOCK_SKEW_WARN_MS }) })
+      sample({
+        engine: snapshot({
+          clockZone: 'UTC',
+          clockSource: 'utc',
+          clockSkewMs: -CLOCK_SKEW_WARN_MS,
+        }),
+      }),
     )?.warning,
-    true
+    true,
   )
   // …and one second under the bar is still a measurement.
   assert.equal(
     formatEngineClock(
       sample({
-        engine: snapshot({ clockZone: 'UTC', clockSource: 'utc', clockSkewMs: CLOCK_SKEW_WARN_MS - 1 })
-      })
+        engine: snapshot({
+          clockZone: 'UTC',
+          clockSource: 'utc',
+          clockSkewMs: CLOCK_SKEW_WARN_MS - 1,
+        }),
+      }),
     )?.warning,
-    false
+    false,
   )
 })
 
@@ -311,7 +322,7 @@ test('a parity probe that never ran is NOT a clean bill', () => {
   assert.equal(formatParity(null), 'no probe has run')
   assert.equal(
     formatParity({ at: 1, logPath: 'x', agree: 5, diverge: 0, skipped: 0 }),
-    '5 agree · 0 diverge · 0 skipped'
+    '5 agree · 0 diverge · 0 skipped',
   )
 })
 
@@ -321,7 +332,10 @@ test('the fire count is read defensively and is absent by default', () => {
   assert.equal(engineFireCount(snapshot()), null)
   assert.equal(engineFireCount(null), null)
   assert.equal(engineFireCount({ ...snapshot(), fires: 17 } as PerfSnapshotResult), 17)
-  assert.equal(engineFireCount({ ...snapshot(), fires: 'lots' } as unknown as PerfSnapshotResult), null)
+  assert.equal(
+    engineFireCount({ ...snapshot(), fires: 'lots' } as unknown as PerfSnapshotResult),
+    null,
+  )
 })
 
 // ---- 3. the panel's plumbing --------------------------------------------------------------------
@@ -348,7 +362,7 @@ function bridge(): Bridge {
     watchEnginePerf(open: boolean): Promise<void> {
       watches.push(open)
       return Promise.resolve()
-    }
+    },
   }
   ;(globalThis as unknown as { window: unknown }).window = { eq }
   return {
@@ -358,7 +372,7 @@ function bridge(): Bridge {
     },
     push(s) {
       listener?.(s)
-    }
+    },
   }
 }
 

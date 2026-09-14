@@ -35,7 +35,7 @@ import {
   REQUIRED_SOUND_IDS,
   migrateAlertSoundRef,
   migrateAlertSounds,
-  packRawBase
+  packRawBase,
 } from '../src/main/data/defaultPacks'
 import { provisionDefaultPacks } from '../src/main/provisionPacks'
 import type { AlertDef } from '../src/shared/types'
@@ -45,7 +45,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 /** The pinned pack's CESP manifest, converted exactly the way every install path does. */
 function installedSoundIds(): Set<string> {
   const cesp = JSON.parse(
-    readFileSync(join(here, 'fixtures', 'alan-rickman.openpeon.json'), 'utf8')
+    readFileSync(join(here, 'fixtures', 'alan-rickman.openpeon.json'), 'utf8'),
   ) as CespManifest
   const taken = new Set<string>()
   return new Set(Object.keys(cespToManifestSounds(cesp, (c, f) => deriveSoundId(c, f, taken))))
@@ -60,7 +60,7 @@ test('Alan Rickman is the one and only self-provisioned default, pinned to a tag
   assert.match(DEFAULT_PACK.source_ref, /^v\d+\.\d+\.\d+$/, 'source_ref is an immutable tag')
   assert.equal(
     packRawBase(DEFAULT_PACK),
-    'https://raw.githubusercontent.com/utensils/openpeon-alan-rickman-soundpack/v1.1.2'
+    'https://raw.githubusercontent.com/utensils/openpeon-alan-rickman-soundpack/v1.1.2',
   )
   // The dropped defaults are no longer provisioned (peon/sc_marine stay installable from
   // the registry; the synthesized `default` pack no longer exists at all).
@@ -80,7 +80,7 @@ test('every sound the shipped alert defs reference exists in the pinned pack', (
     'input-required-input-required-01', // wearsOff template
     'resource-limit-resource-limit-09', // fade template
     'task-acknowledge-task-acknowledge-05', // lands template
-    'task-error-task-error-08' // illusion-fade suggestion
+    'task-error-task-error-08', // illusion-fade suggestion
   ]
   for (const id of referenced) assert.equal(ids.has(id), true, `pack is missing '${id}'`)
 
@@ -103,7 +103,7 @@ function defWith(packId: string, soundId: string): AlertDef {
     name: 't',
     enabled: true,
     trigger: { type: 'event', kind: 'uncharm' },
-    sound: { packId, soundId }
+    sound: { packId, soundId },
   }
 }
 
@@ -132,7 +132,7 @@ test('migration rewrites every retired-pack sound onto a REAL Alan Rickman line'
     ['bastion', 'task-progress-5'],
     ['bastion', 'user-spam-2'],
     // An id we've never seen still resolves to a real, audible line.
-    ['peon', 'who-knows-what-this-was']
+    ['peon', 'who-knows-what-this-was'],
   ]
   for (const [packId, soundId] of legacy) {
     const next = migrateAlertSoundRef({ packId, soundId })
@@ -146,19 +146,19 @@ test('migration preserves intent per category and leaves non-legacy refs alone',
   // charm-break "warning" tone lands on the charm-break line the seeds use.
   assert.equal(
     migrateAlertSoundRef({ packId: 'default', soundId: 'victory' }).soundId,
-    DEFAULT_ALERT_SOUNDS.bossDefeat
+    DEFAULT_ALERT_SOUNDS.bossDefeat,
   )
   assert.equal(
     migrateAlertSoundRef({ packId: 'default', soundId: 'warning' }).soundId,
-    DEFAULT_ALERT_SOUNDS.charmBreak
+    DEFAULT_ALERT_SOUNDS.charmBreak,
   )
   assert.equal(
     migrateAlertSoundRef({ packId: 'peon', soundId: 'error-ugh' }).soundId,
-    DEFAULT_ALERT_SOUNDS.illusionFade
+    DEFAULT_ALERT_SOUNDS.illusionFade,
   )
   assert.equal(
     migrateAlertSoundRef({ packId: 'bastion', soundId: 'resource-limit-4' }).soundId,
-    DEFAULT_ALERT_SOUNDS.buffFade
+    DEFAULT_ALERT_SOUNDS.buffFade,
   )
 
   // Already-shipped refs and third-party packs the user chose are untouched.
@@ -170,7 +170,10 @@ test('migration preserves intent per category and leaves non-legacy refs alone',
 })
 
 test('migrateAlertSounds is idempotent and reports whether anything moved', () => {
-  const list = [defWith('default', 'chime'), defWith(DEFAULT_ALERT_PACK_ID, DEFAULT_ALERT_SOUNDS.bossDefeat)]
+  const list = [
+    defWith('default', 'chime'),
+    defWith(DEFAULT_ALERT_PACK_ID, DEFAULT_ALERT_SOUNDS.bossDefeat),
+  ]
   const first = migrateAlertSounds(list)
   assert.equal(first.changed, 1, 'only the legacy def moves')
   assert.equal(first.alerts[1], list[1], 'an already-migrated def is the SAME object')
@@ -188,14 +191,14 @@ test('migrateAlertSounds is idempotent and reports whether anything moved', () =
 test('provisioning is additive: an installed pack means no work and no network', async () => {
   const done = await provisionDefaultPacks({
     packsRoot: join(here, 'fixtures', 'does-not-exist'),
-    installedIds: new Set([DEFAULT_ALERT_PACK_ID])
+    installedIds: new Set([DEFAULT_ALERT_PACK_ID]),
   })
   assert.equal(done, 0, 'nothing to provision when the default pack is already installed')
 
   // Old packs on disk are irrelevant to the decision — and never removed by it.
   const withOldPacks = await provisionDefaultPacks({
     packsRoot: join(here, 'fixtures', 'does-not-exist'),
-    installedIds: new Set(['peon', 'sc_marine', 'default', DEFAULT_ALERT_PACK_ID])
+    installedIds: new Set(['peon', 'sc_marine', 'default', DEFAULT_ALERT_PACK_ID]),
   })
   assert.equal(withOldPacks, 0)
 })

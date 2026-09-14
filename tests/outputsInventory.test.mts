@@ -37,7 +37,7 @@ import {
   parsePlace,
   splitLocationPath,
   walkEntries,
-  type InventoryEntry
+  type InventoryEntry,
 } from '../src/shared/outputs/inventory'
 import { inventoryHeldCounts, parseInventoryDump } from '../src/main/outputs/inventoryParse'
 import { OUTPUT_KINDS, outputKind, parseOutput } from '../src/main/outputs/kinds'
@@ -101,7 +101,7 @@ test('held counts differ from the old flat parser by EXACTLY the held keyring ro
   assert.equal(
     Object.values(expectedDelta).reduce((s, n) => s + n, 0),
     36,
-    'the real dump carries 36 Equipment keyring rows'
+    'the real dump carries 36 Equipment keyring rows',
   )
 
   // Key-for-key, so a failure names the item rather than dumping two objects.
@@ -156,7 +156,7 @@ test('sub-rows attach to their own parent — the two Ear rows keep their own so
     assert.deepEqual(
       ear.children.map((c) => c.path[c.path.length - 1]),
       [7, 8, 9, 10],
-      'each ear owns its own four socket rows'
+      'each ear owns its own four socket rows',
     )
     assert.ok(ear.children.every((c) => c.empty))
   }
@@ -187,20 +187,22 @@ test('nesting goes two deep: a bagged item carries its own exaltation', () => {
 
   // No row is lost by nesting: every data row of the item table is reachable from the tree.
   const itemRows = REAL_DUMP.split(/\r?\n/).filter(
-    (l) => l.trim() && l.split('\t').length === 5
+    (l) => l.trim() && l.split('\t').length === 5,
   ).length
   assert.equal(allEntries(dump).length, itemRows - 1, 'all rows minus the header')
 })
 
 test('an orphan row is kept at top level and flagged, never re-parented by guesswork', () => {
   const dump = parseInventoryDump(
-    ['Location\tName\tID\tCount\tSlots', 'General 3-Slot4\tMystery Gem\t99\t1\t10'].join('\n')
+    ['Location\tName\tID\tCount\tSlots', 'General 3-Slot4\tMystery Gem\t99\t1\t10'].join('\n'),
   )
   assert.equal(dump.items.length, 1)
   assert.equal(dump.items[0].orphan, true)
   assert.deepEqual(dump.items[0].path, [4])
   // A genuine top-level row is NOT an orphan.
-  const ok = parseInventoryDump(['Location\tName\tID\tCount\tSlots', 'Head\tHat\t1\t1\t10'].join('\n'))
+  const ok = parseInventoryDump(
+    ['Location\tName\tID\tCount\tSlots', 'Head\tHat\t1\t1\t10'].join('\n'),
+  )
   assert.equal(ok.items[0].orphan, false)
 })
 
@@ -213,32 +215,32 @@ test('tier suffixes, exaltation markers and the trailing star split off the base
     base: 'Brigandine Tunic',
     tier: 1,
     exaltation: false,
-    starred: false
+    starred: false,
   })
   assert.deepEqual(parseItemName('Drop of Crystallized Flame +7'), {
     base: 'Drop of Crystallized Flame',
     tier: 7,
     exaltation: false,
-    starred: false
+    starred: false,
   })
   assert.deepEqual(parseItemName('Polished Mithril Mask (Exaltation)'), {
     base: 'Polished Mithril Mask',
     tier: undefined,
     exaltation: true,
-    starred: false
+    starred: false,
   })
   assert.deepEqual(parseItemName('Backpack*'), {
     base: 'Backpack',
     tier: undefined,
     exaltation: false,
-    starred: true
+    starred: true,
   })
   // Untiered names are left alone, and an interior `+N` is not a tier.
   assert.deepEqual(parseItemName('Pauldrons of Power'), {
     base: 'Pauldrons of Power',
     tier: undefined,
     exaltation: false,
-    starred: false
+    starred: false,
   })
   assert.equal(parseItemName('Sword +2 of Doom').tier, undefined)
 })
@@ -274,11 +276,13 @@ test('empty sockets are modeled, not dropped — an empty slot is a fact about t
     [
       [7, true],
       [8, false],
-      [9, false]
-    ]
+      [9, false],
+    ],
   )
   // A blank name reads as empty too.
-  const blank = parseInventoryDump(['Location\tName\tID\tCount\tSlots', 'Head\t\t0\t0\t0'].join('\n'))
+  const blank = parseInventoryDump(
+    ['Location\tName\tID\tCount\tSlots', 'Head\t\t0\t0\t0'].join('\n'),
+  )
   assert.equal(blank.items[0].empty, true)
   assert.deepEqual(heldCountsFromDump(blank), {})
 })
@@ -294,7 +298,7 @@ test('Personal-Depot1 is ONE base token, not a Personal row with a Depot sub-slo
     kind: 'container',
     container: 'personalDepot',
     index: 1,
-    raw: 'Personal-Depot1'
+    raw: 'Personal-Depot1',
   })
   const dump = parseInventoryDump(REAL_DUMP)
   const depot = dump.items.find((e) => e.location === 'Personal-Depot1')
@@ -307,7 +311,10 @@ test('Personal-Depot1 is ONE base token, not a Personal row with a Depot sub-slo
 test('every Location token in the real dump classifies; nothing lands in unknown', () => {
   const dump = parseInventoryDump(REAL_DUMP)
   const unknown = allEntries(dump).filter((e) => e.place.kind === 'unknown')
-  assert.deepEqual(unknown.map((e) => e.location), [])
+  assert.deepEqual(
+    unknown.map((e) => e.location),
+    [],
+  )
 
   const bases = new Set(dump.items.map((e) => e.place.raw))
   // Equipment slots, verbatim as the client spells them.
@@ -319,11 +326,11 @@ test('every Location token in the real dump classifies; nothing lands in unknown
   assert.equal(kinds.filter((p) => p.kind === 'container' && p.container === 'bank').length, 24)
   assert.equal(
     kinds.filter((p) => p.kind === 'container' && p.container === 'sharedBank').length,
-    6
+    6,
   )
   assert.equal(
     kinds.filter((p) => p.kind === 'container' && p.container === 'personalDepot').length,
-    1
+    1,
   )
 })
 
@@ -332,8 +339,8 @@ test('an unknown Location token is reported honestly, never coerced to the neare
     [
       'Location\tName\tID\tCount\tSlots',
       'Mount Keyring 3\tSaddle\t42\t1\t10',
-      'Mount Keyring 3-Slot7\tSaddle (Exaltation)\t42\t1\t10'
-    ].join('\n')
+      'Mount Keyring 3-Slot7\tSaddle (Exaltation)\t42\t1\t10',
+    ].join('\n'),
   )
   assert.equal(dump.items.length, 1)
   assert.deepEqual(dump.items[0].place, { kind: 'unknown', raw: 'Mount Keyring 3' })
@@ -362,7 +369,7 @@ test('the KeyRing table parses into its own section, and only held categories co
   assert.deepEqual(dump.malformed, [])
   assert.equal(
     topLocations(dump).some((l) => l === 'Equipment' || l === 'Activated'),
-    false
+    false,
   )
   // The held set is closed and stated (JOS-66): `Equipment` is in, everything else waits for
   // a dump that says what it is.
@@ -386,7 +393,7 @@ test('the Equipment keyring is DISJOINT from the item table — counting it adds
   const boots = dump.keyRing.filter((k) => k.itemId === 177708)
   assert.deepEqual(
     boots.map((k) => k.name),
-    ['Boots of the Long Road', 'Boots of the Long Road +1', 'Boots of the Long Road +1']
+    ['Boots of the Long Road', 'Boots of the Long Road +1', 'Boots of the Long Road +1'],
   )
 })
 
@@ -401,8 +408,8 @@ test('a section whose header shape we do not recognize is retained verbatim, nev
       'Head\tHat\t1\t1\t10',
       '',
       'Mercenary\tName\tID\tRank\tTier',
-      'Suspended\tGoblin Mercenary\t7\t3\t2'
-    ].join('\n')
+      'Suspended\tGoblin Mercenary\t7\t3\t2',
+    ].join('\n'),
   )
   assert.deepEqual(dump.sections, ['Location', 'Mercenary'])
   assert.deepEqual(dump.sectionShapes, { Location: 'items', Mercenary: 'unknown' })
@@ -411,7 +418,7 @@ test('a section whose header shape we do not recognize is retained verbatim, nev
   assert.deepEqual(dump.unknownSections[0], {
     section: 'Mercenary',
     columns: ['Suspended', 'Goblin Mercenary', '7', '3', '2'],
-    line: 5
+    line: 5,
   })
   // THE ONE DELIBERATE BEHAVIOR DIFFERENCE from the old parser, pinned: it would have
   // counted `goblin mercenary` as a held item because the row happened to have five
@@ -421,7 +428,7 @@ test('a section whose header shape we do not recognize is retained verbatim, nev
 
 test('a malformed row is counted, never thrown on', () => {
   const dump = parseInventoryDump(
-    ['Location\tName\tID\tCount\tSlots', 'Head\tHat\t1\t1\t10', 'Truncated\trow'].join('\n')
+    ['Location\tName\tID\tCount\tSlots', 'Head\tHat\t1\t1\t10', 'Truncated\trow'].join('\n'),
   )
   assert.equal(dump.items.length, 1)
   assert.equal(dump.malformed.length, 1)
@@ -438,7 +445,7 @@ test('an empty file parses to an empty dump rather than throwing', () => {
     unknownSections: [],
     malformed: [],
     sections: [],
-    sectionShapes: {}
+    sectionShapes: {},
   })
   assert.deepEqual(heldCountsFromDump(dump), {})
 })
@@ -460,7 +467,7 @@ test('looksLikeContainer separates bags from socketed items across the whole dum
     'Backpack*',
     'Backpack',
     'Backpack',
-    'Backpack'
+    'Backpack',
   ])
   // Every socketed item is excluded — its children are a SPARSE subset of 1..10.
   const face = dump.items.find((e) => e.location === 'Face')

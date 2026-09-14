@@ -49,13 +49,17 @@ import {
   totalsOf,
   type PerfHudSample,
   type StartupMark,
-  type StartupPhase
+  type StartupPhase,
 } from '../src/shared/perf'
 
 // ------------------------------------------------------------------ per-process aggregation
 
 /** One `app.getAppMetrics()` row, in Electron's own units: percent CPU, KILOBYTES of memory. */
-const metric = (type: string, cpu: number, memoryKb: number): {
+const metric = (
+  type: string,
+  cpu: number,
+  memoryKb: number,
+): {
   type: string
   cpu: { percentCPUUsage: number }
   memory: { workingSetSize: number }
@@ -79,7 +83,7 @@ test('metrics fold per TYPE, summing CPU and converting KB to MB', () => {
     metric('Browser', 4.5, 120_000),
     metric('Tab', 8.25, 200_000),
     metric('Tab', 1.25, 100_000),
-    metric('GPU', 2, 51_200)
+    metric('GPU', 2, 51_200),
   ])
   const byType = new Map(rows.map((r) => [r.type, r]))
 
@@ -94,7 +98,10 @@ test('metrics fold per TYPE, summing CPU and converting KB to MB', () => {
 
   // Every type gets a row, always, in a fixed order: a table whose height changes when a GPU
   // process comes and goes reads as a bug.
-  assert.deepEqual(rows.map((r) => r.type), [...PERF_PROCESS_TYPES])
+  assert.deepEqual(
+    rows.map((r) => r.type),
+    [...PERF_PROCESS_TYPES],
+  )
   assert.equal(byType.get('utility')?.count, 0)
 })
 
@@ -103,7 +110,7 @@ test('a metrics row missing either half contributes zero, never NaN', () => {
   const rows = aggregateMetrics([
     { type: 'Browser' },
     { type: 'Tab', cpu: {} },
-    { type: 'Tab', memory: { workingSetSize: Number.NaN } }
+    { type: 'Tab', memory: { workingSetSize: Number.NaN } },
   ])
   for (const row of rows) {
     assert.ok(Number.isFinite(row.cpuPercent), `${row.type} cpu is finite`)
@@ -118,9 +125,15 @@ test('the chip totals are summed from the SAME rows the popover renders', () => 
   const rows = aggregateMetrics([metric('Browser', 3, 102_400), metric('Tab', 7, 204_800)])
   const totals = totalsOf(rows)
   assert.equal(totals.cpuPercent, 10)
-  assert.equal(totals.memoryMb, rows.reduce((n, r) => n + r.memoryMb, 0))
+  assert.equal(
+    totals.memoryMb,
+    rows.reduce((n, r) => n + r.memoryMb, 0),
+  )
   assert.equal(totals.memoryMb, 300)
-  assert.deepEqual(aggregateMetrics([]).map((r) => r.count), PERF_PROCESS_TYPES.map(() => 0))
+  assert.deepEqual(
+    aggregateMetrics([]).map((r) => r.count),
+    PERF_PROCESS_TYPES.map(() => 0),
+  )
   assert.deepEqual(totalsOf([]), { cpuPercent: 0, memoryMb: 0 })
 })
 
@@ -172,7 +185,7 @@ const sample = (cpu: number, longtasks = 0): PerfHudSample => ({
   memoryMb: 400,
   byType: [],
   lag: { samples: 4, p95Ms: 1, maxMs: 2 },
-  longtasks
+  longtasks,
 })
 
 test('the sample ring holds two minutes and drops the OLDEST, never mutating its input', () => {
@@ -262,7 +275,10 @@ test('an OUT-OF-ORDER mark is refused rather than folded into a negative duratio
   const backwards = addMark(partial.marks, 'storeLoaded', 200)
   assert.equal(backwards.ok, false)
   assert.ok(!backwards.ok && backwards.error.code === 'out-of-order')
-  assert.match(describeMarkError({ code: 'out-of-order', phase: 'storeLoaded', after: 'windowCreated' }), /arrived after/)
+  assert.match(
+    describeMarkError({ code: 'out-of-order', phase: 'storeLoaded', after: 'windowCreated' }),
+    /arrived after/,
+  )
 })
 
 test('the two phases that RACE may arrive either way round, and both launches are complete', () => {
@@ -279,7 +295,10 @@ test('the two phases that RACE may arrive either way round, and both launches ar
     }
     return marks
   }
-  for (const pair of [['replayDone', 'rendererHydrated'], ['rendererHydrated', 'replayDone']] as const) {
+  for (const pair of [
+    ['replayDone', 'rendererHydrated'],
+    ['rendererHydrated', 'replayDone'],
+  ] as const) {
     let marks = upTo()
     for (const [i, phase] of pair.entries()) {
       const result = addMark(marks, phase, 100 + i * 10)
@@ -289,7 +308,10 @@ test('the two phases that RACE may arrive either way round, and both launches ar
     const profile = buildProfile(marks, { startedAt: 1, version: '' })
     assert.equal(profile.complete, true, `${pair.join(' → ')} is a complete launch`)
     // Chronological, not enum order: the profile reads as the launch actually happened.
-    assert.deepEqual(profile.phases.slice(-2).map((p) => p.phase), [...pair])
+    assert.deepEqual(
+      profile.phases.slice(-2).map((p) => p.phase),
+      [...pair],
+    )
     assert.ok(profile.phases.every((p) => p.durationMs >= 0))
   }
 })
@@ -301,8 +323,13 @@ test('a mark whose CLOCK went backwards is refused too — the invariant is asse
   assert.equal(back.ok, false)
   assert.ok(!back.ok && back.error.code === 'time-went-backwards')
   assert.match(
-    describeMarkError({ code: 'time-went-backwards', phase: 'dataLoaded', atMs: 100, previousMs: 500 }),
-    /precedes/
+    describeMarkError({
+      code: 'time-went-backwards',
+      phase: 'dataLoaded',
+      atMs: 100,
+      previousMs: 500,
+    }),
+    /precedes/,
   )
 })
 
@@ -310,7 +337,7 @@ test('durations are consecutive differences and SUM to the total, with nothing N
   const profile = buildProfile(fullChain(), {
     startedAt: 1_700_000_000_000,
     version: '0.2.0',
-    eventsReplayed: 1_148_223
+    eventsReplayed: 1_148_223,
   })
   assert.equal(profile.phases.length, STARTUP_PHASES.length)
   assert.equal(profile.complete, true)
@@ -355,7 +382,7 @@ test('the startup block probe reports a worst stall and a count, and distinguish
     samples: 5,
     maxBlockMs: 300,
     blocksOver50Ms: 2,
-    worstAtMs: 2000
+    worstAtMs: 2000,
   })
   // AT the threshold counts (a boundary asserted, not assumed), just under it does not.
   assert.equal(foldBlockSamples(ticks([50])).blocksOver50Ms, 1)
@@ -372,7 +399,7 @@ test('the startup block probe reports a worst stall and a count, and distinguish
     samples: 2,
     maxBlockMs: 12,
     blocksOver50Ms: 0,
-    worstAtMs: 2000
+    worstAtMs: 2000,
   })
 })
 
@@ -404,7 +431,11 @@ test('the DUTY the replay achieved is a measurement the profile carries, or noth
   // Absent, never a fabricated zero — the same rule `eventsReplayed` and `block` follow. A launch
   // with no log to replay had no duty; it had no fold.
   assert.equal(buildProfile(fullChain(), { startedAt: 1, version: '' }).replay, undefined)
-  assert.equal(replayDutyOf({ slices: 0, workMs: 0, restMs: 0 }), 0, 'and nothing measured is 0, not NaN')
+  assert.equal(
+    replayDutyOf({ slices: 0, workMs: 0, restMs: 0 }),
+    0,
+    'and nothing measured is 0, not NaN',
+  )
 
   // A fold that never rested reads as 100%: that is the pre-JOS-50 behaviour, and it must be
   // VISIBLE rather than rounded away — it is exactly what a broken throttle looks like.
@@ -412,7 +443,10 @@ test('the DUTY the replay achieved is a measurement the profile carries, or noth
 
   // Read back off disk: all three fields or none, like the block stats.
   const onDisk = { ...measured, replay: { slices: 3, workMs: 'soon' } }
-  assert.equal(parseStartupProfile(JSON.parse(JSON.stringify(onDisk)) as unknown)?.replay, undefined)
+  assert.equal(
+    parseStartupProfile(JSON.parse(JSON.stringify(onDisk)) as unknown)?.replay,
+    undefined,
+  )
   // …and a profile written by a build that predates the ledger still parses.
   const legacy = JSON.parse(JSON.stringify(measured)) as Record<string, unknown>
   delete legacy.replay
@@ -426,7 +460,7 @@ test('a profile round-trips through JSON, and anything else parses to null', () 
     version: '9.9.9',
     eventsReplayed: 7,
     block: { samples: 12, maxBlockMs: 31, blocksOver50Ms: 0 },
-    replay: { slices: 9, workMs: 120.5, restMs: 80.4 }
+    replay: { slices: 9, workMs: 120.5, restMs: 80.4 },
   })
   const parsed = parseStartupProfile(JSON.parse(JSON.stringify(profile)) as unknown)
   assert.deepEqual(parsed, profile)
@@ -445,7 +479,11 @@ test('the HUD is OFF by default, and a malformed pref block lands on the default
   assert.deepEqual(DEFAULT_PERF_HUD_PREFS, { enabled: false })
   assert.deepEqual(normalizePerfHudPrefs({ enabled: true }), { enabled: true })
   for (const junk of [null, 42, 'nonsense', [], { enabled: 'yes' }, undefined, { nested: true }]) {
-    assert.deepEqual(normalizePerfHudPrefs(junk), DEFAULT_PERF_HUD_PREFS, `${JSON.stringify(junk)} ⇒ off`)
+    assert.deepEqual(
+      normalizePerfHudPrefs(junk),
+      DEFAULT_PERF_HUD_PREFS,
+      `${JSON.stringify(junk)} ⇒ off`,
+    )
   }
 })
 
@@ -454,5 +492,8 @@ test('every phase the enum lists can actually be marked, and nothing else can', 
   // constructed at a call site, so this asserts the runtime half of that promise.
   const phases: readonly StartupPhase[] = STARTUP_PHASES
   assert.equal(phases.length, 8)
-  assert.deepEqual(fullChain().map((m) => m.phase), [...STARTUP_PHASES])
+  assert.deepEqual(
+    fullChain().map((m) => m.phase),
+    [...STARTUP_PHASES],
+  )
 })

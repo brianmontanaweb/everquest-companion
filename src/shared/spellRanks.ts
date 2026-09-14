@@ -51,7 +51,7 @@ export interface ObservedSpellRanksDelta {
 /** Merge a delta's changed rows over a held map. The ONE fold both windows would ever write. */
 export function applyObservedSpellRanks(
   state: ObservedSpellRanksSnap,
-  delta: ObservedSpellRanksDelta
+  delta: ObservedSpellRanksDelta,
 ): ObservedSpellRanksSnap {
   return { ...state, ...delta.changed }
 }
@@ -63,7 +63,7 @@ export function applyObservedSpellRanks(
  */
 export function observedRankRow(
   snap: ObservedSpellRanksSnap | null | undefined,
-  name: string
+  name: string,
 ): ObservedSpellRankRow | undefined {
   return snap?.[spellLineKey(name)]
 }
@@ -82,7 +82,7 @@ export function observedRankRow(
  */
 export function observedRankLabel(
   snap: ObservedSpellRanksSnap | null | undefined,
-  name: string
+  name: string,
 ): string | null {
   const row = observedRankRow(snap, name)
   if (!row || row.rank <= 1) return null

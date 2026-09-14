@@ -31,7 +31,10 @@ function Row({ label, value }: { label: string; value: string }): JSX.Element {
       <Typography variant="caption" color="text.secondary" sx={{ minWidth: 0 }}>
         {label}
       </Typography>
-      <Typography variant="caption" sx={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+      <Typography
+        variant="caption"
+        sx={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}
+      >
         {value}
       </Typography>
     </Stack>

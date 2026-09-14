@@ -47,7 +47,7 @@ import {
   slotMatches,
   sortGearRows,
   sortValue,
-  type GearFilters
+  type GearFilters,
 } from '../src/renderer/src/features/gear/gearFilter'
 import {
   WEAPON_CATEGORIES,
@@ -57,7 +57,7 @@ import {
   normalizeSkillToken,
   weaponPicksMatch,
   weaponTypeOf,
-  weaponTypesFor
+  weaponTypesFor,
 } from '../src/shared/planner/weaponType'
 import {
   CORE_COLUMNS,
@@ -66,7 +66,7 @@ import {
   columnLabel,
   numericWidth,
   statText,
-  visibleColumns
+  visibleColumns,
 } from '../src/renderer/src/features/gear/gearColumns'
 
 // =================================================================================
@@ -84,7 +84,7 @@ function row(over: Partial<GearRow> & Pick<GearRow, 'key' | 'name'>): GearRow {
     playerCrafted: false,
     stats: {},
     effects: [],
-    ...over
+    ...over,
   }
 }
 
@@ -96,7 +96,7 @@ const THELVORN = row({
   classes: ['PAL'],
   skill: '1H Slashing',
   stats: { WIS: 15, DMG: 20, DELAY: 26, WEIGHT: 3 },
-  effects: [{ name: 'Dismiss Summoned', kind: 'combat', socket: 'proc', tierRequired: 4 }]
+  effects: [{ name: 'Dismiss Summoned', kind: 'combat', socket: 'proc', tierRequired: 4 }],
 })
 
 /** Crown of King Tranix — AC 13, CHA +15, SV MAGIC +20, WT 1.0, and the SV VOID synthesis case. */
@@ -108,11 +108,17 @@ const CROWN = row({
   stats: { AC: 13, CHA: 15, SV_MAGIC: 20, WEIGHT: 1 },
   voidSynth: true,
   effects: [{ name: 'Shielding', kind: 'worn', socket: 'worn', tierRequired: 3 }],
-  eraTag: 'Classic'
+  eraTag: 'Classic',
 })
 
 /** A plain, effect-free, stat-free row — the "states none" case every rule has to survive. */
-const PLAIN = row({ key: 'cloth cap', name: 'Cloth Cap', slots: ['HEAD'], classes: [], stats: { WEIGHT: 0.5 } })
+const PLAIN = row({
+  key: 'cloth cap',
+  name: 'Cloth Cap',
+  slots: ['HEAD'],
+  classes: [],
+  stats: { WEIGHT: 0.5 },
+})
 
 /** A second weapon with a WORSE base ratio but a haste line, for the sort and threshold tests. */
 const CLUB = row({
@@ -122,7 +128,7 @@ const CLUB = row({
   classes: ['WAR', 'PAL'],
   skill: '1H Blunt',
   stats: { DMG: 5, DELAY: 30, HASTE: 10, HP_REGEN: 2, WEIGHT: 2 },
-  effects: []
+  effects: [],
 })
 
 const ALL = [THELVORN, CROWN, PLAIN, CLUB]
@@ -138,22 +144,28 @@ const GREATSWORD = row({
   name: 'Greatsword',
   slots: ['PRIMARY'],
   skill: '2H Slashing',
-  stats: { DMG: 30, DELAY: 45 }
+  stats: { DMG: 30, DELAY: 45 },
 })
-const BOW = row({ key: 'short bow', name: 'Short Bow', slots: ['RANGE'], skill: 'Archery', stats: { DMG: 6, DELAY: 40 } })
+const BOW = row({
+  key: 'short bow',
+  name: 'Short Bow',
+  slots: ['RANGE'],
+  skill: 'Archery',
+  stats: { DMG: 6, DELAY: 40 },
+})
 const DAGGER = row({
   key: 'rusty dagger',
   name: 'Rusty Dagger',
   slots: ['PRIMARY', 'SECONDARY'],
   skill: 'Piercing',
-  stats: { DMG: 3, DELAY: 22 }
+  stats: { DMG: 3, DELAY: 22 },
 })
 const SLOPPY = row({
   key: 'faydark champions long sword',
   name: 'Faydark Champions Long Sword',
   slots: ['PRIMARY', 'SECONDARY'],
   skill: '1H Slashing /',
-  stats: { DMG: 9, DELAY: 27 }
+  stats: { DMG: 9, DELAY: 27 },
 })
 
 const ARMS = [THELVORN, CLUB, GREATSWORD, BOW, DAGGER, SLOPPY, PLAIN]
@@ -180,7 +192,15 @@ test('NOTHING THE TABLE FILTERS ON IS A NUMBER any more - the JOS-302 removal, a
   // SHAPE that replaced it: every field of `GearFilters` is a set membership or a flag, and none of
   // them reads `row.stats`. A field added here that DID read a number would fail this.
   const keys = Object.keys(DEFAULT_GEAR_FILTERS).sort()
-  assert.deepEqual(keys, ['classes', 'effect', 'eraOnly', 'ownedOnly', 'slots', 'text', 'weaponTypes'])
+  assert.deepEqual(keys, [
+    'classes',
+    'effect',
+    'eraOnly',
+    'ownedOnly',
+    'slots',
+    'text',
+    'weaponTypes',
+  ])
   // …and "absent is not zero" now lives entirely in the SORT, which is where the tests for it are.
   assert.equal(sortValue(THELVORN, 'HASTE'), undefined, 'no HASTE line is not 0% haste')
   assert.equal(sortValue(CLUB, 'HASTE'), 10)
@@ -207,11 +227,22 @@ test('the effect filter speaks the donor vocabulary, plus "has one at all"', () 
 // =================================================================================
 
 test('every filter is ANDed, and each is inert at its empty value', () => {
-  assert.deepEqual(names(filterGearRows(ALL, filters())), names(ALL), 'the empty filter filters nothing')
+  assert.deepEqual(
+    names(filterGearRows(ALL, filters())),
+    names(ALL),
+    'the empty filter filters nothing',
+  )
 
-  assert.deepEqual(names(filterGearRows(ALL, filters({ slots: ['PRIMARY'] }))), ['Thelvorn, Blade of Light', 'Wooden Club'])
-  assert.deepEqual(names(filterGearRows(ALL, filters({ text: 'blade' }))), ['Thelvorn, Blade of Light'])
-  assert.deepEqual(names(filterGearRows(ALL, filters({ effect: 'proc' }))), ['Thelvorn, Blade of Light'])
+  assert.deepEqual(names(filterGearRows(ALL, filters({ slots: ['PRIMARY'] }))), [
+    'Thelvorn, Blade of Light',
+    'Wooden Club',
+  ])
+  assert.deepEqual(names(filterGearRows(ALL, filters({ text: 'blade' }))), [
+    'Thelvorn, Blade of Light',
+  ])
+  assert.deepEqual(names(filterGearRows(ALL, filters({ effect: 'proc' }))), [
+    'Thelvorn, Blade of Light',
+  ])
 
   // Five at once: slot AND class AND weapon type AND effect kind AND search.
   const narrow = filters({
@@ -219,13 +250,21 @@ test('every filter is ANDed, and each is inert at its empty value', () => {
     classes: ['PAL'],
     weaponTypes: ['1HS'],
     effect: 'proc',
-    text: 'thelvorn'
+    text: 'thelvorn',
   })
   assert.deepEqual(names(filterGearRows(ALL, narrow)), ['Thelvorn, Blade of Light'])
   // …and one contradiction empties it, without any of the others being wrong.
   assert.deepEqual(filterGearRows(ALL, { ...narrow, effect: 'worn' }), [])
-  assert.deepEqual(filterGearRows(ALL, { ...narrow, weaponTypes: ['2HS'] }), [], 'and so does the wrong weapon type')
-  assert.deepEqual(filterGearRows(ALL, { ...narrow, slots: ['SECONDARY'] }), [], 'and so does the wrong slot')
+  assert.deepEqual(
+    filterGearRows(ALL, { ...narrow, weaponTypes: ['2HS'] }),
+    [],
+    'and so does the wrong weapon type',
+  )
+  assert.deepEqual(
+    filterGearRows(ALL, { ...narrow, slots: ['SECONDARY'] }),
+    [],
+    'and so does the wrong slot',
+  )
 })
 
 // =================================================================================
@@ -246,11 +285,11 @@ test('the class picks REMOVE the rows they do not fit, and an unstated class lis
   assert.deepEqual(names(filterGearRows(ALL, filters({ classes: ['PAL'] }))), [
     'Thelvorn, Blade of Light',
     'Cloth Cap',
-    'Wooden Club'
+    'Wooden Club',
   ])
   assert.deepEqual(names(filterGearRows(ALL, filters({ classes: ['ROG', 'CLR'] }))), [
     'Crown of King Tranix',
-    'Cloth Cap'
+    'Cloth Cap',
   ])
   // …and an EMPTY pick list is still no filter at all.
   assert.deepEqual(names(filterGearRows(ALL, filters({ classes: [] }))), names(ALL))
@@ -264,26 +303,35 @@ test('several slots are a UNION, and the union still ANDs with everything else',
   assert.equal(slotMatches(CLUB, []), true, 'no slot picked is no slot filter')
   assert.equal(slotMatches(CLUB, ['SECONDARY']), true)
   assert.equal(slotMatches(THELVORN, ['SECONDARY']), false)
-  assert.equal(slotMatches(THELVORN, ['SECONDARY', 'PRIMARY']), true, 'ANY of them, never all of them')
+  assert.equal(
+    slotMatches(THELVORN, ['SECONDARY', 'PRIMARY']),
+    true,
+    'ANY of them, never all of them',
+  )
 
   // PRIMARY + SECONDARY is the owner's own example, and it must not become an intersection: the
   // Crown (HEAD) drops out, both weapons stay, and the Cloth Cap (HEAD) drops out with the Crown.
   assert.deepEqual(names(filterGearRows(ALL, filters({ slots: ['PRIMARY', 'SECONDARY'] }))), [
     'Thelvorn, Blade of Light',
-    'Wooden Club'
+    'Wooden Club',
   ])
   assert.deepEqual(names(filterGearRows(ALL, filters({ slots: ['HEAD', 'PRIMARY'] }))), [
     'Thelvorn, Blade of Light',
     'Crown of King Tranix',
     'Cloth Cap',
-    'Wooden Club'
+    'Wooden Club',
   ])
   // …and clearing it returns the whole corpus, which is the acceptance line the ticket spells out.
   assert.deepEqual(names(filterGearRows(ALL, filters({ slots: [] }))), names(ALL))
   // AND it still ANDs: PRIMARY-or-SECONDARY, that a Paladin can use, that carries a proc.
   assert.deepEqual(
-    names(filterGearRows(ALL, filters({ slots: ['PRIMARY', 'SECONDARY'], classes: ['PAL'], effect: 'proc' }))),
-    ['Thelvorn, Blade of Light']
+    names(
+      filterGearRows(
+        ALL,
+        filters({ slots: ['PRIMARY', 'SECONDARY'], classes: ['PAL'], effect: 'proc' }),
+      ),
+    ),
+    ['Thelvorn, Blade of Light'],
   )
 })
 
@@ -314,8 +362,16 @@ test('the corpus spells one skill several ways, and the fold reads them all as o
   // NORMALIZED, NEVER REPAIRED. The token fold is case and punctuation; a string it does not
   // reduce to a known key stays unknown rather than being guessed at.
   assert.equal(normalizeSkillToken('  1h_slashing / '), '1H SLASHING')
-  assert.equal(weaponTypeOf('SHIELD'), null, 'the one page stating a non-weapon skill is not a weapon')
-  assert.equal(weaponTypeOf('Bashing'), null, 'a spelling the corpus has never printed is not invented')
+  assert.equal(
+    weaponTypeOf('SHIELD'),
+    null,
+    'the one page stating a non-weapon skill is not a weapon',
+  )
+  assert.equal(
+    weaponTypeOf('Bashing'),
+    null,
+    'a spelling the corpus has never printed is not invented',
+  )
   assert.equal(weaponTypeOf(undefined), null, 'and armour states no skill at all')
 })
 
@@ -336,23 +392,31 @@ test('a category is nothing but the UNION of its member types', () => {
   assert.equal(new Set(covered).size, covered.length, 'a type may not sit in two categories')
   // …and the picker offers all twelve, each with words of its own.
   assert.equal(WEAPON_PICKS.length, WEAPON_TYPES.length + WEAPON_CATEGORIES.length)
-  for (const pick of WEAPON_PICKS) assert.ok(WEAPON_PICK_LABEL[pick].length > 0, `${pick} has words`)
+  for (const pick of WEAPON_PICKS)
+    assert.ok(WEAPON_PICK_LABEL[pick].length > 0, `${pick} has words`)
 })
 
 test('the weapon filter keeps the kinds asked for, and nothing that is not a weapon', () => {
   assert.equal(weaponPicksMatch('2H Slashing', []), true, 'nothing picked is no filter')
   assert.equal(weaponPicksMatch(undefined, []), true, '…including for armour')
-  assert.equal(weaponPicksMatch(undefined, ['1HS']), false, 'but armour is not an answer to "1H slashers"')
+  assert.equal(
+    weaponPicksMatch(undefined, ['1HS']),
+    false,
+    'but armour is not an answer to "1H slashers"',
+  )
 
   const only = (over: Partial<GearFilters>): string[] => names(filterGearRows(ARMS, filters(over)))
-  assert.deepEqual(only({ weaponTypes: ['1HS'] }), ['Thelvorn, Blade of Light', 'Faydark Champions Long Sword'])
+  assert.deepEqual(only({ weaponTypes: ['1HS'] }), [
+    'Thelvorn, Blade of Light',
+    'Faydark Champions Long Sword',
+  ])
   assert.deepEqual(only({ weaponTypes: ['2HS'] }), ['Greatsword'])
   // THE CATEGORY, doing exactly what its members do — the club (1HB), the two 1HS and the dagger.
   assert.deepEqual(only({ weaponTypes: ['ONE_HAND'] }), [
     'Thelvorn, Blade of Light',
     'Wooden Club',
     'Rusty Dagger',
-    'Faydark Champions Long Sword'
+    'Faydark Champions Long Sword',
   ])
   assert.deepEqual(only({ weaponTypes: ['TWO_HAND'] }), ['Greatsword'])
   assert.deepEqual(only({ weaponTypes: ['RANGED'] }), ['Short Bow'])
@@ -367,17 +431,17 @@ test('the weapon type ANDs with the slot and with the class picks', () => {
   // off hand. The Thelvorn is PRIMARY only, so it drops out of this one.
   assert.deepEqual(
     names(filterGearRows(ARMS, filters({ weaponTypes: ['ONE_HAND'], slots: ['SECONDARY'] }))),
-    ['Wooden Club', 'Rusty Dagger', 'Faydark Champions Long Sword']
+    ['Wooden Club', 'Rusty Dagger', 'Faydark Champions Long Sword'],
   )
   // …and the class picks narrow it again, on the same AND. The Greatsword and the Bow are dropped
   // by the weapon type, not by the classes: every fixture but two states no class list at all.
   assert.deepEqual(
     names(filterGearRows(ARMS, filters({ weaponTypes: ['ONE_HAND'], classes: ['PAL'] }))),
-    ['Thelvorn, Blade of Light', 'Wooden Club', 'Rusty Dagger', 'Faydark Champions Long Sword']
+    ['Thelvorn, Blade of Light', 'Wooden Club', 'Rusty Dagger', 'Faydark Champions Long Sword'],
   )
   assert.deepEqual(
     names(filterGearRows(ARMS, filters({ weaponTypes: ['ONE_HAND'], classes: ['CLR'] }))),
-    ['Rusty Dagger', 'Faydark Champions Long Sword']
+    ['Rusty Dagger', 'Faydark Champions Long Sword'],
   )
 })
 
@@ -396,7 +460,11 @@ test('an absent stat sorts LAST in BOTH directions, and never as a zero', () => 
   for (const dir of ['asc', 'desc'] as const) {
     const sorted = sortGearRows(ALL, { key: 'HASTE', dir })
     assert.equal(sorted[0].name, 'Wooden Club', `${dir}: the only row stating HASTE leads`)
-    assert.deepEqual(names(sorted).slice(1), ['Cloth Cap', 'Crown of King Tranix', 'Thelvorn, Blade of Light'])
+    assert.deepEqual(names(sorted).slice(1), [
+      'Cloth Cap',
+      'Crown of King Tranix',
+      'Thelvorn, Blade of Light',
+    ])
   }
 })
 
@@ -426,7 +494,11 @@ test('scaleAll is a PURE MAP, and it is scaleGearRow s answer', () => {
   assert.equal(scaled.length, ALL.length)
   for (let i = 0; i < ALL.length; i++) {
     assert.deepEqual(scaled[i].stats, scaleGearRow(ALL[i], CHECKPOINT).stats, ALL[i].name)
-    assert.equal(scaled[i].key, ALL[i].key, 'the row identity - and the ownership join key - survives')
+    assert.equal(
+      scaled[i].key,
+      ALL[i].key,
+      'the row identity - and the ownership join key - survives',
+    )
   }
   // The bases are untouched, which is what makes dragging the slider reversible rather than
   // cumulative: the next state starts from the same numbers.
@@ -458,7 +530,7 @@ test('the plus-state moves WHAT A ROW READS, and since JOS-302 never WHICH ROWS 
   assert.deepEqual(
     names(gearTableRows(ALL, BASE, { filters: wanted })),
     names(gearTableRows(ALL, CHECKPOINT, { filters: wanted })),
-    'the same rows, in the same order, at both ends of the slider'
+    'the same rows, in the same order, at both ends of the slider',
   )
 
   // …and the numbers on those same rows DID move, which is the half that survives and the reason
@@ -478,13 +550,21 @@ test('a sort reads the SCALED numbers, non-linear curve and float artifact inclu
   const byWeight = { key: 'WEIGHT', dir: 'asc' } as const
   const order = ['Cloth Cap', 'Crown of King Tranix', 'Wooden Club', 'Thelvorn, Blade of Light']
   assert.deepEqual(names(gearTableRows(ALL, BASE, { filters: filters(), sort: byWeight })), order)
-  assert.deepEqual(gearTableRows(ALL, BASE, { filters: filters(), sort: byWeight }).map((r) => r.stats.WEIGHT), [
-    0.5, 1, 2, 3
-  ])
+  assert.deepEqual(
+    gearTableRows(ALL, BASE, { filters: filters(), sort: byWeight }).map((r) => r.stats.WEIGHT),
+    [0.5, 1, 2, 3],
+  )
 
   const at10 = gearTableRows(ALL, { full: 10, fraction: 0 }, { filters: filters(), sort: byWeight })
-  assert.deepEqual(names(at10), order, 'the ranking survives — every weight shrinks by the same curve')
-  assert.deepEqual(at10.map((r) => r.stats.WEIGHT), [0.1, 0.2, 0.3, 0.4])
+  assert.deepEqual(
+    names(at10),
+    order,
+    'the ranking survives — every weight shrinks by the same curve',
+  )
+  assert.deepEqual(
+    at10.map((r) => r.stats.WEIGHT),
+    [0.1, 0.2, 0.3, 0.4],
+  )
 })
 
 // =================================================================================
@@ -493,19 +573,35 @@ test('a sort reads the SCALED numbers, non-linear curve and float artifact inclu
 
 test('the columns are the core, plus whatever is being SORTED on', () => {
   const base = visibleColumns(DEFAULT_GEAR_SORT)
-  assert.deepEqual(base.map((c) => c.key), [...CORE_COLUMNS], 'the core, and only the core')
+  assert.deepEqual(
+    base.map((c) => c.key),
+    [...CORE_COLUMNS],
+    'the core, and only the core',
+  )
 
   // A sort key brings its own column — and one that is already core adds nothing. Stat THRESHOLDS
   // used to be the derivation's other source (`hp regen 2` conjured an HP REGEN column); JOS-302
   // deleted them, so the sort key is the whole of it and `visibleColumns` no longer takes filters.
   const byRegen = visibleColumns({ key: 'HP_REGEN', dir: 'desc' })
-  assert.deepEqual(byRegen.map((c) => c.key), [...CORE_COLUMNS, 'HP_REGEN'])
+  assert.deepEqual(
+    byRegen.map((c) => c.key),
+    [...CORE_COLUMNS, 'HP_REGEN'],
+  )
   assert.equal(byRegen[byRegen.length - 1].label, 'HP REGEN')
 
   const byBackstab = visibleColumns({ key: 'BACKSTAB', dir: 'desc' })
-  assert.deepEqual(byBackstab.map((c) => c.key), [...CORE_COLUMNS, 'BACKSTAB'])
-  assert.deepEqual(visibleColumns({ key: 'AC', dir: 'asc' }).map((c) => c.key), [...CORE_COLUMNS])
-  assert.deepEqual(visibleColumns({ key: 'name', dir: 'asc' }).map((c) => c.key), [...CORE_COLUMNS])
+  assert.deepEqual(
+    byBackstab.map((c) => c.key),
+    [...CORE_COLUMNS, 'BACKSTAB'],
+  )
+  assert.deepEqual(
+    visibleColumns({ key: 'AC', dir: 'asc' }).map((c) => c.key),
+    [...CORE_COLUMNS],
+  )
+  assert.deepEqual(
+    visibleColumns({ key: 'name', dir: 'asc' }).map((c) => c.key),
+    [...CORE_COLUMNS],
+  )
 })
 
 test('the derivation can add at most ONE column, and the widths always fit the pane', () => {
@@ -516,10 +612,13 @@ test('the derivation can add at most ONE column, and the widths always fit the p
     const cols = visibleColumns({ key, dir: 'desc' })
     assert.ok(
       cols.length <= CORE_COLUMNS.length + MAX_DERIVED_COLUMNS,
-      `sorting by ${key} derived ${String(cols.length)} columns`
+      `sorting by ${key} derived ${String(cols.length)} columns`,
     )
   }
-  assert.equal(visibleColumns({ key: 'STR', dir: 'desc' }).length, CORE_COLUMNS.length + MAX_DERIVED_COLUMNS)
+  assert.equal(
+    visibleColumns({ key: 'STR', dir: 'desc' }).length,
+    CORE_COLUMNS.length + MAX_DERIVED_COLUMNS,
+  )
   assert.equal(MAX_DERIVED_COLUMNS, 1, 'the derivation adds the sort key and nothing else')
 
   const widest = CORE_COLUMNS.length + MAX_DERIVED_COLUMNS
@@ -545,7 +644,14 @@ test('a cell states what the item states - blank is "states none", never a zero'
   // integer-valued primary stats is an integer, and the underscore rule already spells `EFF HP`.
   assert.equal(statText(66, 'EFF_HP'), '66', 'no decimal point, no unit')
   assert.equal(statText(0, 'EFF_HP'), '0', 'a stated zero IS a zero here too')
-  assert.equal(statText(undefined, 'EFF_HP'), '', 'and states-neither is blank, like every other key')
+  assert.equal(
+    statText(undefined, 'EFF_HP'),
+    '',
+    'and states-neither is blank, like every other key',
+  )
   assert.equal(columnLabel('EFF_HP'), 'EFF HP')
-  assert.ok(columnLabel('EFF_HP').length < columnLabel('SV_DISEASE').length, 'shorter than a header this table already draws')
+  assert.ok(
+    columnLabel('EFF_HP').length < columnLabel('SV_DISEASE').length,
+    'shorter than a header this table already draws',
+  )
 })

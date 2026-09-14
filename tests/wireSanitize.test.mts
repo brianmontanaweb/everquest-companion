@@ -38,7 +38,7 @@ import {
   sanitizeOneLine,
   sanitizeTabbedAndFlag,
   sanitizeTabbedLine,
-  stripAnsi
+  stripAnsi,
 } from '../src/shared/sanitizeText'
 import {
   inventoryNotes,
@@ -47,12 +47,12 @@ import {
   rescrubSlice,
   sanitizeInventory,
   toDetail,
-  toRow
+  toRow,
 } from '../src/main/triage/rows'
 import {
   validateEnvelope,
   validateTelemetryBatch,
-  validateTelemetryEvent
+  validateTelemetryEvent,
 } from '../src/shared/telemetryValidate'
 import { TELEMETRY_EVENT_KINDS, type TelemetryEvent } from '../src/shared/telemetry'
 
@@ -83,7 +83,7 @@ test('stripAnsi removes whole escape sequences, payload and all', () => {
     ['nF charset select', `${ESC}(Bafter`, 'after'],
     // A CSI truncated at the end of the string has no final byte, so arms 1-3 all miss and the
     // catch-all takes it. The ESC never survives, which is the only property that matters.
-    ['a truncated CSI still loses its ESC', `${ESC}[`, '']
+    ['a truncated CSI still loses its ESC', `${ESC}[`, ''],
   ]
   for (const [name, sent, want] of table) assert.equal(stripAnsi(sent), want, name)
   // and text that merely LOOKS like an escape (no ESC) is left completely alone
@@ -131,7 +131,10 @@ test('sanitizeTabbedLine keeps TAB — and ONLY where the columns are the game�
   // format. A real row must come out byte for byte.
   const row = 'General 5-Slot13\tEfreeti War Bow\t20861\t1\t10'
   assert.equal(sanitizeTabbedLine(row), row)
-  assert.equal(sanitizeTabbedLine('Location\tName\tID\tCount\tSlots'), 'Location\tName\tID\tCount\tSlots')
+  assert.equal(
+    sanitizeTabbedLine('Location\tName\tID\tCount\tSlots'),
+    'Location\tName\tID\tCount\tSlots',
+  )
   // NOTHING ELSE in that class survives, and the output is still ONE line: LF and CR are gone
   // rather than folded, so a forged "row" cannot become two rows in the file on disk.
   assert.equal(sanitizeTabbedLine('a\nb'), 'ab')
@@ -183,7 +186,7 @@ test('hasNulByte is the pre-parse gate both Lambdas run', () => {
 test('sanitizeAndFlag reports whether it had to do anything', () => {
   assert.deepEqual(sanitizeAndFlag('[Sun Aug 03] You hit a rat for 12 points of damage.'), {
     text: '[Sun Aug 03] You hit a rat for 12 points of damage.',
-    changed: false
+    changed: false,
   })
   const dirty = sanitizeAndFlag(`[Sun] ${ESC}]0;pwned${BEL}You hit a rat.`)
   assert.equal(dirty.changed, true)
@@ -214,7 +217,7 @@ const EVENTS: TelemetryEvent[] = [
     autoHide: true,
     voiceEngine: 'kokoro',
     soundPackCount: 2,
-    updateChannel: 'main'
+    updateChannel: 'main',
   },
   { t: 'funnelStep', funnel: 'voice-install', step: 'downloadStarted' },
   {
@@ -223,7 +226,7 @@ const EVENTS: TelemetryEvent[] = [
     mainErrorLogLines: 7,
     parserStalls: 0,
     presenceRestarts: 1,
-    speechFailures: 0
+    speechFailures: 0,
   },
   { t: 'updateOutcome', step: 'download', ok: false, failureClass: 'network' },
   // THE ONE EVENT WITH TEXT IN IT (JOS-100), and it belongs in this list more than any other:
@@ -242,14 +245,14 @@ const EVENTS: TelemetryEvent[] = [
     view: 'combat',
     sessionAgeBucket: 2,
     mode: 'live',
-    count: 1
+    count: 1,
   },
   // THE TWO FIELDLESS KINDS (JOS-109). They contribute exactly one string slot each — their own
   // `t` — and the poison walk below therefore proves the only thing there is to prove about
   // them: that `optOut[2J` is not an event kind. An event with no fields cannot smuggle
   // text because it has nowhere to put any, which is the entire design.
   { t: 'optOut' },
-  { t: 'optIn' }
+  { t: 'optIn' },
 ]
 
 const ENVELOPE = {
@@ -257,14 +260,14 @@ const ENVELOPE = {
   appVersion: '0.2.0',
   channel: 'prod',
   platform: 'win32',
-  tzOffsetBucket: -5
+  tzOffsetBucket: -5,
 }
 
 test('every telemetry event kind has a sample here — a new kind needs one', () => {
   assert.deepEqual(
     EVENTS.map((e) => e.t).sort(),
     [...TELEMETRY_EVENT_KINDS].sort(),
-    'add the new kind to EVENTS: that is how it gets its no-free-text assertion'
+    'add the new kind to EVENTS: that is how it gets its no-free-text assertion',
   )
   for (const ev of EVENTS) assert.equal(validateTelemetryEvent(ev).ok, true, ev.t)
 })
@@ -290,11 +293,17 @@ test('THE PIN: no telemetry string field will carry an escape sequence — there
       assert.equal(res.ok, false, 'overlaysEnabled accepted free text')
     }
   }
-  assert.ok(slots >= 8, `expected the schema to have string slots to poison, found ${String(slots)}`)
+  assert.ok(
+    slots >= 8,
+    `expected the schema to have string slots to poison, found ${String(slots)}`,
+  )
 
   for (const key of ['analyticsId', 'appVersion', 'channel', 'platform']) {
     for (const poison of poisons) {
-      const res = validateEnvelope({ ...ENVELOPE, [key]: `${String(ENVELOPE[key as 'channel'])}${poison}` })
+      const res = validateEnvelope({
+        ...ENVELOPE,
+        [key]: `${String(ENVELOPE[key as 'channel'])}${poison}`,
+      })
       assert.equal(res.ok, false, `env.${key} accepted ${JSON.stringify(poison)}`)
       assert.equal(!res.ok && res.field, `env.${key}`)
     }
@@ -307,7 +316,7 @@ test('an unknown property on a telemetry event is DROPPED, so it cannot smuggle 
   const res = validateTelemetryBatch({
     v: 1,
     env: { ...ENVELOPE, note: `${ESC}[2J` },
-    events: [{ ts: 1, ev: { t: 'viewDwell', view: 'combat', ms: 5, note: `${ESC}]0;x${BEL}` } }]
+    events: [{ ts: 1, ev: { t: 'viewDwell', view: 'combat', ms: 5, note: `${ESC}]0;x${BEL}` } }],
   })
   assert.equal(res.ok, true)
   const json = JSON.stringify(res.ok ? res.value : null)
@@ -339,8 +348,8 @@ const hostileRow = (): Record<string, unknown> => ({
   env_json: JSON.stringify({
     osRelease: `10.0.22631${ESC}[2J`,
     arch: 'x64\nplatform: linux',
-    [`node${ESC}[31m`]: '20.18.0'
-  })
+    [`node${ESC}[31m`]: '20.18.0',
+  }),
 })
 
 /** Every string reachable from a value, however deeply nested. */
@@ -358,7 +367,7 @@ test('NOTHING a triage row mapper returns carries a control character', () => {
   for (const [name, value] of [
     ['toRow', toRow(row)],
     ['toDetail', toDetail(row, true)],
-    ['parseEnv', parseEnv(row.env_json)]
+    ['parseEnv', parseEnv(row.env_json)],
   ] as const) {
     for (const s of strings(value)) {
       assert.equal(hasWireControls(s), false, `${name} leaked ${JSON.stringify(s)}`)
@@ -386,7 +395,7 @@ test('a clean row is returned completely unchanged — the sanitizer is not a re
     app_version: '0.2.0',
     platform: 'win32',
     disposition: 'looks real',
-    env_json: JSON.stringify({ osRelease: '10.0.22631', arch: 'x64' })
+    env_json: JSON.stringify({ osRelease: '10.0.22631', arch: 'x64' }),
   }
   const detail = toDetail(clean, true)
   assert.equal(detail.row.description, clean.description)
@@ -416,7 +425,7 @@ test('third-party chat a client failed to scrub is dropped HERE, and counted', (
     "[Sun Aug 03 21:14:06 2026] Someone says, 'hi'",
     '[Sun Aug 03 21:14:07 2026] [50 WAR] Bystander (Ogre) <Guild> ZONE: freeport',
     '[Sun Aug 03 21:14:08 2026] Rykkerr waves at Primitive.',
-    HEAL
+    HEAL,
   ].join('\n')
   const res = rescrubSlice(bypassed)
   assert.equal(res.dropped, 4, 'every third-party line the client should have removed')
@@ -442,7 +451,7 @@ test('the two counts are independent — a bypassed slice can need both', () => 
   const both = [
     COMBAT,
     "[Sun Aug 03 21:14:05 2026] Stranger tells you, 'secret'",
-    `${ESC}[31m${HEAL}`
+    `${ESC}[31m${HEAL}`,
   ].join('\n')
   const res = rescrubSlice(both)
   assert.equal(res.dropped, 1)
@@ -512,14 +521,21 @@ test('a dump row carrying an escape is STILL cleaned, and still counted', () => 
     `${ESC}]0;pwned${BEL}General 1\tRusty Dagger\t5\t1\t0`,
     DUMP_ROW,
     `Bank1\tScroll${ch(0x202e)}\t9\t1\t0`,
-    `Bank2\tNul${NUL}\t9\t1\t0`
+    `Bank2\tNul${NUL}\t9\t1\t0`,
   ].join('\r\n')
   const res = sanitizeInventory(forged)
   assert.equal(res.cleaned, 3, 'the three forged rows, and only those')
   for (const line of res.text.split('\r\n')) {
-    assert.equal(hasWireControls(line.replace(/\t/g, '')), false, `${JSON.stringify(line)} is clean`)
+    assert.equal(
+      hasWireControls(line.replace(/\t/g, '')),
+      false,
+      `${JSON.stringify(line)} is clean`,
+    )
   }
-  assert.ok(res.text.includes('General 1\tRusty Dagger\t5\t1\t0'), 'the row SURVIVES; the escape goes')
+  assert.ok(
+    res.text.includes('General 1\tRusty Dagger\t5\t1\t0'),
+    'the row SURVIVES; the escape goes',
+  )
   assert.ok(res.text.includes(DUMP_ROW), 'the honest row beside it is untouched')
   // a stray CR INSIDE a row is not a terminator and is not content either
   const strayCr = sanitizeInventory(`${DUMP_HEADER}\r\nGeneral 1\rRusty Dagger\t5\t1\t0`)

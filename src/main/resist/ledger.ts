@@ -139,7 +139,9 @@ export class ResistBucket {
 
   /** Sorted for a byte-stable serialization: a re-run on unchanged input must diff to nothing. */
   rows(): ResistRow[] {
-    return [...this.byKey.entries()].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)).map((e) => e[1])
+    return [...this.byKey.entries()]
+      .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+      .map((e) => e[1])
   }
 
   /** Seed from a persisted bucket (a character you are not folding this run). */
@@ -262,10 +264,13 @@ export class ResistLedgerStore {
     // THE SHIPPED BASELINE'S AGE IS ITS FREEZE STAMP (JOS-397). Its rows omit the week because they
     // all share one and the file already states it once; this is where the one becomes the four
     // thousand, so that everything downstream sees a row with a week on it and no special case.
-    const frozenWeek = ledger.frozenAt === undefined ? undefined : isoWeekKey(Date.parse(ledger.frozenAt))
+    const frozenWeek =
+      ledger.frozenAt === undefined ? undefined : isoWeekKey(Date.parse(ledger.frozenAt))
     for (const src of ledger.sources) {
       const rows =
-        frozenWeek === undefined ? src.rows : src.rows.map((r) => (r.week === undefined ? { ...r, week: frozenWeek } : r))
+        frozenWeek === undefined
+          ? src.rows
+          : src.rows.map((r) => (r.week === undefined ? { ...r, week: frozenWeek } : r))
       this.bucket(src.key).seed(rows)
     }
   }

@@ -14,7 +14,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  Typography
+  Typography,
 } from '@mui/material'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import ScienceOutlinedIcon from '@mui/icons-material/ScienceOutlined'
@@ -31,19 +31,18 @@ import { useBuffAllow } from './useBuffAllow'
 // Stable empty reference so hooks don't churn before hydration.
 const EMPTY_BUFFS: BuffsSnap = { active: [], stats: {} }
 
-
 // Verdict → chip color + label for the overlay audit table (Task #36).
 const VERDICT_COLOR: Record<OverlayVerdict, 'success' | 'info' | 'error' | 'default'> = {
   verified: 'success',
   shared: 'info',
   'contradicts-wiki': 'error',
-  unknown: 'default'
+  unknown: 'default',
 }
 const VERDICT_LABEL: Record<OverlayVerdict, string> = {
   verified: 'verified',
   shared: 'shared',
   'contradicts-wiki': 'contradicts wiki',
-  unknown: 'unknown'
+  unknown: 'unknown',
 }
 
 /**
@@ -55,7 +54,7 @@ function OverlayDiagnostics({ overlay }: { overlay: MessageOverlay }): JSX.Eleme
   const rows = useMemo(
     // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives OverlayMessage. Becomes a view descriptor when the source lands.
     () => overlay.messages.filter((m) => m.verdict !== 'unknown').slice(0, 200),
-    [overlay.messages]
+    [overlay.messages],
   )
   return (
     <Box>
@@ -141,7 +140,7 @@ function readShowPermanent(): boolean {
 function ActiveHeader({
   permanentCount,
   showPermanent,
-  onToggle
+  onToggle,
 }: {
   permanentCount: number
   showPermanent: boolean
@@ -177,7 +176,7 @@ function ActiveHeader({
 function ActiveGroup({
   label,
   buffs,
-  now
+  now,
 }: {
   label: string
   buffs: ActiveBuff[]
@@ -196,9 +195,15 @@ function ActiveGroup({
           sx={{ height: 16, fontSize: 10, '& .MuiChip-label': { px: 0.5 } }}
         />
       </Stack>
-      <Box sx={{ display: 'grid', gap: 1, gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1,
+          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+        }}
+      >
         {buffs.map((b) => (
-          <ActiveRow key={`${b.spell}@${b.self ? 'self' : b.target ?? '?'}`} buff={b} now={now} />
+          <ActiveRow key={`${b.spell}@${b.self ? 'self' : (b.target ?? '?')}`} buff={b} now={now} />
         ))}
       </Box>
     </Box>
@@ -216,7 +221,13 @@ function ActiveGroup({
  * NO boxes on the page and both timer windows draw exactly what they always drew. ON is what puts
  * the boxes on every card and durations row (owner ruling 2026-08-17: "opt-in, or no choice").
  */
-function AllowModeSwitch({ optIn, onChange }: { optIn: boolean; onChange: (v: boolean) => void }): JSX.Element {
+function AllowModeSwitch({
+  optIn,
+  onChange,
+}: {
+  optIn: boolean
+  onChange: (v: boolean) => void
+}): JSX.Element {
   return (
     <FormControlLabel
       control={
@@ -253,12 +264,15 @@ export default function BuffsView(): JSX.Element {
   // HIDDEN BY DEFAULT (JOS-215) — a display filter over the snapshot, never a request to the
   // model. `snap.active` keeps every row; this page just chooses which to draw.
   const [showPermanent, setShowPermanent] = useState(readShowPermanent)
-  // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives ActiveBuff. Becomes a view descriptor when the source lands.
-  const permanentCount = useMemo(() => snap.active.filter((b) => b.permanent === true).length, [snap.active])
+  const permanentCount = useMemo(
+    // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives ActiveBuff. Becomes a view descriptor when the source lands.
+    () => snap.active.filter((b) => b.permanent === true).length,
+    [snap.active],
+  )
   const active = useMemo(
     // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives ActiveBuff. Becomes a view descriptor when the source lands.
     () => (showPermanent ? snap.active : snap.active.filter((b) => b.permanent !== true)),
-    [snap.active, showPermanent]
+    [snap.active, showPermanent],
   )
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives BuffStat. Becomes a view descriptor when the source lands.
   const minedCount = Object.values(snap.stats).filter((s) => s.n > 0).length
@@ -287,7 +301,7 @@ export default function BuffsView(): JSX.Element {
       .map(([key, list]) => ({
         key,
         // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives ActiveBuff. Becomes a view descriptor when the source lands.
-        buffs: [...list].sort((x, y) => x.startedTs - y.startedTs)
+        buffs: [...list].sort((x, y) => x.startedTs - y.startedTs),
       }))
   }, [active])
   return (

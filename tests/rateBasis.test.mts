@@ -37,7 +37,7 @@ import {
   rateMeasurable,
   resolveRateBasis,
   toggleRateBasis,
-  type RateBasis
+  type RateBasis,
 } from '../src/shared/rateBasis'
 import { dataBounds } from '../src/renderer/src/features/leveling/zoneBands'
 import {
@@ -47,7 +47,7 @@ import {
   aaRateText,
   aaRateTitle,
   rangeHeroes,
-  zoneStatRows
+  zoneStatRows,
 } from '../src/renderer/src/features/leveling/rangeStatsRows'
 import { fmtDuration } from '../src/renderer/src/features/leveling/levelChartGeometry'
 import { xpOverlayView } from '../src/renderer/src/overlay/xpRows'
@@ -58,13 +58,28 @@ const T0 = Date.parse('Sat Aug 01 12:00:00 2026')
 
 function emptySnap(): ProgressionSnap {
   return {
-    expTs: [], expPct: [], expFlag: [],
-    killTs: [], killZone: [], killCredit: [],
-    witnessTs: [], recentKills: [], lootTs: [],
-    zoneStart: [], zoneEnd: [], zoneName: [],
-    offlineStart: [], offlineEnd: [], offlineCamped: [],
-    levelTs: [], levelValue: [], aaGainTs: [], aaGainAmount: [],
-    lastTs: 0, windowStart: 0, dropped: 0
+    expTs: [],
+    expPct: [],
+    expFlag: [],
+    killTs: [],
+    killZone: [],
+    killCredit: [],
+    witnessTs: [],
+    recentKills: [],
+    lootTs: [],
+    zoneStart: [],
+    zoneEnd: [],
+    zoneName: [],
+    offlineStart: [],
+    offlineEnd: [],
+    offlineCamped: [],
+    levelTs: [],
+    levelValue: [],
+    aaGainTs: [],
+    aaGainAmount: [],
+    lastTs: 0,
+    windowStart: 0,
+    dropped: 0,
   }
 }
 
@@ -75,28 +90,60 @@ function zone(over: Partial<ZoneRangeRow> & { zone: string }): ZoneRangeRow {
   const offlineMs = over.offlineMs ?? 0
   const activeMs = over.activeMs ?? spanMs - idleMs - offlineMs
   const base: ZoneRangeRow = {
-    zone: over.zone, spanMs, activeMs, idleMs, offlineMs,
-    visits: 1, kills: 0, killsSelf: 0, killsPet: 0,
-    levelEquiv: 0, expUnstated: 0, expSamples: 0,
-    levelsPerHourActive: null, levelsPerHourWall: null,
-    killsPerHourActive: null, killsPerHourWall: null
+    zone: over.zone,
+    spanMs,
+    activeMs,
+    idleMs,
+    offlineMs,
+    visits: 1,
+    kills: 0,
+    killsSelf: 0,
+    killsPet: 0,
+    levelEquiv: 0,
+    expUnstated: 0,
+    expSamples: 0,
+    levelsPerHourActive: null,
+    levelsPerHourWall: null,
+    killsPerHourActive: null,
+    killsPerHourWall: null,
   }
   return { ...base, ...over, spanMs, activeMs, idleMs, offlineMs }
 }
 
 function stats(over: Partial<RangeStats> = {}): RangeStats {
   const base: RangeStats = {
-    t0: T0, t1: T0 + 3 * HOUR, durationMs: 3 * HOUR, activeMs: 3 * HOUR,
-    idleMs: 0, idleGaps: 0, idleThresholdMs: IDLE_GAP_MS, offlineMs: 0, offlineGaps: 0,
-    kills: 0, killsSelf: 0, killsPet: 0, killsWitnessed: 0,
-    expSamples: 0, expParty: 0, expUnstated: 0, levelEquiv: 0,
-    levelsPerHourActive: null, levelsPerHourWall: null,
-    killsPerHourActive: null, killsPerHourWall: null,
-    levelUps: [], levelRuns: [],
-    aaGained: 0, aaGainEvents: 0,
-    aaPerHourActive: null, aaPointsPerHourActive: null,
-    aaPerHourWall: null, aaPointsPerHourWall: null,
-    zones: [], combos: [], clipped: false
+    t0: T0,
+    t1: T0 + 3 * HOUR,
+    durationMs: 3 * HOUR,
+    activeMs: 3 * HOUR,
+    idleMs: 0,
+    idleGaps: 0,
+    idleThresholdMs: IDLE_GAP_MS,
+    offlineMs: 0,
+    offlineGaps: 0,
+    kills: 0,
+    killsSelf: 0,
+    killsPet: 0,
+    killsWitnessed: 0,
+    expSamples: 0,
+    expParty: 0,
+    expUnstated: 0,
+    levelEquiv: 0,
+    levelsPerHourActive: null,
+    levelsPerHourWall: null,
+    killsPerHourActive: null,
+    killsPerHourWall: null,
+    levelUps: [],
+    levelRuns: [],
+    aaGained: 0,
+    aaGainEvents: 0,
+    aaPerHourActive: null,
+    aaPointsPerHourActive: null,
+    aaPerHourWall: null,
+    aaPointsPerHourWall: null,
+    zones: [],
+    combos: [],
+    clipped: false,
   }
   return { ...base, ...over }
 }
@@ -122,7 +169,7 @@ function view(
   snap: ProgressionSnap,
   events: LootEvent[],
   basis?: RateBasis,
-  id: SliceId = 'all'
+  id: SliceId = 'all',
 ): ReturnType<typeof xpOverlayView> {
   const bounds = dataBounds(snap, [])
   return xpOverlayView({
@@ -130,7 +177,7 @@ function view(
     loot: events,
     slice: resolveSlice({ snap, bounds, id }),
     visible: normalizeXpRows(undefined),
-    basis
+    basis,
   })
 }
 
@@ -142,7 +189,11 @@ const valueOf = (v: ReturnType<typeof xpOverlayView>, id: string): string =>
 // ---------------------------------------------------------------------------------------
 
 test('the two bases are a closed union with a stated default, and absent means the default', () => {
-  assert.deepEqual([...RATE_BASES], ['elapsed', 'active'], 'the loot ledger’s own two words, in order')
+  assert.deepEqual(
+    [...RATE_BASES],
+    ['elapsed', 'active'],
+    'the loot ledger’s own two words, in order',
+  )
   assert.equal(RATE_BASIS_DEFAULT, 'elapsed', 'the owner’s ruling, stated once for the whole app')
   assert.equal(resolveRateBasis(undefined), 'elapsed', 'absent is the default, never a third state')
   assert.equal(resolveRateBasis('active'), 'active')
@@ -195,14 +246,18 @@ test('the rate card defaults to the elapsed hour and names the one it used', () 
     idleMs: HOUR,
     levelsPerHourActive: 2.13,
     levelsPerHourWall: 1.42,
-    expSamples: 210
+    expSamples: 210,
   })
   const [byDefault] = rangeHeroes(s)
   assert.equal(byDefault.value, '1.42 lvl/hr', 'absent basis is the elapsed one')
   assert.equal(byDefault.sub, 'over 3h 0m elapsed', 'and the span states the hour it divided by')
   assert.match(byDefault.title ?? '', /Elapsed time = /)
   const [flipped] = rangeHeroes(s, 'active')
-  assert.equal(flipped.value, '2.13 lvl/hr', 'the toggle is one argument and the other honest answer')
+  assert.equal(
+    flipped.value,
+    '2.13 lvl/hr',
+    'the toggle is one argument and the other honest answer',
+  )
   assert.equal(flipped.sub, 'over 2h 0m active')
   assert.match(flipped.title ?? '', /Active time = /)
 })
@@ -225,7 +280,10 @@ test('each denominator button hovers the effect, then the very definition the ca
     assert.equal(words, `Divides every rate by ${basis} time. ${BASIS_TITLE[basis]}`)
     // The lead clause is about the numbers on screen; the tail is the canonical definition, intact.
     assert.match(words, /^Divides every rate by (elapsed|active) time\. /)
-    assert.ok(words.endsWith(BASIS_TITLE[basis]), `${basis}: the definition is appended, not reworded`)
+    assert.ok(
+      words.endsWith(BASIS_TITLE[basis]),
+      `${basis}: the definition is appended, not reworded`,
+    )
   }
   // The two sides of the one difference, so either button teaches the pair.
   assert.match(BASIS_BUTTON_TITLE.elapsed, /Elapsed time = /)
@@ -237,7 +295,13 @@ test('each denominator button hovers the effect, then the very definition the ca
 /** A three-hour range with a two-hour logout in it divides by ONE hour — `wallMs`, not the clock. */
 test('the elapsed span the card states carves out the logout', () => {
   const [card] = rangeHeroes(
-    stats({ durationMs: 3 * HOUR, activeMs: HOUR, offlineMs: 2 * HOUR, levelsPerHourWall: 1, expSamples: 60 })
+    stats({
+      durationMs: 3 * HOUR,
+      activeMs: HOUR,
+      offlineMs: 2 * HOUR,
+      levelsPerHourWall: 1,
+      expSamples: 60,
+    }),
   )
   assert.equal(card.sub, 'over 1h 0m elapsed')
 })
@@ -248,7 +312,13 @@ test('the elapsed span the card states carves out the logout', () => {
  */
 test('a range shorter than the idle threshold refuses its rate and says why', () => {
   const heroes = rangeHeroes(
-    stats({ durationMs: 3 * MIN, activeMs: 3 * MIN, levelsPerHourActive: 40, levelsPerHourWall: 40, expSamples: 3 })
+    stats({
+      durationMs: 3 * MIN,
+      activeMs: 3 * MIN,
+      levelsPerHourActive: 40,
+      levelsPerHourWall: 40,
+      expSamples: 3,
+    }),
   )
   assert.equal(heroes[0].value, NONE, 'three minutes is the clock since you arrived, not a rate')
   assert.equal(heroes[0].sub, 'over 3m elapsed - too short to state as a rate')
@@ -278,13 +348,17 @@ test('the AA rate chip states both halves over ONE hour, and the default is elap
     aaPerHourActive: 3,
     aaPointsPerHourActive: 4,
     aaPerHourWall: 1.5,
-    aaPointsPerHourWall: 2
+    aaPointsPerHourWall: 2,
   })
   assert.equal(aaRateText(s), '1.50 AA/hr · 2.00 pts/hr')
   assert.equal(aaRateText(s, 'active'), '3.00 AA/hr · 4.00 pts/hr')
   assert.match(aaRateTitle(s), /Elapsed time = /)
   assert.match(aaRateTitle(s, 'active'), /Active time = /)
-  assert.equal(aaRateText(stats({ aaGainEvents: 0 })), null, 'no AA in range still means no chip at all')
+  assert.equal(
+    aaRateText(stats({ aaGainEvents: 0 })),
+    null,
+    'no AA in range still means no chip at all',
+  )
 })
 
 /**
@@ -300,10 +374,14 @@ test('a zone row states the hour in force, and BOTH of its rates come from it', 
     levelsPerHourActive: 2,
     levelsPerHourWall: 1.5,
     killsPerHourActive: 40,
-    killsPerHourWall: 30
+    killsPerHourWall: 30,
   })
   const [elapsed] = zoneStatRows([z])
-  assert.equal(elapsed.levelsPerHour, '1.50 lvl/hr', 'the default is the elapsed hour (owner ruling)')
+  assert.equal(
+    elapsed.levelsPerHour,
+    '1.50 lvl/hr',
+    'the default is the elapsed hour (owner ruling)',
+  )
   assert.equal(elapsed.killsPerHour, '30.0 kills/hr', 'and its neighbour is on the same hour')
   const [active] = zoneStatRows([z], 'levels', 'active')
   assert.equal(active.levelsPerHour, '2.00 lvl/hr')
@@ -313,7 +391,13 @@ test('a zone row states the hour in force, and BOTH of its rates come from it', 
 /** The gate again, per row: the COUNTS and the TIME still print, because they happened. */
 test('a zone you only passed through states its time and refuses its rates', () => {
   const [row] = zoneStatRows([
-    zone({ zone: 'Befallen', spanMs: 3 * MIN, kills: 3, levelsPerHourActive: 40, levelsPerHourWall: 40 })
+    zone({
+      zone: 'Befallen',
+      spanMs: 3 * MIN,
+      kills: 3,
+      levelsPerHourActive: 40,
+      levelsPerHourWall: 40,
+    }),
   ])
   assert.equal(row.time, '3m')
   assert.equal(row.kills, 3, 'the kills happened')
@@ -356,7 +440,11 @@ test('the overlay rates default to the ELAPSED hour, and the toggle is the other
   assert.equal(elapsed.basis, 'elapsed', 'an absent basis is the default, not a third state')
   // Two completions over one elapsed hour, and the same two over the half-hour that was play.
   assert.equal(valueOf(elapsed, 'aa'), '2.00')
-  assert.equal(valueOf(active, 'aa'), '4.14', 'the 31-minute silence is out of the active denominator')
+  assert.equal(
+    valueOf(active, 'aa'),
+    '4.14',
+    'the 31-minute silence is out of the active denominator',
+  )
   assert.equal(elapsed.rows.find((r) => r.id === 'aa')?.detail, '3.00 pts/hr')
   assert.equal(active.rows.find((r) => r.id === 'aa')?.detail, '6.21 pts/hr')
   // The levels pace moves with it…
@@ -376,12 +464,16 @@ test('the mote rates follow the same hour as the paces above them', () => {
   const snap = halfIdleHour()
   const events = [
     loot('Mote of Minor Potential', 50 * MIN, 'Befallen'),
-    loot('Mote of Minor Potential', 45 * MIN, 'Befallen')
+    loot('Mote of Minor Potential', 45 * MIN, 'Befallen'),
   ]
   const mote = (v: ReturnType<typeof xpOverlayView>): string | undefined =>
     v.rows.find((r) => r.row === 'motes')?.value
   assert.equal(mote(view(snap, events)), '2.00', 'two motes in one elapsed hour')
-  assert.equal(mote(view(snap, events, 'active')), '4.14', 'and in the 29 minutes of it that were play')
+  assert.equal(
+    mote(view(snap, events, 'active')),
+    '4.14',
+    'and in the 29 minutes of it that were play',
+  )
 })
 
 /**
@@ -454,7 +546,10 @@ test('a stretch shorter than the idle threshold refuses every rate, with its rea
  */
 test('the rows are drawn either way — only the number waits for evidence', () => {
   const short = view(justArrived(40_000), [])
-  assert.deepEqual(short.rows.map((r) => r.id), ['xp', 'aa', 'eta', 'motes-none'])
+  assert.deepEqual(
+    short.rows.map((r) => r.id),
+    ['xp', 'aa', 'eta', 'motes-none'],
+  )
   const at = view(justArrived(RATE_MIN_MS), [])
   assert.equal(at.measurable, true)
   assert.equal(valueOf(at, 'aa'), '0.00', 'a measured zero over a real span still prints')

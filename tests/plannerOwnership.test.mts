@@ -33,7 +33,7 @@ import {
   HELD_KEYRING_CATEGORIES,
   heldCountsFromDump,
   parseItemName,
-  walkEntries
+  walkEntries,
 } from '../src/shared/outputs/inventory'
 import { SLOT_OF_LOCATION } from '../src/shared/planner/inventorySlots'
 import {
@@ -45,7 +45,7 @@ import {
   ownershipRowsFor,
   type OwnershipIndex,
   type OwnershipPlace,
-  type OwnershipRow
+  type OwnershipRow,
 } from '../src/shared/planner/ownership'
 import { itemTierFromName, itemTierKey } from '../src/shared/itemStats'
 import { itemKey } from '../src/main/itemsDb'
@@ -98,7 +98,7 @@ const SYNTHETIC = [
   row('KeyRing', 'Name', 'ID', ''),
   row('Equipment', 'Boots of the Long Road +1', '177708'),
   row('Equipment', 'Boots of the Long Road +1', '177708'),
-  row('Activated', 'Guise of the Deceiver', '4444')
+  row('Activated', 'Guise of the Deceiver', '4444'),
 ].join('\n')
 
 function syntheticIndex(): OwnershipIndex {
@@ -134,14 +134,14 @@ test('every place kind the dump can name reaches the index', () => {
   assert.deepEqual(
     crown.map((r) => r.place),
     ['equipped', 'inventory', 'bank'],
-    'file order: worn, loose in a bag slot, in the bank'
+    'file order: worn, loose in a bag slot, in the bank',
   )
 
   const tunic = ownershipRowsFor(index, 'Brigandine Tunic')
   assert.deepEqual(
     tunic.map((r) => r.place),
     ['equipped', 'sharedBank'],
-    'the shared bank is its own place'
+    'the shared bank is its own place',
   )
 
   const blood = onlyRow(index, 'Griffenne Blood')
@@ -152,7 +152,7 @@ test('every place kind the dump can name reaches the index', () => {
   assert.equal(boots.length, 2, 'a keyring copy is a ROW; the table has no Count column')
   assert.deepEqual(
     boots.map((r) => r.place),
-    ['keyring', 'keyring']
+    ['keyring', 'keyring'],
   )
   assert.equal(boots[0].keyRingCategory, 'Equipment')
   assert.equal(ownedCount(boots), 2)
@@ -172,7 +172,7 @@ test('Personal-Depot1 stays one base token — no invented Depot1 sub-slot', () 
   assert.equal(blood.basePlace?.kind, 'container')
   assert.equal(
     blood.basePlace?.kind === 'container' ? blood.basePlace.container : null,
-    'personalDepot'
+    'personalDepot',
   )
   assert.equal(blood.basePlace?.kind === 'container' ? blood.basePlace.index : null, 1)
 })
@@ -243,7 +243,7 @@ test('an orphaned child is not attached to whatever row came before it', () => {
   const text = [
     row('Location', 'Name', 'ID', 'Count', 'Slots'),
     row('Head', 'Crown of King Tranix', '1001', '1', '10'),
-    row('Ghost-Slot3', 'Orphan Blade', '77', '1', '10')
+    row('Ghost-Slot3', 'Orphan Blade', '77', '1', '10'),
   ].join('\n')
   const orphan = onlyRow(ownershipIndex(parseInventoryDump(text)), 'Orphan Blade')
   assert.equal(orphan.parentName, undefined, 'its parent row was never printed')
@@ -261,24 +261,24 @@ test('a +N variant is its own ROW under the shared key, never its own key', () =
   assert.deepEqual(
     crown.map((r) => r.tier),
     [2, undefined, 2],
-    'absent means the name carried no suffix — NOT +0'
+    'absent means the name carried no suffix — NOT +0',
   )
   assert.equal(highestTier(crown), 2)
   assert.deepEqual(
     crown.map((r) => r.key),
     ['crown of king tranix', 'crown of king tranix', 'crown of king tranix'],
-    'one key for the family'
+    'one key for the family',
   )
   assert.equal(
     index.has('crown of king tranix +2'),
     false,
-    'the suffix never becomes part of a key'
+    'the suffix never becomes part of a key',
   )
 
   const tunic = ownershipRowsFor(index, 'Brigandine Tunic')
   assert.deepEqual(
     tunic.map((r) => r.tier),
-    [1, undefined]
+    [1, undefined],
   )
   assert.equal(highestTier(tunic), 1)
   assert.equal(highestTier(ownershipRowsFor(index, 'Spacious Rucksack')), undefined)
@@ -304,7 +304,7 @@ test('counts follow heldCountsFromDump`s rule, and Empty is never ownership', ()
 test('the index holds exactly the copies heldCountsFromDump counts', () => {
   for (const [what, text] of [
     ['the constructed dump', SYNTHETIC],
-    ['the real 295-line dump', REAL_DUMP]
+    ['the real 295-line dump', REAL_DUMP],
   ] as const) {
     const dump = parseInventoryDump(text)
     const held = heldCountsFromDump(dump)
@@ -313,7 +313,7 @@ test('the index holds exactly the copies heldCountsFromDump counts', () => {
     assert.equal(ownedCount(allRows(index)), heldTotal, `${what}: same copies, different shape`)
     assert.ok(
       index.size <= Object.keys(held).length,
-      `${what}: the index folds ` + '`+N` variants that heldCounts keeps apart'
+      `${what}: the index folds ` + '`+N` variants that heldCounts keeps apart',
     )
   }
 })
@@ -326,12 +326,12 @@ test('the Activated keyring category stays out — inherited, not re-decided', (
   assert.deepEqual(
     HELD_KEYRING_CATEGORIES,
     ['Equipment'],
-    'the roster lives in shared/outputs/inventory.ts and this index reads it'
+    'the roster lives in shared/outputs/inventory.ts and this index reads it',
   )
 
   for (const [what, text] of [
     ['the constructed dump', SYNTHETIC],
-    ['the real 295-line dump', REAL_DUMP]
+    ['the real 295-line dump', REAL_DUMP],
   ] as const) {
     const dump = parseInventoryDump(text)
     const guise = dump.keyRing.filter((k) => k.name === 'Guise of the Deceiver')
@@ -342,7 +342,7 @@ test('the Activated keyring category stays out — inherited, not re-decided', (
     assert.equal(
       index.has('guise of the deceiver'),
       false,
-      `${what}: and the index does not count it (awaiting-sample law)`
+      `${what}: and the index does not count it (awaiting-sample law)`,
     )
     for (const r of allRows(index)) {
       if (r.place === 'keyring') assert.equal(r.keyRingCategory, 'Equipment')
@@ -369,11 +369,11 @@ test('the real dump indexes into the places the client filed it under', () => {
   assert.equal(boots.length, 3)
   assert.deepEqual(
     boots.map((r) => r.tier),
-    [undefined, 1, 1]
+    [undefined, 1, 1],
   )
   assert.ok(
     boots.every((r) => r.place === 'keyring'),
-    'the keyring is DISJOINT from the item table in this dump'
+    'the keyring is DISJOINT from the item table in this dump',
   )
 
   // Every row round-trips through the lookup, and every key is the key of its own name.
@@ -395,7 +395,7 @@ test('ownershipKey is itemCountKey is itemsDb`s itemKey', () => {
     'Kelin`s Seven Stringed Lute +1',
     'Sphinx Claw +1',
     'Boots of the Long Road',
-    'Thelvorn, Blade of Light +5'
+    'Thelvorn, Blade of Light +5',
   ]
   for (const n of names) {
     assert.equal(ownershipKey(n), itemCountKey(n), n)
@@ -447,6 +447,6 @@ test('the loot-history join flags what the dump does not hold', () => {
   assert.equal(ownershipKey(parseItemName('Bandages*').base), itemCountKey('Bandages'))
   assert.equal(
     ownershipKey(parseItemName('Polished Mithril Mask (Exaltation)').base),
-    itemCountKey('Polished Mithril Mask')
+    itemCountKey('Polished Mithril Mask'),
   )
 })

@@ -35,7 +35,7 @@ import {
   note,
   reportRun,
   settle,
-  settleGone
+  settleGone,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture, type FixtureLog } from './logFixture.mjs'
@@ -60,12 +60,12 @@ const HEAL = {
   // beside it: schema 3 states `recast_time = 1.50 sec`, so the card states 1.5s.
   stats: { type: 'Beneficial', cast: '4.0s', recast: '1.5s', mana: '75', duration: '24 Sec' },
   effect: 'Increase Hitpoints by 35 per tick',
-  classes: 'CLR 19'
+  classes: 'CLR 19',
 }
 const SONG = {
   name: 'Anthem De Arms',
   stats: { mana: '0' },
-  instrument: true
+  instrument: true,
 }
 
 /** Everything the open card is currently saying, as plain values a check can read. */
@@ -90,7 +90,16 @@ function readCard(page: Page): Promise<CardRead> {
   return page.evaluate((sel) => {
     const el = document.querySelector(sel)
     if (!el) {
-      return { present: false, spell: '', stats: {}, effects: [], classes: '', lineage: '', members: [], figures: '' }
+      return {
+        present: false,
+        spell: '',
+        stats: {},
+        effects: [],
+        classes: '',
+        lineage: '',
+        members: [],
+        figures: '',
+      }
     }
     const stats: Record<string, string> = {}
     for (const r of Array.from(el.querySelectorAll('[data-testid="spell-card-stat"]'))) {
@@ -103,14 +112,16 @@ function readCard(page: Page): Promise<CardRead> {
       spell: el.getAttribute('data-spell') ?? '',
       stats,
       effects: Array.from(el.querySelectorAll('[data-testid="spell-card-effect"]')).map((n) =>
-        (n.textContent ?? '').trim()
+        (n.textContent ?? '').trim(),
       ),
-      classes: (el.querySelector('[data-testid="spell-card-classes-levels"]')?.textContent ?? '').trim(),
+      classes: (
+        el.querySelector('[data-testid="spell-card-classes-levels"]')?.textContent ?? ''
+      ).trim(),
       lineage: (el.querySelector('[data-testid="spell-card-lineage"]')?.textContent ?? '').trim(),
       members: Array.from(el.querySelectorAll('[data-testid="spell-card-rank-member"]')).map((n) =>
-        (n.textContent ?? '').trim()
+        (n.textContent ?? '').trim(),
       ),
-      figures: (el.querySelector('[data-testid="spell-card-figures"]')?.textContent ?? '').trim()
+      figures: (el.querySelector('[data-testid="spell-card-figures"]')?.textContent ?? '').trim(),
     }
   }, CARD)
 }
@@ -120,23 +131,33 @@ async function openCardFor(page: Page, spell: string): Promise<CardRead> {
   await page.fill(SEARCH, spell)
   await settle(
     () =>
-      page.evaluate(
-        (s) => (document.querySelector(s.n)?.textContent ?? '').trim(),
-        { n: NAME }
-      ),
+      page.evaluate((s) => (document.querySelector(s.n)?.textContent ?? '').trim(), { n: NAME }),
     (t) => t === spell,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   const pointed = await hoverAt(page, NAME, 0.4, 0.5)
   if (!pointed) {
-    return { present: false, spell: '', stats: {}, effects: [], classes: '', lineage: '', members: [], figures: '' }
+    return {
+      present: false,
+      spell: '',
+      stats: {},
+      effects: [],
+      classes: '',
+      lineage: '',
+      members: [],
+      figures: '',
+    }
   }
   // The popper opens behind an enterDelay and the body then fetches over IPC, so "the card is in
   // the DOM" is not the condition — "the card has an answer in it" is (wave E3: wait for the
   // condition, never for the clock).
-  return settle(() => readCard(page), (c) => c.present && Object.keys(c.stats).length > 0, {
-    timeoutMs: 20_000
-  })
+  return settle(
+    () => readCard(page),
+    (c) => c.present && Object.keys(c.stats).length > 0,
+    {
+      timeoutMs: 20_000,
+    },
+  )
 }
 
 /** Move the pointer off the row so the next hover starts from closed. */
@@ -152,31 +173,31 @@ async function checkTheHeal(page: Page): Promise<void> {
   check(
     'the card is about the spell the pointer is on',
     card.spell === HEAL.name,
-    `card says ${card.spell || '(nothing)'}`
+    `card says ${card.spell || '(nothing)'}`,
   )
   for (const [id, want] of Object.entries(HEAL.stats)) {
     check(
       `…and its ${id} is the committed DB's own value`,
       card.stats[id] === want,
-      `${id}: ${card.stats[id] ?? '(no row)'} · spells.json says ${want}`
+      `${id}: ${card.stats[id] ?? '(no row)'} · spells.json says ${want}`,
     )
   }
   check(
     'the effect list is the wiki’s numbered line, verbatim',
     card.effects.length === 1 && card.effects[0] === HEAL.effect,
-    card.effects.join(' | ') || '(none)'
+    card.effects.join(' | ') || '(none)',
   )
   check(
     'the class level is the LINE’s, as the DB states it',
     card.classes === HEAL.classes,
-    card.classes || '(none)'
+    card.classes || '(none)',
   )
   // THE ABSENCE, which is half the ticket: this page states no bard instrument row, so the card
   // draws none — not an empty one, not a dash.
   check(
     'a field the wiki page omits draws NO row at all',
     card.stats.instrument === undefined,
-    `instrument row: ${card.stats.instrument ?? '(absent, correct)'}`
+    `instrument row: ${card.stats.instrument ?? '(absent, correct)'}`,
   )
   await closeCard(page)
 }
@@ -209,13 +230,13 @@ async function checkTheClientCurve(page: Page, staged: boolean): Promise<void> {
     check(
       'with no client file the card states the page’s own flat number',
       card.figures.includes('heal 140'),
-      card.figures || '(no figures line)'
+      card.figures || '(no figures line)',
     )
   } else {
     check(
       'THE TICKET: the card reads the client’s curve, not the base the page transcribed',
       card.figures.includes('heal 216'),
-      `${card.figures || '(no figures line)'} · the page alone would say heal 140`
+      `${card.figures || '(no figures line)'} · the page alone would say heal 140`,
     )
   }
   // The EFFECT LIST is untouched either way: it is what the wiki says, and this ticket changed
@@ -223,7 +244,7 @@ async function checkTheClientCurve(page: Page, staged: boolean): Promise<void> {
   check(
     'and the quoted effect line is still the wiki’s, verbatim',
     card.effects.length === 1 && card.effects[0] === HEAL.effect,
-    card.effects.join(' | ') || '(none)'
+    card.effects.join(' | ') || '(none)',
   )
   await closeCard(page)
 }
@@ -235,12 +256,12 @@ async function checkTheSong(page: Page): Promise<void> {
   check(
     'a bard page’s instrument row IS drawn, by the same card that omitted it for the heal',
     typeof card.stats.instrument === 'string' && card.stats.instrument.length > 0,
-    card.stats.instrument ?? '(no row)'
+    card.stats.instrument ?? '(no row)',
   )
   check(
     'a STATED zero is a fact and keeps its row (a song costs 0 mana)',
     card.stats.mana === SONG.stats.mana,
-    `mana: ${card.stats.mana ?? '(no row)'}`
+    `mana: ${card.stats.mana ?? '(no row)'}`,
   )
   await closeCard(page)
 }
@@ -259,12 +280,12 @@ async function checkTheLineRanks(page: Page): Promise<void> {
   check(
     'the card lists NO rank members (owner ruling: ranks are not lines)',
     card.members.length === 0,
-    card.members.join(' | ') || '(none)'
+    card.members.join(' | ') || '(none)',
   )
   check(
     '…and states the bare rank with no replaces phrase',
     card.lineage === 'Rank I',
-    card.lineage || '(no lineage line)'
+    card.lineage || '(no lineage line)',
   )
   await closeCard(page)
 }
@@ -297,40 +318,50 @@ async function checkTheBuffRowCard(page: Page, log: FixtureLog): Promise<void> {
     () =>
       page.evaluate(
         (s) => (document.querySelector(s)?.textContent ?? '').trim(),
-        '[data-testid="active-buff-name"]'
+        '[data-testid="active-buff-name"]',
       ),
     (t) => t === 'Clarity',
-    { timeoutMs: 45_000 }
+    { timeoutMs: 45_000 },
   )
-  if (!check('the Clarity cast opened a live buff row', name === 'Clarity', `row reads ${name || '(none)'}`)) {
+  if (
+    !check(
+      'the Clarity cast opened a live buff row',
+      name === 'Clarity',
+      `row reads ${name || '(none)'}`,
+    )
+  ) {
     return
   }
   const pointed = await hoverAt(page, '[data-testid="active-buff-name"]', 0.4, 0.5)
   if (!check('the buff row’s name is pointable', pointed)) return
-  const card = await settle(() => readCard(page), (c) => c.present && c.lineage !== '', { timeoutMs: 20_000 })
+  const card = await settle(
+    () => readCard(page),
+    (c) => c.present && c.lineage !== '',
+    { timeoutMs: 20_000 },
+  )
   check(
     'the card is asked about the RANK the cast line spelled, not the identity the row prints',
     card.spell === 'Clarity III',
-    `card says ${card.spell || '(nothing)'}`
+    `card says ${card.spell || '(nothing)'}`,
   )
   check(
     'the card states the bare rank the cast line spelled - no replaces phrase (owner ruling)',
     card.lineage === 'Rank III',
-    card.lineage || '(no lineage line)'
+    card.lineage || '(no lineage line)',
   )
   check(
     '…and lists no rank members (ranks are not lines)',
     card.members.length === 0,
-    card.members.join(' | ') || '(none)'
+    card.members.join(' | ') || '(none)',
   )
   const note = await page.evaluate(
     (s) => (document.querySelector(s)?.textContent ?? '').trim(),
-    '[data-testid="spell-card-line-note"]'
+    '[data-testid="spell-card-line-note"]',
   )
   check(
     'and the card says out loud that these numbers are the LINE’s, not rank III’s',
     note.includes('Clarity') && note.includes('line'),
-    note || '(no note)'
+    note || '(no note)',
   )
   await closeCard(page)
 }
@@ -364,7 +395,7 @@ function readPage(page: Page): Promise<PageRead> {
         steps: [],
         neighbours: [],
         classes: [],
-        back: ''
+        back: '',
       }
     }
     const section = el.querySelector('[data-testid="spell-line-section"]')
@@ -379,16 +410,20 @@ function readPage(page: Page): Promise<PageRead> {
           n.getAttribute('data-spell') ?? '',
           (n.children[0].textContent ?? '').trim(),
           (n.querySelector('[data-testid="spell-line-when"]')?.textContent ?? '').trim(),
-          n.getAttribute('data-here') ?? ''
-        ].join('|')
+          n.getAttribute('data-here') ?? '',
+        ].join('|'),
       ),
-      neighbours: Array.from(el.querySelectorAll('[data-testid="spell-line-neighbours"]')).map((n) =>
-        (n.textContent ?? '').trim()
+      neighbours: Array.from(el.querySelectorAll('[data-testid="spell-line-neighbours"]')).map(
+        (n) => (n.textContent ?? '').trim(),
       ),
       classes: Array.from(el.querySelectorAll('[data-testid="spell-class-level"]')).map((n) =>
-        [n.getAttribute('data-class') ?? '', (n.textContent ?? '').trim(), n.getAttribute('data-mine') ?? ''].join('|')
+        [
+          n.getAttribute('data-class') ?? '',
+          (n.textContent ?? '').trim(),
+          n.getAttribute('data-mine') ?? '',
+        ].join('|'),
       ),
-      back: (el.querySelector('[data-testid="spell-page-back"]')?.textContent ?? '').trim()
+      back: (el.querySelector('[data-testid="spell-page-back"]')?.textContent ?? '').trim(),
     }
   })
 }
@@ -419,10 +454,17 @@ function readPage(page: Page): Promise<PageRead> {
 async function checkTheDrilldown(page: Page): Promise<void> {
   // The buff row is still on screen from the step above, and its name is a link now.
   await page.click('[data-testid="active-buff-name"]', { timeout: 30_000 })
-  const first = await settle(() => readPage(page), (p) => p.present && p.classes.length > 0, {
-    timeoutMs: 20_000
-  })
-  if (!check('clicking a spell name opens its drilldown page', first.present, JSON.stringify(first))) return
+  const first = await settle(
+    () => readPage(page),
+    (p) => p.present && p.classes.length > 0,
+    {
+      timeoutMs: 20_000,
+    },
+  )
+  if (
+    !check('clicking a spell name opens its drilldown page', first.present, JSON.stringify(first))
+  )
+    return
   checkTheIdentity(first)
   checkTheLadderRows(first)
   checkTheClassTable(first)
@@ -433,9 +475,13 @@ async function checkTheDrilldown(page: Page): Promise<void> {
   const home = await settle(
     () => page.evaluate(() => document.querySelectorAll('[data-testid="active-buff-name"]').length),
     (n) => n > 0,
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   )
-  check('Back out of the drill lands on the tab the name was clicked from', home > 0, `${String(home)} buff rows`)
+  check(
+    'Back out of the drill lands on the tab the name was clicked from',
+    home > 0,
+    `${String(home)} buff rows`,
+  )
 }
 
 /** Whose page this is, and where Back goes. Three small readers rather than one, for the cap. */
@@ -443,12 +489,12 @@ function checkTheIdentity(first: PageRead): void {
   check(
     'the page is about the name that was clicked, rank suffix intact',
     first.spell === 'Clarity III' && first.title === 'Clarity III',
-    `data-spell=${first.spell} title=${first.title}`
+    `data-spell=${first.spell} title=${first.title}`,
   )
   check(
     'the LINE is named, and it is named with the class whose ladder it is',
     first.line.length > 0 && first.lineClass.length > 0,
-    `${first.line} · ${first.lineClass}`
+    `${first.line} · ${first.lineClass}`,
   )
   check('the Back button names where the drill came from', first.back === 'Buffs', first.back)
 }
@@ -458,7 +504,7 @@ function checkTheLadderRows(first: PageRead): void {
   check(
     'the line is drawn as a progression - more than one rung, exactly one of them marked as here',
     first.steps.length > 1 && first.steps.filter((s) => s.endsWith('|yes')).length === 1,
-    first.steps.join(' / ')
+    first.steps.join(' / '),
   )
   // THE SCHEDULE COLUMN, as a CLOSED SET. Three answers are legal and a fourth is a defect: a level
   // the loadout reaches, an honest refusal, or "we do not know your classes yet". The loadout this
@@ -470,7 +516,7 @@ function checkTheLadderRows(first: PageRead): void {
   check(
     'every rung says WHEN, and only in the words the model is allowed to use',
     whens.length > 0 && whens.every(legal),
-    whens.join(' / ')
+    whens.join(' / '),
   )
 }
 
@@ -480,7 +526,7 @@ function checkTheClassTable(first: PageRead): void {
   check(
     'the class table lists every class that gets the spell, with its level',
     first.classes.length > 0 && first.classes.every(shaped),
-    first.classes.join(' / ')
+    first.classes.join(' / '),
   )
 }
 
@@ -502,7 +548,14 @@ function checkTheClassTable(first: PageRead): void {
  */
 async function checkTheWalk(page: Page, first: PageRead): Promise<void> {
   const other = first.steps.map((s) => s.split('|')[0]).find((n) => n !== 'Clarity')
-  if (!check('the ladder offers another rung to walk to', other !== undefined, first.steps.join(' / '))) return
+  if (
+    !check(
+      'the ladder offers another rung to walk to',
+      other !== undefined,
+      first.steps.join(' / '),
+    )
+  )
+    return
   await page.click(`[data-testid="spell-line-step"][data-spell="${other}"] p`, { timeout: 20_000 })
   // THE TITLE IS NOT THE CONDITION — it is the name that was clicked and renders on the same frame
   // as the mount, before `spells:detail` has answered. Waiting on it alone read an empty ladder off
@@ -511,18 +564,18 @@ async function checkTheWalk(page: Page, first: PageRead): Promise<void> {
   const walked = await settle(
     () => readPage(page),
     (p) => p.present && p.title === other && p.classes.length > 0,
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   )
   check('clicking a rung opens THAT spell’s page', walked.title === other, walked.title)
   check(
     'a same-view hop keeps ONE origin - Back still names where the excursion began',
     walked.back === 'Buffs',
-    walked.back
+    walked.back,
   )
   check(
     '…and the way back up the ladder is the ladder: the rung we came from is drawn, and linked',
     walked.steps.some((s) => s.startsWith('Clarity|')),
-    walked.steps.join(' / ')
+    walked.steps.join(' / '),
   )
 }
 
@@ -532,9 +585,13 @@ async function openPicker(page: Page): Promise<number> {
   await page.waitForSelector('[data-testid="alerts-add-suggestion"]', { timeout: 30_000 })
   await page.click('[data-testid="alerts-add-suggestion"]')
   await page.waitForSelector(SUGGEST, { timeout: 20_000 })
-  return settle(() => page.evaluate((s) => document.querySelectorAll(s).length, ROW), (n) => n > 0, {
-    timeoutMs: 20_000
-  })
+  return settle(
+    () => page.evaluate((s) => document.querySelectorAll(s).length, ROW),
+    (n) => n > 0,
+    {
+      timeoutMs: 20_000,
+    },
+  )
 }
 
 async function main(): Promise<void> {
@@ -571,7 +628,11 @@ async function main(): Promise<void> {
     // says, and doing them back to back on one anchor is the proof that the link did not cost the
     // hover (`SpellTooltip` stayed `disableInteractive`; only the anchor gained a handler).
     await checkTheDrilldown(page)
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     if (failures.length) await dumpArtifacts(page, 'spell-card-FAIL')
   } finally {
     await close()

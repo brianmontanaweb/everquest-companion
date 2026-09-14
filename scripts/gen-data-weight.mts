@@ -56,12 +56,14 @@ function bigJsonIn(dir: string): string[] {
   } catch {
     return []
   }
-  return names
-    .filter((n) => n.endsWith('.json'))
-    .map((n) => `${dir}/${n}`)
-    .filter((f) => statSync(join(ROOT, f)).size >= DATA_WEIGHT_MIN_BYTES)
-    // The ledger itself lives in `src/main/data` and must never describe itself.
-    .filter((f) => !f.endsWith('dataWeight.generated.json'))
+  return (
+    names
+      .filter((n) => n.endsWith('.json'))
+      .map((n) => `${dir}/${n}`)
+      .filter((f) => statSync(join(ROOT, f)).size >= DATA_WEIGHT_MIN_BYTES)
+      // The ledger itself lives in `src/main/data` and must never describe itself.
+      .filter((f) => !f.endsWith('dataWeight.generated.json'))
+  )
 }
 
 const mainFiles = [...bigJsonIn('src/main/data'), ...EXTRA_MAIN_FILES].sort()
@@ -96,7 +98,7 @@ function price(file: string): DataWeightRow {
     file,
     bytes,
     parseMs: Math.round(parseMs * 10) / 10,
-    heapMb: Math.round(Math.max(0, heapMb) * 10) / 10
+    heapMb: Math.round(Math.max(0, heapMb) * 10) / 10,
   }
 }
 
@@ -113,12 +115,12 @@ writeFileSync(OUT, next, 'utf8')
 
 for (const r of rows) {
   console.log(
-    `  ${relative(ROOT, join(ROOT, r.file)).padEnd(48)} ${String(r.bytes).padStart(9)} B  parse ${r.parseMs.toFixed(1).padStart(6)} ms  retained ${r.heapMb.toFixed(1).padStart(6)} MB`
+    `  ${relative(ROOT, join(ROOT, r.file)).padEnd(48)} ${String(r.bytes).padStart(9)} B  parse ${r.parseMs.toFixed(1).padStart(6)} ms  retained ${r.heapMb.toFixed(1).padStart(6)} MB`,
   )
 }
 console.log(`  renderer-only, not counted: ${rendererOnly.join(', ') || '(none)'}`)
 console.log(
   before === next
     ? 'gen:data-weight: dataWeight.generated.json is already current'
-    : `gen:data-weight: wrote dataWeight.generated.json (${String(rows.length)} rows)`
+    : `gen:data-weight: wrote dataWeight.generated.json (${String(rows.length)} rows)`,
 )

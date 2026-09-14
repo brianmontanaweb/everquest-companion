@@ -19,7 +19,7 @@ import {
   speechEngineFault,
   speechSetupGap,
   type SpeechEngineFault,
-  type SpeechSetupGap
+  type SpeechSetupGap,
 } from './speech'
 
 /** A tier's voices plus the one fact `[]` alone cannot state: has the answer ARRIVED yet. */
@@ -93,7 +93,9 @@ export function useSpeechEngineFault(): SpeechEngineFault | null {
  * listed, none of them audible. The system tier never latches a fault (it never crosses IPC), so
  * this cannot annotate a Windows voice with a Kokoro failure.
  */
-export function useSpeechSetup(engine: SpeechEngine = currentVoicePrefs().engine): SpeechSetupGap | null {
+export function useSpeechSetup(
+  engine: SpeechEngine = currentVoicePrefs().engine,
+): SpeechSetupGap | null {
   const { voices, loaded } = useVoiceInventory(engine, 0)
   const fault = useSpeechEngineFault()
   if (engine === 'kokoro' && fault) return fault

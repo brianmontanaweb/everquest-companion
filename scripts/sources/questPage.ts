@@ -112,7 +112,7 @@ export function dedupe(names: Iterable<string>): string[] {
 /** Split a table cell into names: prefer link labels, else comma-separated plain text. */
 function cellList(raw: string): string[] {
   const links = [...raw.matchAll(/\[\[\s*([^\]|#]+?)\s*(?:\|\s*([^\]]*?)\s*)?\]\]/g)].map((m) =>
-    (m[2] || m[1]).trim()
+    (m[2] || m[1]).trim(),
   )
   const parts = links.length
     ? links
@@ -149,10 +149,7 @@ function topTableFields(body: string): Record<string, string> {
       continue
     }
     if (line.startsWith('!')) {
-      const key = stripMarkup(line.replace(/^!+/, ''))
-        .replace(/:\s*$/, '')
-        .trim()
-        .toLowerCase()
+      const key = stripMarkup(line.replace(/^!+/, '')).replace(/:\s*$/, '').trim().toLowerCase()
       label = key || null
       continue
     }
@@ -186,7 +183,7 @@ export function parseTopTable(wikitext: string): QuestTopTable | null {
     minLevelText: minText && !/^\d+$/.test(minText) ? minText : undefined,
     classes: cellList(pick('classes')),
     relatedZones: cellList(pick('related zones')),
-    relatedNpcs: cellList(pick('related npcs', 'related npc'))
+    relatedNpcs: cellList(pick('related npcs', 'related npc')),
   }
 }
 
@@ -225,7 +222,7 @@ const EXP_MARKER = /\{\{\s*(yougainexperience|exp)\s*\}\}|you gain experience/i
 export function parseQuestPage(
   page: string,
   wikitext: string,
-  isItem: (title: string) => boolean = () => false
+  isItem: (title: string) => boolean = () => false,
 ): ParsedQuestPage {
   const top = parseTopTable(wikitext)
   const withoutTable = wikitext.replace(TOP_TABLE_RE, '\n')
@@ -235,13 +232,16 @@ export function parseQuestPage(
     .filter((s) => REWARD_HEADING.test(s.heading))
     .map((s) => s.text)
     .join('\n')
-  const bodyText = [lead, ...sections.filter((s) => !REWARD_HEADING.test(s.heading)).map((s) => s.text)].join('\n')
+  const bodyText = [
+    lead,
+    ...sections.filter((s) => !REWARD_HEADING.test(s.heading)).map((s) => s.text),
+  ].join('\n')
 
   // Rewards: a `{{:Name}}` box is always an item; a plain link only counts when the
   // title is a known item page (Reward sections also link factions, zones and coin).
   const rewards = dedupe([
     ...transclusionTargets(rewardText),
-    ...linkTargets(rewardText).filter(isItem)
+    ...linkTargets(rewardText).filter(isItem),
   ])
   const rewardKeys = new Set(rewards.map((r) => r.toLowerCase()))
 
@@ -250,7 +250,7 @@ export function parseQuestPage(
   // too, so BOTH links and transclusions go through the item filter here.
   const requiredItems = dedupe([
     ...transclusionTargets(bodyText).filter(isItem),
-    ...linkTargets(bodyText).filter(isItem)
+    ...linkTargets(bodyText).filter(isItem),
   ]).filter((n) => !rewardKeys.has(n.toLowerCase()))
 
   return {
@@ -266,7 +266,7 @@ export function parseQuestPage(
     requiredItems,
     expReward: EXP_MARKER.test(wikitext),
     disambiguation: /\{\{\s*disambig/i.test(wikitext),
-    hasTopTable: top !== null
+    hasTopTable: top !== null,
   }
 }
 

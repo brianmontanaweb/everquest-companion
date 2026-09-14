@@ -230,12 +230,12 @@ export function loadPresenceNative(): PresenceNative {
   const GetForegroundWindow = bind(user32, 'void *__stdcall GetForegroundWindow()')
   const GetWindowThreadProcessId = bind(
     user32,
-    'uint32 __stdcall GetWindowThreadProcessId(void *hWnd, _Out_ uint32 *pid)'
+    'uint32 __stdcall GetWindowThreadProcessId(void *hWnd, _Out_ uint32 *pid)',
   )
   const GetWindowRect = bind(user32, 'bool __stdcall GetWindowRect(void *hWnd, _Out_ void *rect)')
   const GetWindowTextW = bind(
     user32,
-    'int __stdcall GetWindowTextW(void *hWnd, _Out_ void *buf, int max)'
+    'int __stdcall GetWindowTextW(void *hWnd, _Out_ void *buf, int max)',
   )
 
   // ---- (2) cursor visibility ----
@@ -244,18 +244,18 @@ export function loadPresenceNative(): PresenceNative {
   // ---- (3) image paths, by handle rather than by .NET's process table (JOS-164) ----
   const OpenProcess = bind(
     kernel32,
-    'void *__stdcall OpenProcess(uint32 access, bool inherit, uint32 pid)'
+    'void *__stdcall OpenProcess(uint32 access, bool inherit, uint32 pid)',
   )
   const CloseHandle = bind(kernel32, 'bool __stdcall CloseHandle(void *h)')
   const QueryFullProcessImageNameW = bind(
     kernel32,
-    'bool __stdcall QueryFullProcessImageNameW(void *h, uint32 flags, _Out_ void *buf, _Inout_ uint32 *size)'
+    'bool __stdcall QueryFullProcessImageNameW(void *h, uint32 flags, _Out_ void *buf, _Inout_ uint32 *size)',
   )
 
   // ---- (4) the running scan ----
   const EnumProcesses = bind(
     psapi,
-    'bool __stdcall EnumProcesses(_Out_ void *ids, uint32 cb, _Out_ uint32 *needed)'
+    'bool __stdcall EnumProcesses(_Out_ void *ids, uint32 cb, _Out_ uint32 *needed)',
   )
 
   // Scratch buffers, allocated ONCE. The tick loop must not allocate: it runs ~69 times a second
@@ -304,7 +304,7 @@ export function loadPresenceNative(): PresenceNative {
       y: top,
       width: right - left,
       height: bottom - top,
-      title: titleBuf.toString('utf16le', 0, clamped * 2)
+      title: titleBuf.toString('utf16le', 0, clamped * 2),
     }
   }
 

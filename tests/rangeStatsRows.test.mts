@@ -41,7 +41,7 @@ import {
   unstatedCaption,
   withActiveTime,
   witnessedText,
-  zoneStatRows
+  zoneStatRows,
 } from '../src/renderer/src/features/leveling/rangeStatsRows'
 import { fmtDuration } from '../src/renderer/src/features/leveling/levelChartGeometry'
 import { zoneColor } from '../src/renderer/src/features/leveling/zoneBands'
@@ -75,7 +75,7 @@ function zone(over: Partial<ZoneRangeRow> & { zone: string }): ZoneRangeRow {
     expSamples: 0,
     levelsPerHourActive: null,
     levelsPerHourWall: null,
-    killsPerHourActive: null
+    killsPerHourActive: null,
   }
   return { ...base, ...over, spanMs, activeMs, idleMs, offlineMs }
 }
@@ -108,7 +108,7 @@ function stats(over: Partial<RangeStats> = {}): RangeStats {
     aaGainEvents: 0,
     zones: [],
     combos: [],
-    clipped: false
+    clipped: false,
   }
   return { ...base, ...over }
 }
@@ -147,12 +147,12 @@ test('zone rows sort by levels/hr desc, with UNKNOWN rates last', () => {
   const rows = zoneStatRows([
     zone({ zone: 'Befallen', levelsPerHourActive: 1.2 }),
     zone({ zone: 'Najena', levelsPerHourActive: null, spanMs: 5 * HOUR }),
-    zone({ zone: "Nagafen's Lair", levelsPerHourActive: 3.4 })
+    zone({ zone: "Nagafen's Lair", levelsPerHourActive: 3.4 }),
   ])
   assert.deepEqual(
     rows.map((r) => r.zone),
     ["Nagafen's Lair", 'Befallen', 'Najena'],
-    'a zone whose rate is unknown never outranks one that has a number'
+    'a zone whose rate is unknown never outranks one that has a number',
   )
 })
 
@@ -160,23 +160,34 @@ test('the time toggle is a real reorder, and ties fall back to span', () => {
   const zones = [
     zone({ zone: 'Befallen', levelsPerHourActive: 1.2, spanMs: 20 * MIN }),
     zone({ zone: 'Najena', levelsPerHourActive: null, spanMs: 5 * HOUR }),
-    zone({ zone: "Nagafen's Lair", levelsPerHourActive: 3.4, spanMs: HOUR })
+    zone({ zone: "Nagafen's Lair", levelsPerHourActive: 3.4, spanMs: HOUR }),
   ]
   assert.deepEqual(
     zoneStatRows(zones, 'time').map((r) => r.zone),
-    ['Najena', "Nagafen's Lair", 'Befallen']
+    ['Najena', "Nagafen's Lair", 'Befallen'],
   )
   const ties = zoneStatRows([
     zone({ zone: 'A', levelsPerHourActive: 2, spanMs: HOUR }),
-    zone({ zone: 'B', levelsPerHourActive: 2, spanMs: 3 * HOUR })
+    zone({ zone: 'B', levelsPerHourActive: 2, spanMs: 3 * HOUR }),
   ])
-  assert.deepEqual(ties.map((r) => r.zone), ['B', 'A'], 'equal rates: the longer stay leads')
+  assert.deepEqual(
+    ties.map((r) => r.zone),
+    ['B', 'A'],
+    'equal rates: the longer stay leads',
+  )
 })
 
 test('sorting never mutates the caller’s array', () => {
-  const zones = [zone({ zone: 'Befallen', levelsPerHourActive: 1 }), zone({ zone: 'Najena', levelsPerHourActive: 9 })]
+  const zones = [
+    zone({ zone: 'Befallen', levelsPerHourActive: 1 }),
+    zone({ zone: 'Najena', levelsPerHourActive: 9 }),
+  ]
   zoneStatRows(zones, 'levels')
-  assert.deepEqual(zones.map((z) => z.zone), ['Befallen', 'Najena'], 'the snapshot query owns that array')
+  assert.deepEqual(
+    zones.map((z) => z.zone),
+    ['Befallen', 'Najena'],
+    'the snapshot query owns that array',
+  )
 })
 
 test('a null rate renders as an em-dash, never as 0.0', () => {
@@ -193,9 +204,16 @@ test('a zone with no idle at all carries no idle string', () => {
   // states its ACTIVE rates, so the arm names that basis: what it is about is the idle string and
   // the two rate spellings beside it, not which denominator produced them.
   const [row] = zoneStatRows(
-    [zone({ zone: 'Befallen', spanMs: 2 * HOUR + 41 * MIN, killsPerHourActive: 38.5, levelsPerHourActive: 1.42 })],
+    [
+      zone({
+        zone: 'Befallen',
+        spanMs: 2 * HOUR + 41 * MIN,
+        killsPerHourActive: 38.5,
+        levelsPerHourActive: 1.42,
+      }),
+    ],
     'levels',
-    'active'
+    'active',
   )
   assert.equal(row.idle, null, 'null, so the panel prints nothing rather than "0s idle"')
   assert.equal(row.time, '2h 41m')
@@ -228,7 +246,9 @@ test('levels: a stated zero prints, an UNSTATED one does not', () => {
   assert.equal(capped.levels, NONE, 'every line refused a percentage — unknown is not zero')
   assert.equal(capped.unstated, 9)
 
-  const [partial] = zoneStatRows([zone({ zone: 'Befallen', expSamples: 9, expUnstated: 4, levelEquiv: 1.5 })])
+  const [partial] = zoneStatRows([
+    zone({ zone: 'Befallen', expSamples: 9, expUnstated: 4, levelEquiv: 1.5 }),
+  ])
   assert.equal(partial.levels, '1.50', 'the stated half still counts')
   assert.equal(partial.unstated, 4, 'and the row admits the other half')
 })
@@ -247,21 +267,32 @@ test('the hero cards report the four headline numbers', () => {
       levelEquiv: 3.8,
       levelUps: [
         { ts: T0, level: 18 },
-        { ts: T0 + HOUR, level: 19 }
+        { ts: T0 + HOUR, level: 19 },
       ],
-      levelRuns: [{ fromLevel: 18, toLevel: 19, startTs: T0, endTs: T0 + HOUR }]
+      levelRuns: [{ fromLevel: 18, toLevel: 19, startTs: T0, endTs: T0 + HOUR }],
     }),
     // The ACTIVE basis, named: this fixture states an active rate, and what the arm is about is the
     // four cards rather than which hour they divide by (the pair below pins that).
-    'active'
+    'active',
   )
-  assert.deepEqual(heroes.map((h) => h.id), ['rate', 'kills', 'levels', 'range'])
+  assert.deepEqual(
+    heroes.map((h) => h.id),
+    ['rate', 'kills', 'levels', 'range'],
+  )
   assert.equal(heroes[0].value, '1.42 lvl/hr')
   assert.equal(heroes[0].sub, 'over 2h 41m active')
   assert.equal(heroes[1].value, '214')
-  assert.equal(heroes[1].sub, '180 your killing blows · 34 pet (inferred)', 'pet credit is INFERRED, and says so')
+  assert.equal(
+    heroes[1].sub,
+    '180 your killing blows · 34 pet (inferred)',
+    'pet credit is INFERRED, and says so',
+  )
   assert.equal(heroes[2].value, '3.80')
-  assert.equal(heroes[2].label, 'Levels of progress', 'never "xp" — the log states a level-bar percentage')
+  assert.equal(
+    heroes[2].label,
+    'Levels of progress',
+    'never "xp" — the log states a level-bar percentage',
+  )
   assert.equal(heroes[3].value, '18 → 19')
   assert.equal(heroes[3].sub, '2 dings')
 })
@@ -289,13 +320,13 @@ test('a loadout swap shows two runs, never one fabricated span', () => {
       levelUps: [
         { ts: T0, level: 27 },
         { ts: T0 + HOUR, level: 28 },
-        { ts: T0 + 2 * HOUR, level: 11 }
+        { ts: T0 + 2 * HOUR, level: 11 },
       ],
       levelRuns: [
         { fromLevel: 27, toLevel: 28, startTs: T0, endTs: T0 + HOUR },
-        { fromLevel: 11, toLevel: 11, startTs: T0 + 2 * HOUR, endTs: T0 + 2 * HOUR }
-      ]
-    })
+        { fromLevel: 11, toLevel: 11, startTs: T0 + 2 * HOUR, endTs: T0 + 2 * HOUR },
+      ],
+    }),
   )
   assert.equal(heroes[3].value, '27 → 28 · 11', 'the drop is a NEW run — never "27 → 11"')
   assert.equal(heroes[3].sub, '3 dings · 1 class swap')
@@ -304,15 +335,28 @@ test('a loadout swap shows two runs, never one fabricated span', () => {
 // ---------------------------------------------------------------- the chip row
 
 test('active/idle text, and the idle rule stated literally', () => {
-  assert.equal(activeIdleText(stats({ activeMs: 2 * HOUR + 41 * MIN, idleMs: 38 * MIN })), '2h 41m active · 38m idle')
-  assert.equal(activeIdleText(stats({ activeMs: HOUR, idleMs: 0 })), '1h 0m active', 'no idle, no idle clause')
+  assert.equal(
+    activeIdleText(stats({ activeMs: 2 * HOUR + 41 * MIN, idleMs: 38 * MIN })),
+    '2h 41m active · 38m idle',
+  )
+  assert.equal(
+    activeIdleText(stats({ activeMs: HOUR, idleMs: 0 })),
+    '1h 0m active',
+    'no idle, no idle clause',
+  )
   assert.equal(
     idleRuleCaption(IDLE_GAP_MS),
     'idle = no experience, kill, or loot event for over 5 minutes',
-    'the threshold is read from the stats, never typed in'
+    'the threshold is read from the stats, never typed in',
   )
-  assert.equal(idleRuleCaption(10 * MIN), 'idle = no experience, kill, or loot event for over 10 minutes')
-  assert.ok(!/AFK|offline|away/i.test(idleRuleCaption(IDLE_GAP_MS)), 'the log records events, not presence')
+  assert.equal(
+    idleRuleCaption(10 * MIN),
+    'idle = no experience, kill, or loot event for over 10 minutes',
+  )
+  assert.ok(
+    !/AFK|offline|away/i.test(idleRuleCaption(IDLE_GAP_MS)),
+    'the log records events, not presence',
+  )
   assert.equal(idleGapsText(stats({ idleGaps: 0 })), null)
   assert.equal(idleGapsText(stats({ idleGaps: 3 })), '3 gaps over 5m')
 })
@@ -327,10 +371,16 @@ test('the membership line says how much of the range the numbers left out, and w
   assert.equal(
     membershipText(sliced, 'The Plane of Hate, this tier only'),
     'of 1h 51m selected · The Plane of Hate, this tier only',
-    'the numbers cover 15m of it — the reader is told both, in the order they read them'
+    'the numbers cover 15m of it — the reader is told both, in the order they read them',
   )
-  assert.ok(/tier/.test(MEMBERSHIP_TITLE), 'and the hover explains that a TIER can be what excluded the rest')
-  assert.ok(/chart/.test(MEMBERSHIP_TITLE), 'including that the chart above may still be drawing it')
+  assert.ok(
+    /tier/.test(MEMBERSHIP_TITLE),
+    'and the hover explains that a TIER can be what excluded the rest',
+  )
+  assert.ok(
+    /chart/.test(MEMBERSHIP_TITLE),
+    'including that the chart above may still be drawing it',
+  )
 })
 
 test('no zone in force means no membership line at all', () => {
@@ -339,7 +389,11 @@ test('no zone in force means no membership line at all', () => {
   const whole = stats({ durationMs: 3 * HOUR })
   assert.equal(membershipText(whole, null), null)
   assert.equal(membershipText(whole, undefined), null)
-  assert.equal(membershipText(whole, 'Lower Guk, every tier'), null, 'a slice that admitted all of it says nothing')
+  assert.equal(
+    membershipText(whole, 'Lower Guk, every tier'),
+    null,
+    'a slice that admitted all of it says nothing',
+  )
 })
 
 test('a sub-second shortfall is not a shortfall — the line is not a permanent second clause', () => {
@@ -348,7 +402,10 @@ test('a sub-second shortfall is not a shortfall — the line is not a permanent 
   const rounding = stats({ durationMs: 3 * HOUR - 400, t0: T0, t1: T0 + 3 * HOUR })
   assert.equal(membershipText(rounding, 'Lower Guk, every tier'), null)
   const real = stats({ durationMs: 3 * HOUR - 90 * MIN, t0: T0, t1: T0 + 3 * HOUR })
-  assert.equal(membershipText(real, 'Lower Guk, every tier'), 'of 3h 0m selected · Lower Guk, every tier')
+  assert.equal(
+    membershipText(real, 'Lower Guk, every tier'),
+    'of 3h 0m selected · Lower Guk, every tier',
+  )
 })
 
 test('the class combo is quoted verbatim, or admitted as unknown', () => {
@@ -357,11 +414,18 @@ test('the class combo is quoted verbatim, or admitted as unknown', () => {
   const one = { startTs: T0, endTs: T0 + HOUR, classes: ['PAL', 'MNK', 'ENC'], inferred: false }
   assert.equal(comboText([one]), 'class combo: PAL/MNK/ENC')
   assert.equal(
-    comboText([one, { ...one, startTs: T0 + HOUR, classes: ['PAL', 'MNK', 'WIZ'], inferred: true }]),
+    comboText([
+      one,
+      { ...one, startTs: T0 + HOUR, classes: ['PAL', 'MNK', 'WIZ'], inferred: true },
+    ]),
     'class combo: PAL/MNK/ENC → PAL/MNK/WIZ',
-    'a swap inside the range shows both loadouts, in order'
+    'a swap inside the range shows both loadouts, in order',
   )
-  assert.equal(comboText([one, { ...one, startTs: T0 + HOUR }]), 'class combo: PAL/MNK/ENC', 'one loadout, one label')
+  assert.equal(
+    comboText([one, { ...one, startTs: T0 + HOUR }]),
+    'class combo: PAL/MNK/ENC',
+    'one loadout, one label',
+  )
   assert.equal(comboInferred([one, { ...one, inferred: true }]), true)
 })
 
@@ -387,9 +451,17 @@ test('offline is SAID only where the log said it, and stays out of the idle word
 
   // The active/idle chip is untouched by offline: it reports the two things it always did, and
   // the offline number is its own chip beside it.
-  const camped = stats({ activeMs: 40 * MIN, idleMs: 20 * MIN, offlineMs: 8 * HOUR, offlineGaps: 1 })
+  const camped = stats({
+    activeMs: 40 * MIN,
+    idleMs: 20 * MIN,
+    offlineMs: 8 * HOUR,
+    offlineGaps: 1,
+  })
   assert.equal(activeIdleText(camped), '40m active · 20m idle')
-  assert.ok(!/offline/i.test(activeIdleText(camped)), 'the active/idle chip never grows an offline clause')
+  assert.ok(
+    !/offline/i.test(activeIdleText(camped)),
+    'the active/idle chip never grows an offline clause',
+  )
 })
 
 test('the offline caption and tooltip name the state, not the method', () => {
@@ -401,7 +473,10 @@ test('the offline caption and tooltip name the state, not the method', () => {
   assert.ok(!/camp\/login|only known|counted as idle/.test(OFFLINE_TITLE), OFFLINE_TITLE)
   // …and the idle caption stays exactly what it was: it covers every silence the app cannot
   // attribute, which is precisely the set that must not be called offline.
-  assert.equal(idleRuleCaption(IDLE_GAP_MS), 'idle = no experience, kill, or loot event for over 5 minutes')
+  assert.equal(
+    idleRuleCaption(IDLE_GAP_MS),
+    'idle = no experience, kill, or loot event for over 5 minutes',
+  )
   assert.ok(!/AFK|offline|away/i.test(idleRuleCaption(IDLE_GAP_MS)))
 })
 
@@ -412,7 +487,7 @@ test('a zone row prints its logout beside its active time, and nothing when ther
   assert.equal(plain.offlineMs, 0)
 
   const [camp] = zoneStatRows([
-    zone({ zone: 'Befallen', spanMs: 10 * HOUR, idleMs: 61 * MIN, offlineMs: 8 * HOUR + 59 * MIN })
+    zone({ zone: 'Befallen', spanMs: 10 * HOUR, idleMs: 61 * MIN, offlineMs: 8 * HOUR + 59 * MIN }),
   ])
   assert.equal(camp.time, '10h 0m')
   assert.equal(camp.active, '0s', 'the identity holds: 10h - 1h01m idle - 8h59m offline')
@@ -428,7 +503,10 @@ test('the unstated footnote appears only when it is true', () => {
   assert.equal(unstatedCaption(stats({ expSamples: 40, expUnstated: 0 })), null)
   const note = unstatedCaption(stats({ expSamples: 40, expUnstated: 1 }))
   assert.match(note ?? '', /^\* 1 experience line stated no percentage/, 'singular')
-  assert.match(unstatedCaption(stats({ expUnstated: 22 })) ?? '', /22 experience lines stated no percentage/)
+  assert.match(
+    unstatedCaption(stats({ expUnstated: 22 })) ?? '',
+    /22 experience lines stated no percentage/,
+  )
 })
 
 test('the active-time definition answers the question a user actually asked (JOS-249)', () => {
@@ -448,22 +526,31 @@ test('the active-time definition answers the question a user actually asked (JOS
   // copy of 5 would go on saying 5 the day the measurement moved it.
   assert.ok(
     ACTIVE_TIME_TITLE.includes(`over ${IDLE_GAP_MS / MIN} minutes`),
-    `the sentence must quote IDLE_GAP_MS: ${ACTIVE_TIME_TITLE}`
+    `the sentence must quote IDLE_GAP_MS: ${ACTIVE_TIME_TITLE}`,
   )
 })
 
 test('withActiveTime appends the definition rather than replacing what a surface already said', () => {
   assert.equal(withActiveTime('Motes per hour.'), `Motes per hour. ${ACTIVE_TIME_TITLE}`)
   // The one title in this file that already had a sentence keeps it, and gains the definition.
-  assert.match(AA_RATE_TITLE, /^AA completions and ability points per hour of active time\. Active time = /)
+  assert.match(
+    AA_RATE_TITLE,
+    /^AA completions and ability points per hour of active time\. Active time = /,
+  )
 })
 
 test('the levels-per-hour hero card is the only one that hovers the definition', () => {
-  const heroes = rangeHeroes(stats({ activeMs: 2 * HOUR, levelsPerHourActive: 1.42, expSamples: 12 }), 'active')
+  const heroes = rangeHeroes(
+    stats({ activeMs: 2 * HOUR, levelsPerHourActive: 1.42, expSamples: 12 }),
+    'active',
+  )
   const rateCard = heroes.find((h) => h.id === 'rate')
-  assert.match(rateCard?.title ?? '', /Active time = /, 'the rate card divides by it, so it says what it is')
+  assert.match(
+    rateCard?.title ?? '',
+    /Active time = /,
+    'the rate card divides by it, so it says what it is',
+  )
   for (const h of heroes.filter((c) => c.id !== 'rate')) {
     assert.equal(h.title, undefined, `${h.id} has no rate denominator and so carries no hover`)
   }
 })
-

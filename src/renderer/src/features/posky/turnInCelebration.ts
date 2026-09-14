@@ -65,7 +65,10 @@ export interface DetectedTurnIns {
  * let a turn-in be placed relative to an inventory dump, and what let the log's turn-ins merge with
  * the persisted ones without double-counting (shared/questTurnIns.ts owns both merges).
  */
-export function countTurnIns(turnIns: readonly TurnInEvent[], quests: PoskyQuest[]): DetectedTurnIns {
+export function countTurnIns(
+  turnIns: readonly TurnInEvent[],
+  quests: PoskyQuest[],
+): DetectedTurnIns {
   const instants: TurnInInstants = {}
   const offered: TurnInOffered = {}
   for (const t of turnIns) {
@@ -103,7 +106,7 @@ export interface TurnInTransition {
  */
 export function newlyCompletedTurnIns(
   prevCounts: Record<string, number> | null,
-  counts: Record<string, number>
+  counts: Record<string, number>,
 ): TurnInTransition[] {
   if (prevCounts == null) return []
   const out: TurnInTransition[] = []

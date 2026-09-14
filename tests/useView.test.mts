@@ -18,7 +18,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { mountHook } from './hookHost.mjs'
-import { EngineClientContext, EngineClientProvider, useViewFrom } from '../src/renderer/src/lib/useView'
+import {
+  EngineClientContext,
+  EngineClientProvider,
+  useViewFrom,
+} from '../src/renderer/src/lib/useView'
 import type { EngineClient, ViewHandle, ViewState } from '../src/shared/dataServer/client'
 import { EngineError } from '../src/shared/dataServer/client'
 import type { Row, ViewDescriptor } from '../src/shared/dataServer/protocol.generated'
@@ -60,12 +64,12 @@ function fakeClient(): Fake {
         },
         close: () => {
           entry.closed = true
-        }
+        },
       }
     },
     onState: () => () => undefined,
     onProgress: () => () => undefined,
-    close: () => undefined
+    close: () => undefined,
   } as unknown as EngineClient
   return {
     client,
@@ -74,7 +78,7 @@ function fakeClient(): Fake {
       const entry = opened[opened.length - 1]
       entry.view = view
       entry.listener(view)
-    }
+    },
   }
 }
 
@@ -149,8 +153,8 @@ test('AN EQUAL DESCRIPTOR WRITTEN INLINE DOES NOT RESUBSCRIBE', () => {
       source: 'loot.ledger',
       filter: { session: 'current' },
       sort: [['at', 'desc']],
-      window: { offset: 0, limit: 50 }
-    })
+      window: { offset: 0, limit: 50 },
+    }),
   )
   host.act(() => {
     fake.push(loaded([{ key: 'a', cells: {} }]))
@@ -181,7 +185,12 @@ test('a CHANGED descriptor resubscribes, and shows loading rather than the old q
   assert.deepEqual(host.value, LOADING, 'the old query-s rows were shown under the new query')
 
   host.act(() => {
-    fake.push(loaded([{ key: 'b', cells: {} }, { key: 'c', cells: {} }]))
+    fake.push(
+      loaded([
+        { key: 'b', cells: {} },
+        { key: 'c', cells: {} },
+      ]),
+    )
   })
   assert.equal(host.value.rows?.length, 2)
   host.unmount()
@@ -197,7 +206,7 @@ test('the window a subscription already holds is read at subscribe time', () => 
       const handle = fake.client.subscribe(descriptor, listener)
       fake.opened[fake.opened.length - 1].view = loaded([{ key: 'immediate', cells: {} }], 7)
       return handle
-    }
+    },
   } as unknown as EngineClient
   const host = mountHook(() => useViewFrom(client, { source: 'loot.ledger' }))
   assert.deepEqual(host.value.rows?.[0].key, 'immediate')

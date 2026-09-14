@@ -59,7 +59,7 @@ function KindChip({ kind }: { kind: WishHit['kind'] }): JSX.Element {
 function HitRow({
   hit,
   wished,
-  onPick
+  onPick,
 }: {
   hit: WishHit
   wished: boolean
@@ -79,7 +79,7 @@ function HitRow({
         flexWrap: 'nowrap',
         opacity: wished ? 0.55 : 1,
         cursor: wished ? 'default' : 'pointer',
-        ...(wished ? {} : { '&:hover': { bgcolor: 'action.hover' } })
+        ...(wished ? {} : { '&:hover': { bgcolor: 'action.hover' } }),
       }}
     >
       {hit.iconId !== undefined && (
@@ -121,7 +121,8 @@ function HitRow({
 
 /** Why the list is empty, in the words of whichever reason applies. Never a bare "no results". */
 function emptyLine(text: string, ready: boolean): string {
-  if (text.trim().length < MIN_WISH_QUERY) return 'Type at least two letters to search every item and effect.'
+  if (text.trim().length < MIN_WISH_QUERY)
+    return 'Type at least two letters to search every item and effect.'
   if (!ready) return 'Reading the item database…'
   return 'Nothing in the item database matches that.'
 }
@@ -136,14 +137,20 @@ export interface WishAddProps {
   onPick: (hit: WishHit) => void
 }
 
-export default function WishAdd({ gear, donors, ready, wished, onPick }: WishAddProps): JSX.Element {
+export default function WishAdd({
+  gear,
+  donors,
+  ready,
+  wished,
+  onPick,
+}: WishAddProps): JSX.Element {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const [text, setText] = useState('')
   // The standing search law: the input echoes instantly, the scan runs on the deferred value.
   const query = useDeferredValue(text)
   const hits = useMemo(
     () => (anchor === null ? [] : searchWishCorpus(gear, donors, query)),
-    [anchor, gear, donors, query]
+    [anchor, gear, donors, query],
   )
 
   return (

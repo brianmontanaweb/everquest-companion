@@ -102,7 +102,7 @@ function logsShim(): ReadShim {
     now: () => Date.now(),
     timeoutMs: SERVE_TIMEOUT_MS,
     noteEveryMs: NOTE_EVERY_MS,
-    delay
+    delay,
   })
   return shim
 }

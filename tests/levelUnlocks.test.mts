@@ -13,7 +13,12 @@
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { CLASS_ABBRS, type ClassAbbr, type ComboInterval, type ComboSlot } from '../src/shared/classCombo'
+import {
+  CLASS_ABBRS,
+  type ClassAbbr,
+  type ComboInterval,
+  type ComboSlot,
+} from '../src/shared/classCombo'
 import {
   comboClassSet,
   comboClassesAt,
@@ -28,7 +33,7 @@ import {
   type LevelUnlockData,
   type LevelUnlocks,
   type UnlockRow,
-  type UnlockSpell
+  type UnlockSpell,
 } from '../src/shared/levelUnlocks'
 import { spellMetricsParts } from '../src/shared/spellMetrics'
 import { buildLevelUnlocks } from '../src/main/data/levelUnlocks'
@@ -39,7 +44,7 @@ const slot = (candidates: ClassAbbr[]): ComboSlot => ({
   candidates,
   confidence: candidates.length === 1 ? 1 : 0.4,
   provenance: 'inferred',
-  because: []
+  because: [],
 })
 
 function interval(startTs: number, endTs: number | null, slots: ComboSlot[]): ComboInterval {
@@ -57,28 +62,42 @@ function interval(startTs: number, endTs: number | null, slots: ComboSlot[]): Co
     levelLo: null,
     levelHi: null,
     evidenceCount: slots.length,
-    userLocked: false
+    userLocked: false,
   }
 }
 
 /** A tiny hand-built dataset: two spells, two classes' skills, one disputed discipline. */
 const DATA: LevelUnlockData = {
   spells: [
-    { name: 'Cure Blindness', at: [{ cls: 'CLR', level: 12 }, { cls: 'PAL', level: 22 }], mana: 20 },
+    {
+      name: 'Cure Blindness',
+      at: [
+        { cls: 'CLR', level: 12 },
+        { cls: 'PAL', level: 22 },
+      ],
+      mana: 20,
+    },
     { name: 'Word of Health', at: [{ cls: 'CLR', level: 12 }], castTimeMs: 2500, durationMs: 0 },
-    { name: 'Shield of Words', at: [{ cls: 'CLR', level: 30 }] }
+    { name: 'Shield of Words', at: [{ cls: 'CLR', level: 30 }] },
   ],
   skills: {
     CLR: [
       { name: 'Bind Wound', level: 12, kind: 'skill' },
-      { name: 'Meditate', level: 12, kind: 'skill' }
+      { name: 'Meditate', level: 12, kind: 'skill' },
     ],
     PAL: [
       { name: 'Bind Wound', level: 12, kind: 'skill' },
-      { name: 'Lay on Hands', level: 1, kind: 'innate' }
+      { name: 'Lay on Hands', level: 1, kind: 'innate' },
     ],
-    MNK: [{ name: 'Whirlwind', level: 12, kind: 'disc', dispute: "the Disciplines page strikes MNK through" }]
-  }
+    MNK: [
+      {
+        name: 'Whirlwind',
+        level: 12,
+        kind: 'disc',
+        dispute: 'the Disciplines page strikes MNK through',
+      },
+    ],
+  },
 }
 
 /** The named spell row, which MUST be there — so the assertions read about the row, not the null. */
@@ -122,7 +141,7 @@ test('no interval at all is "we do not know yet", never an empty loadout', () =>
 test('the join is BY TIMESTAMP — a ding lands in the interval that covered it', () => {
   const intervals = [
     interval(1000, 2000, [slot(['CLR']), slot(['PAL'])]),
-    interval(2000, null, [slot(['ROG']), slot(['BER'])])
+    interval(2000, null, [slot(['ROG']), slot(['BER'])]),
   ]
   assert.deepEqual(comboClassSet(comboClassesAt(intervals, 1500)), ['CLR', 'PAL'])
   assert.deepEqual(comboClassSet(comboClassesAt(intervals, 9999)), ['BER', 'ROG'])
@@ -136,8 +155,14 @@ const CLR_PAL = comboClassesOf(interval(0, null, [slot(['CLR']), slot(['PAL'])])
 
 test('a level lists only what THESE classes gain at THAT level', () => {
   const u = unlocksAtLevel(DATA, CLR_PAL, 12)
-  assert.deepEqual(u.spells.map((r) => r.name), ['Cure Blindness', 'Word of Health'])
-  assert.deepEqual(u.skills.map((r) => r.name), ['Bind Wound', 'Meditate'])
+  assert.deepEqual(
+    u.spells.map((r) => r.name),
+    ['Cure Blindness', 'Word of Health'],
+  )
+  assert.deepEqual(
+    u.skills.map((r) => r.name),
+    ['Bind Wound', 'Meditate'],
+  )
   assert.deepEqual(unlockCounts(u), { spells: 2, skills: 2 })
   // Cure Blindness is CLR 12 / PAL 22: at 12 it is a CLERIC row, and says so with one chip.
   assert.deepEqual(u.spells[0].classes, ['CLR'])
@@ -154,9 +179,9 @@ test('a spell the wiki carries TWICE is one row — a bookkeeping duplicate neve
   const dupes: LevelUnlockData = {
     spells: [
       { name: 'Imbue Emerald', at: [{ cls: 'CLR', level: 29 }] },
-      { name: 'Imbue Emerald', at: [{ cls: 'CLR', level: 29 }], mana: 100 }
+      { name: 'Imbue Emerald', at: [{ cls: 'CLR', level: 29 }], mana: 100 },
     ],
-    skills: {}
+    skills: {},
   }
   const clr = comboClassesOf(interval(0, null, [slot(['CLR']), slot(['CLR'])]))
   assert.deepEqual(unlockCounts(unlocksAtLevel(dupes, clr, 29)), { spells: 1, skills: 0 })
@@ -164,7 +189,10 @@ test('a spell the wiki carries TWICE is one row — a bookkeeping duplicate neve
 
 test('a class OUTSIDE the loadout contributes nothing, however loudly the DB states it', () => {
   const u = unlocksAtLevel(DATA, CLR_PAL, 12)
-  assert.equal(u.skills.some((r) => r.name === 'Whirlwind'), false)
+  assert.equal(
+    u.skills.some((r) => r.name === 'Whirlwind'),
+    false,
+  )
 })
 
 test('a disputed row is CARRIED with the wiki’s own sentence, never dropped', () => {
@@ -265,7 +293,10 @@ test('JOS-415: a necro gets Leach at 9 and NOT at 12 — the duplicate page no l
   // ONE card, not two: the renderer folds by name within a level, and both DB rows now say 9.
   assert.equal(nine.filter((n) => n === 'Leach').length, 1)
   // The level-12 card is not empty — the wiki's own list for that level survives untouched.
-  assert.ok(twelve.length > 0, 'level 12 should still carry the necro spells the wiki does place there')
+  assert.ok(
+    twelve.length > 0,
+    'level 12 should still carry the necro spells the wiki does place there',
+  )
 })
 
 test('JOS-528: an enchanter gets Swift Like The Wind at 47 and NOT at 49 — the Leach shape again', () => {
@@ -297,7 +328,8 @@ test('every UNCONFIRMED non-Rogue discipline row is LABELED disputed; every Rogu
   for (const [cls, rows] of Object.entries(REAL.skills)) {
     for (const row of rows ?? []) {
       if (row.kind !== 'disc') continue
-      if (cls === 'ROG') assert.equal(row.dispute, undefined, `ROG ${row.name} must carry no dispute`)
+      if (cls === 'ROG')
+        assert.equal(row.dispute, undefined, `ROG ${row.name} must carry no dispute`)
       else if (CONFIRMED.has(`${cls}:${row.name}`)) {
         assert.equal(row.dispute, undefined, `${cls} ${row.name} was confirmed in game — no chip`)
       } else {
@@ -336,7 +368,10 @@ test('a real ding produces a real subtitle — the exact string the toast would 
   assert.equal(u.ambiguous, false)
   // Every row names at least one class IN the loadout — the join never leaks a stranger's unlock.
   for (const row of [...u.spells, ...u.skills]) {
-    assert.ok(row.classes.every((c) => ['CLR', 'PAL', 'ENC'].includes(c)), `${row.name}: ${row.classes.join('/')}`)
+    assert.ok(
+      row.classes.every((c) => ['CLR', 'PAL', 'ENC'].includes(c)),
+      `${row.name}: ${row.classes.join('/')}`,
+    )
   }
 })
 
@@ -379,8 +414,16 @@ test('an UNRESOLVED slot marks the ownership claim, it does not suppress it', ()
 
 test('two loadout classes gaining it at the SAME level get the quiet `also`, not `already yours`', () => {
   const data: LevelUnlockData = {
-    spells: [{ name: 'Sense Undead', at: [{ cls: 'CLR', level: 27 }, { cls: 'PAL', level: 27 }] }],
-    skills: {}
+    spells: [
+      {
+        name: 'Sense Undead',
+        at: [
+          { cls: 'CLR', level: 27 },
+          { cls: 'PAL', level: 27 },
+        ],
+      },
+    ],
+    skills: {},
   }
   const combo = comboClassesOf(interval(0, null, [slot(['CLR']), slot(['PAL'])]))
   const row = unlocksAtLevel(data, combo, 27).spells[0]
@@ -397,19 +440,29 @@ test('the replaces phrase is scoped to the row own classes, and dedupes', () => 
     level: 10,
     spell: {
       name: 'Healing',
-      at: [{ cls: 'CLR', level: 10 }, { cls: 'SHM', level: 19 }],
+      at: [
+        { cls: 'CLR', level: 10 },
+        { cls: 'SHM', level: 19 },
+      ],
       replaces: [
         { name: 'Light Healing', cls: 'CLR' },
-        { name: 'Light Healing', cls: 'SHM' }
-      ]
-    }
+        { name: 'Light Healing', cls: 'SHM' },
+      ],
+    },
   }
-  assert.equal(replacesPhrase(row), 'replaces Light Healing (CLR)', 'the shaman answer is not this row')
-  assert.equal(replacesPhrase({ ...row, classes: ['SHM'], level: 19 }), 'replaces Light Healing (SHM)')
+  assert.equal(
+    replacesPhrase(row),
+    'replaces Light Healing (CLR)',
+    'the shaman answer is not this row',
+  )
+  assert.equal(
+    replacesPhrase({ ...row, classes: ['SHM'], level: 19 }),
+    'replaces Light Healing (SHM)',
+  )
   // Two classes at once print both, because a trio really does retire two spells.
   assert.equal(
     replacesPhrase({ ...row, classes: ['CLR', 'SHM'] }),
-    'replaces Light Healing (CLR), Light Healing (SHM)'
+    'replaces Light Healing (CLR), Light Healing (SHM)',
   )
   // A row with no line says nothing.
   assert.equal(replacesPhrase({ kind: 'spell', name: 'X', classes: ['CLR'], level: 1 }), null)
@@ -420,7 +473,7 @@ test('the replaces phrase is scoped to the row own classes, and dedupes', () => 
   assert.deepEqual(replacesEntries(row), [{ name: 'Light Healing', cls: 'CLR' }])
   assert.deepEqual(replacesEntries({ ...row, classes: ['CLR', 'SHM'] }), [
     { name: 'Light Healing', cls: 'CLR' },
-    { name: 'Light Healing', cls: 'SHM' }
+    { name: 'Light Healing', cls: 'SHM' },
   ])
   assert.deepEqual(replacesEntries({ kind: 'spell', name: 'X', classes: ['CLR'], level: 1 }), [])
 })
@@ -460,7 +513,10 @@ test('a real level 24 CLR/PAL/ENC row reads the way the panel prints it', () => 
   const combo = comboClassesOf(interval(0, null, [slot(['CLR']), slot(['PAL']), slot(['ENC'])]))
   const rows = unlocksAtLevel(REAL, combo, 24).spells
   const withFigures = rows.filter((r) => r.spell?.metrics !== undefined)
-  assert.ok(withFigures.length > 0, `level 24 CLR/PAL/ENC: ${String(rows.length)} spells, none with figures`)
+  assert.ok(
+    withFigures.length > 0,
+    `level 24 CLR/PAL/ENC: ${String(rows.length)} spells, none with figures`,
+  )
   for (const r of withFigures) {
     const parts = spellMetricsParts(r.spell?.metrics ?? {})
     assert.ok(parts.length > 0, r.name)

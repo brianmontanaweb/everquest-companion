@@ -24,7 +24,7 @@ import {
   CLASS_UNLOCK_CATEGORY,
   CLASS_UNLOCK_PREFIX,
   classUnlockClaims,
-  parseAchievementsDump
+  parseAchievementsDump,
 } from '../src/shared/outputs/achievements'
 import { OUTPUT_KINDS, isOutputFileName, outputKind, parseOutput } from '../src/main/outputs/kinds'
 
@@ -85,7 +85,7 @@ test('the counter column is carried verbatim, and only where the file has one', 
   assert.deepEqual(
     [...new Set(withProgress.map((r) => r.category))].sort(),
     ['Slayer: Conquest', 'Slayer: Skill', 'Slayer: Special'],
-    'only the Slayer categories carry a counter'
+    'only the Slayer categories carry a counter',
   )
   const gnolls = DUMP.rows.find((r) => r.component === 'Gnolls')
   assert.equal(gnolls?.progress, '2/5000')
@@ -96,7 +96,7 @@ test('the tree is resolved onto each row', () => {
   assert.deepEqual(first, {
     category: 'Untapped Potential: Races',
     achievement: 'Race Unlock - Barbarian',
-    status: 'incomplete'
+    status: 'incomplete',
   })
   const second = DUMP.rows[1]
   assert.equal(second.category, 'Untapped Potential: Races')
@@ -114,8 +114,8 @@ test('a malformed line is dropped, never half-read', () => {
       'C\tnot empty\tbad indent',
       'C\t\t\t\t\ttoo deep',
       'C\t\t', // empty name
-      'C\t' // empty achievement name
-    ].join('\r\n')
+      'C\t', // empty achievement name
+    ].join('\r\n'),
   )
   assert.deepEqual(dump.rows, [
     { category: 'A Category', achievement: 'Good Achievement', status: 'complete' },
@@ -123,8 +123,8 @@ test('a malformed line is dropped, never half-read', () => {
       category: 'A Category',
       achievement: 'Good Achievement',
       component: 'Good Component',
-      status: 'complete'
-    }
+      status: 'complete',
+    },
   ])
 })
 
@@ -146,17 +146,16 @@ const CLAIMS = classUnlockClaims(DUMP)
 
 test('the class-unlock category holds one Obtain row per Sky quest', () => {
   const obtain = DUMP.rows.filter(
-    (r) => r.category === CLASS_UNLOCK_CATEGORY && r.component?.startsWith('Obtain ') === true
+    (r) => r.category === CLASS_UNLOCK_CATEGORY && r.component?.startsWith('Obtain ') === true,
   )
   // The join's whole basis: 95 Obtain rows, and the Sky quest set is 95 quests
   // (tests/achievementInference.test.mts pins the other side of that equality).
   assert.equal(obtain.length, 95)
   assert.equal(
-    DUMP.rows.filter(
-      (r) => r.category === CLASS_UNLOCK_CATEGORY && r.component === undefined
-    ).length,
+    DUMP.rows.filter((r) => r.category === CLASS_UNLOCK_CATEGORY && r.component === undefined)
+      .length,
     16,
-    'sixteen classes'
+    'sixteen classes',
   )
   for (const r of obtain) assert.ok(r.achievement.startsWith(CLASS_UNLOCK_PREFIX))
 })
@@ -165,21 +164,21 @@ test('the owner’s dump vouches for the rewards it marks C, and only those', ()
   assert.equal(CLAIMS.length, 48, 'earned class-unlock rewards on the owner’s real dump')
   assert.ok(
     CLAIMS.some((c) => c.className === 'Bard' && c.item === 'Mask of Song'),
-    'trailing period stripped'
+    'trailing period stripped',
   )
   assert.ok(
     CLAIMS.some((c) => c.className === 'Berserker' && c.item === 'Molten Coil'),
-    'a row with no trailing period reads the same'
+    'a row with no trailing period reads the same',
   )
   assert.ok(
     CLAIMS.some((c) => c.className === 'Shadowknight'),
-    'the class name is the GAME’s spelling, kept verbatim'
+    'the class name is the GAME’s spelling, kept verbatim',
   )
   // One-directional: nothing the player has NOT obtained is in the record at all.
   assert.equal(
     CLAIMS.some((c) => c.item === 'Skycleaver'),
     false,
-    'an I row is not a claim'
+    'an I row is not a claim',
   )
 })
 
@@ -188,27 +187,29 @@ test('the boilerplate components are never claims, but they decide the grant (JO
   // dump they can be COMPLETE: the owner is a Paladin, so that achievement's "will autocomplete if
   // you chose to confirm your Primary Class as a Paladin" row is C. It credits no quest.
   const paladin = DUMP.rows.filter((r) => r.achievement === 'Primary Class Unlock - Paladin')
-  const autocomplete = paladin.find((r) => r.component?.startsWith('This achievement will') === true)
+  const autocomplete = paladin.find(
+    (r) => r.component?.startsWith('This achievement will') === true,
+  )
   assert.equal(autocomplete?.status, 'complete', 'the autocomplete row is C for the class we play')
   assert.equal(
     paladin.filter((r) => r.component?.startsWith('Obtain ') === true).length,
     4,
-    'four Sky quests'
+    'four Sky quests',
   )
   assert.equal(
     CLAIMS.filter((c) => c.className === 'Paladin').length,
     4,
-    'four claims — the boilerplate C row added none'
+    'four claims — the boilerplate C row added none',
   )
   assert.equal(
     CLAIMS.some((c) => c.item.startsWith('This achievement')),
-    false
+    false,
   )
   // What it DOES add, since JOS-441: the `grant` every claim of that class then carries. The row is
   // not a claim and never was; it is the file's own statement of which question the claims answer.
   assert.deepEqual(
     [...new Set(CLAIMS.filter((c) => c.className === 'Paladin').map((c) => c.grant))],
-    ['confirm']
+    ['confirm'],
   )
 })
 
@@ -217,19 +218,24 @@ test('the ACHIEVEMENT row’s own status is never read', () => {
   // using a Primary Class Unlock Token" component is I — the achievement completed by a route that
   // has nothing to do with the quests. Reading the parent would credit every quest of that class.
   const paladin = DUMP.rows.find(
-    (r) => r.achievement === 'Primary Class Unlock - Paladin' && r.component === undefined
+    (r) => r.achievement === 'Primary Class Unlock - Paladin' && r.component === undefined,
   )
   assert.equal(paladin?.status, 'complete')
   const bypass = DUMP.rows.find(
     (r) =>
       r.achievement === 'Primary Class Unlock - Paladin' &&
-      r.component?.startsWith('This achievement can be bypassed') === true
+      r.component?.startsWith('This achievement can be bypassed') === true,
   )
-  assert.equal(bypass?.status, 'incomplete', 'a C parent over an I child — the parent proves nothing')
+  assert.equal(
+    bypass?.status,
+    'incomplete',
+    'a C parent over an I child — the parent proves nothing',
+  )
   // And the reader agrees where it costs something: sixteen achievements, three of them C
   // (Races/Classes/Deity each have one), and the claim count is decided entirely by components.
   const completeParents = DUMP.rows.filter(
-    (r) => r.category === CLASS_UNLOCK_CATEGORY && r.component === undefined && r.status === 'complete'
+    (r) =>
+      r.category === CLASS_UNLOCK_CATEGORY && r.component === undefined && r.status === 'complete',
   )
   assert.equal(completeParents.length, 1, 'exactly one class-unlock achievement is complete')
   assert.ok(CLAIMS.length > 4, 'yet claims come from fifteen other classes too')
@@ -237,7 +243,7 @@ test('the ACHIEVEMENT row’s own status is never read', () => {
 
 test('a dump with nothing to say about Sky changes nothing', () => {
   const dump = parseAchievementsDump(
-    ['EverQuest: Raids', 'C\tConqueror of Kedge Keep', 'C\t\tPhinigel Autropos'].join('\r\n')
+    ['EverQuest: Raids', 'C\tConqueror of Kedge Keep', 'C\t\tPhinigel Autropos'].join('\r\n'),
   )
   assert.equal(dump.rows.length, 2, 'it still parses')
   assert.deepEqual(classUnlockClaims(dump), [], 'and vouches for nothing')

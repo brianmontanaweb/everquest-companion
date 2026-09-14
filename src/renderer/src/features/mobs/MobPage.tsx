@@ -44,7 +44,11 @@ import { type JSX, useEffect, useState } from 'react'
 import { Chip, Divider, Paper, Stack, Typography } from '@mui/material'
 import type { KillMap, MobEntry, MobKnowledge, MobQuestUse } from '@shared/types'
 import { killsFor } from '@shared/kills'
-import { CONSIDER_FACTION_COLOR, CONSIDER_FACTION_LABEL, considerDifficultyShort } from '@shared/logEvents'
+import {
+  CONSIDER_FACTION_COLOR,
+  CONSIDER_FACTION_LABEL,
+  considerDifficultyShort,
+} from '@shared/logEvents'
 import { wikiPageUrl } from '@shared/wiki'
 import { formatDate, formatDateTime } from '../../lib/formatDate'
 import { tierStyle } from '../../lib/tierChip'
@@ -78,7 +82,7 @@ type MobKillFacts = MobTarget['kill']
 function useMobKnowledge(
   mob: string,
   seed?: MobKnowledge,
-  entry?: MobEntry
+  entry?: MobEntry,
 ): { data: MobKnowledge | null; loading: boolean } {
   const [fetched, setFetched] = useState<MobKnowledge | null>(seed ?? null)
   const [loading, setLoading] = useState(!seed)
@@ -103,9 +107,7 @@ function useMobKnowledge(
 
   if (!entry) return { data: fetched, loading }
   const pinned = knowledgeFromEntry(entry)
-  const data: MobKnowledge = fetched
-    ? pinIdentity(fetched, pinned)
-    : { ...pinned, name: mob }
+  const data: MobKnowledge = fetched ? pinIdentity(fetched, pinned) : { ...pinned, name: mob }
   return { data, loading }
 }
 
@@ -134,7 +136,7 @@ function StatCard({
   label,
   value,
   hint,
-  testId
+  testId,
 }: {
   label: string
   value: string
@@ -163,7 +165,7 @@ function StatCard({
 function MobIdentity({
   mob,
   con,
-  kill
+  kill,
 }: {
   mob: string
   con?: MobConsiderContext
@@ -233,7 +235,7 @@ function MobStats({
   seenCount,
   page,
   con,
-  kill
+  kill,
 }: {
   wikiCount: number
   outCount: number
@@ -243,7 +245,13 @@ function MobStats({
   kill?: MobKillFacts
 }): JSX.Element {
   return (
-    <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap sx={{ mb: 2, mt: con ? 0 : 1.5 }}>
+    <Stack
+      direction="row"
+      spacing={1.5}
+      flexWrap="wrap"
+      useFlexGap
+      sx={{ mb: 2, mt: con ? 0 : 1.5 }}
+    >
       <StatCard
         label="Known drops"
         testId="mob-stat-drops"
@@ -263,7 +271,13 @@ function MobStats({
 }
 
 /** Level/zone as the WIKI states them — a range as often as a number. */
-function WikiLevelZone({ zone, levelText }: { zone?: string; levelText?: string }): JSX.Element | null {
+function WikiLevelZone({
+  zone,
+  levelText,
+}: {
+  zone?: string
+  levelText?: string
+}): JSX.Element | null {
   // Deliberately falsiness, not nullishness: an empty string from the page says nothing, so a
   // blank zone AND a blank level renders no line at all (what `zone || levelText` always meant).
   if (!zone && !levelText) return null
@@ -314,8 +328,8 @@ function KillsSection({ kill }: { kill?: MobKillFacts }): JSX.Element {
       </Typography>
       {kill && kill.count > 0 ? (
         <Typography variant="caption" color="text.secondary">
-          {kill.count} kill{kill.count === 1 ? '' : 's'} · first {formatDateTime(kill.firstTs)} · last{' '}
-          {formatDateTime(kill.lastTs)}
+          {kill.count} kill{kill.count === 1 ? '' : 's'} · first {formatDateTime(kill.firstTs)} ·
+          last {formatDateTime(kill.lastTs)}
         </Typography>
       ) : (
         <Quiet>Nothing recorded yet for this character.</Quiet>

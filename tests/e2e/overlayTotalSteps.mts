@@ -112,7 +112,7 @@ function readNameFit(overlay: Page, name: string, rate: string): Promise<FitRead
       titleEl.textContent = wasText
       return { after: passes[0], before: passes[1] }
     },
-    [TRIGGER, name, rate] as const
+    [TRIGGER, name, rate] as const,
   )
 }
 
@@ -120,7 +120,7 @@ function readNameFit(overlay: Page, name: string, rate: string): Promise<FitRead
 function headerText(overlay: Page): Promise<string> {
   return overlay.evaluate(
     (trig) => (document.querySelector(trig)?.parentElement as HTMLElement | null)?.innerText ?? '',
-    TRIGGER
+    TRIGGER,
   )
 }
 
@@ -133,7 +133,10 @@ function headerText(overlay: Page): Promise<string> {
  * numbers do not LOOK the same, not that either is a particular gold.
  */
 async function checkLabelledInPanel(overlay: Page): Promise<void> {
-  check('the meter states its aggregate inside the panel content', (await countOf(overlay, `${BARS} ${TOTAL}`)) === 1)
+  check(
+    'the meter states its aggregate inside the panel content',
+    (await countOf(overlay, `${BARS} ${TOTAL}`)) === 1,
+  )
 
   // The row is two spans with a flex gap between them, so `textContent` reads them run together
   // ('all175 dps'). Take the number off the front-loaded label rather than asserting a space the
@@ -141,7 +144,11 @@ async function checkLabelledInPanel(overlay: Page): Promise<void> {
   const text = ((await overlay.textContent(TOTAL)) ?? '').replace(/\s+/g, ' ').trim()
   const value = ((await overlay.textContent(TOTAL_VALUE)) ?? '').trim()
   const label = text.slice(0, text.length - value.length).trim()
-  check('…and it is LABELLED for what it covers, in the row itself rather than a hover', label === 'all', `${label} / ${value}`)
+  check(
+    '…and it is LABELLED for what it covers, in the row itself rather than a hover',
+    label === 'all',
+    `${label} / ${value}`,
+  )
   check('…and the label is on a rate, unit word and all', RATE.test(value), value)
 
   const bars = await countOf(overlay, BAR)
@@ -158,13 +165,13 @@ async function checkLabelledInPanel(overlay: Page): Promise<void> {
       if (!total || !own) return ''
       return `${getComputedStyle(total).color} | ${getComputedStyle(own).color}`
     },
-    [TOTAL_VALUE, BAR] as const
+    [TOTAL_VALUE, BAR] as const,
   )
   const [aggregate, personal] = colors.split(' | ')
   check(
     'the aggregate is VISUALLY DISTINCT from the personal figure on the bar below it',
     Boolean(aggregate) && aggregate !== personal,
-    colors || '(unreadable)'
+    colors || '(unreadable)',
   )
 }
 
@@ -180,7 +187,7 @@ export async function stepTotalOnPanel(overlay: Page, longName: string): Promise
   check(
     'the meter title bar states NO rate any more — that row is the fight name’s now',
     !RATE.test(header),
-    header.replace(/\s+/g, ' ').slice(0, 120)
+    header.replace(/\s+/g, ' ').slice(0, 120),
   )
 
   await checkLabelledInPanel(overlay)
@@ -195,7 +202,7 @@ export async function stepTotalOnPanel(overlay: Page, longName: string): Promise
     note(
       `the staged fixture's longest fight name is “${longName}” (${longName.length} chars), which ` +
         'already fits this title bar whole — so what is measured is that name REPEATED past the ' +
-        "row's width, which is a real EQ name's own letters at a length that has to truncate"
+        "row's width, which is a real EQ name's own letters at a length that has to truncate",
     )
   }
   const fit = await readNameFit(overlay, sample, rate)
@@ -203,12 +210,12 @@ export async function stepTotalOnPanel(overlay: Page, longName: string): Promise
   const { before, after } = fit as FitReadings
   note(
     `title bar with “${rate}” beside the name → without: ${before.chars} chars of “${sample}” fit → ` +
-      `${after.chars} chars, title span ${before.width.toFixed(1)}px → ${after.width.toFixed(1)}px`
+      `${after.chars} chars, title span ${before.width.toFixed(1)}px → ${after.width.toFixed(1)}px`,
   )
   check(
     'A LONG MOB NAME RENDERS MORE CHARACTERS — the room the rate gave up went to the fight name',
     after.chars > before.chars,
-    `${before.chars} → ${after.chars} characters (+${after.chars - before.chars})`
+    `${before.chars} → ${after.chars} characters (+${after.chars - before.chars})`,
   )
 }
 

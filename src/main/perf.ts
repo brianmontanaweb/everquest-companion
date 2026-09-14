@@ -57,7 +57,7 @@ import {
   type StartupMark,
   type StartupPhase,
   type StartupProfile,
-  type StartupStutterProbe
+  type StartupStutterProbe,
 } from '../shared/perf'
 import { formatDataWeight } from '../shared/dataWeight'
 import { startupReplayStats } from '../shared/telemetryStartup'
@@ -332,8 +332,8 @@ function reportStartupReplay(replayDoneAtMs: number): void {
       // to compare against" and "no new bytes" are opposite facts about a launch.
       ...(newBytes === undefined ? {} : { newBytes }),
       ...(firstMbMs === undefined ? {} : { firstMbMs }),
-      ...stutterReading()
-    })
+      ...stutterReading(),
+    }),
   )
 }
 
@@ -381,7 +381,7 @@ export function startupProfile(): StartupProfile {
     // manifest: every other member here is absent on a launch that did not produce it, while the
     // committed rows describe the BUILD and are true of every launch of it. The one part that is
     // per-launch (`heapAfterDataMb`) carries its own absence inside the ledger.
-    data: dataWeightLedger()
+    data: dataWeightLedger(),
   })
 }
 
@@ -394,7 +394,9 @@ function logStartupSummary(profile: StartupProfile): void {
     .map((p) => `${p.phase} ${String(Math.round(p.durationMs))}ms`)
     .join(', ')
   const replayed =
-    profile.eventsReplayed === undefined ? '' : `, ${String(profile.eventsReplayed)} events replayed`
+    profile.eventsReplayed === undefined
+      ? ''
+      : `, ${String(profile.eventsReplayed)} events replayed`
   // The block figures ride the same line: "6 s of replay" and "6 s of replay during which the main
   // loop was never more than 14 ms late" are different launches, and errors.log should say which.
   const blocked =
@@ -414,7 +416,7 @@ function logStartupSummary(profile: StartupProfile): void {
         ` over ${String(profile.replay.slices)} slices)`
   logInfo(
     `[everquest-companion] Startup ${String(Math.round(profile.totalMs))}ms` +
-      `${replayed}${blocked}${duty}${coldRead(profile)} (${worst}) - profile at ${profilePath()}`
+      `${replayed}${blocked}${duty}${coldRead(profile)} (${worst}) - profile at ${profilePath()}`,
   )
   // THE DATA LEDGER GETS ITS OWN LINE (JOS-458) rather than another clause on the one above. The
   // line above describes THIS launch; this one describes the BUILD, and it is the same every time
@@ -537,7 +539,7 @@ function emitSample(): void {
     cpuPercent: totals.cpuPercent,
     memoryMb: totals.memoryMb,
     byType,
-    lag
+    lag,
   }
   sendToMain(IPC.onPerfSample, sample)
 }

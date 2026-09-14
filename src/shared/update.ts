@@ -79,7 +79,7 @@ function jitter(ms: number, rand: () => number): number {
  */
 export function nextCheckDelayMs(
   opts: { phase: 'startup' | 'periodic' | 'resume'; consecutiveFailures?: number },
-  rand: () => number = Math.random
+  rand: () => number = Math.random,
 ): number {
   if (opts.phase === 'startup') return STARTUP_DELAY_MS + Math.round(rand() * STARTUP_JITTER_MS)
   // A WAKE IGNORES THE BACKOFF ON PURPOSE (JOS-307). The failures that walked the backoff out were
@@ -144,7 +144,7 @@ const FEED_PARSE_CODES = new Set([
   // GitHubProvider: `Cannot parse releases feed: <stack>,\nXML:\n<the entire atom feed>`.
   'ERR_UPDATER_INVALID_RELEASE_FEED',
   // Provider.parseUpdateInfo: latest.yml was absent, empty or not YAML.
-  'ERR_UPDATER_INVALID_UPDATE_INFO'
+  'ERR_UPDATER_INVALID_UPDATE_INFO',
 ])
 
 /** The parser sentences a body can produce, across Node versions (they were reworded in 20+). */
@@ -273,12 +273,7 @@ export function describeUpdateFailure(err: unknown): string {
 
 /** Which of the six kinds a failed check/download was. */
 export type UpdateFailureKind =
-  | 'interrupted'
-  | 'blocked'
-  | 'http'
-  | 'parse'
-  | 'unreachable'
-  | 'other'
+  'interrupted' | 'blocked' | 'http' | 'parse' | 'unreachable' | 'other'
 
 // ------------------------------------------- A POWERSHELL THAT ANSWERS NOTHING (JOS-421)
 //
@@ -449,7 +444,7 @@ export const UNREACHABLE_ERROR_CODES = [
   'ERR_CONNECTION_TIMED_OUT',
   'ERR_ADDRESS_UNREACHABLE',
   'ERR_PROXY_CONNECTION_FAILED',
-  'ERR_TIMED_OUT'
+  'ERR_TIMED_OUT',
 ] as const
 
 /** The same list as one word-bounded alternation. `net::ERR_X` matches on `ERR_X` because `:` is
@@ -582,7 +577,7 @@ function parseVersion(v: string): { nums: number[]; pre: string[] } | null {
   if (!m) return null
   return {
     nums: [Number(m[1]), Number(m[2]), Number(m[3])],
-    pre: m[4] ? m[4].split('.') : []
+    pre: m[4] ? m[4].split('.') : [],
   }
 }
 
@@ -639,7 +634,10 @@ function compareIdentifier(x: string, y: string): number {
 }
 
 /** True when `candidate` is strictly newer than `current` (unknown ⇒ false). */
-export function isNewerVersion(candidate: string | undefined, current: string | undefined): boolean {
+export function isNewerVersion(
+  candidate: string | undefined,
+  current: string | undefined,
+): boolean {
   if (!candidate || !current) return false
   return compareVersions(candidate, current) > 0
 }
@@ -653,7 +651,10 @@ export function isNewerVersion(candidate: string | undefined, current: string | 
  * Never guess (world-model law 1) — an unknown comparison defers to
  * electron-updater's own verdict.
  */
-export function isStaleVersion(candidate: string | undefined, current: string | undefined): boolean {
+export function isStaleVersion(
+  candidate: string | undefined,
+  current: string | undefined,
+): boolean {
   if (!candidate || !current) return false
   if (!parseVersion(candidate) || !parseVersion(current)) return false
   return compareVersions(candidate, current) <= 0
@@ -703,7 +704,7 @@ export function updateChipState(status: UpdateStatus, currentVersion?: string): 
         kind: 'downloading',
         percent: Math.max(0, Math.min(100, Math.round(status.percent ?? 0))),
         version: status.version,
-        checkedAt
+        checkedAt,
       }
     case 'available':
       if (stale(status.version)) return { kind: 'quiet', checkedAt, failed: false }
@@ -781,6 +782,6 @@ export function updateChipLine(ui: UpdateChipState, ctx: UpdateChipLineCtx): Upd
   return {
     label: ctx.age === null ? `${vPrefix}not checked yet` : `${vPrefix}checked ${ctx.age}`,
     tip,
-    failed: false
+    failed: false,
   }
 }

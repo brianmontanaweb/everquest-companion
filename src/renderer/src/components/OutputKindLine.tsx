@@ -51,7 +51,7 @@ export function useOutputStatus(kind: OutputKindId): OutputStatusState {
           if (alive()) setState({ status: null, ready: true })
         })
     },
-    [kind]
+    [kind],
   )
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export default function OutputKindLine({
   loadedAt,
   quiet,
   onRefresh,
-  testId
+  testId,
 }: OutputKindLineProps): JSX.Element | null {
   const { status, ready } = useOutputStatus(kind)
   if (!ready || status === null) return null

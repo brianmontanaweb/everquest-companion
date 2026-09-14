@@ -33,7 +33,7 @@ import {
   Divider,
   Link,
   Stack,
-  Typography
+  Typography,
 } from '@mui/material'
 import DescriptionIcon from '@mui/icons-material/Description'
 import { formatPerfBlock, type FeedbackPerf } from '@shared/feedbackPerf'
@@ -68,7 +68,13 @@ function EnvBlock({ env }: { env: Record<string, string> }): JSX.Element {
     )
   }
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 0.25 }}>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+        gap: 0.25,
+      }}
+    >
       {keys.map((k) => (
         <Field key={k} label={k} value={env[k]} />
       ))}
@@ -94,7 +100,7 @@ function PerfBlock({ perf }: { perf: FeedbackPerf | undefined }): JSX.Element | 
         fontSize: 11,
         whiteSpace: 'pre',
         overflowX: 'auto',
-        color: 'text.secondary'
+        color: 'text.secondary',
       }}
     >
       {formatPerfBlock(perf)}
@@ -123,8 +129,8 @@ function SliceSection({ detail }: { detail: TriageDetail }): JSX.Element | null 
     return (
       <Alert severity="warning" data-testid="triage-slice-missing">
         This report declared a log slice
-        {detail.logLines === undefined ? '' : ` (${detail.logLines.toLocaleString()} lines)`} but the
-        object is not in the bucket - the upload failed or the presigned POST expired.
+        {detail.logLines === undefined ? '' : ` (${detail.logLines.toLocaleString()} lines)`} but
+        the object is not in the bucket - the upload failed or the presigned POST expired.
       </Alert>
     )
   }
@@ -150,7 +156,7 @@ function SliceSection({ detail }: { detail: TriageDetail }): JSX.Element | null 
 
 export default function ReportDetail({
   detail,
-  onChanged
+  onChanged,
 }: {
   detail: TriageDetail
   onChanged: () => void

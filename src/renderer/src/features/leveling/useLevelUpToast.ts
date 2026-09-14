@@ -38,7 +38,10 @@ function newestDing(levels: readonly LevelEvent[]): number | null {
  * title never waits on it in practice, and if the pull failed the card still celebrates the
  * level with no subtitle rather than not celebrating at all.
  */
-async function fireLevelUpToast(ding: LevelEvent, intervals: readonly ComboInterval[]): Promise<void> {
+async function fireLevelUpToast(
+  ding: LevelEvent,
+  intervals: readonly ComboInterval[],
+): Promise<void> {
   const data = await levelUnlocks()
   const unlocks = unlocksAtLevel(data, comboClassesAt(intervals, ding.ts), ding.level)
   window.eq.showToast({
@@ -49,7 +52,7 @@ async function fireLevelUpToast(ding: LevelEvent, intervals: readonly ComboInter
     title: `Level ${String(ding.level)}!`,
     subtitle: levelUpSubtitle(unlocks),
     // The click target: the Leveling tab, panel anchored at the level that just dinged.
-    focus: { view: 'leveling', level: ding.level }
+    focus: { view: 'leveling', level: ding.level },
   })
 }
 

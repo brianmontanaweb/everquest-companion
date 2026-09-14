@@ -266,11 +266,14 @@ export function spellStatRows(d: SpellDetail): SpellStatRow[] {
   const rows: SpellStatRow[] = []
   if (d.spellType !== undefined) rows.push({ id: 'type', label: 'Type', value: d.spellType })
   if (d.targetType !== undefined) rows.push({ id: 'target', label: 'Target', value: d.targetType })
-  if (d.castTimeMs !== undefined) rows.push({ id: 'cast', label: 'Cast', value: seconds(d.castTimeMs) })
+  if (d.castTimeMs !== undefined)
+    rows.push({ id: 'cast', label: 'Cast', value: seconds(d.castTimeMs) })
   // Beside the cast, because the two are one sentence: the cycle is the first plus the second.
-  if (d.recastMs !== undefined) rows.push({ id: 'recast', label: 'Recast', value: seconds(d.recastMs) })
+  if (d.recastMs !== undefined)
+    rows.push({ id: 'recast', label: 'Recast', value: seconds(d.recastMs) })
   if (d.mana !== undefined) rows.push({ id: 'mana', label: 'Mana', value: String(d.mana) })
-  if (d.durationText !== undefined) rows.push({ id: 'duration', label: 'Duration', value: d.durationText })
+  if (d.durationText !== undefined)
+    rows.push({ id: 'duration', label: 'Duration', value: d.durationText })
   if (d.instrumentEnhanced !== undefined) {
     rows.push({ id: 'instrument', label: 'Instrument', value: d.instrumentEnhanced })
   }
@@ -383,7 +386,7 @@ const EFFECT_CLASS_LABEL: Record<string, string> = {
   memblur: 'memory blur',
   invisibility: 'invisibility',
   feignDeath: 'feign death',
-  healOverTime: 'heals over time'
+  healOverTime: 'heals over time',
 }
 
 /** The derived-roster words, in the order main listed them. Empty when nothing was derived. */
@@ -402,7 +405,7 @@ export function spellEffectClassLabels(d: SpellDetail): string[] {
  */
 export function spellFocusLines(d: SpellDetail): string[] {
   return (d.focusSources ?? []).map(
-    (f) => `worn +${String(Math.round(f.pct))}% ${f.side} · ${f.effect} · ${f.item}`
+    (f) => `worn +${String(Math.round(f.pct))}% ${f.side} · ${f.effect} · ${f.item}`,
   )
 }
 

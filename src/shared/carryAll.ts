@@ -69,7 +69,7 @@ import {
   type InventoryDump,
   type InventoryEntry,
   type InventoryPlace,
-  type KeyRingEntry
+  type KeyRingEntry,
 } from './outputs/inventory'
 
 // ---- the lanes -------------------------------------------------------------------------
@@ -96,7 +96,7 @@ export const LANE_LABELS: Record<FixedLaneId, string> = {
   bank: 'Bank',
   depot: 'Depot',
   keyring: 'Key rings',
-  elsewhere: 'Elsewhere'
+  elsewhere: 'Elsewhere',
 }
 
 /**
@@ -111,7 +111,7 @@ const CONTAINER_LANES: Record<ContainerKind, FixedLaneId> = {
   general: 'bags',
   bank: 'bank',
   sharedBank: 'bank',
-  personalDepot: 'depot'
+  personalDepot: 'depot',
 }
 
 /** Which lane a classified place belongs to. Total over `InventoryPlace`, by construction. */
@@ -191,7 +191,7 @@ function rowOfEntry(entry: InventoryEntry): CarryRow {
     location: locationText(entry.section, entry.location),
     count: entry.count > 0 ? entry.count : 1,
     lane: laneOfEntry(entry),
-    line: entry.line
+    line: entry.line,
   }
 }
 
@@ -208,7 +208,7 @@ function rowOfKeyRing(entry: KeyRingEntry): CarryRow {
     location: `${entry.section} / ${entry.category}`,
     count: 1,
     lane: 'keyring',
-    line: entry.line
+    line: entry.line,
   }
 }
 
@@ -228,7 +228,7 @@ function lanesOf(rows: readonly CarryRow[], sections: readonly string[]): CarryL
 
   const order: string[] = [
     ...FIXED_LANES,
-    ...sections.filter((s) => s !== PRIMARY_ITEM_SECTION).map((s) => `${SECTION_LANE_PREFIX}${s}`)
+    ...sections.filter((s) => s !== PRIMARY_ITEM_SECTION).map((s) => `${SECTION_LANE_PREFIX}${s}`),
   ]
   // Any lane the order missed still gets a chip, at the end: a row the UI cannot filter to is a
   // row the UI is hiding, and this file would rather grow an odd-looking chip than do that.

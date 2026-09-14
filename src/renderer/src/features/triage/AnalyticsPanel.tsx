@@ -42,14 +42,14 @@ import {
   Switch,
   Tab,
   Tabs,
-  Typography
+  Typography,
 } from '@mui/material'
 import type {
   TriageAnalytics,
   TriageAnalyticsData,
   TriageDownloads,
   TriageFunnelView,
-  TriageLiveSessions
+  TriageLiveSessions,
 } from '@shared/triage'
 import { TRIAGE_ANALYTICS_DAYS, TRIAGE_ANALYTICS_DEFAULT_DAYS } from '@shared/triage'
 import { formatNum } from '../../lib/formatRate'
@@ -63,7 +63,7 @@ import {
   Section,
   Sparkline,
   StartupSection,
-  VersionsSection
+  VersionsSection,
 } from './AnalyticsBits'
 import { CoverageSection } from './CoverageSection'
 import { PerfSection } from './PerfSection'
@@ -74,7 +74,7 @@ import {
   liveTiles,
   pctLabel,
   pulseTiles,
-  windowIsEmpty
+  windowIsEmpty,
 } from './analyticsRows'
 
 /**
@@ -85,7 +85,7 @@ import {
  */
 function PulseSection({
   data,
-  live
+  live,
 }: {
   data: TriageAnalyticsData
   live?: TriageLiveSessions
@@ -107,7 +107,13 @@ function PulseSection({
           </Stack>
         ))}
       </Box>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 2 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: 2,
+        }}
+      >
         <Stack spacing={0.25}>
           <Typography variant="caption" color="text.secondary">
             Active installs per day
@@ -130,11 +136,17 @@ function AdoptionSection({ data }: { data: TriageAnalyticsData }): JSX.Element {
   return (
     <Section title="Adoption">
       <Typography variant="caption" color="text.secondary">
-        Feature numbers are USES, not reach: a daily counter cannot say how many distinct
-        installs touched a feature without keeping a per-install trail, which this design
-        deliberately does not.
+        Feature numbers are USES, not reach: a daily counter cannot say how many distinct installs
+        touched a feature without keeping a per-install trail, which this design deliberately does
+        not.
       </Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 2 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: 2,
+        }}
+      >
         <Stack spacing={0.5}>
           <Typography variant="caption" color="text.secondary">
             Views by dwell share
@@ -149,7 +161,10 @@ function AdoptionSection({ data }: { data: TriageAnalyticsData }): JSX.Element {
             Features (uses · per session)
           </Typography>
           <MixList
-            rows={a.features.map((f) => ({ id: `${f.id} · ${f.perSession.toFixed(2)}/s`, n: f.uses }))}
+            rows={a.features.map((f) => ({
+              id: `${f.id} · ${f.perSession.toFixed(2)}/s`,
+              n: f.uses,
+            }))}
             empty="No feature use recorded."
           />
         </Stack>
@@ -167,7 +182,7 @@ function AdoptionSection({ data }: { data: TriageAnalyticsData }): JSX.Element {
             rows={[
               ...a.voice.map((v) => ({ id: `voice ${v.id}`, n: v.n })),
               ...a.cursorRing.map((v) => ({ id: `cursor ring ${v.id}`, n: v.n })),
-              ...a.autoHide.map((v) => ({ id: `auto-hide ${v.id}`, n: v.n }))
+              ...a.autoHide.map((v) => ({ id: `auto-hide ${v.id}`, n: v.n })),
             ]}
             empty="No setup snapshot recorded."
           />
@@ -199,10 +214,25 @@ function FunnelCard({ view }: { view: TriageFunnelView }): JSX.Element {
         {view.funnel}
       </Typography>
       {bars.map((b) => (
-        <Box key={b.step} sx={{ display: 'grid', gridTemplateColumns: '150px 1fr 120px', columnGap: 1.5, alignItems: 'center' }}>
+        <Box
+          key={b.step}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: '150px 1fr 120px',
+            columnGap: 1.5,
+            alignItems: 'center',
+          }}
+        >
           <Typography variant="caption">{b.step}</Typography>
           <Box sx={{ height: 8, bgcolor: 'action.hover', borderRadius: 1 }}>
-            <Box sx={{ width: `${String(b.widthPct)}%`, height: '100%', bgcolor: 'success.main', borderRadius: 1 }} />
+            <Box
+              sx={{
+                width: `${String(b.widthPct)}%`,
+                height: '100%',
+                bgcolor: 'success.main',
+                borderRadius: 1,
+              }}
+            />
           </Box>
           <Typography variant="caption" sx={{ fontVariantNumeric: 'tabular-nums' }}>
             {formatNum(b.n)} · {b.conversion}
@@ -235,7 +265,7 @@ function FunnelCard({ view }: { view: TriageFunnelView }): JSX.Element {
 function Readout({
   data,
   downloads,
-  live
+  live,
 }: {
   data: TriageAnalyticsData
   downloads?: TriageDownloads
@@ -246,9 +276,9 @@ function Readout({
       {windowIsEmpty(data) && (
         <Alert severity="info" data-testid="analytics-empty">
           <AlertTitle>No data yet</AlertTitle>
-          The tables are there and empty - every number below is a true zero, not a missing
-          reading. The client is lit; if this stays empty, check whether{' '}
-          <code>telemetry_accepting</code> is still closed (<code>analytics open</code>).
+          The tables are there and empty - every number below is a true zero, not a missing reading.
+          The client is lit; if this stays empty, check whether <code>telemetry_accepting</code> is
+          still closed (<code>analytics open</code>).
         </Alert>
       )}
       <PulseSection data={data} live={live} />
@@ -290,8 +320,8 @@ function Readout({
       <DownloadsSection downloads={downloads} />
       <RetentionSection data={data} />
       <Typography variant="caption" color="text.secondary">
-        Window {data.days[0] ?? '?'} → {data.days.at(-1) ?? '?'} · median session length is a
-        bucket range, not an average · durations shown as {durationLabel(1_800_000)}-style spans.
+        Window {data.days[0] ?? '?'} → {data.days.at(-1) ?? '?'} · median session length is a bucket
+        range, not an average · durations shown as {durationLabel(1_800_000)}-style spans.
       </Typography>
     </Stack>
   )
@@ -308,11 +338,11 @@ function OwnerReadout({ data }: { data: TriageAnalyticsData }): JSX.Element {
       <Divider />
       <Alert severity="info" icon={false}>
         <AlertTitle>Mine - the owner cohort, shown separately</AlertTitle>
-        Your dev builds (tagged automatically from <code>env.channel</code>) and any install
-        marked with <code>triage-feedback analytics owner-add &lt;analyticsId&gt;</code> - the id
-        is in Preferences → Usage analytics → &ldquo;Anonymous id&rdquo;. These numbers are NOT
-        included in the readout above and are never added to it. Counters aggregated before an
-        install was marked stay in the user cohort - the split is from-marking-onward.
+        Your dev builds (tagged automatically from <code>env.channel</code>) and any install marked
+        with <code>triage-feedback analytics owner-add &lt;analyticsId&gt;</code> - the id is in
+        Preferences → Usage analytics → &ldquo;Anonymous id&rdquo;. These numbers are NOT included
+        in the readout above and are never added to it. Counters aggregated before an install was
+        marked stay in the user cohort - the split is from-marking-onward.
       </Alert>
       <Readout data={data} />
     </Stack>
@@ -326,7 +356,11 @@ function OwnerReadout({ data }: { data: TriageAnalyticsData }): JSX.Element {
  * never the problem. `main` decides which state it is (`src/main/triage/backend.ts`); this picks
  * the words.
  */
-function Unavailable({ data }: { data: Extract<TriageAnalytics, { available: false }> }): JSX.Element {
+function Unavailable({
+  data,
+}: {
+  data: Extract<TriageAnalytics, { available: false }>
+}): JSX.Element {
   return (
     <Alert severity="warning" data-testid="analytics-unavailable">
       <AlertTitle>
@@ -342,10 +376,7 @@ function Unavailable({ data }: { data: Extract<TriageAnalytics, { available: fal
 export default function AnalyticsPanel(): JSX.Element {
   const [days, setDays] = useState<number>(TRIAGE_ANALYTICS_DEFAULT_DAYS)
   const [includeOwner, setIncludeOwner] = useState(false)
-  const run = useCallback(
-    () => window.eq.triageAnalytics(days, includeOwner),
-    [days, includeOwner]
-  )
+  const run = useCallback(() => window.eq.triageAnalytics(days, includeOwner), [days, includeOwner])
   const analytics = useTriageCall<TriageAnalytics>(run)
   const ready = analytics.data?.available === true ? analytics.data : null
 
@@ -353,7 +384,12 @@ export default function AnalyticsPanel(): JSX.Element {
     <Stack direction="row" spacing={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
       <Tabs value={days} onChange={(_e, v: number) => setDays(v)} variant="scrollable">
         {TRIAGE_ANALYTICS_DAYS.map((d) => (
-          <Tab key={d} value={d} label={`${String(d)}d`} data-testid={`analytics-days-${String(d)}`} />
+          <Tab
+            key={d}
+            value={d}
+            label={`${String(d)}d`}
+            data-testid={`analytics-days-${String(d)}`}
+          />
         ))}
       </Tabs>
       <FormControlLabel

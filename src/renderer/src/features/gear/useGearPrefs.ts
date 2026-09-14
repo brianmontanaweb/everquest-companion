@@ -58,8 +58,12 @@ export interface GearPrefs {
 }
 
 export function useGearPrefs(): GearPrefs {
-  const [columns, setColumnsState] = useState<GearSortKey[] | null>(() => sanitizeColumns(readJson(COLUMNS_KEY)))
-  const [controls, setControlsState] = useState<GearControl[] | null>(() => sanitizeControls(readJson(CONTROLS_KEY)))
+  const [columns, setColumnsState] = useState<GearSortKey[] | null>(() =>
+    sanitizeColumns(readJson(COLUMNS_KEY)),
+  )
+  const [controls, setControlsState] = useState<GearControl[] | null>(() =>
+    sanitizeControls(readJson(CONTROLS_KEY)),
+  )
 
   const setColumns = useCallback((next: GearSortKey[] | null) => {
     setColumnsState(next)

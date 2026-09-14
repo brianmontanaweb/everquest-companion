@@ -40,7 +40,7 @@ function donor(spec: Spec): PlannerDonor {
     tierRequired: 4,
     hasteLocked: spec.hasteLocked ?? false,
     quest: false,
-    playerCrafted: false
+    playerCrafted: false,
   }
 }
 
@@ -49,7 +49,7 @@ function item(spec: { slots?: EquipSlot[]; classes?: ClassAbbr[] }): ItemFocus {
     key: 'host',
     name: 'Host Item',
     slots: spec.slots ?? ['PRIMARY'],
-    classes: spec.classes ?? ['WAR']
+    classes: spec.classes ?? ['WAR'],
   }
 }
 
@@ -65,7 +65,13 @@ test('R2 slot half: the donor and the item must share a place on the body', () =
   assert.equal(itemFits(RING, primary), false)
   // The item's OWN slots are what R2 asks about, so a two-slot host takes a donor that shares
   // either one — this is the case a cell-shaped filter (one slot per cell) could not express.
-  assert.equal(itemFits(donor({ name: 'Offhand', slots: ['SECONDARY'] }), item({ slots: ['PRIMARY', 'SECONDARY'] })), true)
+  assert.equal(
+    itemFits(
+      donor({ name: 'Offhand', slots: ['SECONDARY'] }),
+      item({ slots: ['PRIMARY', 'SECONDARY'] }),
+    ),
+    true,
+  )
 })
 
 test('a donor whose page states NO slot can never donate, whatever the host is', () => {

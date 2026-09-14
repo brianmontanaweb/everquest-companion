@@ -52,7 +52,10 @@ export interface SeedContext {
  */
 /** One cell's planned sockets, decorated. Split out because the walk is three levels deep and the
  *  measured `max-depth` ceiling is three — the rule here is to split, never to ratchet. */
-function cellWishes(sockets: Partial<Record<SocketType, { effect: string; donorKey: string }>>, ctx: SeedContext): PlannedWish[] {
+function cellWishes(
+  sockets: Partial<Record<SocketType, { effect: string; donorKey: string }>>,
+  ctx: SeedContext,
+): PlannedWish[] {
   const out: PlannedWish[] = []
   for (const [socketName, planned] of Object.entries(sockets)) {
     if (!planned) continue
@@ -64,7 +67,7 @@ function cellWishes(sockets: Partial<Record<SocketType, { effect: string; donorK
       name: donor?.name ?? planned.donorKey,
       effect: planned.effect,
       socket,
-      met: ctx.progressOf(planned.donorKey, tierRequired).state === 'ready'
+      met: ctx.progressOf(planned.donorKey, tierRequired).state === 'ready',
     })
   }
   return out

@@ -120,7 +120,7 @@ import {
   SLICES_DIR,
   eventsPath,
   normalizeJson,
-  snapshotsPath
+  snapshotsPath,
 } from './goldenPaths.mjs'
 // …and the differ from its own home rather than re-exported through the oracle.
 import { firstDiff, type Diff } from '../../src/shared/deepDiff'
@@ -128,7 +128,12 @@ import { buildLedger, type Ledger } from './parityLedger.mjs'
 import { SIDECAR, renderSidecar } from '../../scripts/gen-engine-spell-overlay.mjs'
 
 const ENGINE_DIR = join(ROOT, 'engine')
-const PARITY_EXE = join(ENGINE_DIR, 'target', 'release', process.platform === 'win32' ? 'parity.exe' : 'parity')
+const PARITY_EXE = join(
+  ENGINE_DIR,
+  'target',
+  'release',
+  process.platform === 'win32' ? 'parity.exe' : 'parity',
+)
 
 interface Args {
   slices: string[]
@@ -157,7 +162,7 @@ function parseArgs(argv: string[]): Args {
     keepGoing: false,
     snapshots: false,
     onlyModules: [],
-    ledger: false
+    ledger: false,
   }
   for (const a of argv) {
     if (a === '--no-build') out.build = false
@@ -195,7 +200,7 @@ function readSlicesFrom(dir: string): SliceRow[] {
   if (!existsSync(manifest)) {
     throw new Error(
       `no slice manifest at ${manifest} — the corpus is gitignored and machine-local; ` +
-        `pass --slices=<dir> --goldens=<dir> pointing at the checkout that holds it`
+        `pass --slices=<dir> --goldens=<dir> pointing at the checkout that holds it`,
     )
   }
   const raw = JSON.parse(readFileSync(manifest, 'utf8')) as { slices: SliceRow[] }
@@ -215,7 +220,7 @@ function requireFreshSidecar(): void {
   if (have === want) return
   throw new Error(
     `${SIDECAR} is stale — the TypeScript overlay lists moved under it. ` +
-      `Run \`npx tsx scripts/gen-engine-spell-overlay.mts\`, rebuild, and commit the result.`
+      `Run \`npx tsx scripts/gen-engine-spell-overlay.mts\`, rebuild, and commit the result.`,
   )
 }
 
@@ -237,7 +242,7 @@ function buildCrate(): void {
   const t0 = performance.now()
   execFileSync(cargoBin(), ['build', '--release', '-p', 'parity'], {
     cwd: ENGINE_DIR,
-    stdio: 'inherit'
+    stdio: 'inherit',
   })
   console.log(`built parity in ${secs(performance.now() - t0)}`)
 }
@@ -361,7 +366,7 @@ function runSnapshots(args: Args, slice: SliceRow, log: string): Result {
   const t0 = performance.now()
   const res = spawnSync(PARITY_EXE, [log, '--snapshots', '--tz', args.tz], {
     encoding: 'utf8',
-    maxBuffer: 1 << 28
+    maxBuffer: 1 << 28,
   })
   const wall = Math.round(performance.now() - t0)
   if (res.status !== 0 || !res.stdout) {
@@ -371,7 +376,7 @@ function runSnapshots(args: Args, slice: SliceRow, log: string): Result {
       ok: false,
       events: 0,
       ms: wall,
-      lines: [`parity --snapshots exited ${String(res.status)}`, ...(why ? [why] : [])]
+      lines: [`parity --snapshots exited ${String(res.status)}`, ...(why ? [why] : [])],
     }
   }
   const rust = JSON.parse(res.stdout) as RustSnapshots
@@ -381,7 +386,7 @@ function runSnapshots(args: Args, slice: SliceRow, log: string): Result {
   const modules: ModuleResult[] = []
   const skipped: { id: string; why: string }[] = rust.skipped.map((id) => ({
     id,
-    why: 'not ported'
+    why: 'not ported',
   }))
   for (const m of rust.modules) {
     if (args.onlyModules.length > 0 && !args.onlyModules.includes(m.id)) {
@@ -393,7 +398,7 @@ function runSnapshots(args: Args, slice: SliceRow, log: string): Result {
       modules.push({
         id: m.id,
         ok: false,
-        diff: { path: '', expected: '(no such module in the golden)', actual: m.id }
+        diff: { path: '', expected: '(no such module in the golden)', actual: m.id },
       })
       continue
     }
@@ -411,7 +416,7 @@ function runSnapshots(args: Args, slice: SliceRow, log: string): Result {
     ms: rust.meta.ms,
     lines,
     modules,
-    skipped
+    skipped,
   }
 }
 
@@ -422,7 +427,12 @@ function runSnapshots(args: Args, slice: SliceRow, log: string): Result {
  * no-silent-caps law the module list obeys. `--snapshots=<list>` narrows these two exactly as it
  * narrows a module, and the narrowing is reported too.
  */
-function compareSections(args: Args, golden: GoldenSnapshots, rust: RustSnapshots, out: Verdicts): void {
+function compareSections(
+  args: Args,
+  golden: GoldenSnapshots,
+  rust: RustSnapshots,
+  out: Verdicts,
+): void {
   const { modules, skipped } = out
   for (const section of COMBAT_SECTIONS) {
     const got = rust[section]
@@ -469,7 +479,9 @@ function checkInstant(golden: GoldenSnapshots, rust: RustSnapshots): string[] {
   const want = golden.lastEventTs
   const got = rust.meta.lastEventTs
   if (want === undefined || got === undefined || want === got) return []
-  return [`lastEventTs disagrees — golden ${String(want)}, rust ${String(got)}; the snapshots describe two different moments`]
+  return [
+    `lastEventTs disagrees — golden ${String(want)}, rust ${String(got)}; the snapshots describe two different moments`,
+  ]
 }
 
 function runSlice(args: Args, slice: SliceRow): Result {
@@ -485,7 +497,7 @@ function runSlice(args: Args, slice: SliceRow): Result {
   const t0 = performance.now()
   const res = spawnSync(PARITY_EXE, [log, '--golden', golden, '--tz', args.tz], {
     encoding: 'utf8',
-    maxBuffer: 1 << 22
+    maxBuffer: 1 << 22,
   })
   const wall = performance.now() - t0
   const lines = `${res.stdout ?? ''}${res.stderr ?? ''}`.split('\n').filter((l) => l.trim() !== '')
@@ -496,7 +508,7 @@ function runSlice(args: Args, slice: SliceRow): Result {
     ok,
     events: parsed?.events ?? 0,
     ms: parsed?.ms ?? Math.round(wall),
-    lines
+    lines,
   }
 }
 
@@ -526,7 +538,10 @@ function chooseSlices(args: Args): SliceRow[] {
   if (args.slices.length === 0) return all
   return args.slices.map((n) => {
     const hit = all.find((s) => s.name === n)
-    if (!hit) throw new Error(`rustParity: no slice named "${n}" (have ${all.map((s) => s.name).join(', ')})`)
+    if (!hit)
+      throw new Error(
+        `rustParity: no slice named "${n}" (have ${all.map((s) => s.name).join(', ')})`,
+      )
     return hit
   })
 }
@@ -554,7 +569,7 @@ function summarize(bar: string, results: Result[]): void {
   console.log(
     bad === 0
       ? `${bar} GREEN — ${String(events)} events over ${String(results.length)} slice(s) in ${secs(ms)}${scope}`
-      : `${bar} RED — ${String(bad)} of ${String(results.length)} slice(s) diverged`
+      : `${bar} RED — ${String(bad)} of ${String(results.length)} slice(s) diverged`,
   )
   if (bad > 0) process.exitCode = 1
 }
@@ -573,7 +588,9 @@ function reportModules(r: Result): void {
   if (pass.length > 0) console.log(`       PASS ${pass.join(' · ')}`)
   for (const m of r.modules) {
     if (m.ok || !m.diff) continue
-    console.error(`       FAIL ${m.id} at ${m.diff.path === '' ? '(the whole snapshot)' : m.diff.path}`)
+    console.error(
+      `       FAIL ${m.id} at ${m.diff.path === '' ? '(the whole snapshot)' : m.diff.path}`,
+    )
     console.error(`         golden : ${short(m.diff.expected)}`)
     console.error(`         rust   : ${short(m.diff.actual)}`)
     if (m.ledger) reportLedger(m.id, m.ledger)
@@ -603,10 +620,12 @@ function reportLedger(id: string, l: Ledger): void {
   const diverged = l.classes.reduce((n, c) => n + c.count, 0)
   console.error(
     `         ledger : ${String(l.agreed)}/${String(l.leaves)} leaves agree (${pct.toFixed(1)}%) · ` +
-      `${String(diverged)} divergence(s) in ${String(l.classes.length)} class(es)`
+      `${String(diverged)} divergence(s) in ${String(l.classes.length)} class(es)`,
   )
   for (const c of l.classes.slice(0, LEDGER_CLASSES)) {
-    console.error(`         ${String(c.count).padStart(7)}x ${c.path === '' ? '(the whole section)' : c.path}`)
+    console.error(
+      `         ${String(c.count).padStart(7)}x ${c.path === '' ? '(the whole section)' : c.path}`,
+    )
     console.error(`                 at ${c.example.path === '' ? '(root)' : c.example.path}`)
     console.error(`                 golden : ${short(c.example.expected)}`)
     console.error(`                 rust   : ${short(c.example.actual)}`)

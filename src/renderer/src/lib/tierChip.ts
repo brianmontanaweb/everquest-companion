@@ -45,7 +45,7 @@ export const TIER_STYLES: TierStyle[] = [
   { bg: '#5fbf72', fg: TIER_FG, label: 'D1', long: 'D1 · Awakened' },
   { bg: '#6fb3d2', fg: TIER_FG, label: 'D2', long: 'D2 · Adaptive' },
   { bg: '#b07fd0', fg: TIER_FG, label: 'D3', long: 'D3 · Fused' },
-  { bg: '#e0a94a', fg: TIER_FG, label: 'D4', long: 'D4 · Refined' }
+  { bg: '#e0a94a', fg: TIER_FG, label: 'D4', long: 'D4 · Refined' },
 ]
 
 // THE TWO NON-DIFFICULTIES (JOS-166). A kill record's tier key is a difficulty OR one of these
@@ -64,7 +64,7 @@ export const OPEN_WORLD_STYLE: TierStyle = {
   bg: '#4b5563',
   fg: OFF_LADDER_FG,
   label: 'OW',
-  long: 'Open world · no lockout'
+  long: 'Open world · no lockout',
 }
 
 /** The log never said where: no zone line yet, or an instance adjective we cannot decode. */
@@ -72,7 +72,7 @@ export const UNKNOWN_TIER_STYLE: TierStyle = {
   bg: '#3a3f4a',
   fg: OFF_LADDER_FG,
   label: '?',
-  long: 'Difficulty not stated'
+  long: 'Difficulty not stated',
 }
 
 /**

@@ -37,7 +37,13 @@ export interface ViewportArgs {
   plotW: number
 }
 
-export function useTimelineViewport({ dur, id, svgRef, labelW, plotW }: ViewportArgs): TimelineViewport {
+export function useTimelineViewport({
+  dur,
+  id,
+  svgRef,
+  labelW,
+  plotW,
+}: ViewportArgs): TimelineViewport {
   const [view, setView] = useState<ViewWin>({ start: 0, end: dur })
   const dragRef = useRef<{ x: number; start: number; end: number } | null>(null)
 
@@ -48,10 +54,13 @@ export function useTimelineViewport({ dur, id, svgRef, labelW, plotW }: Viewport
 
   const xOf = useCallback(
     (t: number): number => labelW + ((t - view.start) / span) * plotW,
-    [view.start, span, labelW, plotW]
+    [view.start, span, labelW, plotW],
   )
   // Inverse: pixel X (relative to the plot's left edge = labelW) → encounter ms.
-  const tOfPx = useCallback((px: number): number => view.start + (px / plotW) * span, [view.start, span, plotW])
+  const tOfPx = useCallback(
+    (px: number): number => view.start + (px / plotW) * span,
+    [view.start, span, plotW],
+  )
 
   // Clamp a candidate window to the encounter bounds, preserving its span where possible.
   const clampView = useCallback(
@@ -70,7 +79,7 @@ export function useTimelineViewport({ dur, id, svgRef, labelW, plotW }: Viewport
       if (s < 0) s = 0
       return { start: s, end: e }
     },
-    [dur]
+    [dur],
   )
 
   const zoomAround = useCallback(
@@ -84,7 +93,7 @@ export function useTimelineViewport({ dur, id, svgRef, labelW, plotW }: Viewport
         return clampView(s, s + newSpan)
       })
     },
-    [dur, clampView]
+    [dur, clampView],
   )
 
   const onWheel = useCallback(
@@ -110,7 +119,7 @@ export function useTimelineViewport({ dur, id, svgRef, labelW, plotW }: Viewport
       zoomAround(anchor, factor)
       ev.preventDefault()
     },
-    [tOfPx, zoomAround, clampView, labelW, plotW, svgRef]
+    [tOfPx, zoomAround, clampView, labelW, plotW, svgRef],
   )
 
   // Attach the wheel handler NATIVELY as a NON-PASSIVE listener — React's onWheel is passive
@@ -133,7 +142,7 @@ export function useTimelineViewport({ dur, id, svgRef, labelW, plotW }: Viewport
       dragRef.current = { x: ev.clientX, start: view.start, end: view.end }
       svgRef.current?.setPointerCapture(ev.pointerId)
     },
-    [view.start, view.end, labelW, svgRef]
+    [view.start, view.end, labelW, svgRef],
   )
   const onPointerMove = useCallback(
     (ev: React.PointerEvent<SVGSVGElement>) => {
@@ -143,17 +152,27 @@ export function useTimelineViewport({ dur, id, svgRef, labelW, plotW }: Viewport
       const dtMs = -(dxPx / plotW) * (d.end - d.start)
       setView(clampView(d.start + dtMs, d.end + dtMs))
     },
-    [clampView, plotW]
+    [clampView, plotW],
   )
   const onPointerUp = useCallback(
     (ev: React.PointerEvent<SVGSVGElement>) => {
       dragRef.current = null
       svgRef.current?.releasePointerCapture(ev.pointerId)
     },
-    [svgRef]
+    [svgRef],
   )
 
   const fit = useCallback(() => setView({ start: 0, end: dur }), [dur])
 
-  return { view, span, zoomedIn: span < dur - 1, xOf, zoomAround, fit, onPointerDown, onPointerMove, onPointerUp }
+  return {
+    view,
+    span,
+    zoomedIn: span < dur - 1,
+    xOf,
+    zoomAround,
+    fit,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+  }
 }

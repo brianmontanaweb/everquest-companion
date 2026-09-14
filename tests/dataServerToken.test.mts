@@ -21,7 +21,7 @@ import {
   MAX_TOKEN_CHARS,
   MIN_TOKEN_CHARS,
   TOKEN_ENTROPY_BYTES,
-  isWellFormedToken
+  isWellFormedToken,
 } from '../src/shared/dataServer/token'
 import { mintToken, tokensMatch } from '../src/main/dataServer/token'
 
@@ -49,7 +49,11 @@ test('NO PREFIX OF THE REAL TOKEN IS EVER ACCEPTED', () => {
   // who has recovered the first N characters is no closer than one who has recovered none.
   const token = mintToken()
   for (let cut = 1; cut < token.length; cut += 1) {
-    assert.equal(tokensMatch(token, token.slice(0, cut)), false, `a ${String(cut)}-char prefix was accepted`)
+    assert.equal(
+      tokensMatch(token, token.slice(0, cut)),
+      false,
+      `a ${String(cut)}-char prefix was accepted`,
+    )
   }
 })
 
@@ -58,7 +62,11 @@ test('one flipped character anywhere refuses', () => {
   for (let i = 0; i < token.length; i += 1) {
     const flipped = `${token.slice(0, i)}${token[i] === '0' ? '1' : '0'}${token.slice(i + 1)}`
     if (flipped === token) continue
-    assert.equal(tokensMatch(token, flipped), false, `a token differing only at ${String(i)} was accepted`)
+    assert.equal(
+      tokensMatch(token, flipped),
+      false,
+      `a token differing only at ${String(i)} was accepted`,
+    )
   }
 })
 

@@ -7,7 +7,7 @@ import { Tooltip } from '../../lib/Tooltip'
 export function FavoriteStar({
   name,
   favorited,
-  onToggle
+  onToggle,
 }: {
   name: string
   favorited: boolean

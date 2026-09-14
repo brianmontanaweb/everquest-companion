@@ -70,8 +70,8 @@ export const BACKFILL_TABLES = [
   {
     table: 'usage_funnel_daily',
     staging: 'usage_funnel_daily_v2',
-    columns: ['day', 'funnel', 'step', 'outcome', 'app_version', 'n']
-  }
+    columns: ['day', 'funnel', 'step', 'outcome', 'app_version', 'n'],
+  },
 ] as const
 
 export type BackfillTable = (typeof BACKFILL_TABLES)[number]
@@ -148,7 +148,7 @@ export function spanOf(row: Row): InstallSpan {
   return {
     firstSeenDay: str(row.first_seen_day),
     lastSeenDay: str(row.last_seen_day),
-    cohort: marked || dev ? 'owner' : 'user'
+    cohort: marked || dev ? 'owner' : 'user',
   }
 }
 
@@ -302,7 +302,7 @@ async function createStaging(c: Clients, schemaSql: string, t: BackfillTable): P
     throw new Error(
       `the database role '${INGEST_ROLE}' does not exist on this cluster — run ` +
         '`triage-feedback migrate --refresh` first (it creates the role and its grants), ' +
-        'then re-run this command.'
+        'then re-run this command.',
     )
   }
   return created
@@ -320,15 +320,17 @@ export async function fillInstallCohorts(c: Clients): Promise<number> {
     const rows = await c.query(
       'SELECT analytics_id, channel, cohort, first_seen_day, last_seen_day FROM analytics_install' +
         ' ORDER BY analytics_id LIMIT $1 OFFSET $2',
-      [PAGE, offset]
+      [PAGE, offset],
     )
     if (rows.length === 0) break
     for (const cohort of ['owner', 'user'] as const) {
-      const ids = rows.filter((r) => r.cohort === null && spanOf(r).cohort === cohort).map((r) => str(r.analytics_id))
+      const ids = rows
+        .filter((r) => r.cohort === null && spanOf(r).cohort === cohort)
+        .map((r) => str(r.analytics_id))
       if (ids.length === 0) continue
       filled += await c.execute(
         'UPDATE analytics_install SET cohort = $1 WHERE cohort IS NULL AND analytics_id = ANY($2::text[])',
-        [cohort, ids]
+        [cohort, ids],
       )
     }
     if (rows.length < PAGE) break
@@ -343,7 +345,7 @@ export async function readSpans(c: Clients): Promise<InstallSpan[]> {
     const rows = await c.query(
       'SELECT channel, cohort, first_seen_day, last_seen_day FROM analytics_install' +
         ' ORDER BY first_seen_day, last_seen_day LIMIT $1 OFFSET $2',
-      [PAGE, offset]
+      [PAGE, offset],
     )
     for (const row of rows) spans.push(spanOf(row))
     if (rows.length < PAGE) break
@@ -364,7 +366,7 @@ export async function readSpans(c: Clients): Promise<InstallSpan[]> {
 export async function copyTable(
   c: Clients,
   t: BackfillTable,
-  spans: readonly InstallSpan[]
+  spans: readonly InstallSpan[],
 ): Promise<number> {
   const cols = t.columns.join(', ')
   const order = t.columns.filter((col) => col !== 'n').join(', ')
@@ -372,7 +374,7 @@ export async function copyTable(
   for (let offset = 0; offset < MAX_ROWS; offset += PAGE) {
     const rows = await c.query(
       `SELECT ${cols} FROM ${t.table} ORDER BY ${order} LIMIT $1 OFFSET $2`,
-      [PAGE, offset]
+      [PAGE, offset],
     )
     if (rows.length === 0) break
     const params: unknown[] = []
@@ -391,19 +393,21 @@ export async function copyTable(
 /** The kill switch has to be CLOSED: this is a snapshot copy, and a live writer would land rows
  *  after the page that read past them. `analytics close` is one statement and needs no deploy. */
 export async function assertClosed(c: Clients): Promise<void> {
-  const rows = await c.query(`SELECT telemetry_accepting FROM feedback_config WHERE id = 'FEEDBACK'`)
+  const rows = await c.query(
+    `SELECT telemetry_accepting FROM feedback_config WHERE id = 'FEEDBACK'`,
+  )
   if (rows[0]?.telemetry_accepting !== true) return
   throw new Error(
     'telemetry is still OPEN. This copy is a snapshot — a batch landing mid-copy would be ' +
       'missed, and re-running the copy after the new Lambda is live would overwrite its rows.\n' +
       'Run `triage-feedback analytics close` first (one statement, no deploy); the client ' +
-      'treats 503 as "not now" and keeps its buffer, so a short close costs nothing.'
+      'treats 503 as "not now" and keeps its buffer, so a short close costs nothing.',
   )
 }
 
 export async function runBackfill(
   c: Clients,
-  schemaSql: string
+  schemaSql: string,
 ): Promise<{ installs: number; tables: BackfillReport[] }> {
   await assertClosed(c)
   const created = new Map<string, boolean>()
@@ -416,7 +420,7 @@ export async function runBackfill(
     tables.push({
       table: t.table,
       created: created.get(t.table) === true,
-      copied: await copyTable(c, t, spans)
+      copied: await copyTable(c, t, spans),
     })
   }
   return { installs, tables }
@@ -444,18 +448,34 @@ export interface VerifyRow {
  * `hasCohort`). Only a genuine mismatch, and "you have not copied yet", are `ok: false`.
  */
 async function verifyOne(c: Clients, t: BackfillTable): Promise<VerifyRow> {
-  const row = (from: TableTotals | null, to: TableTotals | null, ok: boolean, note: string): VerifyRow => ({
+  const row = (
+    from: TableTotals | null,
+    to: TableTotals | null,
+    ok: boolean,
+    note: string,
+  ): VerifyRow => ({
     table: t.table,
     staging: t.staging,
     from,
     to,
     ok,
-    note
+    note,
   })
   const staged = await tableExists(c, t.staging)
   if (!(await tableExists(c, t.table))) {
-    if (!staged) return row(null, null, true, 'neither table exists — this cluster needs `migrate`, not a backfill')
-    return row(null, await totalsOf(c, t.staging), true, 'original dropped — the rename is still to do')
+    if (!staged)
+      return row(
+        null,
+        null,
+        true,
+        'neither table exists — this cluster needs `migrate`, not a backfill',
+      )
+    return row(
+      null,
+      await totalsOf(c, t.staging),
+      true,
+      'original dropped — the rename is still to do',
+    )
   }
   const from = await totalsOf(c, t.table)
   if (!staged) {
@@ -500,7 +520,7 @@ export async function runSwap(c: Clients): Promise<SwapStep[]> {
   if (bad.length > 0) {
     throw new Error(
       `refusing to swap: ${bad.map((b) => `${b.table} (${b.note})`).join('; ')}.\n` +
-        'Nothing has been dropped. Fix the copy (re-run `analytics backfill-cohort`) and verify again.'
+        'Nothing has been dropped. Fix the copy (re-run `analytics backfill-cohort`) and verify again.',
     )
   }
   const steps: SwapStep[] = []

@@ -241,7 +241,11 @@ export function tierRuns(tiers: Record<number, KillTierRun>): TierRun[] {
 }
 
 /** Fold one tier run into an accumulating tiers map (union of counts and time spans). */
-export function addTierRun(into: Record<number, KillTierRun>, tier: number, run: KillTierRun): void {
+export function addTierRun(
+  into: Record<number, KillTierRun>,
+  tier: number,
+  run: KillTierRun,
+): void {
   const prev = into[tier]
   if (!prev) {
     into[tier] = {
@@ -249,7 +253,7 @@ export function addTierRun(into: Record<number, KillTierRun>, tier: number, run:
       firstTs: run.firstTs,
       lastTs: run.lastTs,
       credited: run.credited,
-      lastCreditedTs: run.lastCreditedTs
+      lastCreditedTs: run.lastCreditedTs,
     }
     return
   }

@@ -7,7 +7,6 @@
 import type { LootEvent, LootSnap } from '@shared/types'
 import { useModule } from '../../lib/useModule'
 
-
 /** Stable empty array: a new `[]` each render would re-run every `useMemo` keyed on the history. */
 const NO_LOOT: LootEvent[] = []
 

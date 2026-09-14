@@ -6,7 +6,14 @@ stories were MOVED verbatim to `docs/agents-archive.md` (JOS-252) — a cut
 that proves load-bearing is reversible in one paste — and
 `tests/agentsDoc.test.mts` enforces a 20k-word ceiling here. Distillation
 protocol: done carefully by the integrator, never delegated to a worker,
-never mechanical truncation, archive before cutting.
+never mechanical truncation, archive before cutting. **Since 2026-09-13,
+live rule content can also move to a colocated `AGENTS.md` under the
+directory it governs, not only to the archive** — `engine/AGENTS.md` is the
+first (the fold's world-model laws, then the log-format rules); a header
+stub with a pointer stays behind so the table of contents doesn't go
+silent. See `docs/plans/2026-09-13-agents-md-colocation.md` for the map and
+rationale. This fork does not use the upstream Linear workspace, so work
+here is cited BY DATE, never by a minted `JOS-` id.
 
 ## What this is
 
@@ -118,22 +125,17 @@ docs/agents-archive.md.
     (`tests/e2e/viewRemount.mts` holds the precondition); a SECOND distinct
     cause with the guard holding · 1 sighting 2026-08-13 · watch. Both rows
     at full length: docs/agents-archive.md.
-  - `engined tests/perf_snapshot.rs` · `perf.snapshot was refused: Unavailable
-    "the fold did not answer within 5000 ms"` from the `until` poll while the
-    engine is still loading its spell catalog on a starved CI runner · 1
-    sighting (2026-09-04, v1.16.0 tag run, two tests at once; the main-push
-    run of the same commit was green) · HARDENED same day: `until` reads that
-    one refusal as "not yet" and keeps polling to `PATIENCE`; every other
-    refusal still panics.
+  - `engined tests/perf_snapshot.rs` · spurious refusal from the `until` poll
+    while the engine is still loading its spell catalog on a starved CI
+    runner · 1 sighting 2026-09-04 · **HARDENED same day** (`until` reads one
+    refusal as "not yet", still panics on any other). Full detail:
+    docs/agents-archive.md.
   - `engined tests/combat.rs` live-meter tests · the fight closes before the
-    test's hit lands (`Drop` op where an edit was expected; segment "fight"
-    not "current"), plus one harness connect timeout · 1 sighting (2026-09-04,
-    v1.16.0 tag engine job, second attempt, three tests; same commit green on
-    the main push) · MECHANISM KNOWN: `Staged::line` stamps relative to TEST
-    START while closure is judged on the wall clock (`FALLBACK_IDLE_MS` 60 s),
-    so a runner that takes over a minute to go live has already idled the
-    fight · chip filed: anchor live stamps to go-live.
-  - Sighting 2: 2026-09-10, run 34553815027. docs/agents-archive.md
+    test's hit lands, plus one harness connect timeout · 2 sightings
+    (2026-09-04, 2026-09-10) · MECHANISM KNOWN: `Staged::line` stamps
+    relative to TEST START while closure runs on the wall clock, so a
+    slow-starting runner has already idled the fight · chip filed: anchor
+    live stamps to go-live. Full detail: docs/agents-archive.md.
   - `combat-dashboard.e2e` · narrow-window resize never lands, settleStable
     settles on stale geometry · 6 sightings 2026-08-10→26, including
     STANDALONE (the full-sweep-only pattern is broken) · fix shape diagnosed
@@ -158,12 +160,10 @@ docs/agents-archive.md.
     under concurrent launches the wait for the stdin-close exit is what loses
     a race with the runner's teardown. Report line until a second sighting;
     if it recurs, the suspect is the wait, not the contract.
-  - `engined/tests/combat.rs` live-meter current-kind · expected `current`,
-    got closed `fight` after process startup consumed the fixed 18 s freshness
-    margin · 1 sighting (2026-08-30, JOS-531 CI; green standalone and full
-    combat suite locally) · **RESOLVED in the JOS-531 CI follow-up** — start
-    the engine before stamping the live fixture, so startup is outside the
-    world-time precondition.
+  - `engined/tests/combat.rs` live-meter current-kind · startup consumed the
+    freshness margin before the fixture went live · 1 sighting 2026-08-30 ·
+    **RESOLVED** in the JOS-531 CI follow-up (engine now starts before the
+    live fixture is stamped). Full detail: docs/agents-archive.md.
   - `presenceWorker.test` first-tick dedup · watches the REAL machine; fails
     while EverQuest runs with a player at the keyboard · 3 sightings
     (2026-08-10 ×2, 2026-08-12 JOS-239 worker mid-session, green on final
@@ -354,6 +354,13 @@ docs/agents-archive.md.
 - `npm run typecheck` (node+web) before done. Data JSONs (spells, overlay
   baseline) are ES-imported so electron-vite INLINES them — a path-relative
   readFile would miss in `out/main/`.
+- **Pre-commit hook needs a manual one-time step, same reason
+  `deps:electron` does.** `.npmrc`'s `ignore-scripts=true` blocks
+  `package.json`'s `prepare` script from auto-running husky's setup on
+  `npm ci`/`npm install`. After cloning, run `npm run prepare` once (or
+  `git config core.hooksPath .husky` directly) or the pre-commit
+  auto-format hook silently never activates. CI doesn't need this — it
+  runs `npm run format:check` as an explicit step, same as lint/typecheck.
 - TS: discriminated unions with union-typed tags need a single-guard
   narrowing (`if (ev.t !== 'dmg') return`); `@shared/*` value imports need
   the renderer `resolve.alias` in electron.vite.config.ts. Node-tested
@@ -458,6 +465,27 @@ threshold. The short version:
   `npm test` after each wave; the engine waves additionally need the
   byte-identical regression gate (law 8's tripwire). Keep the tree buildable
   throughout. Wave map: docs/agents-archive.md.
+
+## Formatting (Prettier)
+
+`npm run format:check` gates CI in BOTH build.yml jobs, right after lint.
+Config lives in `prettier.config.mjs` — chosen to match the tree's existing
+de-facto style (no semicolons, single quotes) rather than Prettier's
+defaults, so the one-time mass-reformat (2026-09-13) was a pure
+whitespace/quote/semicolon diff. `.git-blame-ignore-revs` keeps `git blame`
+(and GitHub's web blame) pointing past that commit.
+
+- **Scope matches ESLint's exactly.** Same extensions
+  (`.ts/.tsx/.mts/.cts/.js/.jsx/.mjs/.cjs`), same excluded generated files
+  (`protocol.generated.ts`, `eslint.ratchet.mjs`) — see `.prettierignore`.
+  `*.json`/`*.yml`/`*.md` are deliberately NOT formatted.
+- **Local pre-commit hook auto-formats staged files** (husky + lint-staged,
+  `.husky/pre-commit`) — needs a one-time manual step after cloning; see
+  Toolchain gotchas.
+- **`eslint-config-prettier` is defensive, not a fix for an active
+  conflict** — typescript-eslint's presets carry no raw formatting rules by
+  design. It just stops one from being silently reintroduced later.
+
 ## Architecture
 
 **THE FOLD IS IN THE RUST ENGINE (JOS-459, deleted from TypeScript by JOS-499).** One child process
@@ -487,25 +515,12 @@ Two boundary laws hold this up, and both FAIL THE BUILD rather than relying on m
   `src/renderer/**`, exemptions inline and reasoned, count only ever shrinks
   (`tests/domainMunging.test.mts`).
 
-- **THE LOG CLOCK IS THE HOST'S TO NAME, AND A SILENT UTC IS A DEFECT (JOS-536).** A log stamp is
-  a zone-less local wall clock; the engine's own probe (`iana-time-zone`, a WinRT call) fails under
-  Wine and on some real installs, and a UTC fallback moves every event by whole hours so fights close
-  on every beat. `session.attach` carries the host's `clock` (IANA name + UTC offset, read fresh per
-  attach), `eqlog::resolve_zone` ranks host name → platform probe → fixed offset → UTC, an offset
-  vetoes a name that disagrees with it, and `perf.snapshot.clockSkewMs` measures the live tail's
-  newest line against the wall clock — a whole number of hours there is a wrong zone, never lag.
-  In a bug report's perf block, `behindMs` of exactly N hours is this bug; `clock utc` names it.
+**THE FOLD'S SEMANTICS NOW LIVE IN `engine/AGENTS.md`** (moved 2026-09-13 —
+the log-clock law, the engine-comment law, and every world-model law below
+it, JOS-172/JOS-87/character-epoch/JOS-134 included). Read it before
+touching `engine/crates/fold` or `engine/crates/eqlog`; a `behindMs` of
+exactly N hours in a perf block is the log-clock bug named there.
 
-**ENGINE COMMENTS STATE THE RULE, NOT THE STORY (owner, 2026-08-27, JOS-524).** A comment
-names a design rule or a constraint the code cannot show: 1-3 lines, one-line why. Module
-headers, single-digit lines. Out: build history, `JOS-nnn` breadcrumbs, alternatives essays,
-restatements of the next line, pointers to another file's header. **Git carries provenance;
-comments carry the rule.** An unverifiable fact (observed behaviour, measured threshold) is
-kept, in one line.
-
-The world-model laws below are still the law — they describe what the fold MEANS, and every one of
-them was ported to Rust and proven deep-equal on six slices of the real log before the TypeScript
-copy was deleted. Where one names a TypeScript file that is gone, read it for the RULE.
 Maps: src/main/maps (pack discovery/per-layer cross-pack merge/LRU/search,
 Electron-free w/ injected roots) over shared/maps types + shared/zones
 (THE zone-knowledge table); renderer features/maps (canvas geometry, DOM
@@ -520,57 +535,6 @@ Overlay = second renderer entry (overlay.html) with a minimal `eqOverlay` bridge
 alwaysOnTop, click-through pin).
 ```
 
-- **A WINDOW READING A FOLD NEEDS BOTH HALVES OF THE TRANSPORT — THE INCREMENTS
-  AND THE REBUILD** (JOS-172, and the engine's diff protocol is built on it).
-  An increment is an increment: a historical fold emits none, so "hydrate once,
-  then ride deltas" is only complete if something says *ask again*. In the
-  engine that answer is the EPOCH — a character switch or a respawn bumps it,
-  every client drops its window state and takes the fresh reset, and resume is
-  always re-query. `sendWorldChanged` (serveDeltas.ts) is the app-side beat.
-  The fix is the DELIVERY, never the discard. **And re-hydration is a SECOND
-  reason a row can vanish**: anything watching a row set for removals is
-  told which kind of change it sees (`timerDrops` takes a `rebuilt` flag and
-  says nothing across a re-fold). Full story + the e2e slow-fold trick:
-  docs/agents-archive.md.
-- **A MODULE WITH A SECOND INPUT MUST REPORT ITS OWN REVISION AS `seq`, NOT
-  THE LAST EVENT'S** (JOS-87). Any reader deduping on `seq` — the app's
-  mirrors and the engine's own cursors both do — only works when "last
-  LogEvent seq folded in" is the whole story, i.e. when state moves ONLY on
-  events; the
-  combo module's user correction advanced no seq, so an idle-log correction
-  was dropped as a duplicate — forever, on an idle log. Fix: a private
-  counter bumped by anything that can change state, reported by the module's
-  own snapshot, plus the PUSH half — an out-of-band write has to make the
-  world publish, or the correction sits in a module nobody re-reads. Four
-  modules carry such a counter (combo, character, respawn, buffTimers).
-  A unit test cannot see either half; `tests/e2e/loadout-override.e2e.mts` is
-  what caught it. Full story: docs/agents-archive.md.
-- **Character epochs**: character-scoped state (leveling/AA, loot, kills,
-  turnins, buffs live-state) resets at the epoch boundary — anchored at
-  OFFICIAL LAUNCH 2026-07-28 (`epochDetector.ts`; the user's beta character
-  shared this log file pre-launch). Do NOT use level regression (loadout
-  swaps legitimately change level). Game-knowledge (mined durations,
-  message overlay) persists across epochs.
-- **A LOGOUT PAUSES YOUR CHARACTER, NOT THE WORLD — SO BUFFS FREEZE AND
-  DEBUFFS DO NOT** (JOS-134, owner's design 2026-08-09). EQ resumes a
-  beneficial buff's REMAINING duration at login
-  (`BuffInstances.onOfflinePause`; the S5 fixture proves it to the second); a
-  debuff you left on a mob is a timer in the WORLD and is never shifted
-  (`modules/buffTimers.ts` takes an EXPLICIT no-op on `offlineGap`). **The
-  boundary is evidence, not a timeout — AND SINCE JOS-262 THERE IS NO TIMEOUT
-  LEFT ANYWHERE IN IT.** ONE shared predicate decides both halves:
-  `sessionDetector.ts inWorldEvidence` — a line that could ONLY have been
-  printed for THIS character. It anchors `fromTs`, and
-  `modules/buffsSession.ts` rules a hole unexplained only when such a line
-  arrives with no intervening login. **"Typed" is NOT the test and the log
-  says so**: a stranger's kill in the reconnect preamble proves the CLIENT
-  is connected and nothing about you. The priced cost: `fromTs` stays a
-  LOWER bound, so a gap never under-states an absence and runs long. **And
-  the learner refuses BOTH halves of a cycle that spans an absence**
-  (`spannedGap`) — both err LONG, the direction law 5's recency-weighted MAX
-  is most sensitive to. Censor, never correct. Zoning is not a logout; death
-  still clears (JOS-88). Full story + the measurements:
-  docs/agents-archive.md.
 - **Spell DB**: `src/main/data/spells.json` (~1.9k spells from eqlwiki
   `Template:Spellpage`: durations, cast/wear-off messages, illusion flag,
   Beneficial/Detrimental) + `messageOverlay.baseline.json` + per-user
@@ -758,516 +722,41 @@ alwaysOnTop, click-through pin).
   `play()` still resolves or rejects — so behaviour assertions are unchanged.
   Deleted-tooling story: docs/agents-archive.md.
 
-### Electron trust boundary (do not weaken)
+### Electron trust boundary — moved to `src/main/AGENTS.md`
 
-- ONE `WEB_PREFERENCES()` in `src/main/windows.ts` (module-private, beside the only
-  code that creates a BrowserWindow) builds the webPreferences for EVERY window
-  (main + all five overlays) — never inline a second opinion. contextIsolation
-  on; nodeIntegration (+InWorker/+InSubFrames), webviewTag,
-  allowRunningInsecureContent, experimentalFeatures, enableBlinkFeatures,
-  navigateOnDragDrop, spellcheck all off; webSecurity on. Stated explicitly even
-  where they match Electron's default — the default is someone else's decision.
-- `sandbox:false` is a PACKAGING blocker, not a choice: both preloads
-  `require()` a shared rollup chunk, and a sandboxed preload's `require`
-  resolves only `electron` + a tiny polyfill set (MEASURED: flipping it
-  kills e2e with `module not found` and no `window.eq`). Nothing in the
-  preloads needs Node, so `sandbox:true` (and `app.enableSandbox()`)
-  unlocks the moment electron.vite.config.ts emits each preload as ONE
-  self-contained file.
-- Navigation/window-open/webview policy is installed ONCE from
-  `app.on('web-contents-created')` (hardenWebContents), never per window: a
-  window added later must not be able to miss it. `will-navigate` allows only the
-  bundled renderer dir (or, in dev, the electron-vite server's ORIGIN — the
-  server's own URL, so 5173/5174 both work); `setWindowOpenHandler` is
-  deny-always and hands ONLY an allowlisted https URL to `shell.openExternal`.
-  **That allowlist is the boundary, not a formality**: link URLs are built from
-  WIKI PAGE TITLES (`shared/wiki.ts`), and an unvalidated openExternal would let
-  one ask the OS to run `file:///…exe`. Widen `EXTERNAL_LINK_ALLOWLIST`
-  (security.ts) deliberately or not at all, **and an entry is a HOST PLUS AN
-  OPTIONAL PATH SCOPE — write the narrowest one that serves the link** (owner
-  ruling, JOS-263). Widened ONCE (JOS-254), with a REPO-SCOPED github.com
-  entry — only `https://github.com/jmoyers/everquest-companion/…` opens; the
-  three wiki entries stay host-wide because a wiki link's PATH is a page title
-  this app cannot predict. The path prefix is matched SEGMENT-AWARE
-  (`…-companion-evil` is not inside `…-companion`) against the
-  WHATWG-normalized pathname, so `..` — and its `%2e%2e` spelling — is
-  resolved away before the check. Full rationale: docs/agents-archive.md.
-  All permissions are denied wholesale
-  (this app needs none); pure policy lives in `src/main/security.ts` and is
-  pinned by `tests/security.test.mts` (no Electron, never skips).
-- Renderer-supplied strings that reach `join()` are validated AT THE IPC
-  HANDLER (`sounds:getData`'s packId → `isSafePackId`), not trusted because
-  today's only caller is the app's own UI.
+`WEB_PREFERENCES()`, the navigation/window-open policy, the external-link
+allowlist and IPC path validation moved 2026-09-13. Two claims were
+CORRECTED in the move rather than carried across: `sandbox` is `true`
+since 2026-09-12, and `WEB_PREFERENCES()` is exported (JOS-139) because
+the tray popover is created in `src/main/tray.ts`.
 
-## World-model laws (hard-won; do not relearn these)
+## World-model laws — moved to `engine/AGENTS.md`
 
-1. **Messages over inference.** Applications, targets, expiry come from
-   explicit chat lines (cast-on-you/other, wears-off, "Your illusion
-   fades.", "slows down.", resists). Estimates are display-only countdowns.
-   Anything inferred is LABELED inferred — never silently guess.
-2. **Names are dirty; canonicalize at boundaries, display raw.**
-   Case-insensitive keys (`idKey`) everywhere (lifecycle lines lowercase
-   articles; damage lines capitalize). Strip spell rank suffixes (casts say
-   `Swift Like the Wind I`, fades are rank-less) and item ` +N` variants at
-   COUNTING boundaries only. Strip leading a/an/the for boss matching.
-   OUR OWN labels are dirty too: `WorldModel.label()` appends a
-   spawn-generation ` (N)` suffix ("the 14th capturer this session") that
-   rides `currentTarget` into lookups — `mobKey` strips it; it is display
-   flavor, never identity. The suffix appears in NO log line.
-3. **Shared messages are the norm.** 123 wears-off families ("Your speed
-   returns to normal." = 9 hastes), generic illusion landings ("You feel
-   different."). Parser carries candidate lists; the MODEL resolves against
-   the active set / session cast history.
-4. **Entities, not names; disposition, not identity.** Buffs are
-   (spell, entity) instances; "pet" is NOT a data-model class (self renders
-   first, others second — presentation only). Charm break keeps the entity
-   + buffs (re-charm same name w/o death/zone = same entity). Single-pet
-   invariant: new claim/charm retires the prior pet — enforced in TWO models
-   with different reach, measured, not an oversight (JOS-54):
-   `modules/buffs.ts` retires across BOTH kinds at the buff-entity level; the
-   combat `WorldModel` retires only BY KIND (`claim()` retires the prior
-   SUMMONED pet — the successor's claim is the only evidence a recast prints;
-   `charm()` retires nothing there; the crossover is an unobserved shape and
-   gets no invented rule — awaiting-sample law). Retirement is not deletion:
-   the old pet keeps every point already attributed (rows key by instanceId)
-   and only stops being yours for FUTURE admission, so the engine's
-   `petNames` index follows the world model out
-   (`EngineState.syncPetNames`). **AND THE CLAIM IS WHAT TRIGGERS IT, NOT THE
-   SUMMON** (JOS-188): an upgraded pet is a new NAME; three lines produce the
-   claim (tell / leader say / your own pet-only buff landing), all through
-   one `bindPetClaim`, on purpose. Zoning: self + summoned pet keep buffs;
-   charmed pets/hostiles are left behind (censor). Deaths retire.
-   **Unobservable fades censor, never pollute stats.** Own-cast gating: never
-   track buffs we didn't cast (10s cast window or a Quick Buff burst).
-   **A HEALER OF YOURS IS NOT NECESSARILY A PLAYER (JOS-48).** Your own
-   lifetap's recourse prints as `<mob> healed you …`, and filing that mob as
-   a KNOWN PLAYER deleted every pet swing at it. The refusal is
-   `EngineState.everStruck` — **a name YOU have landed damage on is a mob**,
-   the third absolute guard beside `everPet` and `everCharmed`, and it is
-   BEHAVIOURAL (the mobs catalog is never consulted, so it holds for a
-   proper-named guard the catalog never heard of). The wider rule ("anything
-   ever ENGAGED as a hostile") is MEASURED WRONG — a mind-controlled healer
-   hits YOU first; being hit is something that HAPPENS to you, hitting is
-   something you DO, and only the second names a mob. One direction only: the
-   refusal never RETIRES a filing the heal got in ahead of. Measurements:
-   docs/agents-archive.md.
-5. **Aggregates lie; derive from identities.** AA earned = net allocation
-   (latest purchase per ability+rank, cost-0 auto-grants excluded) +
-   unspent (last authoritative "You now have" − later spends); sum-of-gains
-   double-counts respec refunds. Durations: DB authoritative, else
-   recency-weighted MAX (median biases low via censored samples).
-6. **Say what the log cannot say** (documented non-distinguishables — never
-   invent): main/off-hand; double/triple attack (SILENT extra swings —
-   zero annotations in 1.35M lines; the rounds model (combat/rounds.ts,
-   wave X 118f0c2) infers by (source, verb, TARGET, second) with
-   cross-target fan-out collapse, per-event ONLY on reuse-timer verbs,
-   aggregate-rate-with-inferred-chip on dual-wieldable weapon verbs, and
-   the player's own Rampage swings are unannotated = outgoing rampage
-   unknowable); ground pickups (NO line exists — the loot family is the
-   only item-acquisition line); self-buff fades (only wears-off emotes);
-   mob HP. Fight NAMING (Task #54): a LIVE fight is named after the CURRENT
-   target (most recent outgoing target — the mob in front of you); on FINALIZE
-   it switches to the LARGEST target ("most damage absorbed", a labeled proxy).
-   Both keep the '+N' others suffix. `encounterName(e, live)`.
-7. **Encounters close on evidence**: all engaged instances dead (+~5s
-   linger); live CC (mez lines) holds fights open indefinitely; ~60s idle
-   fallback for fled mobs. DPS = damage/(lastHit−firstHit); active-time
-   DPS is the secondary stat. A zone change FINALIZES the live zone aggregate
-   into a capped HISTORY (Task #54; last 20 sessions — frozen agg + timing +
-   memoized summary, NO per-event rings, ~0.6MB full-log) instead of discarding
-   it, so a past zone's overall meter stays selectable; the snapshot exposes
-   `zoneSessions` (live first, id 'zone'; finalized 'zs<n>') and buildSelected
-   accepts a session id. Selector rows (main + overlay) carry disambiguation
-   timing: start clock (formatDate) · coarse live-updating age · duration.
-8. **Miss/resist are first-class, damage-free** (Task #51 v2): a miss
-   (avoided melee swing) and a resist (fully-resisted spell) attach to the
-   fresh encounter + zone aggregate with the SAME attribution as damage
-   (you/pet/incoming; hostile-mob-vs-mob resists dropped) but carry NO
-   amount — so every damage total stays byte-identical (the tripwire, per
-   source: `Σ category.total == source.total`). They enter the timeline
-   ring as hollow/red ticks (miss -> "Melee" lane; resist -> the spell's own
-   lane, so an always-resisted mez shows a 0-hit / N-resist lane). Rates:
-   melee hit% = hits/(hits+misses) [hits counts ALL landed incl. spells —
-   the per-category melee row isolates pure melee]; resist% =
-   resists/(spell+dot casts + resists), surfaced at source / category /
-   per-spell rows. A miss/resist NEVER opens or extends an encounter (only
-   damage/CC does), so instants before the first hit go to the zone
-   aggregate only. Ring cap 5k→8k (misses ~2× the density; sole marathon
-   fight peaks 5259 instants — fits with zero drop-oldest; ≤60 rings
-   retained, <1MB). Timeline zoom/pan is renderer-side view-window state
-   (wheel = cursor-anchored zoom, shift-wheel/drag = pan, Fit = reset,
-   starts fit); windowed by visible time range so the SVG stays cheap.
-9. **One time base per chart.** A curve's vertices, markers, axis and hover
-   inverse all read ONE `{t0, t1, bucketMs}`; samples anchor at bucket
-   centres; live windows advance in whole buckets. Mixing an index-fraction
-   vertex mapping with a time-fraction marker mapping stretched markers a
-   full bucket at the right edge, and a wall-clock window length made them
-   swim against a still curve every tick (fixed 5a9dbc2). Canvas is never
-   the answer to arithmetic disagreement. Chart interaction seam: hover
-   binds pointermove/pointerleave ONLY and bails when `ev.buttons !== 0`;
-   drag interactions own pointerdown/up/cancel; a `suppressed` prop ties
-   them without shared state.
-10. **Revisable intervals JOIN AT READ; nothing stamps their ids.** Combo
-   intervals (fuzzy, retroactively re-labeled by a later /who or a user
-   correction) are queried by timestamp (`comboAt`/`groupByCombo`); an id
-   stamped onto a boss kill goes stale with no reconciliation path.
-   Persisted corrections key on TIME; interval ids are recompute-unstable
-   and never leave the renderer.
-11. **Exclusivity gates are RATE-AWARE.** "Never fired without X" requires
-   the inactive exposure to PREDICT evidence (>= 3 expected firings at the
-   lane's own active rate), never a flat swing floor — 289 swings deny
-   Instrument of Nife what 225 earn Spellblade, and that asymmetry is the
-   point. Direct observation beats the model (a lane that DID fire inactive
-   is never "under-sampled"). States active for the same firings declare
-   co-exclusivity — two rows never silently claim one body of evidence.
-12. **Cross-source name RENAMES are knowledge, never fuzzy.** The log, the
-   mob catalog and the map stems disagree by NAME (The Ruins of Old
-   Paineel = The Hole), not spelling. `shared/zones.ts` is the ONE
-   hand-authored, evidence-verified artifact (short names, aliases,
-   `catalogZonesFor`); closest-match would conflate genuinely distinct
-   zones, and an anti-fuzzy tripwire pins two near-name rosters disjoint.
-   A new gap gets a VERIFIED row, never a matcher.
-13. **A DEATH→DEATH GAP IS AN UPPER BOUND, NOT A MEASUREMENT** (JOS-194,
-   `shared/respawn.ts`). Respawn clocks start on the death MESSAGE, numbered
-   from your own kills; the wiki is a bad primary source (394 readable
-   respawns across 7,872 pages), so the ladder is: your typed number, then
-   your kills, then the wiki as a DEFAULT before you have kills and a FLOOR
-   under them once you do. Every observed gap is `respawn + your delay`, so
-   the SMALLEST gap converges downward; it prints as `≤` with the sample
-   count, and a clock at zero says **due**, never "spawned" (laws 1, 6). Two
-   evidence rules keep the bound honest: a gap counts only when both deaths
-   fall inside ONE stated stay in the zone (a zone line ends the stay even
-   when it names the same zone), and two deaths of one name inside 60 s are
-   two mobs in one pull (the shortest catalog respawn is 78 s). The committed
-   floor keeps each page's VERBATIM text beside the parsed seconds
-   (`--reparse` re-derives with NO network).
-   **TRACKING IS OPT-IN PER MOB, AND THE DISPLAY IS ZONE-SCOPED** (owner):
-   EQ names are massively DUPLICATED, so a clock nobody asked for is a clock
-   about a mob the app cannot identify. Recently-killed is the discovery
-   surface; a clock exists only on Watch or a typed number; surfaces show
-   only the zone you are in, filtered by the module's OWN zone-stay state
-   (the empty zone is its own BUCKET; `due` never widens the filter). The
-   zone is part of what the screen shows, so the module bumps `rev` on a
-   zone line (JOS-87's rule, re-learned) — watch list, zone line, sighting
-   and confirmation all bump it.
-   **AND A CLOCK MUST YIELD TO THE LOG NAMING THE MOB** (owner): a row
-   carries `seenTs` — the last instant a TYPED event named that mob while
-   the fold stood in that zone — and a newer `seenTs` reads **UP**, sorting
-   above every countdown; the UP state ages out (`RESPAWN_LINGER_MS`), never
-   the row. Coverage is off EVENTS, never a raw-text scan; a corpse is
-   deliberately NOT a sighting, or every kill would flip its own row up.
-   **AND A SIGHTING NEVER AUTO-ADJUSTS THE SCHEDULE** — it proves the mob is
-   UP, not when it spawned; re-basing is the explicit `Start clock here`
-   affordance (`respawn:confirmSighting`, `basis:'sighting'`, base
-   `max(death, confirmation)`), session state, never persisted.
-   **AND UNWATCH LIVES ON THE MOB, WHEREVER YOU MEET IT** (owner): every
-   surface naming a watched mob carries its own way out, all landing on ONE
-   channel, `respawn:unwatch`, which takes the canonical mob KEY, removes
-   the NAME, and throws away nothing else — watching again restores the
-   identical clock (pinned on the WRITE: `tests/respawnUnwatch.test.mts`).
-   Rounds 7-9, distilled: the tab is Timers; the duration + source label are
-   ONE bordered unit (`RespawnEditDialog.tsx`; whitelist grammar
-   `parseRespawnDuration`; `respawnOverridden` = the ladder saying
-   `source === 'custom'`); the OVERLAY carries no editing; **a watched row
-   NEVER vanishes while watched** (round 8 — what ages out is the SEEN
-   state; unwatch is the only way a row leaves); the mob hover card is
-   IN-APP ONLY. Full rounds history: docs/agents-archive.md.
+The 13 numbered laws (what a buff instance is, pet retirement, aggregate
+derivation, encounter closure, miss/resist accounting, respawn-gap bounds,
+etc.) moved 2026-09-13 to `engine/AGENTS.md`, beside the Rust
+code that now implements every one of them. Read it before touching
+`engine/crates/fold`.
 
-## The fold checkpoint, and why there isn't one (JOS-208, removed by JOS-230)
+## The fold checkpoint, and why there isn't one — moved to `engine/AGENTS.md`
 
-For two days the app could restore its world model from a binary checkpoint
-(JOS-208); the owner removed it anyway (JOS-230): the cold-read stall it
-targeted did not survive its own instrumentation, and it taxed every fold
-change with schema/goldens/census ceremony. WHAT SURVIVED, because it is the
-app's and not the feature's: `tests/foldDeterminism.test.mts` (**a
-historical replay reads no wall clock**), the engine's `st.hydrating` gate
-(`tests/combatReplayClock.test.mts`), and
-`MessageOverlayMiner.lastObservedTs` (a published snapshot's `updatedAt` is
-the LOG's clock). Both product fixes were found by folding the same bytes
-twice and diffing — reach for that again. If a startup-cost ticket comes
-back: measure first, and read `git log 5038f6f0..1c3e584f`. Full
-post-mortem: docs/agents-archive.md.
+The JOS-208/JOS-230 checkpoint post-mortem and the JOS-231 re-seeding law
+moved 2026-09-13 to `engine/AGENTS.md` with the rest of the
+fold semantics.
 
-**A FOLD MUST NEVER BE SEEDED WITH WHAT IT IS ABOUT TO RE-DERIVE, AND THE ONLY
-HONEST WAY TO KNOW IS TO FILE EVERY COUNT UNDER ITS SOURCE** (JOS-231). The
-message overlay re-mines the whole log every launch; seeding it from its own
-persisted served view double-counted every cold launch. `MessageOverlayMiner`
-keeps ONE BUCKET PER SOURCE (`BASELINE_SOURCE` for the committed baseline),
-`beginSource(key)` DISCARDS a bucket before its log is folded again,
-`build()` sums the buckets — a re-fold REPLACES its source's contribution;
-idempotence is structural. The persisted file is v2, a REGISTER with no
-verdicts (a stored verdict is a second opinion waiting to disagree with the
-derived one). The fix deliberately KEEPS the persisted seed (a bucket for a
-character you are not folding is knowledge nothing can re-derive, and
-`effectiveSpellDb` derives parser corrections from the seed BEFORE the
-fold). `tests/messageOverlayIdempotence.test.mts` pins it all, with a
-tripwire that re-creates the old shape and watches the counts double. Full
-story: docs/agents-archive.md.
+## Log-format quick reference — moved to `engine/AGENTS.md`
 
-## Log-format quick reference (all validated against the real log)
-
-The committed fixture tests (`tests/fixtures/*.log` + their suites) are the
-AUTHORITY for line shapes; the rows kept here are the non-obvious laws, and
-the full per-lane evidence lives in docs/agents-archive.md.
-
-- Melee verbs CONJUGATE — match first person ("You slash") AND third
-  ("slashes"); missing `smite`/`cleave` once hid 22% of all damage. Paren
-  modifiers are COMPOUND: `(Riposte Slay Undead)`.
-- **A VERB THAT NAMES A CLASS SKILL GETS ITS OWN LANE; A WEAPON VERB DOES
-  NOT** (JOS-77, JOS-81). `meleeSkill()` (log/parseCombat.ts) splits
-  Backstab, Bash, Kick, Frenzy, Flurry, Cleave (WAR) and Smite (PAL);
-  slash/pierce/crush/hit/slice/claw/gore are what a weapon in a hand prints
-  and share the generic "Melee" row (the Rounds panel splits those BY VERB).
-  The table is HAND-AUTHORED against `data/classes.json`'s skill→class map —
-  never a matcher over spelling. The proofs differ per lane; know them
-  before adding one (full counts + hand tallies: docs/agents-archive.md):
-  - Cleave (JOS-77): an ABSENCE — a verb that never prints for a player who
-    lacks the skill is gated on the skill.
-  - Smite (JOS-81): THE SKILL-UP STREAM — a weapon verb never ticks under
-    its own name while `Smite` ticks beside Kick/Bash/Backstab. **THE SKILL
-    LANE AND THE SPELL LANE SHARE A STEM AND MUST NEVER MERGE** — a spell
-    literally named `Smite` exists; `tests/combatSmiteLane.test.mts` pins
-    the collision on real bytes.
-  - Ranged (JOS-92): **a weapon verb fired from a different SLOT than the
-    hands is not the hand lane** — `shoot` ticks under `Archery`. THE
-    DISCRIMINATOR IS THE VERB AND NOTHING ELSE; no thrown lane is invented
-    beside it (awaiting-sample law); the self arm is INJECTED in
-    `tests/combatRangedLane.test.mts`.
-  - Strike (JOS-163): the GENERIC VERB every monk special prints as — an
-    unnamed strike earns a row called **`Strike`**, the verb, never a name
-    from the chain: the verb earns the ROW, the state line earns the NAME,
-    and **no lane is ever seeded from the chain's first entry**
-    (specialAttacks.ts's stated law).
-  Law 8 held byte-identical across all four changes.
-- **A HEAL THE LOG ANNOUNCES BUT NEVER VALUES GETS A LANE THAT CARRIES A COUNT
-  AND NO NUMBER** (JOS-86 — the monk's Mend). `You mend your wounds and heal
-  some damage.` is the whole sentence: no amount, no target, no third-person
-  twin. THE FIX IS A KIND, NOT A FLAG: `healUnstated`, with **no amount
-  field at all** (a `heal` with `amount: 0` would be a lie with a long
-  tail). It enters NO sum and rides its own `HealSourceView.unstatedCount`
-  so the crit and overheal rates beside it keep their VALUED denominator.
-  FIRST PERSON ONLY, no invented arms (awaiting-sample law). Law 8 gate:
-  every fixture diff was an ADDITION. Full story + the whole-log partition:
-  docs/agents-archive.md.
-- **SPECIAL ATTACKS PRINT NO VERB OF THEIR OWN.** Dragon Punch, Eagle Strike
-  and Tiger Claw ALL land as `You strike …`; Round Kick and Flying Kick as
-  `You kick …`. The game names the live one exactly once (`You will now use
-  <X> while auto attacking.` — a GRANT, also how a lane RESETS — and
-  `… instead of <Y> …`, an in-lane upgrade), so the lane label is STATE, not
-  parsing: `combat/specialAttacks.ts` tracks the live special per VERB lane
-  and ingest renames the skill. **`Slam instead of Bash` is REFUSED** — a
-  documented non-distinguishable (law 6), not a guess. SKILL-UPS ARE NOT AN
-  INPUT anywhere here. Full evidence: docs/agents-archive.md.
-- Zone: `You have entered X.` — REJECT pseudo-zones ("an area where
-  levitation…"). **The zone name is the ONLY thing that ever states a
-  difficulty**, so `zoneTier()` decides what every kill's difficulty was,
-  and it answers FOUR kinds of thing, not one number in five (JOS-166): a
-  trailing `(Awakened|Adaptive|Fused|Refined)` = **d1–d4**; a `- Solo` /
-  `- Group N` suffix with no adjective = **d0, the base INSTANCE with a real
-  weekly lockout**; a bare zone name = **open world** (`TIER_OPEN_WORLD`, no
-  lockout); empty or unknown adjective = **unknown** (`TIER_UNKNOWN`). The
-  name is stripped of all three markers; all four are kill-record keys
-  (`src/shared/kills.ts`), and only the five difficulties can green a weekly
-  ladder rung. Pre-JOS-166 history: docs/agents-archive.md.
-- Loot family (sole item-into-inventory lines): dashed
-  `--You have looted X from Y's corpse.--`; currency (`…stored it in your
-  currency`, NO period); sold (`…sold it for <money|free>.`). Dragon
-  Hoard / depot / combine variants exist and are NOT yet parsed.
-- AA: gains `…gained N ability point(s)! You now have M` (M = UNSPENT);
-  spends in TWO formats (quoted rank-1 / `improved X <rank>`); cost-0 =
-  auto-grants; respecs re-log purchases; no refund line exists. The quoted
-  form is ALWAYS rank 1 and the improved form NEVER logs below rank 2, so a
-  spend line states one rung of a per-ability LADDER — `shared/aaLedger.ts`
-  regroups them. Two families that look like AA are NOT parsed, both
-  deliberately: the `completed achievement` line restates a milestone the
-  gain lines already carry (double-count risk), and `You activate X.` cannot
-  distinguish an AA from a disc or a poison — a buffs/combat signal, never an
-  AA-usage stat. Sweep: docs/agents-archive.md.
-- Class SKILL grants share the AA verb: `You have gained the ability to use
-  <Skill>.` (44×, Double Attack / Sneak / Riposte…) has NO cost clause and
-  is not an AA purchase. `AA_ABILITY_RE` requires ` at a cost of`, which is
-  the whole reason those lines never mint a spend.
-- Resists (`resist` event, Task #51 v2): THREE shapes — `<target> resisted
-  your <Spell>!` (caster=you), `<target> resisted <caster>'s <Spell>!`
-  (caster=name; test YOUR form FIRST — 712 spell names contain `'s`), `You
-  resist[ed] <mob>'s <Spell>!` (incoming). Spell keeps rank suffix for
-  display, rank-normalized (spellCanonKey) for keys. Misses: `tries to … but
-  misses!` family (miss/dodge/parry/riposte/block/absorb). Full-log sweep
-  counts: docs/agents-archive.md.
-- Stances: two mutually exclusive groups — 9 stances (`You assume a/an X
-  stance.` — the article conjugates: "an offensive stance") and 9
-  invocations (`You begin reciting the X invocation`);
-  "begin to change your …" lines are flavor, not state.
-- Quick Buff AA: `You activate Quick Buff.` → burst of landing emotes, NO
-  cast lines. Permanent Illusion AA (ownership learned from its purchase
-  line): illusion self-buffs permanent; ONE illusion per entity;
-  `Your illusion fades.` is the shared remover.
-  **THE BURST IS ALSO THE ONLY LINE THAT ENUMERATES YOUR GROUP BY NAME**
-  (JOS-85): two or more `You healed <X> … by <Spell>.` lines in the SAME
-  second — a fact about the ABILITY, not spell target types. It proves
-  RECIPIENTS, not membership (bursts hit your own pets and, twice, a
-  non-group-mate), so the roster admits a name only in conjunction with
-  `You gain party experience!` earlier in the session (measured 2/2 correct,
-  0 false positives). Weakest provenance rung (`buffed`); self / charmed /
-  claimed-pet names refused. src/main/modules/buffFanOut.ts,
-  docs/plans/group-model.md §1 G4; measurements: docs/agents-archive.md.
-- Summoned pets have random proper names; they persist across zones (charmed
-  pets do not). THREE binding signals, all through one `bindPetClaim`
-  (ingest.ts), on purpose — a separate path would be a third retirement seam
-  for some model to forget (law 4 is a scar from exactly that):
-  - The owner-only tell `<Name> told you, '… Master.'` — **THE TELL ONLY
-    FIRES WHEN THE PET IS ORDERED** (JOS-47); a pet engaging on its own
-    aggro emits nothing private at all. **THE TELL IS THE WHOLE STORY, AND
-    THE BLIND SPOT IS ACCEPTED** (owner, JOS-49): the ask-the-user offer and
-    the pet-say nomination rung are DELETED — the answer is to order it
-    once; an unordered pet is a documented non-distinguishable (law 6). **A
-    TELL BINDS FORWARD, NOT BACKWARD** — nothing reaches back over damage
-    already filed as nobody's.
-  - The `/pet who leader` answer `<Name> says, 'My leader is <You>.'`
-    (JOS-52) — EXACT sentence, never a `/leader/` pattern (the six-says
-    rule). **THE LEADER'S NAME IS THE WHOLE GUARD** (compared to
-    `ParserConfig.characterName`, session-injected) because the say is
-    BROADCAST and forgeable — stated, costed, accepted. It parses to the
-    SAME canonical `petClaim` event as the tell (`via: 'tell' | 'leader'`),
-    so succession/idempotence/promotion are shared code.
-  - **YOUR OWN PET-ONLY BUFF NAMES IT WITHOUT ASKING** (JOS-188): an own
-    cast of a `targetType: Pet` spell (charmModel.ts `PET_TARGET_SPELLS`)
-    ARMS the charm model and the named `buffApply` landing binds the pet.
-    **THE MESSAGE IS NOT THE GATE, THE ARMED OWN CAST IS** — the landing's
-    candidates must contain the spell being cast, and the arm is CONSUMED on
-    a hit (a Quick Buff burst can never bind off one cast). This fixes the
-    UPGRADED pet: a new name means succession triggers on the successor's
-    claim, and an unordered successor had none.
-  **AND THE APP NOW SAYS SO, ONCE, AND THEN STOPS** (JOS-258, owner ruling
-  2026-08-12 — option (a), explicitly NOT a reopening of JOS-49). The blind
-  spot is still accepted; the meter just no longer stays silent about it.
-  `combat/petNudge.ts` arms on the player's own pet-summon cast
-  (`spellEffectClass.ts`'s derived `summonPet` class; `Call Pet` excluded —
-  it moves a pet rather than making one) and the overlay meter draws ONE
-  sentence: *Pet summoned - order it once or type /pet who leader so the
-  meter can see it.* **STALENESS AND REPETITION ARE THE FAILURE MODES, so
-  the whole feature is a timeout**: 10s GRACE, 45s SHOW, 5m QUIET after one
-  is ignored. ONE SLOT; cleared by any `bindPetClaim` (all three routes, one
-  seam), by a fizzle/interrupt, or by its own clock — swept from the event
-  stream AND from `snapshot(now)`. Armed only when `hydrating` is false.
-  **IT COACHES, IT NEVER ADOPTS** — the unbound pet's damage is still
-  dropped at routing while the sentence is up, and
-  `tests/petSummonNudge.test.mts` asserts exactly that beside the timings.
-  The renderer holds NO dismiss state (the snapshot's `petNudge` is absent
-  in every state but the one). Full story: docs/agents-archive.md.
-  A pet-claim tell from a name EVER seen charmed re-arms the charmed set,
-  never the permanent one (`everCharmed`).
-  **AND THE PET-BUFF RUNG IS NO LONGER THE COMBAT MODEL'S ALONE (JOS-454).**
-  `bindPetBuffLanding` emits a derived `petClaim {via:'petBuff'}` on
-  `bus.emitDerived` (Task #47's queue, the one `buffExpired` rides), so
-  every model that binds a `petClaim` — progression's kill credit, buffs.ts
-  entity succession, roster, the resist fold — learns the pet at the instant
-  the meter does. ONE PRODUCER, ONE KIND, and the producer IGNORES its own
-  kind (`ingestPetClaim`), which makes it provably loop-free. The ARM AND
-  THE GATE ARE UNTOUCHED, so which names bind has not moved — only who is
-  told. STILL NOT CLOSED: a pet its owner neither buffs nor orders stays
-  invisible (order it once). Goldens: `p2`/`p3`/`p4` pet-arc logs,
-  petBuffBind/petClaimWindows/petBuffKillCredit tests. The incident that
-  bought it (Vibartik) + measurements: docs/agents-archive.md.
-- Exp: `You gain (party )?experience!( (N.NN%))?` — the percent is an
-  INCREMENT of the current level bar (sums to ~100 between dings);
-  unstated ⇒ at the cap, modeled `pct: undefined` never 0. The exp line
-  PRECEDES its kill line, same second (4,887/4,909) — joins consume the
-  pending exp line at the next credited kill, never search forward.
-- Self `/who` row (keyed on the tailed character's name via
-  `ParserConfig.characterName`, never a constant) states the loadout;
-  skill-ups `You have become better at <Skill>! (n)`; Wiki skill names ≠
-  client skill names (`1 Hand Slashing` vs `1H Slashing`) — classes.json
-  carries the alias table measured from the log.
-  **A `/who` ROW IS GROUND TRUTH AT ITS TIMESTAMP, AND INFERENCE NEVER
-  OUTRANKS IT** (JOS-192, JOS-287; the two live-log tripwires in
-  comboWindows/comboWhoBoundary are this law): an interval may not
-  contradict a row it covers, nor be extended or created BACKWARD over
-  evidence that contradicts it. Two rows are two statements, never one
-  event — so `mergeBoundaries` may narrow, move or absorb an INFERRED
-  boundary but never a `/who` cut (`resolveGroup`), and an inferred window
-  that covers a row cut is that swap dated better by the game (absorbed,
-  recorded in `startAlso`). Frozen shape: fixture
-  `cw7-who-swap-boundary-aug12.log` + tests/comboSwapBoundary.test.mts; the
-  JOS-287 worked example: docs/agents-archive.md.
-- **`Your <item> shimmers briefly.` / `feels alive with power.` IS A WORN
-  FOCUS TALKING, NOT AN ITEM CASTING** (JOS-79, measured whole-log — this
-  entry previously said the opposite and it was wrong). All five items that
-  print it are focus items; the combo rule that acted on it is gone; the
-  event stays and says nothing about class in either direction. A
-  self-announcing clicky needs its own observed sample before any rule acts
-  on one. Measurements: docs/agents-archive.md.
-- Feign death has NO failure line (1.14M lines: only the success emote).
-  An alert cannot fire on the absence of a line — the group ships hidden.
-- **A TELL'S TENSE SAYS WHETHER A PERSON SENT IT** (JOS-69, measured
-  whole-log): present tense (`tells you`) is a player, past tense (`told
-  you`) is the game — that is the whole discriminator, and CAPITALIZATION IS
-  NOT ONE (a charmed pet reads `A gorgon told you, …`). There is NO parsed
-  tell event and no golden can carry one (the scrub drops all quoted
-  speech), hence the `tells` alert group is a RAW trigger
-  (`\] .+ tells you, '`) and its unit test constructs the sentence.
-  Measurements: docs/agents-archive.md.
-- **SLOWS ARE A ROSTER, NOT A NAME** (JOS-69). A slow wearing off a mob is
-  the ordinary named-target `buffFade`, so the SPELL is the matcher and it
-  has to be the whole family — a slow is the spell you replace as you level.
-  spells.json enumerates it by landing emote; the ON-YOU side resolves to
-  all-slow candidate lists, so the alert reports the family, never which
-  one. Its tripwire is one word away: `Your speed returns to normal.` is
-  NINE HASTES (law 3).
-  **AND THE ROSTER HAS TWO SIDES NOW, BECAUSE ONE MEMBER CANNOT SAFELY BE ON
-  BOTH** (JOS-233, owner ruling 2026-08-12): the bard binding pair joined
-  the MOB side only — `The strands fade away.` is shared VERBATIM with a
-  beneficial buff, and a `where.spell` matcher tests the whole candidate
-  list (JOS-84); anchoring cannot fix identical sentences, only the split
-  roster can. The wider binding line is EXPLICITLY UNRULED and stays silent;
-  the table is in tests/charmCcRoster.test.mts. Full story:
-  docs/agents-archive.md.
-- **CHARM AND MEZ ARE ROSTERS TOO — AND THE SPELL DB IS THE ORACLE** (JOS-84).
-  `Your <spell> spell has worn off of <mob>.` is ONE sentence for three
-  facts; `rulesets.ts` matches the spell NAME: `charmSpell` ⇒ `uncharm`,
-  `ccSpell` ⇒ `cc {refresh:true}`, neither ⇒ an ordinary `buffFade`. The
-  rosters are enumerable from spells.json's landing-message families, and
-  `tests/charmCcRoster.test.mts` RE-DERIVES both families every run — a
-  future scrape that adds a member fails the suite instead of going mute.
-  **A MESSAGE FAMILY IS NOT AN EFFECT FAMILY — THE ORACLE HAS BEEN WRONG IN
-  BOTH DIRECTIONS** (Solon's Bewitching Bravura, a mez by family and really
-  the bard's level-39 CHARM, JOS-200; both Largo's binding songs out of
-  `ccSpell` entirely, JOS-225 — movement debuffs, settled by the log). Both
-  reversals live as EVIDENCE-CARRYING TABLES in tests/charmCcRoster.test.mts
-  (`FAMILY_EXCEPTIONS`, `NOT_A_HOLD`) precisely so the next scrape cannot
-  sweep them back in; adding a row is a claim about what the game DOES,
-  backed by log lines — never a way to quiet a noisy alert.
-  **AND "NOT A HOLD" IS NOT "NOT AN ALERT"** (JOS-233): the SLOW group's
-  mob-side roster claims both Largo's by name, and `NOT_A_HOLD` carries a
-  `fires` column so a row states which group it ends up in and cannot drift
-  silently between the two. Full story + the log evidence:
-  docs/agents-archive.md.
-- **THE CALM LINE IS A ROSTER TOO — AND ROUTING OBEYS RULING 8 (JOS-213).**
-  Calm spells are Beneficial, so their timer landed in the player's BUFF
-  overlay — while the thing they watch is a mob-state timer. The fix is a
-  SECOND, orthogonal fact about the SPELL (`ActiveBuff.calmsTarget`,
-  `spellCalmsTarget`, re-derived by an oracle every run, exactly like
-  `ccSpell`); `cls` does NOT change. **THE CUT THAT FAILED IS THE LESSON**:
-  routing on "the TARGET is a mob" reruns the error ruling 8
-  (JOS-136/JOS-140) outlawed — nature, and now surface, comes from the
-  spell, never from the shape of the target. Fixtures `w64`/`w65`, pinned in
-  `tests/calmLineTimers.test.mts`; a pacified mob CAN be killed and takes
-  the ordinary decrement-one death censor, never JOS-228's mez refusal.
-  Full story: docs/agents-archive.md.
-- **THE FRIEND SYSTEM ANNOUNCES NOTHING** (JOS-69): only the `/friends`
-  roster print and the `<name> is now your friend.` confirmation exist — no
-  login line, no logout line — so "a friend came online" is knowable only by
-  polling, and the group ships hidden beside feign-death and pet-death.
-  Sweep: docs/agents-archive.md.
-- Motes (the Item Upgrade System's currency) arrive ONLY inside ordinary loot
-  lines, which already parse to `loot { item, source }`; every one the items
-  catalog knows is `Mote of <tier> Potential` (10 tiers, 7 seen: Infinitesimal
-  220, Minor 31, Lesser 16, Major 8, Potential 7, Greater 2, Superior 1). Nothing
-  anywhere RANKS the tiers, so a per-tier loot filter would be an invented fact.
-- `LogEvent.raw` INCLUDES the `[timestamp] ` prefix: a `^`-anchored raw
-  alert regex silently never matches — anchor on `\] ` (tripwire test).
-- WorldModel labels append a spawn-generation ` (N)` suffix that appears
-  in NO log line (law 2) — `mobKey` strips it.
+Every rule for how a raw log line becomes a typed event (melee/skill verb
+lanes, zone-tier parsing, AA gain/spend shapes, resist shapes, pet-binding
+signals, the charm/mez/slow/calm spell rosters, the tell-tense discriminator)
+moved 2026-09-13 to `engine/AGENTS.md`. Verified against the
+source tree first: every TS file/test the old section cited
+(`log/parseCombat.ts`, `combat/specialAttacks.ts`, `rulesets.ts`,
+`charmModel.ts`, `tests/charmCcRoster.test.mts`, `tests/calmLineTimers.test.mts`,
+`zoneTier()`) is gone, and each has a live Rust equivalent in
+`engine/crates/{eqlog,fold}` — this was a full move, not a partial one.
+Read `engine/AGENTS.md` before touching log parsing or the alert/buff
+rosters it feeds.
 
 ## Data sources
 
@@ -1290,64 +779,11 @@ the full per-lane evidence lives in docs/agents-archive.md.
   `<li>` items — `<br>`-splitting once dropped trailing unhinted items),
   `scrape:bosses` (curated list incl. efreeti spawn-chain "Other:" bosses),
   `scrape:spells`, `gen:message-overlay`, `gen:icon`.
-- Item knowledge: `itemLookup.ts` — local-first (posky) → wiki
-  `{{Itempage}}` (`statsblock` flags / `relatedquests` / `notes`), userData
-  cache with negative caching, live-loot background prefetch.
-- **THE WIKI ART SHIPS IN THE BOX, AND THE FETCH IS THE FALLBACK** (JOS-198,
-  `src/main/bundledImages.ts` + `resources/wiki-images/`): every distinct
-  item iconId + all 29 boss portraits (780 files, 3.75 MB), COMMITTED — a
-  build-time fetch would make `npm run dist` depend on two volunteer wikis'
-  uptime. `npm run fetch:images` regenerates them + `manifest.json`. Files
-  are named by the cache's OWN `cacheFileName()`, so the bundle and
-  `<userData>/image-cache` are ONE namespace that cannot drift;
-  `bundledImageRoots` probes dev/e2e, `app.asar`, `app.asar.unpacked` in
-  order. electron-builder names `resources/wiki-images/**` EXPLICITLY, never
-  `resources/**`. A source build without images is a SUPPORTED state that
-  falls back to the runtime cache. CREDIT IS PART OF THE FEATURE (both wikis
-  named in-app + README). Pins: `tests/bundledImages.test.mts` re-hashes all
-  780; `bosses-week.e2e.mts` proves cold userData + no network. Full story:
-  docs/agents-archive.md.
-- **Downloaded images are cached PERMANENTLY** (`src/main/imageCache.ts`): no
-  image the app fetches may ever be fetched twice — and since JOS-198 a
-  normal install fetches NONE. Item icons serve from `eqimg://item/<id>` (a
-  `protocol.handle` on the DEFAULT session — one handler covers every
-  window); a miss is ONE polite fetch, written ATOMICALLY and only if the
-  bytes sniff as an image. NEGATIVES ARE NEVER CACHED **ON DISK** — a
-  refusal IS remembered IN MEMORY, only when the HOST SPOKE; a NETWORK
-  failure is DELIBERATELY NOT remembered. On disk: no TTL, no eviction. The
-  second route, `eqimg://url/<encoded>`, has a STRICT host allowlist — exact
-  `new URL().hostname` equality, https only; never substring/endsWith. Entry
-  name = `url-<sha256[0:24]>.<sniffed ext>`. **`img-src` does NOT list
-  `https:`** (exactly `'self' data: eqimg:`): that is what makes "every
-  downloaded image is cached" structurally true — widening the CSP is never
-  the fix; wrap the URL through the `url` route. Full story:
-  docs/agents-archive.md.
-- Sound packs: og-packs registry (peonping.github.io/registry) —
-  browse/install ~350 packs in-app. The single shipped default
-  (`alan-rickman`, pinned tag) is GITIGNORED audio, self-provisioned via the
-  same installPack path (additive, retried with backoff — and since JOS-273
-  honouring the tombstone and the default-pack preference above). The
-  synthesized `default` chime pack is DELETED; alerts pointing at any
-  retired pack were rewritten by a ONE-TIME store migration
-  (`migrateAlertSounds`), so an upgrading user's alerts never go silently
-  mute. Pickers pre-select through the preference (`fallbackPack`), never
-  `packs[0]`.
-- **BRING YOUR OWN SOUND (JOS-68): `my-sounds` is a RESERVED pack with its own
-  ROOT.** The user's imports live in `<userData>/my-sounds/` (the ordinary
-  pack shape), NOT under `soundpacks/` — the sibling root makes a registry
-  collision UNREPRESENTABLE rather than unlikely (`packDir()` resolves the
-  reserved id FIRST, `installPack` refuses the name). **The file is COPIED,
-  and the id BECOMES the filename** (`userSoundId()`: lowercase slug, capped,
-  de-duped), so a moved original can never mute an alert and no byte of
-  user-supplied path text reaches `join()`. The picker is
-  `dialog.showOpenDialog` in MAIN — no absolute path crosses IPC in either
-  direction; serving goes through the same `sounds:getData` + `isSafePackId`
-  door as every pack, never a second one. **A missing custom sound is NOT
-  silence** (falls back to the shipped default's line). Removal WARNS by
-  naming the alerts that play it and leaves their defs ALONE. Identity /
-  formats / the 25 MB cap: `shared/userSounds.ts`; the file work takes its
-  ROOT as an argument (tests/userSounds.test.mts drives real copies in a
-  temp dir). Full story: docs/agents-archive.md.
+
+Item knowledge, the bundled wiki art, the permanent image cache, sound
+packs and bring-your-own-sound moved 2026-09-13 to `src/main/AGENTS.md` —
+main owns all five. The scraper etiquette LAW and the wiki API helpers
+above stay here until the `scripts/` phase.
 
 ## UI conventions
 
@@ -1598,101 +1034,21 @@ the full per-lane evidence lives in docs/agents-archive.md.
   `.blockmap` + `latest*.yml` feeds under `release/<version>/`. Unsigned for
   now (SmartScreen "More info → Run anyway" in README); Azure signing turns
   on via repo secrets only — CI args are already conditional.
-- Auto-update: electron-updater in `src/main/updater.ts` — channel from
-  store; check at +10s then 30min; toast → quitAndInstall; dev-guarded on
-  `app.isPackaged` EXCEPT channel IPC (settings UI needs it in dev).
-- First-run self-sufficiency: the default sound pack self-provisions from
-  its pinned registry tag; spell DB/overlay baseline inlined in the main
-  bundle; EQ dir resolves via env → registry → drive-sweep with the
-  Settings-gear override; zero logs anywhere → quiet empty state, never an
-  error. Full detail: docs/agents-archive.md.
-- **DISCOVERY SPAWNS NOTHING, AND THAT IS AN AV DECISION AS MUCH AS A SPEED ONE
-  (JOS-184).** `src/main/log/discovery.ts` used to shell out (eight `reg.exe`
-  queries + `wmic`); both reads now go in-process through `native-reg`
-  (~150 ms of blocked main thread → ~6 ms, and no AV heuristic signature).
-  Two invariants pinned by `tests/eqDiscovery.test.mts`: `eqInstallPathValue`
-  reproduces the OLD command's contract exactly, and `fixedDrives` reads
-  `HKLM\SYSTEM\MountedDevices` (mapped NETWORK drives are never there — the
-  property that keeps the offline-share hang fixed). `native-reg` ships its
-  N-API prebuild INSIDE the tarball; it is `require`d LAZILY and its failure
-  swallowed — a bad `.node` must cost one of three discovery paths, not the
-  launch. Full story: docs/agents-archive.md.
+- Auto-update (`src/main/updater.ts`) and EQ-install discovery
+  (`src/main/log/discovery.ts`, JOS-184): moved 2026-09-13 to
+  `src/main/AGENTS.md`.
 
-### Product identity + channel isolation (Task #58)
+### Product identity + channel isolation — moved to `src/main/AGENTS.md`
 
-- ONE name everywhere: `everquest-companion` (package name, appId, installer,
-  install dir, store file, log prefixes, scraper UAs); the DISPLAY name
-  stays "EQ Legends Companion". `eq-tools` survives ONLY as the
-  legacy-migration source. NSIS install dir + updater cache derive from
-  package.json `name`, NOT productName. Full inventory:
-  docs/agents-archive.md.
-- Channels are decided in `src/main/channel.ts`, the FIRST import of
-  index.ts (it must run before electron-store is constructed at module
-  scope). Nothing else in the tree hardcodes a userData path — soundpacks,
-  errors.log, item/registry caches and the learned overlay all resolve
-  through `app.getPath('userData')`, so redirecting the root redirects
-  everything:
+The one-name rule, the prod/dev/e2e channel table, the single-instance
+lock consequence and the one-time `eq-tools` seed moved 2026-09-13 with
+the rest of the main-process rules.
 
-  | channel | when | userData |
-  |---|---|---|
-  | prod | `app.isPackaged` | `%APPDATA%\everquest-companion` |
-  | dev | not packaged | `%APPDATA%\everquest-companion-dev` |
-  | e2e | `EQ_E2E=1` | temp dir (`EQ_E2E_USER_DATA` or `mkdtemp`) |
+### Settings migrations — moved to `src/main/AGENTS.md`
 
-- Separate dirs ⇒ separate single-instance locks (Chromium keys
-  ProcessSingleton off the user-data dir), so the installed app and the dev
-  app genuinely run at the same time — verified with two Electron processes
-  that both won `requestSingleInstanceLock()` on different dirs and where
-  the second lost on a shared dir. Never "fix" a second instance quitting by
-  weakening the lock; check the channel first.
-- ONE-TIME SEED (prod + dev, never e2e): if the channel's dir does not exist
-  and `%APPDATA%\eq-tools` does, an allowlist is COPIED and a
-  `migrated-from.json` stamp written; Chromium caches / lockfile / errors.log
-  deliberately skipped; the old dir is never modified — it's the backup.
-  Guard is "target dir absent" so it can't run twice; failures log and
-  startup continues. **UPDATE CONTINUITY BREAK (conscious)**: the rename
-  means per-user NSIS sees a NEW app — an old `eq-tools` install never
-  chain-updates; the user uninstalls once and state carries via the seed
-  (documented in README). Allowlist + detail: docs/agents-archive.md.
-
-### Settings migrations (persisted store schema)
-
-- **LAW: any commit that changes a persisted shape ships a migration in the
-  SAME commit.** Bump `CURRENT_SCHEMA_VERSION` in
-  `src/main/storeMigrations.ts`, append a step to `MIGRATIONS`, add a fixture.
-  That rule is the whole reason "an upgrade is clean, going back indefinitely"
-  can be true: a store written by ANY past build must load in today's build,
-  and auto-update means users jump many versions at once. `MIGRATIONS` is
-  APPEND-ONLY — never renumber, edit a shipped step, or delete one.
-- An explicit integer `schemaVersion` INSIDE the file, not app semver: CI
-  stamps versions from tags and dev runs unstamped, so electron-store's
-  semver-keyed `migrations` fire in surprising orders across channels. Absent
-  ⇒ 1 (every pre-framework store), and the chain runs 1→2→…→CURRENT.
-- Runs ONCE at startup from store.ts module scope, BEFORE `new Store()`, so no
-  reader ever sees a pre-migration shape — and after channel.ts's one-time
-  `eq-tools` seed (store.ts imports channel.ts first). Ad-hoc fixups in read
-  paths are the anti-pattern it replaces: the flat `overlay` →
-  `overlays.fight` fold moved out of `getOverlayConfig()` into migration 1→2.
-  (`alertSoundMigration` predates the framework and keeps its own stamp — its
-  "respect a user who re-points an alert" semantics aren't schema-shaped.)
-- Migration 1→2 is REAL work, not a dormant no-op: it also recovers the
-  `progress` blob commit 41831cc orphaned (salvaged under
-  `legacy:pre-character` only when no real character exists — never guess an
-  owner) and drops the dead `liveLoot` map.
-- **Startup never dies here.** Unreadable ⇒ untouched, unstamped. Unparseable
-  ⇒ QUARANTINED to `<name>.corrupt.json` and start fresh (conf leaves
-  `clearInvalidConfig` false, so one truncated write otherwise throws on every
-  read forever). A step that throws ⇒ keep what succeeded, stamp the last
-  version that fully landed, retry next launch. Before the first write the
-  original bytes are copied to `<name>.v<from>.backup.json`, once per source
-  version (a later run never overwrites the pristine copy).
-- **Downgrade (file newer than the build)**: log, back up, and leave the file
-  ALONE — no down-migration, no reset, no stamping backwards. The old build
-  runs best-effort, which is safe because every reader defaults on a missing
-  key and electron-store rewrites the whole parsed object, so future keys
-  survive round-trips. Verified by `tests/storeMigrations.test.mts`, which
-  drives the pure runner + the file half with authored fixtures of the real
-  historical shapes (no Electron, never skips).
+The persisted-store migration law (bump `CURRENT_SCHEMA_VERSION`, append
+to `MIGRATIONS`, never renumber) moved 2026-09-13 with the rest of the
+main-process rules.
 
 ### Installer testing strategy (three tiers)
 
@@ -1911,12 +1267,10 @@ plumbing proven). Reuses the tier-2 lifecycle via
   query_timeout only; db.ts). Verification detail + the SNS confirmation:
   docs/agents-archive.md.
 - **ANALYTICS COHORT SPLIT — LIVE (2026-08-05, waves R+S, run under the
-  standing authorization).** The migration ran COPY-FIRST per owner ruling
-  (staging tables, row-count AND sum(n) verification, swap via DSQL's
-  documented `RENAME TO`; nothing dropped until its verified copy existed).
-  Runbook: infra/README.md "THE COHORT MIGRATION". **A ROTATED analyticsId
-  arrives unmarked — re-run `analytics owner-add`**; cohort mechanics live
-  in the USER/OWNER SPLIT bullet below.
+  standing authorization).** Runbook: infra/README.md "THE COHORT MIGRATION".
+  **A ROTATED analyticsId arrives unmarked — re-run `analytics owner-add`**;
+  cohort mechanics live in the USER/OWNER SPLIT bullet below. Migration
+  method (copy-first, verified swap): docs/agents-archive.md.
 - **ANALYTICS OPERATIONS (how usage questions get answered):**
   - Daily/adoption truth: `triage-feedback analytics digest --days N
     --profile eqc` (user cohort by default; `--cohort all` prints both,

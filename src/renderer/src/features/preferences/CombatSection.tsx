@@ -111,13 +111,14 @@ export function combatSection(): PrefSection {
         label: 'Whose damage the meters show',
         keywords:
           'scope whose damage you group everyone party raid roster member members source cohort filter meter meters overlay combat dps show hide',
-        content: <MeterScopeSetting />
+        content: <MeterScopeSetting />,
       },
       {
         id: 'combine-pet',
         label: 'Show your pet inside your damage',
-        keywords: 'pet combine merge damage breakdown solo meter drill charm nest source zoom default level',
-        content: <PetNestingSetting />
+        keywords:
+          'pet combine merge damage breakdown solo meter drill charm nest source zoom default level',
+        content: <PetNestingSetting />,
       },
       {
         id: 'resist-evidence',
@@ -127,15 +128,15 @@ export function combatSection(): PrefSection {
         // the words for the thing the switch is about (pets, charm, NPC casters).
         keywords:
           'resist resists resistance evidence npc mob creature pet pets charm charmed caster casters learn mine mined data mob page con card magic fire cold poison disease sample samples',
-        content: <ResistEvidenceSetting />
+        content: <ResistEvidenceSetting />,
       },
       {
         id: 'self-meter-name',
         label: 'Show my character name instead of “You”',
         keywords:
           'self you your name character meter meters overlay combat dps row label who am i my name identity personal',
-        content: <SelfNameSetting />
-      }
-    ]
+        content: <SelfNameSetting />,
+      },
+    ],
   }
 }

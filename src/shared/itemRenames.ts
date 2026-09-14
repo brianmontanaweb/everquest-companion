@@ -58,7 +58,7 @@ export const ITEM_RENAMES: readonly ItemRename[] = [
 const foldKey = (name: string): string => itemBaseName(name).toLowerCase()
 
 const BY_KEY: ReadonlyMap<string, ItemRename> = new Map(
-  ITEM_RENAMES.map((r) => [foldKey(r.from), r])
+  ITEM_RENAMES.map((r) => [foldKey(r.from), r]),
 )
 
 /**
@@ -92,7 +92,9 @@ interface RenameableEntry {
  * Returns the SAME object when nothing matched, so the common case costs one map miss per entry
  * in the table rather than a copy of 11k records.
  */
-export function renamedItems<T extends RenameableEntry>(items: Record<string, T>): Record<string, T> {
+export function renamedItems<T extends RenameableEntry>(
+  items: Record<string, T>,
+): Record<string, T> {
   const wanted = ITEM_RENAMES.filter((r) => foldKey(r.from) in items)
   if (wanted.length === 0) return items
   const out: Record<string, T> = { ...items }

@@ -35,7 +35,7 @@ import {
   noteDeadStdio,
   resetDeadPipe,
   silenceStdioErrors,
-  stdioIsDead
+  stdioIsDead,
 } from '../src/main/deadPipe'
 import {
   MAX_BUDGETED_FINGERPRINTS,
@@ -43,13 +43,13 @@ import {
   errorBudget,
   errorBudgetSpent,
   errorBudgetTracked,
-  resetErrorBudget
+  resetErrorBudget,
 } from '../src/main/errorBudget'
 import {
   noteError,
   peekErrorReports,
   resetErrorReports,
-  takeErrorReports
+  takeErrorReports,
 } from '../src/main/telemetry/errorReports'
 
 const TEST_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -73,7 +73,15 @@ test('a broken pipe is recognised by CODE, from whatever shape the failure arriv
   assert.equal(isBrokenPipe(Object.assign(new Error('x'), { code: 'ENOENT' })), false)
   // TOTAL: it is handed whatever came out of a catch or off an 'error' event, and `throw 42` is
   // legal JavaScript. Nothing here may become the throw it is describing.
-  for (const junk of [undefined, null, 'EPIPE', 42, {}, [], new Error('EPIPE: broken pipe, write')]) {
+  for (const junk of [
+    undefined,
+    null,
+    'EPIPE',
+    42,
+    {},
+    [],
+    new Error('EPIPE: broken pipe, write'),
+  ]) {
     assert.equal(isBrokenPipe(junk), false)
   }
 })
@@ -138,14 +146,22 @@ test('THE HEADLINE: 7,272,196 occurrences of one fingerprint report a hundred ti
   }
   assert.equal(reported, MAX_REPORTS_PER_FINGERPRINT)
   assert.equal(notices, 1, 'ONE summary line, not one per occurrence — the cap must not flood too')
-  assert.equal(errorBudgetSpent(fp), MAX_REPORTS_PER_FINGERPRINT + 1, 'and the counter itself stops')
+  assert.equal(
+    errorBudgetSpent(fp),
+    MAX_REPORTS_PER_FINGERPRINT + 1,
+    'and the counter itself stops',
+  )
   resetErrorBudget()
 })
 
 test('the notice lands on the LAST reported occurrence, names the fingerprint, and says why', () => {
   resetErrorBudget()
   for (let i = 1; i < MAX_REPORTS_PER_FINGERPRINT; i++) {
-    assert.deepEqual(errorBudget('deadbeef'), { report: true, notice: null }, `occurrence ${String(i)}`)
+    assert.deepEqual(
+      errorBudget('deadbeef'),
+      { report: true, notice: null },
+      `occurrence ${String(i)}`,
+    )
   }
   const last = errorBudget('deadbeef')
   assert.equal(last.report, true, 'the occurrence that spends the budget is still reported')
@@ -215,7 +231,7 @@ function thrown(message: string, fn = 'logError', line = 573): Error {
   err.stack = [
     `Error: ${message}`,
     `    at ${fn} (C:\\Users\\jmoye\\eqc\\out\\main\\index.js:${String(line)}:11)`,
-    '    at process.<anonymous> (C:\\Users\\jmoye\\eqc\\out\\main\\index.js:664:3)'
+    '    at process.<anonymous> (C:\\Users\\jmoye\\eqc\\out\\main\\index.js:664:3)',
   ].join('\n')
   return err
 }
@@ -282,7 +298,11 @@ test('THE WIRING: logError has ONE door to the console, and every emitter goes t
   assert.match(src, /if \(isBrokenPipe\(err\)\) noteDeadStdio\(\)/)
   // Every public emitter routes through it — the narration paths included. A packaged app narrates
   // on every launch, so `logInfo` would have met the closed pipe first whatever `logError` did.
-  for (const call of ["toConsole('log', args)", "toConsole('warn', args)", "toConsole('error', args)"]) {
+  for (const call of [
+    "toConsole('log', args)",
+    "toConsole('warn', args)",
+    "toConsole('error', args)",
+  ]) {
     assert.ok(src.includes(call), call)
   }
 })
@@ -313,7 +333,10 @@ test('THE WIRING: the file sink is asynchronous, and the only sync writes left a
   // …called from the two places where "later" may never arrive, and from nowhere else in src/main.
   const guards = read('src/main/crashGuards.ts')
   assert.match(guards, /logError\('main:uncaughtException', err\)\r?\n {2}flushErrorLogSync\(\)/)
-  assert.match(guards, /logError\('main:unhandledRejection', reason\)\r?\n {2}flushErrorLogSync\(\)/)
+  assert.match(
+    guards,
+    /logError\('main:unhandledRejection', reason\)\r?\n {2}flushErrorLogSync\(\)/,
+  )
   // The quit final is LAST in `before-quit`, so a teardown step's own error line is in the batch.
   const index = read('src/main/index.ts')
   const beforeQuit = index.slice(index.indexOf("app.on('before-quit'"))
@@ -322,7 +345,7 @@ test('THE WIRING: the file sink is asynchronous, and the only sync writes left a
   assert.ok(body.indexOf('flushStoreForQuit()') < body.indexOf('flushErrorLogSync()'))
 })
 
-test("THE WIRING: crashGuards installs the stdio sink BEFORE it can answer an exception", () => {
+test('THE WIRING: crashGuards installs the stdio sink BEFORE it can answer an exception', () => {
   const src = read('src/main/crashGuards.ts')
   assert.ok(src.indexOf('silenceStdioErrors()\n') < src.indexOf("process.on('uncaughtException'"))
   // EPIPE IS NOT SPECIAL-CASED HERE, and that is deliberate: a broken pipe reaching this handler
@@ -363,5 +386,8 @@ test('THE HONEST LEDGER: the health counters are NOT behind the cap, and that is
   assert.doesNotMatch(health, /errorBudget|MAX_REPORTS_PER_FINGERPRINT/)
   assert.doesNotMatch(read('src/main/errorBudget.ts'), /noteSuppressedErrorLine|noteErrorLogLine/)
   // And `logError` counts the budget's silences into that ledger, so the total still adds up.
-  assert.match(read('src/main/errorLog.ts'), /if \(!budget\.report\) \{\s+noteSuppressedErrorLine\(\)/)
+  assert.match(
+    read('src/main/errorLog.ts'),
+    /if \(!budget\.report\) \{\s+noteSuppressedErrorLine\(\)/,
+  )
 })

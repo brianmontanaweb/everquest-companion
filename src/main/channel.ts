@@ -62,7 +62,7 @@ const SEED_ENTRIES = [
   'message-overlay.json', // learned cast-message overlay (expensive to relearn)
   'item-knowledge-cache.json', // wiki item cache (incl. negative caching)
   'registry-cache.json', // sound-pack registry index
-  'soundpacks' // installed packs, incl. the provisioned alan-rickman default
+  'soundpacks', // installed packs, incl. the provisioned alan-rickman default
 ]
 
 /** Marker written into a seeded dir: what came from where, and when. */
@@ -90,7 +90,7 @@ function seedFromLegacy(target: string, legacy: string): string[] {
     }
     writeFileSync(
       join(target, SEED_STAMP),
-      JSON.stringify({ from: legacy, at: new Date().toISOString(), copied }, null, 2)
+      JSON.stringify({ from: legacy, at: new Date().toISOString(), copied }, null, 2),
     )
   } catch (err) {
     // errorLog.ts's FILE sink can't be used here (it resolves userData, which we're still
@@ -118,7 +118,7 @@ function resolveUserData(): string {
   const copied = seedFromLegacy(target, join(base, LEGACY_DIR_NAME))
   if (copied.length > 0) {
     logInfo(
-      `[everquest-companion] First launch on the '${CHANNEL}' channel: copied ${copied.length} state entries from ${LEGACY_DIR_NAME}\\ → ${target} (${copied.join(', ')}). The old dir is left untouched as a backup.`
+      `[everquest-companion] First launch on the '${CHANNEL}' channel: copied ${copied.length} state entries from ${LEGACY_DIR_NAME}\\ → ${target} (${copied.join(', ')}). The old dir is left untouched as a backup.`,
     )
   }
   return target

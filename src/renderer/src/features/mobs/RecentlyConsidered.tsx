@@ -65,8 +65,8 @@ export function considerTarget(r: ConsiderRow): MobTarget {
       rare: r.rare,
       difficulty: r.difficulty,
       cons: r.cons,
-      zone: r.zone
-    }
+      zone: r.zone,
+    },
   }
 }
 
@@ -89,7 +89,8 @@ interface RowDrops {
 function rowDrops(k: ConsiderRow['knowledge']): RowDrops {
   const split = splitMobDrops(k)
   const countByKey = new Map<string, number>()
-  for (const d of split.wiki) if (d.seenCount !== undefined) countByKey.set(d.item.toLowerCase(), d.seenCount)
+  for (const d of split.wiki)
+    if (d.seenCount !== undefined) countByKey.set(d.item.toLowerCase(), d.seenCount)
   for (const d of split.extraSeen) countByKey.set(d.item.toLowerCase(), d.count)
   return { all: mobDropNames(split), countByKey }
 }
@@ -136,7 +137,13 @@ function DropsLine({ drops }: { drops: RowDrops }): JSX.Element | null {
  * The faction rung survives only as hover text, where it is honest about being a hint rather
  * than the row's headline; the difficulty verdict is not shown at all (see the file header).
  */
-function ConsiderRowView({ r, onOpen }: { r: ConsiderRow; onOpen: (r: ConsiderRow) => void }): JSX.Element {
+function ConsiderRowView({
+  r,
+  onOpen,
+}: {
+  r: ConsiderRow
+  onOpen: (r: ConsiderRow) => void
+}): JSX.Element {
   const k = r.knowledge
   const drops = rowDrops(k)
   const quests = k?.quests ?? []
@@ -156,7 +163,7 @@ function ConsiderRowView({ r, onOpen }: { r: ConsiderRow; onOpen: (r: ConsiderRo
             fontWeight: 600,
             flexShrink: 0,
             cursor: 'pointer',
-            '&:hover': { textDecoration: 'underline' }
+            '&:hover': { textDecoration: 'underline' },
           }}
         >
           {r.mob}
@@ -168,7 +175,11 @@ function ConsiderRowView({ r, onOpen }: { r: ConsiderRow; onOpen: (r: ConsiderRo
         </Typography>
       )}
       {r.rare && (
-        <Chip size="small" label="rare" sx={{ height: 16, fontSize: 10, '& .MuiChip-label': { px: 0.5 } }} />
+        <Chip
+          size="small"
+          label="rare"
+          sx={{ height: 16, fontSize: 10, '& .MuiChip-label': { px: 0.5 } }}
+        />
       )}
       {quests.length > 0 && (
         <Tooltip title={quests.map((q) => q.quest).join(' · ')}>
@@ -197,7 +208,7 @@ function ConsiderRowView({ r, onOpen }: { r: ConsiderRow; onOpen: (r: ConsiderRo
 
 export function RecentlyConsidered({
   rows,
-  onOpen
+  onOpen,
 }: {
   /** the consider ring, oldest-first (the module's own order) — subscribed by the view */
   rows: ConsiderSnap

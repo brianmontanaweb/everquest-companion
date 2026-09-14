@@ -61,12 +61,7 @@
 // position — an identity per observation would persist thousands of offsets to answer a question
 // "which log was this from" already answers.
 
-import type {
-  MessageOverlay,
-  OverlayMessage,
-  OverlayVerdict,
-  SpellEntry
-} from '../../shared/types'
+import type { MessageOverlay, OverlayMessage, OverlayVerdict, SpellEntry } from '../../shared/types'
 import { castOnOtherSuffix } from './spellDb'
 
 /** Overlay schema version — bump to invalidate a stale on-disk snapshot. */
@@ -104,7 +99,11 @@ export interface OverlayCounts {
 export interface OverlaySourceCounts {
   /** Which origin produced these counts: a character id, or the committed baseline's key. */
   key: string
-  messages: { text: string; role: 'landing' | 'wearsOff'; spells: { spell: string; count: number }[] }[]
+  messages: {
+    text: string
+    role: 'landing' | 'wearsOff'
+    spells: { spell: string; count: number }[]
+  }[]
 }
 
 /** The whole register: every bucket, plus the log instant the miner has observed through. */
@@ -229,7 +228,7 @@ function bucketCounts(bucket: Map<string, MessageRecord>): OverlaySourceCounts['
       role: rec.role,
       spells: [...rec.bySpell.values()]
         .map((s) => ({ spell: s.display, count: s.count }))
-        .sort((a, b) => byCodepoint(a.spell, b.spell))
+        .sort((a, b) => byCodepoint(a.spell, b.spell)),
     }))
     .sort((a, b) => byCodepoint(a.text, b.text))
 }
@@ -251,7 +250,11 @@ interface VerdictResult {
  * the wiki — not a contradiction. Only a line matching NEITHER (while the spell was
  * unambiguously the anchor) is a genuine wiki inaccuracy (e.g. Symbol of Pinzarn).
  */
-function landingVerdict(rec: MessageRecord, spellDisplay: string, dbSpell: SpellEntry): VerdictResult {
+function landingVerdict(
+  rec: MessageRecord,
+  spellDisplay: string,
+  dbSpell: SpellEntry,
+): VerdictResult {
   const you = dbSpell.msgCastOnYou
   if (you && you === rec.text) return { verdict: 'verified' }
   const otherSuffix = dbSpell.msgCastOnOther ? castOnOtherSuffix(dbSpell.msgCastOnOther) : null
@@ -261,7 +264,8 @@ function landingVerdict(rec: MessageRecord, spellDisplay: string, dbSpell: Spell
   // The DB has a self message for this spell but we observed a DIFFERENT self-shaped
   // line → contradiction. If the DB has NO self message at all, treat it as a newly
   // VERIFIED landing message (a variation the wiki simply omits), not a contradiction.
-  if (you) return { verdict: 'contradicts-wiki', wikiConflict: { spell: spellDisplay, wikiText: you } }
+  if (you)
+    return { verdict: 'contradicts-wiki', wikiConflict: { spell: spellDisplay, wikiText: you } }
   return { verdict: 'verified' }
 }
 
@@ -410,7 +414,10 @@ export class MessageOverlayMiner {
           agg = { text: rec.text, role: rec.role, bySpell: new Map() }
           out.set(rec.text, agg)
         }
-        addCounts(agg, [...rec.bySpell.values()].map((s) => ({ spell: s.display, count: s.count })))
+        addCounts(
+          agg,
+          [...rec.bySpell.values()].map((s) => ({ spell: s.display, count: s.count })),
+        )
       }
     }
     return out
@@ -460,15 +467,18 @@ export class MessageOverlayMiner {
       'contradicts-wiki': 0,
       verified: 1,
       shared: 2,
-      unknown: 3
+      unknown: 3,
     }
-    messages.sort((a, b) => rank[a.verdict] - rank[b.verdict] || b.total - a.total || byCodepoint(a.text, b.text))
+    messages.sort(
+      (a, b) =>
+        rank[a.verdict] - rank[b.verdict] || b.total - a.total || byCodepoint(a.text, b.text),
+    )
     return {
       version: OVERLAY_VERSION,
       // THE LOG'S CLOCK, NOT THE MACHINE'S — see `lastObservedTs` for the divergence that moved it.
       updatedAt: new Date(this.lastObservedTs).toISOString(),
       messages,
-      stats
+      stats,
     }
   }
 

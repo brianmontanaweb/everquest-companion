@@ -33,7 +33,7 @@ import {
   toBugReportRows,
   windowDays,
   type BugReportRow,
-  type UsageRow
+  type UsageRow,
 } from '../src/main/triage/usageRows'
 import { USAGE_METRICS } from '../src/shared/telemetryRollup'
 import { rateLabel } from '../src/renderer/src/features/triage/analyticsRows'
@@ -43,7 +43,7 @@ import {
   dayX,
   gappedPath,
   rateAxisMax,
-  releaseChart
+  releaseChart,
 } from '../src/renderer/src/features/triage/releaseChart'
 import { RELEASE_NOTES } from '../src/shared/releaseNotes'
 
@@ -58,7 +58,7 @@ const u = (d: string, metric: string, dim: string, n: number): UsageRow => ({
   cohort: 'user',
   metric,
   dim,
-  n
+  n,
 })
 
 /** A feedback bug-report count for one build. */
@@ -73,7 +73,7 @@ const buildWith = (o: { usage?: UsageRow[]; bugReports?: BugReportRow[]; days?: 
     installs: [],
     bugReports: o.bugReports ?? [],
     windowDays: o.days ?? 30,
-    nowMs: NOW
+    nowMs: NOW,
   })
 
 test('NOT REPORTING and ZERO ERRORS are structurally different, not two renderings of one row', () => {
@@ -85,8 +85,8 @@ test('NOT REPORTING and ZERO ERRORS are structurally different, not two renderin
       u(TODAY, USAGE_METRICS.activeInstalls, '-', 30),
       u(TODAY, USAGE_METRICS.version, '0.11.0', 20),
       u(TODAY, USAGE_METRICS.version, '0.8.0', 10),
-      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 20)
-    ]
+      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 20),
+    ],
   }).releaseHealth
   const clean = d.versions.find((v) => v.version === '0.11.0')
   const quiet = d.versions.find((v) => v.version === '0.8.0')
@@ -112,8 +112,8 @@ test('the rate is SELF-NORMALIZING — a build with more users cannot look buggi
       u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 1_000),
       u(TODAY, USAGE_METRICS.health, '0.11.0:mainErrorLogLines', 50),
       u(TODAY, USAGE_METRICS.healthReports, '0.10.0', 100),
-      u(TODAY, USAGE_METRICS.health, '0.10.0:mainErrorLogLines', 5)
-    ]
+      u(TODAY, USAGE_METRICS.health, '0.10.0:mainErrorLogLines', 5),
+    ],
   }).releaseHealth
   assert.equal(d.versions.find((v) => v.version === '0.11.0')?.rate, 0.05)
   assert.equal(d.versions.find((v) => v.version === '0.10.0')?.rate, 0.05)
@@ -128,13 +128,13 @@ test('the error mix per build strips its own version prefix and keeps the fields
       u(TODAY, USAGE_METRICS.health, '0.11.0:rendererCrashes', 1),
       u(TODAY, USAGE_METRICS.health, '0.11.0:mainErrorLogLines', 6),
       // Another build's rows must not leak into this one's mix.
-      u(TODAY, USAGE_METRICS.health, '0.10.0:rendererCrashes', 99)
-    ]
+      u(TODAY, USAGE_METRICS.health, '0.10.0:rendererCrashes', 99),
+    ],
   }).releaseHealth
   const v = d.versions.find((x) => x.version === '0.11.0')
   assert.deepEqual(v?.byField, [
     { id: 'mainErrorLogLines', n: 6 },
-    { id: 'rendererCrashes', n: 1 }
+    { id: 'rendererCrashes', n: 1 },
   ])
   assert.equal(v?.errors, 7)
 })
@@ -152,8 +152,8 @@ test('a HANDLED condition is counted but never enters the rate — that number i
       u(TODAY, USAGE_METRICS.health, '0.11.0:imageFetchFailures', 17_632),
       // …and suppressed lines DO count. They are real errors a cap withheld from the local file,
       // so excluding them would let the cap flatter a build that had started looping.
-      u(TODAY, USAGE_METRICS.health, '0.11.0:suppressedErrorLines', 6)
-    ]
+      u(TODAY, USAGE_METRICS.health, '0.11.0:suppressedErrorLines', 6),
+    ],
   }).releaseHealth
   const v = d.versions.find((x) => x.version === '0.11.0')
   assert.equal(v?.errors, 10, '4 written + 6 suppressed; the 17,632 downloads are not errors')
@@ -163,7 +163,7 @@ test('a HANDLED condition is counted but never enters the rate — that number i
   assert.deepEqual(v?.byField, [
     { id: 'imageFetchFailures', n: 17_632 },
     { id: 'suppressedErrorLines', n: 6 },
-    { id: 'mainErrorLogLines', n: 4 }
+    { id: 'mainErrorLogLines', n: 4 },
   ])
   // The per-DAY series obeys the same rule as the per-build total — two sums, one list.
   assert.equal(v?.days.find((day) => day.day === TODAY)?.errors, 10)
@@ -175,13 +175,13 @@ test('release dates come from the COMMITTED notes, and an unreleased build gets 
     usage: [
       u(TODAY, USAGE_METRICS.version, '0.9.0', 3),
       // A build with no entry in RELEASE_NOTES — a dev build, or one newer than this copy.
-      u(TODAY, USAGE_METRICS.version, '99.0.0', 1)
-    ]
+      u(TODAY, USAGE_METRICS.version, '99.0.0', 1),
+    ],
   }).releaseHealth
   // Pinned against the real committed table, so a note that loses its date fails here.
   assert.equal(
     d.versions.find((v) => v.version === '0.9.0')?.releaseDate,
-    RELEASE_NOTES.find((n) => n.version === '0.9.0')?.date
+    RELEASE_NOTES.find((n) => n.version === '0.9.0')?.date,
   )
   assert.equal(d.versions.find((v) => v.version === '99.0.0')?.releaseDate, null)
 })
@@ -194,8 +194,8 @@ test('COVERAGE says how much of the fleet could have told us, and is null-safe o
       u(TODAY, USAGE_METRICS.activeInstalls, '-', 30),
       u(TODAY, USAGE_METRICS.version, '0.11.0', 20),
       u(TODAY, USAGE_METRICS.version, '0.8.0', 10),
-      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 20)
-    ]
+      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 20),
+    ],
   }).releaseHealth
   const today = d.coverage.find((c) => c.day === TODAY)
   assert.equal(today?.active, 30)
@@ -218,8 +218,8 @@ test('coverage counts a capable build on a day it filed nothing — capability i
       u(day(1), USAGE_METRICS.version, '0.11.0', 10),
       u(TODAY, USAGE_METRICS.activeInstalls, '-', 10),
       u(TODAY, USAGE_METRICS.version, '0.11.0', 10),
-      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 10)
-    ]
+      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 10),
+    ],
   }).releaseHealth
   assert.equal(d.coverage.find((c) => c.day === day(1))?.share, 1)
   // …and that quiet day is still an UNKNOWN rate on the curve, which is the other half of it.
@@ -232,8 +232,8 @@ test('nothing reporting at all is its own state — an empty curve is MISSING, n
   const d = buildWith({
     usage: [
       u(TODAY, USAGE_METRICS.activeInstalls, '-', 12),
-      u(TODAY, USAGE_METRICS.version, '0.8.0', 12)
-    ]
+      u(TODAY, USAGE_METRICS.version, '0.8.0', 12),
+    ],
   }).releaseHealth
   assert.equal(d.anyReporting, false)
   assert.equal(d.coverageShare, 0)
@@ -247,9 +247,9 @@ test('bug reports are their own column, count BUGS only, and are never added to 
     usage: [
       u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 10),
       u(TODAY, USAGE_METRICS.health, '0.11.0:rendererCrashes', 2),
-      u(TODAY, USAGE_METRICS.version, '0.8.0', 5)
+      u(TODAY, USAGE_METRICS.version, '0.8.0', 5),
     ],
-    bugReports: [bug('0.11.0', 4), bug('0.8.0', 7)]
+    bugReports: [bug('0.11.0', 4), bug('0.8.0', 7)],
   }).releaseHealth
   const shipped = d.versions.find((v) => v.version === '0.11.0')
   assert.equal(shipped?.bugReports, 4)
@@ -277,12 +277,12 @@ test('feature requests are NOT bugs, and the cohort comes from the channel like 
       { app_version: '0.11.0', report_type: 'feature', channel: 'prod', n: 9 },
       // A dev-channel report is the author's own — `cohortForChannel`, the same rule the ingest
       // path applies to a counter row, so `ofCohort` partitions these beside the counters.
-      { app_version: '0.11.0', report_type: 'bug', channel: 'dev', n: 5 }
+      { app_version: '0.11.0', report_type: 'bug', channel: 'dev', n: 5 },
     ]),
     [
       { appVersion: '0.11.0', cohort: 'user', n: 3 },
-      { appVersion: '0.11.0', cohort: 'owner', n: 5 }
-    ]
+      { appVersion: '0.11.0', cohort: 'owner', n: 5 },
+    ],
   )
   // TOTAL, like every mapper there: an unknown build groups under '?' rather than being attached
   // to a real release, and a missing type defaults to 'bug' (the table's own default — see
@@ -300,10 +300,13 @@ test('DEPLOY SKEW: an un-dimensioned healthReports row never becomes a version n
       u(TODAY, USAGE_METRICS.activeInstalls, '-', 10),
       u(TODAY, USAGE_METRICS.version, '0.11.0', 10),
       u(TODAY, USAGE_METRICS.healthReports, '-', 10),
-      u(TODAY, USAGE_METRICS.health, 'rendererCrashes', 3)
-    ]
+      u(TODAY, USAGE_METRICS.health, 'rendererCrashes', 3),
+    ],
   }).releaseHealth
-  assert.deepEqual(d.versions.map((v) => v.version), ['0.11.0'])
+  assert.deepEqual(
+    d.versions.map((v) => v.version),
+    ['0.11.0'],
+  )
   // And the skew degrades the HONEST way: nothing it can attribute means nothing reporting, and
   // the real build shows as not-reporting until the deploy lands rather than as mysteriously fine.
   assert.equal(d.anyReporting, false)
@@ -319,8 +322,8 @@ test('an OLD-encoding health row is not attributed to a build it cannot name', (
   const d = buildWith({
     usage: [
       u(TODAY, USAGE_METRICS.health, 'rendererCrashes', 5),
-      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 10)
-    ]
+      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 10),
+    ],
   })
   assert.equal(d.releaseHealth.versions.find((v) => v.version === '0.11.0')?.errors, 0)
   assert.deepEqual(d.health.errors, [{ id: 'rendererCrashes', n: 5 }])
@@ -344,9 +347,9 @@ test('ONE TIME BASE: curves, adoption and release markers all map through the DA
       u(days[2], USAGE_METRICS.activeInstalls, '-', 10),
       u(days[2], USAGE_METRICS.version, '0.9.0', 10),
       u(days[2], USAGE_METRICS.healthReports, '0.9.0', 10),
-      u(days[2], USAGE_METRICS.health, '0.9.0:rendererCrashes', 5)
+      u(days[2], USAGE_METRICS.health, '0.9.0:rendererCrashes', 5),
     ],
-    days: 5
+    days: 5,
   }).releaseHealth
   const geo = releaseChart(d, days)
   assert.equal(geo.days.length, 5)
@@ -374,9 +377,9 @@ test('a NON-REPORTING build gets no rate curve at all — the house rule, made g
   const d = buildWith({
     usage: [
       u(days[1], USAGE_METRICS.activeInstalls, '-', 10),
-      u(days[1], USAGE_METRICS.version, '0.8.0', 10)
+      u(days[1], USAGE_METRICS.version, '0.8.0', 10),
     ],
-    days: 3
+    days: 3,
   }).releaseHealth
   const geo = releaseChart(d, days)
   const s = geo.series.find((x) => x.version === '0.8.0')
@@ -393,7 +396,7 @@ test('a release marker outside the window is DROPPED, never clamped to an edge',
   const days = windowDays(NOW, 3)
   const d = buildWith({
     usage: [u(TODAY, USAGE_METRICS.version, '0.9.0', 1)],
-    days: 3
+    days: 3,
   }).releaseHealth
   // 0.9.0's committed date is nowhere near this synthetic window.
   assert.ok(!days.includes(RELEASE_NOTES.find((n) => n.version === '0.9.0')?.date ?? ''))
@@ -417,8 +420,8 @@ test('the coverage sentence leads with the WORST case and names the quiet builds
       u(TODAY, USAGE_METRICS.activeInstalls, '-', 10),
       u(TODAY, USAGE_METRICS.version, '0.11.0', 4),
       u(TODAY, USAGE_METRICS.version, '0.8.0', 6),
-      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 4)
-    ]
+      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 4),
+    ],
   }).releaseHealth
   const note = coverageNote(d)
   assert.match(note, /40% of install-days/)

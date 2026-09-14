@@ -35,7 +35,7 @@ import {
   userToPx,
   xAtT,
   yAt,
-  type DpsChart
+  type DpsChart,
 } from '../src/renderer/src/features/combat/dpsChart'
 
 const BUCKET = 1000
@@ -56,7 +56,7 @@ function mkSeries(out: number[]): DpsSeries {
     hasInc: false,
     hasAny: out.some((v) => v > 0),
     durationMs: out.length * BUCKET,
-    estimated: false
+    estimated: false,
   }
 }
 
@@ -100,11 +100,17 @@ test('a scrolling LIVE window reports the buckets it kept, not the ones it dropp
 test('tAtUserX is the exact inverse of xAtT — a marker resolves to its own instant', () => {
   const chart = mkChart(RATES)
   for (const t of [chart.t0, 1, 1000, 3333, 4999.5, chart.t1]) {
-    assert.ok(Math.abs(tAtUserX(chart, xAtT(chart, t)) - t) < 1e-9, `round-trip must hold at t=${t}`)
+    assert.ok(
+      Math.abs(tAtUserX(chart, xAtT(chart, t)) - t) < 1e-9,
+      `round-trip must hold at t=${t}`,
+    )
   }
   // …and the other way round, over the drawn plot.
   for (const ux of [PAD_X, 100, 360.5, CHART_W - PAD_X]) {
-    assert.ok(Math.abs(xAtT(chart, tAtUserX(chart, ux)) - ux) < 1e-9, `round-trip must hold at ux=${ux}`)
+    assert.ok(
+      Math.abs(xAtT(chart, tAtUserX(chart, ux)) - ux) < 1e-9,
+      `round-trip must hold at ux=${ux}`,
+    )
   }
 })
 
@@ -134,9 +140,12 @@ test('CSS px are NOT user units: the stretch factor is the card width', () => {
   for (const [px, w] of [
     [37, 360],
     [200, 1024],
-    [0, 480]
+    [0, 480],
   ]) {
-    assert.ok(Math.abs(userToPx(pxToUser(px, w), w) - px) < 1e-9, `px round-trip must hold (${px}@${w})`)
+    assert.ok(
+      Math.abs(userToPx(pxToUser(px, w), w) - px) < 1e-9,
+      `px round-trip must hold (${px}@${w})`,
+    )
   }
   // Measured before layout ⇒ zero width. Both directions answer 0 rather than NaN/Infinity, which
   // would propagate into an SVG coordinate and blank the overlay.
@@ -158,7 +167,7 @@ test('the hover dot rides the DRAWN polyline, vertex for vertex', () => {
   pts.forEach((p, k) => {
     assert.ok(
       Math.abs(curveYAtUserX(chart, mkSeries(RATES), p.x) - p.y) < 0.5,
-      `vertex ${k} must sit on the line (got ${curveYAtUserX(chart, mkSeries(RATES), p.x)}, drawn ${p.y})`
+      `vertex ${k} must sit on the line (got ${curveYAtUserX(chart, mkSeries(RATES), p.x)}, drawn ${p.y})`,
     )
   })
 })
@@ -169,14 +178,17 @@ test('between two vertices the dot follows the segment the SVG paints', () => {
   const mid = (pts[0].x + pts[1].x) / 2
   assert.ok(
     Math.abs(curveYAtUserX(chart, mkSeries(RATES), mid) - (pts[0].y + pts[1].y) / 2) < 0.5,
-    'the midpoint of a straight segment is the mean of its ends'
+    'the midpoint of a straight segment is the mean of its ends',
   )
   // The interpolation is for the DOT only — it is a position on a drawn line, never a rate. The
   // y it lands on is between two real bucket rates and equals neither.
   const yLow = yAt(chart.yMax, RATES[0])
   const yHigh = yAt(chart.yMax, RATES[1])
   const got = curveYAtUserX(chart, mkSeries(RATES), mid)
-  assert.ok(got < yLow && got > yHigh, 'a rising segment puts the midpoint strictly between its ends')
+  assert.ok(
+    got < yLow && got > yHigh,
+    'a rising segment puts the midpoint strictly between its ends',
+  )
 })
 
 test('the dot clamps to the end vertices outside the pads', () => {
@@ -213,7 +225,7 @@ function mkView(markers: TimelineMarker[]): TimelineView {
     downsampled: false,
     rawCount: 0,
     totalCount: 0,
-    truncated: false
+    truncated: false,
   }
 }
 
@@ -222,13 +234,16 @@ test('placeMarkers puts every marker on the mapping the hover reads back', () =>
   const markers: TimelineMarker[] = [
     { t: 0, kind: 'stance', label: 'Berserker' },
     { t: 3200, kind: 'coat', label: 'Neurotoxic', detail: 'blade coat' },
-    { t: 8000, kind: 'slow', label: 'a froglok tad' }
+    { t: 8000, kind: 'slow', label: 'a froglok tad' },
   ]
   const placed = placeMarkers(mkView(markers), chart)
   assert.equal(placed.length, 3)
   placed.forEach((p) => {
     assert.equal(p.x, xAtT(chart, p.m.t))
-    assert.ok(Math.abs(tAtUserX(chart, p.x) - p.m.t) < 1e-9, 'a placed marker must hit-test back to itself')
+    assert.ok(
+      Math.abs(tAtUserX(chart, p.x) - p.m.t) < 1e-9,
+      'a placed marker must hit-test back to itself',
+    )
   })
 })
 
@@ -238,13 +253,13 @@ test('placeMarkers DROPS what scrolled out of a live window instead of clamping 
   const placed = placeMarkers(
     mkView([
       { t: 5_000, kind: 'coat', label: 'Neurotoxic' },
-      { t: 150_000, kind: 'slow', label: 'a froglok tad' }
+      { t: 150_000, kind: 'slow', label: 'a froglok tad' },
     ]),
-    chart
+    chart,
   )
   assert.deepEqual(
     placed.map((p) => p.m.label),
-    ['a froglok tad']
+    ['a froglok tad'],
   )
 })
 
@@ -278,7 +293,7 @@ test('a marker at a bucket centre lands exactly on that bucket own drawn vertex'
       // 0.05 is the polyline's own rounding (points are emitted at one decimal), nothing else.
       assert.ok(
         Math.abs(placed[0].x - pts[k].x) <= 0.05,
-        `marker at bucket ${k} must sit on its vertex (${placed[0].x} vs drawn ${pts[k].x})`
+        `marker at bucket ${k} must sit on its vertex (${placed[0].x} vs drawn ${pts[k].x})`,
       )
     }
   }
@@ -290,7 +305,11 @@ test('hovering a vertex reads back the bucket that vertex was drawn from', () =>
   const chart = mkChart(RATES)
   const series = mkSeries(RATES)
   parsePts(chart.outLine).forEach((p, k) => {
-    assert.equal(dpsAt(series, tAtUserX(chart, p.x)).out, RATES[k], `vertex ${k} must read back as its own bucket`)
+    assert.equal(
+      dpsAt(series, tAtUserX(chart, p.x)).out,
+      RATES[k],
+      `vertex ${k} must read back as its own bucket`,
+    )
   })
 })
 
@@ -307,15 +326,25 @@ test('the live window advances in WHOLE buckets — a marker cannot swim against
     assert.equal(placed.length, 1, `the marker is still inside the window at ${durationMs}ms`)
     assert.ok(
       Math.abs(placed[0].x - xAtT(chart, bucketCenterMs(chart, 150))) < 1e-9,
-      'and still on its own bucket, frame after frame'
+      'and still on its own bucket, frame after frame',
     )
     return placed[0].x
   })
   const step = (CHART_W - 2 * PAD_X) / 120
-  assert.ok(Math.abs(xs[0] - xs[1] - step) < 1e-9, 'crossing a bucket boundary steps by ONE bucket width')
-  assert.equal(xs[1], xs[2], 'the wall clock advancing INSIDE a bucket must not move the marker at all')
+  assert.ok(
+    Math.abs(xs[0] - xs[1] - step) < 1e-9,
+    'crossing a bucket boundary steps by ONE bucket width',
+  )
+  assert.equal(
+    xs[1],
+    xs[2],
+    'the wall clock advancing INSIDE a bucket must not move the marker at all',
+  )
   assert.equal(xs[2], xs[3], 'nor must the instant the still-filling bucket reaches its own end')
-  assert.ok(Math.abs(xs[3] - xs[4] - step) < 1e-9, 'and the next crossing steps by exactly one more')
+  assert.ok(
+    Math.abs(xs[3] - xs[4] - step) < 1e-9,
+    'and the next crossing steps by exactly one more',
+  )
 })
 
 test('a marker that just landed in the still-filling bucket is drawn immediately', () => {

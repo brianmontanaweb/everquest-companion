@@ -163,18 +163,34 @@ const KEY_ALIASES: [string, string][] = (
     ['MANA', 'MP'],
     ['FIRE', 'SV_FIRE'],
     ['COLD', 'SV_COLD'],
-    ['WT', 'WEIGHT']
+    ['WT', 'WEIGHT'],
   ] as [string, string][]
 ).sort((a, b) => b[0].length - a[0].length)
 
 /** `sv magic` / `SV  MAGIC` / `Mana Regen` → `SV_MAGIC` / `SV_MAGIC` / `MANA_REGEN`. */
 export function normalizeStatKey(key: string): string {
-  const k = key.trim().toUpperCase().replace(/[\s-]+/g, '_').replace(/:+$/, '')
+  const k = key
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '_')
+    .replace(/:+$/, '')
   const alias = KEY_ALIASES.find(([from]) => from === k)
   return alias ? alias[1] : k
 }
 
-const PRIMARY_KEYS = new Set(['AC', 'STR', 'STA', 'AGI', 'DEX', 'WIS', 'INT', 'CHA', 'HP', 'MP', 'END'])
+const PRIMARY_KEYS = new Set([
+  'AC',
+  'STR',
+  'STA',
+  'AGI',
+  'DEX',
+  'WIS',
+  'INT',
+  'CHA',
+  'HP',
+  'MP',
+  'END',
+])
 const FLAT_KEYS = new Set(['HP_REGEN', 'MANA_REGEN', 'END_REGEN', 'HASTE'])
 
 /** Which rule a key scales by. Takes a RAW key; normalization happens here. */
@@ -237,8 +253,18 @@ export function scaleWeight(base: number, state: ItemUpgradeState): number {
  * least TWO distinct fields from this set. AC, HP and MP are deliberately NOT in it.
  */
 const VOID_TRIGGER_KEYS = new Set([
-  'STR', 'STA', 'INT', 'AGI', 'DEX', 'CHA', 'WIS',
-  'SV_FIRE', 'SV_COLD', 'SV_POISON', 'SV_MAGIC', 'SV_DISEASE'
+  'STR',
+  'STA',
+  'INT',
+  'AGI',
+  'DEX',
+  'CHA',
+  'WIS',
+  'SV_FIRE',
+  'SV_COLD',
+  'SV_POISON',
+  'SV_MAGIC',
+  'SV_DISEASE',
 ])
 
 /** Whether an upgraded copy of this block gains the synthetic SV VOID line. */
@@ -320,6 +346,6 @@ export function scaleStatBlock(block: ItemStatBlock, state: ItemUpgradeState): I
     flags: [...block.flags],
     effects: [...block.effects],
     exaltationSlots: [...block.exaltationSlots],
-    extras: [...block.extras]
+    extras: [...block.extras],
   }
 }

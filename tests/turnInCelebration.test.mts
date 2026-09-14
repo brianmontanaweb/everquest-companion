@@ -19,7 +19,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   countTurnIns,
-  newlyCompletedTurnIns
+  newlyCompletedTurnIns,
 } from '../src/renderer/src/features/posky/turnInCelebration'
 import { questKey } from '../src/renderer/src/features/posky/keys'
 import poskyRaw from '../src/renderer/src/data/eqlegends/posky.json' with { type: 'json' }
@@ -33,7 +33,8 @@ const counts = (instants: Record<string, number[]>): Record<string, number> =>
   Object.fromEntries(Object.entries(instants).map(([k, v]) => [k, v.length]))
 
 /** The ordinary trade shape: every named item, one copy each — what most fixtures below want. */
-const offer = (names: readonly string[]): TurnInItemOffer[] => names.map((name) => ({ name, count: 1 }))
+const offer = (names: readonly string[]): TurnInItemOffer[] =>
+  names.map((name) => ({ name, count: 1 }))
 
 test('baseline run (prev == null) celebrates NOTHING — historical counts seeded silently', () => {
   const historical = { 'Monk::Monk Test of Fists': 1, 'Warrior::Warrior Test of Bash': 3 }
@@ -44,7 +45,7 @@ test('a quest whose count grew after the baseline is a live transition', () => {
   const baseline = { 'Monk::Monk Test of Fists': 1 }
   const next = { 'Monk::Monk Test of Fists': 1, 'Warrior::Warrior Test of Bash': 1 }
   assert.deepEqual(newlyCompletedTurnIns(baseline, next), [
-    { key: 'Warrior::Warrior Test of Bash', count: 1 }
+    { key: 'Warrior::Warrior Test of Bash', count: 1 },
   ])
 })
 
@@ -52,7 +53,7 @@ test('THE JOS-131 CASE: a SECOND turn-in of a quest already done celebrates, at 
   const baseline = { 'Monk::Monk Test of Fists': 1 }
   const again = { 'Monk::Monk Test of Fists': 2 }
   assert.deepEqual(newlyCompletedTurnIns(baseline, again), [
-    { key: 'Monk::Monk Test of Fists', count: 2 }
+    { key: 'Monk::Monk Test of Fists', count: 2 },
   ])
 })
 
@@ -61,7 +62,7 @@ test('exactly-once per turn-in: an unchanged count never re-fires', () => {
   let baseline: Record<string, number> | null = { 'Monk::Monk Test of Fists': 1 }
   const afterTurnIn = { 'Monk::Monk Test of Fists': 1, 'Warrior::Warrior Test of Bash': 1 }
   assert.deepEqual(newlyCompletedTurnIns(baseline, afterTurnIn), [
-    { key: 'Warrior::Warrior Test of Bash', count: 1 }
+    { key: 'Warrior::Warrior Test of Bash', count: 1 },
   ])
   baseline = afterTurnIn // hook advances the baseline ref
   // A later observation with the SAME counts (e.g. a re-render / another delta) → nothing.
@@ -69,7 +70,7 @@ test('exactly-once per turn-in: an unchanged count never re-fires', () => {
   // A new quest still fires, and the already-fired one still does not.
   const more = { ...afterTurnIn, 'Cleric::Cleric Test of Theurgy': 1 }
   assert.deepEqual(newlyCompletedTurnIns(baseline, more), [
-    { key: 'Cleric::Cleric Test of Theurgy', count: 1 }
+    { key: 'Cleric::Cleric Test of Theurgy', count: 1 },
   ])
 })
 
@@ -77,15 +78,17 @@ test('a count that jumps by two reports ONE transition, at the new count', () =>
   // A catch-up delta (two turn-ins in one snapshot) is one thing that happened, reported with
   // the honest number rather than as two bursts.
   assert.deepEqual(newlyCompletedTurnIns({ 'A::Qa': 1 }, { 'A::Qa': 3 }), [
-    { key: 'A::Qa', count: 3 }
+    { key: 'A::Qa', count: 3 },
   ])
 })
 
 test('multiple simultaneous completions all fire once', () => {
   const next = { 'A::Qa': 1, 'B::Qb': 1, 'C::Qc': 1 }
   assert.deepEqual(
-    newlyCompletedTurnIns({}, next).map((t) => t.key).sort(),
-    ['A::Qa', 'B::Qb', 'C::Qc']
+    newlyCompletedTurnIns({}, next)
+      .map((t) => t.key)
+      .sort(),
+    ['A::Qa', 'B::Qb', 'C::Qc'],
   )
 })
 
@@ -113,13 +116,17 @@ test('a live turn-in of the exact required set is detected (incl. +N normalizati
   assert.deepEqual(
     detected.instants[questKey(monkFists)],
     [turnIn.ts],
-    'the +2 turn-in matches the base requirement, and the INSTANT is what is reported'
+    'the +2 turn-in matches the base requirement, and the INSTANT is what is reported',
   )
 
   // Baseline-guarded celebration: seed silent on load, fire on the live transition.
-  assert.deepEqual(newlyCompletedTurnIns(null, counts(detected.instants)), [], 'load never celebrates')
+  assert.deepEqual(
+    newlyCompletedTurnIns(null, counts(detected.instants)),
+    [],
+    'load never celebrates',
+  )
   assert.deepEqual(newlyCompletedTurnIns({}, counts(detected.instants)), [
-    { key: questKey(monkFists), count: 1 }
+    { key: questKey(monkFists), count: 1 },
   ])
 })
 
@@ -128,12 +135,16 @@ test('TWO turn-ins of the same quest are TWO instants, not one flag', () => {
   const detected = countTurnIns(
     [
       { ts: 1_700_000_000_000, npc: 'Holwin', items: offer(requiredNames) },
-      { ts: 1_700_000_600_000, npc: 'Holwin', items: offer(requiredNames) }
+      { ts: 1_700_000_600_000, npc: 'Holwin', items: offer(requiredNames) },
     ],
-    quests
+    quests,
   )
   assert.deepEqual(detected.instants[questKey(monkFists)], [1_700_000_000_000, 1_700_000_600_000])
-  assert.equal(counts(detected.instants)[questKey(monkFists)], 2, 'the count is what the badge says')
+  assert.equal(
+    counts(detected.instants)[questKey(monkFists)],
+    2,
+    'the count is what the badge says',
+  )
 })
 
 test('an incomplete turn-in (missing Brass Knuckles) is NOT detected', () => {
@@ -142,7 +153,7 @@ test('an incomplete turn-in (missing Brass Knuckles) is NOT detected', () => {
   assert.equal(
     detected.instants[questKey(monkFists)],
     undefined,
-    'missing an item ⇒ not detected now Brass Knuckles is required'
+    'missing an item ⇒ not detected now Brass Knuckles is required',
   )
 })
 
@@ -162,7 +173,7 @@ test('THE OVER-HAND-IN: two copies in one slot are recorded, not collapsed to pr
   assert.equal(
     detected.offered[key]?.[turnIn.ts]?.['brass knuckles'],
     2,
-    'but the offered map remembers the trade held two, not one'
+    'but the offered map remembers the trade held two, not one',
   )
   // Every OTHER required item in the same trade reads its ordinary count of 1.
   assert.equal(detected.offered[key]?.[turnIn.ts]?.['nebulous sapphire'], 1)
@@ -178,7 +189,7 @@ test('two separate offer lines for the same item SUM into the offered map', () =
   assert.equal(
     detected.offered[questKey(monkFists)]?.[turnIn.ts]?.['brass knuckles'],
     2,
-    'two lines naming the same item sum, the same as one line saying 2'
+    'two lines naming the same item sum, the same as one line saying 2',
   )
 })
 
@@ -189,6 +200,6 @@ test('the ordinary one-for-one trade still records exactly 1 per item — no pha
   assert.ok(byItem)
   assert.ok(
     Object.values(byItem).every((n) => n === 1),
-    'every required item reads exactly 1 when the trade offered exactly 1'
+    'every required item reads exactly 1 when the trade offered exactly 1',
   )
 })

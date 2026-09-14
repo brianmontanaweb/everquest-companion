@@ -99,7 +99,7 @@ test('a lifetime is not an unterminated char literal', () => {
   assert.equal(m.unbalanced, false)
   assert.deepEqual(
     m.functions.map((f) => f.name),
-    ['Clock::new', 'Clock::describe', 'helper']
+    ['Clock::new', 'Clock::describe', 'helper'],
   )
 })
 
@@ -139,7 +139,7 @@ trait Tick {
 `)
   assert.deepEqual(
     m.functions.map((f) => f.name),
-    ['Tick::tock']
+    ['Tick::tock'],
   )
 })
 
@@ -159,7 +159,7 @@ mod inner {
 `)
   assert.deepEqual(
     m.functions.map((f) => f.name),
-    ['A::new', 'B::new', 'inner::new', 'inner::new#2']
+    ['A::new', 'B::new', 'inner::new', 'inner::new#2'],
   )
 })
 
@@ -213,11 +213,15 @@ test('THE NEGATIVE PROOF: a baselined violation that GREW turns the gate red', (
 })
 
 test('a violation nobody has ever seen turns the gate red', () => {
-  const fresh = compare([violation(), violation({ file: 'crates/fold/src/new.rs' })], baselineOf([violation()]), [])
+  const fresh = compare(
+    [violation(), violation({ file: 'crates/fold/src/new.rs' })],
+    baselineOf([violation()]),
+    [],
+  )
   assert.equal(isClean(fresh), false)
   assert.deepEqual(
     fresh.added.map((v) => v.file),
-    ['crates/fold/src/new.rs']
+    ['crates/fold/src/new.rs'],
   )
 })
 

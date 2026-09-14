@@ -131,7 +131,7 @@ export const DEFAULT_GEAR_FILTERS: GearFilters = {
   // OFF by default, and that is the search-first ruling again: the tab opens on the CORPUS, which
   // is the question a planner asks first ("what is out there"). "What do I already have" is the
   // second question and it is one click away.
-  ownedOnly: false
+  ownedOnly: false,
 }
 
 /** What the pure model cannot answer for itself — see the header. */
@@ -163,7 +163,10 @@ export interface GearFilterDeps {
  * it can remove are rows that STATED a class list and stated one that excludes every class asked
  * for. A page the wiki left silent about is never removed by a guess.
  */
-export function classMismatch(rowClasses: readonly ClassAbbr[], filter: readonly ClassAbbr[]): boolean {
+export function classMismatch(
+  rowClasses: readonly ClassAbbr[],
+  filter: readonly ClassAbbr[],
+): boolean {
   if (rowClasses.length === 0 || filter.length === 0) return false
   return !rowClasses.some((c) => filter.includes(c))
 }
@@ -216,7 +219,11 @@ function matchesIdentity(row: GearRow, filters: GearFilters): boolean {
  * The two injected ones are LAST on purpose: both reach data outside this module (the mob-catalog
  * inversion, a parsed dump), and a row rejected by a cheap local predicate never pays for them.
  */
-export function matchesGear(row: GearRow, filters: GearFilters, deps: GearFilterDeps = {}): boolean {
+export function matchesGear(
+  row: GearRow,
+  filters: GearFilters,
+  deps: GearFilterDeps = {},
+): boolean {
   if (!matchesIdentity(row, filters)) return false
   if (filters.ownedOnly && !(deps.ownedOrLooted?.(row) ?? false)) return false
   return !(filters.eraOnly && (deps.eraHidden?.(row) ?? false))
@@ -226,7 +233,7 @@ export function matchesGear(row: GearRow, filters: GearFilters, deps: GearFilter
 export function filterGearRows<T extends GearRow>(
   rows: readonly T[],
   filters: GearFilters,
-  deps: GearFilterDeps = {}
+  deps: GearFilterDeps = {},
 ): T[] {
   return rows.filter((r) => matchesGear(r, filters, deps))
 }
@@ -314,8 +321,11 @@ export function scaleAll<T extends GearRow>(rows: readonly T[], state: ItemUpgra
 export function gearTableRows<T extends GearRow>(
   rows: readonly T[],
   state: ItemUpgradeState,
-  opts: { filters: GearFilters; sort?: GearSort; deps?: GearFilterDeps }
+  opts: { filters: GearFilters; sort?: GearSort; deps?: GearFilterDeps },
 ): T[] {
   const scaled = scaleAll(rows, state)
-  return sortGearRows(filterGearRows(scaled, opts.filters, opts.deps), opts.sort ?? DEFAULT_GEAR_SORT)
+  return sortGearRows(
+    filterGearRows(scaled, opts.filters, opts.deps),
+    opts.sort ?? DEFAULT_GEAR_SORT,
+  )
 }

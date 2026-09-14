@@ -18,14 +18,14 @@ import {
   noteEventKind,
   noteReplaying,
   readBreadcrumbs,
-  resetBreadcrumbs
+  resetBreadcrumbs,
 } from '../src/main/telemetry/breadcrumbs'
 import {
   noteCurrentView,
   noteError,
   peekErrorReports,
   resetErrorReports,
-  takeErrorReports
+  takeErrorReports,
 } from '../src/main/telemetry/errorReports'
 import { errorFingerprint } from '../src/shared/errorReport'
 import { MAX_SESSION_FINGERPRINTS, SESSION_AGE_MS_EDGES } from '../src/shared/telemetry'
@@ -50,7 +50,7 @@ test('the ring reports the last ten kinds NEWEST FIRST, with offsets back from t
   assert.deepEqual(readBreadcrumbs(), [
     { kind: 'loot', offsetMs: 0 },
     { kind: 'damage', offsetMs: 300 },
-    { kind: 'zone', offsetMs: 1_500 }
+    { kind: 'zone', offsetMs: 1_500 },
   ])
 })
 
@@ -60,7 +60,10 @@ test('the ring is a RING: eleven events keep the last ten', () => {
   const crumbs = readBreadcrumbs()
   assert.equal(crumbs.length, 10)
   // The `zone` at index 0 has been pushed out; every survivor is a damage line.
-  assert.equal(crumbs.some((c) => c.kind === 'zone'), false)
+  assert.equal(
+    crumbs.some((c) => c.kind === 'zone'),
+    false,
+  )
   assert.equal(crumbs[0].offsetMs, 0)
   assert.equal(crumbs[9].offsetMs, 900)
 })
@@ -84,7 +87,7 @@ test('offsets are COARSE, capped, and never negative', () => {
   noteEventKind('buffExpired', 1_000)
   assert.deepEqual(readBreadcrumbs(), [
     { kind: 'buffExpired', offsetMs: 0 },
-    { kind: 'damage', offsetMs: 0 }
+    { kind: 'damage', offsetMs: 0 },
   ])
 })
 
@@ -115,7 +118,7 @@ test('THE ENGINE FILLS THE BOOT WINDOW, which had no producer at all (JOS-501)',
     // NEWEST FIRST, like every other reading of this ring — a report is read backwards from the
     // crash, so the launch reads bottom-up: spawned, then ready, then live.
     ['engine:live', 'engine:ready', 'engine:spawned'],
-    'the launch is legible, newest first'
+    'the launch is legible, newest first',
   )
 
   // A KIND IS NOT CONTENT, and here the type system is what enforces it: `noteEngineEdge` takes a
@@ -123,7 +126,7 @@ test('THE ENGINE FILLS THE BOOT WINDOW, which had no producer at all (JOS-501)',
   // path, a port or a pid. This asserts the OUTPUT half of that — nothing but the edge survives.
   assert.ok(
     crumbs.every((c) => Object.keys(c).length === 2 && typeof c.offsetMs === 'number'),
-    'a breadcrumb is a kind and an offset, and never grew a third field'
+    'a breadcrumb is a kind and an offset, and never grew a third field',
   )
 
   // THE RING STILL FAVOURS THE RECENT, which is the right trade rather than a loss: a live session
@@ -132,7 +135,7 @@ test('THE ENGINE FILLS THE BOOT WINDOW, which had no producer at all (JOS-501)',
   for (let i = 0; i < 10; i++) noteEventKind('damage', 1_000 + i)
   assert.ok(
     readBreadcrumbs().every((c) => c.kind === 'damage'),
-    'ten later events evict the launch, because ten later events means the launch went fine'
+    'ten later events evict the launch, because ten later events means the launch went fine',
   )
 })
 
@@ -146,7 +149,7 @@ function thrown(message: string, fn = 'foldEvent', line = 120): Error {
   err.stack = [
     `TypeError: ${message}`,
     `    at ${fn} (C:\\Users\\jmoye\\eqc\\out\\main\\pipeline.js:${String(line)}:15)`,
-    '    at LogBus.emit (C:\\Users\\jmoye\\eqc\\out\\main\\log\\bus.js:78:20)'
+    '    at LogBus.emit (C:\\Users\\jmoye\\eqc\\out\\main\\log\\bus.js:78:20)',
   ].join('\n')
   return err
 }
@@ -239,12 +242,12 @@ test('a captured error is a legal event carrying frames, crumbs, view, age and m
   assert.equal(ev.sessionAgeBucket <= SESSION_AGE_MS_EDGES.length, true)
   assert.deepEqual(ev.breadcrumbs, [
     { kind: 'damage', offsetMs: 0 },
-    { kind: 'zone', offsetMs: 500 }
+    { kind: 'zone', offsetMs: 500 },
   ])
   // THE FRAMES ARE BUNDLE-RELATIVE. The account name in the stack does not survive.
   assert.deepEqual(
     ev.frames.map((f) => f.file),
-    ['out/main/pipeline.js', 'out/main/log/bus.js']
+    ['out/main/pipeline.js', 'out/main/log/bus.js'],
   )
   assert.equal(JSON.stringify(ev).includes('jmoye'), false, 'no account name anywhere in it')
   noteReplaying(false)
@@ -254,7 +257,7 @@ test('THE BRIGHT LINE: a thrown LOG LINE reaches the wire with no gameplay in it
   fresh()
   // The plausible accident: a parser that throws with the line it choked on. This is the exact
   // shape `tests/e2e/telemetry.e2e.mts` asserts against a log-line-bearing fixture.
-  const line = "[Sat Aug 01 13:00:28 2026] Kahaptra Z`Taj hits Primitive for 412 points of damage."
+  const line = '[Sat Aug 01 13:00:28 2026] Kahaptra Z`Taj hits Primitive for 412 points of damage.'
   noteError('main:uncaughtException', thrown(`parseDamage failed on ${line}`))
   const [ev] = takeErrorReports()
   assert.equal(validateTelemetryEvent(ev).ok, true)
@@ -311,7 +314,7 @@ const site = (fn: string, line: number) => (): string =>
   [
     '[object Object]',
     `    at ${fn} (C:\\Users\\jmoye\\eqc\\out\\main\\index.js:${String(line)}:9)`,
-    '    at EventEmitter.emit (node:events:518:28)'
+    '    at EventEmitter.emit (node:events:518:28)',
   ].join('\n')
 
 /** The console forwarder's payload, verbatim: no stack, no name, and never had either. */
@@ -322,15 +325,28 @@ test('TWO FRAMELESS ERRORS FROM DIFFERENT PLACES ARE TWO ISSUES, not one', () =>
   // frameless failure in the app — a forwarded console error, a failed load, a rejected string —
   // collapsed into ONE row that could only be read by squinting at its one stored message.
   fresh()
-  noteError('renderer:console', forwarded('Failed to load resource'), 1, site('forwardConsole', 5178))
-  noteError('main:did-fail-load', { errorCode: -105, isMainFrame: true }, 1, site('onDidFailLoad', 5310))
+  noteError(
+    'renderer:console',
+    forwarded('Failed to load resource'),
+    1,
+    site('forwardConsole', 5178),
+  )
+  noteError(
+    'main:did-fail-load',
+    { errorCode: -105, isMainFrame: true },
+    1,
+    site('onDidFailLoad', 5310),
+  )
   const drained = takeErrorReports()
   assert.equal(drained.length, 2, 'two capture sites are two issues')
   assert.notEqual(drained[0].fingerprint, drained[1].fingerprint)
   for (const ev of drained) {
     assert.equal(validateTelemetryEvent(ev).ok, true)
     assert.equal(ev.frameOrigin, 'capture', 'and each says the frames are the CATCH site')
-    assert.deepEqual(ev.frames.map((f) => f.file), ['out/main/index.js'])
+    assert.deepEqual(
+      ev.frames.map((f) => f.file),
+      ['out/main/index.js'],
+    )
   }
   assert.equal(JSON.stringify(drained).includes('jmoye'), false, 'no account name anywhere in it')
 })
@@ -346,9 +362,9 @@ test('a report WITH frames keeps the fingerprint it has always had', () => {
     ev.fingerprint,
     errorFingerprint('TypeError', [
       { file: 'out/main/pipeline.js', line: 120, col: 15, func: 'foldEvent' },
-      { file: 'out/main/log/bus.js', line: 78, col: 20, func: 'LogBus.emit' }
+      { file: 'out/main/log/bus.js', line: 78, col: 20, func: 'LogBus.emit' },
     ]),
-    'name + top frames, exactly as before this ticket'
+    'name + top frames, exactly as before this ticket',
   )
 })
 
@@ -357,11 +373,17 @@ test('a NESTED error is unwrapped: `{ preloadPath, error }` reports the real sta
   // stack; the whole error is one property down, and the old read gave up at the top level.
   fresh()
   const inner = thrown('preload blew up')
-  noteError('main:preload-error', { preloadPath: 'C:\\Users\\jmoye\\eqc\\out\\preload\\index.js', error: inner })
+  noteError('main:preload-error', {
+    preloadPath: 'C:\\Users\\jmoye\\eqc\\out\\preload\\index.js',
+    error: inner,
+  })
   const [ev] = takeErrorReports()
   assert.equal(ev.errorName, 'TypeError', 'the inner error names it')
   assert.equal(ev.frameOrigin, 'thrown', 'a real stack, not a capture site')
-  assert.deepEqual(ev.frames.map((f) => f.file), ['out/main/pipeline.js', 'out/main/log/bus.js'])
+  assert.deepEqual(
+    ev.frames.map((f) => f.file),
+    ['out/main/pipeline.js', 'out/main/log/bus.js'],
+  )
   assert.equal(validateTelemetryEvent(ev).ok, true)
   assert.equal(JSON.stringify(ev).includes('jmoye'), false, 'and the wrapper path does not ride')
 })
@@ -373,7 +395,7 @@ test('EXTERNAL frames ride along, and they are what the fingerprint falls back o
   enoent.stack = [
     'Error: ENOENT',
     '    at Object.readFileSync (node:fs:452:20)',
-    '    at FSWatcher._handle (C:\\Users\\jmoye\\eqc\\node_modules\\chokidar\\lib\\handler.js:88:9)'
+    '    at FSWatcher._handle (C:\\Users\\jmoye\\eqc\\node_modules\\chokidar\\lib\\handler.js:88:9)',
   ].join('\n')
   const other = new Error('ENOENT: no such file or directory, open <path>')
   other.stack = 'Error: ENOENT\n    at Object.statSync (node:fs:1600:3)'
@@ -387,7 +409,7 @@ test('EXTERNAL frames ride along, and they are what the fingerprint falls back o
   assert.deepEqual(first.frames, [], 'nothing of ours in the stack')
   assert.deepEqual(
     (first.externalFrames ?? []).map((f) => f.file),
-    ['node:fs', 'node_modules/chokidar']
+    ['node:fs', 'node_modules/chokidar'],
   )
   assert.equal('frameOrigin' in first, false, 'no frames means nothing to say about their origin')
   assert.equal(first.code, 'ENOENT')
@@ -402,7 +424,10 @@ test('with no location at all, the MESSAGE SHAPE is what stops the collision', (
   noteError('renderer:unhandledrejection', { message: 'the network went away' })
   const drained = takeErrorReports()
   assert.equal(drained.length, 2, 'two shapes, two issues')
-  assert.equal(drained.reduce((n, ev) => n + ev.count, 0), 3)
+  assert.equal(
+    drained.reduce((n, ev) => n + ev.count, 0),
+    3,
+  )
   for (const ev of drained) {
     assert.equal(validateTelemetryEvent(ev).ok, true)
     assert.deepEqual(ev.frames, [])
@@ -430,9 +455,11 @@ test('a React componentStack rides as a bounded componentPath, on BOTH carriers'
   fresh()
   noteError(
     'renderer:console',
-    forwarded(`[everquest-companion] ErrorBoundary caught: TypeError\n\nComponent stack:${componentStack}`),
+    forwarded(
+      `[everquest-companion] ErrorBoundary caught: TypeError\n\nComponent stack:${componentStack}`,
+    ),
     1,
-    site('forwardConsole', 5178)
+    site('forwardConsole', 5178),
   )
   const [viaConsole] = takeErrorReports()
   assert.equal(viaConsole.componentPath, 'Tooltip>InventoryRow')

@@ -27,9 +27,13 @@ import {
   formatEntityText,
   formatMobsText,
   formatSegmentText,
-  formatTargetText
+  formatTargetText,
 } from '../src/renderer/src/features/combat/copyText'
-import type { MobBreakdown, SkillRow, TargetDetail } from '../src/renderer/src/features/combat/dashboardData'
+import type {
+  MobBreakdown,
+  SkillRow,
+  TargetDetail,
+} from '../src/renderer/src/features/combat/dashboardData'
 import type { CategoryView, SegmentView, SkillView, SourceView } from '../src/shared/combat'
 
 // ── fixtures ────────────────────────────────────────────────────────────────────────
@@ -49,7 +53,7 @@ function cat(category: CategoryView['category'], skills: SkillView[]): CategoryV
     max: Math.max(0, ...skills.map((s) => s.max)),
     resists: skills.reduce((n, s) => n + (s.resists ?? 0), 0),
     resistPct: 0,
-    skills
+    skills,
   }
 }
 
@@ -73,7 +77,7 @@ function source(over: Partial<SourceView>): SourceView {
     resistPct: 0,
     skills: [],
     categories: [],
-    ...over
+    ...over,
   }
 }
 
@@ -92,14 +96,24 @@ const YOU = source({
   resists: 2,
   resistPct: 28.6,
   categories: [
-    cat('melee', [skill('Melee', { total: 21200, hits: 210, crits: 23, max: 412, min: 12, misses: 45 })]),
+    cat('melee', [
+      skill('Melee', { total: 21200, hits: 210, crits: 23, max: 412, min: 12, misses: 45 }),
+    ]),
     cat('slay', [
       skill('Melee', { total: 3200, hits: 30, crits: 6, max: 300, min: 40, misses: 9 }),
-      skill('Backstab', { total: 2800, hits: 15, crits: 2, max: 500, min: 60, misses: 3 })
+      skill('Backstab', { total: 2800, hits: 15, crits: 2, max: 500, min: 60, misses: 3 }),
     ]),
-    cat('spell', [skill('Ancient Wrath', { total: 4000, hits: 5, crits: 0, max: 900, min: 700, resists: 2 })])
+    cat('spell', [
+      skill('Ancient Wrath', { total: 4000, hits: 5, crits: 0, max: 900, min: 700, resists: 2 }),
+    ]),
   ],
-  rounds: { totalRounds: 186, avgHitsPerRound: 1.29, maxHitsInRound: 3, multiHitRounds: 41, histogram: [145, 37, 4] }
+  rounds: {
+    totalRounds: 186,
+    avgHitsPerRound: 1.29,
+    maxHitsInRound: 3,
+    multiHitRounds: 41,
+    histogram: [145, 37, 4],
+  },
 })
 
 /** A summoned pet — the row that must wear a '(pet)' tag and carries no crits. */
@@ -114,7 +128,9 @@ const PET = source({
   critPct: 0,
   misses: 36,
   hitPct: 76.9,
-  categories: [cat('melee', [skill('Melee', { total: 9030, hits: 120, max: 180, min: 8, misses: 36 })])]
+  categories: [
+    cat('melee', [skill('Melee', { total: 9030, hits: 120, max: 180, min: 8, misses: 36 })]),
+  ],
 })
 
 /** A grouped ally: no avoided swings, no crits, no resists — every optional CELL empty. */
@@ -125,7 +141,7 @@ const ALLY = source({
   total: 5000,
   dps: 60,
   hits: 40,
-  categories: [cat('melee', [skill('Melee', { total: 5000, hits: 40, max: 260, min: 30 })])]
+  categories: [cat('melee', [skill('Melee', { total: 5000, hits: 40, max: 260, min: 30 })])],
 })
 
 const SEG: SegmentView = {
@@ -142,8 +158,24 @@ const SEG: SegmentView = {
   inTotal: 3200,
   inDps: 39,
   incoming: [
-    source({ id: 'e1', name: 'a deadly black widow (7)', kind: 'enemy', total: 2400, dps: 29, hits: 60, crits: 4, critPct: 6.7 }),
-    source({ id: 'e2', name: 'a deadly black widow (8)', kind: 'enemy', total: 800, dps: 10, hits: 20 })
+    source({
+      id: 'e1',
+      name: 'a deadly black widow (7)',
+      kind: 'enemy',
+      total: 2400,
+      dps: 29,
+      hits: 60,
+      crits: 4,
+      critPct: 6.7,
+    }),
+    source({
+      id: 'e2',
+      name: 'a deadly black widow (8)',
+      kind: 'enemy',
+      total: 800,
+      dps: 10,
+      hits: 20,
+    }),
   ],
   // YOUR DEFENCE (JOS-354) — the block the Incoming paste opens with. Shaped like a real segment:
   // 81 swings aimed at you, 39 of them landed, 42 avoided (12 by one of your four skills).
@@ -161,17 +193,22 @@ const SEG: SegmentView = {
       parry: (1 / 81) * 100,
       riposte: (2 / 81) * 100,
       block: (7 / 81) * 100,
-      absorb: 0
+      absorb: 0,
     },
-    riposte: { events: 2, swings: 2, hits: 2, damage: 143, pctOfSwingDamage: 0.46, taken: 11 }
+    riposte: { events: 2, swings: 2, hits: 2, damage: 143, pctOfSwingDamage: 0.46, taken: 11 },
   },
   enemyHealTotal: 1200,
   incomingHealTotal: 2100,
   incomingHealers: [
     { name: 'Grinn Frostbeard', total: 1800, count: 6 },
-    { name: 'You', total: 300, count: 2 }
+    { name: 'You', total: 300, count: 2 },
   ],
-  healing: { total: 0, restoredTotal: 0, absorbedTotal: 0, sources: [] } as unknown as SegmentView['healing'],
+  healing: {
+    total: 0,
+    restoredTotal: 0,
+    absorbedTotal: 0,
+    sources: [],
+  } as unknown as SegmentView['healing'],
   // Task #64: the rogue-poison ledger. Every dimension at once — a slow that landed, both
   // ambiguous Strike lanes, a poison damage lane, a dispel tier, a mid-fight coat and both
   // modifier switches — so one golden pins the whole block's shape.
@@ -183,7 +220,7 @@ const SEG: SegmentView = {
     strikes: [
       { name: 'Asp Venom Strike / Cobra Venom Strike', count: 15, ambiguous: true },
       { name: 'Weakening Strike', count: 2 },
-      { name: 'Befuddling Strike', count: 1 }
+      { name: 'Befuddling Strike', count: 1 },
     ],
     strikeCount: 18,
     slowLands: 2,
@@ -193,8 +230,8 @@ const SEG: SegmentView = {
     dispels: [{ name: 'Cancel Magic / Phobocancel', count: 4, ambiguous: true }],
     dispelCount: 4,
     stanceSwitches: 1,
-    invocationSwitches: 2
-  }
+    invocationSwitches: 2,
+  },
 }
 
 function row(name: string, over: Partial<SkillRow> = {}): SkillRow {
@@ -205,26 +242,77 @@ function row(name: string, over: Partial<SkillRow> = {}): SkillRow {
 const TARGET: TargetDetail = {
   rows: [
     row('Melee', { total: 7400, hits: 92, crits: 9, max: 412, min: 12, misses: 21 }),
-    row('Slay Undead', { category: 'slay', total: 2600, hits: 24, crits: 4, max: 500, min: 40, misses: 6 }),
-    row('Ancient Wrath', { category: 'spell', total: 2000, hits: 2, max: 900, min: 700, resists: 1 })
+    row('Slay Undead', {
+      category: 'slay',
+      total: 2600,
+      hits: 24,
+      crits: 4,
+      max: 500,
+      min: 40,
+      misses: 6,
+    }),
+    row('Ancient Wrath', {
+      category: 'spell',
+      total: 2000,
+      hits: 2,
+      max: 900,
+      min: 700,
+      resists: 1,
+    }),
   ],
   total: 12000,
   hits: 118,
   crits: 13,
   misses: 27,
   resists: 1,
-  estimated: true
+  estimated: true,
 }
 
 const MOBS: MobBreakdown = {
   rows: [
-    { target: 'a deadly black widow (7)', total: 24000, hits: 210, crits: 22, misses: 40, resists: 1, pct: 100, share: 53 },
-    { target: 'a deadly black widow (8)', total: 16000, hits: 150, crits: 14, misses: 28, resists: 0, pct: 66.7, share: 35.4 },
-    { target: 'a vampire bat', total: 4000, hits: 40, crits: 3, misses: 9, resists: 0, pct: 16.7, share: 8.8 },
-    { target: 'a zol ghoul knight', total: 1230, hits: 12, crits: 0, misses: 2, resists: 0, pct: 5.1, share: 2.7 }
+    {
+      target: 'a deadly black widow (7)',
+      total: 24000,
+      hits: 210,
+      crits: 22,
+      misses: 40,
+      resists: 1,
+      pct: 100,
+      share: 53,
+    },
+    {
+      target: 'a deadly black widow (8)',
+      total: 16000,
+      hits: 150,
+      crits: 14,
+      misses: 28,
+      resists: 0,
+      pct: 66.7,
+      share: 35.4,
+    },
+    {
+      target: 'a vampire bat',
+      total: 4000,
+      hits: 40,
+      crits: 3,
+      misses: 9,
+      resists: 0,
+      pct: 16.7,
+      share: 8.8,
+    },
+    {
+      target: 'a zol ghoul knight',
+      total: 1230,
+      hits: 12,
+      crits: 0,
+      misses: 2,
+      resists: 0,
+      pct: 5.1,
+      share: 2.7,
+    },
   ],
   total: 45230,
-  estimated: false
+  estimated: false,
 }
 
 /** An empty fight — the honest degenerate case (a pull that opened on a miss). */
@@ -251,11 +339,11 @@ const EMPTY: SegmentView = {
     defended: 0,
     defendedPct: 0,
     rates: { miss: 0, dodge: 0, parry: 0, riposte: 0, block: 0, absorb: 0 },
-    riposte: { events: 0, swings: 0, hits: 0, damage: 0, pctOfSwingDamage: 0, taken: 0 }
+    riposte: { events: 0, swings: 0, hits: 0, damage: 0, pctOfSwingDamage: 0, taken: 0 },
   },
   enemyHealTotal: 0,
   incomingHealTotal: 0,
-  incomingHealers: []
+  incomingHealers: [],
 }
 
 /** Every line of every block must fit the paste width — asserted on each golden below. */
@@ -280,8 +368,8 @@ test('formatSegmentText (outgoing) is the meter header + the ranked source table
       '2  Vebarn (pet)       9.0k  108 dps        77%',
       // Nothing was avoided against this source and it never crit: both cells stay blank
       // rather than claiming a 100% hit rate the meter itself declines to show.
-      '3  Grinn Frostbeard   5.0k   60 dps'
-    ].join('\n')
+      '3  Grinn Frostbeard   5.0k   60 dps',
+    ].join('\n'),
   )
   assert.ok(fits(text))
 })
@@ -315,8 +403,8 @@ test('formatSegmentText (incoming) uses the incoming totals and appends the heal
       '',
       'Heals received: 2.1k',
       '  Grinn Frostbeard · 1.8k (6)',
-      '  You · 300 (2)'
-    ].join('\n')
+      '  You · 300 (2)',
+    ].join('\n'),
   )
   assert.ok(fits(text))
 })
@@ -329,11 +417,17 @@ test('a selfLabel relabels the self row at every copy level, and the default is 
   // one. The Source column is a char narrower: `Primitive (You)` (15) < `Grinn Frostbeard` (16).
   // The self rows (1, and the grouped-ALLY fixture 3) now read `Primitive (You)`; `kind:'pet'` row 2 does not.
   const seg = formatSegmentText(SEG, 'out', 'Primitive (You)').split('\n')
-  assert.equal(seg.slice(3, 7).join('\n'), '   Source           Total      DPS  Crit  Hit  Resist\n1  Primitive (You)  31.2k  375 dps   12%  82%     29%\n2  Vebarn (pet)      9.0k  108 dps        77%\n3  Primitive (You)   5.0k   60 dps')
+  assert.equal(
+    seg.slice(3, 7).join('\n'),
+    '   Source           Total      DPS  Crit  Hit  Resist\n1  Primitive (You)  31.2k  375 dps   12%  82%     29%\n2  Vebarn (pet)      9.0k  108 dps        77%\n3  Primitive (You)   5.0k   60 dps',
+  )
   // Entity drill: the subject line takes the label, the body is otherwise the un-labelled golden.
   const ent = formatEntityText(SEG, YOU, [], 'Primitive (You)')
   assert.ok(ent.startsWith('Primitive (You) - a deadly black widow +2 · 1:23\n'))
-  assert.equal(ent.split('\n').slice(1).join('\n'), formatEntityText(SEG, YOU).split('\n').slice(1).join('\n'))
+  assert.equal(
+    ent.split('\n').slice(1).join('\n'),
+    formatEntityText(SEG, YOU).split('\n').slice(1).join('\n'),
+  )
   // A non-self (`kind: 'pet'`) subject keeps its own name even when a selfLabel is passed.
   assert.ok(formatEntityText(SEG, PET, [], 'Primitive (You)').startsWith('Vebarn (pet) - '))
   // The default (omitted / null) path is byte-identical — every existing golden still holds.
@@ -359,8 +453,8 @@ test('formatEntityText is the flat skill list, slay grouped, with the rounds foo
       // A spell lane has no avoided swings, so its Miss cell is blank while its Resist isn't.
       'Ancient Wrath   4.0k     5  800  900                 29%',
       '',
-      'Melee rounds: 186 · avg 1.29 hits/round · 41 multi-hit · up to 3/round'
-    ].join('\n')
+      'Melee rounds: 186 · avg 1.29 hits/round · 41 multi-hit · up to 3/round',
+    ].join('\n'),
   )
   assert.ok(fits(text))
 })
@@ -389,8 +483,8 @@ test('formatEntityText NESTS the pet as a line item when the preference passes i
       // printing one would invent an observation.
       'Vebarn (pet)    9.0k   120',
       '',
-      'Melee rounds: 186 · avg 1.29 hits/round · 41 multi-hit · up to 3/round'
-    ].join('\n')
+      'Melee rounds: 186 · avg 1.29 hits/round · 41 multi-hit · up to 3/round',
+    ].join('\n'),
   )
   assert.ok(fits(text))
   // No pets passed (the preference off, or a non-self source) ⇒ byte-identical to before.
@@ -408,8 +502,8 @@ test('formatEntityText omits every column the source has no data for', () => {
       // No Crit / Miss / Resist columns exist at all here — an absent dimension is absent,
       // never a column of zeroes.
       'Skill  Total  Hits  Avg  Max',
-      'Melee   5.0k    40  125  260'
-    ].join('\n')
+      'Melee   5.0k    40  125  260',
+    ].join('\n'),
   )
   assert.ok(fits(text))
 })
@@ -434,8 +528,8 @@ test('formatTargetText carries the ~ estimate prefix on every derived number but
       'Slay Undead    ~2.6k   ~24   ~108  500  ~17%  ~20%',
       'Ancient Wrath  ~2.0k    ~2  ~1.0k  900                ~33%',
       '',
-      '~ = estimated: this fight kept only a sample of its events.'
-    ].join('\n')
+      '~ = estimated: this fight kept only a sample of its events.',
+    ].join('\n'),
   )
   assert.ok(fits(text))
 })
@@ -462,8 +556,8 @@ test('formatMobsText copies the rows the card LISTS and says what it left off', 
       '1  a deadly black widow (7)  24.0k    53%   210    22       40       1',
       '2  a deadly black widow (8)  16.0k    35%   150    14       28',
       '3  a vampire bat              4.0k     9%    40     3        9',
-      '+1 more not shown'
-    ].join('\n')
+      '+1 more not shown',
+    ].join('\n'),
   )
   assert.ok(fits(text))
 })
@@ -479,11 +573,19 @@ test('formatMobsText with no cap copies every row and claims nothing was left of
 test('an empty segment says so instead of printing an empty table', () => {
   assert.equal(
     formatSegmentText(EMPTY, 'out'),
-    ['a vampire bat · 0:07', 'Outgoing damage · 0 · 0 dps', 'No outgoing damage in this segment.'].join('\n')
+    [
+      'a vampire bat · 0:07',
+      'Outgoing damage · 0 · 0 dps',
+      'No outgoing damage in this segment.',
+    ].join('\n'),
   )
   assert.equal(
     formatSegmentText(EMPTY, 'in'),
-    ['a vampire bat · 0:07', 'Incoming damage · 0 · 0 dps', 'No incoming damage in this segment.'].join('\n')
+    [
+      'a vampire bat · 0:07',
+      'Incoming damage · 0 · 0 dps',
+      'No incoming damage in this segment.',
+    ].join('\n'),
   )
 })
 
@@ -504,7 +606,7 @@ test('nothing anywhere is markdown — a paste must not be re-rendered by its de
     formatSegmentText(SEG, 'in'),
     formatEntityText(SEG, YOU),
     formatTargetText(SEG, 'a deadly black widow (7)', TARGET),
-    formatMobsText(SEG, MOBS, 3)
+    formatMobsText(SEG, MOBS, 3),
     // The Procs block gets the same treatment in combatProcsCopyText.test.mts.
   ]
   for (const b of blocks) {

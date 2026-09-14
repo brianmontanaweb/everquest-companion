@@ -25,7 +25,7 @@ import { join } from 'node:path'
 
 const ENV_CANDIDATES = [
   join(import.meta.dirname, '..', '.triage', 'linear.env'),
-  join(import.meta.dirname, '..', '..', '..', '..', '.triage', 'linear.env')
+  join(import.meta.dirname, '..', '..', '..', '..', '.triage', 'linear.env'),
 ]
 const envPath = ENV_CANDIDATES.find((p) => existsSync(p))
 if (envPath === undefined) throw new Error('.triage/linear.env not found (checkout or main repo)')
@@ -37,17 +37,25 @@ async function gql<T>(query: string, variables: Record<string, unknown> = {}): P
   const res = await fetch('https://api.linear.app/graphql', {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: KEY },
-    body: JSON.stringify({ query, variables })
+    body: JSON.stringify({ query, variables }),
   })
   const body = (await res.json()) as { data?: T; errors?: unknown }
   if (body.errors) throw new Error(JSON.stringify(body.errors))
   return body.data as T
 }
 
-interface StateNode { id: string; name: string; type: string }
-interface TeamData { teams: { nodes: { id: string; key: string; name: string; states: { nodes: StateNode[] } }[] } }
+interface StateNode {
+  id: string
+  name: string
+  type: string
+}
+interface TeamData {
+  teams: { nodes: { id: string; key: string; name: string; states: { nodes: StateNode[] } }[] }
+}
 
-const teamData = await gql<TeamData>('query { teams { nodes { id key name states { nodes { id name type } } } } }')
+const teamData = await gql<TeamData>(
+  'query { teams { nodes { id key name states { nodes { id name type } } } } }',
+)
 // PINNED to JOS, never nodes[0]: the header names the team as law, and the day a second team
 // appeared in the workspace, first-team-wins silently filed three tickets there.
 const team = teamData.teams.nodes.find((t) => t.key === 'JOS') ?? teamData.teams.nodes[0]
@@ -55,15 +63,18 @@ if (!team) throw new Error('no team visible to this key')
 
 const stateId = (name: string): string => {
   const s = team.states.nodes.find((x) => x.name.toLowerCase() === name.toLowerCase())
-  if (!s) throw new Error(`no state '${name}' — have: ${team.states.nodes.map((x) => x.name).join(', ')}`)
+  if (!s)
+    throw new Error(`no state '${name}' — have: ${team.states.nodes.map((x) => x.name).join(', ')}`)
   return s.id
 }
 
-async function issueByIdentifier(ident: string): Promise<{ id: string; identifier: string; title: string }> {
+async function issueByIdentifier(
+  ident: string,
+): Promise<{ id: string; identifier: string; title: string }> {
   const num = Number(ident.split('-')[1])
   const d = await gql<{ issues: { nodes: { id: string; identifier: string; title: string }[] } }>(
     'query($n: Float!) { issues(filter: { number: { eq: $n } }, first: 1) { nodes { id identifier title } } }',
-    { n: num }
+    { n: num },
   )
   const node = d.issues.nodes[0]
   if (!node) throw new Error(`no issue ${ident}`)
@@ -81,47 +92,78 @@ if (cmd === 'list') {
   // sorted by the kanban's own manual order (sortOrder within a column) with the priority
   // field shown — this listing IS the dispatch queue, never a cached plan of it.
   const want = flag('state')
-  const d = await gql<{ issues: { nodes: { identifier: string; title: string; sortOrder: number; priority: number; state: { name: string; position: number } }[] } }>(
+  const d = await gql<{
+    issues: {
+      nodes: {
+        identifier: string
+        title: string
+        sortOrder: number
+        priority: number
+        state: { name: string; position: number }
+      }[]
+    }
+  }>(
     'query($id: ID!) { issues(filter: { team: { id: { eq: $id } } }, first: 250) { nodes { identifier title sortOrder priority state { name position } } } }',
-    { id: team.id }
+    { id: team.id },
   )
   const PRIO = ['—', 'URGENT', 'High', 'Med', 'Low']
   const rows = d.issues.nodes
     .filter((n) => !want || n.state.name.toLowerCase() === want.toLowerCase())
     .sort((a, b) => a.state.position - b.state.position || a.sortOrder - b.sortOrder)
   for (const n of rows) {
-    console.log(`${n.identifier}  [${n.state.name}]  (${PRIO[n.priority] ?? n.priority})  ${n.title}`)
+    console.log(
+      `${n.identifier}  [${n.state.name}]  (${PRIO[n.priority] ?? n.priority})  ${n.title}`,
+    )
   }
 } else if (cmd === 'show' && a) {
   const issue = await issueByIdentifier(a)
-  const d = await gql<{ issue: { title: string; description: string; state: { name: string }; priority: number; comments: { nodes: { body: string; createdAt: string }[] } } }>(
+  const d = await gql<{
+    issue: {
+      title: string
+      description: string
+      state: { name: string }
+      priority: number
+      comments: { nodes: { body: string; createdAt: string }[] }
+    }
+  }>(
     'query($id: String!) { issue(id: $id) { title description priority state { name } comments { nodes { body createdAt } } } }',
-    { id: issue.id }
+    { id: issue.id },
   )
-  console.log(`# ${issue.identifier}: ${d.issue.title}\nState: ${d.issue.state.name} · priority ${String(d.issue.priority)}\n\n${d.issue.description}\n`)
+  console.log(
+    `# ${issue.identifier}: ${d.issue.title}\nState: ${d.issue.state.name} · priority ${String(d.issue.priority)}\n\n${d.issue.description}\n`,
+  )
   for (const c of d.issue.comments.nodes) console.log(`--- comment (${c.createdAt}):\n${c.body}\n`)
 } else if (cmd === 'create' && a) {
   // --priority: 1 urgent, 2 high, 3 medium, 4 low (Linear's own scale; 0/absent = none)
   const prio = flag('priority')
   const descFile = flag('desc-file')
   const input: Record<string, unknown> = {
-    teamId: team.id, title: a,
+    teamId: team.id,
+    title: a,
     description: descFile !== undefined ? readFileSync(descFile, 'utf8') : (flag('desc') ?? ''),
-    stateId: stateId(flag('state') ?? 'Todo')
+    stateId: stateId(flag('state') ?? 'Todo'),
   }
   if (prio !== undefined) input.priority = Number(prio)
   const d = await gql<{ issueCreate: { issue: { identifier: string } } }>(
     'mutation($input: IssueCreateInput!) { issueCreate(input: $input) { issue { identifier } } }',
-    { input }
+    { input },
   )
   console.log(`created ${d.issueCreate.issue.identifier}`)
 } else if (cmd === 'move' && a && b) {
   const issue = await issueByIdentifier(a)
-  await gql('mutation($id: String!, $sid: String!) { issueUpdate(id: $id, input: { stateId: $sid }) { success } }', {
-    id: issue.id, sid: stateId(b)
-  })
+  await gql(
+    'mutation($id: String!, $sid: String!) { issueUpdate(id: $id, input: { stateId: $sid }) { success } }',
+    {
+      id: issue.id,
+      sid: stateId(b),
+    },
+  )
   console.log(`${issue.identifier} -> ${b}`)
-} else if (cmd === 'edit' && a && (flag('title') !== undefined || flag('desc-file') !== undefined)) {
+} else if (
+  cmd === 'edit' &&
+  a &&
+  (flag('title') !== undefined || flag('desc-file') !== undefined)
+) {
   // Rewrite an existing ticket's title and/or body in place (a ticket that graduates from GATED
   // to a build brief keeps its identifier and its comment history).
   const issue = await issueByIdentifier(a)
@@ -130,18 +172,28 @@ if (cmd === 'list') {
   const descFile = flag('desc-file')
   if (title !== undefined) input.title = title
   if (descFile !== undefined) input.description = readFileSync(descFile, 'utf8')
-  await gql('mutation($id: String!, $input: IssueUpdateInput!) { issueUpdate(id: $id, input: $input) { success } }', {
-    id: issue.id, input
-  })
+  await gql(
+    'mutation($id: String!, $input: IssueUpdateInput!) { issueUpdate(id: $id, input: $input) { success } }',
+    {
+      id: issue.id,
+      input,
+    },
+  )
   console.log(`${issue.identifier} edited`)
 } else if (cmd === 'comment' && a && (b || flag('file'))) {
   const issue = await issueByIdentifier(a)
   const file = flag('file')
   const body = file !== undefined ? readFileSync(file, 'utf8') : b
-  await gql('mutation($id: String!, $body: String!) { commentCreate(input: { issueId: $id, body: $body }) { success } }', {
-    id: issue.id, body
-  })
+  await gql(
+    'mutation($id: String!, $body: String!) { commentCreate(input: { issueId: $id, body: $body }) { success } }',
+    {
+      id: issue.id,
+      body,
+    },
+  )
   console.log(`${issue.identifier} commented`)
 } else {
-  console.log('usage: linear.mts list [--state S] | create "Title" [--state S] [--desc D|--desc-file F] | edit JOS-N [--title T] [--desc-file F] | move JOS-N "State" | comment JOS-N "text"|--file F')
+  console.log(
+    'usage: linear.mts list [--state S] | create "Title" [--state S] [--desc D|--desc-file F] | edit JOS-N [--title T] [--desc-file F] | move JOS-N "State" | comment JOS-N "text"|--file F',
+  )
 }

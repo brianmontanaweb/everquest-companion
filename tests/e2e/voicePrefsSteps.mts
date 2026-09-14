@@ -43,7 +43,7 @@ interface Spoken {
 
 function spoken(page: Page): Promise<Spoken[]> {
   return page.evaluate(
-    () => (window as unknown as { __eqSpeech?: { spoken: Spoken[] } }).__eqSpeech?.spoken ?? []
+    () => (window as unknown as { __eqSpeech?: { spoken: Spoken[] } }).__eqSpeech?.spoken ?? [],
   ) as Promise<Spoken[]>
 }
 
@@ -55,22 +55,19 @@ function spoken(page: Page): Promise<Spoken[]> {
  * event is dispatched. No test-only back door is involved in either half.
  */
 async function useVoice(page: Page, voiceId: string): Promise<string | null> {
-  const stored = await page.evaluate(
-    async (id) => {
-      const eq = (
-        window as unknown as {
-          eq: {
-            getVoicePrefs: () => Promise<Record<string, unknown>>
-            setVoicePrefs: (p: Record<string, unknown>) => Promise<Record<string, unknown>>
-          }
+  const stored = await page.evaluate(async (id) => {
+    const eq = (
+      window as unknown as {
+        eq: {
+          getVoicePrefs: () => Promise<Record<string, unknown>>
+          setVoicePrefs: (p: Record<string, unknown>) => Promise<Record<string, unknown>>
         }
-      ).eq
-      const prefs = await eq.getVoicePrefs()
-      const next = await eq.setVoicePrefs({ ...prefs, voiceId: id })
-      return (next.voiceId as string | null) ?? null
-    },
-    voiceId
-  )
+      }
+    ).eq
+    const prefs = await eq.getVoicePrefs()
+    const next = await eq.setVoicePrefs({ ...prefs, voiceId: id })
+    return (next.voiceId as string | null) ?? null
+  }, voiceId)
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
   return stored
 }
@@ -79,59 +76,75 @@ async function useVoice(page: Page, voiceId: string): Promise<string | null> {
 async function fireAndHear(page: Page): Promise<Spoken | null> {
   const before = (await spoken(page)).length
   await page.click(`[data-alert-id="${ALERT_ID}"] [data-testid="alert-test"]`)
-  const all = await settle(() => spoken(page), (list) => list.length > before, {
-    timeoutMs: 10_000
-  }).catch(() => null)
+  const all = await settle(
+    () => spoken(page),
+    (list) => list.length > before,
+    {
+      timeoutMs: 10_000,
+    },
+  ).catch(() => null)
   return all?.[all.length - 1] ?? null
 }
 
 /** A def that speaks a fixed sentence, and carries a DEAD per-alert voice id to be ignored. */
 async function seedSpeakingDef(page: Page): Promise<number> {
-  const saved = await page.evaluate(
-    async (id) => {
-      const eq = (window as unknown as { eq: { saveAlert: (d: unknown) => Promise<unknown[]> } }).eq
-      const defs = await eq.saveAlert({
-        id,
-        name: 'Voice follows prefs',
-        enabled: true,
-        trigger: { type: 'event', kind: 'uncharm' },
-        sound: { packId: 'alan-rickman', soundId: 'attention' },
-        cooldownMs: 0,
-        audio: 'speech',
-        // THE RETIRED OVERRIDE, stored exactly as an older build would have written it. It must be
-        // ignored rather than honoured — if anything still reads it, every check below sees it.
-        speech: { mode: 'alertName', voiceId: 'e2e:stale-per-alert-voice' }
-      })
-      return defs.length
-    },
-    ALERT_ID
-  )
+  const saved = await page.evaluate(async (id) => {
+    const eq = (window as unknown as { eq: { saveAlert: (d: unknown) => Promise<unknown[]> } }).eq
+    const defs = await eq.saveAlert({
+      id,
+      name: 'Voice follows prefs',
+      enabled: true,
+      trigger: { type: 'event', kind: 'uncharm' },
+      sound: { packId: 'alan-rickman', soundId: 'attention' },
+      cooldownMs: 0,
+      audio: 'speech',
+      // THE RETIRED OVERRIDE, stored exactly as an older build would have written it. It must be
+      // ignored rather than honoured — if anything still reads it, every check below sees it.
+      speech: { mode: 'alertName', voiceId: 'e2e:stale-per-alert-voice' },
+    })
+    return defs.length
+  }, ALERT_ID)
   await page.click('[data-testid="nav-alerts"]', { timeout: 60_000 })
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
   await settle(
-    () => page.evaluate((sel) => document.querySelectorAll(sel).length, `[data-alert-id="${ALERT_ID}"]`),
+    () =>
+      page.evaluate(
+        (sel) => document.querySelectorAll(sel).length,
+        `[data-alert-id="${ALERT_ID}"]`,
+      ),
     (n) => n === 1,
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   )
   return saved
 }
 
 export async function stepVoiceFollowsPrefs(page: Page): Promise<void> {
   const saved = await seedSpeakingDef(page)
-  if (!check('a speaking def saves through the app’s own IPC', saved > 0, `${String(saved)} defs stored`)) {
+  if (
+    !check(
+      'a speaking def saves through the app’s own IPC',
+      saved > 0,
+      `${String(saved)} defs stored`,
+    )
+  ) {
     return
   }
 
   const storedA = await useVoice(page, VOICE_A)
-  if (!check('the voice preference round-trips through main', storedA === VOICE_A, String(storedA))) return
+  if (!check('the voice preference round-trips through main', storedA === VOICE_A, String(storedA)))
+    return
   const first = await fireAndHear(page)
   if (!check('the alert speaks', first !== null, 'the engine seam recorded nothing')) return
   check(
     'a firing uses the voice from Preferences, NOT the id stored on the def',
     first?.voiceId === VOICE_A,
-    `spoke with "${String(first?.voiceId)}"`
+    `spoke with "${String(first?.voiceId)}"`,
   )
-  check('…and this channel stayed mute doing it', first?.uttered === false, `uttered=${String(first?.uttered)}`)
+  check(
+    '…and this channel stayed mute doing it',
+    first?.uttered === false,
+    `uttered=${String(first?.uttered)}`,
+  )
 
   // THE REPORT, reproduced: change the preference and fire the SAME def again.
   const storedB = await useVoice(page, VOICE_B)
@@ -140,7 +153,7 @@ export async function stepVoiceFollowsPrefs(page: Page): Promise<void> {
   check(
     'THE REPORT: changing the voice in Preferences changes what an existing alert speaks with',
     second?.voiceId === VOICE_B,
-    `spoke with "${String(second?.voiceId)}" after switching to "${VOICE_B}"`
+    `spoke with "${String(second?.voiceId)}" after switching to "${VOICE_B}"`,
   )
 
   // …and the editor offers no way to pin one back onto this alert.
@@ -148,11 +161,15 @@ export async function stepVoiceFollowsPrefs(page: Page): Promise<void> {
   await page.waitForSelector('[data-testid="alert-speech-block"]', { timeout: 15_000 })
   check(
     'the alert editor offers no per-alert voice picker any more',
-    (await page.evaluate(() => document.querySelectorAll('[data-testid="alert-speech-voice"]').length)) === 0
+    (await page.evaluate(
+      () => document.querySelectorAll('[data-testid="alert-speech-voice"]').length,
+    )) === 0,
   )
   check(
     '…while the ▶ that auditions the real voice is still there',
-    (await page.evaluate(() => document.querySelectorAll('[data-testid="alert-speech-test"]').length)) === 1
+    (await page.evaluate(
+      () => document.querySelectorAll('[data-testid="alert-speech-test"]').length,
+    )) === 1,
   )
   await page.keyboard.press('Escape')
   await page.waitForSelector('[data-testid="alert-dialog"]', { state: 'detached', timeout: 10_000 })

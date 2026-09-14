@@ -123,7 +123,7 @@ export function useModule<Snap>(moduleId: string): Snap | null {
   // answered on this hook's FIRST render, with no loading frame it does not need.
   const [held, setHeld] = useState<Held<Snap>>(() => ({
     id: moduleId,
-    snap: moduleStore().getSnapshot(moduleId) as Snap | null
+    snap: moduleStore().getSnapshot(moduleId) as Snap | null,
   }))
 
   useEffect(() => {
@@ -131,7 +131,9 @@ export function useModule<Snap>(moduleId: string): Snap | null {
       const snap = moduleStore().getSnapshot(moduleId) as Snap | null
       // Bail out the way React does. The store only notifies when it has taken a new reply, but
       // this also covers the `take()` below, which fires on every subscribe.
-      setHeld((prev) => (prev.id === moduleId && Object.is(prev.snap, snap) ? prev : { id: moduleId, snap }))
+      setHeld((prev) =>
+        prev.id === moduleId && Object.is(prev.snap, snap) ? prev : { id: moduleId, snap },
+      )
     }
     const off = moduleStore().subscribe(moduleId, take)
     // CLOSE THE GAP between the render that read the store and the effect that subscribed to it:

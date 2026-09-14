@@ -51,7 +51,7 @@ export function ChipMultiSelect<T extends string>({
   max,
   minWidth = 280,
   optionLabel,
-  testId
+  testId,
 }: ChipMultiSelectProps<T>): JSX.Element {
   const full = max !== undefined && value.length >= max
   return (

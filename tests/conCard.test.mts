@@ -26,13 +26,13 @@ import {
   conCardHoldMs,
   conCardIsPlayer,
   conCardSuppressed,
-  normalizeConCardConfig
+  normalizeConCardConfig,
 } from '../src/shared/conCard'
 import {
   CON_CARD_NOTABLE_TAGS,
   CON_CARD_OPEN_HINT,
   conCardTotalN,
-  notableChips
+  notableChips,
 } from '../src/renderer/src/overlay/conCardRows'
 import { fitChanged, overlayFitRequest } from '../src/renderer/src/overlay/overlayFit'
 // The forward model moved to its own module when JOS-385 split resistModel.ts (line ceiling).
@@ -45,13 +45,13 @@ import {
   defaultOverlayBounds,
   fitsHeightToContent,
   fittedOverlayHeight,
-  overlayDefaultSize
+  overlayDefaultSize,
 } from '../src/main/overlayLayout'
 import {
   RESIST_AXES,
   type MobResistProfile,
   type ResistEstimate,
-  type ResistTag
+  type ResistTag,
 } from '../src/shared/resistTypes'
 import type { ConCardChip, ConCardPayload } from '../src/shared/conCard'
 
@@ -60,14 +60,21 @@ import type { ConCardChip, ConCardPayload } from '../src/shared/conCard'
 test('the con card is an overlay kind, appended after every meter, and holds no meter slot', () => {
   assert.ok(OVERLAY_KINDS.includes('conCard'), 'the kind exists')
   assert.equal(OVERLAY_KINDS[OVERLAY_KINDS.length - 1], 'conCard', 'APPENDED - see shared/types.ts')
-  assert.ok(!METER_KINDS.includes('conCard'), 'a strip is not a meter and must not consume a dock slot')
+  assert.ok(
+    !METER_KINDS.includes('conCard'),
+    'a strip is not a meter and must not consume a dock slot',
+  )
 })
 
 test('it opens TOP CENTRE, in the celebration strip’s own band (owner ruling, 2026-08-16)', () => {
   const area = { x: 0, y: 0, width: 1920, height: 1040 }
   const b = defaultOverlayBounds('conCard', area)
   const size = overlayDefaultSize('conCard', area)
-  assert.deepEqual({ width: b.width, height: b.height }, size, 'the bounds carry the kind’s own size')
+  assert.deepEqual(
+    { width: b.width, height: b.height },
+    size,
+    'the bounds carry the kind’s own size',
+  )
   assert.equal(b.x, Math.round((area.width - b.width) / 2), 'horizontally centred')
   // THE TOP, not 384 px down it. The card used to clear the celebration band so two kinds that both
   // ship ON could never share pixels; the owner overruled that on 2026-08-16 because a card that
@@ -99,16 +106,28 @@ test('a fitted height is the request, clamped to the floor and to the room BELOW
   const area = { x: 0, y: 0, width: 1920, height: 1040 }
   // The ordinary case: a card asks for what it drew and gets exactly that.
   assert.equal(fittedOverlayHeight(214, 12, area), 214)
-  assert.equal(fittedOverlayHeight(214.4, 12, area), 214, 'rounded, because a window is whole pixels')
+  assert.equal(
+    fittedOverlayHeight(214.4, 12, area),
+    214,
+    'rounded, because a window is whole pixels',
+  )
   assert.equal(fittedOverlayHeight(215.5, 12, area), 216)
   // THE FLOOR is the one every kind shares — and Electron would clamp `setBounds` against the
   // window's own minHeight anyway, so main must not believe a number the window cannot wear.
   assert.equal(fittedOverlayHeight(20, 12, area), OVERLAY_MIN_SIZE.height)
-  assert.equal(fittedOverlayHeight(Number.NaN, 12, area), OVERLAY_MIN_SIZE.height, 'a nonsense request')
+  assert.equal(
+    fittedOverlayHeight(Number.NaN, 12, area),
+    OVERLAY_MIN_SIZE.height,
+    'a nonsense request',
+  )
   // THE CEILING IS THE ROOM UNDER THE TOP EDGE, and the position never gives: a card dragged near
   // the bottom of the screen SHRINKS rather than sliding back up the screen under the user.
   assert.equal(fittedOverlayHeight(600, 900, area), 140, '1040 - 900')
-  assert.equal(fittedOverlayHeight(600, 1035, area), OVERLAY_MIN_SIZE.height, 'and never past the floor')
+  assert.equal(
+    fittedOverlayHeight(600, 1035, area),
+    OVERLAY_MIN_SIZE.height,
+    'and never past the floor',
+  )
   // A work area that does not start at zero (a second monitor, a taskbar) measures the same way.
   const second = { x: 2560, y: 100, width: 1920, height: 1000 }
   assert.equal(fittedOverlayHeight(400, 800, second), 300, '100 + 1000 - 800')
@@ -151,7 +170,11 @@ test('NEVER FOR A PLAYER, and the con ladder is not what answers that', () => {
   const catalog = new Set(['blugurg', 'sheldon'])
   const knownMob = (n: string): boolean => catalog.has(n.toLowerCase())
 
-  assert.equal(conCardIsPlayer('Lasershark', knownMob), true, 'one capitalized word the catalog never heard of')
+  assert.equal(
+    conCardIsPlayer('Lasershark', knownMob),
+    true,
+    'one capitalized word the catalog never heard of',
+  )
   assert.equal(conCardIsPlayer('Faker', knownMob), true)
   assert.equal(conCardIsPlayer('Blugurg', knownMob), false, 'a proper-named NPC the catalog knows')
   assert.equal(conCardIsPlayer('Sheldon', knownMob), false)
@@ -166,8 +189,16 @@ test('a re-con inside a minute of a CLOSE does not nag, and a minute later it do
   const closed = 1_000_000
   assert.equal(conCardSuppressed(closed, closed + 1), true)
   assert.equal(conCardSuppressed(closed, closed + CON_CARD_REOPEN_SUPPRESS_MS - 1), true)
-  assert.equal(conCardSuppressed(closed, closed + CON_CARD_REOPEN_SUPPRESS_MS), false, 'the window ends')
-  assert.equal(conCardSuppressed(undefined, closed), false, 'a mob nobody closed is never suppressed')
+  assert.equal(
+    conCardSuppressed(closed, closed + CON_CARD_REOPEN_SUPPRESS_MS),
+    false,
+    'the window ends',
+  )
+  assert.equal(
+    conCardSuppressed(undefined, closed),
+    false,
+    'a mob nobody closed is never suppressed',
+  )
   // A log line stamped BEFORE the close (a clock that went backwards) suppresses nothing - the
   // rule is about the minute after a close, and nothing else.
   assert.equal(conCardSuppressed(closed, closed - 10), false)
@@ -178,19 +209,35 @@ test('a re-con inside a minute of a CLOSE does not nag, and a minute later it do
 
 function est(spec: Partial<ResistEstimate> = {}): ResistEstimate {
   return {
-    R: 126, lo: 110, hi: 144, n: 600, nInformative: 600, fromBaseline: 480, fromYou: 120,
-    droppedNoLevel: 0, droppedUnobservable: 0, droppedUnknownInvocation: 0,
-    pinned: false, empirical: { total: 600, resisted: 40 }, resistsAlmostEverything: false, npcOnly: false,
+    R: 126,
+    lo: 110,
+    hi: 144,
+    n: 600,
+    nInformative: 600,
+    fromBaseline: 480,
+    fromYou: 120,
+    droppedNoLevel: 0,
+    droppedUnobservable: 0,
+    droppedUnknownInvocation: 0,
+    pinned: false,
+    empirical: { total: 600, resisted: 40 },
+    resistsAlmostEverything: false,
+    npcOnly: false,
     byFamily: { cast: { n: 600, resist: 40, land: 560 }, song: { n: 0, resist: 0, land: 0 } },
     byCaster: {
       self: { n: 600, resist: 40, land: 560 },
       pc: { n: 0, resist: 0, land: 0 },
-      npc: { n: 0, resist: 0, land: 0 }
+      npc: { n: 0, resist: 0, land: 0 },
     },
     npcIncluded: true,
-    perSpell: [], baselineWeight: 0, userOnly: false, baselineFit: null, userFit: null,
-    differsFromShipped: false, nearlyImmune: false,
-    ...spec
+    perSpell: [],
+    baselineWeight: 0,
+    userOnly: false,
+    baselineFit: null,
+    userFit: null,
+    differsFromShipped: false,
+    nearlyImmune: false,
+    ...spec,
   }
 }
 
@@ -210,8 +257,24 @@ function chip(tag: ResistTag | null, n = 20): ConCardChip {
             pOver: 0.9,
             tag,
             guidance: 'needs overchannel',
-            atLo: { level: 50, mobLevel: 53, atMobLevel: false, pPlain: 0.3, pOver: 0.95, tag, guidance: 'needs overchannel' },
-            atHi: { level: 50, mobLevel: 53, atMobLevel: false, pPlain: 0.1, pOver: 0.85, tag, guidance: 'needs overchannel' }
+            atLo: {
+              level: 50,
+              mobLevel: 53,
+              atMobLevel: false,
+              pPlain: 0.3,
+              pOver: 0.95,
+              tag,
+              guidance: 'needs overchannel',
+            },
+            atHi: {
+              level: 50,
+              mobLevel: 53,
+              atMobLevel: false,
+              pPlain: 0.1,
+              pOver: 0.85,
+              tag,
+              guidance: 'needs overchannel',
+            },
           },
     pinned: false,
     empirical: { total: n, resisted: 0 },
@@ -219,7 +282,7 @@ function chip(tag: ResistTag | null, n = 20): ConCardChip {
     n,
     // A cell whose casts could all have been resisted: the two counts agree, which is most cells.
     nTotal: n,
-    fit: tag === null ? null : { R: 60, lo: 40, hi: 80 }
+    fit: tag === null ? null : { R: 60, lo: 40, hi: 80 },
   }
 }
 
@@ -232,13 +295,46 @@ function profile(spec: Partial<MobResistProfile> = {}): MobResistProfile {
     baselineFrozenAt: null,
     spellDataNote: null,
     axes: [
-      { axis: 'magic', estimate: est({ n: 600, nInformative: 600 }), tag: 'very resistant', benchmark: { level: 50, mobLevel: 53, atMobLevel: false, pPlain: 0.2, pOver: 0.9, tag: 'very resistant', guidance: 'may not land even with overchannel', atLo: { level: 50, mobLevel: 53, atMobLevel: false, pPlain: 0.3, pOver: 0.95, tag: 'very resistant', guidance: 'may not land even with overchannel' }, atHi: { level: 50, mobLevel: 53, atMobLevel: false, pPlain: 0.1, pOver: 0.85, tag: 'very resistant', guidance: 'may not land even with overchannel' } }, n: 600, nInformative: 600 },
+      {
+        axis: 'magic',
+        estimate: est({ n: 600, nInformative: 600 }),
+        tag: 'very resistant',
+        benchmark: {
+          level: 50,
+          mobLevel: 53,
+          atMobLevel: false,
+          pPlain: 0.2,
+          pOver: 0.9,
+          tag: 'very resistant',
+          guidance: 'may not land even with overchannel',
+          atLo: {
+            level: 50,
+            mobLevel: 53,
+            atMobLevel: false,
+            pPlain: 0.3,
+            pOver: 0.95,
+            tag: 'very resistant',
+            guidance: 'may not land even with overchannel',
+          },
+          atHi: {
+            level: 50,
+            mobLevel: 53,
+            atMobLevel: false,
+            pPlain: 0.1,
+            pOver: 0.85,
+            tag: 'very resistant',
+            guidance: 'may not land even with overchannel',
+          },
+        },
+        n: 600,
+        nInformative: 600,
+      },
       {
         axis: 'fire',
         estimate: est({ R: 180, lo: 40, hi: 200, n: 3, nInformative: 3 }),
         tag: 'very resistant',
         n: 3,
-        nInformative: 3
+        nInformative: 3,
       },
       { axis: 'cold', estimate: null, tag: null, benchmark: null, n: 0, nInformative: 0 },
       // POISON IS THE JOS-385 SHAPE: forty casts, and only six of them of a spell that could have
@@ -248,23 +344,67 @@ function profile(spec: Partial<MobResistProfile> = {}): MobResistProfile {
         estimate: est({ R: 5, lo: 0, hi: 20, n: 40, nInformative: 6 }),
         tag: 'weak',
         n: 40,
-        nInformative: 6
+        nInformative: 6,
       },
-      { axis: 'disease', estimate: null, tag: null, benchmark: null, n: 0, nInformative: 0 }
+      { axis: 'disease', estimate: null, tag: null, benchmark: null, n: 0, nInformative: 0 },
     ],
-    ...spec
+    ...spec,
   }
 }
 
 test('five chips, always, in one order, whatever the profile hands over', () => {
   const chips = conCardChips(profile())
-  assert.deepEqual(chips.map((c) => c.axis), [...RESIST_AXES], 'the order the eye learns')
+  assert.deepEqual(
+    chips.map((c) => c.axis),
+    [...RESIST_AXES],
+    'the order the eye learns',
+  )
   // A profile missing an axis entirely (an older payload, a future shape) still draws five.
   const short = conCardChips(
-    profile({ axes: [{ axis: 'fire', estimate: est(), tag: 'resistant', benchmark: { level: 50, mobLevel: 53, atMobLevel: false, pPlain: 0.2, pOver: 0.9, tag: 'resistant', guidance: 'needs overchannel', atLo: { level: 50, mobLevel: 53, atMobLevel: false, pPlain: 0.3, pOver: 0.95, tag: 'resistant', guidance: 'needs overchannel' }, atHi: { level: 50, mobLevel: 53, atMobLevel: false, pPlain: 0.1, pOver: 0.85, tag: 'resistant', guidance: 'needs overchannel' } }, n: 9, nInformative: 9 }] })
+    profile({
+      axes: [
+        {
+          axis: 'fire',
+          estimate: est(),
+          tag: 'resistant',
+          benchmark: {
+            level: 50,
+            mobLevel: 53,
+            atMobLevel: false,
+            pPlain: 0.2,
+            pOver: 0.9,
+            tag: 'resistant',
+            guidance: 'needs overchannel',
+            atLo: {
+              level: 50,
+              mobLevel: 53,
+              atMobLevel: false,
+              pPlain: 0.3,
+              pOver: 0.95,
+              tag: 'resistant',
+              guidance: 'needs overchannel',
+            },
+            atHi: {
+              level: 50,
+              mobLevel: 53,
+              atMobLevel: false,
+              pPlain: 0.1,
+              pOver: 0.85,
+              tag: 'resistant',
+              guidance: 'needs overchannel',
+            },
+          },
+          n: 9,
+          nInformative: 9,
+        },
+      ],
+    }),
   )
   assert.equal(short.length, 5)
-  assert.deepEqual(short.map((c) => c.axis), [...RESIST_AXES])
+  assert.deepEqual(
+    short.map((c) => c.axis),
+    [...RESIST_AXES],
+  )
   assert.equal(short[2].tag, null, 'an axis with no row is an EMPTY chip, never a missing one')
 })
 
@@ -289,11 +429,18 @@ test('THE CARD KEEPS ONLY WHAT IT RESISTS (owner ruling, 2026-08-16)', () => {
   // narrowing is the card's, and it happens here.
   const chips = conCardChips(profile())
   const kept = notableChips(chips)
-  assert.deepEqual(kept.map((c) => c.axis), ['magic', 'fire'], 'the two resistant axes, in axis order')
+  assert.deepEqual(
+    kept.map((c) => c.axis),
+    ['magic', 'fire'],
+    'the two resistant axes, in axis order',
+  )
   // `weak` and `normal` are the answer you would have assumed; they leave.
   assert.ok(!kept.some((c) => c.axis === 'poison'), 'a weak axis is dropped')
   // And an axis with nothing behind it leaves too — no `no data` chips on this surface.
-  assert.ok(!kept.some((c) => c.axis === 'cold' || c.axis === 'disease'), 'an empty axis is dropped')
+  assert.ok(
+    !kept.some((c) => c.axis === 'cold' || c.axis === 'disease'),
+    'an empty axis is dropped',
+  )
   // A LOW-SAMPLE RESISTANT AXIS SURVIVES. `fire` is n=3, and JOS-382's ruling is untouched: the
   // card shows the answer with its wide interval and the quieter caveat, it does not withhold it.
   const fire = kept.find((c) => c.axis === 'fire')
@@ -308,9 +455,21 @@ test('the card keeps the two words that change what you cast, and nothing else',
   assert.deepEqual([...CON_CARD_NOTABLE_TAGS], ['resistant', 'very resistant'])
   assert.equal(benchmarkTag(60, 'needs overchannel'), 'resistant')
   assert.equal(benchmarkTag(60, 'should land'), 'normal')
-  const kept = notableChips([chip('weak'), chip('normal'), chip('resistant'), chip('very resistant')])
-  assert.deepEqual(kept.map((c) => c.tag), ['resistant', 'very resistant'])
-  assert.deepEqual(kept.map((c) => c.from), ['benchmark', 'benchmark'], 'the model answered for both')
+  const kept = notableChips([
+    chip('weak'),
+    chip('normal'),
+    chip('resistant'),
+    chip('very resistant'),
+  ])
+  assert.deepEqual(
+    kept.map((c) => c.tag),
+    ['resistant', 'very resistant'],
+  )
+  assert.deepEqual(
+    kept.map((c) => c.from),
+    ['benchmark', 'benchmark'],
+    'the model answered for both',
+  )
   // A tag with no observations behind it cannot happen from `conCardChips`, and is refused anyway.
   assert.deepEqual(notableChips([chip('resistant', 0)]), [], 'n = 0 is never notable')
   assert.deepEqual(notableChips([chip(null)]), [])
@@ -320,8 +479,16 @@ test('THERE ARE EXACTLY TWO WAYS ONTO THE CARD (JOS-400 removed the third)', () 
   // JOS-397 added a run detector that could carry an ordinary chip onto the card and print a second
   // band on it; the owner removed it the same day, because a card says ONE thing about a creature.
   // What survives of that ruling is the decay inside the estimate, which reaches this card as `tag`.
-  const kept = notableChips([chip('normal'), chip('resistant'), { ...chip(null, 59), pinned: true, empirical: { total: 59, resisted: 40 } }])
-  assert.deepEqual(kept.map((c) => c.from), ['benchmark', 'resistRate'], 'benchmark or resist rate, and nothing else')
+  const kept = notableChips([
+    chip('normal'),
+    chip('resistant'),
+    { ...chip(null, 59), pinned: true, empirical: { total: 59, resisted: 40 } },
+  ])
+  assert.deepEqual(
+    kept.map((c) => c.from),
+    ['benchmark', 'resistRate'],
+    'benchmark or resist rate, and nothing else',
+  )
   // An ordinary band leaves whatever has been happening recently: there is no second route back on.
   assert.deepEqual(notableChips([chip('normal')]), [])
   const quietPinned = { ...chip(null, 59), pinned: true, empirical: { total: 59, resisted: 5 } }
@@ -335,7 +502,7 @@ test('A PINNED CELL FALLS BACK TO THE RESIST RATE, and only when it is worth a w
   const pinned = (resisted: number, total: number): ConCardChip => ({
     ...chip(null, total),
     pinned: true,
-    empirical: { total, resisted }
+    empirical: { total, resisted },
   })
   const eye = notableChips([pinned(31, 59)])
   assert.equal(eye.length, 1)
@@ -376,17 +543,36 @@ test('THE CHIP COUNTS WHAT COULD HAVE BEEN RESISTED, and carries the total besid
   // still been observed. Only the CAVEAT keys off the informative count.
   const allUninformative = conCardChips(
     profile({
-      axes: [{ axis: 'magic', estimate: est({ n: 40, nInformative: 0 }), tag: 'resistant', n: 40, nInformative: 0 }]
-    })
+      axes: [
+        {
+          axis: 'magic',
+          estimate: est({ n: 40, nInformative: 0 }),
+          tag: 'resistant',
+          n: 40,
+          nInformative: 0,
+        },
+      ],
+    }),
   )
-  assert.equal(notableChips(allUninformative).length, 1, 'a resistant axis is drawn, and wears the caveat')
+  assert.equal(
+    notableChips(allUninformative).length,
+    1,
+    'a resistant axis is drawn, and wears the caveat',
+  )
   assert.equal(conCardTotalN(allUninformative), 40, 'and the profile has plainly seen something')
 })
 
 // ---- what the card is NOT (JOS-390) -------------------------------------------------------
 
 function payload(spec: Partial<ConCardPayload> = {}): ConCardPayload {
-  return { id: 'a lava guardian', ts: 1, name: 'A lava guardian', chips: [], spellData: true, ...spec }
+  return {
+    id: 'a lava guardian',
+    ts: 1,
+    name: 'A lava guardian',
+    chips: [],
+    spellData: true,
+    ...spec,
+  }
 }
 
 test('THE PAYLOAD CARRIES NO DROPS, NO KILLS AND NO RESPAWN — the card is a lily pad', () => {
@@ -397,7 +583,7 @@ test('THE PAYLOAD CARRIES NO DROPS, NO KILLS AND NO RESPAWN — the card is a li
   assert.deepEqual(
     Object.keys(p).sort(),
     ['chips', 'id', 'level', 'name', 'rare', 'spellData', 'ts', 'zone'],
-    'the header, the chips, and the two flags — nothing else crosses'
+    'the header, the chips, and the two flags — nothing else crosses',
   )
   for (const gone of ['dropsWiki', 'dropsSeen', 'kills', 'respawn', 'knowledgeIn']) {
     assert.ok(!(gone in p), `${gone} left the card with the drops`)
@@ -431,11 +617,11 @@ test('the auto-hide clamps, defaults to THREE seconds, and ZERO survives as "nev
   assert.ok(
     DEFAULT_CON_CARD_AUTO_HIDE_MS >= CON_CARD_MIN_AUTO_HIDE_MS &&
       DEFAULT_CON_CARD_AUTO_HIDE_MS <= CON_CARD_MAX_AUTO_HIDE_MS,
-    'the default must survive its own normalizer'
+    'the default must survive its own normalizer',
   )
   assert.equal(
     normalizeConCardConfig({ autoHideMs: DEFAULT_CON_CARD_AUTO_HIDE_MS }).autoHideMs,
-    DEFAULT_CON_CARD_AUTO_HIDE_MS
+    DEFAULT_CON_CARD_AUTO_HIDE_MS,
   )
   assert.equal(normalizeConCardConfig({ autoHideMs: 999_999 }).autoHideMs, 120_000, 'capped')
   assert.equal(normalizeConCardConfig({ autoHideMs: 1 }).autoHideMs, 3_000, 'floored')
@@ -443,7 +629,9 @@ test('the auto-hide clamps, defaults to THREE seconds, and ZERO survives as "nev
   assert.equal(normalizeConCardConfig({ autoHideMs: 0 }).autoHideMs, CON_CARD_NEVER_HIDES)
   assert.equal(normalizeConCardConfig({ autoHideMs: -5 }).autoHideMs, CON_CARD_NEVER_HIDES)
   // A hand-edited key is dropped rather than honoured.
-  assert.deepEqual(normalizeConCardConfig({ autoHideMs: 20_000, sound: 'ding' }), { autoHideMs: 20_000 })
+  assert.deepEqual(normalizeConCardConfig({ autoHideMs: 20_000, sound: 'ding' }), {
+    autoHideMs: 20_000,
+  })
 })
 
 test('"never" reaches the queue as an infinite hold, and never as a number on the wire', () => {

@@ -64,7 +64,7 @@ function rungSx(rung: LadderRung, size: number, clickable: boolean): SxProps<The
     cursor: clickable ? 'pointer' : 'inherit',
     ...(clickable && !rung.cleared
       ? { borderStyle: 'dashed', '&:hover': { borderColor: 'success.main' } }
-      : {})
+      : {}),
   }
 }
 
@@ -84,7 +84,7 @@ function Rung({
   rung,
   size,
   canMark,
-  onMark
+  onMark,
 }: {
   rung: LadderRung
   size: number
@@ -108,7 +108,10 @@ function Rung({
       data-cleared={rung.cleared ? '1' : '0'}
       data-manual={rung.manual ? '1' : undefined}
       data-can-mark={clickable ? '1' : undefined}
-      title={rungTitle(rung) ?? (clickable ? 'Click to mark this difficulty cleared this week' : undefined)}
+      title={
+        rungTitle(rung) ??
+        (clickable ? 'Click to mark this difficulty cleared this week' : undefined)
+      }
       onClick={onClick}
       sx={rungSx(rung, size, clickable)}
     >
@@ -124,7 +127,7 @@ function Rung({
 export default function DifficultyLadder({
   rungs,
   compact,
-  baseMark
+  baseMark,
 }: {
   rungs: LadderRung[]
   compact: boolean
@@ -147,7 +150,9 @@ export default function DifficultyLadder({
           // this store marked by hand (undo it). A rung greened by a REAL lock is not ours to
           // clear — leaving it clickable is a dead no-op click (whole-branch review, Minor 6).
           canMark={
-            rung.tier === 0 && (!rung.cleared || rung.manual === true) ? baseMark?.canMark : undefined
+            rung.tier === 0 && (!rung.cleared || rung.manual === true)
+              ? baseMark?.canMark
+              : undefined
           }
           onMark={rung.tier === 0 ? baseMark?.onToggle : undefined}
         />

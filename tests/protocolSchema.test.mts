@@ -43,19 +43,15 @@ import {
   protocolVersion,
   readFixtureNames,
   readSchemaFiles,
-  schemaDigest
+  schemaDigest,
 } from '../scripts/protocolSchema.mjs'
 import { renderTypeScript, stripProvenanceNotes } from '../scripts/protocolCodegen.mjs'
 import {
   PROTOCOL_VERSION,
   type ClientMessage,
-  type EngineMessage
+  type EngineMessage,
 } from '../src/shared/dataServer/protocol.generated'
-import {
-  MAX_TOKEN_CHARS,
-  MIN_TOKEN_CHARS,
-  isWellFormedToken
-} from '../src/shared/dataServer/token'
+import { MAX_TOKEN_CHARS, MIN_TOKEN_CHARS, isWellFormedToken } from '../src/shared/dataServer/token'
 
 // CRLF-normalized for the same reason `telemetryDoc.test.mts` normalizes: this repo checks out with
 // core.autocrlf=true, so the committed file's on-disk bytes carry \r\n while a renderer emits \n.
@@ -73,7 +69,7 @@ test('every schema file is draft 2020-12 and carries nothing but $defs of substa
     assert.equal(
       file.json.$schema,
       'https://json-schema.org/draft/2020-12/schema',
-      `${file.name} does not declare draft 2020-12`
+      `${file.name} does not declare draft 2020-12`,
     )
     const defs = file.json.$defs as Record<string, unknown>
     assert.ok(Object.keys(defs).length > 0, `${file.name} defines nothing`)
@@ -115,7 +111,8 @@ test('THE SCHEMA DESCRIBES MESSAGES AND NEVER BYTES — the owner constraint, as
   // grew a byte-count, a port or a frame length would make that impossible, and would do it
   // quietly. The check is over PROPERTY NAMES rather than prose: the prose has to be able to
   // explain why framing is absent, which is not the same as declaring it.
-  const forbidden = /^(frame|framing|delimiter|newline|bytes|byteLength|port|host|socket|url|payloadBytes)$/i
+  const forbidden =
+    /^(frame|framing|delimiter|newline|bytes|byteLength|port|host|socket|url|payloadBytes)$/i
   const names: string[] = []
   const walk = (node: unknown): void => {
     if (Array.isArray(node)) {
@@ -133,7 +130,11 @@ test('THE SCHEMA DESCRIBES MESSAGES AND NEVER BYTES — the owner constraint, as
   walk(bundle.$defs)
   assert.ok(names.length > 30, 'the walk found almost no properties — it is not looking')
   for (const name of names) {
-    assert.doesNotMatch(name, forbidden, `\`${name}\` is a framing concern and belongs in a transport adapter`)
+    assert.doesNotMatch(
+      name,
+      forbidden,
+      `\`${name}\` is a framing concern and belongs in a transport adapter`,
+    )
   }
 })
 
@@ -143,7 +144,7 @@ test('PARITY: the committed TypeScript is exactly what the schema renders today'
   assert.equal(
     committed(TS_OUT),
     await renderTypeScript(),
-    'src/shared/dataServer/protocol.generated.ts is out of date — run `npm run gen:protocol` and commit BOTH generated files'
+    'src/shared/dataServer/protocol.generated.ts is out of date — run `npm run gen:protocol` and commit BOTH generated files',
   )
 })
 
@@ -155,7 +156,7 @@ test('THE RUST ARTIFACT IS CURRENT TOO, and this suite can say so without a Rust
   const rust = committed(RUST_OUT)
   assert.ok(
     rust.includes(line),
-    `engine/crates/protocol/src/generated.rs was generated from a different schema — run \`npm run gen:protocol\` and commit it (expected ${line})`
+    `engine/crates/protocol/src/generated.rs was generated from a different schema — run \`npm run gen:protocol\` and commit it (expected ${line})`,
   )
   // …and the TypeScript file carries the same line, so one grep answers "are these two in step".
   assert.ok(committed(TS_OUT).includes(line))
@@ -165,14 +166,17 @@ test('COVERAGE: every definition became a type in BOTH languages', () => {
   const ts = committed(TS_OUT)
   const rust = committed(RUST_OUT)
   const names = Object.keys(bundle.$defs as Record<string, unknown>)
-  assert.ok(names.length >= 30, `only ${String(names.length)} definitions — did the merge drop a file?`)
+  assert.ok(
+    names.length >= 30,
+    `only ${String(names.length)} definitions — did the merge drop a file?`,
+  )
 
   for (const name of names) {
     assert.ok(
       ts.includes(`export interface ${name} `) ||
         ts.includes(`export interface ${name} {`) ||
         ts.includes(`export type ${name} =`),
-      `$defs/${name} produced no TypeScript type`
+      `$defs/${name} produced no TypeScript type`,
     )
     // THE TWO DELIBERATE ABSENCES on the Rust side, and they are the same defect twice: typify
     // lowers a multi-type schema to an enum whose number arm is f64, so `184220` comes back
@@ -180,7 +184,10 @@ test('COVERAGE: every definition became a type in BOTH languages', () => {
     // and both are named HERE, so a third one cannot appear without editing this list.
     if (name === 'Cell') {
       // `Cell` is replaced by the hand-written `protocol::cell::Cell` — see that module's header.
-      assert.ok(rust.includes('crate::cell::Cell'), 'the hand-written Cell replacement is not in use')
+      assert.ok(
+        rust.includes('crate::cell::Cell'),
+        'the hand-written Cell replacement is not in use',
+      )
       continue
     }
     if (name === 'ModuleState') {
@@ -188,15 +195,19 @@ test('COVERAGE: every definition became a type in BOTH languages', () => {
       // `serde_json::Value`, so there is nothing to hand-write and nothing to generate.
       assert.ok(
         rust.includes('pub state: ::serde_json::Value'),
-        'the ModuleState replacement is not in use'
+        'the ModuleState replacement is not in use',
       )
       continue
     }
     assert.ok(
-      [`pub struct ${name} `, `pub struct ${name}(`, `pub struct ${name} {`, `pub enum ${name} `, `pub type ${name} `].some(
-        (needle) => rust.includes(needle)
-      ),
-      `$defs/${name} produced no Rust type`
+      [
+        `pub struct ${name} `,
+        `pub struct ${name}(`,
+        `pub struct ${name} {`,
+        `pub enum ${name} `,
+        `pub type ${name} `,
+      ].some((needle) => rust.includes(needle)),
+      `$defs/${name} produced no Rust type`,
     )
   }
 })
@@ -215,10 +226,14 @@ test('the generated TypeScript carries no generator boilerplate', () => {
 
 test('THE WIRE VERSION agrees everywhere it is written down', () => {
   const version = protocolVersion(files)
-  assert.equal(PROTOCOL_VERSION, version, 'the generated TypeScript constant disagrees with the schema')
+  assert.equal(
+    PROTOCOL_VERSION,
+    version,
+    'the generated TypeScript constant disagrees with the schema',
+  )
   assert.ok(
     committed(RUST_OUT).includes(`pub const PROTOCOL_VERSION: i64 = ${String(version)};`),
-    'the generated Rust constant disagrees with the schema'
+    'the generated Rust constant disagrees with the schema',
   )
   assert.ok(Number.isInteger(version) && version >= 1)
 })
@@ -228,17 +243,14 @@ test('THE TOKEN BOUNDS agree between the schema, the shared module and the Rust 
   assert.equal(token.minLength, MIN_TOKEN_CHARS)
   assert.equal(token.maxLength, MAX_TOKEN_CHARS)
 
-  const rustToken = readFileSync(
-    join(RUST_OUT, '..', 'token.rs'),
-    'utf8'
-  )
+  const rustToken = readFileSync(join(RUST_OUT, '..', 'token.rs'), 'utf8')
   assert.ok(
     rustToken.includes(`pub const MIN_TOKEN_BYTES: usize = ${String(token.minLength)};`),
-    'engine/crates/protocol/src/token.rs disagrees with the schema about the floor'
+    'engine/crates/protocol/src/token.rs disagrees with the schema about the floor',
   )
   assert.ok(
     rustToken.includes(`pub const MAX_TOKEN_BYTES: usize = ${String(token.maxLength)};`),
-    'engine/crates/protocol/src/token.rs disagrees with the schema about the ceiling'
+    'engine/crates/protocol/src/token.rs disagrees with the schema about the ceiling',
   )
 })
 
@@ -277,7 +289,7 @@ test('THE FOUR WORKED MOMENTS from the plan doc are committed as fixtures', () =
     '01-subscribe.json',
     '02-live-diff.json',
     '03-meter-tick.json',
-    '04-character-switch.json'
+    '04-character-switch.json',
   ]) {
     assert.ok(names.includes(expected), `${expected} is missing`)
   }
@@ -296,7 +308,7 @@ test('every fixture message VALIDATES against the schema and narrows through the
       if (frame.dir === 'client') {
         assert.ok(
           isClientMessage(frame.message),
-          `${where}: ${JSON.stringify(isClientMessage.errors)}`
+          `${where}: ${JSON.stringify(isClientMessage.errors)}`,
         )
         const typed = frame.message as ClientMessage
         seen.add(typed.op)
@@ -304,7 +316,7 @@ test('every fixture message VALIDATES against the schema and narrows through the
       } else {
         assert.ok(
           isEngineMessage(frame.message),
-          `${where}: ${JSON.stringify(isEngineMessage.errors)}`
+          `${where}: ${JSON.stringify(isEngineMessage.errors)}`,
         )
         const typed = frame.message as EngineMessage
         seen.add(typed.kind)
@@ -330,8 +342,11 @@ test('every fixture message VALIDATES against the schema and narrows through the
     'respawn.define',
     'combo.define',
     'roster.define',
-    'knowledge.item', 'knowledge.mob', 'knowledge.spell',
-    'knowledge.search', 'knowledge.define',
+    'knowledge.item',
+    'knowledge.mob',
+    'knowledge.spell',
+    'knowledge.search',
+    'knowledge.define',
     'reply',
     'error',
     'reset',
@@ -342,7 +357,7 @@ test('every fixture message VALIDATES against the schema and narrows through the
     'sessionMarks.add',
     'respawn.confirmSighting',
     'conCard',
-    'moduleChanged'
+    'moduleChanged',
   ]) {
     assert.ok(seen.has(tag), `no fixture demonstrates \`${tag}\``)
   }
@@ -352,17 +367,18 @@ test('THE SCHEMA HAS TEETH — the shapes it forbids are actually refused', () =
   // A validator that accepts everything would pass every assertion above. These are the four
   // constraints the contract leans on hardest.
   const cases: [string, unknown][] = [
-    [
-      'a reply that says ok:false',
-      { kind: 'reply', id: 1, ok: false, result: {} }
-    ],
+    ['a reply that says ok:false', { kind: 'reply', id: 1, ok: false, result: {} }],
     [
       'a stream message with an unknown field',
-      { kind: 'epoch', epoch: 1, reason: 'attach', surprise: true }
+      { kind: 'epoch', epoch: 1, reason: 'attach', surprise: true },
     ],
     [
       'a sort direction that is not asc or desc',
-      { id: 1, op: 'view.subscribe', params: { source: 'loot.ledger', sort: [['at', 'sideways']] } }
+      {
+        id: 1,
+        op: 'view.subscribe',
+        params: { source: 'loot.ledger', sort: [['at', 'sideways']] },
+      },
     ],
     [
       'a cell holding structure',
@@ -371,14 +387,14 @@ test('THE SCHEMA HAS TEETH — the shapes it forbids are actually refused', () =
         id: 1,
         epoch: 0,
         total: 1,
-        rows: [{ key: 'row:1', cells: { nested: { a: 1 } } }]
-      }
+        rows: [{ key: 'row:1', cells: { nested: { a: 1 } } }],
+      },
     ],
-    ['an error code nobody defined', { kind: 'error', id: 1, ok: false, error: { code: 'oops', message: 'x' } }],
     [
-      'a token below the entropy floor',
-      { op: 'hello', token: 'short', protocolVersion: 1 }
-    ]
+      'an error code nobody defined',
+      { kind: 'error', id: 1, ok: false, error: { code: 'oops', message: 'x' } },
+    ],
+    ['a token below the entropy floor', { op: 'hello', token: 'short', protocolVersion: 1 }],
   ]
   for (const [why, message] of cases) {
     const accepted = isEngineMessage(message) || isClientMessage(message)
@@ -409,10 +425,15 @@ test('A PROGRESS FRAME SAYS WHICH LOOP EMITTED IT, and says it by being absent (
   // climbing, which is what a scan that has just finished looks like. `live` is the engine saying
   // which one it is in, and it is OPTIONAL because a scan frame says nothing rather than saying
   // false (the `song`/`rare` idiom already on this wire).
-  const fold = (bundle.$defs as Record<string, {
-    properties: Record<string, { type?: string }>
-    required: string[]
-  }>).FoldProgress
+  const fold = (
+    bundle.$defs as Record<
+      string,
+      {
+        properties: Record<string, { type?: string }>
+        required: string[]
+      }
+    >
+  ).FoldProgress
   assert.equal(fold.properties.live.type, 'boolean')
   assert.equal(fold.required.includes('live'), false, '`live` is present only when true')
 
@@ -420,7 +441,13 @@ test('A PROGRESS FRAME SAYS WHICH LOOP EMITTED IT, and says it by being absent (
     kind: 'epoch',
     epoch: 2,
     reason: 'progress',
-    progress: { pct: 62.4, events: 9087066, offset: 128, logSize: 205, ...(live === undefined ? {} : { live }) }
+    progress: {
+      pct: 62.4,
+      events: 9087066,
+      offset: 128,
+      logSize: 205,
+      ...(live === undefined ? {} : { live }),
+    },
   })
   assert.ok(isEngineMessage(framed()), 'a scan frame carries no flag')
   assert.ok(isEngineMessage(framed(true)), 'a tail frame carries it')
@@ -431,9 +458,9 @@ test('A PROGRESS FRAME SAYS WHICH LOOP EMITTED IT, and says it by being absent (
       kind: 'epoch',
       epoch: 2,
       reason: 'progress',
-      progress: { pct: 62.4, events: 1, offset: 1, logSize: 1, live: 'tail' }
+      progress: { pct: 62.4, events: 1, offset: 1, logSize: 1, live: 'tail' },
     }),
-    false
+    false,
   )
 })
 
@@ -444,7 +471,7 @@ test('`timeout` IS AN ERROR CODE A CLIENT MINTS, and it is in the one closed set
   const codes = (bundle.$defs as Record<string, { enum: string[] }>).ErrorCode.enum
   assert.ok(codes.includes('timeout'))
   assert.ok(
-    isEngineMessage({ kind: 'error', id: 1, ok: false, error: { code: 'timeout', message: 'x' } })
+    isEngineMessage({ kind: 'error', id: 1, ok: false, error: { code: 'timeout', message: 'x' } }),
   )
 })
 

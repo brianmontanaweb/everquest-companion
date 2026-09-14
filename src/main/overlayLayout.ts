@@ -253,7 +253,10 @@ function conCardBounds(workArea: Bounds): Bounds {
   return {
     ...size,
     x: Math.max(workArea.x, Math.min(x, workArea.x + workArea.width - size.width)),
-    y: Math.max(workArea.y, Math.min(workArea.y + CON_CARD_TOP, workArea.y + workArea.height - size.height))
+    y: Math.max(
+      workArea.y,
+      Math.min(workArea.y + CON_CARD_TOP, workArea.y + workArea.height - size.height),
+    ),
   }
 }
 
@@ -269,7 +272,7 @@ function bannerBounds(workArea: Bounds): Bounds {
   return {
     ...size,
     x: Math.max(workArea.x, Math.min(x, workArea.x + workArea.width - size.width)),
-    y: Math.max(workArea.y, Math.min(y, workArea.y + workArea.height - size.height))
+    y: Math.max(workArea.y, Math.min(y, workArea.y + workArea.height - size.height)),
   }
 }
 
@@ -283,7 +286,10 @@ function toastBounds(workArea: Bounds): Bounds {
   return {
     ...size,
     x: Math.max(workArea.x, Math.min(x, workArea.x + workArea.width - size.width)),
-    y: Math.max(workArea.y, Math.min(workArea.y + TOAST_TOP, workArea.y + workArea.height - size.height))
+    y: Math.max(
+      workArea.y,
+      Math.min(workArea.y + TOAST_TOP, workArea.y + workArea.height - size.height),
+    ),
   }
 }
 
@@ -378,7 +384,7 @@ export function scaledStripBounds(
   kind: OverlayKind,
   layout: Bounds,
   scale: number,
-  workArea: Bounds
+  workArea: Bounds,
 ): Bounds {
   const width = clamp(scaled(layout.width, scale), OVERLAY_MIN_SIZE.width, workArea.width)
   const height = fitsHeightToContent(kind)
@@ -390,7 +396,7 @@ export function scaledStripBounds(
     width,
     height,
     x: clamp(Math.round(centreX - width / 2), workArea.x, workArea.x + workArea.width - width),
-    y: clamp(layout.y, workArea.y, workArea.y + workArea.height - height)
+    y: clamp(layout.y, workArea.y, workArea.y + workArea.height - height),
   }
 }
 
@@ -410,7 +416,9 @@ export function scaledStripBounds(
 export function stripLayoutBounds(kind: OverlayKind, chrome: Bounds, scale: number): Bounds {
   const s = scale > 0 ? scale : 1
   const width = Math.max(1, Math.round(chrome.width / s))
-  const height = fitsHeightToContent(kind) ? chrome.height : Math.max(1, Math.round(chrome.height / s))
+  const height = fitsHeightToContent(kind)
+    ? chrome.height
+    : Math.max(1, Math.round(chrome.height / s))
   const centreX = chrome.x + chrome.width / 2
   return { width, height, x: Math.round(centreX - width / 2), y: chrome.y }
 }
@@ -452,12 +460,16 @@ function meterSize(workArea: Bounds): Size {
   for (const scale of SHRINK_LADDER) {
     const size = {
       width: Math.round(DEFAULT_SIZE.width * scale),
-      height: Math.round(DEFAULT_SIZE.height * scale)
+      height: Math.round(DEFAULT_SIZE.height * scale),
     }
-    if (colsThatFit(size.width, workArea) * rowsThatFit(size.height, workArea) >= needed) return size
+    if (colsThatFit(size.width, workArea) * rowsThatFit(size.height, workArea) >= needed)
+      return size
   }
   const last = SHRINK_LADDER[SHRINK_LADDER.length - 1]
-  return { width: Math.round(DEFAULT_SIZE.width * last), height: Math.round(DEFAULT_SIZE.height * last) }
+  return {
+    width: Math.round(DEFAULT_SIZE.width * last),
+    height: Math.round(DEFAULT_SIZE.height * last),
+  }
 }
 
 /**
@@ -483,7 +495,7 @@ export function defaultOverlayBounds(kind: OverlayKind, workArea: Bounds): Bound
   return {
     ...size,
     x: Math.max(workArea.x, Math.min(x, workArea.x + workArea.width - size.width)),
-    y: Math.max(workArea.y, Math.min(y, workArea.y + workArea.height - size.height))
+    y: Math.max(workArea.y, Math.min(y, workArea.y + workArea.height - size.height)),
   }
 }
 
@@ -513,5 +525,5 @@ export const OVERLAY_TITLE: Partial<Record<OverlayKind, string>> = {
   xp: 'XP Overlay',
   respawn: 'Respawn Timer Overlay',
   alertBanner: 'Alert Banner Overlay',
-  conCard: 'Mob Card Overlay'
+  conCard: 'Mob Card Overlay',
 }

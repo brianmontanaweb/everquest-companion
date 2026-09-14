@@ -173,6 +173,6 @@ export function moteRates(args: MoteRatesArgs): MoteRateRow[] {
       tier: moteTier(r.item),
       drops: r.drops,
       perHourActive: r.dropsPerHourActive,
-      perHourWall: r.dropsPerHourWall
+      perHourWall: r.dropsPerHourWall,
     }))
 }

@@ -55,11 +55,12 @@ function fullyInContent(page: Page, sel: string): Promise<string> {
       const b = box.getBoundingClientRect()
       if (r.height < 1) return 'collapsed to nothing'
       if (r.height > b.height) return 'taller than the content viewport'
-      if (r.bottom > b.bottom + 2) return `${String(Math.round(r.bottom - b.bottom))}px below the fold`
+      if (r.bottom > b.bottom + 2)
+        return `${String(Math.round(r.bottom - b.bottom))}px below the fold`
       if (r.top < b.top - 2) return `${String(Math.round(b.top - r.top))}px above the fold`
       return 'in view'
     },
-    { sel, content: CONTENT }
+    { sel, content: CONTENT },
   )
 }
 
@@ -67,7 +68,7 @@ function fullyInContent(page: Page, sel: string): Promise<string> {
 function panelHighlight(page: Page): Promise<string> {
   return page.evaluate(
     (s) => document.querySelector(s)?.getAttribute('data-highlighted') ?? 'absent',
-    PANEL
+    PANEL,
   )
 }
 
@@ -85,7 +86,7 @@ function contentBox(page: Page): Promise<{ client: number; height: number }> {
 function panelHeight(page: Page): Promise<number> {
   return page.evaluate(
     (s) => Math.round(document.querySelector(s)?.getBoundingClientRect().height ?? -1),
-    PANEL
+    PANEL,
   )
 }
 
@@ -105,11 +106,19 @@ function panelHeight(page: Page): Promise<number> {
  * about how the app looks at 200px; it is a statement about what a deep link does when the panel
  * is off screen, and a short window is the cheapest way to put it there.
  */
-async function withWindowHeight(app: ElectronApplication, page: Page, height: number): Promise<() => Promise<void>> {
+async function withWindowHeight(
+  app: ElectronApplication,
+  page: Page,
+  height: number,
+): Promise<() => Promise<void>> {
   const win = await app.browserWindow(page)
   const original = await win.evaluate((w) => w.getBounds())
   const settleLayout = (): Promise<string> =>
-    settleStable(() => contentBox(page).then((b) => JSON.stringify(b)), { timeoutMs: 15_000, stable: 4, pollMs: 150 })
+    settleStable(() => contentBox(page).then((b) => JSON.stringify(b)), {
+      timeoutMs: 15_000,
+      stable: 4,
+      pollMs: 150,
+    })
   await win.evaluate((w, h) => {
     w.setMinimumSize(200, 200)
     w.setBounds({ ...w.getBounds(), height: h })
@@ -142,7 +151,7 @@ function clickLevelUp(toast: Page, target: 'action' | 'card'): Promise<boolean> 
   return toast.evaluate(
     (a) => {
       const card = [...document.querySelectorAll('[data-testid="toast-card"]')].find((e) =>
-        (e as HTMLElement).innerText.includes(a.needle)
+        (e as HTMLElement).innerText.includes(a.needle),
       )
       if (!card) return false
       const el = a.target === 'card' ? card : card.querySelector('[data-testid="toast-action"]')
@@ -150,7 +159,7 @@ function clickLevelUp(toast: Page, target: 'action' | 'card'): Promise<boolean> 
       ;(el as HTMLElement).click()
       return true
     },
-    { needle: `Level ${String(DING_LEVEL)}!`, target }
+    { needle: `Level ${String(DING_LEVEL)}!`, target },
   )
 }
 
@@ -169,7 +178,13 @@ function resetContentScroll(page: Page): Promise<number> {
       const el = document.querySelector(s) as HTMLElement | null
       if (el) el.scrollTop = 0
     }, CONTENT)
-    .then(() => settle(() => contentTop(page), (v) => v === 0, { timeoutMs: 5_000 }))
+    .then(() =>
+      settle(
+        () => contentTop(page),
+        (v) => v === 0,
+        { timeoutMs: 5_000 },
+      ),
+    )
 }
 
 /**
@@ -194,7 +209,12 @@ function resetContentScroll(page: Page): Promise<number> {
  */
 export async function stepDeepLinkRoundtrip(mainPage: Page, toast: Page): Promise<void> {
   const clicked = await clickLevelUp(toast, 'action')
-  if (!check('the level-up card’s VISIBLE ACTION is a click target (JOS-334), and it is what fires here', clicked)) {
+  if (
+    !check(
+      'the level-up card’s VISIBLE ACTION is a click target (JOS-334), and it is what fires here',
+      clicked,
+    )
+  ) {
     return
   }
 
@@ -202,41 +222,72 @@ export async function stepDeepLinkRoundtrip(mainPage: Page, toast: Page): Promis
     .waitForSelector('[data-testid="new-at-level"]', { timeout: 20_000 })
     .then(
       () => true,
-      () => false
+      () => false,
     )
-  if (!check('…and the click lands the app on the Leveling tab’s "New at this level" panel', landed)) return
+  if (
+    !check('…and the click lands the app on the Leveling tab’s "New at this level" panel', landed)
+  )
+    return
 
   // THE HIGHLIGHT FIRST, and it is not politeness about ordering: the pulse is deliberately brief
   // (two seconds, useFocusLanding), so the assertion that could time out has to be the one that
   // starts polling soonest. It is also the assertion that does not depend on the layout settling.
-  const lit = await settle(() => panelHighlight(mainPage), (v) => v === 'true', { timeoutMs: 8_000 })
-  check('…and the panel LIGHTS UP on arrival, so the reader can see what they were sent to', lit === 'true', lit)
+  const lit = await settle(
+    () => panelHighlight(mainPage),
+    (v) => v === 'true',
+    { timeoutMs: 8_000 },
+  )
+  check(
+    '…and the panel LIGHTS UP on arrival, so the reader can see what they were sent to',
+    lit === 'true',
+    lit,
+  )
 
-  const view = await settle(() => fullyInContent(mainPage, PANEL), (v) => v === 'in view', { timeoutMs: 8_000 })
+  const view = await settle(
+    () => fullyInContent(mainPage, PANEL),
+    (v) => v === 'in view',
+    { timeoutMs: 8_000 },
+  )
   if (view === 'taller than the content viewport') {
-    note('this loadout’s unlock lists make the panel taller than the window — a landing cannot put ALL of it in frame, which is the fixture speaking and not a regression')
+    note(
+      'this loadout’s unlock lists make the panel taller than the window — a landing cannot put ALL of it in frame, which is the fixture speaking and not a regression',
+    )
   } else {
     check(
       '…scrolled FULLY into the app content area (JOS-330 — the panel is the bottom of the left column)',
       view === 'in view',
-      `${view} at scrollTop ${String(await contentTop(mainPage))}`
+      `${view} at scrollTop ${String(await contentTop(mainPage))}`,
     )
   }
 
   const value = await mainPage.evaluate(
-    () => (document.querySelector('[data-testid="new-at-level-value"]') as HTMLElement | null)?.innerText ?? ''
+    () =>
+      (document.querySelector('[data-testid="new-at-level-value"]') as HTMLElement | null)
+        ?.innerText ?? '',
   )
-  check('…anchored at the level that dinged, not at the character’s own', value.includes(String(DING_LEVEL)), value)
+  check(
+    '…anchored at the level that dinged, not at the character’s own',
+    value.includes(String(DING_LEVEL)),
+    value,
+  )
   check(
     '…with the level stepper mounted (the panel is browsable, not just historical)',
-    (await countOf(mainPage, '[data-testid="new-at-level-next"]')) === 1
+    (await countOf(mainPage, '[data-testid="new-at-level-next"]')) === 1,
   )
 
   // AND IT IS A CUE, NOT A COSTUME. Waiting for the attribute to fall back is what proves the
   // highlight is transient — and it is also what arms the repeat step below, which can only claim
   // a RE-fire from a panel that is demonstrably dark first.
-  const dark = await settle(() => panelHighlight(mainPage), (v) => v === 'false', { timeoutMs: 10_000 })
-  check('…and the highlight is a brief cue, not a permanent outline: it comes back off', dark === 'false', dark)
+  const dark = await settle(
+    () => panelHighlight(mainPage),
+    (v) => v === 'false',
+    { timeoutMs: 10_000 },
+  )
+  check(
+    '…and the highlight is a brief cue, not a permanent outline: it comes back off',
+    dark === 'false',
+    dark,
+  )
 
   // THE WHOLE CARD IS STILL THE LINK (JOS-334). The button is the promise becoming visible, and a
   // reader who clicks the card ANYWHERE — as they have been able to since the kind shipped — must
@@ -244,16 +295,26 @@ export async function stepDeepLinkRoundtrip(mainPage: Page, toast: Page): Promis
   // click. A card that has aged out of its 25 s hold NOTES rather than fails; the hold is this
   // spec's fixture, not a claim about the app.
   if (await clickLevelUp(toast, 'card')) {
-    const relit = await settle(() => panelHighlight(mainPage), (v) => v === 'true', { timeoutMs: 8_000 })
+    const relit = await settle(
+      () => panelHighlight(mainPage),
+      (v) => v === 'true',
+      { timeoutMs: 8_000 },
+    )
     check(
       'clicking the card ITSELF still fires the same link — the action is a promise, not a second path',
       relit === 'true',
-      relit
+      relit,
     )
     // Left dark again on the way out, because the repeat step below arms itself the same way.
-    await settle(() => panelHighlight(mainPage), (v) => v === 'false', { timeoutMs: 10_000 })
+    await settle(
+      () => panelHighlight(mainPage),
+      (v) => v === 'false',
+      { timeoutMs: 10_000 },
+    )
   } else {
-    note('the level-up card aged out before the whole-card click could be re-tested — its hold is the fixture speaking, not a regression')
+    note(
+      'the level-up card aged out before the whole-card click could be re-tested — its hold is the fixture speaking, not a regression',
+    )
   }
 }
 
@@ -289,7 +350,11 @@ export async function stepDeepLinkRoundtrip(mainPage: Page, toast: Page): Promis
  * Driven through `focusApp` — the same door the card's own click goes through, already proven by
  * the step above — because the card that carried the first link may have aged out of the stack.
  */
-export async function stepRepeatDeepLink(app: ElectronApplication, mainPage: Page, toast: Page): Promise<void> {
+export async function stepRepeatDeepLink(
+  app: ElectronApplication,
+  mainPage: Page,
+  toast: Page,
+): Promise<void> {
   const wide = await contentBox(mainPage)
   const panelH = await panelHeight(mainPage)
   const win = await app.browserWindow(mainPage)
@@ -301,7 +366,9 @@ export async function stepRepeatDeepLink(app: ElectronApplication, mainPage: Pag
   const target = Math.max(240, chrome + panelH + 60)
   const restore = target < bounds.height ? await withWindowHeight(app, mainPage, target) : null
   if (!restore) {
-    note(`the window is already shorter than the panel needs (${String(bounds.height)}px around a ${String(panelH)}px panel) — no squeeze to apply`)
+    note(
+      `the window is already shorter than the panel needs (${String(bounds.height)}px around a ${String(panelH)}px panel) — no squeeze to apply`,
+    )
   }
 
   try {
@@ -311,31 +378,45 @@ export async function stepRepeatDeepLink(app: ElectronApplication, mainPage: Pag
     const hidden = top === 0 && before.includes('below the fold')
     const rig = `${String(squeezed.height)}px of tab in a ${String(squeezed.client)}px viewport at scrollTop ${String(top)}`
     if (hidden) {
-      check('with the window squeezed, the level panel is genuinely BELOW THE FOLD at the top of the page', true, rig)
+      check(
+        'with the window squeezed, the level panel is genuinely BELOW THE FOLD at the top of the page',
+        true,
+        rig,
+      )
     } else {
-      note(`this fixture's Leveling tab is too short to hide the panel behind a fold (${rig}) — the repeat link's SCROLL cannot be measured here, only its highlight`)
+      note(
+        `this fixture's Leveling tab is too short to hide the panel behind a fold (${rig}) — the repeat link's SCROLL cannot be measured here, only its highlight`,
+      )
     }
 
     await toast.evaluate((level) => {
       ;(window as unknown as { eqOverlay: { focusApp: (f: unknown) => void } }).eqOverlay.focusApp({
         view: 'leveling',
-        level
+        level,
       })
     }, DING_LEVEL)
 
-    const lit = await settle(() => panelHighlight(mainPage), (v) => v === 'true', { timeoutMs: 8_000 })
+    const lit = await settle(
+      () => panelHighlight(mainPage),
+      (v) => v === 'true',
+      { timeoutMs: 8_000 },
+    )
     check(
       'a SECOND link to the level ALREADY on screen lights the panel again (the nonce contract)',
       lit === 'true',
-      lit
+      lit,
     )
     if (!hidden) return
-    const view = await settle(() => fullyInContent(mainPage, PANEL), (v) => v === 'in view', { timeoutMs: 8_000 })
+    const view = await settle(
+      () => fullyInContent(mainPage, PANEL),
+      (v) => v === 'in view',
+      { timeoutMs: 8_000 },
+    )
     const moved = await contentTop(mainPage)
     check(
       '…and SCROLLS it into the content area, from a page parked at its top',
       view === 'in view' && moved > 0,
-      `${before} → ${view} at scrollTop ${String(moved)}`
+      `${before} → ${view} at scrollTop ${String(moved)}`,
     )
   } finally {
     // Unconditionally, even on a failed check: the quest-anchor step runs after this one and the

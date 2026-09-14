@@ -42,7 +42,7 @@ import type {
   UserSound,
   UserSoundImportResult,
   UserSoundRemoveResult,
-  VoicePrefs
+  VoicePrefs,
 } from '../shared/types'
 import type { CombatSnapshot, FightSearchResult, SnapshotOpts } from '../shared/combat'
 import type { ClassAbbr, ComboDelta, ComboSnap } from '../shared/classCombo'
@@ -58,7 +58,7 @@ import type {
   MapPackPrefs,
   MapSearchHit,
   MapSearchOpts,
-  ZoneShort
+  ZoneShort,
 } from '../shared/maps'
 // Presence-driven prefs live beside their normalizers, not in shared/types.ts — see the note at
 // the bottom of that file.
@@ -78,16 +78,12 @@ import type {
   LogSliceMeta,
   FeedbackContext,
   SubmitErrorCode,
-  SubmitResult as SharedSubmitResult
+  SubmitResult as SharedSubmitResult,
 } from '../shared/feedback'
 // Usage analytics (docs/plans/usage-analytics.md). The event union is a SHARED contract — the
 // renderer builds values of it, main re-validates them at the handler, and wave A2's Lambda
 // validates them again on arrival, all from one definition.
-import type {
-  TelemetryEvent,
-  TelemetryPayloadView,
-  TelemetryPrefs
-} from '../shared/telemetry'
+import type { TelemetryEvent, TelemetryPayloadView, TelemetryPrefs } from '../shared/telemetry'
 // Performance profiling (docs/plans/perf-profiling.md). Same arrangement as presencePrefs: the
 // shapes live beside their pure helpers in shared/perf.ts, not in types.ts, because
 // storeMigrations.ts must reach the prefs normalizer from module scope.
@@ -125,7 +121,7 @@ import type {
   TriagePatch,
   TriageResult,
   TriageRow,
-  TriageSlice
+  TriageSlice,
 } from '../shared/triage'
 
 /** Reply of share:saveFile — the OS save dialog either wrote a file or was cancelled. */
@@ -187,9 +183,25 @@ export interface SubmitOpts {
   attachAchievements: boolean
 }
 
-export type { CharacterRef, EqConfig, EqConfigResult, LogLine, LogSwitchNudge, LootEvent, ProgressState }
+export type {
+  CharacterRef,
+  EqConfig,
+  EqConfigResult,
+  LogLine,
+  LogSwitchNudge,
+  LootEvent,
+  ProgressState,
+}
 export type { ModuleChanged, ModuleSnapshot }
-export type { AlertDef, AlertPrefs, SoundData, SoundPack, SpellCatalog, ItemKnowledge, MobKnowledge }
+export type {
+  AlertDef,
+  AlertPrefs,
+  SoundData,
+  SoundPack,
+  SpellCatalog,
+  ItemKnowledge,
+  MobKnowledge,
+}
 export type { UserSound, UserSoundImportResult, UserSoundRemoveResult }
 export type {
   SpeechEngine,
@@ -198,7 +210,7 @@ export type {
   SpeechSayRequest,
   SpeechSayResult,
   SpeechVoice,
-  VoicePrefs
+  VoicePrefs,
 }
 export type { PackInstallProgress, PackMutationResult, PackPreviewList, RegistryListResult }
 export type { AppFocus, UpdateStatus }
@@ -213,7 +225,7 @@ export type {
   FeedbackEnv,
   FeedbackInventoryPreview,
   LogSliceMeta,
-  SubmitErrorCode
+  SubmitErrorCode,
 }
 export type { TelemetryEvent, TelemetryPayloadView, TelemetryPrefs }
 export type { PerfHudPrefs, PerfSample, StartupProfile }
@@ -228,7 +240,7 @@ export type {
   TriagePatch,
   TriageResult,
   TriageRow,
-  TriageSlice
+  TriageSlice,
 }
 // The combo module rides the generic transport, so the renderer never names these on an API
 // method — re-exported here for the same reason every other module payload is: so a view can
@@ -333,7 +345,8 @@ const api = {
 
   getCharacter: (): Promise<CharacterRef | null> => ipcRenderer.invoke(IPC.getCharacter),
   listCharacters: (): Promise<CharacterRef[]> => ipcRenderer.invoke(IPC.listCharacters),
-  setCharacter: (logPath: string): Promise<SetCharacterResult> => ipcRenderer.invoke(IPC.setCharacter, logPath),
+  setCharacter: (logPath: string): Promise<SetCharacterResult> =>
+    ipcRenderer.invoke(IPC.setCharacter, logPath),
 
   // ---- EQ install-dir discovery + override (Settings gear) ----
   /** Read the effective EQ config: install root, how it resolved, log count. */
@@ -347,8 +360,7 @@ const api = {
    */
   pickEqLogFile: (): Promise<EqConfigResult> => ipcRenderer.invoke(IPC.pickEqLogFile),
   /** Set the override to an explicit dir (undefined/'' reverts to auto-detect). */
-  setEqDir: (dir: string | undefined): Promise<EqConfig> =>
-    ipcRenderer.invoke(IPC.setEqDir, dir),
+  setEqDir: (dir: string | undefined): Promise<EqConfig> => ipcRenderer.invoke(IPC.setEqDir, dir),
   /** Clear the override → revert to auto-discovery. Returns the re-resolved config. */
   resetEqDir: (): Promise<EqConfig> => ipcRenderer.invoke(IPC.resetEqDir),
   /** Subscribe to "effective EQ config changed" pushes (override applied/cleared). */
@@ -372,8 +384,11 @@ const api = {
    */
   // The 3rd argument (the Sky over-hand-in fix) is what a detected trade actually offered, per
   // required item — the same write as the instants, not a second round trip.
-  setQuestTurnIns: (questKey: string, instants: number[], offered?: Record<number, Record<string, number>>): Promise<ProgressState> =>
-    ipcRenderer.invoke(IPC.setQuestTurnIns, questKey, instants, offered),
+  setQuestTurnIns: (
+    questKey: string,
+    instants: number[],
+    offered?: Record<number, Record<string, number>>,
+  ): Promise<ProgressState> => ipcRenderer.invoke(IPC.setQuestTurnIns, questKey, instants, offered),
   /**
    * State ONE item's held count by hand, or take the statement back with `count: null` (JOS-186).
    * `key` is the normalized counting key; `name` is only ever a spelling. Main dates the statement
@@ -513,7 +528,7 @@ const api = {
   applyShare: (
     text: string,
     ui: Record<string, string>,
-    selection?: { alertIds?: string[]; scalarIds?: string[] }
+    selection?: { alertIds?: string[]; scalarIds?: string[] },
   ): Promise<ShareApplyResult> => ipcRenderer.invoke(IPC.shareApply, text, ui, selection),
 
   // ---- generic module transport ----
@@ -635,11 +650,11 @@ const api = {
   setCursorRing: (patch: Partial<CursorRingPrefs>): Promise<CursorRingPrefs> =>
     ipcRenderer.invoke(IPC.cursorRingSet, patch),
   /** The overlay auto-hide prefs: hide when EQ isn't running / isn't focused. */
-  getOverlayAutoHide: (): Promise<OverlayAutoHidePrefs> => ipcRenderer.invoke(IPC.overlayAutoHideGet),
+  getOverlayAutoHide: (): Promise<OverlayAutoHidePrefs> =>
+    ipcRenderer.invoke(IPC.overlayAutoHideGet),
   /** Merge-patch the overlay auto-hide prefs; applies to the live overlays immediately. */
   setOverlayAutoHide: (patch: Partial<OverlayAutoHidePrefs>): Promise<OverlayAutoHidePrefs> =>
     ipcRenderer.invoke(IPC.overlayAutoHideSet, patch),
-
 
   // ---- clipboard ----
   /**
@@ -771,7 +786,7 @@ const api = {
   triageSetBlocked: (
     installId: string,
     blocked: boolean,
-    reason?: string
+    reason?: string,
   ): Promise<TriageResult<void>> =>
     ipcRenderer.invoke(IPC.triageSetBlocked, installId, blocked, reason),
   /** The same markdown digest `triage-feedback digest` prints, plus its clusters. */
@@ -782,7 +797,10 @@ const api = {
    *  `includeOwner` returns it as a second, complete readout in `owner`; the two are rendered
    *  side by side and never summed. `available:false` means one thing only: this cluster lacks
    *  a table or column the readout reads. Tables that exist and are empty are honest zeros. */
-  triageAnalytics: (days?: number, includeOwner?: boolean): Promise<TriageResult<TriageAnalytics>> =>
+  triageAnalytics: (
+    days?: number,
+    includeOwner?: boolean,
+  ): Promise<TriageResult<TriageAnalytics>> =>
     ipcRenderer.invoke(IPC.triageAnalytics, days, includeOwner === true),
 
   // ---- frameless window controls (Task #23) ----
@@ -800,7 +818,7 @@ const api = {
     } catch {
       // If IPC itself is unavailable, the renderer console handler still logged.
     }
-  }
+  },
 }
 
 export type EqApi = typeof api

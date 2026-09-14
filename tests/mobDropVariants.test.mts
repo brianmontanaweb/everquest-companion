@@ -42,7 +42,7 @@ test('a base and its +N variants fold into ONE line with the combined count', ()
   const groups = foldSeenVariants([
     row('Sphinx Claw', 2, T),
     row('Sphinx Claw +1', 1, T + DAY),
-    row('Sphinx Claw +2', 1, T - DAY)
+    row('Sphinx Claw +2', 1, T - DAY),
   ])
   assert.equal(groups.length, 1, 'three spellings are one item')
   const g = groups[0]
@@ -54,7 +54,7 @@ test('a base and its +N variants fold into ONE line with the combined count', ()
   assert.deepEqual(
     g.variants.map((v) => v.item),
     ['Sphinx Claw', 'Sphinx Claw +1', 'Sphinx Claw +2'],
-    'the breakdown opens in upgrade order, not in count order'
+    'the breakdown opens in upgrade order, not in count order',
   )
 })
 
@@ -78,22 +78,25 @@ test('a lone +N still says which one it was: base name on the line, affordance t
   const [g] = foldSeenVariants([row('Sphinx Claw +1', 1, T)])
   assert.equal(g.item, 'Sphinx Claw', 'derived from the variant when no base was ever looted')
   assert.equal(g.hasVariants, true, 'a single variant row is still hiding something')
-  assert.deepEqual(g.variants.map((v) => v.item), ['Sphinx Claw +1'])
+  assert.deepEqual(
+    g.variants.map((v) => v.item),
+    ['Sphinx Claw +1'],
+  )
 })
 
 test('groups sort by the COMBINED count, so a fold cannot be seated below a smaller line', () => {
   const groups = foldSeenVariants([
     row('Bone Chips', 3, T),
     row('Sphinx Claw', 2, T),
-    row('Sphinx Claw +1', 2, T + DAY)
+    row('Sphinx Claw +1', 2, T + DAY),
   ])
   assert.deepEqual(
     groups.map((g) => [g.item, g.count]),
     [
       ['Sphinx Claw', 4],
-      ['Bone Chips', 3]
+      ['Bone Chips', 3],
     ],
-    'the 4× fold outranks the 3× row it used to sit under as two 2× rows'
+    'the 4× fold outranks the 3× row it used to sit under as two 2× rows',
   )
 })
 
@@ -101,11 +104,14 @@ test('ties break by recency, and casing never splits an item', () => {
   const groups = foldSeenVariants([
     row('Golden Hilt', 1, T),
     row('golden hilt +1', 1, T + DAY),
-    row('Wind Rune Geza', 2, T)
+    row('Wind Rune Geza', 2, T),
   ])
   // Both lines are 2×; the fold's own `lastTs` (the +1, a day later) breaks the tie, which is
   // the same comparator MobLootIndex.drops() applies to the rows before they were folded.
-  assert.deepEqual(groups.map((g) => g.item), ['Golden Hilt', 'Wind Rune Geza'])
+  assert.deepEqual(
+    groups.map((g) => g.item),
+    ['Golden Hilt', 'Wind Rune Geza'],
+  )
   assert.equal(groups[0].count, 2, 'a differently-cased variant lands on the same line')
   assert.equal(groups[0].lastTs, T + DAY)
 })

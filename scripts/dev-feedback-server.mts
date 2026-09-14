@@ -83,11 +83,28 @@ import { hasNulByte } from '../src/shared/sanitizeText'
 import { MAX_TELEMETRY_BODY_BYTES } from '../src/shared/telemetry'
 // The two halves that moved OUT of this file for room (each says why in its own header):
 // the S3 presign rehearsal's pure helpers, and the whole `/v1/telemetry` rehearsal.
-import { boundaryOf, multipartFields, policyViolation, s3Error, TOO_BIG, TOO_SMALL, type Res } from './devS3Leg.mjs'
-import { emptyTelemetryState, telemetryRoute, telemetryTables, type TelemetryState } from './devTelemetryStack.mjs'
+import {
+  boundaryOf,
+  multipartFields,
+  policyViolation,
+  s3Error,
+  TOO_BIG,
+  TOO_SMALL,
+  type Res,
+} from './devS3Leg.mjs'
+import {
+  emptyTelemetryState,
+  telemetryRoute,
+  telemetryTables,
+  type TelemetryState,
+} from './devTelemetryStack.mjs'
 // …and, since JOS-441, where each attachment kind lands. Same reason, same shape of split.
 import {
-  achievementsObjectKey, ATTACHMENT_KINDS, inventoryObjectKey, logObjectKey, reportIdOfToken,
+  achievementsObjectKey,
+  ATTACHMENT_KINDS,
+  inventoryObjectKey,
+  logObjectKey,
+  reportIdOfToken,
   type AttachmentKind,
 } from './devFeedbackKeys.mjs'
 
@@ -168,7 +185,8 @@ const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
 
 function ulid(now: number): string {
   let time = ''
-  for (let rest = now, i = 0; i < 10; i++, rest = Math.floor(rest / 32)) time = CROCKFORD[rest % 32] + time
+  for (let rest = now, i = 0; i < 10; i++, rest = Math.floor(rest / 32))
+    time = CROCKFORD[rest % 32] + time
   return time + Array.from({ length: 16 }, () => CROCKFORD[Math.floor(Math.random() * 32)]).join('')
 }
 
@@ -254,21 +272,44 @@ function mintUpload(
   const key = spec.key(reportId, now)
   const file = `${reportId}${spec.file}`
   const token = `${reportId}${spec.token}`
-  state.presigns.set(token, { key, expiresAt: now + UPLOAD_TTL_SEC * 1000, sha256: what.sha256, kind, file })
-  const fields = { key, 'Content-Type': 'application/gzip', 'x-amz-server-side-encryption': 'AES256' }
-  return { url: `${state.origin}/devstack/upload/${token}`, fields, key, expiresInSec: UPLOAD_TTL_SEC }
+  state.presigns.set(token, {
+    key,
+    expiresAt: now + UPLOAD_TTL_SEC * 1000,
+    sha256: what.sha256,
+    kind,
+    file,
+  })
+  const fields = {
+    key,
+    'Content-Type': 'application/gzip',
+    'x-amz-server-side-encryption': 'AES256',
+  }
+  return {
+    url: `${state.origin}/devstack/upload/${token}`,
+    fields,
+    key,
+    expiresInSec: UPLOAD_TTL_SEC,
+  }
 }
 
 function reportRow(req: SubmitRequest, reportId: string, now: number): Record<string, unknown> {
   const { installId, clientReportId, clientTs, draft, env, log, inventory, achievements } = req
   return {
-    t: 'report', reportId, installId, clientReportId, receivedAt: now, clientTs, status: 'new',
+    t: 'report',
+    reportId,
+    installId,
+    clientReportId,
+    receivedAt: now,
+    clientTs,
+    status: 'new',
     // Scored only by the Lambda — never guessed at here (see FIDELITY in the header).
     spamScore: null,
     // No title/contact keys: they left the wire contract and then the `report` table, so the
     // Lambda's INSERT does not name them and this row must not either.
-    type: draft.type, description: draft.description,
-    env, log,
+    type: draft.type,
+    description: draft.description,
+    env,
+    log,
     logKey: log === null ? null : logObjectKey(reportId, now),
     // The second attachment (JOS-296), stored in the two columns the Lambda's INSERT names.
     inventory,
@@ -282,12 +323,17 @@ function reportRow(req: SubmitRequest, reportId: string, now: number): Record<st
 /** The Lambda's `accept`, step for step (§8.3). */
 function accept(state: State, req: SubmitRequest, now: number): Res {
   if (state.mode.closed !== null) return fail(503, 'closed', state.mode.closed)
-  if (state.mode.blocked) return fail(403, 'blocked', 'This install is blocked from submitting feedback.')
+  if (state.mode.blocked)
+    return fail(403, 'blocked', 'This install is blocked from submitting feedback.')
 
   const idempKey = `${req.installId}|${req.clientReportId}`
   const replay = state.idemp.get(idempKey)
   if (replay !== undefined)
-    return { status: 200, json: { ok: true, reportId: replay, upload: null }, note: `replay ${replay}` }
+    return {
+      status: 200,
+      json: { ok: true, reportId: replay, upload: null },
+      note: `replay ${replay}`,
+    }
 
   if (!consumeQuota(state, req, now))
     return fail(429, 'quota_exceeded', 'Daily report limit reached for this install.', {
@@ -299,12 +345,17 @@ function accept(state: State, req: SubmitRequest, now: number): Res {
   state.idemp.set(idempKey, reportId)
   const log = req.log
   const inv = req.inventory
-  const upload = log === null ? null : mintUpload(state, reportId, { kind: 'log', sha256: log.sha256, now })
+  const upload =
+    log === null ? null : mintUpload(state, reportId, { kind: 'log', sha256: log.sha256, now })
   const inventoryUpload =
-    inv === null ? null : mintUpload(state, reportId, { kind: 'inventory', sha256: inv.sha256, now })
+    inv === null
+      ? null
+      : mintUpload(state, reportId, { kind: 'inventory', sha256: inv.sha256, now })
   const ach = req.achievements
   const achievementsUpload =
-    ach === null ? null : mintUpload(state, reportId, { kind: 'achievements', sha256: ach.sha256, now })
+    ach === null
+      ? null
+      : mintUpload(state, reportId, { kind: 'achievements', sha256: ach.sha256, now })
   return {
     status: 201,
     json: { ok: true, reportId, upload, inventoryUpload, achievementsUpload },
@@ -343,22 +394,36 @@ function storeSlice(state: State, reportId: string, presign: Presign, file: Buff
   const shaMatches = sha256 === presign.sha256
   const { key, kind } = presign
   appendRow(state, {
-    t: 'upload', reportId, kind, key, bytes: file.byteLength,
-    sha256, declaredSha256: presign.sha256, shaMatches, at: Date.now(),
+    t: 'upload',
+    reportId,
+    kind,
+    key,
+    bytes: file.byteLength,
+    sha256,
+    declaredSha256: presign.sha256,
+    shaMatches,
+    at: Date.now(),
   })
   // S3 answers a plain presigned POST with 204 and an empty body.
   return { status: 204, note: `${kind} ${file.byteLength}B sha=${shaMatches ? 'ok' : 'MISMATCH'}` }
 }
 
-function uploadRoute(state: State, token: string, contentType: string | undefined, body: Buffer): Res {
+function uploadRoute(
+  state: State,
+  token: string,
+  contentType: string | undefined,
+  body: Buffer,
+): Res {
   // `<reportId>`, `<reportId>.inventory` or `<reportId>.achievements` — the row is filed under
   // the report whichever leg it came in on.
   const reportId = reportIdOfToken(token)
   const presign = state.presigns.get(token)
-  if (presign === undefined) return s3Error(403, 'AccessDenied', 'no presign was minted for this key')
+  if (presign === undefined)
+    return s3Error(403, 'AccessDenied', 'no presign was minted for this key')
   if (Date.now() > presign.expiresAt) return s3Error(403, 'AccessDenied', 'Request has expired')
   const boundary = boundaryOf(contentType)
-  if (boundary === null) return s3Error(400, 'MalformedPOSTRequest', 'not well-formed multipart/form-data')
+  if (boundary === null)
+    return s3Error(400, 'MalformedPOSTRequest', 'not well-formed multipart/form-data')
 
   const parts = multipartFields(body, boundary)
   const violation = policyViolation(parts, presign.key)
@@ -372,7 +437,8 @@ function uploadRoute(state: State, token: string, contentType: string | undefine
 
 // ---- the /devstack control plane ---------------------------------------------------------------
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v)
 
 function patchMode(state: State, body: Buffer): Res {
   let parsed: unknown
@@ -382,7 +448,11 @@ function patchMode(state: State, body: Buffer): Res {
     parsed = null
   }
   if (!isRecord(parsed))
-    return { status: 400, json: { ok: false, message: 'mode expects a JSON object' }, note: 'bad json' }
+    return {
+      status: 400,
+      json: { ok: false, message: 'mode expects a JSON object' },
+      note: 'bad json',
+    }
   const patch = parsed
   const m = state.mode
   if ('closed' in patch) m.closed = typeof patch.closed === 'string' ? patch.closed : null
@@ -400,7 +470,11 @@ function listReports(state: State): Res {
   const reports = state.rows
     .filter((r) => r.t === 'report')
     .map((r) => ({ ...r, uploaded: uploaded.has(idOf(r)) }))
-  return { status: 200, json: { ok: true, count: reports.length, reports }, note: `${reports.length} rows` }
+  return {
+    status: 200,
+    json: { ok: true, count: reports.length, reports },
+    note: `${reports.length} rows`,
+  }
 }
 
 // ---- the http seam ---------------------------------------------------------------------------
@@ -449,7 +523,9 @@ async function postRoute(state: State, req: IncomingMessage, path: string): Prom
   if (path === '/v1/feedback') {
     const body = await readBody(req, MAX_BODY_BYTES + 1)
     await sleep(state.mode.latencyMs)
-    return body === null ? fail(413, 'too_large', 'Report body is too large.') : submitRoute(state, body)
+    return body === null
+      ? fail(413, 'too_large', 'Report body is too large.')
+      : submitRoute(state, body)
   }
   if (path === '/v1/telemetry') {
     const body = await readBody(req, MAX_TELEMETRY_BODY_BYTES + 1)
@@ -495,7 +571,9 @@ async function handle(state: State, req: IncomingMessage, res: ServerResponse): 
   if (!state.quiet) {
     const stamp = new Date().toISOString().slice(11, 19)
     const detail = out.note === undefined ? '' : ` ${out.note}`
-    console.log(`${stamp} ${req.method ?? '?'} ${path} → ${out.status}${detail} (${Date.now() - startedAt}ms)`)
+    console.log(
+      `${stamp} ${req.method ?? '?'} ${path} → ${out.status}${detail} (${Date.now() - startedAt}ms)`,
+    )
   }
   send(res, out)
 }
@@ -515,12 +593,21 @@ export async function startDevStack(opts: DevStackOptions = {}): Promise<DevStac
   const dir = resolve(opts.dir ?? DEFAULT_DIR)
   mkdirSync(dir, { recursive: true })
   const mode: Mode = {
-    closed: null, blocked: false, quota: 'ok', latencyMs: 0,
+    closed: null,
+    blocked: false,
+    quota: 'ok',
+    latencyMs: 0,
     maxPerDay: opts.maxPerDay ?? DEFAULT_MAX_PER_DAY,
   }
   const state: State = {
-    dir, mode, origin: 'http://127.0.0.1', quiet: opts.quiet ?? false,
-    idemp: new Map(), quota: new Map(), presigns: new Map(), rows: [],
+    dir,
+    mode,
+    origin: 'http://127.0.0.1',
+    quiet: opts.quiet ?? false,
+    idemp: new Map(),
+    quota: new Map(),
+    presigns: new Map(),
+    rows: [],
     telemetry: emptyTelemetryState(),
   }
   loadHistory(state)
@@ -549,7 +636,11 @@ export async function startDevStack(opts: DevStackOptions = {}): Promise<DevStac
 // ---- cli ---------------------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-  const opts = { port: { type: 'string' }, dir: { type: 'string' }, 'max-per-day': { type: 'string' } } as const
+  const opts = {
+    port: { type: 'string' },
+    dir: { type: 'string' },
+    'max-per-day': { type: 'string' },
+  } as const
   const { values } = parseArgs({ options: opts })
   const stack = await startDevStack({
     port: values.port === undefined ? DEFAULT_PORT : Number(values.port),

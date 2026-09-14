@@ -32,7 +32,7 @@ import type {
   EngineMessage,
   FireMessage,
   KnowledgeMissMessage,
-  ModuleChangedMessage
+  ModuleChangedMessage,
 } from './protocol.generated'
 
 /** One frame kind's listeners. */
@@ -51,7 +51,7 @@ export function createBroadcasts(): Broadcasts {
     fire: new Set(),
     conCard: new Set(),
     moduleChanged: new Set(),
-    knowledgeMiss: new Set()
+    knowledgeMiss: new Set(),
   }
 }
 
@@ -70,11 +70,7 @@ export function listen<T>(fanout: Fanout<T>, listener: (message: T) => void): ()
 }
 
 /** The four frames this module owns, as one type — see the header for what makes them one. */
-export type Broadcast =
-  | FireMessage
-  | ConCardMessage
-  | ModuleChangedMessage
-  | KnowledgeMissMessage
+export type Broadcast = FireMessage | ConCardMessage | ModuleChangedMessage | KnowledgeMissMessage
 
 /**
  * Deliver one frame if it is a connection-wide one. `true` when it was.
@@ -85,10 +81,7 @@ export type Broadcast =
  * that ends in a real type rather than in a cast. A frame kind added to the schema and forgotten
  * here therefore fails to typecheck at the caller rather than being silently dropped.
  */
-export function deliver(
-  broadcasts: Broadcasts,
-  message: EngineMessage
-): message is Broadcast {
+export function deliver(broadcasts: Broadcasts, message: EngineMessage): message is Broadcast {
   switch (message.kind) {
     case 'fire':
       return fan(broadcasts.fire, message)

@@ -34,7 +34,7 @@ import {
   spellLineNote,
   spellNeighbourLine,
   spellStatRows,
-  spellStepWhen
+  spellStepWhen,
 } from '@shared/spellDetail'
 import type { AppRouting, NavBack } from '../../appRouting'
 import type { View } from '../../appViews'
@@ -52,7 +52,13 @@ import { useBackTarget } from '../../appBack'
  * The rung you are ON is marked and is NOT a link to itself: a row that navigates to the page it is
  * already on is a control that appears to do nothing, which is worse than no control.
  */
-function LadderRow({ step, combo }: { step: SpellLineStep; combo: readonly ClassAbbr[] }): JSX.Element {
+function LadderRow({
+  step,
+  combo,
+}: {
+  step: SpellLineStep
+  combo: readonly ClassAbbr[]
+}): JSX.Element {
   const when = spellStepWhen(step, combo)
   return (
     <Stack
@@ -105,7 +111,12 @@ function LineSection({ detail }: { detail: SpellDetail }): JSX.Element | null {
         {path.line} · {path.cls}
       </Typography>
       {note !== null && (
-        <Typography variant="caption" color="warning.main" display="block" data-testid="spell-line-note">
+        <Typography
+          variant="caption"
+          color="warning.main"
+          display="block"
+          data-testid="spell-line-note"
+        >
           {note}
         </Typography>
       )}
@@ -117,7 +128,12 @@ function LineSection({ detail }: { detail: SpellDetail }): JSX.Element | null {
       {/* A SET rather than a ladder (travel rings, the Imbue gems, the poison tiers) still lists its
           membership — the spell really is one of them — and says why it names no order. */}
       {!path.ladder && (
-        <Typography variant="caption" color="text.secondary" display="block" data-testid="spell-line-set">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          data-testid="spell-line-set"
+        >
           these are one set rather than a progression - none of them replaces another
         </Typography>
       )}
@@ -184,7 +200,13 @@ function StatStrip({ detail }: { detail: SpellDetail }): JSX.Element | null {
   return (
     <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap">
       {rows.map((r) => (
-        <Typography key={r.id} variant="caption" color="text.secondary" data-testid="spell-page-stat" data-stat={r.id}>
+        <Typography
+          key={r.id}
+          variant="caption"
+          color="text.secondary"
+          data-testid="spell-page-stat"
+          data-stat={r.id}
+        >
           {r.label}: {r.value}
         </Typography>
       ))}
@@ -208,7 +230,7 @@ function StatStrip({ detail }: { detail: SpellDetail }): JSX.Element | null {
 export function SpellPage({
   name,
   nav,
-  onClose
+  onClose,
 }: {
   name: string
   /** the app's ONE back contract — a spell page is ALWAYS a drill, so this is always present. */
@@ -229,7 +251,12 @@ export function SpellPage({
   return (
     <Stack spacing={1} sx={{ height: '100%' }} data-testid="spell-page" data-spell={name}>
       <Box>
-        <Button size="small" data-testid="spell-page-back" startIcon={<ArrowBackIcon />} onClick={back}>
+        <Button
+          size="small"
+          data-testid="spell-page-back"
+          startIcon={<ArrowBackIcon />}
+          onClick={back}
+        >
           {nav?.origin?.label ?? 'Back'}
         </Button>
       </Box>
@@ -240,7 +267,11 @@ export function SpellPage({
               {name}
             </Typography>
             {detail !== null && spellFactsAreForLine(detail) && (
-              <Typography variant="caption" color="text.secondary" data-testid="spell-page-line-note">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                data-testid="spell-page-line-note"
+              >
                 these are the {detail.name} line&apos;s numbers - the database states none per rank
               </Typography>
             )}
@@ -277,7 +308,7 @@ export function SpellPage({
 export function SpellDrill({
   view,
   viewKey,
-  routing
+  routing,
 }: {
   view: View
   viewKey: string

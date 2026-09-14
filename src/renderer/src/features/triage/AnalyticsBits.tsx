@@ -24,7 +24,7 @@ import type {
   TriageDownloads,
   TriageMixRow,
   TriageStartupRow,
-  UsageDayPoint
+  UsageDayPoint,
 } from '@shared/triage'
 import { sparklinePoints } from '@shared/perf'
 import { formatNum } from '../../lib/formatRate'
@@ -69,7 +69,7 @@ export function Section({ title, children }: { title: string; children: ReactNod
 /** `label  value  ▁▁▃▅` — the one row shape every mix list in this panel uses. */
 export function MixList({
   rows,
-  empty
+  empty,
 }: {
   rows: readonly TriageMixRow[]
   empty: string
@@ -83,7 +83,14 @@ export function MixList({
   }
   const max = Math.max(...rows.map((r) => r.n))
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(120px, max-content) 1fr max-content', columnGap: 1.5, rowGap: 0.25 }}>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(120px, max-content) 1fr max-content',
+        columnGap: 1.5,
+        rowGap: 0.25,
+      }}
+    >
       {rows.map((r) => (
         <Box key={r.id} sx={{ display: 'contents' }}>
           <Typography variant="caption">{r.id}</Typography>
@@ -93,7 +100,7 @@ export function MixList({
                 width: `${String(max > 0 ? (r.n / max) * 100 : 0)}%`,
                 height: '100%',
                 bgcolor: 'primary.main',
-                borderRadius: 1
+                borderRadius: 1,
               }}
             />
           </Box>
@@ -113,7 +120,13 @@ export function HealthSection({ data }: { data: TriageAnalyticsData }): JSX.Elem
       <Typography variant="caption" color="text.secondary">
         {formatNum(h.reports)} per-session health rollups received.
       </Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 2 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: 2,
+        }}
+      >
         <Stack spacing={0.5}>
           <Typography variant="caption" color="text.secondary">
             Error classes
@@ -175,18 +188,17 @@ export function StartupSection({ data }: { data: TriageAnalyticsData }): JSX.Ele
     <Section title="Startup replay - per build">
       <Typography variant="caption" color="text.secondary">
         One reading per launch, from the machines that run it: how long reading the log history
-        took, the worst single main-loop block while it did, and the duty the fold actually
-        achieved (measured, never the setting). Percentiles are bucket ranges - the counters keep a
+        took, the worst single main-loop block while it did, and the duty the fold actually achieved
+        (measured, never the setting). Percentiles are bucket ranges - the counters keep a
         histogram, so an exact figure would be invented. Character-switch replays are not measured.
         The second line of each row is the MACHINE&apos;s half: the drift of a fixed heartbeat that
-        ran through the same fold, and how long the first megabyte took to arrive. Drift that
-        climbs while the block figures hold still is a healthy process on a stuttering computer -
-        neither number claims that alone, the pair does. The third line is the startup
-        CHECKPOINT&apos;s backstop: how often a client re-folded its log the slow way in the
-        background and compared the answer to the remembered one. Divergences are expected to be
-        zero forever - a non-zero here is the reason to switch the shortcut off, not a number to
-        interpret. It never says WHICH part of the fold differed; that stays on the user&apos;s own
-        machine.
+        ran through the same fold, and how long the first megabyte took to arrive. Drift that climbs
+        while the block figures hold still is a healthy process on a stuttering computer - neither
+        number claims that alone, the pair does. The third line is the startup CHECKPOINT&apos;s
+        backstop: how often a client re-folded its log the slow way in the background and compared
+        the answer to the remembered one. Divergences are expected to be zero forever - a non-zero
+        here is the reason to switch the shortcut off, not a number to interpret. It never says
+        WHICH part of the fold differed; that stays on the user&apos;s own machine.
       </Typography>
       {s.byVersion.length === 0 ? (
         <Typography variant="caption" color="text.secondary" data-testid="analytics-startup-empty">
@@ -251,9 +263,9 @@ export function LiveSection({ data }: { data: TriageAnalyticsData }): JSX.Elemen
         Two clocks, all session: the main thread&apos;s own 250 ms timer and the same timer on a
         worker thread that does nothing else. A window BOTH went late in is the machine stalling -
         paging, a driver reset, a disk - and the app was a victim beside the game; a window only
-        main saw is ours. Compare machine/report against late/report below: the gap is the part
-        this app is answerable for. Percentiles are bucket ranges, not exact figures. A dash is
-        never a clean bill - it means nothing reported.
+        main saw is ours. Compare machine/report against late/report below: the gap is the part this
+        app is answerable for. Percentiles are bucket ranges, not exact figures. A dash is never a
+        clean bill - it means nothing reported.
       </Typography>
       {l.reports === 0 ? (
         <Typography variant="caption" color="text.secondary" data-testid="analytics-live-empty">
@@ -284,16 +296,16 @@ export function LiveSection({ data }: { data: TriageAnalyticsData }): JSX.Elemen
       )}
       <Stack spacing={0.5}>
         <Typography variant="caption" color="text.secondary">
-          The fattest single read of each interval, and the size of the logs being tailed - the
-          game appends to that same file from its render thread, so this is the cost we could be
-          charging it.
+          The fattest single read of each interval, and the size of the logs being tailed - the game
+          appends to that same file from its render thread, so this is the cost we could be charging
+          it.
         </Typography>
         <MixList rows={l.tailDeltas} empty="No session has reported a read yet." />
         <MixList rows={l.tailLogSizes} empty="No session has reported a log size yet." />
         <Typography variant="caption" color="text.secondary">
           …and what was switched on while all of it was measured. A LOCKED overlay is the one to
-          watch: it arms a process-wide mouse hook, so every system mouse event waits on our
-          message loop.
+          watch: it arms a process-wide mouse hook, so every system mouse event waits on our message
+          loop.
         </Typography>
         <MixList rows={l.state} empty="No session has reported its state yet." />
       </Stack>
@@ -309,7 +321,14 @@ export function VersionsSection({ data }: { data: TriageAnalyticsData }): JSX.El
           No version has reported yet.
         </Typography>
       ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'max-content max-content max-content 1fr', columnGap: 2, rowGap: 0.25 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'max-content max-content max-content 1fr',
+            columnGap: 2,
+            rowGap: 0.25,
+          }}
+        >
           {data.versions.map((v) => (
             <Box key={v.version} sx={{ display: 'contents' }}>
               <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
@@ -352,7 +371,14 @@ function DownloadRows({ rows }: { rows: TriageDownloads }): JSX.Element {
     )
   }
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: 'max-content max-content max-content 1fr', columnGap: 2, rowGap: 0.25 }}>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'max-content max-content max-content 1fr',
+        columnGap: 2,
+        rowGap: 0.25,
+      }}
+    >
       {rows.releases.map((r) => (
         <Box key={r.tag} sx={{ display: 'contents' }}>
           <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
@@ -384,15 +410,19 @@ function DownloadRows({ rows }: { rows: TriageDownloads }): JSX.Element {
  * Absent (no fetch happened) renders nothing; a FAILED fetch renders the reason, because a
  * silently missing section would look identical to a release nobody downloaded.
  */
-export function DownloadsSection({ downloads }: { downloads?: TriageDownloads }): JSX.Element | null {
+export function DownloadsSection({
+  downloads,
+}: {
+  downloads?: TriageDownloads
+}): JSX.Element | null {
   if (downloads === undefined) return null
   return (
     <Section title="GitHub downloads - updater-inflated, NOT installs">
       <Typography variant="caption" color="text.secondary">
         Release asset fetches, per tag, from the public GitHub API. The auto-updater downloads the
         installer again on every install it updates - v0.5.0 took 61 downloads within hours of
-        publication - so read this as fetches, not as new users. The install answer is the
-        Versions table above, off <code>analytics_install</code>. Global: never split by cohort.
+        publication - so read this as fetches, not as new users. The install answer is the Versions
+        table above, off <code>analytics_install</code>. Global: never split by cohort.
       </Typography>
       <DownloadRows rows={downloads} />
     </Section>
@@ -403,16 +433,23 @@ export function RetentionSection({ data }: { data: TriageAnalyticsData }): JSX.E
   return (
     <Section title="Retention">
       <Typography variant="caption" color="text.secondary">
-        Survival, computed at read time from `analytics_install`: of the installs first seen on
-        a day, how many were still being seen on or after +1 / +7 / +30. A dash means the
-        cohort has not reached that horizon yet.
+        Survival, computed at read time from `analytics_install`: of the installs first seen on a
+        day, how many were still being seen on or after +1 / +7 / +30. A dash means the cohort has
+        not reached that horizon yet.
       </Typography>
       {data.retention.length === 0 ? (
         <Typography variant="caption" color="text.secondary">
           No cohorts yet.
         </Typography>
       ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, max-content)', columnGap: 3, rowGap: 0.25 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, max-content)',
+            columnGap: 3,
+            rowGap: 0.25,
+          }}
+        >
           {['Cohort', 'Installs', 'D1', 'D7', 'D30'].map((h) => (
             <Typography key={h} variant="caption" color="text.secondary">
               {h}

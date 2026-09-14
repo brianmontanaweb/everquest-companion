@@ -64,7 +64,8 @@ export type InventoryBaselineSource = 'log' | 'mtime'
  * is what gets PERSISTED, and because `storagesCoveredBy` pins the two together with a total
  * map: a container kind added over there is a compile error until it is added here.
  */
-export type InventoryStorage = 'equip' | 'general' | 'bank' | 'sharedBank' | 'personalDepot' | 'keyRing'
+export type InventoryStorage =
+  'equip' | 'general' | 'bank' | 'sharedBank' | 'personalDepot' | 'keyRing'
 
 /** A dump's generation instant, and which of the two sources answered. */
 export interface InventoryBaseline {
@@ -134,7 +135,7 @@ export function floorToSecond(ms: number): number {
 export function resolveInventoryBaseline(
   path: string,
   mtimeIso: string,
-  writtenAt: (file: string) => number | null
+  writtenAt: (file: string) => number | null,
 ): InventoryBaseline | null {
   const fromLog = writtenAt(baseName(path))
   if (fromLog !== null) return { ts: floorToSecond(fromLog), source: 'log' }
@@ -184,7 +185,7 @@ const CONTAINER_STORAGE: Record<ContainerKind, InventoryStorage> = {
   general: 'general',
   bank: 'bank',
   sharedBank: 'sharedBank',
-  personalDepot: 'personalDepot'
+  personalDepot: 'personalDepot',
 }
 
 /**
@@ -219,5 +220,5 @@ const STORAGE_ORDER: readonly InventoryStorage[] = [
   'bank',
   'sharedBank',
   'personalDepot',
-  'keyRing'
+  'keyRing',
 ]

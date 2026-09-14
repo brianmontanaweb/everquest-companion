@@ -84,7 +84,8 @@ const NARROW_W = 760
 
 const rowOf = (key: string): string => `${ROW}[data-item-key="${key}"]`
 
-const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> => settle(fn, (ok) => ok, { timeoutMs: ms })
+const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> =>
+  settle(fn, (ok) => ok, { timeoutMs: ms })
 
 /** One equipped cell of the open pair, as plain values a check can read. */
 interface CardCell {
@@ -116,7 +117,7 @@ const NO_PAIR: PairRead = {
   simulated: false,
   cells: [],
   freshness: '',
-  noDump: false
+  noDump: false,
 }
 
 /**
@@ -130,7 +131,16 @@ export function readPair(page: Page): Promise<PairRead> {
   return page.evaluate((sel) => {
     const el = document.querySelector(sel)
     if (!el) {
-      return { present: false, equipped: false, item: '', stats: '', simulated: false, cells: [], freshness: '', noDump: false }
+      return {
+        present: false,
+        equipped: false,
+        item: '',
+        stats: '',
+        simulated: false,
+        cells: [],
+        freshness: '',
+        noDump: false,
+      }
     }
     const card = el.querySelector('[data-testid="gear-compare-card"]')
     return {
@@ -141,12 +151,16 @@ export function readPair(page: Page): Promise<PairRead> {
       simulated: el.querySelector('[data-testid="gear-compare-simulated"]') !== null,
       cells: Array.from(el.querySelectorAll('[data-testid="gear-compare-slot"]')).map((c) => ({
         cell: c.getAttribute('data-cell') ?? '',
-        name: (c.querySelector('[data-testid="gear-compare-equipped-name"]')?.textContent ?? '').trim(),
+        name: (
+          c.querySelector('[data-testid="gear-compare-equipped-name"]')?.textContent ?? ''
+        ).trim(),
         empty: c.querySelector('[data-testid="gear-compare-empty"]') !== null,
-        delta: (c.querySelector('[data-testid="gear-compare-delta"]')?.textContent ?? '').trim()
+        delta: (c.querySelector('[data-testid="gear-compare-delta"]')?.textContent ?? '').trim(),
       })),
-      freshness: (el.querySelector('[data-testid="gear-compare-freshness"]')?.textContent ?? '').trim(),
-      noDump: el.querySelector('[data-testid="gear-compare-nodump"]') !== null
+      freshness: (
+        el.querySelector('[data-testid="gear-compare-freshness"]')?.textContent ?? ''
+      ).trim(),
+      noDump: el.querySelector('[data-testid="gear-compare-nodump"]') !== null,
     }
   }, PAIR)
 }
@@ -170,38 +184,46 @@ interface PairGeometry {
 /** The LAYOUT geometry of the open pair — see trap 1 in the header for why not `getBoundingClientRect`. */
 function pairGeometry(page: Page): Promise<PairGeometry> {
   return page.evaluate(() => {
-    const boxes = ['gear-compare-pair', 'gear-compare-card', 'gear-compare-equipped-card'].map((id) => {
-      const el = document.querySelector(`[data-testid="${id}"]`) as HTMLElement | null
-      if (!el) return null
-      // Climb the offsetParent chain to the POPPER — the outermost box before `body`, and the only
-      // one in this subtree whose own transform is a pure translate, so its client rect is honest.
-      // Everything below it contributes untransformed `offsetLeft/Top`, which is exactly the
-      // geometry the frozen `Grow` scale hides (trap 1). No named `const` function bindings in
-      // here: `keepNames` would emit a `__name` helper the page does not have.
-      let node = el
-      let dx = 0
-      let dy = 0
-      while (node.offsetParent instanceof HTMLElement && node.offsetParent !== document.body) {
-        dx += node.offsetLeft
-        dy += node.offsetTop
-        node = node.offsetParent
-      }
-      const base = node.getBoundingClientRect()
-      const l = (node === el ? base.left : base.left + dx)
-      const t = (node === el ? base.top : base.top + dy)
-      return { l: Math.round(l), t: Math.round(t), r: Math.round(l + el.offsetWidth), b: Math.round(t + el.offsetHeight) }
-    })
+    const boxes = ['gear-compare-pair', 'gear-compare-card', 'gear-compare-equipped-card'].map(
+      (id) => {
+        const el = document.querySelector(`[data-testid="${id}"]`) as HTMLElement | null
+        if (!el) return null
+        // Climb the offsetParent chain to the POPPER — the outermost box before `body`, and the only
+        // one in this subtree whose own transform is a pure translate, so its client rect is honest.
+        // Everything below it contributes untransformed `offsetLeft/Top`, which is exactly the
+        // geometry the frozen `Grow` scale hides (trap 1). No named `const` function bindings in
+        // here: `keepNames` would emit a `__name` helper the page does not have.
+        let node = el
+        let dx = 0
+        let dy = 0
+        while (node.offsetParent instanceof HTMLElement && node.offsetParent !== document.body) {
+          dx += node.offsetLeft
+          dy += node.offsetTop
+          node = node.offsetParent
+        }
+        const base = node.getBoundingClientRect()
+        const l = node === el ? base.left : base.left + dx
+        const t = node === el ? base.top : base.top + dy
+        return {
+          l: Math.round(l),
+          t: Math.round(t),
+          r: Math.round(l + el.offsetWidth),
+          b: Math.round(t + el.offsetHeight),
+        }
+      },
+    )
     return {
       vw: document.documentElement.clientWidth,
       vh: document.documentElement.clientHeight,
       pair: boxes[0],
       item: boxes[1],
-      equipped: boxes[2]
+      equipped: boxes[2],
     }
   })
 }
 
-const say = (b: Box | null): string => (b === null ? 'absent' : `x ${String(b.l)}→${String(b.r)}  y ${String(b.t)}→${String(b.b)}`)
+const say = (b: Box | null): string =>
+  b === null ? 'absent' : `x ${String(b.l)}→${String(b.r)}  y ${String(b.t)}→${String(b.b)}`
 
 /**
  * THE ASSERTION THE OFF-SCREEN DEFECT WOULD HAVE FAILED, and the one the shipped spec never made.
@@ -214,22 +236,31 @@ export async function checkPairOnScreen(page: Page, label: string): Promise<void
   await settleStable(() => pairGeometry(page).then((g) => JSON.stringify(g)), { timeoutMs: 10_000 })
   const g = await pairGeometry(page)
   const { item, equipped, vw, vh } = g
-  if (!check(`${label}: both cards of the pair are drawn`, item !== null && equipped !== null, say(item) + ' | ' + say(equipped))) {
+  if (
+    !check(
+      `${label}: both cards of the pair are drawn`,
+      item !== null && equipped !== null,
+      say(item) + ' | ' + say(equipped),
+    )
+  ) {
     return
   }
-  for (const [what, box] of [['the item card', item], ['the equipped card', equipped]] as const) {
+  for (const [what, box] of [
+    ['the item card', item],
+    ['the equipped card', equipped],
+  ] as const) {
     if (box === null) continue
     check(
       `${label}: ${what} is inside the window — every edge of it`,
       box.l >= 0 && box.t >= 0 && box.r <= vw && box.b <= vh,
-      `${say(box)} in a ${String(vw)}×${String(vh)} viewport`
+      `${say(box)} in a ${String(vw)}×${String(vh)} viewport`,
     )
   }
   if (item !== null && equipped !== null) {
     check(
       `${label}: the equipped card is to the RIGHT of the item card, not under it`,
       item.r <= equipped.l && item.t === equipped.t,
-      `${say(item)} then ${say(equipped)}`
+      `${say(item)} then ${say(equipped)}`,
     )
   }
 }
@@ -259,17 +290,29 @@ export function hitTest(page: Page, s: string): Promise<string> {
  * reads the renderer's own viewport first because a resize crosses Electron, the OS, Chromium's
  * layout and React before anything measurable moves. Exported: the exalt side narrows too.
  */
-export async function resizeTo(app: ElectronApplication, page: Page, width: number, height: number): Promise<number> {
+export async function resizeTo(
+  app: ElectronApplication,
+  page: Page,
+  width: number,
+  height: number,
+): Promise<number> {
   const win = await app.browserWindow(page)
-  await win.evaluate((w, b) => {
-    // Below the app's own 900px minimum nothing would move at all; the combat dashboard's narrow
-    // step lifts the same floor for the same reason, and the caller puts it back.
-    w.setMinimumSize(360, 360)
-    w.setBounds({ ...w.getBounds(), width: b.w, height: b.h })
-  }, { w: width, h: height })
-  return settle(() => page.evaluate(() => document.documentElement.clientWidth), (v) => Math.abs(v - width) <= 24, {
-    timeoutMs: 15_000
-  })
+  await win.evaluate(
+    (w, b) => {
+      // Below the app's own 900px minimum nothing would move at all; the combat dashboard's narrow
+      // step lifts the same floor for the same reason, and the caller puts it back.
+      w.setMinimumSize(360, 360)
+      w.setBounds({ ...w.getBounds(), width: b.w, height: b.h })
+    },
+    { w: width, h: height },
+  )
+  return settle(
+    () => page.evaluate(() => document.documentElement.clientWidth),
+    (v) => Math.abs(v - width) <= 24,
+    {
+      timeoutMs: 15_000,
+    },
+  )
 }
 
 /** Put the app's own window minimum back, so a narrow step cannot leak a 360px app. */
@@ -283,7 +326,11 @@ export async function restoreMinimum(app: ElectronApplication, page: Page): Prom
 /** Point at something and wait for its pair to have an ANSWER in it, not merely to be in the DOM. */
 export async function openPairOn(page: Page, selector: string, key: string): Promise<PairRead> {
   if (!(await hoverAt(page, selector, 0.5, 0.5))) return NO_PAIR
-  return settle(() => readPair(page), (c) => c.present && c.item === key, { timeoutMs: 20_000 })
+  return settle(
+    () => readPair(page),
+    (c) => c.present && c.item === key,
+    { timeoutMs: 20_000 },
+  )
 }
 
 /**
@@ -296,14 +343,20 @@ export async function openPairOn(page: Page, selector: string, key: string): Pro
  * given a second attempt — a lost pointer is not a missing card and this step must not report one
  * as the other.
  */
-export async function openPairSettled(page: Page, selector: string, key: string): Promise<PairRead> {
+export async function openPairSettled(
+  page: Page,
+  selector: string,
+  key: string,
+): Promise<PairRead> {
   await settleStable(
     () =>
       page.evaluate((q) => {
         const r = document.querySelector(q)?.getBoundingClientRect()
-        return r ? `${String(Math.round(r.left))},${String(Math.round(r.top))},${String(Math.round(r.width))}` : 'gone'
+        return r
+          ? `${String(Math.round(r.left))},${String(Math.round(r.top))},${String(Math.round(r.width))}`
+          : 'gone'
       }, selector),
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   const first = await openPairOn(page, selector, key)
   if (first.present) return first
@@ -334,13 +387,26 @@ async function stepPairOpens(page: Page, base: GearRow): Promise<boolean> {
   check('no card is open until something is pointed at', (await countOf(page, PAIR)) === 0)
 
   const card = await openPairOn(page, rowOf(base.key), base.key)
-  if (!check('pointing at a gear row opens its comparison pair', card.present, JSON.stringify(card).slice(0, 200))) {
+  if (
+    !check(
+      'pointing at a gear row opens its comparison pair',
+      card.present,
+      JSON.stringify(card).slice(0, 200),
+    )
+  ) {
     return false
   }
   check('…and the item card is about the row the pointer is on', card.item === base.key, card.item)
-  check('the item card states the item’s own numbers', card.stats.includes('DMG'), card.stats || '(none)')
+  check(
+    'the item card states the item’s own numbers',
+    card.stats.includes('DMG'),
+    card.stats || '(none)',
+  )
   check('…and says nothing about a simulation, because the selector is at base', !card.simulated)
-  check('the equipped card is drawn beside it, because the staged dump has been read', card.equipped)
+  check(
+    'the equipped card is drawn beside it, because the staged dump has been read',
+    card.equipped,
+  )
   checkEquippedCard(card, base)
   checkFreshness(card)
   await checkPairOnScreen(page, 'default size')
@@ -358,7 +424,7 @@ function checkFreshness(card: PairRead): void {
   check(
     'the equipped card says how old the dump making that claim is',
     card.freshness.includes('inventory dump') && card.freshness.includes('updated'),
-    card.freshness || '(no line)'
+    card.freshness || '(no line)',
   )
   check('…and does not offer the run-the-command hint, because there IS a dump', !card.noDump)
 }
@@ -374,13 +440,13 @@ function checkEquippedCard(card: PairRead, base: GearRow): void {
   check(
     'the equipped card names the cell this item would go in, once',
     card.cells.length === 1 && card.cells[0].cell === 'PRIMARY',
-    card.cells.map((c) => c.cell).join(', ') || '(no cells)'
+    card.cells.map((c) => c.cell).join(', ') || '(no cells)',
   )
   const first = card.cells[0] as CardCell | undefined
   check(
     'and it names what the staged dump says is in that hand, at its own +N',
     first?.name === 'Thelvorn, Blade of Light +5',
-    first?.name ?? '(nothing)'
+    first?.name ?? '(nothing)',
   )
 
   const worn = scaleGearRow(base, { full: 5, fraction: 0 }).stats
@@ -389,7 +455,7 @@ function checkEquippedCard(card: PairRead, base: GearRow): void {
   check(
     'the delta line is the difference between this item and the one on your body',
     wantDmg !== undefined && (first?.delta ?? '').includes(wanted),
-    `card says "${first?.delta ?? ''}" · wanted "${wanted}"`
+    `card says "${first?.delta ?? ''}" · wanted "${wanted}"`,
   )
 }
 
@@ -430,12 +496,19 @@ async function stepStillClickable(page: Page, key: string): Promise<void> {
     ['the era toggle in the toolbar above', ERA_TOGGLE],
     ['the search box', SEARCH],
     ['the row’s own wish heart', `${rowOf(key)} ${WISH}`],
-    ['the item name’s Loot link', `${rowOf(key)} ${NAME_LINK}`]
+    ['the item name’s Loot link', `${rowOf(key)} ${NAME_LINK}`],
   ] as const) {
     const verdict = await hitTest(page, selector)
-    check(`with the pair open, ${what} is still the thing a click would reach`, verdict === 'hit', verdict)
+    check(
+      `with the pair open, ${what} is still the thing a click would reach`,
+      verdict === 'hit',
+      verdict,
+    )
   }
-  check('the pair is still open — the hit test measured a live card, not an absent one', (await countOf(page, PAIR)) === 1)
+  check(
+    'the pair is still open — the hit test measured a live card, not an absent one',
+    (await countOf(page, PAIR)) === 1,
+  )
   check('and it closes when the pointer leaves the row', await closePair(page))
 }
 
@@ -457,14 +530,17 @@ async function stepSecondHand(page: Page): Promise<void> {
     await clearPicks(page, SLOT_PICKER)
     return
   }
-  const key = await page.evaluate((s) => document.querySelector(s)?.getAttribute('data-item-key') ?? '', ROW)
+  const key = await page.evaluate(
+    (s) => document.querySelector(s)?.getAttribute('data-item-key') ?? '',
+    ROW,
+  )
   const card = await openPairOn(page, rowOf(key), key)
   if (check(`pointing at a secondary-slot row opens its pair (${key})`, card.present)) {
     const secondary = card.cells.find((c) => c.cell === 'SECONDARY')
     check(
       'the SECONDARY cell names what the staged dump has in that hand, at its own +N',
       secondary?.name === 'Whitened Treant Fists +4',
-      secondary?.name ?? `(no SECONDARY cell; cells: ${card.cells.map((c) => c.cell).join(', ')})`
+      secondary?.name ?? `(no SECONDARY cell; cells: ${card.cells.map((c) => c.cell).join(', ')})`,
     )
     const cells = card.cells.map((c) => c.cell)
     check('no cell is compared twice', new Set(cells).size === cells.length, cells.join(', '))
@@ -472,10 +548,12 @@ async function stepSecondHand(page: Page): Promise<void> {
       check(
         'an item that states two slots is compared against both of them',
         cells.includes('PRIMARY') && cells.includes('SECONDARY'),
-        cells.join(', ')
+        cells.join(', '),
       )
     } else {
-      note(`the first secondary row on screen (${key}) states one slot — the two-slot dedupe is pinned in tests/gearCompare.test.mts`)
+      note(
+        `the first secondary row on screen (${key}) states one slot — the two-slot dedupe is pinned in tests/gearCompare.test.mts`,
+      )
     }
   }
   await closePair(page)
@@ -483,7 +561,11 @@ async function stepSecondHand(page: Page): Promise<void> {
 }
 
 /** The whole comparison step. Hands the tab back with nothing narrowed and no pair open. */
-export async function stepGearCompare(app: ElectronApplication, page: Page, base: GearRow): Promise<void> {
+export async function stepGearCompare(
+  app: ElectronApplication,
+  page: Page,
+  base: GearRow,
+): Promise<void> {
   if (await stepPairOpens(page, base)) {
     await stepStillClickable(page, base.key)
     await stepNarrow(app, page, base.key)

@@ -23,7 +23,7 @@ const RUNG_D0 = '[data-testid="boss-rung-d0"]'
 /** Every persisted per-character weekClears key currently in localStorage. */
 function weekClearsKeys(page: Page): Promise<string[]> {
   return page.evaluate(() =>
-    Object.keys(localStorage).filter((k) => k.startsWith('eq.bosses.weekClears.'))
+    Object.keys(localStorage).filter((k) => k.startsWith('eq.bosses.weekClears.')),
   )
 }
 
@@ -34,22 +34,29 @@ export async function stepManualClearPersists(page: Page): Promise<void> {
   // means only "no target has a credited open-world kill this reset week", which is legitimate and
   // clock-dependent. What stays uncoverable here is the click path itself when the real log has no
   // eligible target; the pure toggle logic is pinned in tests/bossWeekClears.test.mts instead.
-  const ready = await page.locator('[data-testid="boss-view"]').getAttribute('data-week-clears-ready')
+  const ready = await page
+    .locator('[data-testid="boss-view"]')
+    .getAttribute('data-week-clears-ready')
   check('the weekClears store learned the character', ready === 'true', String(ready))
 
   const markable = page.locator(`${RUNG_D0}[data-can-mark="1"]`).first()
   if ((await markable.count()) === 0) {
-    console.log('  (no target has a credited open-world kill this week — manual-clear step skipped)')
+    console.log(
+      '  (no target has a credited open-world kill this week — manual-clear step skipped)',
+    )
     return
   }
   await markable.click()
   const cleared = await settle(
     () => markable.getAttribute('data-cleared'),
     (v) => v === '1',
-    { timeoutMs: 5_000 }
+    { timeoutMs: 5_000 },
   )
   check('clicking an eligible d0 rung marks it cleared', cleared === '1', String(cleared))
-  check('…and the rung reports it was a manual mark', (await markable.getAttribute('data-manual')) === '1')
+  check(
+    '…and the rung reports it was a manual mark',
+    (await markable.getAttribute('data-manual')) === '1',
+  )
   const keys = await weekClearsKeys(page)
   check('…and it wrote a per-character weekClears key', keys.length === 1, JSON.stringify(keys))
 }

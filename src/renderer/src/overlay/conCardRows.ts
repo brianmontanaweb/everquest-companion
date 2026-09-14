@@ -86,7 +86,8 @@ export function notableChips(chips: readonly ConCardChip[]): ConCardNotableChip[
     if (c.nTotal <= 0) continue
     if (c.pinned) {
       const { total, resisted } = c.empirical
-      if (total > 0 && resisted / total >= RESIST_RATE_NOTABLE_AT) out.push({ ...c, from: 'resistRate' })
+      if (total > 0 && resisted / total >= RESIST_RATE_NOTABLE_AT)
+        out.push({ ...c, from: 'resistRate' })
       continue
     }
     if (c.tag !== null && c.fit !== null && CON_CARD_NOTABLE_TAGS.includes(c.tag)) {

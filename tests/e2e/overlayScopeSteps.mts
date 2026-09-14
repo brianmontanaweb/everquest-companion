@@ -19,7 +19,7 @@ import {
   OVERLAY_SCOPE_FLOOR,
   RETIRED_OVERLAY_CHIP,
   RETIRED_OVERLAY_HEADER_LABEL,
-  setMeterScope
+  setMeterScope,
 } from './combatPrefsSteps.mjs'
 
 /** The selector trigger, by the ARIA contract OverlayHeader renders. Its parent IS the row. */
@@ -49,12 +49,21 @@ async function label(overlay: Page): Promise<string> {
  * it — swapped in synchronously, so React never sees it.
  */
 async function checkFloorPlacement(overlay: Page): Promise<void> {
-  check('the inline scope CONTROL is gone from the overlay header (JOS-115)', (await countOf(overlay, RETIRED_OVERLAY_CHIP)) === 0)
-  check('…and the scope READOUT has left the title bar too (JOS-121)', (await countOf(overlay, RETIRED_OVERLAY_HEADER_LABEL)) === 0)
-  check('the meter panel carries it on its floor instead', (await countOf(overlay, OVERLAY_SCOPE_FLOOR)) === 1)
+  check(
+    'the inline scope CONTROL is gone from the overlay header (JOS-115)',
+    (await countOf(overlay, RETIRED_OVERLAY_CHIP)) === 0,
+  )
+  check(
+    '…and the scope READOUT has left the title bar too (JOS-121)',
+    (await countOf(overlay, RETIRED_OVERLAY_HEADER_LABEL)) === 0,
+  )
+  check(
+    'the meter panel carries it on its floor instead',
+    (await countOf(overlay, OVERLAY_SCOPE_FLOOR)) === 1,
+  )
   const inHeader = await overlay.evaluate(
     ([trig, floor]) => Boolean(document.querySelector(trig)?.parentElement?.querySelector(floor)),
-    [TRIGGER, OVERLAY_SCOPE_FLOOR] as const
+    [TRIGGER, OVERLAY_SCOPE_FLOOR] as const,
   )
   check('…and it is nowhere inside the header row', inHeader === false)
 
@@ -77,7 +86,11 @@ async function checkFloorPlacement(overlay: Page): Promise<void> {
     const cs = getComputedStyle(el)
     return `${cs.pointerEvents}/${cs.cursor}`
   }, OVERLAY_SCOPE_FLOOR)
-  check('the floor readout takes no pointer at all — it states the scope, it does not offer it', inert === 'none/auto', inert)
+  check(
+    'the floor readout takes no pointer at all — it states the scope, it does not offer it',
+    inert === 'none/auto',
+    inert,
+  )
 }
 
 /**
@@ -97,7 +110,11 @@ async function checkFloorPlacement(overlay: Page): Promise<void> {
  * for, and a pinned meter is the one with no selector, no controls and no tooltip left to explain
  * why a name is missing from it.
  */
-export async function stepOverlayScope(page: Page, overlay: Page, setLocked: SetLocked): Promise<void> {
+export async function stepOverlayScope(
+  page: Page,
+  overlay: Page,
+  setLocked: SetLocked,
+): Promise<void> {
   await setLocked(overlay, false)
   await checkFloorPlacement(overlay)
 
@@ -115,30 +132,60 @@ export async function stepOverlayScope(page: Page, overlay: Page, setLocked: Set
   // what it writes: the word has to CHANGE for the trip to have proven anything, and Group is the
   // one that also carries the law-1 fallback wording this floor exists to be able to show.
   await setMeterScope(page, 'group', 'nav-combat')
-  const applied = await settle(() => label(overlay), (t) => t.startsWith('Group'), { timeoutMs: 10_000 })
-  check('a preference set in the main window reaches the floating overlay', applied.startsWith('Group'), applied)
+  const applied = await settle(
+    () => label(overlay),
+    (t) => t.startsWith('Group'),
+    { timeoutMs: 10_000 },
+  )
+  check(
+    'a preference set in the main window reaches the floating overlay',
+    applied.startsWith('Group'),
+    applied,
+  )
   // …and no roster editor came with it: that is the Combat tab's job.
-  check('the overlay offers no roster popover', (await countOf(overlay, '[data-testid="roster-open"]')) === 0)
+  check(
+    'the overlay offers no roster popover',
+    (await countOf(overlay, '[data-testid="roster-open"]')) === 0,
+  )
 
   // THE TITLE BAR NEVER SAYS IT. The scope is deliberately NOT the default right now, so the word
   // on the floor is one no default could have put there, and the header row's own text is the
   // assertion — the tag did not move a few pixels left, it left.
   const headerText = await overlay.evaluate(
     (trig) => (document.querySelector(trig)?.parentElement as HTMLElement | null)?.innerText ?? '',
-    TRIGGER
+    TRIGGER,
   )
-  check('no scope text in the overlay meter title bar', !headerText.includes('Group'), headerText.replace(/\s+/g, ' ').slice(0, 120))
+  check(
+    'no scope text in the overlay meter title bar',
+    !headerText.includes('Group'),
+    headerText.replace(/\s+/g, ' ').slice(0, 120),
+  )
 
   await setLocked(overlay, true)
-  check('a LOCKED overlay KEEPS the floor readout (JOS-121 — it is the meter, not chrome)', (await countOf(overlay, OVERLAY_SCOPE_FLOOR)) === 1)
-  check('…still saying the stored scope with no chrome around it', (await label(overlay)) === applied, await label(overlay))
+  check(
+    'a LOCKED overlay KEEPS the floor readout (JOS-121 — it is the meter, not chrome)',
+    (await countOf(overlay, OVERLAY_SCOPE_FLOOR)) === 1,
+  )
+  check(
+    '…still saying the stored scope with no chrome around it',
+    (await label(overlay)) === applied,
+    await label(overlay),
+  )
 
   await setLocked(overlay, false)
-  check('the overlay still shows the stored scope after the lock round trip', (await label(overlay)) === applied, await label(overlay))
+  check(
+    'the overlay still shows the stored scope after the lock round trip',
+    (await label(overlay)) === applied,
+    await label(overlay),
+  )
 
   // Leave the app on its default so nothing downstream inherits a narrowed meter.
   await setMeterScope(page, 'everyone', 'nav-combat')
-  await settle(() => label(overlay), (t) => t === 'Everyone', { timeoutMs: 10_000 })
+  await settle(
+    () => label(overlay),
+    (t) => t === 'Everyone',
+    { timeoutMs: 10_000 },
+  )
 }
 
 // ── JOS-121: what the title bar did with the room ───────────────────────────────────────
@@ -215,7 +262,7 @@ function readRoom(overlay: Page, word: string): Promise<RoomReadings | null> {
           rowH: r.height,
           triggerW: t.width,
           titleW,
-          dragArea: r.width * r.height - noDrag
+          dragArea: r.width * r.height - noDrag,
         })
         if (pass === 0) {
           row.style.padding = '4px 8px'
@@ -232,7 +279,7 @@ function readRoom(overlay: Page, word: string): Promise<RoomReadings | null> {
       row.style.padding = pad
       return { before: readings[1], after: readings[0], word: scopeWord }
     },
-    [TRIGGER, DRAG_GUTTER, word] as const
+    [TRIGGER, DRAG_GUTTER, word] as const,
   )
 }
 
@@ -255,22 +302,22 @@ export async function stepTitleBarRoom(overlay: Page): Promise<void> {
     `title bar with “${word}” in it → without: selector ${before.triggerW.toFixed(1)}px → ` +
       `${after.triggerW.toFixed(1)}px, name ${before.titleW.toFixed(1)}px → ${after.titleW.toFixed(1)}px, ` +
       `drag ${before.dragArea.toFixed(0)}px² → ${after.dragArea.toFixed(0)}px² ` +
-      `(row ${after.rowW.toFixed(0)}×${before.rowH.toFixed(0)}→${after.rowH.toFixed(0)})`
+      `(row ${after.rowW.toFixed(0)}×${before.rowH.toFixed(0)}→${after.rowH.toFixed(0)})`,
   )
 
   check(
     'THE SELECTOR GAINED THE ROOM — the trigger is wider without the scope word',
     after.triggerW > before.triggerW,
-    `${before.triggerW.toFixed(1)}px → ${after.triggerW.toFixed(1)}px`
+    `${before.triggerW.toFixed(1)}px → ${after.triggerW.toFixed(1)}px`,
   )
   check(
     '…and the fight NAME is what got it, so a long mob name truncates later',
     after.titleW > before.titleW,
-    `${before.titleW.toFixed(1)}px → ${after.titleW.toFixed(1)}px`
+    `${before.titleW.toFixed(1)}px → ${after.titleW.toFixed(1)}px`,
   )
   check(
     'THE DRAG SURFACE GREW TOO — the gutter and the extra row pixel outweigh the word it lost',
     after.dragArea > before.dragArea,
-    `${before.dragArea.toFixed(0)}px² → ${after.dragArea.toFixed(0)}px²`
+    `${before.dragArea.toFixed(0)}px² → ${after.dragArea.toFixed(0)}px²`,
   )
 }

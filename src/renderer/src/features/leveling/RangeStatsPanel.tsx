@@ -44,7 +44,7 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
-  Typography
+  Typography,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import SpeedIcon from '@mui/icons-material/Speed'
@@ -82,7 +82,7 @@ import {
   zoneStatRows,
   type HeroStat,
   type ZoneSort,
-  type ZoneStatRow
+  type ZoneStatRow,
 } from './rangeStatsRows'
 import { Tooltip } from '../../lib/Tooltip'
 
@@ -108,14 +108,14 @@ const ACCENT: Record<HeroStat['id'], string> = {
   rate: '#5fbf72',
   kills: '#b07fd0',
   levels: '#d9b25f',
-  range: '#6fb3d2'
+  range: '#6fb3d2',
 }
 
 const ICON: Record<HeroStat['id'], JSX.Element> = {
   rate: <SpeedIcon />,
   kills: <WhatshotIcon />,
   levels: <TrendingUpIcon />,
-  range: <MilitaryTechIcon />
+  range: <MilitaryTechIcon />,
 }
 
 /**
@@ -129,7 +129,14 @@ function StatCard({ stat }: { stat: HeroStat }): JSX.Element {
   return (
     <Paper
       variant="outlined"
-      sx={{ p: 1.25, flex: 1, minWidth: 150, borderLeft: `3px solid ${accent}`, display: 'flex', gap: 1 }}
+      sx={{
+        p: 1.25,
+        flex: 1,
+        minWidth: 150,
+        borderLeft: `3px solid ${accent}`,
+        display: 'flex',
+        gap: 1,
+      }}
       data-testid="leveling-range-hero"
       // A NATIVE title, never a popper (JOS-143), and only on the card that has one: the rate
       // card's denominator is active time and JOS-249 says so on hover.
@@ -181,9 +188,16 @@ function ChipRow({ stats, basis }: { stats: RangeStats; basis: RateBasis }): JSX
           </Tooltip>
         )}
         <Chip size="small" variant="outlined" label={comboText(stats.combos)} sx={CHIP_SX} />
-        {comboInferred(stats.combos) && <Chip size="small" variant="outlined" label="inferred" sx={CHIP_SX} />}
+        {comboInferred(stats.combos) && (
+          <Chip size="small" variant="outlined" label="inferred" sx={CHIP_SX} />
+        )}
         {witnessed && (
-          <Chip size="small" variant="outlined" label={witnessed} sx={{ ...CHIP_SX, opacity: 0.55 }} />
+          <Chip
+            size="small"
+            variant="outlined"
+            label={witnessed}
+            sx={{ ...CHIP_SX, opacity: 0.55 }}
+          />
         )}
         {aa && (
           <Tooltip title={AA_RESPEC_CAPTION}>
@@ -227,7 +241,13 @@ function ZoneRow({ row }: { row: ZoneStatRow }): JSX.Element {
           sx={{ opacity: 0.55 }}
           // The parenthetical prints this camp's active ms, so it hovers the definition (JOS-249)
           // — and nothing at all when there is no parenthetical to hover.
-          title={row.detail ? (row.offline ? `${OFFLINE_CAPTION} · ${ACTIVE_TIME_TITLE}` : ACTIVE_TIME_TITLE) : undefined}
+          title={
+            row.detail
+              ? row.offline
+                ? `${OFFLINE_CAPTION} · ${ACTIVE_TIME_TITLE}`
+                : ACTIVE_TIME_TITLE
+              : undefined
+          }
         >
           {row.detail ? ` (${row.detail})` : ''}
         </Box>
@@ -238,7 +258,11 @@ function ZoneRow({ row }: { row: ZoneStatRow }): JSX.Element {
       <TableCell align="right" sx={CELL_SX}>
         {row.levels}
         {row.unstated > 0 && (
-          <Box component="span" sx={{ opacity: 0.55 }} title="some experience lines here stated no percentage">
+          <Box
+            component="span"
+            sx={{ opacity: 0.55 }}
+            title="some experience lines here stated no percentage"
+          >
             {' *'}
           </Box>
         )}
@@ -266,12 +290,24 @@ const HEAD_SX = { ...CELL_SX, fontWeight: 700, whiteSpace: 'nowrap' } as const
  * same law: seven columns of numbers is genuinely wide content, and wide content scrolls in its
  * OWN container — never by pushing the page sideways. Hence `overflowX` alone, never `overflow`.
  */
-function ZoneTable({ zones, basis }: { zones: RangeStats['zones']; basis: RateBasis }): JSX.Element | null {
+function ZoneTable({
+  zones,
+  basis,
+}: {
+  zones: RangeStats['zones']
+  basis: RateBasis
+}): JSX.Element | null {
   const [sort, setSort] = useState<ZoneSort>('levels')
   const rows = zoneStatRows(zones, sort, basis)
   if (rows.length === 0) return null
   const head = (key: ZoneSort, label: string): JSX.Element => (
-    <TableSortLabel active={sort === key} direction="desc" onClick={() => { setSort(key) }}>
+    <TableSortLabel
+      active={sort === key}
+      direction="desc"
+      onClick={() => {
+        setSort(key)
+      }}
+    >
       {label}
     </TableSortLabel>
   )
@@ -348,7 +384,9 @@ function HeaderRow({ stats, scope, zoneCaption, onClear }: RangeStatsPanelProps)
       )}
       {/* STATE, NOT PROCESS: one word saying these numbers are narrower than the timescale
           above them. Absent for the window, which the timescale bar already names. */}
-      {scope === 'selection' && <Chip size="small" variant="outlined" label="selection" sx={CHIP_SX} />}
+      {scope === 'selection' && (
+        <Chip size="small" variant="outlined" label="selection" sx={CHIP_SX} />
+      )}
       {stats.clipped && (
         // State, not process (UI conventions): the analytics store is capped drop-oldest,
         // so a range reaching below `windowStart` is measured over a PARTIAL record and
@@ -372,7 +410,12 @@ function HeaderRow({ stats, scope, zoneCaption, onClear }: RangeStatsPanelProps)
   )
 }
 
-export function RangeStatsPanel({ stats, scope, zoneCaption, onClear }: RangeStatsPanelProps): JSX.Element {
+export function RangeStatsPanel({
+  stats,
+  scope,
+  zoneCaption,
+  onClear,
+}: RangeStatsPanelProps): JSX.Element {
   const { basis } = useRateBasis()
   const footnote = unstatedCaption(stats)
   return (

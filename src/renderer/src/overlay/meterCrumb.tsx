@@ -77,7 +77,7 @@ export function MeterCrumb({
   dur,
   total,
   onBack,
-  children
+  children,
 }: {
   /** the drilled subject, or null at level 1 — there is no subject and nowhere to go back to. */
   name: string | null
@@ -99,7 +99,7 @@ export function MeterCrumb({
           gap: 6,
           fontSize: 11,
           color: 'rgba(255,255,255,0.7)',
-          marginBottom: 3
+          marginBottom: 3,
         }}
       >
         {/* THE WAY OUT, and its own element rather than the whole row. It was split off because the
@@ -115,14 +115,16 @@ export function MeterCrumb({
             gap: 4,
             flexGrow: 1,
             minWidth: 0,
-            cursor: onBack ? 'pointer' : 'default'
+            cursor: onBack ? 'pointer' : 'default',
           }}
         >
           {name !== null && (
             <>
               {/* The chevron says Back by being a chevron (JOS-358 — no hover out here). */}
               <span style={{ fontSize: 13 }}>{onBack ? '‹' : '·'}</span>
-              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
+              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {name}
+              </span>
             </>
           )}
         </div>
@@ -137,7 +139,7 @@ export function MeterCrumb({
                 fontSize: 8,
                 letterSpacing: 0.5,
                 textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.4)'
+                color: 'rgba(255,255,255,0.4)',
               }}
             >
               {TOTAL_LABEL}
@@ -157,7 +159,7 @@ export function MeterCrumb({
           style={{
             flexShrink: 0,
             color: 'rgba(255,255,255,0.5)',
-            fontVariantNumeric: 'tabular-nums'
+            fontVariantNumeric: 'tabular-nums',
           }}
         >
           {dur}

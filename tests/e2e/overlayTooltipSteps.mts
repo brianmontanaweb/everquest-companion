@@ -30,12 +30,13 @@ const PIN = 'button[aria-label^="Lock"], button[aria-label^="Unlock"]'
  *  modes (tests/e2e/overlayScopeSteps.mts aims at it for the same reason). */
 function readTitles(page: Page): Promise<{ outside: string[]; inside: number; pins: number }> {
   return page.evaluate((pin) => {
-    const header = document.querySelector('[data-testid="overlay-drag-gutter"]')?.parentElement ?? null
+    const header =
+      document.querySelector('[data-testid="overlay-drag-gutter"]')?.parentElement ?? null
     const all = [...document.querySelectorAll<HTMLElement>('[title]')]
     return {
       outside: all.filter((e) => !header?.contains(e)).map((e) => e.title),
       inside: all.filter((e) => header?.contains(e)).length,
-      pins: document.querySelectorAll(pin).length
+      pins: document.querySelectorAll(pin).length,
     }
   }, PIN)
 }
@@ -48,9 +49,21 @@ function readTitles(page: Page): Promise<{ outside: string[]; inside: number; pi
  */
 export async function stepNoTooltipsAnywhere(page: Page, who: string): Promise<void> {
   const seen = await readTitles(page)
-  check(`nothing below ${who}'s title bar hovers anything`, seen.outside.length === 0, JSON.stringify(seen.outside))
-  check(`…and nothing in ${who}'s title bar does either`, seen.inside === 0, `${String(seen.inside)} in the header`)
-  check('…while the unlock control is still there, by NAME rather than by tooltip', seen.pins === 1, `${String(seen.pins)} pin(s)`)
+  check(
+    `nothing below ${who}'s title bar hovers anything`,
+    seen.outside.length === 0,
+    JSON.stringify(seen.outside),
+  )
+  check(
+    `…and nothing in ${who}'s title bar does either`,
+    seen.inside === 0,
+    `${String(seen.inside)} in the header`,
+  )
+  check(
+    '…while the unlock control is still there, by NAME rather than by tooltip',
+    seen.pins === 1,
+    `${String(seen.pins)} pin(s)`,
+  )
 }
 
 /**
@@ -59,9 +72,14 @@ export async function stepNoTooltipsAnywhere(page: Page, who: string): Promise<v
  */
 export async function stepRowsHoverNothing(page: Page, rowTestId: string): Promise<void> {
   const titles = await page.evaluate(
-    (sel) => [...document.querySelectorAll<HTMLElement>(`[data-testid="${sel}"]`)].map((e) => e.title),
-    rowTestId
+    (sel) =>
+      [...document.querySelectorAll<HTMLElement>(`[data-testid="${sel}"]`)].map((e) => e.title),
+    rowTestId,
   )
   if (!check(`there are ${rowTestId} rows to make the claim about`, titles.length > 0)) return
-  check(`no ${rowTestId} hovers anything`, titles.every((t) => t === ''), JSON.stringify(titles))
+  check(
+    `no ${rowTestId} hovers anything`,
+    titles.every((t) => t === ''),
+    JSON.stringify(titles),
+  )
 }

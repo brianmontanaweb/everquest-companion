@@ -34,7 +34,7 @@ import {
   hotZoneStyle,
   overlayHotZones,
   overlayWantsHoverZones,
-  type ZoneRect
+  type ZoneRect,
 } from '../src/main/overlayHotZone'
 import {
   HOVER_EVERY_FAST_TICKS,
@@ -47,7 +47,7 @@ import {
   parseHoverZones,
   parsePresenceLine,
   pointInHoverZone,
-  watcherCadence
+  watcherCadence,
 } from '../src/main/presenceProtocol'
 import { OVERLAY_KINDS, type OverlayKind } from '../src/shared/types'
 
@@ -78,7 +78,7 @@ test('every kind gets the zone style its own renderer sensor implies', () => {
     // empty almost all of the time.
     toast: 'none',
     alertBanner: 'none',
-    conCard: 'none'
+    conCard: 'none',
   }
   for (const kind of OVERLAY_KINDS) assert.equal(hotZoneStyle(kind), expected[kind], kind)
 })
@@ -95,7 +95,7 @@ test('a chrome kind publishes the header strip and the grip — never the bars',
     x: 1920 + 380 - GRIP_BAND_PX,
     y: 300 + CHROME_STRIP_PX,
     width: GRIP_BAND_PX,
-    height: 320 - CHROME_STRIP_PX
+    height: 320 - CHROME_STRIP_PX,
   })
 
   // THE CENTRE OF THE METER IS NOT IN ANY ZONE, and that is the whole ruling: a pinned meter's body
@@ -104,10 +104,13 @@ test('a chrome kind publishes the header strip and the grip — never the bars',
   assert.equal(
     zones.some((z) => pointInHoverZone(middle.x, middle.y, z)),
     false,
-    'the bars would have taken the mouse'
+    'the bars would have taken the mouse',
   )
   // …while the pin's own corner is.
-  assert.ok(zones.some((z) => pointInHoverZone(1920 + 360, 300 + 12, z)), 'the pin is unreachable')
+  assert.ok(
+    zones.some((z) => pointInHoverZone(1920 + 360, 300 + 12, z)),
+    'the pin is unreachable',
+  )
 })
 
 test('a window kind publishes its window, and a strip publishes nothing', () => {
@@ -183,7 +186,7 @@ test('the hit test is a MIDDLE cadence, and it never speeds the ring up', () => 
   assert.deepEqual(ringOn, {
     tickMs: watcherCadence(true).tickMs,
     foregroundEveryTicks: watcherCadence(true).foregroundEveryTicks,
-    hoverEveryTicks: HOVER_EVERY_FAST_TICKS
+    hoverEveryTicks: HOVER_EVERY_FAST_TICKS,
   })
   // THE TWO CLOCKS ARE ONE CLOCK: two of the ring's floor ticks and one hover period are the same
   // two Windows timer quanta. They are not the same NUMBER, and that is the measurement rather than
@@ -192,11 +195,11 @@ test('the hit test is a MIDDLE cadence, and it never speeds the ring up', () => 
   // request never exceeds what two floor ticks measure at.
   assert.ok(
     HOVER_POLL_MS <= WATCHER_TICK_FLOOR_MS * HOVER_EVERY_FAST_TICKS,
-    'a hover period past two floor ticks would silently cost a third of the sample rate'
+    'a hover period past two floor ticks would silently cost a third of the sample rate',
   )
   assert.ok(
     HOVER_POLL_MS > WATCHER_TICK_FLOOR_MS,
-    'and one below one floor tick would be asking for the ring cadence under another name'
+    'and one below one floor tick would be asking for the ring cadence under another name',
   )
 
   // Ring off with a pinned overlay: the coarse ~160 ms tick cannot put chrome under a pointer, so
@@ -211,12 +214,14 @@ test('the hit test is a MIDDLE cadence, and it never speeds the ring up', () => 
   assert.equal(
     hoverOnly.foregroundEveryTicks * HOVER_EVERY_FAST_TICKS,
     FOREGROUND_EVERY_TICKS,
-    'the foreground/alt-tab cadence moved'
+    'the foreground/alt-tab cadence moved',
   )
   assert.ok(
-    Math.abs(hoverOnly.tickMs * hoverOnly.foregroundEveryTicks - WATCHER_TICK_FLOOR_MS * FOREGROUND_EVERY_TICKS) <=
-      WATCHER_TICK_FLOOR_MS,
-    'and the nominal request is within a quantum of the one it replaced'
+    Math.abs(
+      hoverOnly.tickMs * hoverOnly.foregroundEveryTicks -
+        WATCHER_TICK_FLOOR_MS * FOREGROUND_EVERY_TICKS,
+    ) <= WATCHER_TICK_FLOOR_MS,
+    'and the nominal request is within a quantum of the one it replaced',
   )
 
   // Neither: exactly the loop JOS-193 left behind, and `hoverEveryTicks: 0` is what the worker
@@ -239,7 +244,7 @@ test('a zone set round-trips, and an empty one is that key CLEARING', () => {
   // nothing", so a key can never be half-updated.
   assert.deepEqual(parseHoverZones(encodeHoverZones('heal-overall', [])), {
     key: 'heal-overall',
-    zones: []
+    zones: [],
   })
   // …and the bare `Z` is every key at once: the feature going off.
   assert.deepEqual(parseHoverZones(HOVER_ZONES_CLEAR), { key: null, zones: [] })
@@ -257,7 +262,7 @@ test('a malformed downstream line decodes to NOTHING — it must never move the 
     'Z|fight|1.5|2|3|4', // the wire is whole pixels
     'Z|Fight!|1|2|3|4', // a key is a bounded token
     'stop',
-    'H'
+    'H',
   ]) {
     assert.equal(parseHoverZones(junk), null, junk)
   }
@@ -267,12 +272,12 @@ test('an upstream transition decodes, and its key is checked by SHAPE', () => {
   assert.deepEqual(parsePresenceLine(encodeHoverTransition('fight', true)), {
     t: 'hover',
     key: 'fight',
-    inside: true
+    inside: true,
   })
   assert.deepEqual(parsePresenceLine(encodeHoverTransition('heal-overall', false)), {
     t: 'hover',
     key: 'heal-overall',
-    inside: false
+    inside: false,
   })
   for (const junk of ['V', 'V|fight', 'V|fight|2|3', 'V|fight|yes', 'V||1', 'V|1fight|1']) {
     assert.equal(parsePresenceLine(junk), null, junk)
@@ -283,7 +288,7 @@ test('an upstream transition decodes, and its key is checked by SHAPE', () => {
   assert.deepEqual(parsePresenceLine('V|nosuchkind|1'), {
     t: 'hover',
     key: 'nosuchkind',
-    inside: true
+    inside: true,
   })
 })
 

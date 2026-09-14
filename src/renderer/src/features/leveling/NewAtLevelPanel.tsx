@@ -72,7 +72,7 @@ import { LevelStepper } from './LevelStepper'
 function ComboChips({
   classes,
   resolved,
-  ambiguous
+  ambiguous,
 }: {
   classes: string[]
   resolved: ReadonlySet<string>
@@ -127,7 +127,7 @@ export function NewAtLevelPanel({
   viewed,
   focusLevel,
   focusNonce,
-  onFocusConsumed
+  onFocusConsumed,
 }: NewAtLevelPanelProps): JSX.Element {
   const { level, picked, pick: onPick } = viewed
   const data = useLevelUnlocks()
@@ -183,7 +183,7 @@ export function NewAtLevelPanel({
       searching
         ? searchUnlockSpells(data.spells, tokenizeSpellQuery(query), { classes, currentLevel })
         : EMPTY_UNLOCK_SEARCH,
-    [searching, data.spells, query, classes, currentLevel]
+    [searching, data.spells, query, classes, currentLevel],
   )
 
   return (
@@ -200,9 +200,21 @@ export function NewAtLevelPanel({
       {/* THE ARRIVAL PULSE, keyed on the nonce so a repeat link restarts it (see useFocusLanding).
           A sibling of the content rather than a style on the Paper, and inert to the pointer. */}
       {landing.seq !== null && <Box key={landing.seq} aria-hidden sx={LANDING_PULSE_SX} />}
-      <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mb: 0.75 }}>
+      <Stack
+        direction="row"
+        spacing={1.5}
+        alignItems="center"
+        flexWrap="wrap"
+        useFlexGap
+        sx={{ mb: 0.75 }}
+      >
         <Typography variant="subtitle2">New at this level</Typography>
-        <LevelStepper level={level} onChange={(n) => onPick(n)} dimmed={searching} testidPrefix="new-at-level" />
+        <LevelStepper
+          level={level}
+          onChange={(n) => onPick(n)}
+          dimmed={searching}
+          testidPrefix="new-at-level"
+        />
         {/* ONE QUIET WORD, ONCE (JOS-391, AGENTS.md's caveat diet). The row figures are base
             values with no crits, focus or AA in them; that is a property of the whole panel,
             said here in a word rather than footnoted on twelve rows. The per-second figures DO
@@ -254,11 +266,10 @@ export function NewAtLevelPanel({
         </Stack>
       ) : (
         <Typography variant="caption" color="text.secondary" data-testid="new-at-level-unknown">
-          Your class loadout isn&apos;t known yet - a <code>/who</code> on yourself, or a correction on the
-          Profile tab, and this fills in.
+          Your class loadout isn&apos;t known yet - a <code>/who</code> on yourself, or a correction
+          on the Profile tab, and this fills in.
         </Typography>
       )}
-
     </Paper>
   )
 }

@@ -24,7 +24,7 @@ import {
   filterSpells,
   groupSpellSections,
   type SpellSearchToken,
-  type SpellSection
+  type SpellSection,
 } from '../../../../shared/spellSearch'
 
 /** Most rows the dialog will mount at once — the perf fix's cap, now shared across sections. */
@@ -58,7 +58,7 @@ export interface SuggestResults {
 function capRows(
   groups: readonly { id: ResultSection['id']; title: string; all: SpellCatalogEntry[] }[],
   collapsed: ReadonlySet<string>,
-  budget: number
+  budget: number,
 ): ResultSection[] {
   let left = budget
   return groups.map((g) => {
@@ -79,7 +79,7 @@ export function buildSuggestResults(
   entries: readonly SpellCatalogEntry[],
   tokens: readonly SpellSearchToken[],
   collapsed: ReadonlySet<string> = new Set(),
-  budget: number = MAX_ROWS
+  budget: number = MAX_ROWS,
 ): SuggestResults {
   const matches = filterSpells(entries, tokens)
   const observed: SpellCatalogEntry[] = []
@@ -89,10 +89,10 @@ export function buildSuggestResults(
   const capped = capRows(
     [
       { id: 'fights', title: 'From your fights', all: observed },
-      ...SPELL_SECTIONS.map((id) => ({ id, title: SPELL_SECTION_LABEL[id], all: bySection[id] }))
+      ...SPELL_SECTIONS.map((id) => ({ id, title: SPELL_SECTION_LABEL[id], all: bySection[id] })),
     ],
     collapsed,
-    budget
+    budget,
   )
   return { fights: capped[0], sections: capped.slice(1), matched: matches.length }
 }
@@ -116,7 +116,7 @@ export function buildSuggestResults(
  */
 export function filterAlertGroups(
   groups: readonly AlertGroup[],
-  tokens: readonly SpellSearchToken[]
+  tokens: readonly SpellSearchToken[],
 ): AlertGroup[] {
   if (tokens.length === 0) return [...groups]
   const texts = tokens.map(groupText)
@@ -132,5 +132,5 @@ export function filterAlertGroups(
 /** The words a token contributes to a SET's text, or null when it says nothing about sets. */
 function groupText(token: SpellSearchToken): string | null {
   if (token.kind === 'text') return token.text
-  return token.kind === 'class' ? token.text ?? null : null
+  return token.kind === 'class' ? (token.text ?? null) : null
 }

@@ -29,7 +29,7 @@ import {
   OUTPUT_KINDS,
   type OutputFileStatus,
   type OutputKindDef,
-  type OutputKindId
+  type OutputKindId,
 } from '../../shared/outputs/kinds'
 import { effectiveEqRoot } from '../log/config'
 import { findOutputFile } from './discovery'
@@ -130,7 +130,7 @@ export interface OutputKindWatch {
 export function watchOutputKind(
   id: OutputKindId,
   character: OutputCharacter,
-  opts: OutputWatchOptions
+  opts: OutputWatchOptions,
 ): OutputKindWatch {
   const def: OutputKindDef = outputKind(id)
   const active = opts.active ?? ((): boolean => true)
@@ -154,7 +154,7 @@ export function watchOutputKind(
       onGone: () => {
         if (active()) armFile(true)
       },
-      onError: opts.onError
+      onError: opts.onError,
     })
     // THE GONE-AND-ALREADY-BACK CASE (JOS-431 audit fix). When the re-arm after an `unlink` finds
     // the replacement on disk, NO future event will announce it: the fresh watcher was armed on an
@@ -182,7 +182,7 @@ export function watchOutputKind(
       armFile()
       opts.onChange()
     },
-    onError: opts.onError
+    onError: opts.onError,
   })
 
   armFile()
@@ -191,6 +191,6 @@ export function watchOutputKind(
       void fileWatcher?.close()
       fileWatcher = null
       void dirWatcher.close()
-    }
+    },
   }
 }

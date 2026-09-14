@@ -24,7 +24,7 @@ import {
   onPick,
   saveZoneSelection,
   type ZoneSelection,
-  type ZoneStore
+  type ZoneStore,
 } from '../src/renderer/src/features/maps/zoneFollow'
 
 /** A `localStorage` stand-in — the two methods the module uses, over a Map. */
@@ -35,7 +35,7 @@ function store(seed: Record<string, string> = {}): ZoneStore & { all(): Record<s
     setItem: (k, v) => {
       data.set(k, v)
     },
-    all: () => Object.fromEntries(data)
+    all: () => Object.fromEntries(data),
   }
 }
 
@@ -48,7 +48,10 @@ test('a fresh install follows the character, and so does an install that predate
   assert.deepEqual(loadZoneSelection(store()), FRESH)
   // The upgrade case: `eq.maps.zone` written by v0.10.0, no mode key at all. It must not come
   // back pinned — nobody chose that, and a silent pin is the reported bug with the sign flipped.
-  assert.deepEqual(loadZoneSelection(store({ [LAST_ZONE_KEY]: 'sro' })), { zone: 'sro', mode: 'follow' })
+  assert.deepEqual(loadZoneSelection(store({ [LAST_ZONE_KEY]: 'sro' })), {
+    zone: 'sro',
+    mode: 'follow',
+  })
 })
 
 test('following re-points the map on every zone line', () => {
@@ -143,14 +146,20 @@ test('a follow into an unplaceable zone leaves the last real map remembered', ()
 
 test('a pin with nothing pinned, and any unrecognised mode, fold to following', () => {
   assert.deepEqual(loadZoneSelection(store({ [ZONE_MODE_KEY]: 'pinned' })), FRESH)
-  assert.deepEqual(loadZoneSelection(store({ [LAST_ZONE_KEY]: '', [ZONE_MODE_KEY]: 'pinned' })), FRESH)
-  assert.deepEqual(loadZoneSelection(store({ [LAST_ZONE_KEY]: 'sro', [ZONE_MODE_KEY]: 'PINNED' })), {
-    zone: 'sro',
-    mode: 'follow'
-  })
+  assert.deepEqual(
+    loadZoneSelection(store({ [LAST_ZONE_KEY]: '', [ZONE_MODE_KEY]: 'pinned' })),
+    FRESH,
+  )
+  assert.deepEqual(
+    loadZoneSelection(store({ [LAST_ZONE_KEY]: 'sro', [ZONE_MODE_KEY]: 'PINNED' })),
+    {
+      zone: 'sro',
+      mode: 'follow',
+    },
+  )
   assert.deepEqual(loadZoneSelection(store({ [LAST_ZONE_KEY]: 'sro', [ZONE_MODE_KEY]: '{}' })), {
     zone: 'sro',
-    mode: 'follow'
+    mode: 'follow',
   })
 })
 

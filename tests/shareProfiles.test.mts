@@ -30,7 +30,7 @@ import {
   UI_PREF_SPECS,
   validateEnvelope,
   type AlertSetBody,
-  type SettingsBundleBody
+  type SettingsBundleBody,
 } from '../src/shared/profiles'
 import { decodeShareString, encodeShareString, looksLikeShareString } from '../src/main/shareCodec'
 import { MAX_SPEECH_CHARS } from '../src/shared/speechText'
@@ -46,7 +46,7 @@ function alert(over: Partial<AlertDef> = {}): AlertDef {
     enabled: true,
     trigger: { type: 'event', kind: 'uncharm' },
     sound: { packId: 'alan-rickman', soundId: 'attention' },
-    ...over
+    ...over,
   }
 }
 
@@ -67,7 +67,10 @@ test('checksum is stable, and differs for different content', () => {
 // ------------------------------------------------------------------ codec round-trip
 
 test('round-trips an alert set through encode/decode', () => {
-  const body = buildAlertSetBody([alert(), alert({ id: 'boss', name: 'Boss', trigger: { type: 'app', signal: 'bossDefeat' } })])
+  const body = buildAlertSetBody([
+    alert(),
+    alert({ id: 'boss', name: 'Boss', trigger: { type: 'app', signal: 'bossDefeat' } }),
+  ])
   const env = makeEnvelope('alerts', body, '1.2.3')
   const text = encodeShareString(env)
 
@@ -87,7 +90,11 @@ test('round-trips an alert set through encode/decode', () => {
 
 test('compresses: 20 alerts still fit in a single chat message', () => {
   const many = Array.from({ length: 20 }, (_, i) =>
-    alert({ id: `alert-${i}`, name: `Alert number ${i}`, trigger: { type: 'raw', regex: `You have entered zone ${i}` } })
+    alert({
+      id: `alert-${i}`,
+      name: `Alert number ${i}`,
+      trigger: { type: 'raw', regex: `You have entered zone ${i}` },
+    }),
   )
   const text = encodeShareString(makeEnvelope('alerts', buildAlertSetBody(many), '1.0.0'))
   assert.ok(text.length < 2000, `expected < 2000 chars for Discord, got ${text.length}`)
@@ -152,7 +159,7 @@ test('sanitizes untrusted payloads: unknown keys dropped, bad regex refused', ()
     // A sender must not be able to smuggle extra state into the store.
     evil: { path: MACHINE_PATH },
     volume: 99,
-    cooldownMs: -5
+    cooldownMs: -5,
   })
   assert.ok(dirty)
   assert.equal(Object.prototype.hasOwnProperty.call(dirty as object, 'evil'), false)
@@ -160,11 +167,20 @@ test('sanitizes untrusted payloads: unknown keys dropped, bad regex refused', ()
   assert.equal(dirty?.cooldownMs, 0, 'cooldown clamped to >= 0')
 
   assert.equal(
-    sanitizeAlertDef({ id: 'y', name: 'Y', trigger: { type: 'raw', regex: '([' }, sound: { packId: 'p', soundId: 's' } }),
+    sanitizeAlertDef({
+      id: 'y',
+      name: 'Y',
+      trigger: { type: 'raw', regex: '([' },
+      sound: { packId: 'p', soundId: 's' },
+    }),
     null,
-    'an unparseable regex is refused rather than stored to blow up the evaluator'
+    'an unparseable regex is refused rather than stored to blow up the evaluator',
   )
-  assert.equal(sanitizeAlertDef({ id: 'z', name: 'Z' }), null, 'a def with no trigger/sound is refused')
+  assert.equal(
+    sanitizeAlertDef({ id: 'z', name: 'Z' }),
+    null,
+    'a def with no trigger/sound is refused',
+  )
 })
 
 // ---------------------------------------------------- voice alerts survive the wire (W1→W2)
@@ -183,7 +199,7 @@ test('the voice config survives a share round trip, validated field by field', (
     sound: { packId: 'p', soundId: 's' },
     audio: 'both',
     speech: { mode: 'spellFirstWord', voiceId: 'urn:sapi:Zira?en-US' },
-    alwaysPlay: true
+    alwaysPlay: true,
   })
   assert.deepEqual(spoken?.audio, 'both')
   assert.deepEqual(spoken?.speech, { mode: 'spellFirstWord', voiceId: 'urn:sapi:Zira?en-US' })
@@ -209,7 +225,7 @@ test('a sound-only alert is byte-identical after sanitizing (the merge fingerpri
     // Explicit defaults must NOT be written back as keys — a def that gained `audio:'sound'`
     // would stop matching the copy already in a user's store (shareMerge.alertBehaviorKey).
     audio: 'sound',
-    alwaysPlay: false
+    alwaysPlay: false,
   })
   assert.equal(Object.prototype.hasOwnProperty.call(plain as object, 'audio'), false)
   assert.equal(Object.prototype.hasOwnProperty.call(plain as object, 'alwaysPlay'), false)
@@ -221,13 +237,13 @@ test('untrusted voice fields are validated against the closed sets, clamped, or 
     id: 'v',
     name: 'V',
     trigger: { type: 'raw', regex: 'ok' },
-    sound: { packId: 'p', soundId: 's' }
+    sound: { packId: 'p', soundId: 's' },
   }
   const bogus = sanitizeAlertDef({
     ...base,
     audio: 'megaphone',
     speech: { mode: 'readMyEmail', phrase: 'nope' },
-    alwaysPlay: 'yes'
+    alwaysPlay: 'yes',
   })
   assert.equal(bogus?.audio, undefined, 'an unknown audio action is dropped, never coerced')
   assert.equal(bogus?.speech, undefined, 'an unknown speech mode is dropped, never defaulted')
@@ -236,22 +252,29 @@ test('untrusted voice fields are validated against the closed sets, clamped, or 
   const long = sanitizeAlertDef({
     ...base,
     audio: 'speech',
-    speech: { mode: 'custom', phrase: 'x'.repeat(500), voiceId: 'v'.repeat(9999) }
+    speech: { mode: 'custom', phrase: 'x'.repeat(500), voiceId: 'v'.repeat(9999) },
   })
   assert.equal(long?.speech?.phrase?.length, MAX_SPEECH_CHARS, 'the phrase is capped, not refused')
   assert.equal(long?.speech?.voiceId?.length, SHARE_LIMITS.maxVoiceIdChars)
 
   const empties = sanitizeAlertDef({
     ...base,
-    speech: { mode: 'custom', phrase: '   ', voiceId: '' }
+    speech: { mode: 'custom', phrase: '   ', voiceId: '' },
   })
-  assert.deepEqual(empties?.speech, { mode: 'custom' }, 'blank optional fields are omitted, not stored empty')
+  assert.deepEqual(
+    empties?.speech,
+    { mode: 'custom' },
+    'blank optional fields are omitted, not stored empty',
+  )
 })
 
 // ------------------------------------------------------------------ additive merge
 
 test('merge is additive: existing alerts are never removed or modified', () => {
-  const existing = [alert(), alert({ id: 'boss', name: 'Boss', trigger: { type: 'app', signal: 'bossDefeat' } })]
+  const existing = [
+    alert(),
+    alert({ id: 'boss', name: 'Boss', trigger: { type: 'app', signal: 'bossDefeat' } }),
+  ]
   const incoming = [alert({ id: 'new-one', name: 'New', trigger: { type: 'raw', regex: 'hello' } })]
   const plan = planAlertMerge(existing, incoming, ['alan-rickman'])
   const res = applyAlertMerge(existing, plan)
@@ -278,12 +301,19 @@ test('id collision with DIFFERENT behavior imports alongside, deterministically'
   assert.equal(plan[0].action, 'rekey')
   assert.notEqual(plan[0].finalId, 'charm-break')
   assert.ok(plan[0].finalId.startsWith('charm-break~'))
-  assert.equal(plan[0].finalName, 'Charm break (imported)', 'name clash is disambiguated for the list')
+  assert.equal(
+    plan[0].finalName,
+    'Charm break (imported)',
+    'name clash is disambiguated for the list',
+  )
 
   const first = applyAlertMerge(existing, plan)
   assert.equal(first.added, 1)
   assert.equal(first.alerts.length, 2)
-  assert.ok(first.alerts.some((a) => a.id === 'charm-break'), 'the original survives untouched')
+  assert.ok(
+    first.alerts.some((a) => a.id === 'charm-break'),
+    'the original survives untouched',
+  )
 
   // Second import of the SAME payload: the rekeyed id is derived from the behavior, so the
   // twin is found and skipped — idempotent.
@@ -297,7 +327,7 @@ test('id collision with DIFFERENT behavior imports alongside, deterministically'
 test('two incoming alerts that collide with EACH OTHER both land', () => {
   const incoming = [
     alert({ id: 'dup', name: 'Dup', trigger: { type: 'raw', regex: 'a' } }),
-    alert({ id: 'dup', name: 'Dup', trigger: { type: 'raw', regex: 'b' } })
+    alert({ id: 'dup', name: 'Dup', trigger: { type: 'raw', regex: 'b' } }),
   ]
   const plan = planAlertMerge([], incoming, ['alan-rickman'])
   const res = applyAlertMerge([], plan)
@@ -308,7 +338,7 @@ test('two incoming alerts that collide with EACH OTHER both land', () => {
 test('per-item opt-in: only selected alerts are applied', () => {
   const incoming = [
     alert({ id: 'a1', name: 'A1', trigger: { type: 'raw', regex: 'a' } }),
-    alert({ id: 'a2', name: 'A2', trigger: { type: 'raw', regex: 'b' } })
+    alert({ id: 'a2', name: 'A2', trigger: { type: 'raw', regex: 'b' } }),
   ]
   const plan = planAlertMerge([], incoming, ['alan-rickman'])
   const res = applyAlertMerge([], plan, new Set(['a1']))
@@ -323,14 +353,27 @@ test('a missing sound pack flags the alert but still imports it (never silently 
   assert.equal(plan[0].action, 'add')
   const res = applyAlertMerge([], plan)
   assert.equal(res.added, 1)
-  assert.deepEqual(res.alerts[0].sound, { packId: 'peon', soundId: 'work-work' }, 'sound is NOT re-pointed at a default')
+  assert.deepEqual(
+    res.alerts[0].sound,
+    { packId: 'peon', soundId: 'work-work' },
+    'sound is NOT re-pointed at a default',
+  )
 })
 
 test('behavior key ignores name/note/enabled but tracks trigger + sound', () => {
   const base = alert()
-  assert.equal(alertBehaviorKey(base), alertBehaviorKey(alert({ name: 'other', note: 'x', enabled: false })))
-  assert.notEqual(alertBehaviorKey(base), alertBehaviorKey(alert({ sound: { packId: 'p', soundId: 's' } })))
-  assert.notEqual(alertBehaviorKey(base), alertBehaviorKey(alert({ trigger: { type: 'raw', regex: 'q' } })))
+  assert.equal(
+    alertBehaviorKey(base),
+    alertBehaviorKey(alert({ name: 'other', note: 'x', enabled: false })),
+  )
+  assert.notEqual(
+    alertBehaviorKey(base),
+    alertBehaviorKey(alert({ sound: { packId: 'p', soundId: 's' } })),
+  )
+  assert.notEqual(
+    alertBehaviorKey(base),
+    alertBehaviorKey(alert({ trigger: { type: 'raw', regex: 'q' } })),
+  )
 })
 
 // ------------------------------------------------------------------ the whitelist (tripwire)
@@ -351,16 +394,16 @@ test('WHITELIST: no machine path can appear in a settings export', () => {
         open: true,
         locked: false,
         bounds: { x: 1920, y: 0, width: 420, height: 300 },
-        drill: { entityId: 'primitive' }
-      } as never
+        drill: { entityId: 'primitive' },
+      } as never,
     },
     ui: {
       'eq.combat.scope': 'overall',
       'eq.favorites': '["fire emerald"]',
       // Not on the whitelist — must be dropped even though it was handed in:
       'eq.view': 'combat',
-      'eq.secretPath': MACHINE_PATH
-    }
+      'eq.secretPath': MACHINE_PATH,
+    },
   })
 
   const text = canonicalJson(body)
@@ -380,26 +423,26 @@ test('WHITELIST: no machine path can appear in a settings export', () => {
 })
 
 test('WHITELIST: the exportable UI keys are exactly the documented list', () => {
-  assert.deepEqual(
-    UI_PREF_SPECS.map((s) => s.key).sort(),
-    [
-      'eq.bossDensity',
-      'eq.combat.scope',
-      'eq.combat.selfMeterName',
-      'eq.countSource',
-      'eq.favorites',
-      'eq.profile',
-      'eq.selectedClasses'
-    ]
+  assert.deepEqual(UI_PREF_SPECS.map((s) => s.key).sort(), [
+    'eq.bossDensity',
+    'eq.combat.scope',
+    'eq.combat.selfMeterName',
+    'eq.countSource',
+    'eq.favorites',
+    'eq.profile',
+    'eq.selectedClasses',
+  ])
+  assert.ok(
+    !UI_PREF_SPECS.some((s) => s.key === 'eq.view'),
+    'the last-open tab is never exportable',
   )
-  assert.ok(!UI_PREF_SPECS.some((s) => s.key === 'eq.view'), 'the last-open tab is never exportable')
 })
 
 test('the self-meter-name pref rides the bundle', () => {
   const body = buildSettingsBody({
     alerts: [],
     alertPrefs: { globalVolume: 0.5, muted: false },
-    ui: { 'eq.combat.selfMeterName': '1' }
+    ui: { 'eq.combat.selfMeterName': '1' },
   })
   assert.equal(body.ui?.['eq.combat.selfMeterName'], '1')
 })
@@ -408,8 +451,10 @@ test('WHITELIST holds through a full encode: the wire bytes carry no path', () =
   const body = buildSettingsBody({
     alerts: [alert()],
     alertPrefs: { globalVolume: 0.7, muted: false },
-    overlays: { fight: { bgAlpha: 0.72, topN: 5, bounds: { x: 1, y: 2, width: 3, height: 4 } } as never },
-    ui: { 'eq.view': 'posky', 'eq.combat.scope': 'fight' }
+    overlays: {
+      fight: { bgAlpha: 0.72, topN: 5, bounds: { x: 1, y: 2, width: 3, height: 4 } } as never,
+    },
+    ui: { 'eq.view': 'posky', 'eq.combat.scope': 'fight' },
   })
   const decoded = decodeShareString(encodeShareString(makeEnvelope('settings', body, '1.0.0')))
   assert.ok(decoded.ok)
@@ -426,12 +471,12 @@ test('scalar changes are reported only when they actually differ', () => {
     // `topN` rides along from a bundle written before the row budget was retired. It offers
     // nothing to opt into now, so it must not become a row the user is asked about.
     overlays: { fight: { bgAlpha: 0.9, topN: 10 } as never },
-    ui: { 'eq.combat.scope': 'overall' }
+    ui: { 'eq.combat.scope': 'overall' },
   }
   const changes = planScalarChanges(body, {
     alertPrefs: { globalVolume: 0.5, muted: false },
     overlays: { fight: { bgAlpha: 0.72 } },
-    ui: { 'eq.combat.scope': 'overall' }
+    ui: { 'eq.combat.scope': 'overall' },
   })
   const ids = changes.map((c) => c.id).sort()
   // `overlayBgAlpha.shared` is there because this body is an OLD one (JOS-407): it carries per-kind
@@ -449,30 +494,39 @@ test('the global always-play preference travels, and an OLD bundle offers no row
   assert.equal('alwaysPlayAll' in (off.alertPrefs ?? {}), false, 'off is absent, byte for byte')
   const on = buildSettingsBody({
     alerts: [],
-    alertPrefs: { globalVolume: 0.7, muted: false, alwaysPlayAll: true }
+    alertPrefs: { globalVolume: 0.7, muted: false, alwaysPlayAll: true },
   })
   assert.equal(on.alertPrefs?.alwaysPlayAll, true)
 
   const ctx = {
     alertPrefs: { globalVolume: 0.7, muted: false },
     overlays: {},
-    ui: {}
+    ui: {},
   }
   // A pre-JOS-222 bundle: nothing to opt into.
-  assert.deepEqual(planScalarChanges(off, ctx).map((c) => c.id), [])
+  assert.deepEqual(
+    planScalarChanges(off, ctx).map((c) => c.id),
+    [],
+  )
   // A bundle from someone who turned it on: one row, false → true.
   const rows = planScalarChanges(on, ctx)
-  assert.deepEqual(rows.map((c) => c.id), ['alertPrefs.alwaysPlayAll'])
+  assert.deepEqual(
+    rows.map((c) => c.id),
+    ['alertPrefs.alwaysPlayAll'],
+  )
   assert.deepEqual(
     { current: rows[0]?.current, incoming: rows[0]?.incoming },
-    { current: 'false', incoming: 'true' }
+    { current: 'false', incoming: 'true' },
   )
   // …and the row exists in the other direction too, so an import can turn it back OFF.
   const backOff = planScalarChanges(off, {
     ...ctx,
-    alertPrefs: { globalVolume: 0.7, muted: false, alwaysPlayAll: true }
+    alertPrefs: { globalVolume: 0.7, muted: false, alwaysPlayAll: true },
   })
-  assert.deepEqual(backOff.map((c) => c.id), ['alertPrefs.alwaysPlayAll'])
+  assert.deepEqual(
+    backOff.map((c) => c.id),
+    ['alertPrefs.alwaysPlayAll'],
+  )
 })
 
 test('list-shaped UI prefs union additively; nothing you had is dropped', () => {
@@ -490,5 +544,8 @@ test('list-shaped UI prefs union additively; nothing you had is dropped', () => 
 test('buildAlertSetBody picks one alert by id, or all when omitted', () => {
   const all = [alert(), alert({ id: 'b', name: 'B', trigger: { type: 'raw', regex: 'x' } })]
   assert.equal(buildAlertSetBody(all).alerts.length, 2)
-  assert.deepEqual(buildAlertSetBody(all, ['b']).alerts.map((a) => a.id), ['b'])
+  assert.deepEqual(
+    buildAlertSetBody(all, ['b']).alerts.map((a) => a.id),
+    ['b'],
+  )
 })

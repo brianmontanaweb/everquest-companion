@@ -36,7 +36,7 @@ import {
   reportRun,
   settle,
   settleGone,
-  sleep
+  sleep,
 } from './appHarness.mjs'
 import { closeWindows, mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture, type FixtureLog } from './logFixture.mjs'
@@ -77,15 +77,17 @@ interface Payload {
 
 /** The bridge the app's own UI uses — so the spec observes exactly what the app observes. */
 function payload(page: Page): Promise<Payload> {
-  return page.evaluate(
-    () => (window as unknown as { eq: { getTelemetryPayload: () => Promise<Payload> } }).eq.getTelemetryPayload()
+  return page.evaluate(() =>
+    (
+      window as unknown as { eq: { getTelemetryPayload: () => Promise<Payload> } }
+    ).eq.getTelemetryPayload(),
   )
 }
 
 function textOf(page: Page, selector: string): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText ?? '',
-    selector
+    selector,
   )
 }
 
@@ -104,14 +106,20 @@ function textOf(page: Page, selector: string): Promise<string> {
 async function stepNoticeShown(page: Page): Promise<boolean> {
   await page.waitForSelector(NOTICE, { timeout: 30_000 })
   const shown = await countOf(page, NOTICE)
-  if (!check('the first-run notice renders on a fresh install', shown === 1, `${String(shown)} bar(s)`)) {
+  if (
+    !check(
+      'the first-run notice renders on a fresh install',
+      shown === 1,
+      `${String(shown)} bar(s)`,
+    )
+  ) {
     return false
   }
   const sentence = (await textOf(page, TEXT)).replace(/\s+/g, ' ').trim()
   check(
     'it says what it does, in one sentence, before anything could be sent',
     sentence === 'We collect completely anonymous usage data.',
-    sentence.slice(0, 110)
+    sentence.slice(0, 110),
   )
   // …and NOTHING else. The whole bar — sentence plus the three action labels — has to stay
   // shorter than the first paragraph of the modal this replaced.
@@ -119,7 +127,7 @@ async function stepNoticeShown(page: Page): Promise<boolean> {
   check(
     'no second paragraph, no list — the amended T1 shape',
     body.length <= 80 && (await countOf(page, `${NOTICE} li`)) === 0,
-    `${String(body.length)} chars: ${body}`
+    `${String(body.length)} chars: ${body}`,
   )
   return true
 }
@@ -142,15 +150,19 @@ async function stepBarShape(page: Page): Promise<void> {
         const el = document.querySelector(s) as HTMLElement | null
         if (!el) return null
         const r = el.getBoundingClientRect()
-        return { h: Math.round(r.height), fs: parseFloat(getComputedStyle(el).fontSize), tag: el.tagName }
+        return {
+          h: Math.round(r.height),
+          fs: parseFloat(getComputedStyle(el).fontSize),
+          tag: el.tagName,
+        }
       }),
-    [OFF, DETAILS, DISMISS]
+    [OFF, DETAILS, DISMISS],
   )
   if (
     !check(
       'the bar carries all three exits: Opt out, Details, dismiss',
       els.every((e) => e != null),
-      JSON.stringify(els)
+      JSON.stringify(els),
     )
   ) {
     return
@@ -160,11 +172,11 @@ async function stepBarShape(page: Page): Promise<void> {
   check(
     'Opt out is a BUTTON, never smaller than the Details link beside it',
     off.tag === 'BUTTON' && off.fs >= details.fs && off.h >= details.h,
-    `off ${String(off.h)}px/${String(off.fs)} vs details ${String(details.h)}px/${String(details.fs)}`
+    `off ${String(off.h)}px/${String(off.fs)} vs details ${String(details.h)}px/${String(details.fs)}`,
   )
   check(
     '…and nothing is pre-checked: the notice is actions, not a form',
-    (await countOf(page, `${NOTICE} input`)) === 0
+    (await countOf(page, `${NOTICE} input`)) === 0,
   )
   // A bar, not a panel: it may not eat the app. Anything taller than ~1/5 of the window is a
   // modal wearing a bar's clothes.
@@ -172,7 +184,11 @@ async function stepBarShape(page: Page): Promise<void> {
     const el = document.querySelector(sel) as HTMLElement | null
     return el ? el.getBoundingClientRect().height / window.innerHeight : 1
   }, NOTICE)
-  check('it is a slim bar — it does not take the window over', tall < 0.2, `${(tall * 100).toFixed(0)}% of the window`)
+  check(
+    'it is a slim bar — it does not take the window over',
+    tall < 0.2,
+    `${(tall * 100).toFixed(0)}% of the window`,
+  )
 }
 
 /**
@@ -185,12 +201,20 @@ async function stepDismissKeepsOn(page: Page): Promise<void> {
   check('dismissing closes the bar', await settleGone(page, NOTICE, { timeoutMs: 8_000 }))
   // The bar's exit is a renderer animation; the ANSWER it recorded is a main-process store write,
   // so the payload is read until it carries one rather than on whatever tick the DOM finished on.
-  const p = await settle(() => payload(page), (x) => x.prefs.noticeShown, { timeoutMs: 8_000 })
-  check('dismissal KEEPS collection on — it is not a silent opt-out', p.prefs.enabled === true, JSON.stringify(p.prefs))
+  const p = await settle(
+    () => payload(page),
+    (x) => x.prefs.noticeShown,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    'dismissal KEEPS collection on — it is not a silent opt-out',
+    p.prefs.enabled === true,
+    JSON.stringify(p.prefs),
+  )
   check(
     '…and still marks the notice shown, so it is a once-ever question',
     p.prefs.noticeShown === true,
-    JSON.stringify(p.prefs)
+    JSON.stringify(p.prefs),
   )
 }
 
@@ -216,7 +240,7 @@ const FIRST_RUN_STEPS = [
   'logDetected',
   'firstParse',
   'firstNonOverviewView',
-  'firstOverlayEnabled'
+  'firstOverlayEnabled',
 ]
 
 async function stepFirstRunFunnel(page: Page): Promise<void> {
@@ -227,12 +251,12 @@ async function stepFirstRunFunnel(page: Page): Promise<void> {
   check(
     'a first run records the funnel step that says a first run happened',
     steps.includes('installed'),
-    `first-run steps: ${steps.join(', ') || '(none)'}`
+    `first-run steps: ${steps.join(', ') || '(none)'}`,
   )
   check(
     'every recorded step is a DECLARED first-run step, exactly once',
     steps.every((s) => FIRST_RUN_STEPS.includes(s)) && new Set(steps).size === steps.length,
-    steps.join(', ')
+    steps.join(', '),
   )
   note(`first-run funnel on this machine: ${steps.join(' → ') || '(none)'}`)
 }
@@ -252,7 +276,7 @@ async function stepDetailsOpensPane(page: Page): Promise<void> {
   check(
     '…and reading is not answering twice: collection stays on, the question is marked asked',
     p.prefs.enabled === true && p.prefs.noticeShown === true,
-    JSON.stringify(p.prefs)
+    JSON.stringify(p.prefs),
   )
 }
 
@@ -260,16 +284,20 @@ async function stepDetailsOpensPane(page: Page): Promise<void> {
 async function stepOptOut(page: Page): Promise<void> {
   await page.click(OFF)
   check('answering closes the bar', await settleGone(page, NOTICE, { timeoutMs: 8_000 }))
-  const p = await settle(() => payload(page), (x) => x.prefs.noticeShown, { timeoutMs: 8_000 })
+  const p = await settle(
+    () => payload(page),
+    (x) => x.prefs.noticeShown,
+    { timeoutMs: 8_000 },
+  )
   check('“Opt out” switches collection off', p.prefs.enabled === false, JSON.stringify(p.prefs))
   check(
     '…and marks the notice shown either way, so it is a once-ever question',
-    p.prefs.noticeShown === true
+    p.prefs.noticeShown === true,
   )
   check(
     '…and drops everything already buffered, immediately',
     p.buffered.length === 0,
-    `${String(p.buffered.length)} event(s) still held`
+    `${String(p.buffered.length)} event(s) still held`,
   )
   // …AND the id goes with it. This assertion is what found the original bug: because the
   // feature is opt-OUT, an id is minted on the very first launch, BEFORE the notice is
@@ -278,7 +306,7 @@ async function stepOptOut(page: Page): Promise<void> {
   check(
     'no analytics id is left behind for a user who declined',
     p.prefs.analyticsId === null,
-    String(p.prefs.analyticsId)
+    String(p.prefs.analyticsId),
   )
 }
 
@@ -310,7 +338,7 @@ function stepOnDisk(userData: string): void {
   check(
     'the opt-out is on disk after the app that made it has exited',
     prefs?.enabled === false && prefs.noticeShown === true,
-    JSON.stringify(telemetry)
+    JSON.stringify(telemetry),
   )
 }
 
@@ -320,7 +348,7 @@ async function stepPersisted(page: Page): Promise<void> {
   check(
     'the answer SURVIVES a restart — analytics is still off after relaunch',
     p.prefs.enabled === false,
-    JSON.stringify(p.prefs)
+    JSON.stringify(p.prefs),
   )
   check('…and the notice is not asked again', (await countOf(page, NOTICE)) === 0)
 }
@@ -332,17 +360,23 @@ async function stepPane(page: Page): Promise<void> {
   await page.waitForSelector(PANE, { timeout: 15_000 })
   check('Preferences has a Usage analytics section', (await countOf(page, PANE)) === 1)
 
-  const off = await page.evaluate((sel) => (document.querySelector(sel) as HTMLInputElement | null)?.checked, SWITCH)
+  const off = await page.evaluate(
+    (sel) => (document.querySelector(sel) as HTMLInputElement | null)?.checked,
+    SWITCH,
+  )
   check('the switch reflects the stored answer (off)', off === false, String(off))
 
   // THE LIT BUILD, as the user meets it: not an empty box to interpret, a sentence. This run
   // never sent (EQ_E2E=1 shuts the gate), so the pane must say exactly that — and NOT the
   // dark-build sentence, which stopped being true when the endpoint was compiled in.
-  const empty = (await textOf(page, '[data-testid="telemetry-last-batch-empty"]')).replace(/\s+/g, ' ')
+  const empty = (await textOf(page, '[data-testid="telemetry-last-batch-empty"]')).replace(
+    /\s+/g,
+    ' ',
+  )
   check(
     'the pane says, in words, that nothing has been sent yet from this install',
     /nothing has been sent yet/i.test(empty) && !/no analytics endpoint compiled in/i.test(empty),
-    empty.slice(0, 120)
+    empty.slice(0, 120),
   )
 }
 
@@ -351,13 +385,21 @@ async function stepCollects(page: Page): Promise<void> {
   await page.click(SWITCH)
   // The MINTING is the condition: the switch write crosses into main, which generates the id and
   // hands it back. Waiting for the id to exist is waiting for exactly what is asserted next.
-  const after = await settle(() => payload(page), (p) => p.prefs.enabled && p.prefs.analyticsId !== null, {
-    timeoutMs: 10_000
-  })
-  check('turning it back on mints an anonymous id', /^[0-9a-f-]{36}$/i.test(after.prefs.analyticsId ?? ''), String(after.prefs.analyticsId))
+  const after = await settle(
+    () => payload(page),
+    (p) => p.prefs.enabled && p.prefs.analyticsId !== null,
+    {
+      timeoutMs: 10_000,
+    },
+  )
+  check(
+    'turning it back on mints an anonymous id',
+    /^[0-9a-f-]{36}$/i.test(after.prefs.analyticsId ?? ''),
+    String(after.prefs.analyticsId),
+  )
   check(
     'the id is NOT the feedback install id — the two data sets cannot be joined',
-    after.prefs.analyticsId !== null
+    after.prefs.analyticsId !== null,
   )
 
   // Fill the ring the way a user would: switch tabs. `useViewDwell` reports on the switch.
@@ -369,13 +411,17 @@ async function stepCollects(page: Page): Promise<void> {
     await sleep(DWELL_MS)
   }
   // …and the ring filling is a condition, so it is one.
-  const p = await settle(() => payload(page), (x) => x.buffered.some((r) => r.ev.t === 'viewDwell'), {
-    timeoutMs: 10_000
-  })
+  const p = await settle(
+    () => payload(page),
+    (x) => x.buffered.some((r) => r.ev.t === 'viewDwell'),
+    {
+      timeoutMs: 10_000,
+    },
+  )
   check(
     'switching tabs records viewDwell events into the LOCAL ring',
     p.buffered.some((r) => r.ev.t === 'viewDwell'),
-    `${String(p.buffered.length)} buffered: ${[...new Set(p.buffered.map((r) => String(r.ev.t)))].join(', ')}`
+    `${String(p.buffered.length)} buffered: ${[...new Set(p.buffered.map((r) => String(r.ev.t)))].join(', ')}`,
   )
 
   // THE SETUP SNAPSHOT (JOS-364), on the machine the suite is really running on. It is the one
@@ -386,24 +432,34 @@ async function stepCollects(page: Page): Promise<void> {
   //
   // Polled rather than timed: the producer waits out its own delay after the replay finishes, and
   // a fixed sleep here would be a flake waiting for a slow CI box.
-  const settled = await settle(() => payload(page), (x) => x.buffered.some((r) => r.ev.t === 'setupSnapshot'), { timeoutMs: 30_000 })
+  const settled = await settle(
+    () => payload(page),
+    (x) => x.buffered.some((r) => r.ev.t === 'setupSnapshot'),
+    { timeoutMs: 30_000 },
+  )
   const setup = settled.buffered.filter((r) => r.ev.t === 'setupSnapshot')
   check(
     'the setup snapshot is PRODUCED — once, on the machine this suite is running on',
     setup.length === 1,
-    `${String(setup.length)} among ${[...new Set(settled.buffered.map((r) => String(r.ev.t)))].join(', ')}`
+    `${String(setup.length)} among ${[...new Set(settled.buffered.map((r) => String(r.ev.t)))].join(', ')}`,
   )
   // The machine class, as SHAPE rather than as values: the cores and the GPU of the box running
   // this suite are properties of THAT box, and frozen numbers rot. What must hold on any machine
   // is that every axis is present and is a bucket index or a member of its own closed enum.
   const ev: Record<string, unknown> = setup[0]?.ev ?? {}
-  const ENUMS = { gpuVendor: 'nvidia amd intel other unknown', gpuCompositing: 'hardware software off unknown', eqWindowMode: 'fullscreen windowed unknown' }
+  const ENUMS = {
+    gpuVendor: 'nvidia amd intel other unknown',
+    gpuCompositing: 'hardware software off unknown',
+    eqWindowMode: 'fullscreen windowed unknown',
+  }
   check(
     '…carrying the machine class: four bucket INDICES, three closed enums and a safe-mode flag',
-    ['cpuCountBucket', 'totalMemBucket', 'displayCountBucket', 'primaryScaleBucket'].every((k) => typeof ev[k] === 'number') &&
+    ['cpuCountBucket', 'totalMemBucket', 'displayCountBucket', 'primaryScaleBucket'].every(
+      (k) => typeof ev[k] === 'number',
+    ) &&
       Object.entries(ENUMS).every(([k, allowed]) => allowed.split(' ').includes(String(ev[k]))) &&
       typeof ev.safeMode === 'boolean',
-    JSON.stringify(ev)
+    JSON.stringify(ev),
   )
 
   // …AND MAIN DERIVES THE FUNNEL STEP FROM THEM. `firstNonOverviewView` is never sent by the
@@ -415,12 +471,12 @@ async function stepCollects(page: Page): Promise<void> {
   check(
     'main derives firstNonOverviewView from the renderer dwell it already receives',
     derived.some((r) => String(r.ev.step) === 'firstNonOverviewView'),
-    derived.map((r) => String(r.ev.step)).join(', ') || '(no first-run steps)'
+    derived.map((r) => String(r.ev.step)).join(', ') || '(no first-run steps)',
   )
   check(
     '…once, and only for tabs that are not the one the app opens on',
     derived.filter((r) => String(r.ev.step) === 'firstNonOverviewView').length === 1,
-    `${String(derived.length)} first-run step(s) after visiting combat, loot, overview`
+    `${String(derived.length)} first-run step(s) after visiting combat, loot, overview`,
   )
 
   // THE PRIVACY PROPERTY, against the buffer this session actually produced. Every string in
@@ -430,7 +486,7 @@ async function stepCollects(page: Page): Promise<void> {
   const strings = p.buffered.flatMap((r) =>
     Object.entries(r.ev)
       .filter(([, v]) => typeof v === 'string')
-      .map(([k, v]) => `${k}=${String(v)}`)
+      .map(([k, v]) => `${k}=${String(v)}`),
   )
   const suspicious = strings.filter((s) => {
     const value = s.slice(s.indexOf('=') + 1)
@@ -439,7 +495,7 @@ async function stepCollects(page: Page): Promise<void> {
   check(
     'nothing in the buffer is free text — every string is a short closed-enum token',
     suspicious.length === 0,
-    suspicious.slice(0, 3).join(' | ') || `${String(strings.length)} strings, all enum tokens`
+    suspicious.slice(0, 3).join(' | ') || `${String(strings.length)} strings, all enum tokens`,
   )
 
   // …and it does not INVENT the part it could not have measured. This session began with
@@ -448,7 +504,7 @@ async function stepCollects(page: Page): Promise<void> {
   check(
     'enabling mid-session records no sessionStart — the number was never measurable',
     !p.buffered.some((r) => r.ev.t === 'sessionStart'),
-    [...new Set(p.buffered.map((r) => String(r.ev.t)))].join(', ')
+    [...new Set(p.buffered.map((r) => String(r.ev.t)))].join(', '),
   )
 
   // THE LIT BUILD, AND THE E2E LAW TOGETHER: the endpoint IS compiled in (that is the whole
@@ -458,12 +514,12 @@ async function stepCollects(page: Page): Promise<void> {
   check(
     'the running build HAS a telemetry endpoint — the client is lit',
     p.endpointConfigured === true,
-    `endpointConfigured=${String(p.endpointConfigured)}`
+    `endpointConfigured=${String(p.endpointConfigured)}`,
   )
   check(
     '…and this e2e run still sent nothing: no batch ever left the harness',
     p.lastBatch === null,
-    `lastBatch=${JSON.stringify(p.lastBatch)}`
+    `lastBatch=${JSON.stringify(p.lastBatch)}`,
   )
 }
 
@@ -504,7 +560,8 @@ async function firstRun({ label, errors, step, log, userData, byWindow }: FirstR
     const page = await mainWindow(app)
     watch(page, errors)
     if (await stepNoticeShown(page)) await step(page)
-    if (failures.length) await dumpArtifacts(page, `telemetry-FAIL-${label.split(':')[0].replace(/\s+/g, '-')}`)
+    if (failures.length)
+      await dumpArtifacts(page, `telemetry-FAIL-${label.split(':')[0].replace(/\s+/g, '-')}`)
     if (byWindow === true) await closeWindows(app)
   } finally {
     await close()
@@ -548,7 +605,7 @@ async function main(): Promise<void> {
       // untouched (this is a `window.onerror`, not a render throw), so the app stays usable —
       // but there is nothing after it here that needs it to be.
       await stepThrowRendererError(page, log)
-    }
+    },
   })
   // …and now that launch is gone, what it left behind. It is the one launch that ends with
   // collection ON (dismissal is not an opt-out), so it is the one whose ring holds a reading.
@@ -557,8 +614,19 @@ async function main(): Promise<void> {
   // `replayDone` and these two start there, so one launch leaves both readings behind.
   stepLiveRiders(firstRunData)
   stepErrorReport(firstRunData, log)
-  await firstRun({ label: 'launch 2: fresh userData — the Details link…', errors: consoleErrors, log, step: stepDetailsOpensPane })
-  await firstRun({ label: 'launch 3: fresh userData — opting out…', errors: consoleErrors, log, step: stepOptOut, userData: restartData })
+  await firstRun({
+    label: 'launch 2: fresh userData — the Details link…',
+    errors: consoleErrors,
+    log,
+    step: stepDetailsOpensPane,
+  })
+  await firstRun({
+    label: 'launch 3: fresh userData — opting out…',
+    errors: consoleErrors,
+    log,
+    step: stepOptOut,
+    userData: restartData,
+  })
 
   stepOnDisk(restartData)
 
@@ -570,9 +638,16 @@ async function main(): Promise<void> {
     await page.waitForSelector('[data-testid="nav-preferences"]', { timeout: 60_000 })
     // The stored answer arrives over IPC after the window mounts; the CONDITION is the payload
     // being readable at all, which is also the first thing `stepPersisted` asserts about.
-    await settle(() => payload(page).then((p) => p.prefs.noticeShown).catch(() => false), (ok) => ok, {
-      timeoutMs: 15_000
-    })
+    await settle(
+      () =>
+        payload(page)
+          .then((p) => p.prefs.noticeShown)
+          .catch(() => false),
+      (ok) => ok,
+      {
+        timeoutMs: 15_000,
+      },
+    )
     await stepPersisted(page)
     await stepPane(page)
     await stepCollects(page)
@@ -585,8 +660,13 @@ async function main(): Promise<void> {
   }
 
   // A missing IPC handler shows up here first (`invoke` rejects into an unhandled rejection).
-  check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
-  if (consoleErrors.length === 0) note('four launches, three fresh installs — the persistence claim is a real restart')
+  check(
+    'no renderer console errors',
+    consoleErrors.length === 0,
+    consoleErrors.slice(0, 3).join(' | '),
+  )
+  if (consoleErrors.length === 0)
+    note('four launches, three fresh installs — the persistence claim is a real restart')
 
   reportRun()
 }

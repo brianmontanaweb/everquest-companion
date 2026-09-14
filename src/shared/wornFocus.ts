@@ -159,7 +159,10 @@ const EXCLUDE_SPELL = /^limit:?\s*spell:?\s*exclude\s+(.+?)\s*$/i
 
 /** The head of a focus line, read: which figure it moves and the band it moves it by. */
 function readHead(line: string): Pick<WornFocus, 'kind' | 'minPct' | 'maxPct'> | null {
-  for (const [kind, re] of [['damage', DAMAGE_HEAD], ['heal', HEAL_HEAD]] as const) {
+  for (const [kind, re] of [
+    ['damage', DAMAGE_HEAD],
+    ['heal', HEAL_HEAD],
+  ] as const) {
     const m = re.exec(line)
     if (!m) continue
     const lo = Number(m[1])
@@ -214,7 +217,7 @@ function readLimit(out: WornFocus, line: string, excluded: string[]): void {
 export function parseWornFocus(
   effect: string,
   item: string,
-  lines: readonly string[]
+  lines: readonly string[],
 ): WornFocus | null {
   let out: WornFocus | null = null
   const excluded: string[] = []
@@ -309,7 +312,7 @@ export interface FocusHit {
 export function bestWornFocus(
   worn: readonly WornFocus[],
   kind: FocusKind,
-  spell: FocusSpell
+  spell: FocusSpell,
 ): FocusHit | null {
   let best: FocusHit | null = null
   for (const focus of worn) {

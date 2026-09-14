@@ -4,11 +4,11 @@ import type { SourceView } from '../src/shared/combat'
 import {
   SELF_METER_NAME_KEY,
   selfMeterLabel,
-  withSelfLabel
+  withSelfLabel,
 } from '../src/renderer/src/features/combat/selfMeterLabel'
 
 /** A SourceView is large; the label logic only reads `kind` and `name`, so a cast is honest here. */
-const row = (kind: string, name: string): SourceView => ({ kind, name } as unknown as SourceView)
+const row = (kind: string, name: string): SourceView => ({ kind, name }) as unknown as SourceView
 
 test('the key is the documented localStorage key', () => {
   assert.equal(SELF_METER_NAME_KEY, 'eq.combat.selfMeterName')

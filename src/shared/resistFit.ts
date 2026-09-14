@@ -137,7 +137,7 @@ export function gridFit(
   /** How many resists the model predicts at an R. Omitted, the residual test is skipped. */
   predictedResists?: (R: number) => number,
   /** What the game actually printed. Omitted, the residual test is skipped. */
-  observed?: { resisted: number; total: number }
+  observed?: { resisted: number; total: number },
 ): GridFit {
   const { Rs, logs } = posteriorLogs(logDensity)
   let max = -Infinity
@@ -185,15 +185,24 @@ export function unphysical(hi: number, observed: { resisted: number; total: numb
  * unlucky, the second on any large cell, where the model's ordinary slack becomes statistically
  * overwhelming without becoming important.
  */
-export function doesNotFit(expected: number, observed: { resisted: number; total: number }): boolean {
+export function doesNotFit(
+  expected: number,
+  observed: { resisted: number; total: number },
+): boolean {
   if (observed.total < RESIDUAL_MIN_N) return false
   const gap = Math.abs(observed.resisted - expected) / observed.total
   return gap >= RESIDUAL_MIN_RATE_GAP && residualSigmas(expected, observed) > RESIDUAL_SIGMAS
 }
 
-export function residualSigmas(expected: number, observed: { resisted: number; total: number }): number {
+export function residualSigmas(
+  expected: number,
+  observed: { resisted: number; total: number },
+): number {
   if (observed.total < RESIDUAL_MIN_N) return 0
-  const p = Math.min(Math.max(expected / observed.total, 1 / observed.total), 1 - 1 / observed.total)
+  const p = Math.min(
+    Math.max(expected / observed.total, 1 / observed.total),
+    1 - 1 / observed.total,
+  )
   const sd = Math.sqrt(observed.total * p * (1 - p))
   if (!(sd > 0)) return 0
   return Math.abs(observed.resisted - expected) / sd

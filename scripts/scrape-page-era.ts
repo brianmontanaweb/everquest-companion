@@ -137,8 +137,8 @@ function requestFor(params: Record<string, string>, method: 'GET' | 'POST'): [st
     {
       method: 'POST',
       headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString()
-    }
+      body: body.toString(),
+    },
   ]
 }
 
@@ -229,7 +229,10 @@ function silentPages(file: ItemDbFile): { page: string; key: string }[] {
 }
 
 /** Wikitext for a list of TITLES, 50 per request, cached per batch. */
-async function fetchWikitext(titles: readonly string[], prefix: string): Promise<Map<string, string>> {
+async function fetchWikitext(
+  titles: readonly string[],
+  prefix: string,
+): Promise<Map<string, string>> {
   const out = new Map<string, string>()
   for (let i = 0; i < titles.length; i += TITLE_BATCH) {
     const slice = titles.slice(i, i + TITLE_BATCH)
@@ -241,7 +244,7 @@ async function fetchWikitext(titles: readonly string[], prefix: string): Promise
         prop: 'revisions',
         rvprop: 'content',
         rvslots: 'main',
-        titles: slice.join('|')
+        titles: slice.join('|'),
       })
       pages = j.query?.pages ?? []
       writeCache(file, pages)
@@ -271,7 +274,9 @@ function fromItemCache(wanted: ReadonlySet<string>): Map<string, string> {
     const pages = JSON.parse(readFileSync(resolve(ITEM_CACHE_DIR, f), 'utf8')) as RevPage[]
     for (const p of pages) keepWanted(out, p, wanted)
   }
-  console.log(`Item wikitext: ${String(out.size)} of ${String(wanted.size)} silent pages from the ITEM scraper's cache`)
+  console.log(
+    `Item wikitext: ${String(out.size)} of ${String(wanted.size)} silent pages from the ITEM scraper's cache`,
+  )
   return out
 }
 
@@ -286,7 +291,9 @@ async function itemWikitext(pages: readonly { page: string }[]): Promise<Map<str
   const missing = [...wanted].filter((t) => !out.has(t)).sort((a, b) => a.localeCompare(b))
   if (missing.length === 0) return out
   const batches = Math.ceil(missing.length / TITLE_BATCH)
-  console.log(`Fetching wikitext for ${String(missing.length)} silent pages (${String(batches)} requests)…`)
+  console.log(
+    `Fetching wikitext for ${String(missing.length)} silent pages (${String(batches)} requests)…`,
+  )
   // A dry run says what it WOULD ask for and enumerates off what it has. The gap is the item cache
   // being older than `items.json` (JOS-328 rebuilt the corpus after the last item scrape), so those
   // pages contribute no notes targets to the printed census — stated, not silently absorbed.
@@ -342,7 +349,8 @@ async function fetchMetadata(titles: readonly string[]): Promise<Map<string, boo
       writeCache(file, j)
     }
     const rows = j.eqlmetadata?.pages
-    if (rows === undefined) throw new Error(`eqlmetadata returned no pages: ${JSON.stringify(j).slice(0, 300)}`)
+    if (rows === undefined)
+      throw new Error(`eqlmetadata returned no pages: ${JSON.stringify(j).slice(0, 300)}`)
     eraRevision ??= j.eqlmetadata?.eraRevision
     for (const row of rows) keepRow(out, row)
   }
@@ -380,7 +388,7 @@ async function fetchCategories(titles: readonly string[]): Promise<Map<string, b
         action: 'query',
         prop: 'categories',
         cllimit: 'max',
-        titles: slice.join('|')
+        titles: slice.join('|'),
       })
       pages = j.query?.pages ?? []
       writeCache(file, pages)
@@ -390,7 +398,10 @@ async function fetchCategories(titles: readonly string[]): Promise<Map<string, b
         const m = /^Category:\s*(.+?)[ _]+Era$/i.exec(c.title)
         return m === null ? [] : [m[1].replace(/[_\s]+/g, ' ').trim()]
       })
-      out.set(pageEraKey(p.title), tokens.some((t) => namesEra(t) && eraBadge(t) === 'out'))
+      out.set(
+        pageEraKey(p.title),
+        tokens.some((t) => namesEra(t) && eraBadge(t) === 'out'),
+      )
     }
   }
   return out
@@ -417,7 +428,10 @@ async function fetchCategories(titles: readonly string[]): Promise<Map<string, b
 // them could call an item unreachable that the catalog knows a Lower Guk froglok drops.
 
 /** Every mob name that could decide an item's era: the pages' own `|dropsfrom` ∪ the catalog's. */
-function dropperTitles(file: ItemDbFile, catalog: { mobs: { name: string; drops?: string[] }[] }): string[] {
+function dropperTitles(
+  file: ItemDbFile,
+  catalog: { mobs: { name: string; drops?: string[] }[] },
+): string[] {
   const names = new Map<string, string>()
   const add = (raw: string): void => {
     const key = pageEraKey(raw)
@@ -470,7 +484,7 @@ async function spellPageTitles(): Promise<string[]> {
       eititle: 'Template:Spellpage',
       einamespace: '0',
       eilimit: '500',
-      ...(eicontinue === undefined ? {} : { eicontinue })
+      ...(eicontinue === undefined ? {} : { eicontinue }),
     })
     for (const p of j.query?.embeddedin ?? []) out.push(p.title)
     eicontinue = j.continue?.eicontinue
@@ -497,7 +511,7 @@ function entryFor(
   title: string,
   wikitext: string | undefined,
   outOfEra: boolean | undefined,
-  by: 'eqlmetadata' | 'categories'
+  by: 'eqlmetadata' | 'categories',
 ): PageEraEntry {
   const eraTag = wikitext === undefined ? undefined : parsePageEraTag(wikitext)
   return {
@@ -507,7 +521,7 @@ function entryFor(
     outOfEra: outOfEra ?? (eraTag !== undefined && eraBadge(eraTag) === 'out'),
     ...(eraTag === undefined ? {} : { eraTag }),
     ...(wikitext === undefined ? { missing: true } : {}),
-    by
+    by,
   }
 }
 
@@ -516,7 +530,10 @@ function entryFor(
  * for, and nothing at all for the ones it did not. Shared by both so the two cannot come to mean
  * different things about an absent row.
  */
-function answered(titles: readonly string[], verdicts: ReadonlyMap<string, boolean>): Record<string, boolean> {
+function answered(
+  titles: readonly string[],
+  verdicts: ReadonlyMap<string, boolean>,
+): Record<string, boolean> {
   const out: Record<string, boolean> = {}
   for (const title of titles) {
     const v = verdicts.get(pageEraKey(title))
@@ -527,8 +544,11 @@ function answered(titles: readonly string[], verdicts: ReadonlyMap<string, boole
 
 function printCensus(refs: Map<string, string[]>, targets: readonly string[]): void {
   const byTarget = new Map<string, number>()
-  for (const list of refs.values()) for (const t of list) byTarget.set(t, (byTarget.get(t) ?? 0) + 1)
-  console.log(`\n${String(targets.length)} distinct non-item targets, referenced by ${String(refs.size)} era? pages`)
+  for (const list of refs.values())
+    for (const t of list) byTarget.set(t, (byTarget.get(t) ?? 0) + 1)
+  console.log(
+    `\n${String(targets.length)} distinct non-item targets, referenced by ${String(refs.size)} era? pages`,
+  )
   console.log('  top 12 by referencing pages:')
   for (const [t, n] of [...byTarget].sort((a, b) => b[1] - a[1]).slice(0, 12)) {
     console.log(`    ${String(n).padStart(4)}  ${t}`)
@@ -538,9 +558,13 @@ function printCensus(refs: Map<string, string[]>, targets: readonly string[]): v
 async function main(): Promise<void> {
   const startedAt = Date.now()
   const corpus = JSON.parse(readFileSync(ITEMS_PATH, 'utf8')) as ItemDbFile
-  const catalog = JSON.parse(readFileSync(MOBS_PATH, 'utf8')) as { mobs: { name: string; drops?: string[] }[] }
+  const catalog = JSON.parse(readFileSync(MOBS_PATH, 'utf8')) as {
+    mobs: { name: string; drops?: string[] }[]
+  }
   const silent = silentPages(corpus)
-  console.log(`Corpus: ${String(Object.keys(corpus.items).length)} keys; ${String(silent.length)} pages layers 1-2 leave silent`)
+  console.log(
+    `Corpus: ${String(Object.keys(corpus.items).length)} keys; ${String(silent.length)} pages layers 1-2 leave silent`,
+  )
 
   const wikitext = await itemWikitext(silent)
   const refs = new Map<string, string[]>()
@@ -560,19 +584,25 @@ async function main(): Promise<void> {
   printCensus(refs, titles)
 
   const droppers = dropperTitles(corpus, catalog)
-  console.log(`${String(droppers.length)} distinct dropper mobs (page |dropsfrom ∪ the mob catalog)`)
+  console.log(
+    `${String(droppers.length)} distinct dropper mobs (page |dropsfrom ∪ the mob catalog)`,
+  )
 
   if (dryRun) {
     // The spell enumeration is 4 GETs of its own on a cold cache; a dry run states the cost rather
     // than paying it, so this arm never asks the wiki for the title list either.
     const posts = 2 + Math.ceil(droppers.length / META_BATCH)
-    console.log(`\n--dry-run: nothing sent. A cold run would send ${String(posts)}+ POSTs + ${String(Math.ceil(titles.length / TITLE_BATCH))}+4 GETs.`)
+    console.log(
+      `\n--dry-run: nothing sent. A cold run would send ${String(posts)}+ POSTs + ${String(Math.ceil(titles.length / TITLE_BATCH))}+4 GETs.`,
+    )
     return
   }
 
   const spellCatalog = JSON.parse(readFileSync(SPELLS_PATH, 'utf8')) as SpellDbFile
   const spellTitles = spellTargets(await spellPageTitles(), spellCatalog)
-  console.log(`${String(spellTitles.length)} distinct spell pages (Template:Spellpage ∪ the ${String(spellCatalog.spells.length)} catalog names)`)
+  console.log(
+    `${String(spellTitles.length)} distinct spell pages (Template:Spellpage ∪ the ${String(spellCatalog.spells.length)} catalog names)`,
+  )
 
   let verdicts: Map<string, boolean>
   let by: 'eqlmetadata' | 'categories' = 'eqlmetadata'
@@ -583,7 +613,9 @@ async function main(): Promise<void> {
     mobVerdicts = await fetchMetadata(droppers)
     spellVerdicts = await fetchMetadata(spellTitles)
   } catch (err) {
-    console.log(`eqlmetadata failed (${String(err)}) — falling back to prop=categories, as the skin module documents`)
+    console.log(
+      `eqlmetadata failed (${String(err)}) — falling back to prop=categories, as the skin module documents`,
+    )
     verdicts = await fetchCategories(titles)
     mobVerdicts = await fetchCategories(droppers)
     spellVerdicts = await fetchCategories(spellTitles)
@@ -593,7 +625,12 @@ async function main(): Promise<void> {
 
   const pages: Record<string, PageEraEntry> = {}
   for (const title of titles) {
-    pages[pageEraKey(title)] = entryFor(title, targetText.get(title), verdicts.get(pageEraKey(title)), by)
+    pages[pageEraKey(title)] = entryFor(
+      title,
+      targetText.get(title),
+      verdicts.get(pageEraKey(title)),
+      by,
+    )
   }
   // ASKED, not answered: a target the endpoint did not name at all stays out of its table, and the
   // readers take its absence as silence rather than as `false` (law 1, and see pageEraDb).
@@ -610,7 +647,7 @@ async function main(): Promise<void> {
     pages: Object.fromEntries(Object.entries(pages).sort((a, b) => a[0].localeCompare(b[0]))),
     refs: Object.fromEntries([...refs].sort((a, b) => a[0].localeCompare(b[0]))),
     mobs: Object.fromEntries(Object.entries(mobs).sort((a, b) => a[0].localeCompare(b[0]))),
-    spells: Object.fromEntries(Object.entries(spells).sort((a, b) => a[0].localeCompare(b[0])))
+    spells: Object.fromEntries(Object.entries(spells).sort((a, b) => a[0].localeCompare(b[0]))),
   }
   mkdirSync(dirname(OUT_PATH), { recursive: true })
   // Compact, the items.json posture: the `mobs` table alone is 5k rows, so this stopped being a
@@ -624,17 +661,23 @@ async function main(): Promise<void> {
   const spellsOut = Object.values(spells).filter(Boolean).length
   console.log(
     `\nWrote ${String(titles.length)} pages + ${String(Object.keys(mobs).length)} mobs + ` +
-      `${String(Object.keys(spells).length)} spells → ${OUT_PATH}  (${((Date.now() - startedAt) / 1000).toFixed(1)}s)`
+      `${String(Object.keys(spells).length)} spells → ${OUT_PATH}  (${((Date.now() - startedAt) / 1000).toFixed(1)}s)`,
   )
-  console.log(`  pages out of era: ${String(outCount)}   states an era token: ${String(tagged)}   verdict by: ${by}`)
-  console.log(`  mobs out of era:  ${String(mobsOut)} of ${String(Object.keys(mobs).length)} answered`)
+  console.log(
+    `  pages out of era: ${String(outCount)}   states an era token: ${String(tagged)}   verdict by: ${by}`,
+  )
+  console.log(
+    `  mobs out of era:  ${String(mobsOut)} of ${String(Object.keys(mobs).length)} answered`,
+  )
   // The three counts a spell reader needs: out, in, and the ones nobody answered for (asked minus
   // answered — silence, which the loader marks nothing for).
   console.log(
     `  spells out of era: ${String(spellsOut)}   in era: ${String(Object.keys(spells).length - spellsOut)}   ` +
-      `unanswered: ${String(spellTitles.length - Object.keys(spells).length)} of ${String(spellTitles.length)} asked`
+      `unanswered: ${String(spellTitles.length - Object.keys(spells).length)} of ${String(spellTitles.length)} asked`,
   )
-  console.log(`  eraRevision: ${String(eraRevision)}   live requests sent this run: ${String(requestsSent)}`)
+  console.log(
+    `  eraRevision: ${String(eraRevision)}   live requests sent this run: ${String(requestsSent)}`,
+  )
 }
 
 void main()

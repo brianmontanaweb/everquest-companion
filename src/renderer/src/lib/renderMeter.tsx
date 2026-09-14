@@ -51,7 +51,7 @@ import {
   recordCommit,
   summarizeCommits,
   type CommitRing,
-  type RenderCommitSample
+  type RenderCommitSample,
 } from './renderCommits'
 
 /** The outermost Profiler's id — the app-wide row. Named here so the mount and the panel cannot
@@ -82,7 +82,11 @@ function meter(): CommitRing {
  * the repo's measured `max-params` ceiling. `phase` is unnamed-but-present because the parameter
  * after it is the one this needs; mount and update commits are both commits and both counted.
  */
-function onCommit(id: string, phase: 'mount' | 'update' | 'nested-update', actualDuration: number): void {
+function onCommit(
+  id: string,
+  phase: 'mount' | 'update' | 'nested-update',
+  actualDuration: number,
+): void {
   recordCommit(meter(), id, performance.now(), actualDuration)
 }
 

@@ -32,7 +32,7 @@ import { parseInventoryDump } from '../src/main/outputs/inventoryParse'
 
 const REAL_DUMP = readFileSync(
   join(import.meta.dirname, 'fixtures', 'Primitive_freeport-Inventory.txt'),
-  'utf8'
+  'utf8',
 )
 
 /** A synthetic second item table — INVENTED, see the header. */
@@ -43,7 +43,7 @@ const EXTRA_ITEM_SECTION = [
   'Hoard\tName\tID\tCount\tSlots',
   'Hoard1\tRuned Bone Fork\t20802\t1\t10',
   'Hoard2\tEmpty\t0\t0\t0',
-  'Hoard3\tShiny Metallic Robe\t20790\t2\t10'
+  'Hoard3\tShiny Metallic Robe\t20790\t2\t10',
 ].join('\n')
 
 test('an item-shaped section counts as held, whatever the client called that table', () => {
@@ -69,8 +69,8 @@ test('an item-shaped section counts as held, whatever the client called that tab
       ['Location', 'Hat'],
       ['Hoard', 'Runed Bone Fork'],
       ['Hoard', 'Empty'],
-      ['Hoard', 'Shiny Metallic Robe']
-    ]
+      ['Hoard', 'Shiny Metallic Robe'],
+    ],
   )
 })
 
@@ -83,8 +83,8 @@ test('only the Location table says what is WORN — a second table never dresses
       'Head\tReal Helm\t1\t1\t10',
       '',
       'Hoard\tName\tID\tCount\tSlots',
-      'Head\tStored Helm\t2\t1\t10'
-    ].join('\n')
+      'Head\tStored Helm\t2\t1\t10',
+    ].join('\n'),
   )
   assert.equal(heldCountsFromDump(dump)['stored helm'], 1)
 
@@ -106,8 +106,8 @@ test('a keyring-shaped section parses as a keyring, whatever that table is calle
       'Head\tHat\t1\t1\t10',
       '',
       'Equipment Ring\tName\tID\t',
-      'Equipment\tLight Woolen Mask\t20821'
-    ].join('\n')
+      'Equipment\tLight Woolen Mask\t20821',
+    ].join('\n'),
   )
   assert.deepEqual(dump.sectionShapes, { Location: 'items', 'Equipment Ring': 'keyRing' })
   assert.equal(dump.keyRing.length, 1)

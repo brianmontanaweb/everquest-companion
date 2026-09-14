@@ -27,7 +27,7 @@ const SEQUENTIAL_PHASES = [
   'appReady',
   'protocols',
   'windowCreated',
-  'tailAttached'
+  'tailAttached',
 ]
 /** …and the tail, which RACES: the window paints while the historical scan is still folding, so
  *  either of these can land first depending on how much log there is. */
@@ -88,27 +88,32 @@ export function stepProfileFile(userData: string, firstRun: boolean): void {
   check(
     'it records the sequential half of the boot, in order',
     JSON.stringify(names.slice(0, SEQUENTIAL_PHASES.length)) === JSON.stringify(SEQUENTIAL_PHASES),
-    names.join(' → ')
+    names.join(' → '),
   )
   check(
     '…and both of the phases that race, in whichever order this launch produced',
-    [...names.slice(SEQUENTIAL_PHASES.length)].sort().join(',') === [...CONCURRENT_PHASES].sort().join(','),
-    names.slice(SEQUENTIAL_PHASES.length).join(' → ')
+    [...names.slice(SEQUENTIAL_PHASES.length)].sort().join(',') ===
+      [...CONCURRENT_PHASES].sort().join(','),
+    names.slice(SEQUENTIAL_PHASES.length).join(' → '),
   )
   const marks = profile.phases.map((p) => p.atMs)
   check(
     'the phase marks are MONOTONIC — no phase lands before the one it follows',
     marks.every((at, i) => i === 0 || at >= (marks[i - 1] ?? 0)),
-    marks.map((m) => Math.round(m)).join(', ')
+    marks.map((m) => Math.round(m)).join(', '),
   )
   const summed = profile.phases.reduce((n, p) => n + p.durationMs, 0)
   check(
     'the durations account for the whole launch, exactly (nothing is NaN or negative)',
     profile.phases.every((p) => Number.isFinite(p.durationMs) && p.durationMs >= 0) &&
       Math.abs(summed - profile.totalMs) < 1,
-    `Σ ${String(Math.round(summed))}ms vs total ${String(Math.round(profile.totalMs))}ms`
+    `Σ ${String(Math.round(summed))}ms vs total ${String(Math.round(profile.totalMs))}ms`,
   )
-  check('…and states the launch it describes', profile.complete && profile.startedAt > 0, JSON.stringify({ complete: profile.complete, startedAt: profile.startedAt }))
+  check(
+    '…and states the launch it describes',
+    profile.complete && profile.startedAt > 0,
+    JSON.stringify({ complete: profile.complete, startedAt: profile.startedAt }),
+  )
   // ── THE FOUR FOLD MEASUREMENTS RETIRE HERE (JOS-499) ────────────────────────────────────────
   //
   // `eventsReplayed`, the duty ledger, the block probe and the stutter probe were four readings of
@@ -131,9 +136,6 @@ export function stepProfileFile(userData: string, firstRun: boolean): void {
   // count and the byte offset it reached, the same claim `eventsReplayed` made about the same log.
   stepColdRead(profile, firstRun)
 }
-
-
-
 
 /**
  * THE COLD-READ HALF (JOS-57 scope addition) — and the assertion that matters is about the FIRST
@@ -166,12 +168,8 @@ function stepColdRead(profile: Profile, firstRun: boolean): void {
   // on a fixture and only its sanity can be pinned here.
   check(
     'the first-megabyte hint is a duration when it is there at all, never a negative or a NaN',
-    profile.firstMbMs === undefined || (Number.isFinite(profile.firstMbMs) && profile.firstMbMs >= 0),
-    `firstMbMs ${String(profile.firstMbMs)}`
+    profile.firstMbMs === undefined ||
+      (Number.isFinite(profile.firstMbMs) && profile.firstMbMs >= 0),
+    `firstMbMs ${String(profile.firstMbMs)}`,
   )
 }
-
-
-
-
-

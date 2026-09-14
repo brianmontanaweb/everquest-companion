@@ -26,7 +26,7 @@ import {
   TEXT_SCALE_MAX,
   TEXT_SCALE_MIN,
   TEXT_SCALE_STEP,
-  clampTextScale
+  clampTextScale,
 } from '../src/shared/types'
 // The JOS-405 half — the preference, the one rule, and the upgrade. Imported from its own module
 // rather than through `shared/types`: that file is at its factoring ceiling and does not re-export
@@ -37,7 +37,7 @@ import {
   effectiveOverlayTextScale,
   mergeOverlayTextSize,
   normalizeOverlayTextSize,
-  storedSharedTextScale
+  storedSharedTextScale,
 } from '../src/shared/overlayTextScale'
 
 const src = (rel: string): string => readFileSync(new URL(rel, import.meta.url), 'utf8')
@@ -57,7 +57,7 @@ const SURFACES = {
   'the healing meter': '../src/renderer/src/overlay/HealMeter.tsx',
   'the event log': '../src/renderer/src/overlay/EventLogOverlay.tsx',
   'the celebration toast': '../src/renderer/src/overlay/ToastOverlay.tsx',
-  'the buff timers': '../src/renderer/src/overlay/BuffsOverlay.tsx'
+  'the buff timers': '../src/renderer/src/overlay/BuffsOverlay.tsx',
 }
 
 /** The one file that applies the scale. */
@@ -132,7 +132,11 @@ test('the store clamps the scale on the way OUT as well as in', () => {
 test('NO NEW CHANNEL: the scale rides the existing per-kind overlay config', () => {
   const stepper = src('../src/renderer/src/overlay/TextScaleStepper.tsx')
   assert.match(stepper, /patch\(\{ textScale:/, 'the stepper writes through the config patch')
-  assert.doesNotMatch(stepper, /ipcRenderer|window\.eqOverlay\./, 'and reaches for no channel of its own')
+  assert.doesNotMatch(
+    stepper,
+    /ipcRenderer|window\.eqOverlay\./,
+    'and reaches for no channel of its own',
+  )
 })
 
 test('ONE SCALE FOR EVERY OVERLAY IS NOW A ROUTE, NOT A FAN-OUT (JOS-405)', () => {
@@ -148,7 +152,7 @@ test('ONE SCALE FOR EVERY OVERLAY IS NOW A ROUTE, NOT A FAN-OUT (JOS-405)', () =
   assert.match(
     ipc,
     /if \(p\.textScale !== undefined && !getOverlayTextSize\(\)\.independent\) \{[\s\S]*?broadcastOverlayTextSize\(setOverlayTextSize\(\{ shared: p\.textScale \}\)\)/,
-    'a synced textScale write routes to the shared preference and broadcasts it'
+    'a synced textScale write routes to the shared preference and broadcasts it',
   )
   // THE FAN-OUT IS GONE, and its absence is the claim: a loop that still wrote every kind would
   // keep destroying the per-kind values this feature exists to preserve.
@@ -159,7 +163,11 @@ test('ONE SCALE FOR EVERY OVERLAY IS NOW A ROUTE, NOT A FAN-OUT (JOS-405)', () =
   const loops = ipc.match(/for \(const k of OVERLAY_KINDS\) \{[\s\S]*?\n {2}\}/g) ?? []
   assert.ok(loops.length > 0, 'the broadcast loop is there to check')
   for (const body of loops) {
-    assert.doesNotMatch(body, /setOverlayConfig\(/, 'a per-kind loop may read and send, never write')
+    assert.doesNotMatch(
+      body,
+      /setOverlayConfig\(/,
+      'a per-kind loop may read and send, never write',
+    )
   }
   // …and the independent path is the ordinary per-kind write the field's own shape always said
   // it was: this kind stored, this window echoed. `rest` is the patch minus whatever was routed
@@ -174,13 +182,13 @@ test('THE BROADCAST REACHES A PINNED WINDOW, which has no control of its own to 
   assert.match(
     ipc,
     /function broadcastOverlayTextSize[\s\S]*?for \(const k of OVERLAY_KINDS\) \{[\s\S]*?send\(IPC\.onOverlayTextSize, prefs\)[\s\S]*?getMainWindow\(\)/,
-    'the prefs go to every open overlay window and to the app window'
+    'the prefs go to every open overlay window and to the app window',
   )
   // The WRITE handler always broadcasts, including the `independent` flip that carries no number:
   // turning the switch off is what puts every window back on the shared size.
   assert.match(
     ipc,
-    /overlayTextSizeSet[\s\S]*?const prefs = setOverlayTextSize\(patch\)\s*\n\s*broadcastOverlayTextSize\(prefs\)/
+    /overlayTextSizeSet[\s\S]*?const prefs = setOverlayTextSize\(patch\)\s*\n\s*broadcastOverlayTextSize\(prefs\)/,
   )
 })
 
@@ -203,14 +211,21 @@ test('the prefs normalizer defaults every field, from any garbage', () => {
 
 test('a patch that names one field keeps the other — a switch flip cannot reset the size', () => {
   const base = { shared: 1.5, independent: false, seeded: false }
-  assert.deepEqual(mergeOverlayTextSize({ independent: true }, base), { ...base, independent: true })
+  assert.deepEqual(mergeOverlayTextSize({ independent: true }, base), {
+    ...base,
+    independent: true,
+  })
   assert.deepEqual(mergeOverlayTextSize({ shared: 1.2 }, base), { ...base, shared: 1.2 })
   assert.deepEqual(mergeOverlayTextSize({}, base), base)
   // A wrong-typed field is the same as an absent one: it names nothing this base should give up.
   assert.deepEqual(mergeOverlayTextSize({ shared: 'big', independent: 1 }, base), base)
   // With no base at all it is a normalize, which is what makes it one door for a renderer, a
   // hand-edited file and the store reader.
-  assert.deepEqual(mergeOverlayTextSize({ shared: 1.4 }), { shared: 1.4, independent: false, seeded: false })
+  assert.deepEqual(mergeOverlayTextSize({ shared: 1.4 }), {
+    shared: 1.4,
+    independent: false,
+    seeded: false,
+  })
 })
 
 test('the once-ever seed flag is ONE-WAY — a renderer cannot ask to be re-seeded', () => {
@@ -219,8 +234,15 @@ test('the once-ever seed flag is ONE-WAY — a renderer cannot ask to be re-seed
   // their owner had already moved away from — i.e. it would break the one rule the flag protects.
   const seeded = { shared: 1.2, independent: true, seeded: true }
   assert.equal(mergeOverlayTextSize({ seeded: false }, seeded).seeded, true)
-  assert.equal(mergeOverlayTextSize({ independent: false }, seeded).seeded, true, 'and it outlives syncing again')
-  assert.equal(mergeOverlayTextSize({ seeded: true }, { shared: 1, independent: false, seeded: false }).seeded, true)
+  assert.equal(
+    mergeOverlayTextSize({ independent: false }, seeded).seeded,
+    true,
+    'and it outlives syncing again',
+  )
+  assert.equal(
+    mergeOverlayTextSize({ seeded: true }, { shared: 1, independent: false, seeded: false }).seeded,
+    true,
+  )
 })
 
 test('OPTING IN RESIZES NOTHING, once ever — and the flag is what makes it once', () => {
@@ -233,12 +255,19 @@ test('OPTING IN RESIZES NOTHING, once ever — and the flag is what makes it onc
   assert.match(
     store,
     /if \(next\.independent && cur\.seeded !== true\) \{\s*\n\s*seedOnFirstOptIn\(cur\.shared\)\s*\n\s*next\.seeded = true/,
-    'the first opt-in seeds from the shared size and records that it happened'
+    'the first opt-in seeds from the shared size and records that it happened',
   )
-  assert.match(store, /for \(const kind of OVERLAY_KINDS\) setOverlayConfig\(kind, \{ textScale: shared \}\)/)
+  assert.match(
+    store,
+    /for \(const kind of OVERLAY_KINDS\) setOverlayConfig\(kind, \{ textScale: shared \}\)/,
+  )
   // AND IT IS NOT THE FAN-OUT COMING BACK: the retired one wrote twelve kinds on every PRESS,
   // which is what flattened the values and left nothing to unsync to. This is one opt-in.
-  assert.doesNotMatch(store, /textScale: p\.textScale/, 'no press path writes a per-kind value here')
+  assert.doesNotMatch(
+    store,
+    /textScale: p\.textScale/,
+    'no press path writes a per-kind value here',
+  )
 })
 
 test('THE EFFECTIVE SCALE IS THE WHOLE RULE: independent ? per-kind : shared', () => {
@@ -270,7 +299,7 @@ test('SURVIVING THE SWITCH is a property of the rule, not of a code path', () =>
   assert.equal(
     effectiveOverlayTextScale({ ...synced, independent: true }, remembered),
     remembered,
-    'and unsyncing finds 150% exactly where its owner left it'
+    'and unsyncing finds 150% exactly where its owner left it',
   )
 })
 
@@ -284,7 +313,11 @@ test('an absent shared size is TOLD APART from a stored 100%', () => {
   assert.equal(storedSharedTextScale({ independent: true }), null)
   assert.equal(storedSharedTextScale({ shared: 'big' }), null)
   assert.equal(storedSharedTextScale({ shared: NaN }), null)
-  assert.equal(storedSharedTextScale({ shared: 1 }), 1, 'a stored 100% is an ANSWER, not an absence')
+  assert.equal(
+    storedSharedTextScale({ shared: 1 }),
+    1,
+    'a stored 100% is an ANSWER, not an absence',
+  )
   assert.equal(storedSharedTextScale({ shared: 1.3 }), 1.3)
 })
 
@@ -306,7 +339,11 @@ test('…the MOST COMMON value wins, and a TIE goes to the LARGER', () => {
   assert.equal(deriveSharedTextScale([1.5, 1.5, 1.2, 1.2]), 1.5)
   // Anything that is not a finite number is not a vote — a kind whose config predates the field.
   assert.equal(deriveSharedTextScale([undefined, null, 'x', 1.4, 1.4]), 1.4)
-  assert.equal(deriveSharedTextScale([9, 9]), TEXT_SCALE_MAX, 'and a vote is clamped before it counts')
+  assert.equal(
+    deriveSharedTextScale([9, 9]),
+    TEXT_SCALE_MAX,
+    'and a vote is clamped before it counts',
+  )
 })
 
 test('…and an EMPTY store derives NOTHING: a fresh install is the default', () => {
@@ -322,10 +359,13 @@ test('the derivation is WRITTEN BACK, so it happens once', () => {
   assert.match(
     store,
     /if \(storedSharedTextScale\(raw\) !== null\) return normalizeOverlayTextSize\(raw\)[\s\S]*?settingsStore\.set\('overlayTextSize', next\)/,
-    'an absent shared size derives and persists; a present one is read straight back'
+    'an absent shared size derives and persists; a present one is read straight back',
   )
-  assert.match(store, /deriveSharedTextScale\(Object\.values\(all\)\.map\(\(cfg\) => cfg\?\.textScale\)\)/,
-    'and it derives from the per-kind values, which is the only place the answer exists')
+  assert.match(
+    store,
+    /deriveSharedTextScale\(Object\.values\(all\)\.map\(\(cfg\) => cfg\?\.textScale\)\)/,
+    'and it derives from the per-kind values, which is the only place the answer exists',
+  )
 })
 
 // ---- who reads the rule -------------------------------------------------------------------
@@ -365,7 +405,11 @@ test('the zoom is applied in exactly ONE place: the content pane', () => {
   // …including the meters' shared body wrapper, which forwards the scale and applies none of it.
   const floor = code(FLOOR)
   assert.doesNotMatch(floor, /zoom:/, 'the meter pane must not grow a second copy of the zoom')
-  assert.match(floor, /<OverlayContent textScale=\{textScale\}/, 'the meter pane must forward the scale')
+  assert.match(
+    floor,
+    /<OverlayContent textScale=\{textScale\}/,
+    'the meter pane must forward the scale',
+  )
 })
 
 test('THE CHROME IS NEVER SCALED, and cannot be pushed out of a narrow window', () => {
@@ -377,7 +421,7 @@ test('THE CHROME IS NEVER SCALED, and cannot be pushed out of a narrow window', 
     assert.match(
       code(path),
       /<(OverlayContent|ScaledContent|MeterPane)\s+textScale=/,
-      `${name} scales no content`
+      `${name} scales no content`,
     )
   }
   // …and the footers themselves fit a genuinely narrow window, zoom or no zoom. ONE ROW: the
@@ -387,13 +431,14 @@ test('THE CHROME IS NEVER SCALED, and cannot be pushed out of a narrow window', 
     SURFACES['the damage meter'],
     SURFACES['the healing meter'],
     SURFACES['the event log'],
-    SURFACES['the buff timers']
+    SURFACES['the buff timers'],
   ]) {
     const text = code(path)
+    // Prettier may wrap this style object onto its own lines; collapse whitespace before pinning.
     assert.match(
-      text,
+      text.replace(/\s+/g, ' '),
       /flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 24/,
-      `${path} has a slider that does not give up its width`
+      `${path} has a slider that does not give up its width`,
     )
     assert.doesNotMatch(text, /flexWrap/, `${path} folds its compact chrome onto a second row`)
   }
@@ -408,7 +453,7 @@ test('the content pane scrolls, and no surface hides rows to avoid it', () => {
   for (const path of [
     ...Object.values(SURFACES),
     '../src/renderer/src/overlay/meterBars.tsx',
-    '../src/renderer/src/overlay/healBars.tsx'
+    '../src/renderer/src/overlay/healBars.tsx',
   ]) {
     assert.doesNotMatch(code(path), /topN/, `${path} still carries a row budget`)
   }

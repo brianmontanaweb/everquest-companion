@@ -68,7 +68,7 @@ export function computeHeldCounts(lootHistory: readonly LootEvent[]): Record<str
  */
 function foldHeld(
   lootHistory: readonly LootEvent[],
-  keep: (e: LootEvent, key: string) => boolean
+  keep: (e: LootEvent, key: string) => boolean,
 ): Record<string, number> {
   const c: Record<string, number> = {}
   for (const e of lootHistory) {
@@ -99,7 +99,7 @@ function foldHeld(
  */
 function foldDestroyed(
   lootHistory: readonly LootEvent[],
-  keep: (e: LootEvent, key: string) => boolean
+  keep: (e: LootEvent, key: string) => boolean,
 ): Record<string, number> {
   const c: Record<string, number> = {}
   for (const e of lootHistory) {
@@ -114,7 +114,7 @@ function foldDestroyed(
 /** Destroys recorded strictly after one instant — the discount a DUMP owes (reconcile.ts). */
 export function computeDestroyedAfter(
   lootHistory: readonly LootEvent[],
-  after: number
+  after: number,
 ): Record<string, number> {
   return foldDestroyed(lootHistory, (e) => e.ts > after)
 }
@@ -127,7 +127,7 @@ export function computeDestroyedAfter(
  */
 export function computeDestroyedAfterPerKey(
   lootHistory: readonly LootEvent[],
-  afterByKey: Record<string, number>
+  afterByKey: Record<string, number>,
 ): Record<string, number> {
   return foldDestroyed(lootHistory, (e, k) => e.ts > (afterByKey[k] ?? Infinity))
 }
@@ -158,7 +158,7 @@ export function computeDestroyedAfterPerKey(
  */
 export function computeHeldCountsAfter(
   lootHistory: readonly LootEvent[],
-  after: number
+  after: number,
 ): Record<string, number> {
   return foldHeld(lootHistory, (e) => !isDestroyed(e) && e.ts > after)
 }
@@ -176,7 +176,7 @@ export function computeHeldCountsAfter(
  */
 export function computeHeldCountsAfterPerKey(
   lootHistory: readonly LootEvent[],
-  afterByKey: Record<string, number>
+  afterByKey: Record<string, number>,
 ): Record<string, number> {
   return foldHeld(lootHistory, (e, k) => !isDestroyed(e) && e.ts > (afterByKey[k] ?? Infinity))
 }

@@ -43,7 +43,7 @@ import {
   TEXT_SCALE_STEP,
   clampTextScale,
   effectiveOverlayTextScale,
-  type OverlayTextSizePrefs
+  type OverlayTextSizePrefs,
 } from '@shared/overlayTextScale'
 import {
   BG_ALPHA_MAX,
@@ -51,7 +51,7 @@ import {
   clampBgAlpha,
   effectiveOverlayBgAlpha,
   stepBgAlpha,
-  type OverlayBgAlphaPrefs
+  type OverlayBgAlphaPrefs,
 } from '@shared/overlayBgAlpha'
 import { overlayIndependent } from '@shared/overlayIndependent'
 import { OVERLAY_KIND_LABEL, OVERLAY_LABEL_ORDER, OVERLAY_STRIP_KINDS } from '@shared/overlayLabels'
@@ -100,7 +100,7 @@ function useOverlayTextSize(): PrefsHook<OverlayTextSizePrefs> {
       setPrefs((cur) => ({ ...cur, ...patch }))
       void window.eq.setOverlayTextSize(patch).then(adopt)
     },
-    [adopt]
+    [adopt],
   )
 
   return { prefs, update, adopt }
@@ -122,7 +122,7 @@ function useOverlayBgAlpha(): PrefsHook<OverlayBgAlphaPrefs> {
       setPrefs((cur) => ({ ...cur, ...patch }))
       void window.eq.setOverlayBgAlpha(patch).then(adopt)
     },
-    [adopt]
+    [adopt],
   )
 
   return { prefs, update, adopt }
@@ -131,7 +131,9 @@ function useOverlayBgAlpha(): PrefsHook<OverlayBgAlphaPrefs> {
 /** Every kind's OWN size, live: seeded from the pane's snapshot, corrected by main's push (a press
  *  made on a WINDOW while this list is open), and written through the same door that press uses. */
 function useKindScales(): [Record<OverlayKind, number>, (kind: OverlayKind, next: number) => void] {
-  const [scales, setScales] = useState<Record<OverlayKind, number>>(usePrefsSeed().overlayTextScales)
+  const [scales, setScales] = useState<Record<OverlayKind, number>>(
+    usePrefsSeed().overlayTextScales,
+  )
 
   useEffect(() => {
     return window.eq.onOverlayTextScales((m) => {
@@ -208,7 +210,7 @@ function StepperRow({
   label,
   tag,
   dim,
-  children
+  children,
 }: {
   label: string
   /** `closed`, or nothing. */
@@ -241,7 +243,7 @@ function StepperRow({
  */
 function SharedRows({
   size,
-  alpha
+  alpha,
 }: {
   size: PrefsHook<OverlayTextSizePrefs>
   alpha: PrefsHook<OverlayBgAlphaPrefs>
@@ -285,7 +287,7 @@ function OverlayRow({
   scale,
   onStep,
   alpha,
-  onAlpha
+  onAlpha,
 }: {
   kind: OverlayKind
   open: boolean
@@ -364,7 +366,7 @@ function ColumnHeaders(): JSX.Element {
 function PerOverlayRows({
   size,
   alpha,
-  open
+  open,
 }: {
   size: OverlayTextSizePrefs
   alpha: OverlayBgAlphaPrefs
@@ -384,7 +386,11 @@ function PerOverlayRows({
         return (
           <Box key={kind}>
             {kind === OVERLAY_STRIP_KINDS[0] && (
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', pt: 1, pb: 0.5 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', pt: 1, pb: 0.5 }}
+              >
                 These appear by themselves when something happens.
               </Typography>
             )}
@@ -420,7 +426,10 @@ export function OverlaysAppearanceSetting(): JSX.Element {
   const size = useOverlayTextSize()
   const alpha = useOverlayBgAlpha()
   const open = useOverlayOpen()
-  const independent = overlayIndependent({ text: size.prefs.independent, bg: alpha.prefs.independent })
+  const independent = overlayIndependent({
+    text: size.prefs.independent,
+    bg: alpha.prefs.independent,
+  })
   // THE SHARED STEPPERS' VERSION OF THE `closed` TAG (JOS-408 confusion audit). Every row that
   // governs a closed window says so; the two SHARED steppers govern all twelve at once, so the
   // equivalent state is "none of them is open" — and there the honest answer to "what changes on
@@ -456,13 +465,19 @@ export function OverlaysAppearanceSetting(): JSX.Element {
           }
           label={<Typography variant="body2">Independent per overlay</Typography>}
         />
-        <Typography variant="caption" color="text.secondary" data-testid="pref-overlay-independent-note">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          data-testid="pref-overlay-independent-note"
+        >
           {independent
             ? 'Each overlay keeps its own text size and transparency.'
             : 'All overlays share one text size and one transparency.'}
           {/* Only in the shared shape: with the switch on, every row already carries its own
               `closed` tag and this sentence would repeat twelve of them. */}
-          {!independent && nothingOpen && ' None is open right now, so this is what they will open at.'}
+          {!independent &&
+            nothingOpen &&
+            ' None is open right now, so this is what they will open at.'}
         </Typography>
       </Stack>
 

@@ -360,8 +360,13 @@ export function sniffImageMime(buf: Uint8Array): string | null {
 /** The slice of Electron's `protocol` module this file uses. Structural, so tests could
  *  pass a stub and the real `Electron.Protocol` satisfies it. */
 export interface ProtocolLike {
-  registerSchemesAsPrivileged(schemes: { scheme: string; privileges?: Record<string, boolean> }[]): void
-  handle(scheme: string, handler: (request: GlobalRequest) => GlobalResponse | Promise<GlobalResponse>): void
+  registerSchemesAsPrivileged(
+    schemes: { scheme: string; privileges?: Record<string, boolean> }[],
+  ): void
+  handle(
+    scheme: string,
+    handler: (request: GlobalRequest) => GlobalResponse | Promise<GlobalResponse>,
+  ): void
 }
 
 /**
@@ -381,7 +386,7 @@ export interface ProtocolLike {
  */
 export const EQIMG_SCHEME_PRIVILEGES = {
   scheme: EQIMG_SCHEME,
-  privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
+  privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true },
 } as const
 
 /** Options for the handler (injected so tests/other callers never touch `app`). */
@@ -424,7 +429,7 @@ const NOT_FOUND = (): GlobalResponse => new Response(null, { status: 404, status
  */
 const E2E_BLANK_PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-  'base64'
+  'base64',
 )
 
 /**
@@ -630,7 +635,7 @@ async function healUnreadableEntry(
   path: string,
   err: unknown,
   repair: boolean,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   if (repair) await unlink(path).catch(ignoreCleanupFailure)
   noteImageCacheReadFailure()
@@ -638,7 +643,7 @@ async function healUnreadableEntry(
   if (takeImageReadWarning(code)) {
     warn(
       `[everquest-companion] image cache: could not read ${basename(path)} (${code}); ` +
-        `re-fetching it. Further read failures this session are counted, not logged.`
+        `re-fetching it. Further read failures this session are counted, not logged.`,
     )
   }
 }
@@ -678,7 +683,7 @@ export function installImageCacheProtocol(protocol: ProtocolLike, opts: ImageCac
     try {
       res = await doFetch(url, {
         headers: { 'User-Agent': UA, Accept: 'image/png,image/*;q=0.8,*/*;q=0.5' },
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       })
     } catch (err) {
       // NETWORK LEG: no response at all (offline, DNS, TLS, the 10 s timeout). A counter and, the
@@ -688,7 +693,7 @@ export function installImageCacheProtocol(protocol: ProtocolLike, opts: ImageCac
       if (takeImageFetchWarning(host)) {
         warn(
           `[everquest-companion] image cache: cannot reach ${host} (${describeFetchFailure(err)}); ` +
-            `those images will be hidden. Further failures this session are counted, not logged.`
+            `those images will be hidden. Further failures this session are counted, not logged.`,
         )
       }
       return null
@@ -710,7 +715,7 @@ export function installImageCacheProtocol(protocol: ProtocolLike, opts: ImageCac
       rememberImageFailure(cacheStem(req), 'not-an-image')
       onError(
         `[everquest-companion:error] image cache: ${url} returned ${bytes.length} bytes that are not an image; not caching`,
-        null
+        null,
       )
       return null
     }
@@ -747,7 +752,10 @@ export function installImageCacheProtocol(protocol: ProtocolLike, opts: ImageCac
    * sniff or to read is stepped over and left alone. Either way the RETURN is the same null a
    * plain miss produces, which is what makes the fall-through to the fetch the whole heal.
    */
-  async function serveFromDisk(paths: readonly string[], repair: boolean): Promise<GlobalResponse | null> {
+  async function serveFromDisk(
+    paths: readonly string[],
+    repair: boolean,
+  ): Promise<GlobalResponse | null> {
     for (const path of paths) {
       if (!existsSync(path)) continue
       try {
@@ -818,7 +826,7 @@ function imageResponse(bytes: Uint8Array, mime: string): GlobalResponse {
     status: 200,
     headers: {
       'content-type': mime,
-      'cache-control': 'public, max-age=31536000, immutable'
-    }
+      'cache-control': 'public, max-age=31536000, immutable',
+    },
   })
 }

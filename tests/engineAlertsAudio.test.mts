@@ -42,7 +42,7 @@ function def(over: Partial<AlertDef> & Pick<AlertDef, 'id' | 'name'>): AlertDef 
     enabled: true,
     trigger: { type: 'raw', regex: 'x' },
     sound: { packId: 'classic', soundId: 'ding' },
-    ...over
+    ...over,
   }
 }
 
@@ -53,14 +53,17 @@ function fire(over: Partial<FireMessage> = {}): FireMessage {
     rule: 'Charm break',
     sound: 'classic/ding',
     message: 'Your charm spell has worn off.',
-    ...over
+    ...over,
   }
 }
 
 // ---- the gate -----------------------------------------------------------------------------------
 
 test('THE GATE ARMS, and the line still SAYS SO', () => {
-  const defs = [def({ id: 'charm-break', name: 'Charm break' }), def({ id: 'b', name: 'Mote dropped' })]
+  const defs = [
+    def({ id: 'charm-break', name: 'Charm break' }),
+    def({ id: 'b', name: 'Mote dropped' }),
+  ]
   const verdict = armVerdict(defs)
   assert.equal(verdict.arm, true)
   // The armed line is the reason the verdict is still a verdict and not a boolean: a silent
@@ -105,7 +108,7 @@ test('A FIRE BECOMES A FIRING the renderer can play: the label resolves back to 
     // THE LOG'S CLOCK, carried through verbatim — `FireMessage.at` is the ts of the event that
     // matched, which is exactly what a main-side `FiredAlert.ts` has always been.
     ts: 1_700_000_000_000,
-    matchedText: 'Your charm spell has worn off.'
+    matchedText: 'Your charm spell has worn off.',
   })
 })
 
@@ -134,12 +137,11 @@ test('A CUSTOM PHRASE SPEAKS THE NAME ITS PATTERN CAPTURED — the JOS-103 claim
     id: 'puma',
     name: 'Spirit of the puma',
     audio: 'speech',
-    speech: { mode: 'custom', phrase: 'Puma on {player}' }
+    speech: { mode: 'custom', phrase: 'Puma on {player}' },
   })
-  const firing = fireToFiring(
-    fire({ rule: 'Spirit of the puma', captures: { player: 'Fail' } }),
-    [puma]
-  )
+  const firing = fireToFiring(fire({ rule: 'Spirit of the puma', captures: { player: 'Fail' } }), [
+    puma,
+  ])
   assert.deepEqual(firing?.captures, { player: 'Fail' })
   // THE SENTENCE ITSELF. Before the frame grew, `{player}` had nothing to resolve to and the same
   // def spoke the literal "Puma on {player}" — a token rendered verbatim, which is the documented
@@ -153,17 +155,21 @@ test('…and the `{target}` token speaks the mob, from a def with no regex in it
     id: 'mez',
     name: 'Mez broke',
     audio: 'speech',
-    speech: { mode: 'custom', phrase: 'Mez broke on {target}' }
+    speech: { mode: 'custom', phrase: 'Mez broke on {target}' },
   })
-  const firing = fireToFiring(
-    fire({ rule: 'Mez broke', captures: { target: 'a young puma' } }),
-    [mez]
-  )
+  const firing = fireToFiring(fire({ rule: 'Mez broke', captures: { target: 'a young puma' } }), [
+    mez,
+  ])
   assert.equal(speechTextFor(mez, firing), 'Mez broke on a young puma')
 })
 
 test('A SPELL MODE SPEAKS THE SPELL, rank folded out by the resolver (JOS-84)', () => {
-  const slow = def({ id: 'slow', name: 'Slow landed', audio: 'speech', speech: { mode: 'spellName' } })
+  const slow = def({
+    id: 'slow',
+    name: 'Slow landed',
+    audio: 'speech',
+    speech: { mode: 'spellName' },
+  })
   const firing = fireToFiring(fire({ rule: 'Slow landed', spell: 'Mesmerization III' }), [slow])
   // THE RANK ARRIVES INTACT AND IS FOLDED OUT WHERE IT SHOULD BE. The producer carries what the log
   // spelled; `speechTextFor` strips the numeral, because ranks are noise aloud and a consumer that
@@ -179,15 +185,23 @@ test('…and a spell mode with NO spell still says something true: the alert’s
   // World-model law 1, and the behaviour that used to swallow EVERY spell-mode alert under the
   // engine because no frame could carry a spell at all. It is still the right answer for the
   // families that genuinely name none — an app signal, a raw trigger on a spell-less line.
-  const slow = def({ id: 'slow', name: 'Slow landed', audio: 'speech', speech: { mode: 'spellName' } })
-  assert.equal(speechTextFor(slow, fireToFiring(fire({ rule: 'Slow landed' }), [slow])), 'Slow landed')
+  const slow = def({
+    id: 'slow',
+    name: 'Slow landed',
+    audio: 'speech',
+    speech: { mode: 'spellName' },
+  })
+  assert.equal(
+    speechTextFor(slow, fireToFiring(fire({ rule: 'Slow landed' }), [slow])),
+    'Slow landed',
+  )
 })
 
 test('AN EARLY WARNING CARRIES ITS DEADLINE, so the banner has something to count down to', () => {
   const slow = def({ id: 'group:slow:mob', name: 'Slow wore off a mob', earlyWarnSec: 5 })
   const firing = fireToFiring(
     fire({ rule: 'Slow wore off a mob', at: 1_700_000_056_000, dueAt: 1_700_000_061_000 }),
-    [slow]
+    [slow],
   )
   assert.equal(firing?.dueAt, 1_700_000_061_000)
   // THE GAP IS THE LEAD TIME THE USER CONFIGURED. `ts` is when the sound was made and `dueAt` is
@@ -201,7 +215,11 @@ test('THE THREE FIELDS ARE COPIED, NEVER RE-DERIVED — the second-evaluator ref
   // the matching condition tested, whether the phrase asked for a target). This file's whole
   // discipline is that it decides none of that, so the copy is asserted to be a copy: a capture map
   // the app could not possibly have derived — the def carries no pattern at all — arrives intact.
-  const opaque = def({ id: 'opaque', name: 'Opaque', speech: { mode: 'custom', phrase: '{a} {b}' } })
+  const opaque = def({
+    id: 'opaque',
+    name: 'Opaque',
+    speech: { mode: 'custom', phrase: '{a} {b}' },
+  })
   const firing = fireToFiring(fire({ rule: 'Opaque', captures: { a: 'one', b: 'two' } }), [opaque])
   assert.deepEqual(firing?.captures, { a: 'one', b: 'two' })
   assert.equal(speechTextFor(opaque, firing), 'one two')
@@ -220,10 +238,16 @@ test('A LABEL NOTHING ANSWERS TO IS DROPPED, never played as somebody else', () 
 test('TWO DEFS WITH ONE NAME are separated by the SOUND the engine stated', () => {
   const defs = [
     def({ id: 'quiet', name: 'Slow landed', sound: { packId: 'classic', soundId: 'blip' } }),
-    def({ id: 'loud', name: 'Slow landed', sound: { packId: 'alan-rickman', soundId: 'oh-dear' } })
+    def({ id: 'loud', name: 'Slow landed', sound: { packId: 'alan-rickman', soundId: 'oh-dear' } }),
   ]
-  assert.equal(fireToFiring(fire({ rule: 'Slow landed', sound: 'alan-rickman/oh-dear' }), defs)?.alertId, 'loud')
-  assert.equal(fireToFiring(fire({ rule: 'Slow landed', sound: 'classic/blip' }), defs)?.alertId, 'quiet')
+  assert.equal(
+    fireToFiring(fire({ rule: 'Slow landed', sound: 'alan-rickman/oh-dear' }), defs)?.alertId,
+    'loud',
+  )
+  assert.equal(
+    fireToFiring(fire({ rule: 'Slow landed', sound: 'classic/blip' }), defs)?.alertId,
+    'quiet',
+  )
 })
 
 test('…and when even the sound cannot separate them, the FIRST is played rather than none', () => {
@@ -231,7 +255,7 @@ test('…and when even the sound cannot separate them, the FIRST is played rathe
   // left is a volume. A dropped alert would be a strictly worse answer.
   const defs = [
     def({ id: 'first', name: 'Twin', volume: 0.2 }),
-    def({ id: 'second', name: 'Twin', volume: 1 })
+    def({ id: 'second', name: 'Twin', volume: 1 }),
   ]
   assert.equal(fireToFiring(fire({ rule: 'Twin' }), defs)?.alertId, 'first')
   // A sound key matching NEITHER of them still resolves — the label is the identity, and the
@@ -279,7 +303,10 @@ test('THE SWAP HANGS OFF THE READY EDGE, never off process start', () => {
   // anywhere in that stretch is the same bug wearing a new line number. (The `onReady` callback is
   // lexically inside the same function and is exactly where the arm is SUPPOSED to be, which is why
   // this reads the prefix rather than the whole body.)
-  const starter = /export function startEngineSupervisor\(\): void \{([\s\S]*?)supervisor \?\?= createEngineSupervisor\(/.exec(host)
+  const starter =
+    /export function startEngineSupervisor\(\): void \{([\s\S]*?)supervisor \?\?= createEngineSupervisor\(/.exec(
+      host,
+    )
   assert.ok(starter, 'startEngineSupervisor is gone, or no longer builds the supervisor')
   assert.doesNotMatch(starter[1], /armEngineAlerts\(\)/)
   assert.doesNotMatch(starter[1], /disarmEngineAlerts\(\)/)

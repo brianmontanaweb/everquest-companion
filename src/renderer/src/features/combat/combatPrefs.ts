@@ -121,7 +121,9 @@ function parseDrill(v: unknown): Drill | null {
   const o = v as Record<string, unknown>
   if (o.kind === 'entity' && typeof o.entityId === 'string' && o.entityId !== '') {
     const name = typeof o.name === 'string' && o.name !== '' ? o.name : undefined
-    return name === undefined ? { kind: 'entity', entityId: o.entityId } : { kind: 'entity', entityId: o.entityId, name }
+    return name === undefined
+      ? { kind: 'entity', entityId: o.entityId }
+      : { kind: 'entity', entityId: o.entityId, name }
   }
   if (o.kind === 'target' && typeof o.target === 'string' && o.target !== '') {
     return { kind: 'target', target: o.target }
@@ -147,7 +149,9 @@ export function parseDrillMemory(raw: string | null): DrillMemory {
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return NO_DRILL
   const o = parsed as Record<string, unknown>
   const drill = parseDrill(o.d)
-  const abilities = Array.isArray(o.a) ? o.a.filter((x): x is string => typeof x === 'string' && x !== '') : []
+  const abilities = Array.isArray(o.a)
+    ? o.a.filter((x): x is string => typeof x === 'string' && x !== '')
+    : []
   // Nothing drilled AND nothing expanded is the default, and it has exactly one shape — see
   // `serializeDrillMemory`, which writes that state as an absent key.
   if (!drill && abilities.length === 0) return NO_DRILL
@@ -198,7 +202,12 @@ export const DPS_LINE_KEYS = ['out', 'pet', 'group', 'inc'] as const
  *  own. They are toggleable for one reason above tidiness: a legend where some entries respond to
  *  a click and some ignore it teaches that the legend does nothing. `satisfies` keeps this list
  *  bound to the engine's union without a value import (this module stays DOM- and bundle-free). */
-const MARKER_LINE_KEYS = ['stance', 'invocation', 'coat', 'slow'] as const satisfies readonly TimelineMarkerKind[]
+const MARKER_LINE_KEYS = [
+  'stance',
+  'invocation',
+  'coat',
+  'slow',
+] as const satisfies readonly TimelineMarkerKind[]
 
 /** Every legend entry that can be switched off, in legend order — which is also the order a
  *  stored value is written in, so the same hidden set always serializes to the same string. */
@@ -219,7 +228,12 @@ function isChartLineKey(v: string): v is ChartLineKey {
  */
 export function parseHiddenLines(raw: string | null): readonly ChartLineKey[] {
   if (raw === null || raw === '') return []
-  const found = new Set(raw.split(',').map((s) => s.trim()).filter(isChartLineKey))
+  const found = new Set(
+    raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(isChartLineKey),
+  )
   return CHART_LINE_KEYS.filter((k) => found.has(k))
 }
 
@@ -232,7 +246,10 @@ export function serializeHiddenLines(keys: readonly ChartLineKey[]): string | nu
 
 /** Flip ONE line. Canonical order is restored on the way out so the stored string depends on the
  *  SET and never on the order the user clicked. */
-export function toggleHiddenLine(keys: readonly ChartLineKey[], key: ChartLineKey): readonly ChartLineKey[] {
+export function toggleHiddenLine(
+  keys: readonly ChartLineKey[],
+  key: ChartLineKey,
+): readonly ChartLineKey[] {
   const next = keys.includes(key) ? keys.filter((k) => k !== key) : [...keys, key]
   return CHART_LINE_KEYS.filter((k) => next.includes(k))
 }
@@ -244,7 +261,9 @@ export function toggleHiddenLine(keys: readonly ChartLineKey[], key: ChartLineKe
 function sameSubject(a: Drill | null, b: Drill | null): boolean {
   if (a === null || b === null) return a === b
   if (a.kind !== b.kind) return false
-  return a.kind === 'entity' && b.kind === 'entity' ? a.entityId === b.entityId : JSON.stringify(a) === JSON.stringify(b)
+  return a.kind === 'entity' && b.kind === 'entity'
+    ? a.entityId === b.entityId
+    : JSON.stringify(a) === JSON.stringify(b)
 }
 
 /**
@@ -271,5 +290,8 @@ export function withDrill(m: DrillMemory, drill: Drill | null): DrillMemory {
 export function withAbility(m: DrillMemory, key: string, open: boolean): DrillMemory {
   const has = m.abilities.includes(key)
   if (has === open) return m
-  return { drill: m.drill, abilities: open ? [...m.abilities, key] : m.abilities.filter((k) => k !== key) }
+  return {
+    drill: m.drill,
+    abilities: open ? [...m.abilities, key] : m.abilities.filter((k) => k !== key),
+  }
 }

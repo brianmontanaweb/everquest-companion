@@ -12,14 +12,14 @@ import {
   nextWeekClearsOnToggle,
   parseWeekClears,
   serializeWeekClears,
-  weekClearsStorageKey
+  weekClearsStorageKey,
 } from '../src/renderer/src/features/bosses/weekClears'
 import {
   hasCreditedAmbiguousKill,
   lockoutWindow,
   manualClearIsLiveThisWeek,
   tierLadder,
-  type TierLock
+  type TierLock,
 } from '../src/renderer/src/features/bosses/lockout'
 import type { KillTierRun } from '../src/shared/types'
 
@@ -65,10 +65,7 @@ test('nextWeekClearsOnToggle: an absent mark + click sets a fresh timestamp (run
 })
 
 test('nextWeekClearsOnToggle: a LIVE mark (this week) + click clears it', () => {
-  assert.deepEqual(
-    nextWeekClearsOnToggle({ 'lord nagafen': WED }, 'lord nagafen', week, NOW),
-    {}
-  )
+  assert.deepEqual(nextWeekClearsOnToggle({ 'lord nagafen': WED }, 'lord nagafen', week, NOW), {})
 })
 
 test('nextWeekClearsOnToggle: a STALE mark (last week) + click sets a fresh this-week timestamp in ONE step', () => {
@@ -95,28 +92,16 @@ test('manualClearIsLiveThisWeek is true only for a mark made in the current lock
 
 test('hasCreditedAmbiguousKill sees a credited open-world or unknown run in-window and nothing else', () => {
   const inWin = week.start + 3600_000
-  assert.equal(
-    hasCreditedAmbiguousKill({ [-1]: run({ lastCreditedTs: inWin }) }, week),
-    true
-  )
-  assert.equal(
-    hasCreditedAmbiguousKill({ [-2]: run({ lastCreditedTs: inWin }) }, week),
-    true
-  )
+  assert.equal(hasCreditedAmbiguousKill({ [-1]: run({ lastCreditedTs: inWin }) }, week), true)
+  assert.equal(hasCreditedAmbiguousKill({ [-2]: run({ lastCreditedTs: inWin }) }, week), true)
   // a real difficulty tier does not count — that path is not ambiguous
-  assert.equal(
-    hasCreditedAmbiguousKill({ 0: run({ lastCreditedTs: inWin }) }, week),
-    false
-  )
+  assert.equal(hasCreditedAmbiguousKill({ 0: run({ lastCreditedTs: inWin }) }, week), false)
   // an uncredited open-world run (a stranger's kill) does not count
-  assert.equal(
-    hasCreditedAmbiguousKill({ [-1]: run({ lastCreditedTs: 0 }) }, week),
-    false
-  )
+  assert.equal(hasCreditedAmbiguousKill({ [-1]: run({ lastCreditedTs: 0 }) }, week), false)
   // last week's credited kill does not count
   assert.equal(
     hasCreditedAmbiguousKill({ [-1]: run({ lastCreditedTs: week.start - 1 }) }, week),
-    false
+    false,
   )
 })
 
@@ -124,7 +109,13 @@ test('tierLadder without a manual arg is unchanged — five rungs, base first', 
   const rungs = tierLadder([])
   assert.deepEqual(
     rungs.map((r) => [r.tier, r.cleared]),
-    [[0, false], [1, false], [2, false], [3, false], [4, false]]
+    [
+      [0, false],
+      [1, false],
+      [2, false],
+      [3, false],
+      [4, false],
+    ],
   )
 })
 

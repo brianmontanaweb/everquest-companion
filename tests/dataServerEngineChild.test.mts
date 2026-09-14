@@ -53,7 +53,7 @@ function rig(mode: string): Rig {
     spawn: (bin) => {
       const child = spawn(process.execPath, [FAKE_ENGINE, bin], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        windowsHide: true
+        windowsHide: true,
       })
       children.push(child)
       return child
@@ -73,7 +73,7 @@ function rig(mode: string): Rig {
     healthTimeoutMs: HEALTH_MS,
     // Long enough that no test trips the watchdog by accident; the watchdog itself is pinned with a
     // clock the test owns, next door.
-    healthIntervalMs: 60_000
+    healthIntervalMs: 60_000,
   })
   return {
     supervisor,
@@ -85,7 +85,7 @@ function rig(mode: string): Rig {
       // Belt and braces: a test that failed mid-flight must not leave a node process behind on the
       // owner's machine. `stop()` is the polite path and this is the one that cannot be ignored.
       for (const child of children) if (child.exitCode === null) child.kill()
-    }
+    },
   }
 }
 
@@ -197,7 +197,9 @@ test('a diagnostic on the wrong stream does not cost a working engine its life',
   t.after(() => r.dispose())
   r.supervisor.start()
   await until('ready', () => r.supervisor.state === 'ready')
-  await until('the stray line to be noticed', () => r.logs.some((l) => l.includes('unexpected stdout')))
+  await until('the stray line to be noticed', () =>
+    r.logs.some((l) => l.includes('unexpected stdout')),
+  )
   assert.equal(r.supervisor.state, 'ready')
   assert.equal(r.reports.length, 0)
 })

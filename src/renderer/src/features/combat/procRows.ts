@@ -89,7 +89,11 @@ export function sourceNote(rate: ProcRateView): string {
  * `activeSec` is the SELECTION's active time, used only to word the absence. The denominator the
  * engine actually divided by rides on the rate itself (`sourceSec`) — see `sourceNote`.
  */
-export function ppmCell(rate: ProcRateView, activeSec: number, origin: ProcOrigin = 'spell'): RateCell {
+export function ppmCell(
+  rate: ProcRateView,
+  activeSec: number,
+  origin: ProcOrigin = 'spell',
+): RateCell {
   // A CLICK LANE IS COUNTED IN CLICKS (JOS-438) — the number and its withholding rule are
   // identical, and the unit word is the entire difference the reporter asked for.
   const unit = ORIGIN_UNIT[origin]
@@ -103,11 +107,15 @@ export function ppmCell(rate: ProcRateView, activeSec: number, origin: ProcOrigi
         `No per-minute rate: that needs at least ${MIN_ACTIVE_SEC}s of active combat time and ` +
         `${rate.sourceName === undefined ? 'this selection' : `${rate.sourceName}’s window`} has ` +
         `${sec}s. ${plural(rate.count, unit)} counted - the count is exact; only the division ` +
-        'is withheld.'
+        'is withheld.',
     }
   }
   const wall = rate.ppmWall === undefined ? '' : ` (${fmt(rate.ppmWall)} of wall clock)`
-  return { text: fmt(rate.ppmActive), absent: false, hint: `${activeTimeNote(unit)}${wall}${sourceNote(rate)}` }
+  return {
+    text: fmt(rate.ppmActive),
+    absent: false,
+    hint: `${activeTimeNote(unit)}${wall}${sourceNote(rate)}`,
+  }
 }
 
 // ── THE GLANCEABLE LIST (JOS-37) ────────────────────────────────────────────────────
@@ -143,7 +151,7 @@ function listRow(l: ProcLaneView): ProcListRow {
     ambiguous: l.ambiguous === true,
     origin: l.origin,
     count: l.count,
-    ppm: ppmText(l.rate, l.origin)
+    ppm: ppmText(l.rate, l.origin),
   }
 }
 
@@ -166,7 +174,7 @@ export function procListRows(p: ProcsView): ProcListRow[] {
           ambiguous: s.ambiguous === true,
           origin: 'poison',
           count: s.count,
-          ppm: ABSENT
+          ppm: ABSENT,
         }))
   return rows.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
 }
@@ -230,7 +238,7 @@ export function procSummary(p: ProcsView): ProcSummary {
     count,
     clicks,
     ...(ppm === undefined ? {} : { ppm }),
-    header: clicks === 0 ? procs : `${procs} · ${plural(clicks, 'click')}`
+    header: clicks === 0 ? procs : `${procs} · ${plural(clicks, 'click')}`,
   }
 }
 
@@ -239,18 +247,24 @@ export function procSummary(p: ProcsView): ProcSummary {
 /** What each origin MEANS, said once, so the drill's hover can never soften it into "it's a
  *  proc". The spell sentence is the only INFERENCE in the feature and says so (law 1). */
 const ORIGIN_NOTE: Record<ProcOrigin, string> = {
-  poison: 'A rogue poison Strike: it printed its landing emote and no cast line, which is the only way a Strike ever appears.',
-  spell: 'Detected as a proc by INFERENCE: this spell effect landed with no “You begin casting” line of yours behind it. The log never names what fired it, so this is a co-occurrence, not a source.',
+  poison:
+    'A rogue poison Strike: it printed its landing emote and no cast line, which is the only way a Strike ever appears.',
+  spell:
+    'Detected as a proc by INFERENCE: this spell effect landed with no “You begin casting” line of yours behind it. The log never names what fired it, so this is a co-occurrence, not a source.',
   slay: 'The Slay Undead melee proc, counted from the damage taxonomy - it rides an ordinary weapon swing and prints no spell line of its own.',
   aa: 'An innate AA proc, counted from the “(Finishing Blow)” annotation the game prints on the swing it rode. Its damage stays in the melee lane, where it belongs - a weapon swing is a weapon swing - so the figure here is the damage of the swings that procced, not the damage the proc added. That estimate is the marginal below.',
   click:
-    'NOT a proc - an item CLICK. It landed with no “You begin casting” line, exactly as a proc does, and your own inventory dump names an instant click effect of this spell that no weapon in the item database procs. The rate below is how often you pressed it, not how often it fired on its own.'
+    'NOT a proc - an item CLICK. It landed with no “You begin casting” line, exactly as a proc does, and your own inventory dump names an instant click effect of this spell that no weapon in the item database procs. The rate below is how often you pressed it, not how often it fired on its own.',
 }
 
 /** The WORD a lane's rate is measured in. A proc rate and a click rate are different claims, and
  *  the unit is where the difference has to show up (JOS-438). */
 const ORIGIN_UNIT: Record<ProcOrigin, string> = {
-  poison: 'proc', spell: 'proc', slay: 'proc', aa: 'proc', click: 'click'
+  poison: 'proc',
+  spell: 'proc',
+  slay: 'proc',
+  aa: 'proc',
+  click: 'click',
 }
 
 /** A drill row's proc annotation: `proc · 3.1 ppm`, plus the hover that states its basis. */
@@ -270,7 +284,9 @@ export interface ProcAnnotation {
  * detector; this is only the lookup. FIRST tag wins, which pins the engine's lane order
  * (poison, then spell, then slay) rather than letting a later lane silently relabel a row.
  */
-export function procTagIndex(tags: readonly ProcSkillTag[] | undefined): ReadonlyMap<string, ProcSkillTag> {
+export function procTagIndex(
+  tags: readonly ProcSkillTag[] | undefined,
+): ReadonlyMap<string, ProcSkillTag> {
   const m = new Map<string, ProcSkillTag>()
   for (const t of tags ?? []) {
     const k = t.skill.toLowerCase()
@@ -290,7 +306,7 @@ export function procTagIndex(tags: readonly ProcSkillTag[] | undefined): Readonl
  */
 export function procAnnotationFor(
   index: ReadonlyMap<string, ProcSkillTag>,
-  skill: string
+  skill: string,
 ): ProcAnnotation | undefined {
   const t = index.get(skill.toLowerCase())
   if (!t) return undefined
@@ -310,6 +326,6 @@ export function procAnnotationFor(
   return {
     text: ppm.absent ? unit : `${unit} · ${ppm.text}`,
     hint: `${ORIGIN_NOTE[t.origin]}${lane} ${basis}${ppm.hint}`,
-    color: ORIGIN_COLOR[t.origin]
+    color: ORIGIN_COLOR[t.origin],
   }
 }

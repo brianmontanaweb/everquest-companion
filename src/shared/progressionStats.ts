@@ -93,7 +93,7 @@ export type {
   ComboSource,
   RangeStats,
   RangeStatsArgs,
-  ZoneRangeRow
+  ZoneRangeRow,
 } from './progressionStatsTypes'
 
 /**
@@ -183,7 +183,11 @@ function zoneSegments(snap: ProgressionSnap, t0: number, t1: number, only?: Zone
     segs.push({ key: UNKNOWN_ZONE, name: UNKNOWN_ZONE, start: t0, end: headEnd })
   }
   // The last interval starting at/before t0 is the one we are inside when the range opens.
-  for (let i = Math.max(0, upperBound(snap.zoneStart, t0) - 1); i < n && snap.zoneStart[i] < t1; i++) {
+  for (
+    let i = Math.max(0, upperBound(snap.zoneStart, t0) - 1);
+    i < n && snap.zoneStart[i] < t1;
+    i++
+  ) {
     const start = Math.max(snap.zoneStart[i], t0)
     const end = Math.min(snap.zoneEnd[i] === 0 ? t1 : snap.zoneEnd[i], t1)
     const name = snap.zoneName[i]
@@ -242,11 +246,16 @@ function intersectSpans(spans: readonly Span[], segs: readonly ZoneSeg[]): Span[
 function idleSpans(snap: ProgressionSnap, t0: number, t1: number): Span[] {
   const cols = [snap.expTs, snap.killTs, snap.lootTs]
   const stream: number[] = []
-  for (const col of cols) for (let i = lowerBound(col, t0); i < lowerBound(col, t1); i++) stream.push(col[i])
+  for (const col of cols)
+    for (let i = lowerBound(col, t0); i < lowerBound(col, t1); i++) stream.push(col[i])
   stream.sort((a, b) => a - b)
   const prev = cols.map((c) => prevBefore(c, t0)).filter((v): v is number => v !== null)
   const next = cols.map((c) => nextFrom(c, t1)).filter((v): v is number => v !== null)
-  const walk = [prev.length ? Math.max(...prev) : t0, ...stream, next.length ? Math.min(...next) : t1]
+  const walk = [
+    prev.length ? Math.max(...prev) : t0,
+    ...stream,
+    next.length ? Math.min(...next) : t1,
+  ]
   const spans: Span[] = []
   for (let i = 1; i < walk.length; i++) {
     if (walk[i] - walk[i - 1] <= IDLE_GAP_MS) continue
@@ -266,7 +275,11 @@ function idleSpans(snap: ProgressionSnap, t0: number, t1: number): Span[] {
 function offlineSpansIn(snap: ProgressionSnap, t0: number, t1: number): Span[] {
   const out: Span[] = []
   const n = snap.offlineStart.length
-  for (let i = Math.max(0, upperBound(snap.offlineStart, t0) - 1); i < n && snap.offlineStart[i] < t1; i++) {
+  for (
+    let i = Math.max(0, upperBound(snap.offlineStart, t0) - 1);
+    i < n && snap.offlineStart[i] < t1;
+    i++
+  ) {
     const start = Math.max(snap.offlineStart[i], t0)
     const end = Math.min(snap.offlineEnd[i], t1)
     if (end > start) out.push({ start, end })
@@ -335,7 +348,7 @@ function newRow(zone: string): ZoneRangeRow {
     levelsPerHourActive: null,
     levelsPerHourWall: null,
     killsPerHourActive: null,
-    killsPerHourWall: null
+    killsPerHourWall: null,
   }
 }
 
@@ -357,7 +370,7 @@ function levelsUnknown(expSamples: number, expUnstated: number): boolean {
 function buildRows(
   segs: readonly ZoneSeg[],
   idle: readonly Span[],
-  offline: readonly Span[]
+  offline: readonly Span[],
 ): { rows: ZoneRangeRow[]; of: number[] } {
   const index = new Map<string, number>()
   const rows: ZoneRangeRow[] = []
@@ -437,7 +450,10 @@ function rangeSpans(o: {
 }
 
 /** Fold the credited kills of [t0,t1) into the range totals and their zone rows. */
-function foldKills(snap: ProgressionSnap, ctx: FoldCtx): Pick<RangeStats, 'kills' | 'killsSelf' | 'killsPet'> {
+function foldKills(
+  snap: ProgressionSnap,
+  ctx: FoldCtx,
+): Pick<RangeStats, 'kills' | 'killsSelf' | 'killsPet'> {
   let kills = 0
   let killsSelf = 0
   let killsPet = 0
@@ -461,7 +477,7 @@ function foldKills(snap: ProgressionSnap, ctx: FoldCtx): Pick<RangeStats, 'kills
 /** Fold the experience samples of [t0,t1) into the range totals and their zone rows. */
 function foldExp(
   snap: ProgressionSnap,
-  ctx: FoldCtx
+  ctx: FoldCtx,
 ): Pick<RangeStats, 'expSamples' | 'expParty' | 'expUnstated' | 'levelEquiv'> {
   let expSamples = 0
   let expParty = 0
@@ -486,7 +502,10 @@ function foldExp(
 
 /** Dings in range (and inside the range's segments, which is the same set unless a zone filter
  *  is in force), plus the disjoint runs a loadout swap splits them into. */
-function levelSeriesIn(snap: ProgressionSnap, ctx: FoldCtx): Pick<RangeStats, 'levelUps' | 'levelRuns'> {
+function levelSeriesIn(
+  snap: ProgressionSnap,
+  ctx: FoldCtx,
+): Pick<RangeStats, 'levelUps' | 'levelRuns'> {
   const { t0, t1, segs } = ctx
   const levelUps: RangeStats['levelUps'] = []
   const levelRuns: RangeStats['levelRuns'] = []
@@ -496,7 +515,8 @@ function levelSeriesIn(snap: ProgressionSnap, ctx: FoldCtx): Pick<RangeStats, 'l
     const level = snap.levelValue[i]
     levelUps.push({ ts, level })
     const run = levelRuns[levelRuns.length - 1]
-    if (!run || level < run.toLevel) levelRuns.push({ fromLevel: level, toLevel: level, startTs: ts, endTs: ts })
+    if (!run || level < run.toLevel)
+      levelRuns.push({ fromLevel: level, toLevel: level, startTs: ts, endTs: ts })
     else {
       run.toLevel = level
       run.endTs = ts
@@ -588,6 +608,6 @@ export function rangeStats(args: RangeStatsArgs): RangeStats {
     aaPointsPerHourWall: perHour(aaGained, wall),
     zones: rows,
     combos: combo ? combo.intervalsIn(t0, t1) : [],
-    clipped: snap.windowStart > 0 && t0 < snap.windowStart
+    clipped: snap.windowStart > 0 && t0 < snap.windowStart,
   }
 }

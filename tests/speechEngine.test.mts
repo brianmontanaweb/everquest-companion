@@ -34,11 +34,20 @@ import {
   isSpeechCacheHash,
   parseEqSpeechUrl,
   speechCacheKey,
-  speechCachePath
+  speechCachePath,
 } from '../src/main/speech/cache'
-import { createSpeechEngine, kokoroSessionOptions, resolveKokoroVoice } from '../src/main/speech/engine'
+import {
+  createSpeechEngine,
+  kokoroSessionOptions,
+  resolveKokoroVoice,
+} from '../src/main/speech/engine'
 import { KOKORO_ASSETS, KOKORO_DEFAULT_VOICE, KOKORO_TOTAL_BYTES } from '../src/main/speech/pinned'
-import { assetPath, isKokoroInstalled, kokoroDir, provisionKokoro } from '../src/main/speech/provision'
+import {
+  assetPath,
+  isKokoroInstalled,
+  kokoroDir,
+  provisionKokoro,
+} from '../src/main/speech/provision'
 import type { SpeechInstallProgress } from '../src/shared/alertTypes'
 
 function tempRoot(): string {
@@ -97,7 +106,7 @@ test('parseEqSpeechUrl rejects everything that is not one of our hashes', () => 
     `eqspeech://${hash}%00.txt`,
     `eqimg://${hash}`,
     `file://${hash}`,
-    `eqspeech://C:\\Windows\\${hash}`
+    `eqspeech://C:\\Windows\\${hash}`,
   ]) {
     assert.equal(parseEqSpeechUrl(bad), null, `should reject ${JSON.stringify(bad)}`)
   }
@@ -140,7 +149,7 @@ const pin = (name: string, body: Buffer) => ({
   name,
   url: `https://github.com/x/y/releases/download/model-files-v1.0/${name}`,
   sha256: createHash('sha256').update(body).digest('hex'),
-  bytes: body.length
+  bytes: body.length,
 })
 
 const FAKE_ASSETS = [pin('model.onnx', BODY_A), pin('voices.bin', BODY_B)]
@@ -159,7 +168,7 @@ interface FetchCall {
 function fakeFetch(
   bodies: Map<string, Buffer>,
   log: FetchCall[],
-  opts: { honourRange?: boolean; truncateFirst?: number } = {}
+  opts: { honourRange?: boolean; truncateFirst?: number } = {},
 ) {
   let call = 0
   return ((url: string, init?: RequestInit): Promise<Response> => {
@@ -172,18 +181,17 @@ function fakeFetch(
     const from = honour ? wants : 0
     let slice = body.subarray(from)
     // Cut the FIRST response short to simulate a dropped connection mid-download.
-    if (opts.truncateFirst !== undefined && call === 0) slice = slice.subarray(0, opts.truncateFirst)
+    if (opts.truncateFirst !== undefined && call === 0)
+      slice = slice.subarray(0, opts.truncateFirst)
     call++
-    return Promise.resolve(
-      new Response(new Uint8Array(slice), { status: from > 0 ? 206 : 200 })
-    )
+    return Promise.resolve(new Response(new Uint8Array(slice), { status: from > 0 ? 206 : 200 }))
   }) as unknown as typeof fetch
 }
 
 function bodyMap(): Map<string, Buffer> {
   return new Map([
     [FAKE_ASSETS[0].url, BODY_A],
-    [FAKE_ASSETS[1].url, BODY_B]
+    [FAKE_ASSETS[1].url, BODY_B],
   ])
 }
 
@@ -196,7 +204,7 @@ test('the happy path: both assets stream, verify, and land atomically', async ()
     assets: FAKE_ASSETS,
     fetchImpl: fakeFetch(bodyMap(), log),
     onProgress: (p) => phases.push(p),
-    sleep: () => Promise.resolve()
+    sleep: () => Promise.resolve(),
   })
   assert.deepEqual(result, { ok: true })
   assert.equal(log.length, 2, 'ONE request per asset — never a parallel chunk fetcher')
@@ -216,14 +224,14 @@ test('a completed install is IDEMPOTENT: a re-run touches the network zero times
     userData: root,
     assets: FAKE_ASSETS,
     fetchImpl: fakeFetch(bodyMap(), []),
-    sleep: () => Promise.resolve()
+    sleep: () => Promise.resolve(),
   })
   const log: FetchCall[] = []
   const again = await provisionKokoro({
     userData: root,
     assets: FAKE_ASSETS,
     fetchImpl: fakeFetch(bodyMap(), log),
-    sleep: () => Promise.resolve()
+    sleep: () => Promise.resolve(),
   })
   assert.deepEqual(again, { ok: true })
   assert.equal(log.length, 0, 'verified files are skipped without a request')
@@ -237,7 +245,7 @@ test('a half-finished run RESUMES with a Range request instead of re-fetching', 
     userData: root,
     assets: [FAKE_ASSETS[0]],
     fetchImpl: fakeFetch(bodyMap(), log, { truncateFirst: 100 }),
-    sleep: () => Promise.resolve()
+    sleep: () => Promise.resolve(),
   })
   assert.deepEqual(result, { ok: true })
   assert.equal(log.length, 2)
@@ -253,7 +261,7 @@ test('a server that IGNORES Range restarts cleanly rather than appending', async
     userData: root,
     assets: [FAKE_ASSETS[0]],
     fetchImpl: fakeFetch(bodyMap(), log, { truncateFirst: 100, honourRange: false }),
-    sleep: () => Promise.resolve()
+    sleep: () => Promise.resolve(),
   })
   // The retry asks for a range, gets a 200 with the whole body, throws away its seeded digest
   // and starts over — so the file is correct, not 100 bytes too long.
@@ -270,7 +278,7 @@ test('sha256 is a HARD gate: wrong bytes are never renamed into place', async ()
     assets: [FAKE_ASSETS[0]],
     fetchImpl: fakeFetch(corrupted, []),
     onProgress: (p) => phases.push(p),
-    sleep: () => Promise.resolve()
+    sleep: () => Promise.resolve(),
   })
   assert.equal(result.ok, false)
   // RIGHT LENGTH, wrong digest — so this really is the sha256 check firing, not the length one.
@@ -289,7 +297,7 @@ test('a short body fails on LENGTH before anything is kept', async () => {
     userData: root,
     assets: [FAKE_ASSETS[0]],
     fetchImpl: fakeFetch(short, []),
-    sleep: () => Promise.resolve()
+    sleep: () => Promise.resolve(),
   })
   assert.equal(result.ok, false)
   assert.ok(!existsSync(assetPath(root, FAKE_ASSETS[0])))
@@ -306,13 +314,16 @@ test('a failed asset is retried exactly MAX_ATTEMPTS times, then stops (no storm
     sleep: (ms) => {
       waits.push(ms)
       return Promise.resolve()
-    }
+    },
   })
   assert.equal(result.ok, false)
   // Three attempts at the FIRST asset and then the run gives up — the second is never asked
   // for, because there is nothing to be gained by hammering a host that is failing.
   assert.equal(log.length, 3)
-  assert.deepEqual(log.map((l) => l.url), Array(3).fill(FAKE_ASSETS[0].url))
+  assert.deepEqual(
+    log.map((l) => l.url),
+    Array(3).fill(FAKE_ASSETS[0].url),
+  )
   assert.deepEqual(waits, [2000, 4000]) // exponential, and none after the last attempt
 })
 
@@ -330,7 +341,7 @@ test('a wrong-digest file already on disk is re-fetched, not trusted', async () 
     userData: root,
     assets: [FAKE_ASSETS[0]],
     fetchImpl: fakeFetch(bodyMap(), log),
-    sleep: () => Promise.resolve()
+    sleep: () => Promise.resolve(),
   })
   assert.deepEqual(result, { ok: true })
   assert.equal(log.length, 1)
@@ -358,7 +369,7 @@ test('progress carries whole-install bytes and exactly one terminal phase', asyn
     assets: FAKE_ASSETS,
     fetchImpl: fakeFetch(new Map(), []),
     onProgress: (p) => phases.push(p),
-    sleep: () => Promise.resolve()
+    sleep: () => Promise.resolve(),
   })
   assert.ok(phases.every((p) => p.total === FAKE_TOTAL))
   assert.ok(phases.every((p) => p.engine === 'kokoro'))
@@ -386,7 +397,7 @@ function throwingWorker(root: string, code: string | null): string {
     path,
     code === null
       ? "throw new Error('the worker exploded')\n"
-      : `const e = new Error('dlopen failed'); e.code = ${JSON.stringify(code)}; throw e\n`
+      : `const e = new Error('dlopen failed'); e.code = ${JSON.stringify(code)}; throw e\n`,
   )
   return path
 }
@@ -397,7 +408,7 @@ test('a tier that is NOT downloaded says exactly that, and never spawns a worker
   // No `isInstalled` override: the real check on an empty dir, which is the honest "not installed".
   assert.deepEqual(await engine.say('charm break', 'af_heart'), {
     ok: false,
-    reason: 'engine-not-installed'
+    reason: 'engine-not-installed',
   })
   engine.dispose()
 })
@@ -409,15 +420,21 @@ test('a DOWNLOADED tier whose worker dies is engine-failed, not "not installed"'
     userData: root,
     workerPath: throwingWorker(root, null),
     isInstalled: () => true,
-    onError: (message) => errors.push(message)
+    onError: (message) => errors.push(message),
   })
-  assert.deepEqual(await engine.say('charm break', 'af_heart'), { ok: false, reason: 'engine-failed' })
+  assert.deepEqual(await engine.say('charm break', 'af_heart'), {
+    ok: false,
+    reason: 'engine-failed',
+  })
   // A DEAD WORKER STAYS DEAD: the second utterance answers from the latch rather than spawning
   // a second thread that would fail identically and file a second report.
-  assert.deepEqual(await engine.say('root broke', 'af_heart'), { ok: false, reason: 'engine-failed' })
+  assert.deepEqual(await engine.say('root broke', 'af_heart'), {
+    ok: false,
+    reason: 'engine-failed',
+  })
   assert.ok(
     errors.some((m) => m.includes('the synthesis worker failed')),
-    errors.join(' | ')
+    errors.join(' | '),
   )
   engine.dispose()
 })
@@ -434,15 +451,15 @@ test('ERR_DLOPEN_FAILED is its OWN answer — the engine cannot load on this PC'
     userData: root,
     workerPath: throwingWorker(root, 'ERR_DLOPEN_FAILED'),
     isInstalled: () => true,
-    onError: (message) => errors.push(message)
+    onError: (message) => errors.push(message),
   })
   assert.deepEqual(await engine.say('charm break', 'af_heart'), {
     ok: false,
-    reason: 'engine-unloadable'
+    reason: 'engine-unloadable',
   })
   assert.ok(
     errors.some((m) => m.includes('ERR_DLOPEN_FAILED') && m.includes('Visual C++')),
-    'the log line names the code AND the measured missing piece: ' + errors.join(' | ')
+    'the log line names the code AND the measured missing piece: ' + errors.join(' | '),
   )
   engine.dispose()
 })

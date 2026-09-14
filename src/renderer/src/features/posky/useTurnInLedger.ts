@@ -21,7 +21,7 @@ import {
   turnInOfferedToPersist,
   type QuestTurnIns,
   type TurnInInstants,
-  type TurnInOffered
+  type TurnInOffered,
 } from '../../../../shared/questTurnIns'
 
 // Static bundled data, re-derived here the same way useProgress.ts derives its own copy — cheap
@@ -60,7 +60,7 @@ export interface TurnInLedger {
 export function useTurnInLedger(
   progress: ProgressState | null,
   setProgress: (p: ProgressState) => void,
-  onQuestComplete?: (quest: PoskyQuest, count: number) => void
+  onQuestComplete?: (quest: PoskyQuest, count: number) => void,
 ): TurnInLedger {
   // Raw (nullable) turn-in snapshot: null until the module hydrates. We gate the
   // celebration baseline on hydration so the historical turn-ins that arrive WITH the
@@ -97,7 +97,7 @@ export function useTurnInLedger(
   // reads `{}` until a log-detected over-hand-in ever needs to say otherwise.
   const offered = useMemo(
     () => resolveTurnInOffered(progress, matched.offered),
-    [progress, matched]
+    [progress, matched],
   )
   // The log's share of each count, for the "can this be undone" question (see UseProgress).
   const logCounts = useMemo<Record<string, number>>(() => {
@@ -135,11 +135,13 @@ export function useTurnInLedger(
     // the cost of every ordinary turn-in, not just the rare over-hand-in.
     const pendingKeys = new Set([
       ...turnInsToPersist(progress, turnIns.instants).map((p) => p.key),
-      ...turnInOfferedToPersist(progress, offered).map((p) => p.key)
+      ...turnInOfferedToPersist(progress, offered).map((p) => p.key),
     ])
     if (pendingKeys.size > 0) {
       void Promise.all(
-        [...pendingKeys].map((key) => window.eq.setQuestTurnIns(key, turnIns.instants[key] ?? [], offered[key]))
+        [...pendingKeys].map((key) =>
+          window.eq.setQuestTurnIns(key, turnIns.instants[key] ?? [], offered[key]),
+        ),
       ).then((results) => {
         if (results.length) setProgress(results[results.length - 1])
       })
@@ -158,10 +160,10 @@ export function useTurnInLedger(
   const recordTurnIn = useCallback(
     async (key: string): Promise<void> => {
       setProgress(
-        await window.eq.setQuestTurnIns(key, [...(turnIns.instants[key] ?? []), Date.now()])
+        await window.eq.setQuestTurnIns(key, [...(turnIns.instants[key] ?? []), Date.now()]),
       )
     },
-    [turnIns, setProgress]
+    [turnIns, setProgress],
   )
 
   /**
@@ -176,10 +178,13 @@ export function useTurnInLedger(
       const fromLog = new Set(detected[key] ?? [])
       const cut = [...list].reverse().find((ts) => !fromLog.has(ts))
       setProgress(
-        await window.eq.setQuestTurnIns(key, cut === undefined ? [] : list.filter((ts) => ts !== cut))
+        await window.eq.setQuestTurnIns(
+          key,
+          cut === undefined ? [] : list.filter((ts) => ts !== cut),
+        ),
       )
     },
-    [turnIns, detected, setProgress]
+    [turnIns, detected, setProgress],
   )
 
   return { turnIns, detected, offered, logCounts, recordTurnIn, undoTurnIn }

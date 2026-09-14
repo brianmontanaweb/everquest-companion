@@ -96,7 +96,7 @@ const ONNX_BINDING_SUBPATH = join(
   'bin',
   'napi-v3',
   'win32',
-  'x64'
+  'x64',
 )
 
 /** `<userData>/speech/vcruntime` — the verified CACHE, which survives app updates. */
@@ -119,7 +119,7 @@ export interface VcRuntimeSource {
 
 export const VC_RUNTIME_SOURCE: VcRuntimeSource = {
   payload: VC_REDIST_PAYLOAD,
-  files: VC_RUNTIME_FILES
+  files: VC_RUNTIME_FILES,
 }
 
 // ---- finding the binding -----------------------------------------------------------------
@@ -152,14 +152,14 @@ export function onnxBindingRoots({ appPath, cwd }: OnnxBindingRootInputs): strin
   return [
     join(`${appPath}.unpacked`, ONNX_BINDING_SUBPATH),
     join(appPath, ONNX_BINDING_SUBPATH),
-    join(cwd, ONNX_BINDING_SUBPATH)
+    join(cwd, ONNX_BINDING_SUBPATH),
   ]
 }
 
 /** The first root that actually holds the binding, or null when none does. */
 export function findOnnxBindingDir(
   roots: readonly string[],
-  exists: (p: string) => boolean = existsSync
+  exists: (p: string) => boolean = existsSync,
 ): string | null {
   return roots.find((dir) => exists(join(dir, ONNX_BINDING_FILE))) ?? null
 }
@@ -225,7 +225,7 @@ async function writeAtomic(dir: string, name: string, bytes: Buffer): Promise<vo
 export async function extractVcRuntime(
   payloadPath: string,
   cacheDir: string,
-  files: readonly VcRuntimeFile[]
+  files: readonly VcRuntimeFile[],
 ): Promise<string | null> {
   let archive: Buffer
   try {
@@ -255,7 +255,7 @@ export async function extractVcRuntime(
 export function hasVcRuntimeFiles(
   dir: string,
   files: readonly VcRuntimeFile[] = VC_RUNTIME_FILES,
-  exists: (p: string) => boolean = existsSync
+  exists: (p: string) => boolean = existsSync,
 ): boolean {
   return files.every((file) => exists(join(dir, file.name)))
 }
@@ -271,7 +271,7 @@ export function hasVcRuntimeFiles(
 export async function placeVcRuntime(
   cacheDir: string,
   bindingDir: string,
-  files: readonly VcRuntimeFile[] = VC_RUNTIME_FILES
+  files: readonly VcRuntimeFile[] = VC_RUNTIME_FILES,
 ): Promise<number> {
   let placed = 0
   for (const file of files) {
@@ -303,7 +303,7 @@ export async function placeVcRuntime(
 export async function ensureVcRuntimePlacement(
   userData: string,
   bindingDir: string | null,
-  files: readonly VcRuntimeFile[] = VC_RUNTIME_FILES
+  files: readonly VcRuntimeFile[] = VC_RUNTIME_FILES,
 ): Promise<number> {
   const cacheDir = vcRuntimeCacheDir(userData)
   if (bindingDir === null || !hasVcRuntimeFiles(cacheDir, files)) return 0
@@ -340,13 +340,13 @@ export interface VcRuntimeResult {
  * cache reaches the network.
  */
 export async function provisionVcRuntime(
-  opts: VcRuntimeProvisionOptions
+  opts: VcRuntimeProvisionOptions,
 ): Promise<VcRuntimeResult> {
   const source = opts.source ?? VC_RUNTIME_SOURCE
   const gap = vcRuntimeGap({
     placementDir: opts.bindingDir,
     systemDir: opts.systemDir ?? systemDllDir(),
-    files: source.files
+    files: source.files,
   })
   if (gap.length === 0) return { skipped: true, placed: 0 }
   if (opts.bindingDir === null) {
@@ -373,14 +373,14 @@ export async function provisionVcRuntime(
 async function fetchAndExtract(
   opts: VcRuntimeProvisionOptions,
   source: VcRuntimeSource,
-  cacheDir: string
+  cacheDir: string,
 ): Promise<string | null> {
   const result = await provisionAssets({
     userData: opts.userData,
     dir: cacheDir,
     assets: [source.payload],
     fetchImpl: opts.fetchImpl,
-    sleep: opts.sleep
+    sleep: opts.sleep,
     // No `onProgress`: this run is silent by construction (see the header).
   })
   if (!result.ok) return result.message ?? 'the runtime payload could not be downloaded'

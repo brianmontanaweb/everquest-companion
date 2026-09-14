@@ -18,7 +18,7 @@ export function IconButton({
   children,
   danger,
   accent,
-  accentBg = ICON_ACCENT_GOLD
+  accentBg = ICON_ACCENT_GOLD,
 }: {
   onClick: () => void
   /** The accessible NAME of the button - never a tooltip (owner ruling 2026-08-16: no hover text anywhere on an overlay). */
@@ -46,7 +46,7 @@ export function IconButton({
         lineHeight: 1,
         background: accent ? accentBg : 'transparent',
         color: danger ? '#cf6679' : 'inherit',
-        padding: 0
+        padding: 0,
       }}
       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.14)')}
       onMouseLeave={(e) => (e.currentTarget.style.background = accent ? accentBg : 'transparent')}

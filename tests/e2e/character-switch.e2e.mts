@@ -60,7 +60,7 @@ import {
   settle,
   settleStable,
   sleep,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow, overlayWindow } from './appWindow.mjs'
 import { launchOnFixture, type FixtureLog } from './logFixture.mjs'
@@ -133,7 +133,7 @@ function alertFires(page: Page): Promise<Fires> {
     const bridge = window as unknown as {
       eq: {
         getModuleSnapshot: (
-          id: string
+          id: string,
         ) => Promise<{ state?: { history?: Record<string, unknown[]> } } | null>
       }
     }
@@ -202,7 +202,7 @@ async function tally(main: Page, toast: Page): Promise<Tally> {
 /** What changed between two readings, in the words the failure line wants. */
 function since(before: Tally, after: Tally): string {
   return `${String(after.fires - before.fires)} alert fire(s) ${JSON.stringify(after.byId)} · ${String(
-    after.toasts - before.toasts
+    after.toasts - before.toasts,
   )} toast card(s)`
 }
 
@@ -211,8 +211,10 @@ async function switchTo(page: Page, logPath: string): Promise<{ name: string; ms
   const t0 = Date.now()
   await page.evaluate(
     (p) =>
-      (window as unknown as { eq: { setCharacter: (x: string) => Promise<unknown> } }).eq.setCharacter(p),
-    logPath
+      (
+        window as unknown as { eq: { setCharacter: (x: string) => Promise<unknown> } }
+      ).eq.setCharacter(p),
+    logPath,
   )
   const ms = Date.now() - t0
   // `character:set` resolves once `tailCharacter` has re-pointed and pushed `log:character` — so
@@ -226,7 +228,7 @@ async function switchTo(page: Page, logPath: string): Promise<{ name: string; ms
         return (await bridge.eq.getCharacter())?.name ?? ''
       }),
     (n) => n !== '',
-    { timeoutMs: 60_000 }
+    { timeoutMs: 60_000 },
   )
   // …AND THEN FOR THE ENGINE TO BE ANSWERING FOR THIS CHARACTER (JOS-499).
   //
@@ -251,7 +253,7 @@ async function switchTo(page: Page, logPath: string): Promise<{ name: string; ms
         return (await bridge.eq.getModuleSnapshot('kills')) !== null
       }),
     (ready) => ready,
-    { timeoutMs: 120_000 }
+    { timeoutMs: 120_000 },
   )
   return { name, ms }
 }
@@ -262,7 +264,10 @@ function padLog(log: FixtureLog): number {
   let written = 0
   for (let i = 0; i < PAD_LINES; i += PAD_BATCH) {
     const batch = Math.min(PAD_BATCH, PAD_LINES - i)
-    written += log.appendAt(new Date(start + (i / PAD_BATCH) * 1000), ...Array(batch).fill(PAD_LINE))
+    written += log.appendAt(
+      new Date(start + (i / PAD_BATCH) * 1000),
+      ...Array(batch).fill(PAD_LINE),
+    )
   }
   return written
 }
@@ -277,7 +282,7 @@ async function main(): Promise<void> {
 
   console.log('launch: hidden Electron (EQ_E2E=1) with TWO characters staged from e2e-toast.log…')
   const { app, close, log } = await launchOnFixture('e2e-toast.log', {
-    others: { [OTHER]: 'e2e-toast.log' }
+    others: { [OTHER]: 'e2e-toast.log' },
   })
 
   let page: Page | null = null
@@ -293,7 +298,9 @@ async function main(): Promise<void> {
     await waitHydrated(page)
 
     const toast = await toastWindow(app)
-    if (!check('the toast overlay window is open (the top-centre announcement strip)', toast !== null)) {
+    if (
+      !check('the toast overlay window is open (the top-centre announcement strip)', toast !== null)
+    ) {
       return
     }
     const strip = toast as Page
@@ -304,7 +311,7 @@ async function main(): Promise<void> {
       !check(
         `a second character (${OTHER}) is staged beside Primitive`,
         typeof otherPath === 'string',
-        String(otherPath)
+        String(otherPath),
       )
     ) {
       return
@@ -319,12 +326,12 @@ async function main(): Promise<void> {
     const base = await settleStable(() => tally(page as Page, strip), {
       timeoutMs: 8_000,
       stable: 4,
-      pollMs: 200
+      pollMs: 200,
     })
     check(
       'a fresh launch + first switch celebrate NOTHING (the fold is history, not news)',
       base.toasts === 0,
-      since({ fires: 0, toasts: 0, byId: {} }, base)
+      since({ fires: 0, toasts: 0, byId: {} }, base),
     )
 
     // ── THE CONTROL: a LIVE credited kill must celebrate exactly once ────────────────────────
@@ -332,16 +339,20 @@ async function main(): Promise<void> {
     const live1 = await settle(
       () => tally(page as Page, strip),
       (t) => t.toasts > base.toasts,
-      { timeoutMs: 20_000, pollMs: 200 }
+      { timeoutMs: 20_000, pollMs: 200 },
     )
     // THE CONTROL, COUNTED AS TOASTS — see `FIRE_ROWS_ARE_ENGINE_SIDE`. One credited kill, one
     // celebration; the card is the half the user sees and the half this app still records.
     check(
       `a LIVE credited kill of ${BOSS} celebrates exactly once`,
       live1.toasts - base.toasts === 1,
-      since(base, live1)
+      since(base, live1),
     )
-    check('…and shows exactly one card in the top-centre strip', live1.toasts - base.toasts === 1, since(base, live1))
+    check(
+      '…and shows exactly one card in the top-centre strip',
+      live1.toasts - base.toasts === 1,
+      since(base, live1),
+    )
 
     // Past the alert's own cooldown before any switching, so a quiet round below means SUPPRESSED
     // rather than RATE-LIMITED (see ALERT_COOLDOWN_MS).
@@ -357,12 +368,12 @@ async function main(): Promise<void> {
       const afterAway = await settleStable(() => tally(page as Page, strip), {
         timeoutMs: 10_000,
         stable: 4,
-        pollMs: 200
+        pollMs: 200,
       })
       check(
         `[round ${String(round)}] switching to ${OTHER} celebrates nothing`,
         afterAway.fires === last.fires && afterAway.toasts === last.toasts,
-        `${since(last, afterAway)} · tailing ${away.name} · switch ${String(away.ms)}ms`
+        `${since(last, afterAway)} · tailing ${away.name} · switch ${String(away.ms)}ms`,
       )
       last = afterAway
 
@@ -371,7 +382,9 @@ async function main(): Promise<void> {
       if (!padded) {
         const t0 = Date.now()
         const n = padLog(log)
-        note(`padded Primitive's log with ${String(n)} historical swing lines in ${String(Date.now() - t0)}ms`)
+        note(
+          `padded Primitive's log with ${String(n)} historical swing lines in ${String(Date.now() - t0)}ms`,
+        )
         padded = true
       }
 
@@ -379,7 +392,7 @@ async function main(): Promise<void> {
       const afterBack = await settleStable(() => tally(page as Page, strip), {
         timeoutMs: 15_000,
         stable: 4,
-        pollMs: 200
+        pollMs: 200,
       })
       // THE DEFECT'S WINDOW IS GONE WITH THE REPLAY (JOS-499). This asked whether the return
       // switch had outlived one heartbeat, because the bug needed a fold long enough for a tick
@@ -393,7 +406,7 @@ async function main(): Promise<void> {
       check(
         `[round ${String(round)}] switching BACK to Primitive celebrates nothing — its kills are history`,
         afterBack.fires === last.fires && afterBack.toasts === last.toasts,
-        `${since(last, afterBack)} · tailing ${back.name} · switch ${String(back.ms)}ms`
+        `${since(last, afterBack)} · tailing ${back.name} · switch ${String(back.ms)}ms`,
       )
       last = afterBack
     }
@@ -403,16 +416,20 @@ async function main(): Promise<void> {
     const live2 = await settle(
       () => tally(page as Page, strip),
       (t) => t.fires > last.fires && t.toasts > last.toasts,
-      { timeoutMs: 20_000, pollMs: 200 }
+      { timeoutMs: 20_000, pollMs: 200 },
     )
     check(
       'a live kill AFTER four character switches still celebrates exactly once',
       live2.toasts - last.toasts === 1,
-      since(last, live2)
+      since(last, live2),
     )
     check('…and it is one card, not a burst', live2.toasts - last.toasts === 1, since(last, live2))
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     if (failures.length) await dumpArtifacts(page, 'character-switch-FAIL')
   } finally {
     await close()

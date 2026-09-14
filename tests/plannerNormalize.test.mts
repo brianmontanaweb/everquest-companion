@@ -17,7 +17,7 @@ import {
   isHasteEffect,
   normalizeClasses,
   normalizeSlotTokens,
-  socketTypeOf
+  socketTypeOf,
 } from '../src/shared/planner/normalize'
 import { EQUIP_SLOTS } from '../src/shared/planner/types'
 import { CLASS_ABBRS } from '../src/shared/classCombo'
@@ -86,11 +86,15 @@ const SLOT_TOKENS: [token: string, canonical: string | null][] = [
   ['Ear', 'EAR'],
   // punctuation the wiki leaves behind
   ['BACK,', 'BACK'],
-  ['/', null]
+  ['/', null],
 ]
 
 test('every measured slot token maps to a canonical slot or to silence', () => {
-  assert.equal(SLOT_TOKENS.length, 40, 'the measured inventory is 40 distinct tokens (2026-08-22 rescrape)')
+  assert.equal(
+    SLOT_TOKENS.length,
+    40,
+    'the measured inventory is 40 distinct tokens (2026-08-22 rescrape)',
+  )
   for (const [token, canonical] of SLOT_TOKENS) {
     const { slots, unknown } = normalizeSlotTokens(token)
     assert.deepEqual(unknown, [], `${token} should be known to the table`)
@@ -109,13 +113,17 @@ test('the canonical slot list is closed and has no CHARM', () => {
 test('multi-slot strings split into every slot they name', () => {
   // Verbatim rows from the corpus.
   assert.deepEqual(normalizeSlotTokens('PRIMARY SECONDARY').slots, ['PRIMARY', 'SECONDARY'])
-  assert.deepEqual(normalizeSlotTokens('RANGE PRIMARY SECONDARY').slots, ['RANGE', 'PRIMARY', 'SECONDARY'])
+  assert.deepEqual(normalizeSlotTokens('RANGE PRIMARY SECONDARY').slots, [
+    'RANGE',
+    'PRIMARY',
+    'SECONDARY',
+  ])
   assert.deepEqual(normalizeSlotTokens('SHOULDERS ARMS BACK CHEST LEGS').slots, [
     'SHOULDERS',
     'ARMS',
     'BACK',
     'CHEST',
-    'LEGS'
+    'LEGS',
   ])
   assert.deepEqual(normalizeSlotTokens('BACK, SHOULDER').slots, ['BACK', 'SHOULDERS'])
   assert.deepEqual(normalizeSlotTokens('PRIMARY / SECONDARY').slots, ['PRIMARY', 'SECONDARY'])
@@ -149,7 +157,11 @@ test('the slot table covers the whole committed corpus', () => {
   assert.deepEqual(stray.slice(0, 20), [], 'slot tokens the hand-authored table does not know')
   // Every token the corpus states must be in the table above, so the inventory can't drift.
   const known = new Set(SLOT_TOKENS.map(([t]) => t))
-  assert.deepEqual([...seen].filter((t) => !known.has(t)), [], 'corpus token missing from SLOT_TOKENS')
+  assert.deepEqual(
+    [...seen].filter((t) => !known.has(t)),
+    [],
+    'corpus token missing from SLOT_TOKENS',
+  )
 })
 
 // ---- classes ----------------------------------------------------------------------
@@ -167,7 +179,8 @@ test('`ALL except X Y` is the complement, computed not guessed', () => {
   // The corpus's most common exception row (455 pages) — the four pure casters.
   const casters = normalizeClasses(['ALL', 'except', 'NEC', 'WIZ', 'MAG', 'ENC'])
   assert.equal(casters.length, 12)
-  for (const c of ['NEC', 'WIZ', 'MAG', 'ENC']) assert.ok(!casters.includes(c as never), `${c} excluded`)
+  for (const c of ['NEC', 'WIZ', 'MAG', 'ENC'])
+    assert.ok(!casters.includes(c as never), `${c} excluded`)
   for (const c of ['WAR', 'BRD', 'BER']) assert.ok(casters.includes(c as never), `${c} kept`)
   assert.deepEqual(normalizeClasses(['ALL', 'except', 'MNK']).length, 15)
 })
@@ -202,7 +215,8 @@ test('the class table covers the whole committed corpus', () => {
     else if (classes.some((c) => c.toUpperCase() === 'NONE')) noneRows++
     const out = normalizeClasses(classes)
     assert.ok(out.length <= CLASS_ABBRS.length, `${entry.page} produced more than 16 classes`)
-    for (const c of out) assert.ok(CLASS_ABBRS.includes(c), `${entry.page} produced a non-class ${c}`)
+    for (const c of out)
+      assert.ok(CLASS_ABBRS.includes(c), `${entry.page} produced a non-class ${c}`)
   }
   // Floors under the 2026-08-04 measurement (ALL 4752 bare rows, except 757, NONE 227).
   assert.ok(allRows >= 4000, `only ${allRows} plain ALL rows`)
@@ -211,8 +225,22 @@ test('the class table covers the whole committed corpus', () => {
   // The measured token inventory: 16 codes + ALL/All + NONE/None + except + two annotations —
   // plus `War`, the one Title Case class code the 2026-08-22 rescrape added (the case fold
   // already normalizes it; it is listed so the inventory stays a census and not a guess).
-  const known = new Set<string>([...CLASS_ABBRS, 'ALL', 'All', 'NONE', 'None', 'except', '(35)', '(48)', 'War'])
-  assert.deepEqual([...seen].filter((t) => !known.has(t)), [], 'corpus class token outside the measured set')
+  const known = new Set<string>([
+    ...CLASS_ABBRS,
+    'ALL',
+    'All',
+    'NONE',
+    'None',
+    'except',
+    '(35)',
+    '(48)',
+    'War',
+  ])
+  assert.deepEqual(
+    [...seen].filter((t) => !known.has(t)),
+    [],
+    'corpus class token outside the measured set',
+  )
 })
 
 // ---- socket types (D2) -------------------------------------------------------------
@@ -223,14 +251,15 @@ test('combat and proc are one socket family, and a bare Effect is excluded', () 
   assert.equal(socketTypeOf('worn'), 'worn')
   assert.equal(socketTypeOf('focus'), 'focus')
   assert.equal(socketTypeOf('click'), 'click')
-  assert.equal(socketTypeOf('effect'), null, "a bare Effect: line names no socket — v1 excludes it")
+  assert.equal(socketTypeOf('effect'), null, 'a bare Effect: line names no socket — v1 excludes it')
 })
 
 /** Effect rows per `ItemEffectKind`, counted over item KEYS (the shape the index builder walks). */
 function effectKindCounts(): (kind: string) => number {
   const kinds = new Map<string, number>()
   for (const [, entry] of index) {
-    for (const eff of entry.stats?.effects ?? []) kinds.set(eff.kind, (kinds.get(eff.kind) ?? 0) + 1)
+    for (const eff of entry.stats?.effects ?? [])
+      kinds.set(eff.kind, (kinds.get(eff.kind) ?? 0) + 1)
   }
   return (kind) => kinds.get(kind) ?? 0
 }
@@ -265,7 +294,7 @@ test('the haste family is locked — every attack-haste effect in the corpus', (
     'Blessing of the Grove',
     "Aanya's Quickening",
     'Wonderous Rapidity',
-    'Speed of the Shissar'
+    'Speed of the Shissar',
   ]) {
     assert.equal(isHasteEffect(name), true, `${name} must be haste-locked`)
   }
@@ -281,14 +310,20 @@ test('cast-time focus families are NOT haste, despite the word', () => {
     'Affliction Haste I',
     'Summoning Haste III',
     'Enhancement Haste II',
-    'Reanimation Haste I'
+    'Reanimation Haste I',
   ]) {
     assert.equal(isHasteEffect(name), false, `${name} is a cast-time focus, not attack haste`)
   }
 })
 
 test('ordinary effects are not haste', () => {
-  for (const name of ['Improved Healing III', 'Ice Comet', 'Lifetap', 'Augment Death', 'Flowing Thought I']) {
+  for (const name of [
+    'Improved Healing III',
+    'Ice Comet',
+    'Lifetap',
+    'Augment Death',
+    'Flowing Thought I',
+  ]) {
     assert.equal(isHasteEffect(name), false, `${name} should not be flagged`)
   }
   assert.equal(isHasteEffect('Improved Healing III', 'Must Equip, Casting Time: Instant'), false)

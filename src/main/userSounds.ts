@@ -35,14 +35,14 @@ import {
   USER_SOUND_EXTENSIONS,
   baseName,
   userSoundId,
-  userSoundLabel
+  userSoundLabel,
 } from '../shared/userSounds'
 import type {
   SoundPackManifest,
   UserSound,
   UserSoundImportResult,
   UserSoundRejection,
-  UserSoundRemoveResult
+  UserSoundRemoveResult,
 } from '../shared/types'
 
 /**
@@ -53,7 +53,11 @@ import type {
 export function readUserManifest(root: string): SoundPackManifest {
   // The id and name are OURS, not the file's — a hand-edited manifest must not be able to
   // re-title the reserved pack into something a picker would read as a registry pack.
-  const empty: SoundPackManifest = { id: USER_SOUNDS_PACK_ID, name: USER_SOUNDS_PACK_NAME, sounds: {} }
+  const empty: SoundPackManifest = {
+    id: USER_SOUNDS_PACK_ID,
+    name: USER_SOUNDS_PACK_NAME,
+    sounds: {},
+  }
   const file = join(root, 'manifest.json')
   if (!existsSync(file)) return empty
   try {
@@ -75,7 +79,7 @@ function writeUserManifest(root: string, manifest: SoundPackManifest): void {
 export function listUserSounds(root: string): UserSound[] {
   return Object.entries(readUserManifest(root).sounds).map(([soundId, s]) => ({
     soundId,
-    label: s.label
+    label: s.label,
   }))
 }
 
@@ -97,12 +101,14 @@ function acceptedExt(path: string): string | null {
 function importOne(
   root: string,
   path: string,
-  manifest: SoundPackManifest
+  manifest: SoundPackManifest,
 ): { added: UserSound } | { rejected: UserSoundRejection } {
   const file = baseName(path)
   const ext = acceptedExt(path)
   if (!ext) {
-    return { rejected: { file, reason: `only ${USER_SOUND_EXTENSIONS.join(', ')} files can be played` } }
+    return {
+      rejected: { file, reason: `only ${USER_SOUND_EXTENSIONS.join(', ')} files can be played` },
+    }
   }
   let bytes: number
   try {
@@ -135,7 +141,10 @@ function importOne(
  * Import a batch of already-chosen files into `root`. The manifest is written ONCE, after
  * the whole batch, so a failure part-way leaves the pack exactly as consistent as it was.
  */
-export function importUserSoundFiles(root: string, paths: readonly string[]): UserSoundImportResult {
+export function importUserSoundFiles(
+  root: string,
+  paths: readonly string[],
+): UserSoundImportResult {
   const manifest = readUserManifest(root)
   const added: UserSound[] = []
   const rejected: UserSoundRejection[] = []
@@ -155,17 +164,17 @@ export function importUserSoundFiles(root: string, paths: readonly string[]): Us
  * pulls the whole main process (store → channel → `app.isPackaged`) into anything that reads
  * this file, and the unit test reads this file.
  */
-export async function importUserSounds(parent: BrowserWindow | null): Promise<UserSoundImportResult> {
+export async function importUserSounds(
+  parent: BrowserWindow | null,
+): Promise<UserSoundImportResult> {
   const root = userSoundsRoot()
   const opts = {
     title: 'Add a sound',
     buttonLabel: 'Add',
     properties: ['openFile' as const, 'multiSelections' as const],
-    filters: [{ name: 'Audio', extensions: [...USER_SOUND_EXTENSIONS] }]
+    filters: [{ name: 'Audio', extensions: [...USER_SOUND_EXTENSIONS] }],
   }
-  const res = parent
-    ? await dialog.showOpenDialog(parent, opts)
-    : await dialog.showOpenDialog(opts)
+  const res = parent ? await dialog.showOpenDialog(parent, opts) : await dialog.showOpenDialog(opts)
   if (res.canceled || !res.filePaths.length) {
     return { canceled: true, added: [], rejected: [], sounds: listUserSounds(root) }
   }

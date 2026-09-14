@@ -38,7 +38,6 @@ export function mobLookupKey(name: string): string {
   return mobKey(name)
 }
 
-
 export interface CurrentMobState {
   /** the mob, or undefined when no fight is open / nothing has been hit yet. */
   target?: CurrentTarget
@@ -123,6 +122,6 @@ export function useCurrentMob(snap: CombatSnapshot | null): CurrentMobState {
     knowledge: byKey.get(key) ?? seed,
     // True through the debounce as well as the round trip — "we have not answered yet" is the
     // honest state for both, and it is never collapsed with "there is nothing".
-    loading: !!key && !byKey.has(key)
+    loading: !!key && !byKey.has(key),
   }
 }

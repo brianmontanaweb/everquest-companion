@@ -81,9 +81,9 @@ const LEDGER: ViewDescriptor = {
   // right" is not a thing the next person can check without opening a Rust file.
   sort: [
     ['at', 'desc'],
-    ['seq', 'desc']
+    ['seq', 'desc'],
   ],
-  window: { offset: 0, limit: WINDOW_LIMIT }
+  window: { offset: 0, limit: WINDOW_LIMIT },
 }
 
 export interface EngineLootLedgerProps {
@@ -120,7 +120,7 @@ export function EngineLootLedger({
   knowledgeByKey,
   onSelect,
   source,
-  setSource
+  setSource,
 }: EngineLootLedgerProps): JSX.Element {
   const view = useViewFrom(client, LEDGER)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -142,11 +142,13 @@ export function EngineLootLedger({
       )}
       {view.loading && view.error === null && (
         <Alert severity="info" data-testid="loot-engine-loading">
-          Waiting for the engine&apos;s ledger. A fresh world (a character switch, an engine restart)
-          takes a full fold before the first rows land.
+          Waiting for the engine&apos;s ledger. A fresh world (a character switch, an engine
+          restart) takes a full fold before the first rows land.
         </Alert>
       )}
-      {!view.loading && view.error === null && <EngineSummary shown={rows.length} total={view.total} />}
+      {!view.loading && view.error === null && (
+        <EngineSummary shown={rows.length} total={view.total} />
+      )}
       {/* The app-fed body's container, prop for prop (`LootLedgerBody`) — same overflow, same
           `minHeight: 0`, same contained overscroll — so the two modes scroll identically and a
           comparison of what is on screen is a comparison of the ledgers. */}

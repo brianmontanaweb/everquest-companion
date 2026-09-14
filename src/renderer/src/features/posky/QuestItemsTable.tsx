@@ -56,7 +56,7 @@ export function ItemNameLink({
   onOpenLoot,
   inSummary,
   row,
-  stats
+  stats,
 }: {
   name: string
   /** display text when it differs from the item name */
@@ -86,7 +86,7 @@ export function ItemNameLink({
                 cursor: 'pointer',
                 textDecoration: 'underline dotted',
                 textUnderlineOffset: 2,
-                '&:hover': { textDecoration: 'underline' }
+                '&:hover': { textDecoration: 'underline' },
               }
             : undefined
         }
@@ -104,7 +104,7 @@ export function QuestItemsTable({
   toggleFavorite,
   onOpenMob,
   onOpenLoot,
-  onSetItemCount
+  onSetItemCount,
 }: {
   q: QuestProgress
   isFavorite: (name: string) => boolean
@@ -131,7 +131,11 @@ export function QuestItemsTable({
           return (
             <TableRow key={it.name}>
               <TableCell padding="checkbox">
-                <FavoriteStar name={it.name} favorited={isFavorite(it.name)} onToggle={toggleFavorite} />
+                <FavoriteStar
+                  name={it.name}
+                  favorited={isFavorite(it.name)}
+                  onToggle={toggleFavorite}
+                />
               </TableCell>
               <TableCell sx={{ color: done ? 'success.main' : 'text.primary' }}>
                 {/* The row itself feeds the card's Drops block — built from THIS row rather than
@@ -143,7 +147,12 @@ export function QuestItemsTable({
                 <ItemHaveCell it={it} onSetItemCount={onSetItemCount} />
               </TableCell>
               <TableCell sx={{ color: 'text.secondary' }}>
-                <DropperCell droppers={it.droppers} who={it.who} where={it.where} onOpenMob={onOpenMob} />
+                <DropperCell
+                  droppers={it.droppers}
+                  who={it.who}
+                  where={it.where}
+                  onOpenMob={onOpenMob}
+                />
               </TableCell>
               <TableCell sx={{ color: 'text.secondary' }}>{it.where}</TableCell>
             </TableRow>

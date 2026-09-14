@@ -95,7 +95,7 @@ import {
   isStripKind,
   overlayDefaultSize,
   scaledStripBounds,
-  stripLayoutBounds
+  stripLayoutBounds,
 } from './overlayLayout'
 import { getOverlayConfig, setOverlayConfig } from './store'
 import { getOverlayTextSize } from './storeOverlayTextSize'
@@ -269,6 +269,9 @@ export function refitStripsForTextScale(): void {
     if (!w || w.isDestroyed()) continue
     const next = overlayAppliedBounds(kind)
     if (!next) continue
-    applyOverlayBounds(kind, fitsHeightToContent(kind) ? { ...next, height: w.getBounds().height } : next)
+    applyOverlayBounds(
+      kind,
+      fitsHeightToContent(kind) ? { ...next, height: w.getBounds().height } : next,
+    )
   }
 }

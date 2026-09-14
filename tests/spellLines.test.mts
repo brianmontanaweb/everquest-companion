@@ -23,7 +23,7 @@ import {
   replaceRankInDef,
   spellLineKey,
   spellLineLevel,
-  triggerSpells
+  triggerSpells,
 } from '../src/shared/spellLines'
 import type { AlertDef } from '../src/shared/types'
 
@@ -37,7 +37,7 @@ const REAL_CAST_NAMES = [
   'Allure VI',
   'Clarity III',
   'Quickness',
-  'Languid Pace'
+  'Languid Pace',
 ]
 
 test('L1 spellLineKey is byte-identical to the parser spellCanonKey', () => {
@@ -54,9 +54,13 @@ test('L2 parseSpellRank: suffix → ordinal, bare name → an implicit rank 1', 
   assert.deepEqual(parseSpellRank('Mesmerization III'), {
     base: 'Mesmerization',
     rank: 3,
-    suffixed: true
+    suffixed: true,
   })
-  assert.deepEqual(parseSpellRank('Lay on Hands X'), { base: 'Lay on Hands', rank: 10, suffixed: true })
+  assert.deepEqual(parseSpellRank('Lay on Hands X'), {
+    base: 'Lay on Hands',
+    rank: 10,
+    suffixed: true,
+  })
   // A bare name IS rank 1 — "Clarity" precedes "Clarity II" — but is flagged unsuffixed so
   // nothing offers a rank-pinned alert on a name the log never spells with a rank.
   assert.deepEqual(parseSpellRank('Clarity'), { base: 'Clarity', rank: 1, suffixed: false })
@@ -66,20 +70,19 @@ test('L2 parseSpellRank: suffix → ordinal, bare name → an implicit rank 1', 
 })
 
 test('L3 buildSpellLine unions DB + observed names, dedupes case-insensitively, sorts by rank', () => {
-  const line = buildSpellLine(
-    'clarity',
-    ['Clarity', 'Clarity II', 'clarity ii', 'Clarity III'],
-    { 'Clarity III': 5000, Clarity: 1000 }
-  )
+  const line = buildSpellLine('clarity', ['Clarity', 'Clarity II', 'clarity ii', 'Clarity III'], {
+    'Clarity III': 5000,
+    Clarity: 1000,
+  })
   assert.equal(line.base, 'Clarity')
   assert.deepEqual(
     line.ranks.map((r) => r.name),
     ['Clarity', 'Clarity II', 'Clarity III'],
-    'deduped on the FIRST spelling seen, ascending by rank'
+    'deduped on the FIRST spelling seen, ascending by rank',
   )
   assert.deepEqual(
     line.ranks.map((r) => r.lastCastMs),
-    [1000, null, 5000]
+    [1000, null, 5000],
   )
   // The recency map is read case-insensitively — the wiki and the log disagree on case.
   const cased = buildSpellLine('clarity', ['Clarity II'], { 'clarity ii': 42 })
@@ -89,13 +92,13 @@ test('L3 buildSpellLine unions DB + observed names, dedupes case-insensitively, 
 test('L4 ranking favours the MOST RECENTLY CAST rank, not the highest', () => {
   const line = buildSpellLine('allure', ['Allure III', 'Allure IV', 'Allure VI'], {
     'Allure III': 100,
-    'Allure VI': 50 // higher rank, cast LONGER ago
+    'Allure VI': 50, // higher rank, cast LONGER ago
   })
   assert.equal(preferredRank(line.ranks)?.name, 'Allure III', 'recency beats rank')
   assert.deepEqual(
     rankRecencyOrder(line.ranks).map((r) => r.name),
     ['Allure III', 'Allure VI', 'Allure IV'],
-    'cast ranks first (newest first), then never-cast ranks by descending rank'
+    'cast ranks first (newest first), then never-cast ranks by descending rank',
   )
   // A line nobody has cast falls back to the highest known rank rather than to nothing.
   const unused = buildSpellLine('rune', ['Rune I', 'Rune V'], {})
@@ -109,7 +112,7 @@ test('L5 class levels parse out of the real DB classes strings', () => {
   assert.ok(yaulp, 'Yaulp is in the committed DB')
   assert.deepEqual(parseSpellClassLevels(yaulp.classes), [
     { cls: 'CLR', level: 1 },
-    { cls: 'PAL', level: 9 }
+    { cls: 'PAL', level: 9 },
   ])
   // The two shapes the wiki uses for "no class" produce nothing rather than a guess.
   assert.deepEqual(parseSpellClassLevels('This spell is cast by NPCs only.'), [])
@@ -117,17 +120,21 @@ test('L5 class levels parse out of the real DB classes strings', () => {
   // Both wiki spellings of the Shadow Knight canonicalize to SHD; a class named twice keeps
   // its LOWEST level (the earliest the line is available).
   assert.deepEqual(parseSpellClassLevels('* Shadowknight - Level 39 * Shadow Knight - Level 20'), [
-    { cls: 'SHD', level: 20 }
+    { cls: 'SHD', level: 20 },
   ])
 })
 
 test('L6 the level chip resolves, or says min — it never picks a class', () => {
   const levels = [
     { cls: 'CLR' as const, level: 1 },
-    { cls: 'PAL' as const, level: 9 }
+    { cls: 'PAL' as const, level: 9 },
   ]
   // Exactly one of your resolved classes casts it → that class's level, unambiguous.
-  assert.deepEqual(spellLineLevel(levels, ['PAL', 'WAR']), { level: 9, cls: 'PAL', ambiguous: false })
+  assert.deepEqual(spellLineLevel(levels, ['PAL', 'WAR']), {
+    level: 9,
+    cls: 'PAL',
+    ambiguous: false,
+  })
   // Several of them do → the minimum, flagged ambiguous (never "you are the Cleric").
   assert.deepEqual(spellLineLevel(levels, ['CLR', 'PAL']), { level: 1, ambiguous: true })
   // Loadout unknown → the minimum across every candidate class, flagged ambiguous.
@@ -147,7 +154,7 @@ function rankAlert(id: string, spell: string): AlertDef {
     trigger: { type: 'event', kind: 'resist', where: { caster: 'you', spell } },
     sound: { packId: 'alan-rickman', soundId: 'task-error-task-error-01' },
     volume: 0.4,
-    cooldownMs: 7000
+    cooldownMs: 7000,
   }
 }
 
@@ -156,7 +163,7 @@ test('U1 triggerSpells reads literal pins and deliberately ignores user regexes'
   // A /…/ matcher is a user-authored pattern; rewriting it would be guessing at intent.
   assert.deepEqual(
     triggerSpells({ type: 'event', kind: 'resist', where: { spell: '/allure/' } }),
-    []
+    [],
   )
   // Composites are walked, and non-event conditions contribute nothing.
   assert.deepEqual(
@@ -164,10 +171,10 @@ test('U1 triggerSpells reads literal pins and deliberately ignores user regexes'
       type: 'any',
       conditions: [
         { type: 'event', kind: 'castBegin', where: { spell: 'Rune II' } },
-        { type: 'raw', regex: 'anything' }
-      ]
+        { type: 'raw', regex: 'anything' },
+      ],
     }),
-    ['Rune II']
+    ['Rune II'],
   )
 })
 
@@ -175,8 +182,8 @@ test('U2 an offer appears only for a rank you have CAST above every covered rank
   const lines = [
     buildSpellLine('allure', ['Allure III', 'Allure IV', 'Allure VI'], {
       'Allure III': 100,
-      'Allure VI': 900
-    })
+      'Allure VI': 900,
+    }),
   ]
   const offers = detectRankUpgrades([rankAlert('a1', 'Allure III')], lines)
   assert.equal(offers.length, 1)
@@ -187,14 +194,14 @@ test('U2 an offer appears only for a rank you have CAST above every covered rank
   // Allure IV exists in the line but was NEVER cast → never offered.
   const neverCast = detectRankUpgrades(
     [rankAlert('a1', 'Allure III')],
-    [buildSpellLine('allure', ['Allure III', 'Allure IV'], { 'Allure III': 100 })]
+    [buildSpellLine('allure', ['Allure III', 'Allure IV'], { 'Allure III': 100 })],
   )
   assert.deepEqual(neverCast, [], 'a rank you have not cast is not an upgrade')
 
   // An alert on an UNSUFFIXED name can never go stale, so it is never an offer.
   assert.deepEqual(
     detectRankUpgrades([rankAlert('a2', 'Clarity')], [buildSpellLine('clarity', ['Clarity'], {})]),
-    []
+    [],
   )
 })
 
@@ -203,10 +210,13 @@ test('U3 ALL defs in a line are considered — a covered rank is never re-offere
   const lines = [
     buildSpellLine('allure', ['Allure III', 'Allure V', 'Allure VI'], {
       'Allure V': 500,
-      'Allure VI': 900
-    })
+      'Allure VI': 900,
+    }),
   ]
-  const offers = detectRankUpgrades([rankAlert('a1', 'Allure III'), rankAlert('a2', 'Allure V')], lines)
+  const offers = detectRankUpgrades(
+    [rankAlert('a1', 'Allure III'), rankAlert('a2', 'Allure V')],
+    lines,
+  )
   assert.equal(offers.length, 1, 'ONE offer per line, never one per stale def')
   assert.equal(offers[0].to, 'Allure VI')
   assert.equal(offers[0].from, 'Allure V', 'Replace targets the HIGHEST covered rank')
@@ -216,7 +226,7 @@ test('U3 ALL defs in a line are considered — a covered rank is never re-offere
   // Once VI is covered too, the line is settled — the strip goes quiet instead of nagging.
   const settled = detectRankUpgrades(
     [rankAlert('a1', 'Allure III'), rankAlert('a2', 'Allure V'), rankAlert('a3', 'Allure VI')],
-    lines
+    lines,
   )
   assert.deepEqual(settled, [], 'converges — adding alongside ends the offer')
 })
@@ -250,13 +260,13 @@ test('U4 Add alongside keeps the old alert; Replace re-points it. Both keep user
       type: 'any',
       conditions: [
         { type: 'event', kind: 'castBegin', where: { spell: 'Allure III' } },
-        { type: 'event', kind: 'resist', where: { spell: 'Mesmerization III' } }
-      ]
-    }
+        { type: 'event', kind: 'resist', where: { spell: 'Mesmerization III' } },
+      ],
+    },
   }
   assert.deepEqual(triggerSpells(replaceRankInDef(composite, 'Allure III', 'Allure VI').trigger), [
     'Allure VI',
-    'Mesmerization III'
+    'Mesmerization III',
   ])
 })
 

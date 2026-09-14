@@ -118,7 +118,7 @@ export function songLandingObservable(db: SpellDb | undefined, spellKey: string)
 function learnable(
   db: SpellDb | undefined,
   keys: readonly string[],
-  casterLevel: number | null
+  casterLevel: number | null,
 ): readonly string[] {
   if (casterLevel === null) return keys
   const kept = keys.filter((k) => {
@@ -150,7 +150,7 @@ export function resolveSongEmote(
   db: SpellDb | undefined,
   candidates: readonly string[],
   named: readonly string[],
-  casterLevel: number | null = null
+  casterLevel: number | null = null,
 ): string | null {
   const songs: string[] = []
   for (const name of candidates) {

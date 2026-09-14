@@ -24,9 +24,7 @@ import { CARD_ITEM, CARD_LABEL, CARD_MONO, LABEL_STYLE, TEXT_STYLE } from '../li
 // The game-style item window is a MUI component; the overlay bundle is otherwise MUI-free by
 // design. Loading it LAZILY keeps that promise where it matters — a pinned, locked overlay (and
 // any session where the user never hovers a reward) never pulls MUI into this window at all.
-const ItemWindow = lazy(() =>
-  import('../lib/ItemWindow').then((m) => ({ default: m.ItemWindow }))
-)
+const ItemWindow = lazy(() => import('../lib/ItemWindow').then((m) => ({ default: m.ItemWindow })))
 
 /** This card's own accent. The rest of the palette is the shared card vocabulary in lib/. */
 const GOLD = '#d9b25f'
@@ -125,7 +123,7 @@ function WhatItsFor({ k }: { k: ItemKnowledge }): JSX.Element | null {
         marginTop: 6,
         paddingTop: 5,
         borderTop: '1px solid rgba(255,255,255,0.12)',
-        fontFamily: CARD_MONO
+        fontFamily: CARD_MONO,
       }}
     >
       {shownUses.length > 0 && (
@@ -135,7 +133,10 @@ function WhatItsFor({ k }: { k: ItemKnowledge }): JSX.Element | null {
             const where = questUseWhere(u)
             const outcomes = questUseOutcomes(u)
             return (
-              <div key={`${u.source}:${u.page ?? ''}:${u.quest}:${u.role ?? ''}`} style={{ marginTop: 2 }}>
+              <div
+                key={`${u.source}:${u.page ?? ''}:${u.quest}:${u.role ?? ''}`}
+                style={{ marginTop: 2 }}
+              >
                 <div style={TEXT_STYLE}>
                   {u.quest}
                   {u.role === 'reward' && <span style={{ color: CARD_LABEL }}> · reward</span>}
@@ -162,7 +163,10 @@ function WhatItsFor({ k }: { k: ItemKnowledge }): JSX.Element | null {
               .filter(Boolean)
               .join(' ')
             return (
-              <div key={`${r.tradeskill ?? ''}:${r.recipe}`} style={{ ...LABEL_STYLE, marginTop: 2 }}>
+              <div
+                key={`${r.tradeskill ?? ''}:${r.recipe}`}
+                style={{ ...LABEL_STYLE, marginTop: 2 }}
+              >
                 <span style={{ color: CARD_ITEM }}>{r.recipe}</span>
                 {how && <> · {how}</>}
               </div>
@@ -198,10 +202,14 @@ export function ItemHoverCard({ item, stats }: { item: string; stats?: string })
         borderRadius: 6,
         padding: 8,
         maxWidth: 300,
-        boxShadow: '0 6px 20px rgba(0,0,0,0.6)'
+        boxShadow: '0 6px 20px rgba(0,0,0,0.6)',
       }}
     >
-      <Suspense fallback={<div style={{ fontSize: 11, color: CARD_ITEM, fontFamily: CARD_MONO }}>{item}</div>}>
+      <Suspense
+        fallback={
+          <div style={{ fontSize: 11, color: CARD_ITEM, fontFamily: CARD_MONO }}>{item}</div>
+        }
+      >
         <ItemWindow
           name={item}
           stats={data?.stats}

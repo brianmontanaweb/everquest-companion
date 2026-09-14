@@ -46,13 +46,17 @@ import {
   validateBlockReason,
   validateClosedMessage,
   validatePatch,
-  validateQuery
+  validateQuery,
 } from './validate'
 
 /** Prose, never a stack. An IAM denial is the ACCESS CONTROL WORKING and must read like it. */
 function message(err: unknown): string {
   const raw = err instanceof Error ? err.message : String(err)
-  if (/AccessDenied|not authorized|UnrecognizedClient|ExpiredToken|could not be refreshed|CredentialsProviderError/i.test(raw)) {
+  if (
+    /AccessDenied|not authorized|UnrecognizedClient|ExpiredToken|could not be refreshed|CredentialsProviderError/i.test(
+      raw,
+    )
+  ) {
     return `${raw}\n\nThis surface authenticates with your shell's AWS profile (AWS_PROFILE, default 'eqc'). Nothing else grants access.`
   }
   // The FEEDBACK panels' half of the analytics tab's `unreachable` state. They have no
@@ -88,11 +92,11 @@ export function registerTriageIpc(backend: TriageBackend = awsBackend()): () => 
   })
 
   ipcMain.handle(IPC.triageDetail, async (_e, reportId: unknown) =>
-    isReportId(reportId) ? await attempt(() => backend.detail(reportId)) : REJECT
+    isReportId(reportId) ? await attempt(() => backend.detail(reportId)) : REJECT,
   )
 
   ipcMain.handle(IPC.triageSlice, async (_e, reportId: unknown) =>
-    isReportId(reportId) ? await attempt(() => backend.slice(reportId)) : REJECT
+    isReportId(reportId) ? await attempt(() => backend.slice(reportId)) : REJECT,
   )
 
   ipcMain.handle(IPC.triagePatch, async (_e, reportId: unknown, rawPatch: unknown) => {
@@ -102,7 +106,7 @@ export function registerTriageIpc(backend: TriageBackend = awsBackend()): () => 
   })
 
   ipcMain.handle(IPC.triageForget, async (_e, reportId: unknown) =>
-    isReportId(reportId) ? await attempt(() => backend.forget(reportId)) : REJECT
+    isReportId(reportId) ? await attempt(() => backend.forget(reportId)) : REJECT,
   )
 
   ipcMain.handle(IPC.triageOps, async () => await attempt(() => backend.ops()))
@@ -116,12 +120,15 @@ export function registerTriageIpc(backend: TriageBackend = awsBackend()): () => 
     return await attempt(() => backend.setAccepting(accepting, text))
   })
 
-  ipcMain.handle(IPC.triageSetBlocked, async (_e, installId: unknown, blocked: unknown, rawReason: unknown) => {
-    if (!isInstallId(installId) || typeof blocked !== 'boolean') return REJECT
-    const reason = validateBlockReason(rawReason, blocked)
-    if (reason === null) return REJECT
-    return await attempt(() => backend.setBlocked(installId, blocked, reason))
-  })
+  ipcMain.handle(
+    IPC.triageSetBlocked,
+    async (_e, installId: unknown, blocked: unknown, rawReason: unknown) => {
+      if (!isInstallId(installId) || typeof blocked !== 'boolean') return REJECT
+      const reason = validateBlockReason(rawReason, blocked)
+      if (reason === null) return REJECT
+      return await attempt(() => backend.setBlocked(installId, blocked, reason))
+    },
+  )
 
   ipcMain.handle(IPC.triageDigest, async (_e, raw: unknown) => {
     const q = validateQuery(raw)
@@ -152,7 +159,7 @@ export function registerTriageIpc(backend: TriageBackend = awsBackend()): () => 
     const [result, downloads, live] = await Promise.all([
       attempt(() => backend.analytics(days, rawIncludeOwner === true)),
       fetchGhDownloads(),
-      fetchLiveSessions({ profile: TRIAGE_PROFILE })
+      fetchLiveSessions({ profile: TRIAGE_PROFILE }),
     ])
     if (!result.ok || !result.value.available) return result
     return { ok: true as const, value: { ...result.value, downloads, live } }

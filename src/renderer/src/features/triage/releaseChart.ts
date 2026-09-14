@@ -33,10 +33,7 @@
 // an EMPTY string — nothing is drawn, and the legend says "not reporting" instead. That is the
 // house rule made geometric rather than editorial.
 
-import type {
-  TriageAnalyticsReleaseHealth,
-  TriageReleaseHealthVersion
-} from '@shared/triage'
+import type { TriageAnalyticsReleaseHealth, TriageReleaseHealthVersion } from '@shared/triage'
 
 /** The viewBox both stacked panels are drawn in. Unitless — the SVG scales to its container. */
 export const CHART_W = 640
@@ -61,7 +58,11 @@ export function dayX(i: number, days: number): number {
  * build looks exactly like one that reported nothing, which is the failure this whole section is
  * built to avoid.
  */
-export function gappedPath(values: readonly (number | null)[], max: number, height: number): string {
+export function gappedPath(
+  values: readonly (number | null)[],
+  max: number,
+  height: number,
+): string {
   const span = max > 0 ? max : 1
   const out: string[] = []
   let open = false
@@ -131,8 +132,18 @@ function seriesOf(v: TriageReleaseHealthVersion, maxRate: number): ReleaseSeries
     // A NON-REPORTING BUILD GETS NO CURVE AT ALL. Not a flat line at zero, not a dotted guess —
     // nothing, plus a legend entry that says why. Drawing anything would be inventing the data
     // whose absence is the single most important fact about that build.
-    ratePath: v.reporting ? gappedPath(v.days.map((d) => d.rate), maxRate, RATE_H) : '',
-    sharePath: gappedPath(v.days.map((d) => d.share), 1, SHARE_H)
+    ratePath: v.reporting
+      ? gappedPath(
+          v.days.map((d) => d.rate),
+          maxRate,
+          RATE_H,
+        )
+      : '',
+    sharePath: gappedPath(
+      v.days.map((d) => d.share),
+      1,
+      SHARE_H,
+    ),
   }
 }
 
@@ -145,11 +156,11 @@ function seriesOf(v: TriageReleaseHealthVersion, maxRate: number): ReleaseSeries
  */
 export function releaseChart(
   health: TriageAnalyticsReleaseHealth,
-  days: readonly string[]
+  days: readonly string[],
 ): ReleaseChartGeometry {
   const peak = health.versions.reduce(
     (max, v) => v.days.reduce((m, d) => (d.rate !== null && d.rate > m ? d.rate : m), max),
-    0
+    0,
   )
   const maxRate = rateAxisMax(peak)
   const index = new Map(days.map((d, i) => [d, i]))
@@ -160,9 +171,15 @@ export function releaseChart(
     markers: health.versions.flatMap((v) => {
       // DROPPED, NOT CLAMPED, when the release predates the window — see the header.
       const at = v.releaseDate === null ? undefined : index.get(v.releaseDate)
-      return at === undefined ? [] : [{ version: v.version, date: v.releaseDate ?? '', x: dayX(at, days.length) }]
+      return at === undefined
+        ? []
+        : [{ version: v.version, date: v.releaseDate ?? '', x: dayX(at, days.length) }]
     }),
-    coveragePath: gappedPath(health.coverage.map((c) => c.share), 1, SHARE_H)
+    coveragePath: gappedPath(
+      health.coverage.map((c) => c.share),
+      1,
+      SHARE_H,
+    ),
   }
 }
 

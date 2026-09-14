@@ -28,7 +28,11 @@
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { farmZone, groupNeeds, type FarmNeed } from '../src/renderer/src/features/planner/plannerFarm'
+import {
+  farmZone,
+  groupNeeds,
+  type FarmNeed,
+} from '../src/renderer/src/features/planner/plannerFarm'
 import { sourcesFor } from '../src/renderer/src/features/planner/sourceIndex'
 import type { DonorProgress } from '../src/renderer/src/features/planner/plannerProgress'
 
@@ -45,7 +49,7 @@ const PLANNED: DonorProgress = {
   label: 'planned',
   tierRequired: 4,
   held: 0,
-  looted: 0
+  looted: 0,
 }
 
 /**
@@ -71,7 +75,7 @@ function needOf(itemKey: string, effect: string): FarmNeed {
     playerCrafted: false,
     sources,
     zones: [...new Set(sources.flatMap((s) => s.zones))],
-    progress: PLANNED
+    progress: PLANNED,
   }
 }
 
@@ -101,13 +105,10 @@ test('THE TRUST BUG — with the era filter on, the headband is filed under the 
 
   // …and the out-of-era zones survive, in the tail, each naming its own expansion.
   const also = groups[0].rows[0].also
-  assert.deepEqual(
-    also.map((z) => z.name).sort(),
-    [DN, TD].sort()
-  )
+  assert.deepEqual(also.map((z) => z.name).sort(), [DN, TD].sort())
   assert.ok(
     also.every((z) => z.outOfEra),
-    'an out-of-era "also" zone must say which expansion it is'
+    'an out-of-era "also" zone must say which expansion it is',
   )
   // The chip's word comes from ERA_LABEL, never spelled here twice.
   assert.deepEqual(also.map((z) => z.eraLabel).sort(), ['Kunark', 'Velious'])
@@ -127,7 +128,7 @@ test('the era rule never beats the weights INSIDE the reachable set — most-nee
   // on weight, exactly as it does on era.
   const needs = needsOf([
     { effect: 'Bat Fang', donorKey: HEADBAND },
-    { effect: 'Bone', donorKey: 'glowing bone collar' }
+    { effect: 'Bone', donorKey: 'glowing bone collar' },
   ])
   const groups = groupNeeds(needs, { eraOnly: true })
   const wpk = groups.find((g) => g.title === WPK)
@@ -140,12 +141,16 @@ test('every need appears EXACTLY once, whatever the era rule chose', () => {
   const needs = needsOf([
     { effect: 'Bat Fang', donorKey: HEADBAND },
     { effect: 'Bone', donorKey: 'glowing bone collar' },
-    { effect: 'Nothing', donorKey: 'an item nobody drops' }
+    { effect: 'Nothing', donorKey: 'an item nobody drops' },
   ])
   for (const eraOnly of [true, false]) {
     const groups = groupNeeds(needs, { eraOnly })
     const rows = groups.flatMap((g) => g.rows)
-    assert.equal(rows.length, needs.length, `${String(rows.length)} rows for ${String(needs.length)} needs`)
+    assert.equal(
+      rows.length,
+      needs.length,
+      `${String(rows.length)} rows for ${String(needs.length)} needs`,
+    )
     const ids = new Set(rows.map((r) => r.id))
     assert.equal(ids.size, needs.length)
   }
@@ -153,7 +158,7 @@ test('every need appears EXACTLY once, whatever the era rule chose', () => {
 
 test('a donor nothing places keeps the honest non-zone heading', () => {
   const groups = groupNeeds(needsOf([{ effect: 'X', donorKey: 'an item nobody drops' }]), {
-    eraOnly: true
+    eraOnly: true,
   })
   assert.equal(groups.length, 1)
   assert.equal(groups[0].kind, 'unknown')

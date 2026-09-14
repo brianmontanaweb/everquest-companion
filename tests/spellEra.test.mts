@@ -49,7 +49,11 @@ const RAW: SpellEntry[] = (spellsJson as SpellDbFile).spells
 const verdict = (name: string): boolean | undefined => SIDECAR.spells[pageEraKey(name)]
 
 /** A loadout with exactly these classes resolved — the shape `unlocksAtLevel` joins over. */
-const combo = (...resolved: ClassAbbr[]): ComboClasses => ({ resolved, candidates: [], ambiguous: false })
+const combo = (...resolved: ClassAbbr[]): ComboClasses => ({
+  resolved,
+  candidates: [],
+  ambiguous: false,
+})
 
 // ---------------------------------------------------------------------------------------------
 // 1 — THE SIDECAR: what the wiki said, recorded
@@ -65,12 +69,12 @@ test('the spells table is the same fetch as the pages and mobs beside it', () =>
   // direction is ever read, so a record with an `outOfEra` key would be a field nothing reads.
   assert.equal(
     Object.values(SIDECAR.spells).every((v) => typeof v === 'boolean'),
-    true
+    true,
   )
   // And the keys are FOLDED — `pageEraKey`'s fold, so a lookup by the catalog's own spelling lands.
   assert.deepEqual(
     Object.keys(SIDECAR.spells).filter((k) => k !== pageEraKey(k)),
-    []
+    [],
   )
 })
 
@@ -95,7 +99,10 @@ test('the catalog reaches the table: all but a handful of its names carry a verd
   // MEASURED 2026-08-16: exactly one, and it is a malformed wiki page whose `spellname` field
   // parses as `Brass Resonance 14| spellicon = C` — a name no page has. A jump here means the spell
   // scrape ran without the era scrape following it, and the level rows have gone quiet again.
-  assert.ok(missing.length <= 5, `${missing.length} catalog names have no verdict: ${missing.slice(0, 5).join(', ')}`)
+  assert.ok(
+    missing.length <= 5,
+    `${missing.length} catalog names have no verdict: ${missing.slice(0, 5).join(', ')}`,
+  )
 })
 
 // ---------------------------------------------------------------------------------------------
@@ -116,7 +123,7 @@ test('applySpellEra marks the badged rows and says nothing about the rest', () =
   const marked = spells.filter((s) => s.outOfEra === true).map((s) => s.name)
   assert.deepEqual(
     marked.filter((n) => verdict(n) !== true),
-    []
+    [],
   )
   assert.equal(marked.length, RAW.filter((s) => verdict(s.name) === true).length)
 })
@@ -125,11 +132,11 @@ test('a table that is silent about a spell leaves the row untouched — silence 
   const rows: SpellEntry[] = [
     { name: 'Asked And Badged', durationMs: null, illusion: false },
     { name: 'Asked And Cleared', durationMs: null, illusion: false },
-    { name: 'Never Asked About', durationMs: null, illusion: false }
+    { name: 'Never Asked About', durationMs: null, illusion: false },
   ]
   const file = {
     ...SIDECAR,
-    spells: { 'asked and badged': true, 'asked and cleared': false }
+    spells: { 'asked and badged': true, 'asked and cleared': false },
   } as PageEraFile
   const { spells, report } = applySpellEra(rows, file)
   assert.equal(spells[0].outOfEra, true)
@@ -152,7 +159,7 @@ test('the join is non-mutating and idempotent, like the overlays it runs beside'
   assert.deepEqual(
     twice.spells.filter((s, i) => s !== once.spells[i]),
     [],
-    'a second pass copied rows it had already marked'
+    'a second pass copied rows it had already marked',
   )
 })
 
@@ -218,7 +225,8 @@ test('every folded row is one the sidecar BADGED — the fold never runs on sile
       folded += 1
       assert.equal(verdict(row.name), true, `${row.name} was folded without a verdict`)
     }
-    for (const row of u.spells) assert.notEqual(row.spell?.outOfEra, true, `${row.name} was shown while badged`)
+    for (const row of u.spells)
+      assert.notEqual(row.spell?.outOfEra, true, `${row.name} was shown while badged`)
   }
   assert.ok(folded > 0, 'this trio folded nothing at any level — the join is not reaching the rows')
 })
@@ -226,7 +234,7 @@ test('every folded row is one the sidecar BADGED — the fold never runs on sile
 test('the SEARCH still answers for a badged spell, and marks it (JOS-392 rows, JOS-393 chip)', () => {
   const results = searchUnlockSpells(data.spells, tokenizeSpellQuery('sloths healing'), {
     classes: [],
-    currentLevel: null
+    currentLevel: null,
   })
   const row = results.rows.find((r) => r.name === 'Sloths Healing')
   assert.ok(row, 'a search for the spell by name does not find it')
@@ -235,7 +243,7 @@ test('the SEARCH still answers for a badged spell, and marks it (JOS-392 rows, J
   // And an in-era neighbour in the same line carries nothing to chip.
   const snails = searchUnlockSpells(data.spells, tokenizeSpellQuery('snails healing'), {
     classes: [],
-    currentLevel: null
+    currentLevel: null,
   }).rows.find((r) => r.name === 'Snails Healing')
   assert.equal(snails?.spell?.outOfEra, undefined)
 })

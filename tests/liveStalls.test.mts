@@ -30,12 +30,12 @@ import {
   LOG_SIZE_BYTES_EDGES,
   NEW_BYTES_EDGES,
   TELEMETRY_OVERLAY_KINDS,
-  type TelemetryEvent
+  type TelemetryEvent,
 } from '../src/shared/telemetry'
 import {
   FREE_MEM_GB_EDGES,
   LIVE_STALL_MS_EDGES,
-  WORKING_SET_MB_EDGES
+  WORKING_SET_MB_EDGES,
 } from '../src/shared/telemetryLive'
 import { validateTelemetryEvent } from '../src/shared/telemetryValidate'
 import {
@@ -45,19 +45,15 @@ import {
   LIVE_PROBE_INTERVAL_MS,
   LIVE_STALL_LATE_MS,
   LIVE_TIMELINE_MS,
-  type LiveLateSample
+  type LiveLateSample,
 } from '../src/shared/perfLive'
 import {
   noteLiveProbeSamples,
   peekLiveTimeline,
   resetLiveProbe,
-  takeLiveProbeReading
+  takeLiveProbeReading,
 } from '../src/main/livePerfProbe'
-import {
-  liveStallStats,
-  sessionStateStats,
-  tailReadStats
-} from '../src/main/telemetry/liveFacts'
+import { liveStallStats, sessionStateStats, tailReadStats } from '../src/main/telemetry/liveFacts'
 import type { TailIoSample } from '../src/main/log/tailIoStats'
 
 // ---- the probe's arithmetic ----------------------------------------------------------------
@@ -80,17 +76,14 @@ test('the fold is a DISTRIBUTION plus the two counts a person can feel', () => {
     p95Ms: 0,
     maxMs: 0,
     over100: 0,
-    over500: 0
+    over500: 0,
   })
 })
 
 test('THE COINCIDENCE MATCHER counts stalls the two threads AGREE on, and nothing else', () => {
   const base = 1_000_000
   // A machine stall: both threads late, a quarter second apart — one event, counted once.
-  assert.equal(
-    coincidentWindows([{ at: base, lateMs: 800 }], [{ at: base + 250, lateMs: 700 }]),
-    1
-  )
+  assert.equal(coincidentWindows([{ at: base, lateMs: 800 }], [{ at: base + 250, lateMs: 700 }]), 1)
   // Our own stall: main late, the worker kept perfect time. THE READING THAT BLAMES US.
   assert.equal(coincidentWindows([{ at: base, lateMs: 800 }], []), 0)
   assert.equal(coincidentWindows([{ at: base, lateMs: 800 }], [{ at: base, lateMs: 4 }]), 0)
@@ -98,17 +91,14 @@ test('THE COINCIDENCE MATCHER counts stalls the two threads AGREE on, and nothin
   assert.equal(
     coincidentWindows(
       [{ at: base, lateMs: 800 }],
-      [{ at: base + LIVE_COINCIDENCE_MS + 1, lateMs: 800 }]
+      [{ at: base + LIVE_COINCIDENCE_MS + 1, lateMs: 800 }],
     ),
-    0
+    0,
   )
   // Under the late threshold on either side is not a stall at all.
   assert.equal(
-    coincidentWindows(
-      [{ at: base, lateMs: LIVE_STALL_LATE_MS - 1 }],
-      [{ at: base, lateMs: 900 }]
-    ),
-    0
+    coincidentWindows([{ at: base, lateMs: LIVE_STALL_LATE_MS - 1 }], [{ at: base, lateMs: 900 }]),
+    0,
   )
 })
 
@@ -156,9 +146,9 @@ test('the timeline is a bounded ~10-minute ring of PLAIN DATA, and a report does
   noteLiveProbeSamples(
     [
       { at: now - LIVE_TIMELINE_MS - 1_000, lateMs: 300 },
-      { at: now - 1_000, lateMs: 300 }
+      { at: now - 1_000, lateMs: 300 },
     ],
-    [{ at: now - 900, lateMs: 300 }]
+    [{ at: now - 900, lateMs: 300 }],
   )
   const timeline = peekLiveTimeline(now)
   assert.equal(timeline.main.length, 1)
@@ -182,7 +172,7 @@ test('THE MILLISECOND BECOMES A DECADE at exactly one seam, and the counts stay 
     p95Bucket: bucketOf(14, LIVE_STALL_MS_EDGES),
     maxBucket: bucketOf(1_400, LIVE_STALL_MS_EDGES),
     over100: 3,
-    over500: 1
+    over500: 1,
   })
   // Absent stays ABSENT rather than becoming a zero — the contract's own distinction between
   // "no second clock ran" and "two clocks agreed on nothing".
@@ -199,7 +189,7 @@ test('the tail rider reads its p95 off the RING and its max off the ACCUMULATOR'
     readMs,
     bytes,
     slices: 1,
-    reason: 'reused'
+    reason: 'reused',
   })
   const stats = tailReadStats({
     summary: {
@@ -216,10 +206,10 @@ test('the tail rider reads its p95 off the RING and its max off the ACCUMULATOR'
       maxStatMs: 1,
       over100: 2,
       over500: 1,
-      byReason: { reused: 3, first: 1, replaced: 0, shrunk: 0, error: 0 }
+      byReason: { reused: 3, first: 1, replaced: 0, shrunk: 0, error: 0 },
     },
     window: [cycle(2, 1_000), cycle(3, 300_000), cycle(120, 2_000), cycle(4, 100)],
-    logBytes: 400 * 1024 * 1024
+    logBytes: 400 * 1024 * 1024,
   })
   assert.equal(stats.reads, 4)
   assert.equal(stats.reopens, 1)
@@ -242,7 +232,7 @@ test('the state rider converts the two memory readings from the KIBIBYTES Electr
     // 1.5 GiB free, 640 MiB resident — both arrive as KiB from `getSystemMemoryInfo` and
     // `getAppMetrics`, and a unit mistake here would be invisible in the aggregate forever.
     freeMemKb: 1.5 * 1024 * 1024,
-    workingSetKb: 640 * 1024
+    workingSetKb: 640 * 1024,
   })
   assert.equal(stats.freeMemBucket, bucketOf(1.5, FREE_MEM_GB_EDGES))
   assert.equal(stats.workingSetBucket, bucketOf(640, WORKING_SET_MB_EDGES))
@@ -277,7 +267,7 @@ function fullHeartbeat(): Record<string, unknown> {
       over100: 2,
       over500: 0,
       deltaBytesBucket: 3,
-      logSizeBucket: 3
+      logSizeBucket: 3,
     },
     state: {
       overlaysOpen: 2,
@@ -285,8 +275,8 @@ function fullHeartbeat(): Record<string, unknown> {
       presenceOn: true,
       ringOn: false,
       freeMemBucket: 3,
-      workingSetBucket: 2
-    }
+      workingSetBucket: 2,
+    },
   }
 }
 
@@ -302,7 +292,7 @@ test('the three riders survive validation on a heartbeat, field for field', () =
     maxBucket: 6,
     over100: 4,
     over500: 1,
-    coincident: 1
+    coincident: 1,
   })
   assert.equal(ev.tail?.reads, 812)
   assert.equal(ev.tail?.deltaBytesBucket, 3)
@@ -341,7 +331,11 @@ test('ABSENT IS LEGAL AND MEANS NOTHING TO SAY — an unattached session sends n
 
 test('`coincident` ABSENT and `coincident` ZERO are different answers, and both are accepted', () => {
   // Absent: the probe worker was not running, so there is no second clock and no verdict.
-  const noWorker = { t: 'sessionHeartbeat', uptimeMs: 1_000, live: { samples: 10, p95Bucket: 0, maxBucket: 0, over100: 0, over500: 0 } }
+  const noWorker = {
+    t: 'sessionHeartbeat',
+    uptimeMs: 1_000,
+    live: { samples: 10, p95Bucket: 0, maxBucket: 0, over100: 0, over500: 0 },
+  }
   const a = validateTelemetryEvent(noWorker)
   assert.equal(a.ok, true)
   const evA = (a as { value: TelemetryEvent }).value
@@ -374,18 +368,27 @@ test('OUT-OF-LADDER VALUES ARE REFUSED, by name — a bucket index is not a mill
   refuse({ live: { ...live, p95Bucket: LIVE_STALL_MS_EDGES.length + 1 } }, 'live.p95Bucket')
   refuse({ live: { ...live, maxBucket: -1 } }, 'live.maxBucket')
   refuse({ live: { ...live, coincident: 2.5 } }, 'live.coincident')
-  refuse({ tail: { ...tail, deltaBytesBucket: NEW_BYTES_EDGES.length + 1 } }, 'tail.deltaBytesBucket')
-  refuse({ tail: { ...tail, logSizeBucket: LOG_SIZE_BYTES_EDGES.length + 1 } }, 'tail.logSizeBucket')
-  refuse({ state: { ...state, freeMemBucket: FREE_MEM_GB_EDGES.length + 1 } }, 'state.freeMemBucket')
+  refuse(
+    { tail: { ...tail, deltaBytesBucket: NEW_BYTES_EDGES.length + 1 } },
+    'tail.deltaBytesBucket',
+  )
+  refuse(
+    { tail: { ...tail, logSizeBucket: LOG_SIZE_BYTES_EDGES.length + 1 } },
+    'tail.logSizeBucket',
+  )
+  refuse(
+    { state: { ...state, freeMemBucket: FREE_MEM_GB_EDGES.length + 1 } },
+    'state.freeMemBucket',
+  )
   refuse(
     { state: { ...state, workingSetBucket: WORKING_SET_MB_EDGES.length + 1 } },
-    'state.workingSetBucket'
+    'state.workingSetBucket',
   )
   // Overlay counts are counts of WINDOWS, so their ceiling is the number of overlay kinds — not
   // `MAX_COUNT`. Nine open overlays is not a busy install, it is a broken client.
   refuse(
     { state: { ...state, overlaysOpen: TELEMETRY_OVERLAY_KINDS.length + 1 } },
-    'state.overlaysOpen'
+    'state.overlaysOpen',
   )
   refuse({ state: { ...state, presenceOn: 'yes' } }, 'state.presenceOn')
   // A group that is present must be COMPLETE: a percentile with no sample count under it is not a

@@ -65,7 +65,7 @@ const ACCEPTS: readonly (readonly [string, number])[] = [
   ['3 Days (2.5-3?)', 259200],
   // Wiki decoration that is not part of the value at all.
   ['[[15 minutes]]', 900],
-  ['15 minutes}}', 900]
+  ['15 minutes}}', 900],
 ]
 
 /** Values the field really carries that state NO duration. Each must refuse, not guess. */
@@ -105,7 +105,7 @@ const REFUSES: readonly string[] = [
   '27+ min',
   '2:45h',
   '',
-  '   '
+  '   ',
 ]
 
 test('the wiki grammar reads every duration shape the pages actually print', () => {
@@ -132,7 +132,7 @@ test('the grammar refuses durations outside the sane band', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FLOOR = JSON.parse(
-  readFileSync(join(import.meta.dirname, '../src/main/data/respawns.json'), 'utf8')
+  readFileSync(join(import.meta.dirname, '../src/main/data/respawns.json'), 'utf8'),
 ) as WikiRespawnData
 
 test('the committed wiki floor is well formed', () => {
@@ -143,14 +143,17 @@ test('the committed wiki floor is well formed', () => {
     assert.ok(!keys.has(row.key), `${row.key} appears twice`)
     keys.add(row.key)
     if (row.seconds !== undefined) {
-      assert.ok(row.seconds >= 1 && row.seconds <= 30 * 24 * 3600, `${row.key} = ${String(row.seconds)}s`)
+      assert.ok(
+        row.seconds >= 1 && row.seconds <= 30 * 24 * 3600,
+        `${row.key} = ${String(row.seconds)}s`,
+      )
     }
   }
   const sorted = [...FLOOR.rows].sort((a, b) => a.key.localeCompare(b.key))
   assert.deepEqual(
     FLOOR.rows.map((r) => r.key),
     sorted.map((r) => r.key),
-    'rows are sorted by key so a re-scrape diffs cleanly'
+    'rows are sorted by key so a re-scrape diffs cleanly',
   )
 })
 
@@ -183,11 +186,10 @@ test('the four dungeons the report named still resolve to the values the wiki st
     ['unbound flame', 266], // Najena — "4:26"
     ['the froglok warden', 990], // Upper Guk — "16min 30sec"
     ['the ghoul lord', 540], // Lower Guk — "9 min"
-    ['the froglok king', 1680] // Lower Guk — "28 min (or PH)"
+    ['the froglok king', 1680], // Lower Guk — "28 min (or PH)"
   ]
   const byKey = new Map(FLOOR.rows.map((r) => [r.key, r]))
   for (const [key, secs] of expect) {
     assert.equal(byKey.get(key)?.seconds, secs, `${key} should floor at ${String(secs)}s`)
   }
 })
-

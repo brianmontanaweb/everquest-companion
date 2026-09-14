@@ -78,7 +78,7 @@ const ABBR_BY_DISPLAY_NAME: ReadonlyMap<string, ClassAbbr> = new Map<string, Cla
   ['shadowknight', 'SHD'],
   ['shaman', 'SHM'],
   ['warrior', 'WAR'],
-  ['wizard', 'WIZ']
+  ['wizard', 'WIZ'],
 ])
 
 /** The 16 display names this module understands, for a parity test against classes.json. */
@@ -128,7 +128,7 @@ const DISPLAY_NAME_BY_ABBR: Readonly<Record<ClassAbbr, string>> = {
   SHD: 'Shadow Knight',
   SHM: 'Shaman',
   WAR: 'Warrior',
-  WIZ: 'Wizard'
+  WIZ: 'Wizard',
 }
 
 /** `SHD` -> `Shadow Knight`. The ONE abbr-to-words function; see the table's header. */

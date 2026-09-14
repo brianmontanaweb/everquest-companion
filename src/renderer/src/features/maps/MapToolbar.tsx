@@ -57,7 +57,7 @@ import {
   Stack,
   TextField,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
 } from '@mui/material'
 import ZoomInIcon from '@mui/icons-material/ZoomIn'
 import ZoomOutIcon from '@mui/icons-material/ZoomOut'
@@ -78,7 +78,7 @@ import type { ZoneMode } from './zoneFollow'
 const TOGGLEABLE: { layer: MapLayer; label: string }[] = [
   { layer: 1, label: 'Labels' },
   { layer: 2, label: 'Legend' },
-  { layer: 3, label: 'Extra' }
+  { layer: 3, label: 'Extra' },
 ]
 
 /**
@@ -102,7 +102,7 @@ const TOGGLEABLE: { layer: MapLayer; label: string }[] = [
 function FloorStepper({
   bands,
   floor,
-  onFloor
+  onFloor,
 }: {
   bands: readonly FloorBand[]
   floor: number | null
@@ -141,7 +141,9 @@ function FloorStepper({
           aria-label="Lower level"
           data-testid="maps-floor-down"
           disabled={at <= -1}
-          onClick={() => { step(-1) }}
+          onClick={() => {
+            step(-1)
+          }}
         >
           <KeyboardArrowDownIcon fontSize="small" />
         </IconButton>
@@ -151,8 +153,12 @@ function FloorStepper({
         variant={floor == null ? 'outlined' : 'filled'}
         data-testid="maps-floor-label"
         title={band ? `Elevation ${bandLabel(band)}` : 'Every elevation'}
-        onClick={() => { onFloor(null) }}
-        label={floor == null ? 'All levels' : `Level ${String(floor + 1)} of ${String(bands.length)}`}
+        onClick={() => {
+          onFloor(null)
+        }}
+        label={
+          floor == null ? 'All levels' : `Level ${String(floor + 1)} of ${String(bands.length)}`
+        }
         sx={{ minWidth: 104 }}
       />
       <span title="Higher level">
@@ -161,7 +167,9 @@ function FloorStepper({
           aria-label="Higher level"
           data-testid="maps-floor-up"
           disabled={at >= bands.length - 1}
-          onClick={() => { step(1) }}
+          onClick={() => {
+            step(1)
+          }}
         >
           <KeyboardArrowUpIcon fontSize="small" />
         </IconButton>
@@ -184,7 +192,7 @@ function FloorStepper({
  */
 function ZoneModeControls({
   mode,
-  onFollowCurrent
+  onFollowCurrent,
 }: {
   mode: ZoneMode
   onFollowCurrent: () => void
@@ -277,7 +285,7 @@ function PackSelect({
   label,
   value,
   packs,
-  onChange
+  onChange,
 }: {
   label: string
   value: string | undefined
@@ -325,7 +333,9 @@ function DrawnControls(props: MapToolbarProps): JSX.Element {
           aria-label="Zoom in"
           title="Zoom in"
           data-testid="maps-zoom-in"
-          onClick={() => { onZoom(1.35) }}
+          onClick={() => {
+            onZoom(1.35)
+          }}
         >
           <ZoomInIcon fontSize="small" />
         </IconButton>
@@ -334,7 +344,9 @@ function DrawnControls(props: MapToolbarProps): JSX.Element {
           aria-label="Zoom out"
           title="Zoom out"
           data-testid="maps-zoom-out"
-          onClick={() => { onZoom(1 / 1.35) }}
+          onClick={() => {
+            onZoom(1 / 1.35)
+          }}
         >
           <ZoomOutIcon fontSize="small" />
         </IconButton>
@@ -360,7 +372,11 @@ function DrawnControls(props: MapToolbarProps): JSX.Element {
         }}
       >
         {TOGGLEABLE.map((t) => (
-          <ToggleButton key={t.layer} value={String(t.layer)} data-testid={`maps-layer-${String(t.layer)}`}>
+          <ToggleButton
+            key={t.layer}
+            value={String(t.layer)}
+            data-testid={`maps-layer-${String(t.layer)}`}
+          >
             {t.label}
           </ToggleButton>
         ))}
@@ -387,7 +403,12 @@ function DrawnControls(props: MapToolbarProps): JSX.Element {
 
       {/* The one position the app can hold, and the only way one gets in (JOS-98). It belongs on
           this row for the row's own reason: it describes what is DRAWN on the surface. */}
-      <MapLocField marker={locMarker} onPlace={onPlaceLoc} onShow={onShowLoc} onClear={onClearLoc} />
+      <MapLocField
+        marker={locMarker}
+        onPlace={onPlaceLoc}
+        onShow={onShowLoc}
+        onClear={onClearLoc}
+      />
     </>
   )
 }
@@ -419,7 +440,11 @@ function DrawnRow(props: MapToolbarProps): JSX.Element | null {
   if (props.hasMap) return <DrawnControls {...props} />
   if (!props.reserve) return null
   return (
-    <Box aria-hidden data-testid="maps-toolbar-reserved" sx={{ display: 'contents', visibility: 'hidden' }}>
+    <Box
+      aria-hidden
+      data-testid="maps-toolbar-reserved"
+      sx={{ display: 'contents', visibility: 'hidden' }}
+    >
       <DrawnControls {...props} />
     </Box>
   )

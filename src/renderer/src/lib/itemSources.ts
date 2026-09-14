@@ -89,7 +89,8 @@ export function buildSourceIndex(mobs: readonly MobEntry[]): Map<string, ItemSou
       if (key === '') continue
       const list = index.get(key)
       if (!list) index.set(key, [source])
-      else if (!list.some((s) => s.mobPage === source.mobPage && s.mob === source.mob)) list.push(source)
+      else if (!list.some((s) => s.mobPage === source.mobPage && s.mob === source.mob))
+        list.push(source)
     }
   }
   return index
@@ -130,7 +131,7 @@ export function sourcesFor(key: string): readonly ItemSource[] {
  */
 export function mergeItemSources(
   catalogSources: readonly ItemSource[],
-  wiki: readonly ItemDropSource[] | undefined
+  wiki: readonly ItemDropSource[] | undefined,
 ): ItemSource[] {
   const out = [...catalogSources]
   const seen = new Set(catalogSources.map((s) => s.mob.trim().toLowerCase()))

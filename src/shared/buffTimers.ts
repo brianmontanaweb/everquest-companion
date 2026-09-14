@@ -336,7 +336,10 @@ export function timerRowSurface(row: BuffTimerRow): TimerOverlayKind {
 }
 
 /** The rows one timer surface shows. Order is `buildTimerRows`' order, filtered — never re-sorted. */
-export function rowsForSurface(rows: readonly BuffTimerRow[], kind: TimerOverlayKind): BuffTimerRow[] {
+export function rowsForSurface(
+  rows: readonly BuffTimerRow[],
+  kind: TimerOverlayKind,
+): BuffTimerRow[] {
   return rows.filter((r) => timerRowSurface(r) === kind)
 }
 
@@ -362,7 +365,10 @@ export function rowsForSurface(rows: readonly BuffTimerRow[], kind: TimerOverlay
  * It is applied BEFORE ordering and dismissal so everything downstream — the header count, the
  * groups, the drop flash — is talking about what is actually on screen.
  */
-export function filterPermanentRows(rows: readonly BuffTimerRow[], showPermanent: boolean): BuffTimerRow[] {
+export function filterPermanentRows(
+  rows: readonly BuffTimerRow[],
+  showPermanent: boolean,
+): BuffTimerRow[] {
   return showPermanent ? [...rows] : rows.filter((r) => r.mode !== 'permanent')
 }
 
@@ -404,7 +410,10 @@ function rowAllowKeys(row: BuffTimerRow): string[] {
  * Applied BEFORE ordering and dismissal, like the permanent filter, so everything downstream — the
  * header count, the groups, the drop flash — is talking about what is actually on screen.
  */
-export function filterAllowedRows(rows: readonly BuffTimerRow[], prefs: BuffAllowPrefs): BuffTimerRow[] {
+export function filterAllowedRows(
+  rows: readonly BuffTimerRow[],
+  prefs: BuffAllowPrefs,
+): BuffTimerRow[] {
   // NOTHING SAID, SHIPPED MODE ⇒ EVERY ROW, and not merely as an optimization: it is the statement
   // that this feature is invisible until somebody uses it.
   if (buffAllowIsDefault(prefs)) return [...rows]
@@ -454,12 +463,14 @@ export function timerDropLabel(row: BuffTimerRow): string {
 export function timerDrops(
   prev: readonly BuffTimerRow[] | null,
   current: readonly BuffTimerRow[],
-  opts: { rebuilt: boolean }
+  opts: { rebuilt: boolean },
 ): TimerDrop[] {
   if (prev === null || opts.rebuilt) return []
   const onBuffs = (r: BuffTimerRow): boolean => timerRowSurface(r) === 'buffs'
   const live = new Set(current.filter(onBuffs).map((r) => r.id))
-  return prev.filter((r) => onBuffs(r) && !live.has(r.id)).map((r) => ({ id: r.id, name: timerDropLabel(r) }))
+  return prev
+    .filter((r) => onBuffs(r) && !live.has(r.id))
+    .map((r) => ({ id: r.id, name: timerDropLabel(r) }))
 }
 
 // ----- DISMISSAL: a display verdict, and structurally nothing else (JOS-203) -----
@@ -513,7 +524,7 @@ export function isTimerDismissed(row: BuffTimerRow, dismissals: TimerDismissals)
 /** The rows a window draws once its dismissals are applied. Order is the caller's, never re-sorted. */
 export function dismissTimerRows(
   rows: readonly BuffTimerRow[],
-  dismissals: TimerDismissals
+  dismissals: TimerDismissals,
 ): BuffTimerRow[] {
   if (dismissals.size === 0) return [...rows]
   return rows.filter((r) => !isTimerDismissed(r, dismissals))
@@ -527,7 +538,10 @@ export function dismissTimerRows(
 export const MAX_TIMER_DISMISSALS = 50
 
 /** Record one dismissal, most-recent last, evicting the oldest past {@link MAX_TIMER_DISMISSALS}. */
-export function withTimerDismissal(prev: TimerDismissals, row: BuffTimerRow): Map<string, TimerDismissal> {
+export function withTimerDismissal(
+  prev: TimerDismissals,
+  row: BuffTimerRow,
+): Map<string, TimerDismissal> {
   const next = new Map(prev)
   // Delete first so a re-dismissal moves to the END of the insertion order — the eviction below is
   // oldest-first, and a row the user just cleared twice is the last one they want forgotten.
@@ -562,7 +576,7 @@ export function timerReading(row: BuffTimerRow, nowMs: number): TimerReading {
     elapsedMs,
     remainingMs,
     fraction: Math.min(1, Math.max(0, left / row.durationMs)),
-    overdue: left <= 0
+    overdue: left <= 0,
   }
 }
 
@@ -631,7 +645,9 @@ function entityKeyOf(name: string): string {
  * statable), so a blanket "a mez counts up" would have thrown away two of the four families
  * and a blanket "take the first" would have been the coin flip JOS-84 exists to forbid.
  */
-export function statedDuration(candidates: readonly { durationMs: number | null }[]): number | null {
+export function statedDuration(
+  candidates: readonly { durationMs: number | null }[],
+): number | null {
   if (candidates.length === 0) return null
   const first = candidates[0].durationMs
   if (first == null) return null
@@ -655,7 +671,7 @@ function ccRow(h: CcHold): BuffTimerRow {
     ...(h.caster != null ? { caster: h.caster } : {}),
     ...(h.durationMs != null
       ? { mode: 'countdown' as const, durationMs: h.durationMs }
-      : { mode: 'elapsed' as const })
+      : { mode: 'elapsed' as const }),
   }
 }
 
@@ -688,7 +704,7 @@ function buffRowExtras(b: ActiveBuff): Partial<BuffTimerRow> {
     ...(b.inferredTarget === true ? { inferredTarget: true as const } : {}),
     ...(b.count != null && b.count > 1 ? { count: b.count } : {}),
     ...(b.caster != null ? { caster: b.caster } : {}),
-    ...(b.candidates ? { candidates: [...b.candidates], ambiguous: true as const } : {})
+    ...(b.candidates ? { candidates: [...b.candidates], ambiguous: true as const } : {}),
   }
 }
 
@@ -703,7 +719,7 @@ function buffRow(b: ActiveBuff): BuffTimerRow {
     ...(b.self ? {} : { target: b.target ?? 'unknown target', targetKey }),
     startedTs: b.startedTs,
     ...buffRowExtras(b),
-    ...timerModeOf(b)
+    ...timerModeOf(b),
   }
 }
 
@@ -720,7 +736,10 @@ function endedByCc(b: ActiveBuff, ends: readonly CcEnd[]): boolean {
   if (b.self || b.target == null) return false
   const key = entityKeyOf(b.target)
   const spell = timerNameKey(b.spell)
-  return ends.some((e) => e.key === key && e.ts >= b.startedTs && (e.spell == null || timerNameKey(e.spell) === spell))
+  return ends.some(
+    (e) =>
+      e.key === key && e.ts >= b.startedTs && (e.spell == null || timerNameKey(e.spell) === spell),
+  )
 }
 
 /**
@@ -733,7 +752,8 @@ function endedByCc(b: ActiveBuff, ends: readonly CcEnd[]): boolean {
  * further: they are never going to expire.
  */
 function compareRows(a: BuffTimerRow, b: BuffTimerRow): number {
-  const rank = (r: BuffTimerRow): number => (r.mode === 'countdown' ? 0 : r.mode === 'elapsed' ? 1 : 2)
+  const rank = (r: BuffTimerRow): number =>
+    r.mode === 'countdown' ? 0 : r.mode === 'elapsed' ? 1 : 2
   if (rank(a) !== rank(b)) return rank(a) - rank(b)
   if (a.mode === 'countdown' && b.mode === 'countdown') {
     const ea = a.startedTs + (a.durationMs ?? 0)
@@ -759,13 +779,19 @@ export function buildTimerRows(buffs: BuffsSnap, timers: BuffTimersSnap): BuffTi
   // `<mob> has been …` siblings become holds. Where both exist for one (mob, spell), the HOLD
   // wins — it is the half that knows about break lines.
   const heldBySpell = new Set(
-    timers.holds.filter((h) => h.spell != null).map((h) => `${h.key}|${timerNameKey(h.spell ?? '')}`)
+    timers.holds
+      .filter((h) => h.spell != null)
+      .map((h) => `${h.key}|${timerNameKey(h.spell ?? '')}`),
   )
   const rows: BuffTimerRow[] = []
   for (const b of buffs.active) {
     if (endedByCc(b, timers.ends)) continue
     const row = buffRow(b)
-    if (row.group === 'target' && heldBySpell.has(`${row.targetKey ?? ''}|${timerNameKey(row.name)}`)) continue
+    if (
+      row.group === 'target' &&
+      heldBySpell.has(`${row.targetKey ?? ''}|${timerNameKey(row.name)}`)
+    )
+      continue
     rows.push(row)
   }
   for (const h of timers.holds) rows.push(ccRow(h))
@@ -794,6 +820,9 @@ export function buildTimerRows(buffs: BuffsSnap, timers: BuffTimersSnap): BuffTi
  * reads the next thing to break, not the roster of mobs. Nothing is added, removed or renamed by
  * either — it is a sort, and `rowsForSurface` has already decided membership.
  */
-export function orderTimerRows(rows: readonly BuffTimerRow[], grouping: TimerGrouping): BuffTimerRow[] {
+export function orderTimerRows(
+  rows: readonly BuffTimerRow[],
+  grouping: TimerGrouping,
+): BuffTimerRow[] {
   return grouping === 'target' ? [...rows] : [...rows].sort(compareRows)
 }

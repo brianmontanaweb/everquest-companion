@@ -33,13 +33,13 @@ export const fail = (field: string, message: string): TelemetryValidationFailure
   ok: false,
   error: 'invalid_event',
   message,
-  field
+  field,
 })
 
 export function oneOf<T extends string>(
   raw: unknown,
   field: string,
-  allowed: readonly T[]
+  allowed: readonly T[],
 ): Validated<T> {
   if (typeof raw === 'string' && (allowed as readonly string[]).includes(raw)) {
     return { ok: true, value: raw as T }
@@ -65,12 +65,7 @@ export function flag(raw: unknown, field: string): Validated<boolean> {
   return { ok: true, value: raw }
 }
 
-export function matching(
-  raw: unknown,
-  field: string,
-  re: RegExp,
-  what: string
-): Validated<string> {
+export function matching(raw: unknown, field: string, re: RegExp, what: string): Validated<string> {
   if (typeof raw === 'string' && re.test(raw)) return { ok: true, value: raw }
   return fail(field, `${field} must be ${what}.`)
 }
@@ -80,7 +75,7 @@ export function signedInt(
   raw: unknown,
   field: string,
   min: number,
-  max: number
+  max: number,
 ): Validated<number> {
   if (typeof raw !== 'number' || !Number.isSafeInteger(raw) || raw < min || raw > max) {
     return fail(field, `${field} must be a whole number between ${String(min)} and ${String(max)}.`)

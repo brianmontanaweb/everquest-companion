@@ -55,7 +55,7 @@ export function pickEventInLane(
   events: readonly TimelineEvent[],
   laneName: string,
   cursorMs: number,
-  tolMs: number
+  tolMs: number,
 ): HitPick<TimelineEvent> | null {
   let from = lowerBound(events, cursorMs)
   while (from > 0 && cursorMs - events[from - 1].t <= tolMs) from--
@@ -83,7 +83,7 @@ export function pickEventInLane(
 export function pickMarker(
   markers: readonly TimelineMarker[],
   cursorMs: number,
-  tolMs: number
+  tolMs: number,
 ): HitPick<TimelineMarker> | null {
   let bestIdx = -1
   let bestDt = 0
@@ -106,7 +106,7 @@ export function pickMarker(
 export function pickSpanAt(
   spans: readonly StanceSpan[],
   group: StanceSpan['group'],
-  cursorMs: number
+  cursorMs: number,
 ): StanceSpan | null {
   return spans.find((s) => s.group === group && cursorMs >= s.start && cursorMs <= s.end) ?? null
 }

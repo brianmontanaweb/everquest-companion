@@ -57,12 +57,16 @@ export interface BundledImageRootInputs {
  * without a filesystem: dev/e2e first (the common case while developing), then the two
  * packaged shapes, then cwd as the backstop for a launch whose app path is a bare script.
  */
-export function bundledImageRoots({ appPath, resourcesPath, cwd }: BundledImageRootInputs): string[] {
+export function bundledImageRoots({
+  appPath,
+  resourcesPath,
+  cwd,
+}: BundledImageRootInputs): string[] {
   const roots = [
     join(appPath, 'resources', BUNDLED_IMAGES_DIR_NAME),
     // asarUnpack moves the directory out of the archive but keeps its path inside it.
     join(`${appPath}.unpacked`, 'resources', BUNDLED_IMAGES_DIR_NAME),
-    join(cwd, 'resources', BUNDLED_IMAGES_DIR_NAME)
+    join(cwd, 'resources', BUNDLED_IMAGES_DIR_NAME),
   ]
   if (resourcesPath !== '') roots.splice(2, 0, join(resourcesPath, BUNDLED_IMAGES_DIR_NAME))
   return roots
@@ -77,7 +81,7 @@ export function bundledImageRoots({ appPath, resourcesPath, cwd }: BundledImageR
  */
 export function findBundledImagesDir(
   roots: readonly string[],
-  exists: (p: string) => boolean = existsSync
+  exists: (p: string) => boolean = existsSync,
 ): string | null {
   for (const root of roots) {
     if (exists(root)) return root

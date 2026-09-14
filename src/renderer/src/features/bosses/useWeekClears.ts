@@ -25,7 +25,7 @@ import {
   parseWeekClears,
   serializeWeekClears,
   weekClearsStorageKey,
-  type WeekClears
+  type WeekClears,
 } from './weekClears'
 
 export interface WeekClearsApi {
@@ -124,8 +124,8 @@ export function useWeekClears(): WeekClearsApi {
         // (the whole-branch review's Important 3).
         if (snapshot.character === null) return
         write(nextWeekClearsOnToggle(snapshot.clears, bossKey, w, Date.now()))
-      }
+      },
     }),
-    [snap]
+    [snap],
   )
 }

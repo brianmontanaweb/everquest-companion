@@ -47,8 +47,8 @@ function reportAndReload(error: Error, info: React.ErrorInfo | null): void {
         message: `${error.name}: ${error.message}`,
         stack: `${error.stack ?? ''}${
           info?.componentStack ? `\n\nComponent stack:${info.componentStack}` : ''
-        }`
-      })
+        }`,
+      }),
     )
   } catch {
     // Reload anyway — a report we could not prefill is better than a stuck window.
@@ -61,7 +61,7 @@ const BUTTON: React.CSSProperties = {
   borderRadius: 6,
   padding: '10px 18px',
   fontSize: 14,
-  cursor: 'pointer'
+  cursor: 'pointer',
 }
 
 /** The two actions. Reporting is offered FIRST — the crash is most useful to us right now. */
@@ -115,7 +115,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
           info?.componentStack ? `\n\nComponent stack:${info.componentStack}` : ''
         }`,
         source: 'ErrorBoundary',
-        view: currentViewId()
+        view: currentViewId(),
       })
     } catch {
       // Ignore — the visible fallback below is the primary user-facing signal.
@@ -128,7 +128,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
     console.error(
       '[everquest-companion] ErrorBoundary caught:',
       error,
-      info?.componentStack ? `\n\nComponent stack:${info.componentStack}` : ''
+      info?.componentStack ? `\n\nComponent stack:${info.componentStack}` : '',
     )
   }
 
@@ -150,7 +150,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
           font: '14px/1.5 system-ui, sans-serif',
           padding: '32px',
           overflow: 'auto',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
         }}
       >
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
@@ -170,7 +170,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
               color: '#ffb4b4',
               fontFamily: 'ui-monospace, monospace',
               whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word'
+              wordBreak: 'break-word',
             }}
           >
             {error.message}
@@ -189,7 +189,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
                 fontSize: 12,
                 color: '#c7c7c7',
                 whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word'
+                wordBreak: 'break-word',
               }}
             >
               {detail}

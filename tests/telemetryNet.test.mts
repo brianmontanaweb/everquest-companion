@@ -33,10 +33,19 @@ import {
   telemetryCollectEnabled,
   telemetryEndpointConfigured,
   telemetryFlushEnabled,
-  telemetryPermanentRefusal
+  telemetryPermanentRefusal,
 } from '../src/main/telemetry/net'
-import { emptyRing, parseRingFile, pushCapped, TELEMETRY_RING_VERSION } from '../src/main/telemetry/ring'
-import { TELEMETRY_BUFFER_CAP, type TelemetryPrefs, type TelemetryRecord } from '../src/shared/telemetry'
+import {
+  emptyRing,
+  parseRingFile,
+  pushCapped,
+  TELEMETRY_RING_VERSION,
+} from '../src/main/telemetry/ring'
+import {
+  TELEMETRY_BUFFER_CAP,
+  type TelemetryPrefs,
+  type TelemetryRecord,
+} from '../src/shared/telemetry'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const TELEMETRY_DIR = join(ROOT, 'src', 'main', 'telemetry')
@@ -45,7 +54,7 @@ const prefs = (over: Partial<TelemetryPrefs> = {}): TelemetryPrefs => ({
   enabled: true,
   noticeShown: true,
   analyticsId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
-  ...over
+  ...over,
 })
 
 // ---- 1. THE ENDPOINT --------------------------------------------------------------------
@@ -76,18 +85,18 @@ test('THE TRUTH TABLE: the flush gate needs all four facts, and the endpoint is 
   assert.equal(
     telemetryFlushEnabled(true, TELEMETRY_API_URL, prefs()),
     false,
-    'THE E2E LAW (plan T7): the headless harness never sends, lit endpoint or not'
+    'THE E2E LAW (plan T7): the headless harness never sends, lit endpoint or not',
   )
   assert.equal(telemetryFlushEnabled(false, '', prefs()), false, 'no endpoint ⇒ nowhere to send')
   assert.equal(
     telemetryFlushEnabled(false, TELEMETRY_API_URL, prefs({ enabled: false })),
     false,
-    "THE OPT-OUT: the user's switch is off, so the network is off — immediately, not next launch"
+    "THE OPT-OUT: the user's switch is off, so the network is off — immediately, not next launch",
   )
   assert.equal(
     telemetryFlushEnabled(false, TELEMETRY_API_URL, prefs({ noticeShown: false })),
     false,
-    'THE T1 GATE: nothing transmits before the first-run notice has rendered'
+    'THE T1 GATE: nothing transmits before the first-run notice has rendered',
   )
 
   // …and every combination of the two consent facts, because these are the two that a user
@@ -97,7 +106,7 @@ test('THE TRUTH TABLE: the flush gate needs all four facts, and the endpoint is 
       assert.equal(
         telemetryFlushEnabled(false, TELEMETRY_API_URL, prefs({ enabled, noticeShown })),
         enabled && noticeShown,
-        `enabled=${String(enabled)} noticeShown=${String(noticeShown)}`
+        `enabled=${String(enabled)} noticeShown=${String(noticeShown)}`,
       )
     }
   }
@@ -140,11 +149,17 @@ test('THE TARGET PIN: every fetch under src/main/telemetry/ names TELEMETRY_API_
       assert.equal(
         m[1],
         'TELEMETRY_API_URL',
-        `${name}: fetch(${String(m[1])}…) — the only legal target is the compiled-in constant`
+        `${name}: fetch(${String(m[1])}…) — the only legal target is the compiled-in constant`,
       )
     }
     // The other ways bytes leave a process. There is one transport here and it is `fetch`.
-    for (const re of [/XMLHttpRequest/, /\bnet\.request\b/, /require\(['"]https?['"]\)/, /from ['"]node:https?['"]/, /new WebSocket/]) {
+    for (const re of [
+      /XMLHttpRequest/,
+      /\bnet\.request\b/,
+      /require\(['"]https?['"]\)/,
+      /from ['"]node:https?['"]/,
+      /new WebSocket/,
+    ]) {
       assert.equal(re.test(src), false, `${name} contains ${String(re)} — one transport, no others`)
     }
   }
@@ -155,9 +170,16 @@ test('THERE IS NO OVERRIDE: no setter, no env var, nothing can supply an endpoin
   // The feedback precedent (§6.2): an overridable ingest URL is an exfiltration primitive, not
   // a convenience. Telemetry does not even have feedback's loopback dev gate — it has no
   // local-stack rehearsal need, and a gate that does not exist cannot be widened.
-  assert.deepEqual(Object.keys(net).filter((k) => /^(set|override|configure)/i.test(k)), [])
+  assert.deepEqual(
+    Object.keys(net).filter((k) => /^(set|override|configure)/i.test(k)),
+    [],
+  )
   for (const { name, body } of telemetrySources()) {
-    assert.equal(/process\.env/.test(body), false, `${name} must not read an env var for an endpoint`)
+    assert.equal(
+      /process\.env/.test(body),
+      false,
+      `${name} must not read an env var for an endpoint`,
+    )
   }
   // …and `postTelemetryBatch` takes no url: a url parameter is the first half of an override,
   // and it would make the target pin above unwritable.
@@ -175,7 +197,7 @@ test('A REFUSAL OF THESE BYTES drops them; a bad moment keeps them', () => {
     assert.equal(
       telemetryPermanentRefusal(status),
       false,
-      `${String(status)} is "not now" — offline, the daily cap, or the operator's kill switch`
+      `${String(status)} is "not now" — offline, the daily cap, or the operator's kill switch`,
     )
   }
 })
@@ -231,8 +253,8 @@ test('a foreign, corrupt or hand-edited ring file is refused rather than trusted
     events: [
       { ts: 1, ev: { t: 'viewDwell', view: 'combat', ms: 10, characterName: 'Primitive' } },
       { ts: 2, ev: { t: 'notAnEvent', payload: 'anything at all' } },
-      'not a record'
-    ]
+      'not a record',
+    ],
   })
   assert.deepEqual(parsed?.events, [{ ts: 1, ev: { t: 'viewDwell', view: 'combat', ms: 10 } }])
   assert.equal(parsed?.lastBatch, null, 'a display-only field is never restored from disk')

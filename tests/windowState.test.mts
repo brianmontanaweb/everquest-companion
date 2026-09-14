@@ -34,7 +34,7 @@ import {
   windowStateOf,
   type ArmTimer,
   type WindowBounds,
-  type WindowLike
+  type WindowLike,
 } from '../src/main/windowState'
 
 /** A window that answers exactly what this module asks of one. */
@@ -48,7 +48,7 @@ function fakeWindow(opts: {
     isDestroyed: () => opts.destroyed === true,
     isMinimized: () => opts.minimized === true,
     isMaximized: () => opts.maximized === true,
-    getNormalBounds: () => opts.normal
+    getNormalBounds: () => opts.normal,
   }
 }
 
@@ -64,7 +64,7 @@ test('a whole, sane rectangle is remembered as it was', () => {
 test('a maximized state keeps the flag AND the rectangle underneath it', () => {
   assert.deepEqual(normalizeWindowState({ ...CHOSEN, maximized: true }), {
     ...CHOSEN,
-    maximized: true
+    maximized: true,
   })
 })
 
@@ -79,7 +79,7 @@ test('fractional pixels are rounded — a window is a whole number of them', () 
     x: 10,
     y: 11,
     width: 800,
-    height: 601
+    height: 601,
   })
 })
 
@@ -95,7 +95,7 @@ test('a hand-edited or half-written state is refused, and the default is what is
     { x: Number.NaN, y: 0, width: 800, height: 600 },
     { x: 0, y: 0, width: Number.POSITIVE_INFINITY, height: 600 },
     { x: 0, y: 0, width: 0, height: 600 },
-    { x: 0, y: 0, width: 800, height: -600 }
+    { x: 0, y: 0, width: 800, height: -600 },
   ]) {
     assert.equal(normalizeWindowState(raw), undefined, JSON.stringify(raw) ?? 'undefined')
   }
@@ -108,7 +108,7 @@ test('an off-screen POSITION is not refused here — an unplugged monitor is a m
     x: 9000,
     y: 9000,
     width: 800,
-    height: 600
+    height: 600,
   })
 })
 
@@ -183,7 +183,7 @@ function fakeTimer(): { arm: ArmTimer; fire: () => void; armed: () => number; de
       fn?.()
     },
     armed: () => arms,
-    delays
+    delays,
   }
 }
 

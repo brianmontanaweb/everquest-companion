@@ -38,7 +38,7 @@ import {
   type MobResistProfile,
   type ResistAxis,
   type ResistAxisBenchmark,
-  type ResistTag
+  type ResistTag,
 } from './resistTypes'
 // TYPE-ONLY, so the cycle it closes (types.ts names this file's config blob) is erased at compile
 // time. `shared/buffTimers.ts` takes the same shape for the same reason: the knob-applier belongs
@@ -79,7 +79,7 @@ export const CON_CARD_MIN_AUTO_HIDE_MS = 3_000
 export const CON_CARD_MAX_AUTO_HIDE_MS = 120_000
 
 export const DEFAULT_CON_CARD_CONFIG: ConCardOverlayConfig = {
-  autoHideMs: DEFAULT_CON_CARD_AUTO_HIDE_MS
+  autoHideMs: DEFAULT_CON_CARD_AUTO_HIDE_MS,
 }
 
 const asRecord = (v: unknown): Record<string, unknown> =>
@@ -96,9 +96,14 @@ const asRecord = (v: unknown): Record<string, unknown> =>
  */
 export function normalizeConCardConfig(v: unknown): ConCardOverlayConfig {
   const raw = asRecord(v).autoHideMs
-  const ms = typeof raw === 'number' && Number.isFinite(raw) ? Math.floor(raw) : DEFAULT_CON_CARD_AUTO_HIDE_MS
+  const ms =
+    typeof raw === 'number' && Number.isFinite(raw)
+      ? Math.floor(raw)
+      : DEFAULT_CON_CARD_AUTO_HIDE_MS
   if (ms <= 0) return { autoHideMs: CON_CARD_NEVER_HIDES }
-  return { autoHideMs: Math.min(CON_CARD_MAX_AUTO_HIDE_MS, Math.max(CON_CARD_MIN_AUTO_HIDE_MS, ms)) }
+  return {
+    autoHideMs: Math.min(CON_CARD_MAX_AUTO_HIDE_MS, Math.max(CON_CARD_MIN_AUTO_HIDE_MS, ms)),
+  }
 }
 
 /**
@@ -110,7 +115,8 @@ export function normalizeConCardConfig(v: unknown): ConCardOverlayConfig {
  * ceiling and because this is a fact about the kind, not about the store.
  */
 export function applyConCardKnob(kind: OverlayKind, cfg: OverlayConfig): void {
-  if (kind === 'conCard') cfg.conCard = normalizeConCardConfig({ ...DEFAULT_CON_CARD_CONFIG, ...cfg.conCard })
+  if (kind === 'conCard')
+    cfg.conCard = normalizeConCardConfig({ ...DEFAULT_CON_CARD_CONFIG, ...cfg.conCard })
   else delete cfg.conCard
 }
 
@@ -277,7 +283,7 @@ function blankChip(axis: ResistAxis): ConCardChip {
     npcOnly: false,
     n: 0,
     nTotal: 0,
-    fit: null
+    fit: null,
   }
 }
 
@@ -298,7 +304,7 @@ function chipFor(axis: ResistAxis, row: MobResistAxis | undefined): ConCardChip 
     // surfaces disagreeing about how much this app knows (JOS-385).
     n: row.nInformative,
     nTotal: row.n,
-    fit: row.tag === null ? null : { R: est.R, lo: est.lo, hi: est.hi }
+    fit: row.tag === null ? null : { R: est.R, lo: est.lo, hi: est.hi },
   }
 }
 

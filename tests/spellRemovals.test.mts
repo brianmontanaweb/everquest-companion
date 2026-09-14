@@ -52,7 +52,7 @@ import {
   buildSpellCatalog,
   loadSpellDb,
   spellCorrectionsReport,
-  spellRemovalsReport
+  spellRemovalsReport,
 } from '../src/main/data/spellDb.ts'
 import { buildLevelUnlocks } from '../src/main/data/levelUnlocks.ts'
 import { classesForSpell } from '../src/main/data/spellClasses.ts'
@@ -70,7 +70,10 @@ test('THE REPORTED DEFECT: Invigor is in the scrape and is NOT in the effective 
   // 35`, placed at CLR 9 / PAL 22 / DRU 14 / SHM 24 / ENC 24 / RNG 30.
   const before = RAW.filter((s) => s.name === 'Invigor')
   assert.equal(before.length, 1, 'the committed scrape still carries the row this entry removes')
-  assert.ok(before[0].classes?.includes('Paladin - Level 22'), 'and still places it at the levels the report names')
+  assert.ok(
+    before[0].classes?.includes('Paladin - Level 22'),
+    'and still places it at the levels the report names',
+  )
 
   const { spells, report } = applySpellRemovals(RAW)
   assert.equal(spells.filter((s) => s.name === 'Invigor').length, 0, 'the layer drops it')
@@ -96,12 +99,12 @@ test('THE INVISIBILITY TWINS: two pages, one spell, and the client says which pa
   assert.deepEqual(
     [classic[0].mana, classic[0].castTimeMs, classic[0].targetType],
     [30, 5000, 'Single'],
-    'the copy this client does not run'
+    'the copy this client does not run',
   )
   assert.deepEqual(
     [modern[0].mana, modern[0].castTimeMs, modern[0].targetType],
     [40, 4000, 'Single Friendly (or Self)'],
-    'and the one it does — spells_us.txt id 235 states cast 4000, 270 ticks, 40 mana'
+    'and the one it does — spells_us.txt id 235 states cast 4000, 270 ticks, 40 mana',
   )
   // AND THE SCRAPE ARTIFACT IS THE CLASSIC PAGE'S ALONE: its commented-out items block swallowed
   // the opening `<!--` into the two fields that precede it. The correction that used to patch
@@ -112,16 +115,25 @@ test('THE INVISIBILITY TWINS: two pages, one spell, and the client says which pa
   assert.ok(!modern[0].classes?.includes('<!--'))
 
   // THE EFFECTIVE DB HOLDS ONE ROW, under the spelling the game prints, with the client's numbers.
-  const rows = loadSpellDb().spells.filter((s) => /^Invisibility (Versus|vs\.) Undead$/.test(s.name))
+  const rows = loadSpellDb().spells.filter((s) =>
+    /^Invisibility (Versus|vs\.) Undead$/.test(s.name),
+  )
   assert.equal(rows.length, 1, 'one spell, one row')
-  assert.equal(rows[0].name, 'Invisibility Versus Undead', 'the 83 log lines spell it this way; 0 spell it `vs.`')
+  assert.equal(
+    rows[0].name,
+    'Invisibility Versus Undead',
+    'the 83 log lines spell it this way; 0 spell it `vs.`',
+  )
   assert.deepEqual(
     [rows[0].mana, rows[0].castTimeMs, rows[0].targetType, rows[0].durationText],
     [40, 4000, 'Single Friendly (or Self)', '27 Min'],
-    'THE RULING: the joined entry keeps the surviving page`s fields, not whichever row sorted first'
+    'THE RULING: the joined entry keeps the surviving page`s fields, not whichever row sorted first',
   )
   assert.ok(!rows[0].classes?.includes('<!--'), 'and no leaked markup survives anywhere on it')
-  assert.ok(rows[0].classes?.includes('(Autogranted)'), 'including the autogrant note only that page states')
+  assert.ok(
+    rows[0].classes?.includes('(Autogranted)'),
+    'including the autogrant note only that page states',
+  )
 })
 
 test('THE UNLOCK PANEL draws ONE invisibility-vs-undead row at each of the five levels', () => {
@@ -135,9 +147,13 @@ test('THE UNLOCK PANEL draws ONE invisibility-vs-undead row at each of the five 
   assert.deepEqual(
     rows[0].at.map((p) => `${p.cls} ${p.level}`).sort(),
     ['CLR 11', 'ENC 14', 'NEC 1', 'PAL 17', 'SHD 4'],
-    'at exactly the five levels the report names'
+    'at exactly the five levels the report names',
   )
-  assert.deepEqual([rows[0].mana, rows[0].castTimeMs], [40, 4000], 'carrying the client-confirmed figures')
+  assert.deepEqual(
+    [rows[0].mana, rows[0].castTimeMs],
+    [40, 4000],
+    'carrying the client-confirmed figures',
+  )
 })
 
 test('THE ALERT WIZARD and THE CLASS INDEX hold one invisibility-vs-undead key', () => {
@@ -145,12 +161,27 @@ test('THE ALERT WIZARD and THE CLASS INDEX hold one invisibility-vs-undead key',
   // rank suffixes, not abbreviations, so `invisibility versus undead` and `invisibility vs. undead`
   // were two spells everywhere a name is a join key.
   const catalog = buildSpellCatalog(loadSpellDb(), new Map())
-  const keys = catalog.entries.filter((e) => e.key.includes('undead') && e.key.startsWith('invisibility'))
-  assert.deepEqual(keys.map((e) => e.key).sort(), ['invisibility to undead', 'invisibility versus undead'])
+  const keys = catalog.entries.filter(
+    (e) => e.key.includes('undead') && e.key.startsWith('invisibility'),
+  )
+  assert.deepEqual(keys.map((e) => e.key).sort(), [
+    'invisibility to undead',
+    'invisibility versus undead',
+  ])
   // And the key the catalog holds is the one a cast line produces: `You begin casting Invisibility
   // Versus Undead.` occurs 28 times in the owner's log and is what class inference reads.
-  assert.deepEqual(classesForSpell('Invisibility Versus Undead'), ['CLR', 'ENC', 'NEC', 'PAL', 'SHD'])
-  assert.deepEqual(classesForSpell('Invisibility vs. Undead'), [], 'a spelling the game never prints places nobody')
+  assert.deepEqual(classesForSpell('Invisibility Versus Undead'), [
+    'CLR',
+    'ENC',
+    'NEC',
+    'PAL',
+    'SHD',
+  ])
+  assert.deepEqual(
+    classesForSpell('Invisibility vs. Undead'),
+    [],
+    'a spelling the game never prints places nobody',
+  )
 })
 
 test('every removal removes something in the committed DB, or is a stated tombstone', () => {
@@ -164,7 +195,7 @@ test('every removal removes something in the committed DB, or is a stated tombst
   assert.deepEqual(
     report.satisfied,
     [],
-    'a removal matching no row is a typo until somebody records that the wiki dropped the page'
+    'a removal matching no row is a typo until somebody records that the wiki dropped the page',
   )
   assert.equal(report.removed, SPELL_REMOVALS.length, 'one row per entry, on the committed scrape')
 })
@@ -176,7 +207,7 @@ test('a removal that names a spell nobody looked for cannot hide in the list', (
   const { spells } = applySpellRemovals(RAW)
   assert.ok(
     spells.some((s) => s.name === 'Extinguish Fatigue'),
-    'absence of evidence is not evidence of absence: an unverified sibling stays in the DB'
+    'absence of evidence is not evidence of absence: an unverified sibling stays in the DB',
   )
 })
 
@@ -193,12 +224,19 @@ test('every removal states a dated verification, a reason field and evidence', (
     // The date is the whole evidence base for this class, so its shape is checked rather than
     // trusted: a claim about a live service goes stale, and a reader needs to know how old the
     // look was without parsing prose.
-    assert.match(r.verified, /^\d{4}-\d{2}-\d{2}$/, `${r.spell}: \`verified\` is an ISO date, not prose`)
+    assert.match(
+      r.verified,
+      /^\d{4}-\d{2}-\d{2}$/,
+      `${r.spell}: \`verified\` is an ISO date, not prose`,
+    )
     assert.ok(!Number.isNaN(Date.parse(r.verified)), `${r.spell}: \`verified\` must be a real date`)
     // `null` is a REAL answer and the point of the field: a mechanical reason is a much wider claim
     // than a verification and is held to its own bar. What is refused is the empty gesture — a
     // blank string, or whitespace, which reads as "stated" and says nothing.
-    assert.ok(r.reason === null || r.reason.trim().length > 20, `${r.spell}: state a real reason or state null`)
+    assert.ok(
+      r.reason === null || r.reason.trim().length > 20,
+      `${r.spell}: state a real reason or state null`,
+    )
     assert.ok(r.evidence.length > 20, `${r.spell}: say what was done and what was found`)
     // A superseded entry does not withdraw a spell, so it owes the name the spell survives under.
     // An absence entry must NOT state one: after it runs the DB says nothing about the spell, and a
@@ -219,7 +257,11 @@ test('a superseded page leaves its spell standing, under the name it says', () =
   for (const r of SPELL_REMOVALS) {
     if (r.supersededBy === undefined) continue
     const rows = effective.filter((s) => s.name === r.supersededBy)
-    assert.equal(rows.length, 1, `${r.spell}: the survivor \`${r.supersededBy}\` must be in the effective DB, once`)
+    assert.equal(
+      rows.length,
+      1,
+      `${r.spell}: the survivor \`${r.supersededBy}\` must be in the effective DB, once`,
+    )
   }
 })
 
@@ -241,7 +283,10 @@ test('no spell is both removed and corrected', () => {
     // the refusal now applies only where no `supersededBy` entry claims the destination.
     if (c.field === 'name' && removed.has(c.to)) {
       const claimed = SPELL_REMOVALS.some((r) => r.spell === c.to && r.supersededBy === c.to)
-      assert.ok(claimed, `${c.to} is removed AND is the target of a rename, with no superseded entry saying so`)
+      assert.ok(
+        claimed,
+        `${c.to} is removed AND is the target of a rename, with no superseded entry saying so`,
+      )
     }
   }
 })
@@ -258,7 +303,7 @@ test('applying the layer twice is applying it once, and the second pass is all t
   assert.deepEqual(
     second.report.satisfied,
     SPELL_REMOVALS.map((r) => r.spell),
-    'every entry reports satisfied, which is the SAME answer a natural upstream drop produces'
+    'every entry reports satisfied, which is the SAME answer a natural upstream drop produces',
   )
 })
 
@@ -284,11 +329,21 @@ test('a removal takes EVERY row of its name, the way a NAME correction does', ()
   // MESSAGE correction deliberately writes only the first of them: their messages may genuinely
   // differ. Existence cannot differ. Half a removal leaves a phantom that `byKey`,
   // `buildSpellCatalog` and `buildLevelUnlocks` would all still find, which is the whole defect.
-  const twinned: SpellEntry[] = RAW.flatMap((s) => (s.name === 'Invigor' ? [s, { ...s, durationMs: 36_000 }] : [s]))
+  const twinned: SpellEntry[] = RAW.flatMap((s) =>
+    s.name === 'Invigor' ? [s, { ...s, durationMs: 36_000 }] : [s],
+  )
   assert.equal(twinned.filter((s) => s.name === 'Invigor').length, 2)
   const { spells, report } = applySpellRemovals(twinned)
-  assert.equal(spells.filter((s) => s.name === 'Invigor').length, 0, 'both rows, or the row is still there')
-  assert.equal(report.removed, SPELL_REMOVALS.length + 1, 'counted per ROW, not per entry — the synthetic twin is the +1')
+  assert.equal(
+    spells.filter((s) => s.name === 'Invigor').length,
+    0,
+    'both rows, or the row is still there',
+  )
+  assert.equal(
+    report.removed,
+    SPELL_REMOVALS.length + 1,
+    'counted per ROW, not per entry — the synthetic twin is the +1',
+  )
 })
 
 test('the layer never writes through the imported JSON module', () => {
@@ -297,7 +352,10 @@ test('the layer never writes through the imported JSON module', () => {
   const before = RAW.length
   applySpellRemovals(RAW)
   assert.equal(RAW.length, before, 'mutating it would leak into every importer')
-  assert.ok(RAW.some((s) => s.name === 'Invigor'), 'and the committed scrape still carries what the wiki carries')
+  assert.ok(
+    RAW.some((s) => s.name === 'Invigor'),
+    'and the committed scrape still carries what the wiki carries',
+  )
 })
 
 test('a removal names the SCRAPE`s spelling, so the corrections overlay never sees the row', () => {
@@ -327,11 +385,11 @@ test('a removal names the SCRAPE`s spelling, so the corrections overlay never se
     assert.equal(
       r.supersededBy,
       r.spell,
-      `${r.spell} is a name the corrections layer PRODUCES; only a superseded duplicate may share it`
+      `${r.spell} is a name the corrections layer PRODUCES; only a superseded duplicate may share it`,
     )
     assert.ok(
       RAW.some((s) => s.name === r.spell),
-      `${r.spell} must name a row of the committed SCRAPE, not only the name a rename produces`
+      `${r.spell} must name a row of the committed SCRAPE, not only the name a rename produces`,
     )
   }
 })
@@ -363,7 +421,11 @@ test('the corrections overlay still describes everything, applied AFTER the remo
   const c = spellCorrectionsReport()
   assert.ok(c, 'the load path reports the corrections too')
   assert.deepEqual(c.unknownSpells, [], 'a correction naming a removed spell would land here')
-  assert.deepEqual(c.stale, [], 'and removing a row must not move a sentence out from under a correction')
+  assert.deepEqual(
+    c.stale,
+    [],
+    'and removing a row must not move a sentence out from under a correction',
+  )
   assert.ok(c.applied > 0, 'the corrections still do their job on the shorter list')
 })
 
@@ -374,10 +436,17 @@ test('WHAT THE REMOVAL DOES NOT TAKE WITH IT: both shared sentences keep an owne
   const db = loadSpellDb()
   const you = db.castOnYou.get('Your body zings with energy.')
   assert.ok(you, 'the self landing is still a message the parser knows')
-  assert.deepEqual(you.map((s) => s.name), ['Extinguish Fatigue'], 'under its surviving owner')
+  assert.deepEqual(
+    you.map((s) => s.name),
+    ['Extinguish Fatigue'],
+    'under its surviving owner',
+  )
   const other = db.castOnOtherSuffix.get('looks energized.')
   assert.ok(other, 'and so is the third-person landing')
-  assert.deepEqual(other.map((s) => s.name), ['Extinguish Fatigue'])
+  assert.deepEqual(
+    other.map((s) => s.name),
+    ['Extinguish Fatigue'],
+  )
 })
 
 // ---------------------------------------------------------------------------------------------
@@ -392,9 +461,17 @@ test('THE UNLOCK PANEL no longer offers Invigor at 22, 24 or 30', () => {
   const data = buildLevelUnlocks()
   assert.equal(data.spells.filter((s) => s.name === 'Invigor').length, 0, 'no card names it')
   const staminaSiblings = data.spells.filter((s) => s.name === 'Extinguish Fatigue')
-  assert.equal(staminaSiblings.length, 1, 'and the unverified sibling is untouched — this is not a family purge')
+  assert.equal(
+    staminaSiblings.length,
+    1,
+    'and the unverified sibling is untouched — this is not a family purge',
+  )
   // The three levels the report names, read the way the panel reads them.
-  for (const [cls, level] of [['PAL', 22], ['SHM', 24], ['RNG', 30]] as const) {
+  for (const [cls, level] of [
+    ['PAL', 22],
+    ['SHM', 24],
+    ['RNG', 30],
+  ] as const) {
     const atLevel = data.spells.filter((s) => s.at.some((a) => a.cls === cls && a.level === level))
     assert.ok(!atLevel.some((s) => s.name === 'Invigor'), `${cls} ${level} must not list it`)
   }
@@ -413,13 +490,16 @@ test('THE ALERT WIZARD no longer offers Invigor a suggestion', () => {
   // longer invigorated.` — the very song the list file's header measures 1,028 landings of. Both
   // are real rows and both must stay; what must be gone is the entry the search used to name.
   assert.deepEqual(
-    catalog.entries.filter((e) => e.searchText.includes('invigor')).map((e) => e.key).sort(),
-    ["invigorate", "jaxan's jig o' vigor"],
-    'typing "invigor" finds the two spells that exist, and not the one that does not'
+    catalog.entries
+      .filter((e) => e.searchText.includes('invigor'))
+      .map((e) => e.key)
+      .sort(),
+    ['invigorate', "jaxan's jig o' vigor"],
+    'typing "invigor" finds the two spells that exist, and not the one that does not',
   )
   assert.ok(
     catalog.entries.some((e) => e.key === 'extinguish fatigue'),
-    'while the unverified sibling stays offerable'
+    'while the unverified sibling stays offerable',
   )
 })
 
@@ -432,7 +512,7 @@ test('THE CLASS INDEX places nobody by a spell the game does not have', () => {
   assert.deepEqual(
     classesForSpell('Extinguish Fatigue'),
     ['CLR', 'DRU', 'ENC', 'RNG', 'SHM'],
-    'and the sibling still places exactly who the wiki says'
+    'and the sibling still places exactly who the wiki says',
   )
 })
 
@@ -488,12 +568,12 @@ const RAW_IMPORT_EXEMPT: ReadonlyMap<string, string> = new Map([
   // and need no exemption at all.
   [
     'src/main/planner/effectIndex.ts',
-    'item Effect: -> spell-page join; 7 committed items carry an Invigor effect and a removed row would blank their one-liners'
+    'item Effect: -> spell-page join; 7 committed items carry an Invigor effect and a removed row would blank their one-liners',
   ],
   [
     'src/main/planner/wornFocusIndex.ts',
-    'the same item Focus Effect: -> spell-page join, harvesting the percentage and the level cap; a focus page is learnable by nobody, so a removal can never be about one'
-  ]
+    'the same item Focus Effect: -> spell-page join, harvesting the percentage and the level cap; a focus page is learnable by nobody, so a removal can never be about one',
+  ],
 ])
 
 function tsFilesUnder(dir: string, out: string[] = []): string[] {
@@ -521,7 +601,7 @@ test('every src importer of spells.json goes through the removals seam, or is ex
   assert.deepEqual(
     offenders,
     [],
-    'a name-keyed index built on the raw scrape still offers spells EQ Legends does not have'
+    'a name-keyed index built on the raw scrape still offers spells EQ Legends does not have',
   )
 })
 
@@ -531,7 +611,11 @@ test('the exemption list names only files that really exist and really import th
   const root = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')
   for (const [rel, reason] of RAW_IMPORT_EXEMPT) {
     const src = readFileSync(join(root, rel), 'utf8')
-    assert.match(src, /^import\s+\w+\s+from\s+'[^']*spells\.json'/m, `${rel} no longer imports the scrape`)
+    assert.match(
+      src,
+      /^import\s+\w+\s+from\s+'[^']*spells\.json'/m,
+      `${rel} no longer imports the scrape`,
+    )
     assert.ok(reason.length > 20, `${rel}: an exemption states why`)
   }
 })

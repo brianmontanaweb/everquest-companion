@@ -36,7 +36,7 @@ import {
   failures,
   note,
   reportRun,
-  settle
+  settle,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -60,7 +60,7 @@ const DUMP_WAIT_MS = 15_000
 function textOf(page: Page, selector: string): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText ?? '',
-    selector
+    selector,
   )
 }
 
@@ -81,7 +81,11 @@ async function setDescription(page: Page, text: string): Promise<void> {
   // The gate is derived state, not an effect, but MUI's helper text re-renders on the next frame.
   // The CONDITION is that the field's own rendering has caught up with what was typed — its text
   // carries the live `n / max` counter, so any real keystroke changes it.
-  await settle(() => textOf(page, DESCRIPTION), (t) => t !== before, { timeoutMs: 8_000 })
+  await settle(
+    () => textOf(page, DESCRIPTION),
+    (t) => t !== before,
+    { timeoutMs: 8_000 },
+  )
 }
 
 /** Does `window.eq.triageOps()` resolve in this run? Never throws out of the page. */
@@ -119,7 +123,7 @@ function ownerToolsFlag(page: Page): Promise<unknown> {
 async function stepTriageStripped(page: Page): Promise<void> {
   check(
     'the owner-only Triage tab is STRIPPED from a production-shaped build (no nav row)',
-    (await countOf(page, '[data-testid="nav-triage"]')) === 0
+    (await countOf(page, '[data-testid="nav-triage"]')) === 0,
   )
   // …and the bridge method the tab would call is a door with nothing behind it. It is still on
   // the preload (channel names are not secrets), but the handler is registered only under
@@ -129,7 +133,7 @@ async function stepTriageStripped(page: Page): Promise<void> {
   check(
     '…and its IPC handlers are not registered in this build either',
     reachable === false,
-    `triage:ops ${reachable ? 'ANSWERED' : 'rejected, as designed'}`
+    `triage:ops ${reachable ? 'ANSWERED' : 'rejected, as designed'}`,
   )
   // JOS-72's default, read where the renderer reads it. An ambient `EQ_OWNER_TOOLS` in whatever
   // shell ran the suite would show up right here rather than silently arming the second launch.
@@ -137,7 +141,7 @@ async function stepTriageStripped(page: Page): Promise<void> {
   check(
     '…and the owner-tools opt-in reads FALSE with nothing set — the default is hidden',
     flag === false,
-    `window.eq.ownerTools = ${String(flag)}`
+    `window.eq.ownerTools = ${String(flag)}`,
   )
 }
 
@@ -162,17 +166,17 @@ async function stepOptInPolarity(page: Page): Promise<void> {
   check(
     'EQ_OWNER_TOOLS=1 reaches the renderer through the preload — the bridge field is real',
     flag === true,
-    `window.eq.ownerTools = ${String(flag)}`
+    `window.eq.ownerTools = ${String(flag)}`,
   )
   check(
     '…but the nav row STAYS absent: the renderer half is a compile-time strip, not a switch',
-    (await countOf(page, '[data-testid="nav-triage"]')) === 0
+    (await countOf(page, '[data-testid="nav-triage"]')) === 0,
   )
   const reachable = await triageReachable(page)
   check(
     '…and main STILL refuses to register the handlers, because EQ_E2E outranks the opt-in',
     reachable === false,
-    `triage:ops ${reachable ? 'ANSWERED — the harness could reach the owner’s AWS account' : 'rejected, as designed'}`
+    `triage:ops ${reachable ? 'ANSWERED — the harness could reach the owner’s AWS account' : 'rejected, as designed'}`,
   )
 }
 
@@ -181,7 +185,11 @@ async function stepOpen(page: Page): Promise<boolean> {
   await page.click('[data-testid="nav-feedback"]', { timeout: 60_000 })
   await page.waitForSelector(DIALOG, { timeout: 15_000 })
   const open = await countOf(page, DIALOG)
-  return check('the feedback dialog opens from the nav drawer footer', open === 1, `${String(open)} dialog(s)`)
+  return check(
+    'the feedback dialog opens from the nav drawer footer',
+    open === 1,
+    `${String(open)} dialog(s)`,
+  )
 }
 
 /**
@@ -198,11 +206,11 @@ async function stepDarkBuild(page: Page): Promise<void> {
   check(
     'a build with no endpoint says so, in the dialog, before anything is typed',
     /isn’t available in this build|is not available in this build/.test(text),
-    text.slice(0, 100)
+    text.slice(0, 100),
   )
   check(
     '…and Send stays disabled in that build, however good the draft is',
-    (await disabledState(page, SEND)) === true
+    (await disabledState(page, SEND)) === true,
   )
 }
 
@@ -211,14 +219,17 @@ async function stepDarkBuild(page: Page): Promise<void> {
  * the main process and the ingest Lambda all run, so its complaint is what the field shows.
  */
 async function stepValidatorGate(page: Page): Promise<void> {
-  check('Send starts disabled — an empty report is not sendable', (await disabledState(page, SEND)) === true)
+  check(
+    'Send starts disabled — an empty report is not sendable',
+    (await disabledState(page, SEND)) === true,
+  )
 
   await setDescription(page, 'too short')
   const short = (await textOf(page, DESCRIPTION)).replace(/\s+/g, ' ')
   check(
     'a too-short description is refused by the SHARED validator, in its own words',
     /at least \d+ characters/i.test(short),
-    short.slice(0, 110)
+    short.slice(0, 110),
   )
   check('…and Send is still disabled', (await disabledState(page, SEND)) === true)
 
@@ -227,7 +238,7 @@ async function stepValidatorGate(page: Page): Promise<void> {
   check(
     'a valid description clears the validator’s complaint (the gate is the validator, not a length guess)',
     !/at least \d+ characters/i.test(good) && /\d+ \/ \d+/.test(good),
-    good.slice(0, 110)
+    good.slice(0, 110),
   )
 }
 
@@ -251,7 +262,7 @@ async function waitForPreviewMeta(page: Page): Promise<string> {
       return { meta, emptyRun }
     },
     (s) => s.meta > 0 || s.emptyRun >= 10,
-    { timeoutMs: SLICE_WAIT_MS, pollMs: 200 }
+    { timeoutMs: SLICE_WAIT_MS, pollMs: 200 },
   )
   if (state.meta === 0) return ''
   return (await textOf(page, PREVIEW_META)).replace(/\s+/g, ' ')
@@ -267,8 +278,11 @@ async function stepAttachAndPreview(page: Page): Promise<void> {
   const readCheck = (): Promise<boolean | null> =>
     page.evaluate(
       () =>
-        (document.querySelector('[data-testid="feedback-attach-log"] input') as HTMLInputElement | null)
-          ?.checked ?? null
+        (
+          document.querySelector(
+            '[data-testid="feedback-attach-log"] input',
+          ) as HTMLInputElement | null
+        )?.checked ?? null,
     )
   const checked = await settle(readCheck, (c) => c === true, { timeoutMs: 8_000 })
   check('choosing Bug report ticks "attach my log" by default', checked === true, String(checked))
@@ -277,12 +291,14 @@ async function stepAttachAndPreview(page: Page): Promise<void> {
   check(
     'the dialog states what survives the scrub, in plain language, before you send',
     disclosure.includes('Chat, tells, group and /who lines are removed'),
-    disclosure.includes('Chat, tells') ? 'present' : 'the §5.3 disclosure is missing'
+    disclosure.includes('Chat, tells') ? 'present' : 'the §5.3 disclosure is missing',
   )
 
   const meta = await waitForPreviewMeta(page)
   if (!meta) {
-    note('main built no slice for the live log this run (no character log, or an empty window) — the preview counts are not asserted')
+    note(
+      'main built no slice for the live log this run (no character log, or an empty window) — the preview counts are not asserted',
+    )
     return
   }
   // State, never process: lines · span · removed · compressed size. Counts are identities
@@ -293,7 +309,7 @@ async function stepAttachAndPreview(page: Page): Promise<void> {
       /\d{1,2}:\d{2}.\d{1,2}:\d{2}/.test(meta) &&
       /[\d,]+ lines removed/.test(meta) &&
       /\d+(\.\d+)? (KB|MB) compressed/.test(meta),
-    meta.slice(0, 120)
+    meta.slice(0, 120),
   )
 
   const box = await page.evaluate((sel) => {
@@ -303,7 +319,7 @@ async function stepAttachAndPreview(page: Page): Promise<void> {
     return {
       h: Math.round(el.getBoundingClientRect().height),
       scrolls: style.overflowY === 'auto' || style.overflowY === 'scroll',
-      rows: el.querySelectorAll('div').length
+      rows: el.querySelectorAll('div').length,
     }
   }, PREVIEW)
   if (!check('the preview box is rendered', box !== null)) return
@@ -313,16 +329,19 @@ async function stepAttachAndPreview(page: Page): Promise<void> {
   check(
     'the preview is a FIXED-height box that scrolls its own content',
     b.h > 0 && b.h <= 320 && b.scrolls,
-    `${String(b.h)}px · overflow ${b.scrolls ? 'auto' : 'visible'}`
+    `${String(b.h)}px · overflow ${b.scrolls ? 'auto' : 'visible'}`,
   )
   // Windowed through lib/useWindowedRows: only the visible slice is mounted, so a 5,000-line
   // preview costs a screenful of nodes, not 5,000.
   check(
     '…and it is windowed, not fully mounted',
     b.rows > 0 && b.rows < 200,
-    `${String(b.rows)} mounted row nodes`
+    `${String(b.rows)} mounted row nodes`,
   )
-  check('"Save a copy…" is offered — the escape hatch that makes the preview honest', (await countOf(page, '[data-testid="feedback-save-copy"]')) === 1)
+  check(
+    '"Save a copy…" is offered — the escape hatch that makes the preview honest',
+    (await countOf(page, '[data-testid="feedback-save-copy"]')) === 1,
+  )
 }
 
 /**
@@ -341,31 +360,41 @@ async function stepAttachInventory(page: Page): Promise<void> {
   const readCheck = (): Promise<boolean | null> =>
     page.evaluate(
       () =>
-        (document.querySelector('[data-testid="feedback-attach-inventory"] input') as HTMLInputElement | null)
-          ?.checked ?? null
+        (
+          document.querySelector(
+            '[data-testid="feedback-attach-inventory"] input',
+          ) as HTMLInputElement | null
+        )?.checked ?? null,
     )
   const checked = await settle(readCheck, (c) => c === true, { timeoutMs: 8_000 })
   check(
     'a bug report ticks "attach my inventory export" BY DEFAULT (the owner ruling)',
     checked === true,
-    String(checked)
+    String(checked),
   )
 
   const dialog = (await textOf(page, DIALOG)).replace(/\s+/g, ' ')
   check(
     'the dialog states what the export is and that nothing is removed from it',
     dialog.includes('Your inventory export is included') && dialog.includes('no chat in it'),
-    dialog.includes('Your inventory export is included') ? 'present' : 'the disclosure is missing'
+    dialog.includes('Your inventory export is included') ? 'present' : 'the disclosure is missing',
   )
 
   // The dump is staged, so the preview must resolve. An empty run here would mean main did not
   // find the file the harness planted — which is a failure, not a "not asserted this run".
-  const seen = await settle(() => countOf(page, INV_META), (n) => n > 0, {
-    timeoutMs: DUMP_WAIT_MS,
-    pollMs: 200
-  })
+  const seen = await settle(
+    () => countOf(page, INV_META),
+    (n) => n > 0,
+    {
+      timeoutMs: DUMP_WAIT_MS,
+      pollMs: 200,
+    },
+  )
   if (!check('main packaged the staged inventory export for preview', seen > 0)) {
-    const empty = (await textOf(page, '[data-testid="feedback-inventory-empty"]')).replace(/\s+/g, ' ')
+    const empty = (await textOf(page, '[data-testid="feedback-inventory-empty"]')).replace(
+      /\s+/g,
+      ' ',
+    )
     note(`the dialog said: ${empty.slice(0, 140)}`)
     return
   }
@@ -385,7 +414,7 @@ async function stepInventoryPreview(page: Page): Promise<void> {
   check(
     'the preview states the export as STATE: how old it is, how many rows, which file, what it costs',
     states,
-    meta.slice(0, 140)
+    meta.slice(0, 140),
   )
   // THE FRESHNESS TRUTH LEADS. It is the fact that turns an export-shaped bug report into an
   // answer, so it is first in the line rather than buried behind two counts.
@@ -398,7 +427,7 @@ async function stepInventoryPreview(page: Page): Promise<void> {
     return {
       h: Math.round(el.getBoundingClientRect().height),
       scrolls: style.overflowY === 'auto' || style.overflowY === 'scroll',
-      rows: el.querySelectorAll('div').length
+      rows: el.querySelectorAll('div').length,
     }
   }, INV_PREVIEW)
   if (!check('the export preview box is rendered', box !== null)) return
@@ -408,14 +437,22 @@ async function stepInventoryPreview(page: Page): Promise<void> {
   check(
     'the export preview is a FIXED-height box that scrolls its own content, windowed like the slice',
     windowed,
-    `${String(b.h)}px · overflow ${b.scrolls ? 'auto' : 'visible'} · ${String(b.rows)} mounted rows`
+    `${String(b.h)}px · overflow ${b.scrolls ? 'auto' : 'visible'} · ${String(b.rows)} mounted rows`,
   )
 
   // Un-ticking it collapses the whole block — the preview is not a thing you keep reading after
   // deciding not to send it.
   await page.click('[data-testid="feedback-attach-inventory"] input')
-  const gone = await settle(() => countOf(page, INV_META), (n) => n === 0, { timeoutMs: 8_000 })
-  check('un-ticking the box takes the preview away with it', gone === 0, `${String(gone)} meta line(s)`)
+  const gone = await settle(
+    () => countOf(page, INV_META),
+    (n) => n === 0,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    'un-ticking the box takes the preview away with it',
+    gone === 0,
+    `${String(gone)} meta line(s)`,
+  )
   await page.click('[data-testid="feedback-attach-inventory"] input')
 }
 
@@ -437,15 +474,15 @@ async function stepAttachAchievements(page: Page): Promise<void> {
       () =>
         (
           document.querySelector(
-            '[data-testid="feedback-attach-achievements"] input'
+            '[data-testid="feedback-attach-achievements"] input',
           ) as HTMLInputElement | null
-        )?.checked ?? null
+        )?.checked ?? null,
     )
   const checked = await settle(readCheck, (c) => c === true, { timeoutMs: 8_000 })
   check(
     'a bug report ticks "attach my achievements export" BY DEFAULT, like its sibling',
     checked === true,
-    String(checked)
+    String(checked),
   )
 
   const dialog = (await textOf(page, DIALOG)).replace(/\s+/g, ' ')
@@ -453,17 +490,23 @@ async function stepAttachAchievements(page: Page): Promise<void> {
     'the dialog states what THIS export is, and that it does not even carry the character name',
     dialog.includes('Your achievements export is included') &&
       dialog.includes('does not even carry your character'),
-    dialog.includes('Your achievements export is included') ? 'present' : 'the disclosure is missing'
+    dialog.includes('Your achievements export is included')
+      ? 'present'
+      : 'the disclosure is missing',
   )
 
-  const seen = await settle(() => countOf(page, ACH_META), (n) => n > 0, {
-    timeoutMs: DUMP_WAIT_MS,
-    pollMs: 200
-  })
+  const seen = await settle(
+    () => countOf(page, ACH_META),
+    (n) => n > 0,
+    {
+      timeoutMs: DUMP_WAIT_MS,
+      pollMs: 200,
+    },
+  )
   if (!check('main packaged the staged achievements export for preview', seen > 0)) {
     const empty = (await textOf(page, '[data-testid="feedback-achievements-empty"]')).replace(
       /\s+/g,
-      ' '
+      ' ',
     )
     note(`the dialog said: ${empty.slice(0, 140)}`)
     return
@@ -478,16 +521,20 @@ async function stepAttachAchievements(page: Page): Promise<void> {
   check(
     'the preview states it in the SAME vocabulary as the inventory one, naming ITS file',
     states,
-    meta.slice(0, 140)
+    meta.slice(0, 140),
   )
 
   // THE CONSENT IS PER FILE. Un-ticking the achievements box must not disturb the inventory one.
   await page.click('[data-testid="feedback-attach-achievements"] input')
-  const gone = await settle(() => countOf(page, ACH_META), (n) => n === 0, { timeoutMs: 8_000 })
+  const gone = await settle(
+    () => countOf(page, ACH_META),
+    (n) => n === 0,
+    { timeoutMs: 8_000 },
+  )
   check('un-ticking THIS box takes only its own preview away', gone === 0, `${String(gone)} left`)
   check(
     '…and the inventory export is still attached, because the two ticks are not one tick',
-    (await countOf(page, INV_META)) > 0
+    (await countOf(page, INV_META)) > 0,
   )
   await page.click('[data-testid="feedback-attach-achievements"] input')
 }
@@ -503,7 +550,7 @@ async function main(): Promise<void> {
   const { app, close } = await launchOnFixture('e2e-feedback.log', {
     inventory: 'Primitive_freeport-Inventory.txt',
     // …and the achievements export beside it (JOS-441), for the same reason and in the same root.
-    achievements: 'Primitive_freeport-Achievements.txt'
+    achievements: 'Primitive_freeport-Achievements.txt',
   })
 
   let page: Page | null = null
@@ -527,7 +574,11 @@ async function main(): Promise<void> {
 
     // A missing IPC handler shows up here first (`invoke` rejects into an unhandled rejection),
     // so a clean console is part of what "the dialog works" means.
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
 
     if (failures.length) await dumpArtifacts(page, 'feedback-FAIL')
   } finally {

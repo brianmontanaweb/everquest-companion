@@ -49,7 +49,17 @@
  * The nine weapon skills the corpus states, folded to one token each. Ordered the way the picker
  * lists them: the one-handers, the two-handers, then the two ranged skills.
  */
-export const WEAPON_TYPES = ['1HS', '1HB', '1HP', 'H2H', '2HS', '2HB', '2HP', 'ARCHERY', 'THROWING'] as const
+export const WEAPON_TYPES = [
+  '1HS',
+  '1HB',
+  '1HP',
+  'H2H',
+  '2HS',
+  '2HB',
+  '2HP',
+  'ARCHERY',
+  'THROWING',
+] as const
 
 export type WeaponType = (typeof WEAPON_TYPES)[number]
 
@@ -69,7 +79,7 @@ export type WeaponPick = WeaponType | WeaponCategory
 export const WEAPON_CATEGORY_MEMBERS: Record<WeaponCategory, readonly WeaponType[]> = {
   ONE_HAND: ['1HS', '1HB', '1HP', 'H2H'],
   TWO_HAND: ['2HS', '2HB', '2HP'],
-  RANGED: ['ARCHERY', 'THROWING']
+  RANGED: ['ARCHERY', 'THROWING'],
 }
 
 /**
@@ -95,7 +105,7 @@ export const WEAPON_PICK_LABEL: Record<WeaponPick, string> = {
   '2HB': '2H Blunt',
   '2HP': '2H Piercing',
   ARCHERY: 'Archery',
-  THROWING: 'Throwing'
+  THROWING: 'Throwing',
 }
 
 const CATEGORY_SET: ReadonlySet<string> = new Set<string>(WEAPON_CATEGORIES)
@@ -124,7 +134,7 @@ const SKILL_TYPES: ReadonlyMap<string, WeaponType> = new Map<string, WeaponType>
   // The wiki's template version suffix, not three different skills.
   ['THROWING', 'THROWING'],
   ['THROWINGV1', 'THROWING'],
-  ['THROWINGV2', 'THROWING']
+  ['THROWINGV2', 'THROWING'],
 ])
 
 /**
@@ -136,7 +146,10 @@ const SKILL_TYPES: ReadonlyMap<string, WeaponType> = new Map<string, WeaponType>
  * known key stays unknown rather than being guessed at.
  */
 export function normalizeSkillToken(skill: string): string {
-  return skill.toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim()
+  return skill
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, ' ')
+    .trim()
 }
 
 /**

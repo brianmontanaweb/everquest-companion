@@ -64,6 +64,6 @@ export function useFavorites(): UseFavorites {
   const isFavorite = useCallback((name: string) => favs.has(name.toLowerCase()), [favs])
   return useMemo(
     () => ({ favorites: favs, isFavorite, toggle: toggleFavorite }),
-    [favs, isFavorite]
+    [favs, isFavorite],
   )
 }

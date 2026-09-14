@@ -89,7 +89,7 @@ function JsonBox({ value, testId }: { value: unknown; testId: string }): JSX.Ele
         bgcolor: 'action.hover',
         color: 'text.secondary',
         whiteSpace: 'pre-wrap',
-        wordBreak: 'break-word'
+        wordBreak: 'break-word',
       }}
     >
       {JSON.stringify(value, null, 2)}
@@ -139,7 +139,7 @@ function LastSentPanel({ payload }: { payload: TelemetryPayloadView }): JSX.Elem
 /** The id + the rotate action. The cost of rotating is stated, not buried. */
 function IdentityRow({
   payload,
-  onRotate
+  onRotate,
 }: {
   payload: TelemetryPayloadView
   onRotate: () => void
@@ -155,8 +155,8 @@ function IdentityRow({
         </Button>
       </Stack>
       <Typography variant="caption" color="text.secondary">
-        A random id made on your machine, and deliberately not the one a bug report uses - the
-        two can’t be joined. Replacing it also throws away everything buffered, and looks like a
+        A random id made on your machine, and deliberately not the one a bug report uses - the two
+        can’t be joined. Replacing it also throws away everything buffered, and looks like a
         brand-new install from then on.
       </Typography>
     </Stack>
@@ -170,7 +170,7 @@ export function TelemetrySetting(): JSX.Element {
     (enabled: boolean): void => {
       void window.eq.setTelemetryEnabled(enabled).then(refresh)
     },
-    [refresh]
+    [refresh],
   )
   const rotate = useCallback((): void => {
     void window.eq.rotateAnalyticsId().then(refresh)

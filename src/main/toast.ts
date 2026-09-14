@@ -34,7 +34,7 @@ import {
   validateToastRequest,
   type ToastItemCard,
   type ToastPayload,
-  type ToastRequest
+  type ToastRequest,
 } from '../shared/toast'
 
 /**
@@ -70,12 +70,16 @@ function sendToToastOverlay(payload: ToastPayload): void {
 }
 
 /** Build the wire payload for a validated request (item card already resolved). */
-function buildPayload(req: ToastRequest, item: ToastItemCard | undefined, durationMs: number): ToastPayload {
+function buildPayload(
+  req: ToastRequest,
+  item: ToastItemCard | undefined,
+  durationMs: number,
+): ToastPayload {
   const payload: ToastPayload = {
     id: req.id,
     kind: req.kind,
     title: req.title,
-    durationMs: req.durationMs ?? durationMs
+    durationMs: req.durationMs ?? durationMs,
   }
   if (req.subtitle) payload.subtitle = req.subtitle
   if (req.focus) payload.focus = req.focus

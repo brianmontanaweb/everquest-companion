@@ -31,7 +31,7 @@ import {
   raiseTopmost,
   resetTopmostStatsForTests,
   topmostStats,
-  type TopmostWindow
+  type TopmostWindow,
 } from '../src/main/topmost'
 
 /** A BrowserWindow as far as these helpers can tell: one style bit and a call log. */
@@ -45,7 +45,7 @@ function fakeWindow(startsTopmost: boolean): TopmostWindow & { calls: string[] }
       assert.equal(flag, true, 'nothing here ever turns always-on-top OFF')
       topmost = flag
       calls.push(level)
-    }
+    },
   }
 }
 
@@ -107,7 +107,7 @@ test('THE OVERLAY SHOW PATHS ARE GUARDED, and the ring paths are not', () => {
     // is unchanged, which is the whole of what this test is about.
     'function applyOpaqueStripVisibility(',
     'export function createOverlayWindow(',
-    'export function setOverlaysHidden('
+    'export function setOverlaysHidden(',
   ]) {
     const fn = body(decl)
     assert.match(fn, /assertTopmost\(w\)/, `${decl} re-asserts through the guard`)
@@ -117,7 +117,7 @@ test('THE OVERLAY SHOW PATHS ARE GUARDED, and the ring paths are not', () => {
   for (const decl of [
     'export function createCursorRingWindow(',
     'export function setCursorRingVisible(',
-    'function raiseCursorRing('
+    'function raiseCursorRing(',
   ]) {
     const fn = body(decl)
     assert.match(fn, /raiseTopmost\(w\)/, `${decl} raises unconditionally`)

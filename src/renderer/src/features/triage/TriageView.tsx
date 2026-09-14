@@ -35,7 +35,7 @@ const TABS: { id: TriageTab; label: string }[] = [
   { id: 'reports', label: 'Reports' },
   { id: 'ops', label: 'Ops' },
   { id: 'digest', label: 'Digest' },
-  { id: 'analytics', label: 'Analytics' }
+  { id: 'analytics', label: 'Analytics' },
 ]
 
 /** Remembered like every other tab selection in this app: renderer-local, nothing persisted

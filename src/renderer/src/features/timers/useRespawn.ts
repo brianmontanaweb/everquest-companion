@@ -10,11 +10,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useModule } from '../../lib/useModule'
-import {
-  EMPTY_RESPAWN_SNAP,
-  type RespawnPrefs,
-  type RespawnSnap
-} from '@shared/respawn'
+import { EMPTY_RESPAWN_SNAP, type RespawnPrefs, type RespawnSnap } from '@shared/respawn'
 
 export function useRespawnSnap(): RespawnSnap {
   const snap = useModule<RespawnSnap>('respawn')

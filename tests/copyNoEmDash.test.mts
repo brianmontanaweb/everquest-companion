@@ -72,7 +72,7 @@ const COPY_FILES = [
   // The tray icon's tooltip and its context menu (JOS-139) — three labels a player reads, in a
   // main-process module. Added here rather than left to the header's "main at large" carve-out,
   // which is exactly what that paragraph asks a new copy-carrying main module to do.
-  'src/main/tray.ts'
+  'src/main/tray.ts',
 ] as const
 
 /** Excluded with a reason, every one of them spelled out in the header. */
@@ -115,7 +115,7 @@ function offencesIn(rel: string): string[] {
     src,
     ts.ScriptTarget.Latest,
     true,
-    rel.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+    rel.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
   )
   const found: string[] = []
   const visit = (node: ts.Node): void => {
@@ -139,7 +139,7 @@ test('user-facing copy uses normal dashes, never an em dash or an en dash', () =
   assert.deepEqual(
     offences,
     [],
-    `user-facing copy must use ' - ', never U+2014/U+2013 (AGENTS.md, UI conventions):\n${offences.join('\n')}`
+    `user-facing copy must use ' - ', never U+2014/U+2013 (AGENTS.md, UI conventions):\n${offences.join('\n')}`,
   )
 })
 
@@ -152,11 +152,11 @@ test('the scan can actually SEE a violation, and ignores one in a comment', () =
       '// a comment — with an em dash, which must be invisible to the scan',
       "const bad = 'copy — with an em dash'",
       'const jsx = <p>text – here</p>',
-      "const ok = 'copy - with a normal dash'"
+      "const ok = 'copy - with a normal dash'",
     ].join('\n'),
     ts.ScriptTarget.Latest,
     true,
-    ts.ScriptKind.TSX
+    ts.ScriptKind.TSX,
   )
   const hits: number[] = []
   const visit = (node: ts.Node): void => {
@@ -173,6 +173,9 @@ test('the named main-process copy modules all exist', () => {
   // The list above is hand-maintained, so a rename that silently drops a module from the guard
   // fails here rather than going quiet.
   for (const f of COPY_FILES) {
-    assert.doesNotThrow(() => readFileSync(join(TEST_ROOT, f), 'utf8'), `${f} is listed but missing`)
+    assert.doesNotThrow(
+      () => readFileSync(join(TEST_ROOT, f), 'utf8'),
+      `${f} is listed but missing`,
+    )
   }
 })

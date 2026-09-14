@@ -12,7 +12,12 @@
 // unlocks at that level produces, so there is no second failure path to reason about.
 
 import { useEffect, useMemo, useState } from 'react'
-import { EMPTY_UNLOCK_DATA, comboClassesOf, type ComboClasses, type LevelUnlockData } from '@shared/levelUnlocks'
+import {
+  EMPTY_UNLOCK_DATA,
+  comboClassesOf,
+  type ComboClasses,
+  type LevelUnlockData,
+} from '@shared/levelUnlocks'
 import { useComboSnap } from '../profiles/ClassComboData'
 
 let pending: Promise<LevelUnlockData> | null = null

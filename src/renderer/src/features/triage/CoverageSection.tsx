@@ -56,7 +56,7 @@ function FlipRows({ data }: { data: TriageAnalyticsData }): JSX.Element {
         display: 'grid',
         gridTemplateColumns: 'repeat(3, max-content)',
         columnGap: 3,
-        rowGap: 0.25
+        rowGap: 0.25,
       }}
     >
       {['Build', 'Turned off', 'Turned back on'].map((h) => (
@@ -84,7 +84,7 @@ function FlipRows({ data }: { data: TriageAnalyticsData }): JSX.Element {
 /** The estimate half. Renders nothing about downloads when there was no fetch to render. */
 function DarkCohort({
   data,
-  downloads
+  downloads,
 }: {
   data: TriageAnalyticsData
   downloads?: TriageDownloads
@@ -101,9 +101,7 @@ function DarkCohort({
   }
   return (
     <Stack spacing={0.5} data-testid="coverage-estimate">
-      <Box
-        sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'flex-start' }}
-      >
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'flex-start' }}>
         <Stack spacing={0}>
           <Typography variant="caption" color="text.secondary">
             Installer downloads
@@ -128,11 +126,11 @@ function DarkCohort({
         </Stack>
       </Box>
       <Typography variant="caption" color="warning.main">
-        ESTIMATE, and the gap between these two is NOT an opt-out count. Downloads are not
-        installs: the auto updater re fetches the installer on every install it updates, one
-        machine that has updated four times contributed four downloads, people re download after a
-        reinstall, and a curiosity click costs a download and produces no install. The gap is
-        shown, never subtracted.
+        ESTIMATE, and the gap between these two is NOT an opt-out count. Downloads are not installs:
+        the auto updater re fetches the installer on every install it updates, one machine that has
+        updated four times contributed four downloads, people re download after a reinstall, and a
+        curiosity click costs a download and produces no install. The gap is shown, never
+        subtracted.
       </Typography>
     </Stack>
   )
@@ -145,7 +143,7 @@ function DarkCohort({
  */
 export function CoverageSection({
   data,
-  downloads
+  downloads,
 }: {
   data: TriageAnalyticsData
   downloads?: TriageDownloads

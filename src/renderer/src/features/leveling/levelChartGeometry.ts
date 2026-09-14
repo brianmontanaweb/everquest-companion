@@ -138,7 +138,7 @@ export function paddedAxis(dataLo: number, dataHi: number, band: PlotBand, opts:
     lo: opts.floor !== undefined ? Math.max(lo, opts.floor) : lo,
     hi: mid + span / 2 + pad,
     top: band.top,
-    bottom: band.bottom
+    bottom: band.bottom,
   }
 }
 
@@ -207,7 +207,7 @@ export function levelAt(segments: readonly LevelSegment[], ts: number): LevelAt 
     kind: 'level',
     level: p.level,
     sinceTs: p.ts,
-    nextTs: pi + 1 < pts.length ? pts[pi + 1].ts : null
+    nextTs: pi + 1 < pts.length ? pts[pi + 1].ts : null,
   }
 }
 
@@ -248,7 +248,10 @@ export function stepIndexAt(points: readonly { ts: number }[], ts: number): numb
 }
 
 /** Cumulative AA gained at `ts`; null before the first gain. */
-export function cumulativeAt(points: readonly { ts: number; y: number }[], ts: number): number | null {
+export function cumulativeAt(
+  points: readonly { ts: number; y: number }[],
+  ts: number,
+): number | null {
   const i = stepIndexAt(points, ts)
   return i < 0 ? null : points[i].y
 }

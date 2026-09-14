@@ -188,23 +188,20 @@ test('Spider Legs: four recipes across two tradeskills, each grouped under its h
     { recipe: 'Gnomish Spirits', tradeskill: 'Brewing', trivial: 102 },
     { recipe: 'Halas Heater', tradeskill: 'Brewing', trivial: 135 },
     { recipe: 'Wooly Spider Crunchies', tradeskill: 'Baking', trivial: 46 },
-    { recipe: 'Candied Spider', tradeskill: 'Baking', trivial: 88 }
+    { recipe: 'Candied Spider', tradeskill: 'Baking', trivial: 88 },
   ])
 })
 
 test('Skewers: the one page with BOTH fields — crafted two ways, used in four recipes', () => {
   const k = parseItemWikitext('Skewers', SKEWERS)
   // |recipes — what consumes it
-  assert.deepEqual(
-    (k.recipes ?? []).map(recipeUseLabel),
-    [
-      'Compass (Tinkering 50)',
-      'Gnome Kabobs (Baking 56)',
-      'Lizard-on-a-Stick (Baking 56)',
-      'Rat Kabobs (Baking 26)',
-      'Smoker (Blacksmithing 50)'
-    ]
-  )
+  assert.deepEqual((k.recipes ?? []).map(recipeUseLabel), [
+    'Compass (Tinkering 50)',
+    'Gnome Kabobs (Baking 56)',
+    'Lizard-on-a-Stick (Baking 56)',
+    'Rat Kabobs (Baking 26)',
+    'Smoker (Blacksmithing 50)',
+  ])
   // |playercrafted — how it's made. Two independent recipes, each with its own container.
   assert.equal(k.playerCrafted, true)
   assert.equal(k.craftedBy?.length, 2)
@@ -220,15 +217,15 @@ test('Skewers: the one page with BOTH fields — crafted two ways, used in four 
     {
       name: 'Water Flask',
       qty: 1,
-      sources: ['Foraged', 'Crafted', 'Summoned', 'Bought', 'Quested', 'Dropped']
-    }
+      sources: ['Foraged', 'Crafted', 'Summoned', 'Bought', 'Quested', 'Dropped'],
+    },
   ])
   assert.equal(pottery.tradeskill, 'Pottery')
   assert.equal(pottery.trivial, 17)
   assert.equal(pottery.container, 'Kiln')
   assert.deepEqual(
     pottery.ingredients.map((i) => i.name),
-    ['Quality Firing Sheet', 'Unfired Skewers']
+    ['Quality Firing Sheet', 'Unfired Skewers'],
   )
   assert.equal(craftedByLabel({ ...BASE, ...k }), 'Blacksmithing 38 (Forge) · Pottery 17 (Kiln)')
 })
@@ -240,14 +237,26 @@ test('Gnome Kabobs: a craft RESULT — yield x2, oven, four ingredients, {{SmIco
   assert.equal(k.craftedBy?.length, 1)
   const c = k.craftedBy![0]
   assert.deepEqual(
-    { tradeskill: c.tradeskill, trivial: c.trivial, container: c.container, yieldItem: c.yieldItem, yieldQty: c.yieldQty },
-    { tradeskill: 'Baking', trivial: 56, container: 'Oven', yieldItem: 'Gnome Kabobs', yieldQty: 2 }
+    {
+      tradeskill: c.tradeskill,
+      trivial: c.trivial,
+      container: c.container,
+      yieldItem: c.yieldItem,
+      yieldQty: c.yieldQty,
+    },
+    {
+      tradeskill: 'Baking',
+      trivial: 56,
+      container: 'Oven',
+      yieldItem: 'Gnome Kabobs',
+      yieldQty: 2,
+    },
   )
   assert.deepEqual(c.ingredients, [
     { name: 'Gnome Meat', qty: 1, sources: ['Dropped'] },
     { name: 'Jug of Sauces', qty: 1, sources: ['Bought'] },
     { name: 'Skewers', qty: 1, sources: ['Crafted', 'Returned on Failure', 'Returned on Success'] },
-    { name: 'Spices', qty: 1, sources: ['Bought'] }
+    { name: 'Spices', qty: 1, sources: ['Bought'] },
   ])
   assert.equal(craftedByLabel({ ...BASE, ...k }), 'Baking 56 (Oven)')
 })
@@ -258,7 +267,7 @@ test('Pickled Troll: the Troll Parts sink — Baking 51, ingredients in page ord
   assert.equal(k.craftedBy![0].trivial, 51)
   assert.deepEqual(
     k.craftedBy![0].ingredients.map((i) => i.name),
-    ['Jug of Sauces', 'Troll Parts', 'Vinegar']
+    ['Jug of Sauces', 'Troll Parts', 'Vinegar'],
   )
 })
 
@@ -270,7 +279,7 @@ test('parseRecipeUses: flat list (no ** level) reads as bare recipes; prose fall
   // A piped link keeps the page, displays the label.
   const piped = parseRecipeUses('* [[Baking]]\n** [[Misty Thicket Picnic|Picnic]] (Trivial: 122)')
   assert.deepEqual(piped.recipes, [
-    { recipe: 'Picnic', page: 'Misty Thicket Picnic', tradeskill: 'Baking', trivial: 122 }
+    { recipe: 'Picnic', page: 'Misty Thicket Picnic', tradeskill: 'Baking', trivial: 122 },
   ])
   // Freeform text with no links is never structured — it becomes the prose note.
   const prose = parseRecipeUses('See the tradeskill page for combines.')
@@ -284,8 +293,8 @@ test('parseCraftRecipes: an ingredient row without a source list keeps just name
     {
       tradeskill: 'Baking',
       container: 'Oven',
-      ingredients: [{ name: 'Bear Meat', qty: 2 }]
-    }
+      ingredients: [{ name: 'Bear Meat', qty: 2 }],
+    },
   ])
 })
 
@@ -313,12 +322,18 @@ test('isTradeskillOnly: an ingredient nothing quests for is hidden; anything que
   // A quest use ALWAYS wins, whatever the recipes say — including a posky (Plane of Sky) one,
   // which is a quest use like any other, so a Sky drop can never read as tradeskill-only.
   assert.equal(
-    isTradeskillOnly({ ...meat, questUses: [{ quest: 'Corrupt Guards', source: 'quests', role: 'required' }] }),
-    false
+    isTradeskillOnly({
+      ...meat,
+      questUses: [{ quest: 'Corrupt Guards', source: 'quests', role: 'required' }],
+    }),
+    false,
   )
   assert.equal(
-    isTradeskillOnly({ ...meat, questUses: [{ quest: 'Warrior · Test of Blood', source: 'posky' }] }),
-    false
+    isTradeskillOnly({
+      ...meat,
+      questUses: [{ quest: 'Warrior · Test of Blood', source: 'posky' }],
+    }),
+    false,
   )
   // LORE is its own reason to surface an item.
   assert.equal(isTradeskillOnly({ ...meat, lore: true }), false)

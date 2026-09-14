@@ -18,13 +18,27 @@ import spellsJson from '../src/main/data/spells.json'
 import {
   classesForSpell,
   parseSpellClassString,
-  spellClassIndex
+  spellClassIndex,
 } from '../src/main/data/spellClasses'
 
 /** The 16 /who codes. SHD, never SHK — the wiki writes the class two ways, we don't. */
 const ALL: string[] = [
-  'BER', 'BRD', 'BST', 'CLR', 'DRU', 'ENC', 'MAG', 'MNK',
-  'NEC', 'PAL', 'RNG', 'ROG', 'SHD', 'SHM', 'WAR', 'WIZ'
+  'BER',
+  'BRD',
+  'BST',
+  'CLR',
+  'DRU',
+  'ENC',
+  'MAG',
+  'MNK',
+  'NEC',
+  'PAL',
+  'RNG',
+  'ROG',
+  'SHD',
+  'SHM',
+  'WAR',
+  'WIZ',
 ]
 
 const skills: Record<string, string[]> = classes.skills
@@ -60,8 +74,15 @@ test('the 9 stances are keyed by the string the CLIENT prints', () => {
   // parseCasts.ts lowercases the name captured from "You assume a/an <X> stance." — these
   // nine are the full set observed in the real log.
   assert.deepEqual(Object.keys(stances).sort(), [
-    'balanced', 'berserker', 'channeler', 'defensive', 'evasive',
-    'mage hunter', 'offensive', 'ranged', 'striker'
+    'balanced',
+    'berserker',
+    'channeler',
+    'defensive',
+    'evasive',
+    'mage hunter',
+    'offensive',
+    'ranged',
+    'striker',
   ])
 })
 
@@ -71,8 +92,15 @@ test('berserker stance is BER-EXCLUSIVE — the whole reason melee is detectable
 
 test('the 9 invocations are keyed by the CLIENT string, not the wiki prose', () => {
   assert.deepEqual(Object.keys(invocations).sort(), [
-    'arcane mastery', 'divine', 'empowering', 'inversion', 'inviolable',
-    'overchannel', 'recovery', 'spellblade', 'unyielding'
+    'arcane mastery',
+    'divine',
+    'empowering',
+    'inversion',
+    'inviolable',
+    'overchannel',
+    'recovery',
+    'spellblade',
+    'unyielding',
   ])
   // The wiki's prose row is headed "Empower" and "Over Channel" (and "Overchannel" in the
   // Magician table). The client says "empowering" and "overchannel"; those win the key.
@@ -111,7 +139,15 @@ test('the signature skill-ups resolve to exactly one class each', () => {
 
 test('skill keys are client spellings, not the wiki long forms', () => {
   // The wiki writes "1 Hand Slashing" / "Channelling" / "String"; the client abbreviates.
-  for (const client of ['1H Blunt', '1H Piercing', '1H Slashing', '2H Slashing', 'Channeling', 'Stringed Instruments', 'Percussion Instruments']) {
+  for (const client of [
+    '1H Blunt',
+    '1H Piercing',
+    '1H Slashing',
+    '2H Slashing',
+    'Channeling',
+    'Stringed Instruments',
+    'Percussion Instruments',
+  ]) {
     assert.ok(client in skills, `missing client skill name ${client}`)
   }
   for (const wiki of ['1 Hand Slashing', 'Channelling', 'String', 'Percussion', 'Pick Pocket']) {
@@ -186,7 +222,9 @@ function tally(sets: readonly (readonly string[])[]): Map<string, { total: numbe
 }
 
 const RAW = tally(
-  (spellsJson as { spells: { classes?: string }[] }).spells.map((s) => parseSpellClassString(s.classes))
+  (spellsJson as { spells: { classes?: string }[] }).spells.map((s) =>
+    parseSpellClassString(s.classes),
+  ),
 )
 const CANON = tally([...spellClassIndex().values()].map((s) => [...s]))
 
@@ -225,9 +263,18 @@ test('the per-class counts reproduce the design measurement, per spell entry', (
   // which still carries both invisibility pages exactly as the wiki wrote them. The effective
   // index below is where that ticket lands.
   const expected: Record<string, [number, number]> = {
-    BRD: [91, 90], BST: [77, 27], CLR: [206, 82], DRU: [268, 152],
-    ENC: [239, 184], MAG: [202, 161], NEC: [193, 86], PAL: [91, 17],
-    RNG: [92, 20], SHD: [91, 23], SHM: [209, 102], WIZ: [235, 193]
+    BRD: [91, 90],
+    BST: [77, 27],
+    CLR: [206, 82],
+    DRU: [268, 152],
+    ENC: [239, 184],
+    MAG: [202, 161],
+    NEC: [193, 86],
+    PAL: [91, 17],
+    RNG: [92, 20],
+    SHD: [91, 23],
+    SHM: [209, 102],
+    WIZ: [235, 193],
   }
   for (const [abbr, [total, excl]] of Object.entries(expected)) {
     assert.deepEqual([RAW.get(abbr)?.total, RAW.get(abbr)?.excl], [total, excl], `${abbr} drifted`)
@@ -305,6 +352,6 @@ test('both wiki spellings of the Shadow Knight canonicalize to SHD', () => {
   assert.deepEqual(parseSpellClassString('* Shadowknight - Level 24'), ['SHD'])
   assert.deepEqual(
     parseSpellClassString('* Shadowknight - Level 24 * Necromancer - Level 16 (Autogranted)'),
-    ['NEC', 'SHD']
+    ['NEC', 'SHD'],
   )
 })

@@ -27,7 +27,7 @@ import {
   DialogContent,
   DialogTitle,
   Stack,
-  Typography
+  Typography,
 } from '@mui/material'
 import Snackbar from '@mui/material/Snackbar'
 import MuiAlert from '@mui/material/Alert'
@@ -71,11 +71,17 @@ function importToast(res: ShareApplyResult): Toast {
       ? res.added
         ? `Added ${res.added} alert${res.added === 1 ? '' : 's'}${res.skipped ? `, skipped ${res.skipped} you already had` : ''}.`
         : 'Nothing to add - you already have every alert in that string.'
-      : res.error ?? 'Import failed.'
+      : (res.error ?? 'Import failed.'),
   }
 }
 
-function AlertsToast({ toast, onClose }: { toast: Toast | null; onClose: () => void }): JSX.Element {
+function AlertsToast({
+  toast,
+  onClose,
+}: {
+  toast: Toast | null
+  onClose: () => void
+}): JSX.Element {
   return (
     <Snackbar
       open={!!toast}
@@ -113,14 +119,14 @@ function useEditDialog(): EditDialog {
       setTarget(def)
       setOpen(true)
     },
-    close: () => setOpen(false)
+    close: () => setOpen(false),
   }
 }
 
 function ConfirmResetDialog({
   open,
   onCancel,
-  onConfirm
+  onConfirm,
 }: {
   open: boolean
   onCancel: () => void
@@ -131,8 +137,8 @@ function ConfirmResetDialog({
       <DialogTitle>Reset alerts to defaults?</DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary">
-          This replaces all alerts, including any you added or edited, with the
-          seeded built-in set (Charm break + Raid target defeated). This can&apos;t be undone.
+          This replaces all alerts, including any you added or edited, with the seeded built-in set
+          (Charm break + Raid target defeated). This can&apos;t be undone.
         </Typography>
       </DialogContent>
       <DialogActions>
@@ -164,7 +170,7 @@ function useResetConfirm(store: AlertsStore): { request: () => void; dialog: JSX
         onCancel={() => setOpen(false)}
         onConfirm={() => void confirm()}
       />
-    )
+    ),
   }
 }
 
@@ -181,7 +187,7 @@ function SoundLibraryDialogs({
   surface,
   store,
   onClose,
-  onChanged
+  onChanged,
 }: {
   surface: SoundSurface
   /**
@@ -277,7 +283,7 @@ function EditAlertDialog({
   store,
   edit,
   voiceSetup,
-  banner
+  banner,
 }: {
   store: AlertsStore
   edit: EditDialog
@@ -313,7 +319,7 @@ function EditAlertDialog({
  */
 export default function AlertsView({
   onOpenVoicePrefs,
-  onOpenOverlayPrefs
+  onOpenOverlayPrefs,
 }: {
   onOpenVoicePrefs?: () => void
   /**
@@ -377,7 +383,7 @@ export default function AlertsView({
           onTest: previewAlertNow,
           onCopyShare: (ids) => void copyShare(ids),
           onEdit: edit.openEdit,
-          onRemove: (id) => void removeAlert(id)
+          onRemove: (id) => void removeAlert(id),
         }}
       />
 
@@ -385,7 +391,10 @@ export default function AlertsView({
         store={store}
         edit={edit}
         voiceSetup={voiceSetup}
-        banner={{ on: bannerOverlayOn, ...(onOpenOverlayPrefs ? { onOpenPrefs: onOpenOverlayPrefs } : {}) }}
+        banner={{
+          on: bannerOverlayOn,
+          ...(onOpenOverlayPrefs ? { onOpenPrefs: onOpenOverlayPrefs } : {}),
+        }}
       />
 
       <SoundLibraryDialogs

@@ -32,7 +32,7 @@ import {
   reportRun,
   settle,
   settleGone,
-  settleStable
+  settleStable,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture, type FixtureLog } from './logFixture.mjs'
@@ -53,11 +53,10 @@ const REPLAY_WAIT_MS = 300_000
  *  errors.log and told apart from the run's own noise. */
 const CONSOLE_MARK = 'JOS99-PROBE'
 
-
 function textOf(page: Page, selector: string): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText ?? '',
-    selector
+    selector,
   )
 }
 
@@ -72,7 +71,10 @@ async function dismissFirstRunNotice(page: Page): Promise<void> {
   await page.waitForSelector(notice, { timeout: 30_000 }).catch(() => undefined)
   if ((await countOf(page, notice)) === 0) return
   await page.click('[data-testid="telemetry-notice-off"]')
-  check('the analytics first-run notice can be answered out of the way', await settleGone(page, notice, { timeoutMs: 8_000 }))
+  check(
+    'the analytics first-run notice can be answered out of the way',
+    await settleGone(page, notice, { timeoutMs: 8_000 }),
+  )
 }
 
 /** THE DEFAULT-OFF ASSERTION. The HUD costs a metrics poll and a 500 ms probe; a user who never
@@ -82,10 +84,20 @@ async function stepAbsentByDefault(page: Page): Promise<void> {
   // AN ABSENCE ASSERTION NEEDS A POSITIVE SIGNAL FIRST. The chip is pushed by a sampler that
   // starts on a store read, so "it is not there" only means something once the title bar has
   // stopped changing — a settled count of 0 says that, where a flat 1500ms only hoped it.
-  const chips = await settleStable(() => countOf(page, CHIP), { timeoutMs: 8_000, stable: 6, pollMs: 150 })
-  check('the performance chip is absent on a fresh install — the HUD is opt-in', chips === 0, `${String(chips)} chip(s)`)
+  const chips = await settleStable(() => countOf(page, CHIP), {
+    timeoutMs: 8_000,
+    stable: 6,
+    pollMs: 150,
+  })
+  check(
+    'the performance chip is absent on a fresh install — the HUD is opt-in',
+    chips === 0,
+    `${String(chips)} chip(s)`,
+  )
   const prefs = await page.evaluate(() =>
-    (window as unknown as { eq: { getPerfPrefs: () => Promise<{ enabled: boolean }> } }).eq.getPerfPrefs()
+    (
+      window as unknown as { eq: { getPerfPrefs: () => Promise<{ enabled: boolean }> } }
+    ).eq.getPerfPrefs(),
   )
   check('…and the stored switch says so', prefs.enabled === false, JSON.stringify(prefs))
 }
@@ -99,7 +111,7 @@ async function stepEnable(page: Page): Promise<boolean> {
 
   const before = await page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLInputElement | null)?.checked,
-    SWITCH
+    SWITCH,
   )
   check('the switch reflects the stored answer (off)', before === false, String(before))
 
@@ -111,7 +123,7 @@ async function stepEnable(page: Page): Promise<boolean> {
   }
   return check(
     'enabling it puts the live chip in the title bar, without a relaunch',
-    (await countOf(page, CHIP)) === 1
+    (await countOf(page, CHIP)) === 1,
   )
 }
 
@@ -121,7 +133,7 @@ async function stepChipReadsNumbers(page: Page): Promise<void> {
   check(
     'the chip states CPU% and memory in the app’s own vocabulary',
     /CPU\s+\d+%/.test(text) && /\d+(\.\d+)?\s*(MB|GB)/.test(text),
-    text || 'no chip text'
+    text || 'no chip text',
   )
 }
 
@@ -133,13 +145,16 @@ async function stepPopover(page: Page): Promise<void> {
 
   check(
     'the popover breaks the total down by process type, with real numbers',
-    /\bmain\b/.test(text) && /\brenderer\b/.test(text) && /\d+%/.test(text) && /\d+\s*(MB|GB)/.test(text),
-    text.slice(0, 160)
+    /\bmain\b/.test(text) &&
+      /\brenderer\b/.test(text) &&
+      /\d+%/.test(text) &&
+      /\d+\s*(MB|GB)/.test(text),
+    text.slice(0, 160),
   )
   check(
     '…states how far behind the event loop is running (the figure the colour comes from)',
     /event loop/i.test(text) && /(\d+\s*(ms|s)|not measured yet)/.test(text),
-    text.slice(0, 160)
+    text.slice(0, 160),
   )
   check('…counts the renderer’s own long tasks', /long tasks/i.test(text))
   // THE DEV-ONLY HALF, PROVEN BY ITS ABSENCE (JOS-513). This spec runs a production-shaped build
@@ -149,15 +164,18 @@ async function stepPopover(page: Page): Promise<void> {
   // here it must not exist at all, and only a real build can say that.
   check(
     '…and the dev-only render-commit rows are ABSENT from a production build of the same popover',
-    (await countOf(page, '[data-testid="perf-render"]')) === 0
+    (await countOf(page, '[data-testid="perf-render"]')) === 0,
   )
   check(
     '…and draws the last two minutes as a sparkline with a real path',
     (await page.evaluate(
       () =>
-        (document.querySelector('[data-testid="perf-sparkline"] polyline') as SVGPolylineElement | null)
-          ?.getAttribute('points')?.length ?? 0
-    )) > 0
+        (
+          document.querySelector(
+            '[data-testid="perf-sparkline"] polyline',
+          ) as SVGPolylineElement | null
+        )?.getAttribute('points')?.length ?? 0,
+    )) > 0,
   )
   await page.keyboard.press('Escape')
   await settleGone(page, POPOVER, { timeoutMs: 8_000 })
@@ -182,11 +200,13 @@ async function stepPopover(page: Page): Promise<void> {
 function stepMeterStrippedFromBuild(): void {
   const assets = join(dirname(MAIN_ENTRY), '..', 'renderer', 'assets')
   const bundles = readdirSync(assets).filter((f) => f.endsWith('.js'))
-  const carrying = bundles.filter((f) => readFileSync(join(assets, f), 'utf8').includes('perf-render'))
+  const carrying = bundles.filter((f) =>
+    readFileSync(join(assets, f), 'utf8').includes('perf-render'),
+  )
   check(
     'the dev-only render meter is not merely hidden in a build — it is not in the bytes',
     bundles.length > 0 && carrying.length === 0,
-    `${String(bundles.length)} renderer bundle(s); carrying the meter: ${carrying.join(', ') || 'none'}`
+    `${String(bundles.length)} renderer bundle(s); carrying the meter: ${carrying.join(', ') || 'none'}`,
   )
 }
 
@@ -195,7 +215,7 @@ function storedYield(page: Page): Promise<{ yieldToGame: boolean }> {
   return page.evaluate(() =>
     (
       window as unknown as { eq: { getProcessPriority: () => Promise<{ yieldToGame: boolean }> } }
-    ).eq.getProcessPriority()
+    ).eq.getProcessPriority(),
   )
 }
 
@@ -215,14 +235,21 @@ async function stepYieldToGame(page: Page): Promise<void> {
   await page.waitForSelector(YIELD_SWITCH, { timeout: 15_000 })
   const shown = await page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLInputElement | null)?.checked,
-    YIELD_SWITCH
+    YIELD_SWITCH,
   )
   check('Performance offers the game-priority switch, ON as shipped', shown === true, String(shown))
   check('…and the stored answer agrees', (await storedYield(page)).yieldToGame === true)
 
   await page.click(YIELD_SWITCH)
-  const stored = await settle(() => storedYield(page), (p) => !p.yieldToGame, { timeoutMs: 8_000 })
-  check('turning it off is stored immediately, not at the next launch', stored.yieldToGame === false)
+  const stored = await settle(
+    () => storedYield(page),
+    (p) => !p.yieldToGame,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    'turning it off is stored immediately, not at the next launch',
+    stored.yieldToGame === false,
+  )
 }
 
 /**
@@ -235,8 +262,10 @@ async function waitForReplay(page: Page): Promise<boolean> {
     page
       .evaluate(() =>
         (
-          window as unknown as { eq: { getCombatSnapshot: (o: unknown) => Promise<{ hydrating: boolean }> } }
-        ).eq.getCombatSnapshot({})
+          window as unknown as {
+            eq: { getCombatSnapshot: (o: unknown) => Promise<{ hydrating: boolean }> }
+          }
+        ).eq.getCombatSnapshot({}),
       )
       .catch(() => null)
   const snap = await settle(read, (s) => s !== null && !s.hydrating, { timeoutMs: REPLAY_WAIT_MS })
@@ -264,12 +293,14 @@ async function stepStartupPane(page: Page): Promise<void> {
   check(
     'Preferences shows the last startup as a per-phase breakdown with a total',
     /Last startup:/.test(text) && /(\d+(\.\d+)?\s*(ms|s))/.test(text),
-    text.slice(0, 140)
+    text.slice(0, 140),
   )
   check(
     '…names every phase of the boot it describes',
-    /Settings loaded/.test(text) && /Log history replayed/.test(text) && /Interface drawn/.test(text),
-    text.slice(0, 200)
+    /Settings loaded/.test(text) &&
+      /Log history replayed/.test(text) &&
+      /Interface drawn/.test(text),
+    text.slice(0, 200),
   )
 }
 
@@ -294,13 +325,10 @@ async function stepReloadIsNotAnError(page: Page, userData: string): Promise<voi
   check('the window survives a reload (the crash-recovery / dev-watch path)', true)
 
   // A warning, then an error, from the real renderer console.
-  await page.evaluate(
-    (m) => {
-      console.warn(`${m}-WARNING a component grumbled`)
-      console.error(`${m}-ERROR something actually broke`)
-    },
-    CONSOLE_MARK
-  )
+  await page.evaluate((m) => {
+    console.warn(`${m}-WARNING a component grumbled`)
+    console.error(`${m}-ERROR something actually broke`)
+  }, CONSOLE_MARK)
 
   const path = join(userData, 'errors.log')
   const readLog = (): Promise<string> => {
@@ -310,22 +338,31 @@ async function stepReloadIsNotAnError(page: Page, userData: string): Promise<voi
       return Promise.resolve('')
     }
   }
-  const log = await settle(readLog, (t) => t.includes(`${CONSOLE_MARK}-ERROR`), { timeoutMs: 20_000 })
+  const log = await settle(readLog, (t) => t.includes(`${CONSOLE_MARK}-ERROR`), {
+    timeoutMs: 20_000,
+  })
 
   check(
     'a renderer console.error still reaches errors.log — the file has not gone quiet',
     log.includes(`${CONSOLE_MARK}-ERROR`),
-    `${String(log.length)} bytes of log`
+    `${String(log.length)} bytes of log`,
   )
   check(
     '…but a console.warn does NOT: a warning is not an error and is not counted as one',
     !log.includes(`${CONSOLE_MARK}-WARNING`),
-    log.split(/\r?\n/).filter((l) => l.includes(CONSOLE_MARK)).join(' | ')
+    log
+      .split(/\r?\n/)
+      .filter((l) => l.includes(CONSOLE_MARK))
+      .join(' | '),
   )
   check(
     'and the reload costs NO error line — a re-sent rendererHydrated mark is expected, not a bug',
     !/was marked twice/.test(log),
-    log.split(/\r?\n/).filter((l) => /marked twice/.test(l)).slice(0, 2).join(' | ')
+    log
+      .split(/\r?\n/)
+      .filter((l) => /marked twice/.test(l))
+      .slice(0, 2)
+      .join(' | '),
   )
 }
 
@@ -353,7 +390,11 @@ async function closeWindows(app: ElectronApplication): Promise<void> {
  * delta means anything, because the whole claim is that one process left something behind that the
  * next one could read. It does no UI work: it boots, folds, and quits by the window path again.
  */
-async function stepSecondLaunch(log: FixtureLog, userData: string, errors: string[]): Promise<void> {
+async function stepSecondLaunch(
+  log: FixtureLog,
+  userData: string,
+  errors: string[],
+): Promise<void> {
   console.log('launch 2: same userData, same log — does the cold-read delta appear…')
   const { app, close } = await launchOnFixture(log, { userData })
   try {
@@ -370,7 +411,7 @@ async function stepSecondLaunch(log: FixtureLog, userData: string, errors: strin
     // default can produce here (the setting ships ON), so this can only have come off disk.
     check(
       'the game-priority switch survives a relaunch, off as the last launch left it',
-      (await storedYield(page)).yieldToGame === false
+      (await storedYield(page)).yieldToGame === false,
     )
     await closeWindows(app)
   } finally {
@@ -433,7 +474,11 @@ async function main(): Promise<void> {
   await removeUserData(userData)
 
   // A missing IPC handler shows up here first (`invoke` rejects into an unhandled rejection).
-  check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+  check(
+    'no renderer console errors',
+    consoleErrors.length === 0,
+    consoleErrors.slice(0, 3).join(' | '),
+  )
   if (consoleErrors.length === 0) {
     note('the chip, the popover and the startup file all came from one real boot of the app')
   }

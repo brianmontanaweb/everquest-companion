@@ -10,7 +10,7 @@ import type {
   ModuleSnapshot,
   OverlayConfig,
   OverlayDrill,
-  OverlayKind
+  OverlayKind,
 } from '../shared/types'
 import { OVERLAY_KINDS } from '../shared/types'
 import type { OverlayTextSizePrefs } from '../shared/overlayTextScale'
@@ -195,7 +195,8 @@ const overlayApi = {
   /** The membership + denominator in force everywhere. */
   getScopeSelection: (): Promise<ScopeSelection> => ipcRenderer.invoke(IPC.scopeSelectionGet),
   /** "The user moved one of these knobs." A PARTIAL — the half you do not mention does not move. */
-  setScopeSelection: (patch: Partial<ScopeSelection>): void => ipcRenderer.send(IPC.scopeSelectionSet, patch),
+  setScopeSelection: (patch: Partial<ScopeSelection>): void =>
+    ipcRenderer.send(IPC.scopeSelectionSet, patch),
   /** Subscribe to scope changes made in ANY window. Payload is the whole selection. */
   onScopeSelection: (cb: (s: ScopeSelection) => void): (() => void) => {
     const listener = (_e: unknown, s: ScopeSelection): void => cb(s)
@@ -249,7 +250,8 @@ const overlayApi = {
    * `ignore:true` lets clicks fall through to the game, `false` captures them so a
    * hovered control (the pin button) is clickable. Fire-and-forget.
    */
-  setIgnoreMouse: (ignore: boolean): void => ipcRenderer.send(IPC.overlaySetIgnoreMouse, KIND, ignore),
+  setIgnoreMouse: (ignore: boolean): void =>
+    ipcRenderer.send(IPC.overlaySetIgnoreMouse, KIND, ignore),
   /**
    * "THE CURSOR IS NO LONGER OVER YOU" (JOS-381) — the one leave signal that does not come from
    * this window.
@@ -396,7 +398,7 @@ const overlayApi = {
   fitHeight: (height: number): void => ipcRenderer.send(IPC.overlayFitHeight, KIND, height),
 
   /** Close this overlay from its own close button (interactive mode only). */
-  close: (): void => ipcRenderer.send(IPC.overlayClose, KIND)
+  close: (): void => ipcRenderer.send(IPC.overlayClose, KIND),
 }
 
 export type EqOverlayApi = typeof overlayApi

@@ -39,7 +39,7 @@ import {
   DEFAULT_COUNT_SOURCE,
   countSourcePhrase,
   countsFromInventory,
-  resolveCountSource
+  resolveCountSource,
 } from '../src/renderer/src/features/inventory/countSource'
 import { reconcile } from '../src/renderer/src/features/inventory/reconcile'
 import { readyQuests } from '../src/renderer/src/features/posky/questCompletion'
@@ -57,8 +57,8 @@ const CLAW: PoskyQuest = {
   giver: 'Gorgalosk',
   items: [
     { name: 'Sphinx Claw', count: 1, who: [], where: 'Island 4' },
-    { name: 'Ivory Sky Diamond', count: 1, who: [], where: 'Island 3' }
-  ]
+    { name: 'Ivory Sky Diamond', count: 1, who: [], where: 'Island 3' },
+  ],
 }
 const QUESTS = [CLAW]
 const CLAW_KEY = questKey(CLAW)
@@ -91,7 +91,7 @@ test('every source is offered, labelled, and says which witness it ignores', () 
     // (JOS-186) is last because it is the only one that throws evidence away rather than adding a
     // witness, and it is the only one that can make a count go down.
     ['log', 'inventory', 'both', 'rebaseline'],
-    'the dropdown offers all four'
+    'the dropdown offers all four',
   )
   // SCOPE D, as a property rather than as three frozen strings: the two labels this ticket fixed
   // described JOS-128's reset semantics ("Export, plus loot since" / "Export if any, else log"),
@@ -103,14 +103,14 @@ test('every source is offered, labelled, and says which witness it ignores', () 
   assert.doesNotMatch(
     `${inventory.label} ${inventory.phrase}`,
     /plus loot|since|then the log|else/i,
-    'reverted JOS-128 wording: `inventory` never consults the log (reconcile.ts:115,222)'
+    'reverted JOS-128 wording: `inventory` never consults the log (reconcile.ts:115,222)',
   )
   const both = COUNT_SOURCE_OPTIONS.find((o) => o.value === 'both')
   assert.ok(both)
   assert.doesNotMatch(
     `${both.label} ${both.phrase}`,
     /if any|else|fall(s)? back/i,
-    '`both` is max(log, dump) per item, never a fallback to one of them'
+    '`both` is max(log, dump) per item, never a fallback to one of them',
   )
   // The counting-from line and the dropdown cannot drift: one table feeds both surfaces.
   for (const o of COUNT_SOURCE_OPTIONS) assert.equal(countSourcePhrase(o.value), o.phrase)
@@ -135,7 +135,7 @@ function run(
   log: Record<string, number>,
   inv: Record<string, number>,
   turnIns: Record<string, number>,
-  countSource: CountSource
+  countSource: CountSource,
 ): ReturnType<typeof reconcile> {
   return reconcile({
     log,
@@ -143,7 +143,7 @@ function run(
     lootNames: { 'sphinx claw': 'Sphinx Claw' },
     countSource,
     turnIns,
-    quests: QUESTS
+    quests: QUESTS,
   })
 }
 
@@ -158,10 +158,19 @@ test('WITHOUT A DUMP, `both` reduces to `log` byte-identically — rows, order a
   const space: { log: Record<string, number>; turnIns: Record<string, number> }[] = []
   for (const c of [0, 1, 2, 5]) {
     for (const d of [0, 1, 3]) {
-      for (const [o, times] of [[0, 0], [0, 1], [4, 2], [4, 7]] as const) {
+      for (const [o, times] of [
+        [0, 0],
+        [0, 1],
+        [4, 2],
+        [4, 7],
+      ] as const) {
         space.push({
-          log: { ...(c ? { [claw]: c } : {}), ...(d ? { [diamond]: d } : {}), ...(o ? { [other]: o } : {}) },
-          turnIns: times ? { [CLAW_KEY]: times } : {}
+          log: {
+            ...(c ? { [claw]: c } : {}),
+            ...(d ? { [diamond]: d } : {}),
+            ...(o ? { [other]: o } : {}),
+          },
+          turnIns: times ? { [CLAW_KEY]: times } : {},
         })
       }
     }
@@ -170,7 +179,7 @@ test('WITHOUT A DUMP, `both` reduces to `log` byte-identically — rows, order a
     assert.deepEqual(
       run(s.log, {}, s.turnIns, 'both'),
       run(s.log, {}, s.turnIns, 'log'),
-      `log=${JSON.stringify(s.log)} turnIns=${JSON.stringify(s.turnIns)}`
+      `log=${JSON.stringify(s.log)} turnIns=${JSON.stringify(s.turnIns)}`,
     )
   }
   assert.equal(space.length, 48, 'the space actually ran')
@@ -186,14 +195,21 @@ test('…and it still reduces with the DUMP WINDOWS switched on (JOS-401/JOS-403
   const windows = {
     turnInInstants: { [CLAW_KEY]: [T0 - HOUR, T0 + HOUR] },
     rebaselineAt: T0,
-    destroyedSinceDump: { [claw]: 2 }
+    destroyedSinceDump: { [claw]: 2 },
   }
   for (const turnIns of [{}, { [CLAW_KEY]: 1 }, { [CLAW_KEY]: 2 }]) {
-    const input = { log: { [claw]: 4 }, inv: {}, lootNames: {}, turnIns, quests: QUESTS, ...windows }
+    const input = {
+      log: { [claw]: 4 },
+      inv: {},
+      lootNames: {},
+      turnIns,
+      quests: QUESTS,
+      ...windows,
+    }
     assert.deepEqual(
       reconcile({ ...input, countSource: 'both' }),
       reconcile({ ...input, countSource: 'log' }),
-      `turnIns=${JSON.stringify(turnIns)}: no dump, no discount, no difference`
+      `turnIns=${JSON.stringify(turnIns)}: no dump, no discount, no difference`,
     )
   }
 })
@@ -205,7 +221,7 @@ test('…and the reduction is the count source ALONE: one dumped item and they d
   assert.notDeepEqual(
     run(log, { 'ivory sky diamond': 1 }, {}, 'both'),
     run(log, { 'ivory sky diamond': 1 }, {}, 'log'),
-    'a single dumped item is the whole difference the default change buys'
+    'a single dumped item is the whole difference the default change buys',
   )
 })
 
@@ -237,7 +253,7 @@ function progressOf(net: Record<string, number>, turnIns = 0): QuestProgress {
     missing: items.filter((i) => i.have < i.need).map((i) => i.name),
     turnIns,
     logTurnIns: 0,
-    completed: turnIns >= 1
+    completed: turnIns >= 1,
   }
 }
 
@@ -264,12 +280,12 @@ test('THE DELETED-LOG TRACE: the Ready tab populates from a dump alone', () => {
   assert.deepEqual(
     readyQuests([progressOf(run(noLog, DUMP, {}, 'log').net)]),
     [],
-    'under `log` the tab is empty while the player holds every item — the report, exactly'
+    'under `log` the tab is empty while the player holds every item — the report, exactly',
   )
   assert.deepEqual(
     readyQuests([progressOf(run(noLog, DUMP, {}, DEFAULT_COUNT_SOURCE).net)]).map((q) => q.name),
     ['Test of Claw'],
-    'under the default the dump alone is enough to hand it in'
+    'under the default the dump alone is enough to hand it in',
   )
 })
 

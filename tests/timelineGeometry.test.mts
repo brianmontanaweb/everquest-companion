@@ -29,7 +29,7 @@ import {
   MIN_LANE_H,
   MIN_PLOT_W,
   timelineMetrics,
-  type WrapSize
+  type WrapSize,
 } from '../src/renderer/src/features/combat/timelineGeometry'
 import type { TimelineView } from '../src/shared/combat'
 
@@ -57,24 +57,24 @@ function view(lanes: number, opts: { markers?: number; pins?: number } = {}): Ti
       lane: `Lane ${String(i)}`,
       category: 'melee' as const,
       total: 100,
-      kind: 'you' as const
+      kind: 'you' as const,
     })),
     events: [],
     stanceSpans: Array.from({ length: pins }, (_, i) => ({
       group: (i === 0 ? 'stance' : 'invocation') as 'stance' | 'invocation',
       name: 'x',
       start: 0,
-      end: 100
+      end: 100,
     })),
     markers: Array.from({ length: markers }, (_, i) => ({
       t: i * 100,
       kind: 'slow' as const,
-      label: 'a mob'
+      label: 'a mob',
     })),
     downsampled: false,
     rawCount: 0,
     totalCount: 0,
-    truncated: false
+    truncated: false,
   }
 }
 
@@ -90,7 +90,7 @@ function step(
   tl: TimelineView,
   wrap: WrapSize,
   frame: WrapSize,
-  measureScroller: boolean
+  measureScroller: boolean,
 ): WrapSize {
   const m = timelineMetrics(tl, wrap)
   // Chromium's overflow:auto resolution — add the axis that overflows, then re-test the other
@@ -108,7 +108,7 @@ function settle(
   tl: TimelineView,
   frame: WrapSize,
   measureScroller: boolean,
-  limit = 40
+  limit = 40,
 ): { wrap: WrapSize; passes: number } | null {
   let wrap: WrapSize = { w: 900, h: 400 }
   for (let i = 1; i <= limit; i++) {
@@ -154,13 +154,19 @@ test('TRIPWIRE: measuring the SCROLL box has no fixed point — the reported fli
 test('measuring a NON-scrolling frame settles on the first pass, at every container size', () => {
   for (const { lanes, frame } of frames()) {
     const got = settle(view(lanes), frame, false)
-    assert.ok(got !== null, `no fixed point at ${String(lanes)} lanes in ${String(frame.w)}x${String(frame.h)}`)
+    assert.ok(
+      got !== null,
+      `no fixed point at ${String(lanes)} lanes in ${String(frame.w)}x${String(frame.h)}`,
+    )
     // One pass to adopt the frame, one to observe it unchanged: the measurement cannot depend
     // on what was drawn, so there is nothing left to converge.
-    assert.ok(got.passes <= 2, `settled in ${String(got.passes)} passes at ${String(frame.w)}x${String(frame.h)}`)
+    assert.ok(
+      got.passes <= 2,
+      `settled in ${String(got.passes)} passes at ${String(frame.w)}x${String(frame.h)}`,
+    )
     assert.deepEqual(got.wrap, {
       w: Math.max(MIN_REPORTED_W, frame.w),
-      h: Math.max(MIN_REPORTED_H, frame.h)
+      h: Math.max(MIN_REPORTED_H, frame.h),
     })
   }
 })
@@ -169,13 +175,16 @@ test('the chart never demands a VERTICAL scrollbar for its own bottom padding', 
   for (const { lanes, frame } of frames()) {
     const wrap: WrapSize = {
       w: Math.max(MIN_REPORTED_W, frame.w),
-      h: Math.max(MIN_REPORTED_H, frame.h)
+      h: Math.max(MIN_REPORTED_H, frame.h),
     }
     const m = timelineMetrics(view(lanes), wrap)
     // A chart whose lanes are above the readability floor FITS: `svgH` (which includes PAD)
     // must land inside the measured box. Only a lane-starved chart may overflow.
     if (m.laneH > MIN_LANE_H) {
-      assert.ok(m.svgH <= wrap.h, `svgH ${String(m.svgH)} > wrap.h ${String(wrap.h)} at ${String(lanes)} lanes`)
+      assert.ok(
+        m.svgH <= wrap.h,
+        `svgH ${String(m.svgH)} > wrap.h ${String(wrap.h)} at ${String(lanes)} lanes`,
+      )
     }
   }
 })
@@ -184,7 +193,7 @@ test('the chart only overflows HORIZONTALLY when the gutter + minimum plot no lo
   for (const { lanes, frame } of frames()) {
     const wrap: WrapSize = {
       w: Math.max(MIN_REPORTED_W, frame.w),
-      h: Math.max(MIN_REPORTED_H, frame.h)
+      h: Math.max(MIN_REPORTED_H, frame.h),
     }
     const m = timelineMetrics(view(lanes), wrap)
     if (m.plotW > MIN_PLOT_W) {

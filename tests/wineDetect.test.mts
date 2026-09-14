@@ -26,7 +26,7 @@ import {
   detectWine,
   graphicsEnvironmentOf,
   systemDirectory,
-  type WineProbe
+  type WineProbe,
 } from '../src/shared/wineDetect'
 
 /** A machine with nothing Wine about it: the default probe every test starts from. */
@@ -35,7 +35,7 @@ function windows(over: Partial<WineProbe> = {}): WineProbe {
     platform: 'win32',
     env: { SystemRoot: 'C:\\Windows' },
     fileExists: () => false,
-    ...over
+    ...over,
   }
 }
 
@@ -62,8 +62,8 @@ test('an ordinary Windows machine is NOT Wine — and stays that way under provo
       LANG: 'en_US.UTF-8',
       XDG_RUNTIME_DIR: '/run/user/1000',
       TERM: 'xterm-256color',
-      MSYSTEM: 'MINGW64'
-    }
+      MSYSTEM: 'MINGW64',
+    },
   })
   assert.deepEqual(detectWine(posixish), { wine: false, signals: [] })
 
@@ -76,14 +76,18 @@ test('an ordinary Windows machine is NOT Wine — and stays that way under provo
     'C:\\Windows\\system32\\winhlp32.exe',
     'C:\\Windows\\system32\\wininit.exe',
     'C:\\Windows\\system32\\winlogon.exe',
-    'C:\\Windows\\system32\\ntdll.dll'
+    'C:\\Windows\\system32\\ntdll.dll',
   ])
   assert.deepEqual(detectWine(realSystem32), { wine: false, signals: [] })
 
   // A variable that exists but is EMPTY is not a variable that is set — the `envDisablesGpu`
   // rule, applied here: an exporter that cleared it was declining, not asking.
   for (const raw of ['', '   ']) {
-    assert.equal(detectWine(windows({ env: { WINEHOMEDIR: raw } })).wine, false, JSON.stringify(raw))
+    assert.equal(
+      detectWine(windows({ env: { WINEHOMEDIR: raw } })).wine,
+      false,
+      JSON.stringify(raw),
+    )
   }
 })
 
@@ -107,11 +111,11 @@ test('the LAUNCHER-set Wine variables do not count, and that is the false-positi
     WINELOADERNOEXEC: '1',
     // Proton's marker. Real, but Steam-specific — it says nothing about a Lutris or bare-wine run,
     // and the injected variables cover Proton anyway.
-    STEAM_COMPAT_DATA_PATH: '/steam/compatdata/12345'
+    STEAM_COMPAT_DATA_PATH: '/steam/compatdata/12345',
   }
   assert.deepEqual(detectWine(windows({ env: { SystemRoot: 'C:\\Windows', ...launcherSet } })), {
     wine: false,
-    signals: []
+    signals: [],
   })
   for (const name of Object.keys(launcherSet)) {
     assert.ok(!WINE_ENV_VARS.includes(name), `${name} must not be a signal`)
@@ -124,7 +128,7 @@ test('a Wine prefix is detected by its own tools in system32 — any ONE of them
     assert.deepEqual(
       detectWine(probe),
       { wine: true, signals: [`file:${name}`] },
-      `${name} alone must be enough — a stripped prefix is still a prefix`
+      `${name} alone must be enough — a stripped prefix is still a prefix`,
     )
   }
 })
@@ -145,9 +149,9 @@ test('every signal that fired is reported, so a wrong answer is arguable rather 
         SystemRoot: 'C:\\windows',
         WINEHOMEDIR: '\\??\\unix\\home\\u',
         WINEUSERNAME: 'u',
-        WINEPREFIX: '/home/u/.wine'
-      }
-    }
+        WINEPREFIX: '/home/u/.wine',
+      },
+    },
   )
   const { wine, signals } = detectWine(probe)
   assert.equal(wine, true)
@@ -158,7 +162,7 @@ test('every signal that fired is reported, so a wrong answer is arguable rather 
     'file:wineboot.exe',
     'file:winecfg.exe',
     'env:WINEHOMEDIR',
-    'env:WINEUSERNAME'
+    'env:WINEUSERNAME',
   ])
 })
 
@@ -166,9 +170,12 @@ test('a NATIVE build is never Wine, however Wine-shaped the machine around it lo
   // Wine hosts a WINDOWS build; a Linux or macOS build of this app is not an emulated Windows
   // process and must never take a compatibility path meant for one. The gate is absolute, which
   // is why it is asserted against a probe where every other signal fires.
-  const loaded = withFiles(WINE_SYSTEM_BINARIES.map((n) => `C:\\Windows\\system32\\${n}`), {
-    env: { SystemRoot: 'C:\\Windows', WINEPREFIX: '/home/u/.wine' }
-  })
+  const loaded = withFiles(
+    WINE_SYSTEM_BINARIES.map((n) => `C:\\Windows\\system32\\${n}`),
+    {
+      env: { SystemRoot: 'C:\\Windows', WINEPREFIX: '/home/u/.wine' },
+    },
+  )
   for (const platform of ['linux', 'darwin', 'freebsd']) {
     assert.deepEqual(detectWine({ ...loaded, platform }), { wine: false, signals: [] }, platform)
   }
@@ -180,7 +187,10 @@ test('the system directory comes from the environment, and always resolves to so
   assert.equal(systemDirectory({ SystemRoot: 'C:\\Windows\\' }), 'C:\\Windows\\system32')
   assert.equal(systemDirectory({ SystemRoot: '  C:\\Windows  ' }), 'C:\\Windows\\system32')
   // SystemRoot wins over windir when both are present (they normally agree).
-  assert.equal(systemDirectory({ SystemRoot: 'C:\\Windows', windir: 'D:\\Other' }), 'C:\\Windows\\system32')
+  assert.equal(
+    systemDirectory({ SystemRoot: 'C:\\Windows', windir: 'D:\\Other' }),
+    'C:\\Windows\\system32',
+  )
   // Neither set, or set to nothing: the conventional path, so the check still HAPPENS. A skipped
   // probe would be a silent false negative.
   assert.equal(systemDirectory({}), 'C:\\Windows\\system32')
@@ -190,7 +200,7 @@ test('the system directory comes from the environment, and always resolves to so
   // …and the detector really looks THERE, not at a hardcoded C: — a prefix on another drive is
   // still a prefix.
   const relocated = withFiles(['D:\\WinNT\\system32\\wineboot.exe'], {
-    env: { SystemRoot: 'D:\\WinNT' }
+    env: { SystemRoot: 'D:\\WinNT' },
   })
   assert.equal(detectWine(relocated).wine, true)
   assert.equal(detectWine({ ...relocated, env: { SystemRoot: 'C:\\Windows' } }).wine, false)
@@ -222,7 +232,7 @@ test('a detected prefix asks for OPAQUE OVERLAYS AND KEEPS THE GPU; an ordinary 
   assert.deepEqual(wine, {
     wine: true,
     signals: ['file:wineboot.exe'],
-    auto: { safeMode: false, opaqueOverlays: true }
+    auto: { safeMode: false, opaqueOverlays: true },
   })
   assert.deepEqual(graphicsEnvironmentOf({ wine: false, signals: [] }), NO_GRAPHICS_ENVIRONMENT)
   // The renderer's pre-hydration state is the ordinary machine, so a card that has not heard back
@@ -235,7 +245,10 @@ test('the Chromium flags are gated on the PREFIX, and real Windows gets an empty
   // takes an access violation (0xC0000005) three times before Chromium gives up — running it
   // in-process is what makes the app paint.
   assert.deepEqual(WINE_CHROMIUM_FLAGS, ['disable-direct-composition', 'in-process-gpu'])
-  assert.deepEqual(chromiumFlagsFor({ wine: true, signals: ['env:WINELOADER'] }), WINE_CHROMIUM_FLAGS)
+  assert.deepEqual(
+    chromiumFlagsFor({ wine: true, signals: ['env:WINELOADER'] }),
+    WINE_CHROMIUM_FLAGS,
+  )
 
   // THE HALF THAT MATTERS TO EVERY OTHER USER. `--in-process-gpu` gives up crash containment, so
   // it may not reach a machine that has no Wine problem to solve — and the gate is the DETECTION,
@@ -243,9 +256,11 @@ test('the Chromium flags are gated on the PREFIX, and real Windows gets an empty
   assert.deepEqual(chromiumFlagsFor({ wine: false, signals: [] }), [])
   assert.deepEqual(chromiumFlagsFor(detectWine(windows())), [])
   assert.deepEqual(
-    chromiumFlagsFor(detectWine({ platform: process.platform, env: process.env, fileExists: existsSync })),
+    chromiumFlagsFor(
+      detectWine({ platform: process.platform, env: process.env, fileExists: existsSync }),
+    ),
     [],
-    'this machine is real Windows and must append nothing'
+    'this machine is real Windows and must append nothing',
   )
   // A native build is gated out one level up, so it cannot reach the list either.
   const loaded = withFiles(WINE_SYSTEM_BINARIES.map((n) => `C:\\Windows\\system32\\${n}`))
@@ -263,5 +278,9 @@ test('THIS machine, with a real filesystem, is not mistaken for Wine', () => {
     assert.equal(found.wine, false, 'a non-win32 host is gated out before anything is read')
     return
   }
-  assert.deepEqual(found, { wine: false, signals: [] }, `signals fired on a real Windows box: ${found.signals.join(', ')}`)
+  assert.deepEqual(
+    found,
+    { wine: false, signals: [] },
+    `signals fired on a real Windows box: ${found.signals.join(', ')}`,
+  )
 })

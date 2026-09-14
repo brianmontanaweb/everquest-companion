@@ -33,7 +33,7 @@ import {
   failures,
   reportRun,
   settle,
-  settleStable
+  settleStable,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture } from './logFixture.mjs'
@@ -44,8 +44,11 @@ const SEARCH_CLEAR = '[data-testid="alerts-search-clear"]'
 
 /** The ids of the alert rows, top to bottom, as the list is rendering them right now. */
 function renderedOrder(page: Page): Promise<string[]> {
-  return page.evaluate((sel) =>
-    [...document.querySelectorAll(sel)].map((el) => el.getAttribute('data-alert-id') ?? '?'), ROW)
+  return page.evaluate(
+    (sel) =>
+      [...document.querySelectorAll(sel)].map((el) => el.getAttribute('data-alert-id') ?? '?'),
+    ROW,
+  )
 }
 
 /** The ids main has stored, in stored order — which IS the order, there being no other. */
@@ -53,7 +56,7 @@ function storedOrder(page: Page): Promise<string[]> {
   return page.evaluate(() =>
     (window as unknown as { eq: { listAlerts: () => Promise<{ id: string }[]> } }).eq
       .listAlerts()
-      .then((defs) => defs.map((d) => d.id))
+      .then((defs) => defs.map((d) => d.id)),
   ) as Promise<string[]>
 }
 
@@ -61,7 +64,11 @@ function storedOrder(page: Page): Promise<string[]> {
 async function openAlerts(page: Page): Promise<string[]> {
   await page.click('[data-testid="nav-alerts"]', { timeout: 60_000 })
   await page.waitForSelector(ROW, { timeout: 30_000 })
-  return settle(() => renderedOrder(page), (ids) => ids.length > 0, { timeoutMs: 20_000 })
+  return settle(
+    () => renderedOrder(page),
+    (ids) => ids.length > 0,
+    { timeoutMs: 20_000 },
+  )
 }
 
 /** The claim every step below rests on: what is on screen is what main has stored. */
@@ -70,12 +77,12 @@ async function checkScreenMatchesStore(page: Page, tag: string): Promise<string[
   const stored = await settle(
     () => storedOrder(page),
     (ids) => ids.join('>') === shown.join('>'),
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   )
   check(
     `[${tag}] the order on screen is the order main has stored`,
     shown.join('>') === stored.join('>'),
-    `screen ${shown.join(' > ')} · store ${stored.join(' > ')}`
+    `screen ${shown.join(' > ')} · store ${stored.join(' > ')}`,
   )
   return shown
 }
@@ -107,7 +114,7 @@ async function checkSearchFindsANote(page: Page, start: string[]): Promise<void>
   check(
     'a word that appears only in one alert’s NOTE finds that alert, and narrows the list to it',
     shown.length < start.length && shown.includes('boss-defeat') && !shown.includes('charm-break'),
-    `${String(start.length)} rows before · now ${shown.join(' > ') || '(none)'}`
+    `${String(start.length)} rows before · now ${shown.join(' > ') || '(none)'}`,
   )
 }
 
@@ -122,7 +129,7 @@ async function checkFilterKeepsTheOrder(page: Page, start: string[]): Promise<vo
     !check(
       'a trigger word narrows the list to the alerts whose trigger says it',
       shown.length >= 2 && shown.length < start.length && !shown.includes('charm-break'),
-      `now ${shown.join(' > ') || '(none)'}`
+      `now ${shown.join(' > ') || '(none)'}`,
     )
   ) {
     return
@@ -130,28 +137,30 @@ async function checkFilterKeepsTheOrder(page: Page, start: string[]): Promise<vo
   check(
     'the rows that survive a search are in the order the list already had them in',
     shown.join('>') === start.filter((id) => shown.includes(id)).join('>'),
-    `list ${start.join(' > ')} · filtered ${shown.join(' > ')}`
+    `list ${start.join(' > ')} · filtered ${shown.join(' > ')}`,
   )
   // The narrowing is a VIEW, so main's own list is untouched by it.
   const stored = await storedOrder(page)
   check(
     'the search narrows what you are looking at and nothing else — main still has every alert',
     stored.join('>') === start.join('>'),
-    `store ${stored.join(' > ')} · list was ${start.join(' > ')}`
+    `store ${stored.join(' > ')} · list was ${start.join(' > ')}`,
   )
 }
 
 /** A query nothing answers empties the list and says which kind of empty it is. */
 async function checkNoMatchesSaysSo(page: Page): Promise<void> {
   const shown = await typeSearch(page, 'vorpal')
-  if (!check('a query nothing answers leaves no rows at all', shown.length === 0, shown.join(' > '))) {
+  if (
+    !check('a query nothing answers leaves no rows at all', shown.length === 0, shown.join(' > '))
+  ) {
     return
   }
   const empty = await page.textContent('[data-testid="alerts-empty"]')
   check(
     '…and the empty list says it is the SEARCH that emptied it, not that you have no alerts',
     (empty ?? '').includes('No alerts match'),
-    `the empty state reads: ${empty ?? '(absent)'}`
+    `the empty state reads: ${empty ?? '(absent)'}`,
   )
 }
 
@@ -161,12 +170,12 @@ async function checkClearRestores(page: Page, start: string[]): Promise<void> {
   const shown = await settle(
     () => renderedOrder(page),
     (ids) => ids.join('>') === start.join('>'),
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   )
   check(
     'clearing the search brings the whole list back, in the order it left',
     shown.join('>') === start.join('>'),
-    `left ${start.join(' > ')} · back ${shown.join(' > ')}`
+    `left ${start.join(' > ')} · back ${shown.join(' > ')}`,
   )
   await checkScreenMatchesStore(page, 'after clearing the search')
 }
@@ -193,7 +202,7 @@ async function main(): Promise<void> {
       check(
         'the alerts list renders the seeded alerts',
         start.length >= 3,
-        `${String(start.length)} rows: ${start.join(' > ')}`
+        `${String(start.length)} rows: ${start.join(' > ')}`,
       )
     ) {
       await checkScreenMatchesStore(page, 'at rest')
@@ -202,7 +211,11 @@ async function main(): Promise<void> {
       await checkNoMatchesSaysSo(page)
       await checkClearRestores(page, start)
     }
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     if (failures.length) await dumpArtifacts(page, 'alerts-search-FAIL')
   } finally {
     await close()

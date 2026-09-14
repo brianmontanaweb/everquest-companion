@@ -58,7 +58,7 @@ export const PERF_SEAMS = [
   'registryFlush',
   'inventoryLoad',
   'achievementsLoad',
-  'worldRebuilt'
+  'worldRebuilt',
 ] as const
 
 export type PerfSeamName = (typeof PERF_SEAMS)[number]
@@ -164,7 +164,12 @@ function ms(n: number): number {
  * Ties go to the FIRST call that reached the maximum, `foldBlockSamples`' stated choice, for its
  * reason: two runs of the same seam then describe the same call.
  */
-export function addSeamCall(tally: SeamTally, seam: PerfSeamName, took: number, at: number): SeamTally {
+export function addSeamCall(
+  tally: SeamTally,
+  seam: PerfSeamName,
+  took: number,
+  at: number,
+): SeamTally {
   const took0 = ms(took)
   const stall = took0 >= SEAM_STALL_MS ? 1 : 0
   const prior = tally[seam]
@@ -176,7 +181,7 @@ export function addSeamCall(tally: SeamTally, seam: PerfSeamName, took: number, 
           over100Calls: prior.over100Calls + stall,
           maxMs: Math.max(prior.maxMs, took0),
           totalMs: prior.totalMs + took0,
-          worstAt: took0 > prior.maxMs ? ms(at) : prior.worstAt
+          worstAt: took0 > prior.maxMs ? ms(at) : prior.worstAt,
         }
   return { ...tally, [seam]: entry }
 }
@@ -190,7 +195,7 @@ export function addGcPause(tally: GcTally, sample: GcSample): GcTally {
     maxMs: Math.max(tally.maxMs, took),
     totalMs: tally.totalMs + took,
     over100: tally.over100 + (took >= SEAM_STALL_MS ? 1 : 0),
-    worstAt: took > tally.maxMs ? ms(sample.at) : tally.worstAt
+    worstAt: took > tally.maxMs ? ms(sample.at) : tally.worstAt,
   }
 }
 

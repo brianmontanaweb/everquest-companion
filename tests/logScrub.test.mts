@@ -34,13 +34,13 @@ import {
   PET_SAY_RE,
   isThirdPartyChat,
   scrubKeep,
-  scrubLines
+  scrubLines,
 } from '../src/shared/logScrub'
 import {
   SELF_NAME as SHIM_SELF_NAME,
   scrubKeep as shimScrubKeep,
   isThirdPartyChat as shimIsThirdPartyChat,
-  PET_CLAIM_RE as SHIM_PET_CLAIM_RE
+  PET_CLAIM_RE as SHIM_PET_CLAIM_RE,
 } from './fixture-scrub.mjs'
 
 // ---------------------------------------------------------------------------------------
@@ -65,7 +65,7 @@ const DROPPED: Record<string, string[]> = {
     "[Wed Jul 29 01:20:33 2026] You say, 'hail'",
     // mob speech goes too: nothing parses it, and a named NPC is indistinguishable from a
     // player name by shape alone
-    "[Sat Aug 01 19:29:05 2026] a Teir`Dal ranger says, 'You will die!'"
+    "[Sat Aug 01 19:29:05 2026] a Teir`Dal ranger says, 'You will die!'",
   ],
   '/who output': [
     '[Tue Jul 28 14:11:26 2026] Players in EverQuest Legends:',
@@ -76,28 +76,28 @@ const DROPPED: Record<string, string[]> = {
     '[Tue Jul 28 14:11:26 2026] There are 50 players in EverQuest Legends.',
     '[Tue Jul 28 14:11:26 2026] There is 1 player in EverQuest Legends.',
     '[Tue Jul 28 14:11:26 2026] AFK [3 CLR/DRU] Ehle (Dark Elf)  ZONE: West Commonlands (commons)  ',
-    '[Tue Jul 28 14:11:26 2026] * RIP * [3 CLR/DRU] Ehle (Dark Elf)  ZONE: West Commonlands (commons)  '
+    '[Tue Jul 28 14:11:26 2026] * RIP * [3 CLR/DRU] Ehle (Dark Elf)  ZONE: West Commonlands (commons)  ',
   ],
   'player emotes': [
     '[Wed Jul 29 01:20:33 2026] Rykkerr waves at Primitive.',
     '[Wed Jul 29 01:20:33 2026] Rykkerr bows before Primitive.',
     '[Wed Jul 29 01:20:33 2026] You wave at Rykkerr.',
-    '[Wed Jul 29 01:20:33 2026] You thank at Rykkerr.'
+    '[Wed Jul 29 01:20:33 2026] You thank at Rykkerr.',
   ],
   'guild motd': [
     '[Wed Jul 29 01:20:33 2026] GUILD MOTD: raid at 8',
-    '[Wed Jul 29 01:20:33 2026] Guild message of the day: raid at 8'
+    '[Wed Jul 29 01:20:33 2026] Guild message of the day: raid at 8',
   ],
   // THE GAP THIS SUITE EXISTS TO CLOSE (2026-09-12): /emote broadcasts arbitrary player-typed
   // text with no shape a blocklist could ever enumerate. Before the allowlist backstop
   // (logLineTemplates.ts), none of these matched anything in DROP and all five survived.
   'custom /emote free text': [
-    "[Thu Sep 10 20:14:02 2026] Grimtak is definitely not a bot, ask me about crypto at t.me/whatever",
+    '[Thu Sep 10 20:14:02 2026] Grimtak is definitely not a bot, ask me about crypto at t.me/whatever',
     '[Thu Sep 10 20:14:02 2026] Rykkerr thinks the raid leader has no idea what they are doing',
     '[Thu Sep 10 20:14:02 2026] Primitive is selling accounts, message me',
     '[Thu Sep 10 20:14:02 2026] Vexxa just wants everyone to know today is a good day',
-    '[Thu Sep 10 20:14:02 2026] Dranix would like to remind everyone the raid starts at 8pm server'
-  ]
+    '[Thu Sep 10 20:14:02 2026] Dranix would like to remind everyone the raid starts at 8pm server',
+  ],
 }
 
 /** Lines the world model needs. Dropping any of these silently corrupts a golden expectation. */
@@ -108,21 +108,21 @@ const KEPT: Record<string, string[]> = {
     '[Sun Aug 02 15:30:39 2026] You try to frenzy on a deadly black widow, but miss!',
     '[Sun Aug 02 19:28:52 2026] A zol ghoul knight resisted your Condemnation of Nife!',
     '[Sun Aug 02 15:32:00 2026] You have slain Baron Telyx V`Zher!',
-    '[Sun Aug 02 17:10:51 2026] You healed Primitive for 1351 (5968) hit points by Lay on Hands VI.'
+    '[Sun Aug 02 17:10:51 2026] You healed Primitive for 1351 (5968) hit points by Lay on Hands VI.',
   ],
   'casts, buffs, stances': [
     '[Sun Aug 02 15:30:23 2026] You begin casting Swift Like the Wind I.',
     '[Sun Aug 02 15:30:25 2026] Your speed returns to normal.',
     '[Sun Aug 02 15:30:25 2026] You assume an offensive stance.',
     '[Sun Aug 02 15:30:25 2026] You activate Quick Buff.',
-    '[Sun Aug 02 15:30:25 2026] Your illusion fades.'
+    '[Sun Aug 02 15:30:25 2026] Your illusion fades.',
   ],
   'loot, zones, progress': [
     "[Sun Aug 02 15:32:05 2026] --You have looted a Ghoulbane from a zol ghoul knight's corpse.--",
     '[Mon Aug 03 01:23:01 2026] You have entered The Ruins of Old Paineel.',
     '[Sun Aug 02 15:32:05 2026] You gain party experience! (1.42%)',
     '[Sun Aug 02 15:32:05 2026] You have gained 1 ability point(s)! You now have 3 ability point(s).',
-    '[Sun Aug 02 15:32:05 2026] You have become better at 1H Slashing! (122)'
+    '[Sun Aug 02 15:32:05 2026] You have become better at 1H Slashing! (122)',
   ],
   // Group MEMBERSHIP events are structural facts, not communications (owner decision
   // 2026-08-05): the same names appear in every combat line of the same slice, and these
@@ -132,12 +132,12 @@ const KEPT: Record<string, string[]> = {
     '[Tue Jul 28 21:09:31 2026] Dranix has joined the group.',
     '[Tue Jul 28 21:09:31 2026] Dranix has left the group.',
     '[Tue Jul 28 21:09:31 2026] Dranix invites you to join a group.',
-    '[Tue Jul 28 21:09:31 2026] Dranix is now the leader of your group.'
+    '[Tue Jul 28 21:09:31 2026] Dranix is now the leader of your group.',
   ],
   // Mob emotes are not SOCIAL emotes: no proper-name subject, nobody's words.
   'mob emotes': [
     '[Sun Aug 02 15:30:39 2026] a Teir`Dal ranger yawns.',
-    '[Sun Aug 02 15:30:39 2026] an ice giant priest sighs in tranquility.'
+    '[Sun Aug 02 15:30:39 2026] an ice giant priest sighs in tranquility.',
   ],
   // The allowlist backstop (2026-09-12, logLineTemplates.ts) closes the /emote gap by defaulting
   // to DROP for anything unrecognized — which means every one of these families had to be found
@@ -147,22 +147,23 @@ const KEPT: Record<string, string[]> = {
   'third-person cast lifecycle (Rust only conjugates "Your ...", mobs need it too)': [
     "[Thu Sep 10 20:14:02 2026] Cleric of Innoruuk's Superior Healing spell is interrupted.",
     '[Thu Sep 10 20:14:02 2026] Ihasthebuffs`s Blast of Poison spell fizzles!',
-    '[Thu Sep 10 20:14:02 2026] Lord Nagafen regains concentration and continues casting.'
+    '[Thu Sep 10 20:14:02 2026] Lord Nagafen regains concentration and continues casting.',
   ],
   '"You have taken" self-damage (Rust\'s dot regex only conjugates third-person "has taken")': [
     '[Thu Sep 10 20:14:02 2026] You have taken 30 damage from Deadly Poison by a revultant rat.',
-    '[Thu Sep 10 20:14:02 2026] You hurt yourself for 3 points.'
+    '[Thu Sep 10 20:14:02 2026] You hurt yourself for 3 points.',
   ],
-  'mob/self status-effect flavor (Kind::Unknown live, but canned text, never a bystander\'s words)': [
-    '[Thu Sep 10 20:14:02 2026] Master Yael is tortured by the condemnation of Rodcet Nife.',
-    '[Thu Sep 10 20:14:02 2026] a fire giant warrior adheres to the ground.',
-    '[Thu Sep 10 20:14:02 2026] You writhe in the grip of agony.'
-  ],
+  "mob/self status-effect flavor (Kind::Unknown live, but canned text, never a bystander's words)":
+    [
+      '[Thu Sep 10 20:14:02 2026] Master Yael is tortured by the condemnation of Rodcet Nife.',
+      '[Thu Sep 10 20:14:02 2026] a fire giant warrior adheres to the ground.',
+      '[Thu Sep 10 20:14:02 2026] You writhe in the grip of agony.',
+    ],
   'system/UI rejection and status text (canned, no bystander content)': [
     "[Thu Sep 10 20:14:02 2026] You can't use that command right now...",
     '[Thu Sep 10 20:14:02 2026] Auto attack is on.',
     '[Thu Sep 10 20:14:02 2026] Your faction standing with Inhabitants of Hate could not possibly get any worse.',
-    '[Thu Sep 10 20:14:02 2026] Tryder tries to cast a spell on you, but you are protected.'
+    '[Thu Sep 10 20:14:02 2026] Tryder tries to cast a spell on you, but you are protected.',
   ],
   'per-spell cast/wear-off text from src/main/data/spells.json (isKnownSpellMessage)': [
     '[Thu Sep 10 20:14:02 2026] You drink the potion.',
@@ -171,18 +172,14 @@ const KEPT: Record<string, string[]> = {
     "[Thu Sep 10 20:14:02 2026] Rykkerr's muscles pulse with abducted strength.",
     // the scrape artifact case: "Someone 's brain begins to melt." (stray space before 's) must
     // still match the real client's "Nagafen's brain begins to melt." (no space).
-    "[Thu Sep 10 20:14:02 2026] Lord Nagafen's brain begins to melt."
-  ]
+    "[Thu Sep 10 20:14:02 2026] Lord Nagafen's brain begins to melt.",
+  ],
 }
 
 test('every enumerated third-party family is DROPPED', () => {
   for (const [family, lines] of Object.entries(DROPPED)) {
     for (const line of lines) {
-      assert.equal(
-        isThirdPartyChat(line, { selfName: SELF }),
-        true,
-        `${family} must drop: ${line}`
-      )
+      assert.equal(isThirdPartyChat(line, { selfName: SELF }), true, `${family} must drop: ${line}`)
       assert.equal(scrubKeep(line, { selfName: SELF }), false)
     }
   }
@@ -203,7 +200,7 @@ test('everything the world model reads is KEPT', () => {
 const PET_CLAIMS = [
   "[Sat Aug 01 19:29:05 2026] An ice giant priest told you, 'Attacking an ice giant Master.'",
   "[Sat Aug 01 19:32:23 2026] An ice giant priest told you, 'Attacking giant wooly spider Master.'",
-  "[Sun Jul 19 23:07:26 2026] Konartik told you, 'I am unable to wake a Rosch Mas Gnoll, Master.'"
+  "[Sun Jul 19 23:07:26 2026] Konartik told you, 'I am unable to wake a Rosch Mas Gnoll, Master.'",
 ]
 
 test('CARVE-OUT: the pet-claim tell survives — it is the ONLY binding signal for a pet', () => {
@@ -223,7 +220,7 @@ test('a real tell that merely mentions a pet is NOT the carve-out', () => {
   const notAClaim = [
     "[Sat Aug 01 19:29:05 2026] Rykkerr told you, 'Attacking your Master.' and then laughed",
     "[Sat Aug 01 19:29:05 2026] Rykkerr told you, 'nice pet'",
-    "[Sat Aug 01 19:29:05 2026] Rykkerr tells you, 'Attacking an ice giant Master.'"
+    "[Sat Aug 01 19:29:05 2026] Rykkerr tells you, 'Attacking an ice giant Master.'",
   ]
   for (const line of notAClaim) {
     assert.equal(scrubKeep(line, { selfName: SELF }), false, `must drop: ${line}`)
@@ -243,7 +240,7 @@ const PET_SAYS = [
   "[Thu Jul 30 16:29:50 2026] Kober says, 'As you wish, oh great one.'",
   "[Sun Jul 26 21:44:12 2026] Gobantik says, 'Following you, Master.'",
   "[Wed Jul 22 02:11:53 2026] An isle goblin says, 'Now holding, Master.  I will not start new attacks until ordered.'",
-  "[Fri Jul 24 18:03:09 2026] A large heart spider says, 'I beg forgiveness, Master.  That is not a legal target.'"
+  "[Fri Jul 24 18:03:09 2026] A large heart spider says, 'I beg forgiveness, Master.  That is not a legal target.'",
 ]
 
 test('CARVE-OUT: the six pet-voiced SAY sentences survive — they are an NPC pet speaking', () => {
@@ -269,7 +266,7 @@ test('the vocabulary is EXACT — mob flavor that merely says "master" is still 
     "[Wed Jul 29 11:02:14 2026] Bloody tells General1:1, 'Wu's Fist of Mastery +6 is what ya want'",
     // …and the pet sentence spoken on ANY other channel is still a person's words.
     "[Thu Jul 30 16:10:18 2026] Rykkerr tells you, 'Sorry, Master... calming down.'",
-    "[Thu Jul 30 16:10:18 2026] Rykkerr shouts, 'As you wish, oh great one.'"
+    "[Thu Jul 30 16:10:18 2026] Rykkerr shouts, 'As you wish, oh great one.'",
   ]
   for (const line of stillDropped) {
     assert.equal(scrubKeep(line, { selfName: SELF }), false, `must drop: ${line}`)
@@ -322,9 +319,11 @@ test('the leader shape is EXACT — the other lines containing "leader" are unto
   // would have taken opinions about all of them; these keep behaving exactly as they did, and
   // un-gating the carve-out did not widen it by one line.
   assert.equal(
-    scrubKeep('[Thu Aug 06 12:20:01 2026] Rykkerr is now the leader of your group.', { selfName: SELF }),
+    scrubKeep('[Thu Aug 06 12:20:01 2026] Rykkerr is now the leader of your group.', {
+      selfName: SELF,
+    }),
     true,
-    'group membership events are KEPT (owner decision 2026-08-05), and not by this carve-out'
+    'group membership events are KEPT (owner decision 2026-08-05), and not by this carve-out',
   )
   for (const line of [
     "[Wed Jul 29 11:02:14 2026] Bloody tells General1:1, 'you the leader fire it up'",
@@ -336,7 +335,7 @@ test('the leader shape is EXACT — the other lines containing "leader" are unto
     "[Thu Aug 06 12:44:20 2026] Rykkerr tells the group, 'My leader is Primitive.'",
     // …and the sentence must be the whole quote, ending where the game ends it
     "[Thu Aug 06 12:44:20 2026] Rykkerr says, 'My leader is Primitive and he is afk'",
-    "[Thu Aug 06 12:44:20 2026] Rykkerr says, 'who is My leader is Primitive.'"
+    "[Thu Aug 06 12:44:20 2026] Rykkerr says, 'who is My leader is Primitive.'",
   ]) {
     assert.equal(scrubKeep(line, { selfName: SELF }), false, `must drop: ${line}`)
   }
@@ -351,7 +350,7 @@ test('the leader carve-out consults NO name, so no name can widen or narrow it',
     assert.equal(
       scrubKeep("[Wed Jul 29 01:20:33 2026] Rykkerr says, 'hail'", { selfName }),
       false,
-      'and ordinary speech still goes'
+      'and ordinary speech still goes',
     )
   }
 })
@@ -363,10 +362,10 @@ const selfWho = (name: string): string[] => [
   `[Tue Jul 28 20:16:48 2026] [17 PAL/MNK/ENC] ${name} (Dark Elf)  ZONE: The City of Guk (guktop)  `,
   `[Tue Jul 28 14:11:26 2026] [7 CLR/BER] ${name} (Froglok)  ZONE: West Commonlands (commons)  `,
   `[Tue Jul 28 14:11:26 2026] AFK [7 CLR/BER] ${name} (Froglok)  ZONE: West Commonlands (commons)  `,
-  `[Tue Jul 28 14:11:26 2026] * RIP * [7 CLR/BER] ${name}'s corpse (Froglok)  ZONE: West Commonlands (commons)  `
+  `[Tue Jul 28 14:11:26 2026] * RIP * [7 CLR/BER] ${name}'s corpse (Froglok)  ZONE: West Commonlands (commons)  `,
 ]
 
-test('CARVE-OUT: the owner\'s own /who row survives — for the name they passed in', () => {
+test("CARVE-OUT: the owner's own /who row survives — for the name they passed in", () => {
   // The carve-out is a PARAMETER now: a fixture's self is Primitive, a user's report's self is
   // whoever they are playing. Both work, and neither leaks the other.
   for (const name of ['Primitive', 'Vexxa']) {
@@ -384,7 +383,8 @@ test('CARVE-OUT: the owner\'s own /who row survives — for the name they passed
 test('the self carve-out is a NAME, not a pattern', () => {
   // A name is inserted into a regex, so its metacharacters must be literal — otherwise
   // `Prim.tive` would claim `Primitive`'s row, and a name with a `|` could claim anyone's.
-  const row = '[Tue Jul 28 14:11:26 2026] [7 CLR/BER] Primitive (Froglok)  ZONE: West Commonlands (commons)  '
+  const row =
+    '[Tue Jul 28 14:11:26 2026] [7 CLR/BER] Primitive (Froglok)  ZONE: West Commonlands (commons)  '
   assert.equal(scrubKeep(row, { selfName: 'Prim.tive' }), false)
   assert.equal(scrubKeep(row, { selfName: 'Nobody|Primitive' }), false)
   assert.equal(scrubKeep(row, { selfName: 'Primitive' }), true)
@@ -396,23 +396,18 @@ test('the self carve-out does not extend to the owner being quoted', () => {
   // Even your own words are somebody else's conversation; only the /who ROW is exempt.
   assert.equal(
     scrubKeep("[Wed Jul 29 01:20:33 2026] You told Rykkerr, 'sure, thanks'", { selfName: SELF }),
-    false
+    false,
   )
   assert.equal(
     scrubKeep('[Wed Jul 29 01:20:33 2026] Primitive waves at Rykkerr.', { selfName: SELF }),
-    false
+    false,
   )
 })
 
 // ---- scrubLines: the counting variant the preview depends on -----------------------------
 
 test('scrubLines returns the kept lines and an honest dropped count, in ONE pass', () => {
-  const lines = [
-    ...KEPT.combat!,
-    ...DROPPED['quoted speech']!,
-    ...PET_CLAIMS,
-    ...selfWho(SELF)
-  ]
+  const lines = [...KEPT.combat!, ...DROPPED['quoted speech']!, ...PET_CLAIMS, ...selfWho(SELF)]
   const res = scrubLines(lines, { selfName: SELF })
   const expectedKept = KEPT.combat!.length + PET_CLAIMS.length + selfWho(SELF).length
   assert.equal(res.kept.length, expectedKept)
@@ -421,7 +416,7 @@ test('scrubLines returns the kept lines and an honest dropped count, in ONE pass
   // kept lines are VERBATIM and in order — a scrub DROPS, it never rewrites (the law)
   assert.deepEqual(
     res.kept,
-    lines.filter((l) => scrubKeep(l, { selfName: SELF }))
+    lines.filter((l) => scrubKeep(l, { selfName: SELF })),
   )
   for (const line of res.kept) assert.ok(lines.includes(line))
 
@@ -451,18 +446,18 @@ test('tests/fixture-scrub.mjs agrees with the shared module, line for line', () 
     ...selfWho('Vexxa'),
     // a couple of shapes with no timestamp prefix at all (an extractor's raw first line)
     'Players in EverQuest Legends:',
-    'You have entered The Ruins of Old Paineel.'
+    'You have entered The Ruins of Old Paineel.',
   ]
   for (const line of corpus) {
     assert.equal(
       shimScrubKeep(line),
       scrubKeep(line, { selfName: SHIM_SELF_NAME }),
-      `shim disagrees on: ${line}`
+      `shim disagrees on: ${line}`,
     )
     assert.equal(
       shimIsThirdPartyChat(line),
       isThirdPartyChat(line, { selfName: SHIM_SELF_NAME }),
-      `shim disagrees on: ${line}`
+      `shim disagrees on: ${line}`,
     )
   }
 })

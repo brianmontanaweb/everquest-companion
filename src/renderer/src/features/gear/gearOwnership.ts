@@ -52,7 +52,7 @@ import {
   type OwnershipEntry,
   type OwnershipPlace,
   type OwnershipRow,
-  type UncountedKeyRing
+  type UncountedKeyRing,
 } from '../../../../shared/planner/ownership'
 
 // ---- the facts ------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ const NOTHING: GearOwnership = {
   exaltations: 0,
   owned: false,
   looted: false,
-  lootedNotInDump: false
+  lootedNotInDump: false,
 }
 
 export type GearOwnershipMap = ReadonlyMap<string, GearOwnership>
@@ -101,7 +101,7 @@ const PLACE_ORDER: readonly OwnershipPlace[] = [
   'sharedBank',
   'personalDepot',
   'keyring',
-  'unknown'
+  'unknown',
 ]
 
 /** The words for a place. `unknown` is NAMED as unrecognised rather than folded into a neighbour. */
@@ -112,7 +112,7 @@ const PLACE_LABEL: Record<OwnershipPlace, string> = {
   sharedBank: 'Shared bank',
   personalDepot: 'Depot',
   keyring: 'Keyring',
-  unknown: 'Unfiled'
+  unknown: 'Unfiled',
 }
 
 export function placeLabel(place: OwnershipPlace): string {
@@ -133,12 +133,20 @@ export function ownedFacts(rows: readonly OwnershipRow[]): OwnedFact[] {
     const key = `${row.place}|${row.tier === undefined ? '' : String(row.tier)}`
     const seen = groups.get(key)
     if (seen) seen.count += row.count
-    else groups.set(key, row.tier === undefined ? { place: row.place, count: row.count } : { place: row.place, tier: row.tier, count: row.count })
+    else
+      groups.set(
+        key,
+        row.tier === undefined
+          ? { place: row.place, count: row.count }
+          : { place: row.place, tier: row.tier, count: row.count },
+      )
   }
   // Place first (the reading order above), then plus-state ascending with "stated nothing" first:
   // the row that says least is the weakest claim and belongs at the front of the sentence.
   return [...groups.values()].sort(
-    (a, b) => PLACE_ORDER.indexOf(a.place) - PLACE_ORDER.indexOf(b.place) || (a.tier ?? -1) - (b.tier ?? -1)
+    (a, b) =>
+      PLACE_ORDER.indexOf(a.place) - PLACE_ORDER.indexOf(b.place) ||
+      (a.tier ?? -1) - (b.tier ?? -1),
   )
 }
 
@@ -151,7 +159,7 @@ export function gearOwnershipOf(rows: readonly OwnershipRow[], looted: boolean):
     exaltations: rows.reduce((n, r) => n + (r.exaltation ? 1 : 0), 0),
     owned: facts.length > 0,
     looted,
-    lootedNotInDump: looted && facts.length === 0
+    lootedNotInDump: looted && facts.length === 0,
   }
 }
 
@@ -168,7 +176,7 @@ export function gearOwnershipOf(rows: readonly OwnershipRow[], looted: boolean):
  */
 export function gearOwnershipMap(
   entries: readonly OwnershipEntry[],
-  lootedNames: Iterable<string>
+  lootedNames: Iterable<string>,
 ): GearOwnershipMap {
   const index = ownershipIndexFrom(entries)
   const looted = new Set<string>()
@@ -227,18 +235,20 @@ export function ownedCellText(o: GearOwnership): string {
 export function ownedCellTitle(o: GearOwnership): string {
   const parts: string[] = []
   if (o.facts.length > 0) {
-    parts.push(`Your dump names ${o.facts.map(factText).join(', ')}. Each +N is its own copy, never a total.`)
+    parts.push(
+      `Your dump names ${o.facts.map(factText).join(', ')}. Each +N is its own copy, never a total.`,
+    )
   }
   if (o.exaltations > 0) {
     parts.push(
       o.exaltations === 1
         ? 'One (Exaltation) row names this item - that is the gem socketed into something, not a copy you can wear.'
-        : `${String(o.exaltations)} (Exaltation) rows name this item - those are gems socketed into other items, not copies you can wear.`
+        : `${String(o.exaltations)} (Exaltation) rows name this item - those are gems socketed into other items, not copies you can wear.`,
     )
   }
   if (o.lootedNotInDump) {
     parts.push(
-      'The log says you looted this and your dump names no copy: sold, traded, consumed into an exaltation - or the dump was written before you looted it. The line above says when it was written and when this app read it.'
+      'The log says you looted this and your dump names no copy: sold, traded, consumed into an exaltation - or the dump was written before you looted it. The line above says when it was written and when this app read it.',
     )
   } else if (o.looted && o.facts.length > 0) {
     parts.push('The log also saw you loot it.')

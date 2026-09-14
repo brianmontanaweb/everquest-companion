@@ -30,7 +30,7 @@ const CATALOG: MobEntry[] = [
   entry('p4', 'a mystery', undefined, ['Plane of Sky']),
   entry('p5', 'an unconsiderable thing', 'You can’t consider that.', ['Plane of Sky']),
   entry('p6', 'a froglok', '30', ['Innothule Swamp']),
-  entry('p7', 'a bandit', '9-12', ['Eastern Karana', 'Lake Rathe'])
+  entry('p7', 'a bandit', '9-12', ['Eastern Karana', 'Lake Rathe']),
 ]
 
 // =============================================================================
@@ -39,11 +39,17 @@ const CATALOG: MobEntry[] = [
 
 test('mobsInZone: exact zone match', () => {
   const rows = mobsInZone('Innothule Swamp', CATALOG)
-  assert.deepEqual(rows.map((r) => r.page), ['p6'])
+  assert.deepEqual(
+    rows.map((r) => r.page),
+    ['p6'],
+  )
 })
 
 test('mobsInZone: case and whitespace fold', () => {
-  assert.deepEqual(mobsInZone('  innothule   SWAMP  ', CATALOG).map((r) => r.page), ['p6'])
+  assert.deepEqual(
+    mobsInZone('  innothule   SWAMP  ', CATALOG).map((r) => r.page),
+    ['p6'],
+  )
 })
 
 test('mobsInZone: leading article folds on both sides', () => {
@@ -63,7 +69,7 @@ test('mobsInZone: instance tier + Solo/Group noise is stripped', () => {
     'The Plane of Sky 4 (Refined)',
     'The Plane of Sky - Solo',
     'The Plane of Sky - Solo 4 (Refined)',
-    'The Plane of Sky - Group 2'
+    'The Plane of Sky - Group 2',
   ]) {
     assert.equal(mobsInZone(raw, CATALOG).length, 5, raw)
   }
@@ -83,8 +89,14 @@ test('mobsInZone: no match returns []', () => {
 })
 
 test('mobsInZone: a multi-zone row matches any of its zones', () => {
-  assert.deepEqual(mobsInZone('Lake Rathe', CATALOG).map((r) => r.page), ['p7'])
-  assert.deepEqual(mobsInZone('Eastern Karana', CATALOG).map((r) => r.page), ['p7'])
+  assert.deepEqual(
+    mobsInZone('Lake Rathe', CATALOG).map((r) => r.page),
+    ['p7'],
+  )
+  assert.deepEqual(
+    mobsInZone('Eastern Karana', CATALOG).map((r) => r.page),
+    ['p7'],
+  )
 })
 
 // =============================================================================
@@ -101,15 +113,18 @@ const ALIAS_CATALOG: MobEntry[] = [
   entry('h1', 'a fallen erudite', '43-47', ['The Hole']), //         alias spelling only
   entry('h2', 'a rock golem', '40', ['The Ruins of Old Paineel']), // log spelling only
   entry('h3', 'a mimic', '44', ['The Hole', 'The Ruins of Old Paineel']), // BOTH — must appear once
-  entry('h4', 'a slave citizen', '30', ['Paineel']) //               a DIFFERENT, real zone
+  entry('h4', 'a slave citizen', '30', ['Paineel']), //               a DIFFERENT, real zone
 ]
 
 test('mobsInZone: a verified rename resolves — "The Ruins of Old Paineel" finds "The Hole"', () => {
-  assert.deepEqual(mobsInZone('The Ruins of Old Paineel', ALIAS_CATALOG).map((r) => r.page), [
-    'h2', // 40
-    'h1', // 43-47 → 43
-    'h3' //  44 … and the "Paineel" row is NOT here
-  ])
+  assert.deepEqual(
+    mobsInZone('The Ruins of Old Paineel', ALIAS_CATALOG).map((r) => r.page),
+    [
+      'h2', // 40
+      'h1', // 43-47 → 43
+      'h3', //  44 … and the "Paineel" row is NOT here
+    ],
+  )
 })
 
 test('mobsInZone: the alias unions with the exact match and dedupes by page', () => {
@@ -124,11 +139,14 @@ test('mobsInZone: the alias survives instance noise, and never runs backwards', 
   // The raw string the log actually prints for the instance.
   assert.deepEqual(
     mobsInZone('The Ruins of Old Paineel - Solo 4 (Refined)', ALIAS_CATALOG).map((r) => r.page),
-    ['h2', 'h1', 'h3']
+    ['h2', 'h1', 'h3'],
   )
   // "Paineel" is its OWN zone in both sources. A closest-match rule would conflate the two; an
   // exact table cannot. This is the pin that keeps fuzzy zone matching out.
-  assert.deepEqual(mobsInZone('Paineel', ALIAS_CATALOG).map((r) => r.page), ['h4'])
+  assert.deepEqual(
+    mobsInZone('Paineel', ALIAS_CATALOG).map((r) => r.page),
+    ['h4'],
+  )
 })
 
 test('mobsInZone: a zone with no alias entry still returns [] rather than guessing', () => {
@@ -145,27 +163,36 @@ test('mobsInZone: a zone with no alias entry still returns [] rather than guessi
 
 test('mobsInZone: level ascending, unknown level last, name tiebreak', () => {
   const rows = mobsInZone('Plane of Sky', CATALOG)
-  assert.deepEqual(rows.map((r) => r.name), [
-    'a presence', //            50
-    'a gust of wind', //        53
-    'A blade storm', //         59-61 → sorts on the low end, 59
-    'a mystery', //             no level at all
-    'an unconsiderable thing' //  level text with no digits — same unknown bucket, name tiebreak
-  ])
+  assert.deepEqual(
+    rows.map((r) => r.name),
+    [
+      'a presence', //            50
+      'a gust of wind', //        53
+      'A blade storm', //         59-61 → sorts on the low end, 59
+      'a mystery', //             no level at all
+      'an unconsiderable thing', //  level text with no digits — same unknown bucket, name tiebreak
+    ],
+  )
 })
 
 test('mobsInZone: name tiebreak is case-insensitive', () => {
   const tie: MobEntry[] = [
     entry('t2', 'b thing', '10', ['Nowhere']),
-    entry('t1', 'A thing', '10', ['Nowhere'])
+    entry('t1', 'A thing', '10', ['Nowhere']),
   ]
-  assert.deepEqual(mobsInZone('Nowhere', tie).map((r) => r.page), ['t1', 't2'])
+  assert.deepEqual(
+    mobsInZone('Nowhere', tie).map((r) => r.page),
+    ['t1', 't2'],
+  )
 })
 
 test('mobsInZone: does not mutate the caller’s catalog order', () => {
   const before = CATALOG.map((r) => r.page)
   mobsInZone('Plane of Sky', CATALOG)
-  assert.deepEqual(CATALOG.map((r) => r.page), before)
+  assert.deepEqual(
+    CATALOG.map((r) => r.page),
+    before,
+  )
 })
 
 // =============================================================================
@@ -185,7 +212,7 @@ test('real catalog: live-log zone strings resolve to a roster', () => {
     ['The Plane of Sky 1 (Awakened)', 60], // + tier ordinal
     ['Najena 4 (Refined)', 30], //         tier ordinal, no article
     ['East Freeport', 100],
-    ['Neriak - Commons', 80] //            separator collapse
+    ['Neriak - Commons', 80], //            separator collapse
   ]
   for (const [zone, floor] of cases) {
     assert.ok(mobsInZone(zone, REAL).length >= floor, `${zone} → ${mobsInZone(zone, REAL).length}`)
@@ -195,7 +222,11 @@ test('real catalog: live-log zone strings resolve to a roster', () => {
 test('real catalog: an instance is the same roster as its base zone', () => {
   const base = mobsInZone('The Plane of Sky', REAL).map((r) => r.page)
   for (const raw of ['The Plane of Sky 1 (Awakened)', 'The Plane of Sky - Solo 4 (Refined)']) {
-    assert.deepEqual(mobsInZone(raw, REAL).map((r) => r.page), base, raw)
+    assert.deepEqual(
+      mobsInZone(raw, REAL).map((r) => r.page),
+      base,
+      raw,
+    )
   }
 })
 
@@ -209,7 +240,7 @@ test('real catalog: the renamed zones resolve through the shared alias table', (
     ['The Ruins of Old Guk', 60], //              → Lower Guk
     ['The City of Guk', 45], //                   → Upper Guk
     ['The Permafrost Caverns', 30], //            → Permafrost
-    ['The Lair of the Splitpaw', 25] //           → Splitpaw Lair
+    ['The Lair of the Splitpaw', 25], //           → Splitpaw Lair
   ]
   for (const [zone, floor] of cases) {
     assert.ok(mobsInZone(zone, REAL).length >= floor, `${zone} → ${mobsInZone(zone, REAL).length}`)

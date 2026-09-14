@@ -47,7 +47,7 @@ import {
   note,
   reportRun,
   settle,
-  settleGone
+  settleGone,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -81,21 +81,23 @@ interface Spoken {
 /** The engine seam's own ring. `[]` when nothing has ever asked to speak. */
 function spoken(page: Page): Promise<Spoken[]> {
   return page.evaluate(
-    () => (window as unknown as { __eqSpeech?: { spoken: Spoken[] } }).__eqSpeech?.spoken ?? []
+    () => (window as unknown as { __eqSpeech?: { spoken: Spoken[] } }).__eqSpeech?.spoken ?? [],
   ) as Promise<Spoken[]>
 }
 
 /** The voice prefs as MAIN has them — the only honest read of what is actually stored. */
 function storedPrefs(page: Page): Promise<Record<string, unknown>> {
   return page.evaluate(() =>
-    (window as unknown as { eq: { getVoicePrefs: () => Promise<Record<string, unknown>> } }).eq.getVoicePrefs()
+    (
+      window as unknown as { eq: { getVoicePrefs: () => Promise<Record<string, unknown>> } }
+    ).eq.getVoicePrefs(),
   )
 }
 
 function textOf(page: Page, selector: string): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText ?? '',
-    selector
+    selector,
   )
 }
 
@@ -119,7 +121,11 @@ async function selectIn(page: Page, selector: string, value: string): Promise<vo
 async function spokeOnce(page: Page, act: () => Promise<void>): Promise<Spoken[]> {
   const before = (await spoken(page)).length
   await act()
-  return settle(() => spoken(page), (all) => all.length > before, { timeoutMs: 10_000 })
+  return settle(
+    () => spoken(page),
+    (all) => all.length > before,
+    { timeoutMs: 10_000 },
+  )
 }
 
 function selectValue(page: Page, testid: string, value: string): Promise<void> {
@@ -132,30 +138,48 @@ async function stepPanel(page: Page): Promise<boolean> {
   await page.waitForSelector('[data-testid="prefs-rail-voice"]', { timeout: 20_000 })
   await page.click('[data-testid="prefs-rail-voice"]')
   await page.waitForSelector(VOICE_PANEL, { timeout: 15_000 })
-  if (!check('Preferences has a Voice section, reachable from the rail', (await countOf(page, VOICE_PANEL)) === 1)) {
+  if (
+    !check(
+      'Preferences has a Voice section, reachable from the rail',
+      (await countOf(page, VOICE_PANEL)) === 1,
+    )
+  ) {
     return false
   }
 
   check(
     'there is NO master switch — an alert’s own output is the whole of "does this speak"',
-    (await countOf(page, ENABLE)) === 0
+    (await countOf(page, ENABLE)) === 0,
   )
   check(
     '…and the section says so, rather than leaving the user hunting for the toggle they remember',
-    (await countOf(page, '[data-testid="pref-voice-intro"]')) === 1
+    (await countOf(page, '[data-testid="pref-voice-intro"]')) === 1,
   )
 
   const stored = await storedPrefs(page)
   check(
     'main agrees: the stored voice blob carries configuration and no permission',
     !('enabled' in stored),
-    JSON.stringify(stored)
+    JSON.stringify(stored),
   )
-  check('…and the engine tier defaults to the free, zero-download one', stored.engine === 'system', String(stored.engine))
+  check(
+    '…and the engine tier defaults to the free, zero-download one',
+    stored.engine === 'system',
+    String(stored.engine),
+  )
 
   // The controls that configure the tier are all present.
-  for (const id of ['pref-voice-engine', 'pref-voice-picker', 'pref-voice-preview', 'pref-voice-rate', 'pref-voice-volume']) {
-    check(`the Voice section offers ${id.replace('pref-voice-', '')}`, (await countOf(page, `[data-testid="${id}"]`)) === 1)
+  for (const id of [
+    'pref-voice-engine',
+    'pref-voice-picker',
+    'pref-voice-preview',
+    'pref-voice-rate',
+    'pref-voice-volume',
+  ]) {
+    check(
+      `the Voice section offers ${id.replace('pref-voice-', '')}`,
+      (await countOf(page, `[data-testid="${id}"]`)) === 1,
+    )
   }
   return true
 }
@@ -164,15 +188,25 @@ async function stepPanel(page: Page): Promise<boolean> {
 async function stepPreview(page: Page): Promise<void> {
   const before = (await spoken(page)).length
   const all = await spokeOnce(page, () => page.click('[data-testid="pref-voice-preview"]'))
-  if (!check('the ▶ preview reaches the speech engine seam', all.length === before + 1, `${String(all.length - before)} utterance(s)`)) {
+  if (
+    !check(
+      'the ▶ preview reaches the speech engine seam',
+      all.length === before + 1,
+      `${String(all.length - before)} utterance(s)`,
+    )
+  ) {
     return
   }
   const last = all[all.length - 1]
-  check('…saying something, through the selected tier', last.text.length > 0 && last.engine === 'system', `${last.engine}: "${last.text}"`)
+  check(
+    '…saying something, through the selected tier',
+    last.text.length > 0 && last.engine === 'system',
+    `${last.engine}: "${last.text}"`,
+  )
   check(
     'THE E2E CHANNEL NEVER UTTERS — the seam records and returns before any engine is touched',
     last.uttered === false,
-    `uttered=${String(last.uttered)}`
+    `uttered=${String(last.uttered)}`,
   )
 }
 
@@ -188,24 +222,29 @@ async function stepKokoroInstall(page: Page): Promise<void> {
   await selectValue(page, 'pref-voice-engine', 'kokoro')
   check(
     'choosing the downloaded tier says plainly that it is not installed',
-    (await countOf(page, '[data-testid="pref-voice-not-installed"]')) === 1
+    (await countOf(page, '[data-testid="pref-voice-not-installed"]')) === 1,
   )
   // `innerText` is the RENDERED text, and MUI Buttons uppercase it — match case-insensitively
   // rather than pinning a theme decision this spec has no opinion about.
-  const label = (await textOf(page, '[data-testid="pref-voice-install"]')).replace(/\s+/g, ' ').trim()
+  const label = (await textOf(page, '[data-testid="pref-voice-install"]'))
+    .replace(/\s+/g, ' ')
+    .trim()
   check(
     '…and offers the download, stating what it costs BEFORE the user pays it',
     /^download natural voice \(~\d+ MB\)$/i.test(label),
-    label
+    label,
   )
 
   await page.click('[data-testid="pref-voice-install"]')
   await page.waitForSelector('[data-testid="pref-voice-install-error"]', { timeout: 20_000 })
-  const failure = (await textOf(page, '[data-testid="pref-voice-install-error"]')).replace(/\s+/g, ' ')
+  const failure = (await textOf(page, '[data-testid="pref-voice-install-error"]')).replace(
+    /\s+/g,
+    ' ',
+  )
   check(
     'clicking it reaches main, and main’s refusal is rendered inline with its reason',
     failure.includes('disabled in e2e'),
-    failure
+    failure,
   )
   await selectValue(page, 'pref-voice-engine', 'system')
 }
@@ -235,7 +274,7 @@ const FIRST_ROW = '[data-testid="alert-row"]:first-of-type'
 function firstRowName(page: Page): Promise<string> {
   return page.evaluate(
     (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText.trim() ?? '',
-    `${FIRST_ROW} .MuiTypography-body2`
+    `${FIRST_ROW} .MuiTypography-body2`,
   )
 }
 
@@ -245,7 +284,7 @@ async function stepRowPicker(page: Page): Promise<void> {
   check(
     'an alert row shows its sound, not a drill-down: two selects, output and sound',
     (await countOf(page, `${FIRST_ROW} [data-testid="alert-output"]`)) === 1 &&
-      (await countOf(page, `${FIRST_ROW} [data-testid="alert-sound"]`)) === 1
+      (await countOf(page, `${FIRST_ROW} [data-testid="alert-sound"]`)) === 1,
   )
 
   await selectIn(page, `${FIRST_ROW} [data-testid="alert-output"]`, 'output:speech')
@@ -255,26 +294,32 @@ async function stepRowPicker(page: Page): Promise<void> {
     .replace(/\u200b/g, '')
     .replace(/\s+/g, ' ')
     .trim()
-  check('the output select states the channel the def is actually in', shown === 'Voice (spoken)', shown)
+  check(
+    'the output select states the channel the def is actually in',
+    shown === 'Voice (spoken)',
+    shown,
+  )
   check(
     '…and the second select becomes what to SAY, not which sound to play',
     (await countOf(page, `${FIRST_ROW} [data-testid="alert-say"]`)) === 1 &&
-      (await countOf(page, `${FIRST_ROW} [data-testid="alert-sound"]`)) === 0
+      (await countOf(page, `${FIRST_ROW} [data-testid="alert-sound"]`)) === 0,
   )
 
   const stored = await page.evaluate(() =>
-    (window as unknown as { eq: { listAlerts: () => Promise<{ audio?: string }[]> } }).eq.listAlerts()
+    (
+      window as unknown as { eq: { listAlerts: () => Promise<{ audio?: string }[]> } }
+    ).eq.listAlerts(),
   )
   check(
     'the row wrote the audio channel onto the stored def (no editor was opened)',
     stored[0]?.audio === 'speech',
-    JSON.stringify(stored[0]?.audio)
+    JSON.stringify(stored[0]?.audio),
   )
 
   // Nothing is wrong with the system tier's voices, so the row wears no setup annotation.
   check(
     'a row whose voice is fine carries no chrome about voices',
-    (await countOf(page, `${FIRST_ROW} [data-testid="alert-row-voice-setup"]`)) === 0
+    (await countOf(page, `${FIRST_ROW} [data-testid="alert-row-voice-setup"]`)) === 0,
   )
 
   const name = await firstRowName(page)
@@ -284,7 +329,7 @@ async function stepRowPicker(page: Page): Promise<void> {
     !check(
       'and the row’s ▶ SPEAKS it — the same firing path, no new preview seam',
       all.length === before + 1,
-      `${String(all.length - before)} utterance(s) — 0 means it played the pack sound again`
+      `${String(all.length - before)} utterance(s) — 0 means it played the pack sound again`,
     )
   ) {
     return
@@ -293,9 +338,13 @@ async function stepRowPicker(page: Page): Promise<void> {
   check(
     '…saying the text the def resolves to, not a sound: the RESOLVED ACTION, never audible noise',
     last.text === name,
-    `spoke "${last.text}", expected "${name}"`
+    `spoke "${last.text}", expected "${name}"`,
   )
-  check('…and this channel stayed mute while proving it', last.uttered === false, `uttered=${String(last.uttered)}`)
+  check(
+    '…and this channel stayed mute while proving it',
+    last.uttered === false,
+    `uttered=${String(last.uttered)}`,
+  )
 }
 
 /**
@@ -323,9 +372,13 @@ async function stepRowSetupNote(page: Page): Promise<void> {
     await page.waitForSelector('[data-testid="alert-row"]', { timeout: 30_000 })
     // The annotation this step is about is derived from the stored voice tier, which the row
     // reads over IPC — so the settled ROW is what has to be waited for, not a fixed beat.
-    await settle(() => countOf(page, `${FIRST_ROW} [data-testid="alert-output"]`), (n) => n === 1, {
-      timeoutMs: 10_000
-    })
+    await settle(
+      () => countOf(page, `${FIRST_ROW} [data-testid="alert-output"]`),
+      (n) => n === 1,
+      {
+        timeoutMs: 10_000,
+      },
+    )
   }
 
   await gotoVoicePrefs()
@@ -333,10 +386,17 @@ async function stepRowSetupNote(page: Page): Promise<void> {
   await gotoAlerts()
   check(
     'a speaking row whose tier is not installed says so, on the row itself',
-    (await countOf(page, `${FIRST_ROW} [data-testid="alert-row-voice-setup"]`)) === 1
+    (await countOf(page, `${FIRST_ROW} [data-testid="alert-row-voice-setup"]`)) === 1,
   )
-  const note = (await textOf(page, `${FIRST_ROW} [data-testid="alert-row-voice-setup"]`)).replace(/\s+/g, ' ')
-  check('…naming what is missing, not naming a switch that no longer exists', /downloaded/i.test(note), note)
+  const note = (await textOf(page, `${FIRST_ROW} [data-testid="alert-row-voice-setup"]`)).replace(
+    /\s+/g,
+    ' ',
+  )
+  check(
+    '…naming what is missing, not naming a switch that no longer exists',
+    /downloaded/i.test(note),
+    note,
+  )
   noteLink(await countOf(page, `${FIRST_ROW} [data-testid="voice-setup-link"]`))
 
   await gotoVoicePrefs()
@@ -344,7 +404,7 @@ async function stepRowSetupNote(page: Page): Promise<void> {
   await gotoAlerts()
   check(
     '…and the annotation disappears the moment the tier can speak again',
-    (await countOf(page, `${FIRST_ROW} [data-testid="alert-row-voice-setup"]`)) === 0
+    (await countOf(page, `${FIRST_ROW} [data-testid="alert-row-voice-setup"]`)) === 0,
   )
 }
 
@@ -353,13 +413,15 @@ function noteLink(count: number): void {
   note(
     count === 1
       ? 'the annotation carries the "Set up in Preferences" link (App passes onOpenVoicePrefs)'
-      : 'the annotation renders without its link — App is not passing onOpenVoicePrefs yet'
+      : 'the annotation renders without its link — App is not passing onOpenVoicePrefs yet',
   )
 }
 
 /** The alert name the dialog is editing, read off its own title ("Edit alert — <name>"). */
 async function editingName(page: Page): Promise<string> {
-  const title = (await textOf(page, '[data-testid="alert-dialog"] .MuiDialogTitle-root')).replace(/\s+/g, ' ').trim()
+  const title = (await textOf(page, '[data-testid="alert-dialog"] .MuiDialogTitle-root'))
+    .replace(/\s+/g, ' ')
+    .trim()
   // `Edit alert - <name>` (JOS-106 took the em dash out of the copy). The FIRST ` - ` is the
   // separator, so an alert whose own name carries a hyphen still resolves.
   const dash = title.indexOf(' - ')
@@ -376,11 +438,14 @@ async function stepEditor(page: Page): Promise<string> {
   await page.click('[data-testid="alert-row"]:first-of-type [data-testid="alert-edit"]')
   await page.waitForSelector('[data-testid="alert-dialog"]', { timeout: 15_000 })
   const name = await editingName(page)
-  check('the alert editor carries a Speech block', (await countOf(page, '[data-testid="alert-speech-block"]')) === 1)
+  check(
+    'the alert editor carries a Speech block',
+    (await countOf(page, '[data-testid="alert-speech-block"]')) === 1,
+  )
   check(
     'the audio channel is a sound/speech choice, and the throttle opt-out is beside it',
     (await countOf(page, '[data-testid="alert-audio-action"]')) === 1 &&
-      (await countOf(page, '[data-testid="alert-always-play"]')) === 1
+      (await countOf(page, '[data-testid="alert-always-play"]')) === 1,
   )
 
   await selectValue(page, 'alert-audio-action', 'speech')
@@ -388,21 +453,25 @@ async function stepEditor(page: Page): Promise<string> {
   check(
     'the mode preview resolves LIVE, before anything has fired — and defaults to the alert’s name',
     !!name && preview.includes(name),
-    `${preview.slice(0, 80)} (editing “${name}”)`
+    `${preview.slice(0, 80)} (editing “${name}”)`,
   )
   // The mode picker is offered; the per-alert VOICE picker is not, and its absence is the claim
   // (JOS-362 — the voice lives in Preferences now, see voicePrefsSteps.mts).
   check(
     'the mode picker is offered, and no per-alert voice override is',
     (await countOf(page, '[data-testid="alert-speech-mode"]')) === 1 &&
-      (await countOf(page, '[data-testid="alert-speech-voice"]')) === 0
+      (await countOf(page, '[data-testid="alert-speech-voice"]')) === 0,
   )
 
   await page.click('[data-testid="alert-save"]')
   await page.waitForSelector('[data-testid="alert-dialog"]', { state: 'detached', timeout: 15_000 })
   // The save writes through main; the row that will be test-fired next has to be back on screen
   // before it can be clicked, which is a condition the list itself answers.
-  await settle(() => countOf(page, '[data-testid="alert-row"]'), (n) => n > 0, { timeoutMs: 10_000 })
+  await settle(
+    () => countOf(page, '[data-testid="alert-row"]'),
+    (n) => n > 0,
+    { timeoutMs: 10_000 },
+  )
   return name
 }
 
@@ -413,18 +482,28 @@ async function stepEditor(page: Page): Promise<string> {
 async function stepFire(page: Page, name: string): Promise<void> {
   const before = (await spoken(page)).length
   const all = await spokeOnce(page, () =>
-    page.click('[data-testid="alert-row"]:first-of-type [data-testid="alert-test"]')
+    page.click('[data-testid="alert-row"]:first-of-type [data-testid="alert-test"]'),
   )
-  if (!check('test-firing a speech alert invokes the engine seam', all.length === before + 1, `${String(all.length - before)} utterance(s)`)) {
+  if (
+    !check(
+      'test-firing a speech alert invokes the engine seam',
+      all.length === before + 1,
+      `${String(all.length - before)} utterance(s)`,
+    )
+  ) {
     return
   }
   const last = all[all.length - 1]
   check(
     '…saying exactly what `speechTextFor` resolved for that def',
     last.text === name,
-    `spoke "${last.text}", expected "${name}"`
+    `spoke "${last.text}", expected "${name}"`,
   )
-  check('…and still without uttering a sound in this channel', last.uttered === false, `uttered=${String(last.uttered)}`)
+  check(
+    '…and still without uttering a sound in this channel',
+    last.uttered === false,
+    `uttered=${String(last.uttered)}`,
+  )
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -452,7 +531,10 @@ const CAPTURE_PHRASE = 'Puma on {player}'
 /** What the alert must SAY once the line lands. The whole point of the feature. */
 const CAPTURE_EXPECTED = 'Puma on Fail'
 
-async function stepCaptureAlert(page: Page, log: { appendAt: (at: Date, ...m: readonly string[]) => number }): Promise<void> {
+async function stepCaptureAlert(
+  page: Page,
+  log: { appendAt: (at: Date, ...m: readonly string[]) => number },
+): Promise<void> {
   // Author the def exactly as the `landsOnOther` suggestion template does (suggestions.ts).
   const saved = await page.evaluate(
     async ({ id, phrase }) => {
@@ -463,18 +545,26 @@ async function stepCaptureAlert(page: Page, log: { appendAt: (at: Date, ...m: re
         enabled: true,
         trigger: {
           type: 'raw',
-          regex: "^\\[[^\\]]*\\] (?<player>[A-Za-z' `]{1,48}) growls with the spirit of the puma\\."
+          regex:
+            "^\\[[^\\]]*\\] (?<player>[A-Za-z' `]{1,48}) growls with the spirit of the puma\\.",
         },
         sound: { packId: 'alan-rickman', soundId: 'task-acknowledge-task-acknowledge-05' },
         cooldownMs: 0,
         audio: 'speech',
-        speech: { mode: 'custom', phrase }
+        speech: { mode: 'custom', phrase },
       })
       return defs.length
     },
-    { id: CAPTURE_ALERT_ID, phrase: CAPTURE_PHRASE }
+    { id: CAPTURE_ALERT_ID, phrase: CAPTURE_PHRASE },
   )
-  if (!check('a capture alert saves through the app’s own IPC', saved > 0, `${String(saved)} defs stored`)) return
+  if (
+    !check(
+      'a capture alert saves through the app’s own IPC',
+      saved > 0,
+      `${String(saved)} defs stored`,
+    )
+  )
+    return
 
   // THE PLAYER HOLDS ITS OWN COPY OF THE DEFS. `refreshAlertStore` (player.tsx) re-reads them on
   // mount and on window FOCUS — and a hidden e2e window is never focused, so a def stored straight
@@ -484,13 +574,16 @@ async function stepCaptureAlert(page: Page, log: { appendAt: (at: Date, ...m: re
   await page.click('[data-testid="nav-alerts"]', { timeout: 60_000 })
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
   await settle(
-    () => page.evaluate(
-      (id) => (window as unknown as { eq: { listAlerts: () => Promise<{ id: string }[]> } }).eq
-        .listAlerts().then((d) => d.some((a) => a.id === id)),
-      CAPTURE_ALERT_ID
-    ),
+    () =>
+      page.evaluate(
+        (id) =>
+          (window as unknown as { eq: { listAlerts: () => Promise<{ id: string }[]> } }).eq
+            .listAlerts()
+            .then((d) => d.some((a) => a.id === id)),
+        CAPTURE_ALERT_ID,
+      ),
     (present) => present,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
 
   // ── RESTORED BY JOS-500 (owner ruling 27) — THE FIRE FRAME CARRIES THE WORDS ──────────────
@@ -520,19 +613,23 @@ async function stepCaptureAlert(page: Page, log: { appendAt: (at: Date, ...m: re
   const all = await settle(
     () => spoken(page),
     (list) => list.slice(before).some((s) => s.text === CAPTURE_EXPECTED),
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   ).catch(() => null)
   const hit = all?.slice(before).find((s) => s.text === CAPTURE_EXPECTED)
   if (
     !check(
       'a capture group reaches the speech seam SUBSTITUTED, from a live-tailed log line',
       hit !== undefined,
-      hit ? `spoke "${hit.text}"` : `never spoke "${CAPTURE_EXPECTED}"`
+      hit ? `spoke "${hit.text}"` : `never spoke "${CAPTURE_EXPECTED}"`,
     )
   ) {
     return
   }
-  check('…and this channel stayed mute doing it', hit.uttered === false, `uttered=${String(hit.uttered)}`)
+  check(
+    '…and this channel stayed mute doing it',
+    hit.uttered === false,
+    `uttered=${String(hit.uttered)}`,
+  )
 }
 
 /**
@@ -545,7 +642,11 @@ async function stepCaptureHint(page: Page): Promise<void> {
   // Addressed by ID, never by list position: this def was appended to a list the earlier steps
   // also edit, so "first-of-type" would be a bet on ordering.
   const row = `[data-alert-id="${CAPTURE_ALERT_ID}"]`
-  await settle(() => countOf(page, row), (n) => n === 1, { timeoutMs: 15_000 })
+  await settle(
+    () => countOf(page, row),
+    (n) => n === 1,
+    { timeoutMs: 15_000 },
+  )
   await page.click(`${row} [data-testid="alert-edit"]`)
   await page.waitForSelector('[data-testid="alert-dialog"]', { timeout: 15_000 })
   // `innerText` is EMPTY for a node that is not laid out yet, and MUI's Dialog fades in — so the
@@ -554,13 +655,13 @@ async function stepCaptureHint(page: Page): Promise<void> {
     await settle(
       () => textOf(page, '[data-testid="alert-speech-captures"]'),
       (t) => t.trim().length > 0,
-      { timeoutMs: 10_000 }
+      { timeoutMs: 10_000 },
     ).catch(() => '')
   ).replace(/\s+/g, ' ')
   check(
     'the editor names the capture groups this alert’s pattern declares',
     hint.includes('{player}'),
-    hint.slice(0, 110) || '(no hint rendered)'
+    hint.slice(0, 110) || '(no hint rendered)',
   )
   await page.keyboard.press('Escape')
   await settleGone(page, '[data-testid="alert-dialog"]', { timeoutMs: 10_000 })
@@ -609,7 +710,11 @@ async function main(): Promise<void> {
       await stepVoiceFollowsPrefs(page)
     }
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     if (failures.length) await dumpArtifacts(page, 'voice-alerts-FAIL')
   } finally {
     await close()

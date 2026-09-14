@@ -38,7 +38,7 @@ test('only browser-backward is the Back button', () => {
     'volume-mute',
     'volume-up',
     'app-left',
-    ''
+    '',
   ]) {
     assert.equal(isBackCommand(cmd), false, cmd)
   }
@@ -57,7 +57,7 @@ function spy(id: number, handled: boolean, log: number[]): BackTarget {
     run: () => {
       log.push(id)
       return handled
-    }
+    },
   }
 }
 
@@ -69,7 +69,7 @@ test('the innermost registered affordance wins', () => {
       log.push(-1)
       return true
     }),
-    true
+    true,
   )
   // Only the top ran: the outer affordance and the app-level fallback were never asked.
   assert.deepEqual(log, [2])
@@ -83,7 +83,7 @@ test('a target that handled nothing falls through to the next, then to the fallb
       log.push(-1)
       return true
     }),
-    true
+    true,
   )
   assert.deepEqual(log, [2, 1, -1])
 })
@@ -95,7 +95,7 @@ test('with nothing on screen, the app-level fallback is the whole answer', () =>
       log.push(-1)
       return true
     }),
-    true
+    true,
   )
   assert.deepEqual(log, [-1])
 })
@@ -103,7 +103,7 @@ test('with nothing on screen, the app-level fallback is the whole answer', () =>
 test('a press with nowhere to go is a no-op that reports itself as one', () => {
   assert.equal(
     runBack([], () => false),
-    false
+    false,
   )
 })
 
@@ -114,7 +114,7 @@ test('unregistering is by id, so affordances retiring out of order retire the ri
   stack = removeTarget(stack, 1)
   assert.deepEqual(
     stack.map((t) => t.id),
-    [2]
+    [2],
   )
   runBack(stack, () => false)
   assert.deepEqual(log, [2])
@@ -129,6 +129,6 @@ test('the stack functions never mutate the array they were handed', () => {
   removeTarget(before, 1)
   assert.deepEqual(
     before.map((t) => t.id),
-    [1]
+    [1],
   )
 })

@@ -151,7 +151,7 @@ const HEADINGS: Record<Exclude<FarmGroupKind, 'zone'>, string> = {
   quest: 'Quests',
   crafted: 'Crafted',
   unstated: 'Zone unstated',
-  unknown: 'No known source'
+  unknown: 'No known source',
 }
 
 /** Non-zone groups always follow the zones, in this order. */
@@ -236,13 +236,16 @@ export function groupNeeds(needs: readonly FarmNeed[], opts: FarmGrouping): Farm
 
   const zoneGroups: FarmGroup[] = [...zones.entries()]
     .map(([title, rows]) => ({ title, kind: 'zone' as const, zone: farmZone(title), rows }))
-    .sort((a, b) => b.rows.length - a.rows.length || (a.title < b.title ? -1 : a.title > b.title ? 1 : 0))
+    .sort(
+      (a, b) =>
+        b.rows.length - a.rows.length || (a.title < b.title ? -1 : a.title > b.title ? 1 : 0),
+    )
 
   const tailGroups: FarmGroup[] = TAIL.filter((kind) => tails.has(kind)).map((kind) => ({
     title: HEADINGS[kind],
     kind,
     zone: null,
-    rows: tails.get(kind) ?? []
+    rows: tails.get(kind) ?? [],
   }))
 
   return [...zoneGroups, ...tailGroups]
@@ -268,5 +271,7 @@ export function campText(row: Pick<FarmNeed, 'sources'>): string {
   const first = row.sources[0]
   if (!first) return ''
   const extra = row.sources.length > 1 ? ` +${String(row.sources.length - 1)} more` : ''
-  return first.levelText == null ? `${first.mob}${extra}` : `${first.mob} (lvl ${first.levelText})${extra}`
+  return first.levelText == null
+    ? `${first.mob}${extra}`
+    : `${first.mob} (lvl ${first.levelText})${extra}`
 }

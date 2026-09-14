@@ -13,7 +13,7 @@ import {
   type ConditionDraft,
   conditionFieldKeyErr,
   conditionFieldValErr,
-  conditionRawErr
+  conditionRawErr,
 } from './conditionDraft'
 
 // The LogEvent kinds an 'event' trigger can select. Derived from the LogEventKind union
@@ -25,7 +25,7 @@ const APP_SIGNALS: AppSignal[] = ['bossDefeat', 'questComplete']
 
 const APP_SIGNAL_LABEL: Record<AppSignal, string> = {
   bossDefeat: 'Raid target defeated',
-  questComplete: 'Quest completed'
+  questComplete: 'Quest completed',
 }
 
 interface ConditionFieldProps {
@@ -87,12 +87,11 @@ function EventConditionFields({ draft, onChange }: ConditionFieldProps): JSX.Ele
       <Typography variant="caption" color="text.secondary">
         Leave BOTH boxes blank to fire on every {draft.kind} event. A value needs a field to match
         against, so name one: a dropped item is <code>item</code>, and <code>loot</code> also
-        carries <code>source</code>. A value in /slashes/ is a
-        case-insensitive regex. A plain <code>spell</code> name matches EVERY RANK of that spell
-        (&ldquo;Mesmerization&rdquo; hears Mesmerization III too) - write a /regex/ if you mean one
-        rank only. For <code>buffExpired</code>, use <code>target</code>=
-        <code>self</code> for your own buffs, or omit <code>target</code> to match a buff
-        wearing off you OR your pet/target.
+        carries <code>source</code>. A value in /slashes/ is a case-insensitive regex. A plain{' '}
+        <code>spell</code> name matches EVERY RANK of that spell (&ldquo;Mesmerization&rdquo; hears
+        Mesmerization III too) - write a /regex/ if you mean one rank only. For{' '}
+        <code>buffExpired</code>, use <code>target</code>=<code>self</code> for your own buffs, or
+        omit <code>target</code> to match a buff wearing off you OR your pet/target.
       </Typography>
     </>
   )
@@ -113,8 +112,8 @@ function RawConditionFields({ draft, onChange }: ConditionFieldProps): JSX.Eleme
         helperText={rawErr ?? 'Valid pattern'}
       />
       <Typography variant="caption" color="text.secondary">
-        Matches anywhere in the line. Escape regex metacharacters
-        (e.g. <code>\.</code>, <code>\(</code>) with a backslash.
+        Matches anywhere in the line. Escape regex metacharacters (e.g. <code>\.</code>,{' '}
+        <code>\(</code>) with a backslash.
       </Typography>
     </>
   )

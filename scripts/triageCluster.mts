@@ -109,7 +109,8 @@ export function parseSince(spec: string, nowMs: number): number {
     return nowMs - Number(rel[1]) * unit
   }
   const abs = Date.parse(spec)
-  if (Number.isNaN(abs)) throw new Error(`--since: expected 7d / 12h / 30m or an ISO date, got "${spec}"`)
+  if (Number.isNaN(abs))
+    throw new Error(`--since: expected 7d / 12h / 30m or an ISO date, got "${spec}"`)
   return abs
 }
 
@@ -133,23 +134,68 @@ export function crashSignature(text: string): string | null {
   if (frame) return `${source}|${frame[1]}:${frame[2]}`
   // No frame (a forwarded console error, a string payload). Fall back to the head of
   // the message so two identical failures still land together.
-  const head = rest
-    .slice(err[0].length)
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 60)
+  const head = rest.slice(err[0].length).replace(/\s+/g, ' ').trim().slice(0, 60)
   return head.length > 0 ? `${source}|${head}` : source
 }
 
 // ---- token sets --------------------------------------------------------------------
 
 const STOPWORDS = new Set([
-  'the', 'and', 'for', 'but', 'not', 'you', 'your', 'was', 'were', 'are', 'has',
-  'have', 'had', 'this', 'that', 'with', 'from', 'when', 'then', 'than', 'they',
-  'their', 'there', 'its', 'about', 'after', 'before', 'into', 'out', 'get',
-  'got', 'can', 'cant', 'cannot', 'dont', 'doesnt', 'didnt', 'wont', 'would',
-  'could', 'should', 'just', 'like', 'some', 'any', 'all', 'also', 'only',
-  'very', 'really', 'please', 'thanks', 'hey', 'app', 'application',
+  'the',
+  'and',
+  'for',
+  'but',
+  'not',
+  'you',
+  'your',
+  'was',
+  'were',
+  'are',
+  'has',
+  'have',
+  'had',
+  'this',
+  'that',
+  'with',
+  'from',
+  'when',
+  'then',
+  'than',
+  'they',
+  'their',
+  'there',
+  'its',
+  'about',
+  'after',
+  'before',
+  'into',
+  'out',
+  'get',
+  'got',
+  'can',
+  'cant',
+  'cannot',
+  'dont',
+  'doesnt',
+  'didnt',
+  'wont',
+  'would',
+  'could',
+  'should',
+  'just',
+  'like',
+  'some',
+  'any',
+  'all',
+  'also',
+  'only',
+  'very',
+  'really',
+  'please',
+  'thanks',
+  'hey',
+  'app',
+  'application',
 ])
 
 /** lowercase, strip punctuation AND digits (a version number is not a topic), drop
@@ -305,7 +351,11 @@ export interface DigestOptions {
   channel: string
 }
 
-function digestHeader(reports: readonly TriageReport[], clusters: readonly Cluster[], o: DigestOptions): string[] {
+function digestHeader(
+  reports: readonly TriageReport[],
+  clusters: readonly Cluster[],
+  o: DigestOptions,
+): string[] {
   const bugs = reports.filter((r) => r.type === 'bug').length
   const spam = reports.filter((r) => r.status === 'spam').length
   const days = Math.max(1, Math.round((o.nowMs - o.sinceMs) / 86_400_000))

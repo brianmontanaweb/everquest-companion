@@ -32,7 +32,12 @@ import { MultiAttackStats, RiposteStats, StatItem } from './meterBits'
 // `other` (JOS-430) is a combatant the log named that your roster has not: the same green as a
 // group-mate, muted, so the list reads as one family of friendlies with the confirmed ones brighter.
 export const KIND_COLOR: Record<string, string> = {
-  you: '#d9b25f', pet: '#6fb3d2', allyPet: '#5b7f95', member: '#7fbf8f', other: '#5f8f74', enemy: '#cf6679'
+  you: '#d9b25f',
+  pet: '#6fb3d2',
+  allyPet: '#5b7f95',
+  member: '#7fbf8f',
+  other: '#5f8f74',
+  enemy: '#cf6679',
 }
 
 /**
@@ -49,12 +54,11 @@ export const CAT_COLOR: Record<DamageCategory, string> = {
   slay: '#f6f0da',
   spell: '#a98fe0',
   dot: '#6fb3d2',
-  ds: '#cf6679'
+  ds: '#cf6679',
 }
 
 /** Red-tint for resist/miss rate badges (matches the timeline's hollow marks). */
 export const RESIST_COLOR = '#e05663'
-
 
 export function Bar({
   color,
@@ -65,7 +69,7 @@ export function Bar({
   adorn,
   onClick,
   accent,
-  selected
+  selected,
 }: {
   color: string
   pct: number
@@ -92,11 +96,21 @@ export function Bar({
         overflow: 'hidden',
         cursor: onClick ? 'pointer' : 'default',
         bgcolor: 'rgba(255,255,255,0.04)',
-        outline: selected ? `1px solid ${color}` : 'none'
+        outline: selected ? `1px solid ${color}` : 'none',
       }}
     >
-      <Box sx={{ position: 'absolute', inset: 0, width: `${Math.max(2, pct)}%`, bgcolor: color, opacity: 0.5 }} />
-      {accent && <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, bgcolor: accent }} />}
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: `${Math.max(2, pct)}%`,
+          bgcolor: color,
+          opacity: 0.5,
+        }}
+      />
+      {accent && (
+        <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, bgcolor: accent }} />
+      )}
       <Stack
         direction="row"
         alignItems="center"
@@ -104,7 +118,10 @@ export function Bar({
         spacing={0.75}
       >
         {rank != null && (
-          <Typography variant="caption" sx={{ color: 'text.secondary', width: 16, textAlign: 'right' }}>
+          <Typography
+            variant="caption"
+            sx={{ color: 'text.secondary', width: 16, textAlign: 'right' }}
+          >
             {rank}
           </Typography>
         )}
@@ -131,7 +148,7 @@ export function Bar({
 export function SkillName({
   name,
   category,
-  plain
+  plain,
 }: {
   name: string
   category: DamageCategory
@@ -141,7 +158,11 @@ export function SkillName({
   return (
     <>
       {name}
-      <Typography component="span" variant="caption" sx={{ ml: 0.5, color: CAT_COLOR.slay, fontWeight: 600 }}>
+      <Typography
+        component="span"
+        variant="caption"
+        sx={{ ml: 0.5, color: CAT_COLOR.slay, fontWeight: 600 }}
+      >
         · Slay Undead
       </Typography>
     </>
@@ -173,7 +194,6 @@ export function skillStatText(s: FlatSkill, a = ''): string {
   return parts.join(' · ')
 }
 
-
 /**
  * The three figures that only exist once a lane has LANDED A HIT: the average, the crit rate and
  * the damage range. Split out of `SkillReadout` so the readout does not have to repeat the same
@@ -186,8 +206,14 @@ function DamageStats({ s, a }: { s: FlatSkill; a: string }): React.JSX.Element |
   return (
     <>
       <StatItem label="Avg per hit" value={`${a}${fmt(Math.round(s.total / s.hits))}`} />
-      <StatItem label="Crits" value={`${a}${s.crits} (${Math.round((s.crits / s.hits) * 100)}% crit)`} />
-      <StatItem label="Damage range" value={min > 0 && min !== s.max ? `${fmt(min)} - ${fmt(s.max)}` : fmt(s.max)} />
+      <StatItem
+        label="Crits"
+        value={`${a}${s.crits} (${Math.round((s.crits / s.hits) * 100)}% crit)`}
+      />
+      <StatItem
+        label="Damage range"
+        value={min > 0 && min !== s.max ? `${fmt(min)} - ${fmt(s.max)}` : fmt(s.max)}
+      />
     </>
   )
 }
@@ -207,7 +233,7 @@ function SkillReadout({
   s,
   multi,
   approx,
-  after
+  after,
 }: {
   s: SkillRow
   /** this ability's own multi-attack reading (double/triple/quad/flurry), or null when it has none. */
@@ -231,7 +257,7 @@ function SkillReadout({
         py: 0.75,
         borderLeft: `3px solid ${color}`,
         borderRadius: '0 4px 4px 0',
-        bgcolor: 'rgba(255,255,255,0.03)'
+        bgcolor: 'rgba(255,255,255,0.03)',
       }}
     >
       <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
@@ -285,7 +311,7 @@ function SkillChildren({ s, approx }: { s: SkillRow; approx?: boolean }): React.
           letterSpacing: '0.06em',
           textTransform: 'uppercase',
           color: 'text.disabled',
-          mb: 0.5
+          mb: 0.5,
         }}
       >
         {groupLabels(s).heading}
@@ -301,7 +327,11 @@ function SkillChildren({ s, approx }: { s: SkillRow; approx?: boolean }): React.
  *  name-first, but sits on the translucent (0.5-opacity) fill, not beyond it. */
 function InlineStats({ children }: { children: ReactNode }): React.JSX.Element {
   return (
-    <Typography component="span" variant="caption" sx={{ ml: 0.75, color: 'text.secondary', fontWeight: 400 }}>
+    <Typography
+      component="span"
+      variant="caption"
+      sx={{ ml: 0.75, color: 'text.secondary', fontWeight: 400 }}
+    >
       {children}
     </Typography>
   )
@@ -337,7 +367,12 @@ function ProcTag({ proc }: { proc: ProcAnnotation }): React.JSX.Element {
  * card, where a bar a third of the width cannot carry two numbers and a name.
  * Its own function so `SkillBar` stays inside the complexity budget.
  */
-function skillRight(s: SkillRow, a: string, activeSec: number | undefined, compact?: boolean): string {
+function skillRight(
+  s: SkillRow,
+  a: string,
+  activeSec: number | undefined,
+  compact?: boolean,
+): string {
   if (activeSec === undefined || compact) return `${a}${fmt(s.total)}`
   return `${a}${formatRate(laneDps(s.total, activeSec))} · ${a}${fmt(s.total)}`
 }
@@ -348,7 +383,12 @@ function skillRight(s: SkillRow, a: string, activeSec: number | undefined, compa
  * basis and, where there is none, the reason the resist rate is being withheld. Nothing at all in
  * the glance card, where there is no room for it.
  */
-function skillInline(s: SkillRow, a: string, land: ReturnType<typeof landEvidence>, compact?: boolean): ReactNode {
+function skillInline(
+  s: SkillRow,
+  a: string,
+  land: ReturnType<typeof landEvidence>,
+  compact?: boolean,
+): ReactNode {
   if (compact) return null
   if (s.hits > 0) return skillStatText(s, a)
   return (
@@ -376,7 +416,7 @@ export function SkillBar({
   nested,
   activeSec,
   compact,
-  proc
+  proc,
 }: {
   s: SkillRow
   approx?: boolean
@@ -437,8 +477,14 @@ export function SkillBar({
           <>
             <SkillName name={s.name} category={s.category} plain={nested} />
             {land.resistPct !== undefined && (
-              <Tooltip title={`${resists} resisted, ${land.landed} landed - ${Math.round(100 - land.resistPct)}% landed. ${land.hint}`}>
-                <Typography component="span" variant="caption" sx={{ ml: 0.75, color: RESIST_COLOR }}>
+              <Tooltip
+                title={`${resists} resisted, ${land.landed} landed - ${Math.round(100 - land.resistPct)}% landed. ${land.hint}`}
+              >
+                <Typography
+                  component="span"
+                  variant="caption"
+                  sx={{ ml: 0.75, color: RESIST_COLOR }}
+                >
                   {Math.round(land.resistPct)}% resist
                 </Typography>
               </Tooltip>
@@ -487,7 +533,7 @@ export function DashCard({
   children,
   fill,
   height,
-  testId
+  testId,
 }: {
   title: string
   right?: ReactNode
@@ -516,7 +562,7 @@ export function DashCard({
           ? { height: '100%', minHeight: 0, overflow: 'hidden' }
           : height != null
             ? { flex: `0 0 ${height}px`, minHeight: 0, maxHeight: height }
-            : { flex: '0 0 auto' })
+            : { flex: '0 0 auto' }),
       }}
     >
       <Stack
@@ -529,7 +575,12 @@ export function DashCard({
         <Typography
           variant="caption"
           noWrap
-          sx={{ fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'text.secondary' }}
+          sx={{
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            color: 'text.secondary',
+          }}
         >
           {title}
         </Typography>
@@ -542,7 +593,7 @@ export function DashCard({
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
-          ...(fill ? { overflow: 'auto' } : null)
+          ...(fill ? { overflow: 'auto' } : null),
         }}
       >
         {children}
@@ -572,7 +623,7 @@ export function QuietNote({ children }: { children: ReactNode }): React.JSX.Elem
 export function ApproxChip({
   shown,
   raw,
-  truncated
+  truncated,
 }: {
   shown: number
   raw: number

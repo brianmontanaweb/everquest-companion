@@ -18,7 +18,7 @@ import {
   classesMismatch,
   detectedOffer,
   provenanceOf,
-  sameClasses
+  sameClasses,
 } from '../src/renderer/src/features/planner/plannerClasses'
 
 /** Only the two fields these rules read — the functions take exactly that much of a plan. */
@@ -47,7 +47,7 @@ test('a FOLLOWING set takes the detected trio when the two disagree', () => {
   assert.deepEqual(boundClasses(following(['ROG', 'PAL', 'BER']), ['PAL', 'ENC', 'MNK']), [
     'PAL',
     'ENC',
-    'MNK'
+    'MNK',
   ])
 })
 
@@ -72,7 +72,7 @@ test('the chip is offered only on a pinned set that disagrees with detection', (
   assert.deepEqual(detectedOffer(pinned(['ROG', 'PAL', 'BER']), ['PAL', 'ENC', 'MNK']), [
     'PAL',
     'ENC',
-    'MNK'
+    'MNK',
   ])
   assert.equal(detectedOffer(pinned(['PAL', 'ENC', 'MNK']), ['MNK', 'PAL', 'ENC']), null)
   assert.equal(detectedOffer(pinned(['ROG']), []), null)

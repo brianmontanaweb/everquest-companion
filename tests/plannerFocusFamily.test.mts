@@ -44,7 +44,7 @@ test('every focus effect name in the corpus parses into a family and a tier', ()
     rows: focus.length,
     names: names.length,
     families: families.size,
-    detail: Object.fromEntries([...families].map(([f, t]) => [f, [...t].sort((a, b) => a - b)]))
+    detail: Object.fromEntries([...families].map(([f, t]) => [f, [...t].sort((a, b) => a - b)])),
   })
   // FLOORS, under the 2026-08-05 measurement (119 rows / 53 names / 29 families).
   assert.ok(names.length >= 40, `only ${String(names.length)} distinct focus effect names`)
@@ -53,7 +53,13 @@ test('every focus effect name in the corpus parses into a family and a tier', ()
 
 test('a tiered family folds its ranks together and an untiered name stands alone', () => {
   const tiersOf = (family: string): number[] =>
-    [...new Set(names.filter((n) => parseFocusEffect(n).family === family).map((n) => parseFocusEffect(n).tier))].sort()
+    [
+      ...new Set(
+        names
+          .filter((n) => parseFocusEffect(n).family === family)
+          .map((n) => parseFocusEffect(n).tier),
+      ),
+    ].sort()
 
   // The healer's family, and the one the design doc names: the corpus ships I and III, no II.
   assert.deepEqual(tiersOf('Improved Healing'), [1, 3])
@@ -76,7 +82,10 @@ test('only focus rows carry the family fields', () => {
   // deliberately NOT parsed: "which is best" is a focus question, and the planner must not claim a
   // comparison the corpus never states.
   const ranked = donors.filter((d) => d.socket !== 'focus' && / [IVX]+$/.test(d.effect))
-  assert.ok(ranked.length > 0, 'no ranked non-focus effect names at all — is the corpus still whole?')
+  assert.ok(
+    ranked.length > 0,
+    'no ranked non-focus effect names at all — is the corpus still whole?',
+  )
   for (const d of ranked.slice(0, 50)) {
     assert.equal(d.family, undefined, `${d.socket} ${d.effect} was given a family`)
     assert.equal(d.familyTier, undefined, `${d.socket} ${d.effect} was given a tier`)
@@ -84,18 +93,36 @@ test('only focus rows carry the family fields', () => {
 })
 
 test('the parser reads the three shapes, and refuses everything else', () => {
-  assert.deepEqual(parseFocusEffect('Improved Healing III'), { family: 'Improved Healing', tier: 3 })
-  assert.deepEqual(parseFocusEffect('Burning Affliction II'), { family: 'Burning Affliction', tier: 2 })
-  assert.deepEqual(parseFocusEffect('Extended Enhancement'), { family: 'Extended Enhancement', tier: 1 })
+  assert.deepEqual(parseFocusEffect('Improved Healing III'), {
+    family: 'Improved Healing',
+    tier: 3,
+  })
+  assert.deepEqual(parseFocusEffect('Burning Affliction II'), {
+    family: 'Burning Affliction',
+    tier: 2,
+  })
+  assert.deepEqual(parseFocusEffect('Extended Enhancement'), {
+    family: 'Extended Enhancement',
+    tier: 1,
+  })
   // The bard instrument modifiers: the number is the modifier's own scale, ranked inside its own
   // family and never against a Roman one.
-  assert.deepEqual(parseFocusEffect('Percussion Resonance 14'), { family: 'Percussion Resonance', tier: 14 })
+  assert.deepEqual(parseFocusEffect('Percussion Resonance 14'), {
+    family: 'Percussion Resonance',
+    tier: 14,
+  })
   // "Minor Improved Damage" is its OWN family — the name says minor, and folding it into Improved
   // Damage would rank a weaker focus against a stronger one (law 12: renames are knowledge).
-  assert.deepEqual(parseFocusEffect('Minor Improved Damage I'), { family: 'Minor Improved Damage', tier: 1 })
+  assert.deepEqual(parseFocusEffect('Minor Improved Damage I'), {
+    family: 'Minor Improved Damage',
+    tier: 1,
+  })
   // Non-canonical Roman ("IIII"), a trailing word, and a bare numeral leave the name whole rather
   // than inventing a family: a one-member family is visible in the browser, a mis-tier is not.
-  assert.deepEqual(parseFocusEffect('Improved Healing IIII'), { family: 'Improved Healing IIII', tier: 1 })
+  assert.deepEqual(parseFocusEffect('Improved Healing IIII'), {
+    family: 'Improved Healing IIII',
+    tier: 1,
+  })
   assert.deepEqual(parseFocusEffect('Minion of Hate'), { family: 'Minion of Hate', tier: 1 })
   assert.deepEqual(parseFocusEffect('IV'), { family: 'IV', tier: 1 })
   assert.deepEqual(parseFocusEffect('  Spell Haste  II '), { family: 'Spell Haste', tier: 2 })

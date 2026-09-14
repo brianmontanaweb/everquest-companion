@@ -46,8 +46,8 @@ const CLIENT: SpellResistTable = {
     targetType: 5,
     hpSlot: { base: -217, max: 325, calc: 103 },
     hp: [{ base: -217, max: 325, calc: 103, perTick: true }],
-    hpDuration: { formula: 7, value: 5 }
-  }
+    hpDuration: { formula: 7, value: 5 },
+  },
 }
 
 /**
@@ -64,7 +64,7 @@ const ODIUM_FIGURES = {
   dot: true,
   overSec: 30,
   recastMs: 6000,
-  source: 'client'
+  source: 'client',
 }
 
 /** What the panel and the card both print, in order. */
@@ -81,7 +81,7 @@ test('C1 the join is the CANONICAL key, because a miss here fails silently', () 
   assert.equal(
     clientHpFor({ tashani: { axis: null, resistAdj: 0, castMs: 0, targetType: 5 } }, 'Tashani'),
     undefined,
-    'a row with no effect-0 slot'
+    'a row with no effect-0 slot',
   )
 })
 
@@ -143,7 +143,11 @@ test('C5 no spell that already had wiki figures moves — the wiki stays primary
       const now = JSON.stringify(withClient[i].metrics ?? null)
       if (plain[i] === now) continue
       changed++
-      assert.equal(plain[i], 'null', `${withClient[i].name} HAD figures and they moved: ${plain[i]}`)
+      assert.equal(
+        plain[i],
+        'null',
+        `${withClient[i].name} HAD figures and they moved: ${plain[i]}`,
+      )
     }
     assert.equal(changed, 1, 'the one-entry table adds Odium and nothing else')
   } finally {
@@ -154,7 +158,11 @@ test('C5 no spell that already had wiki figures moves — the wiki stays primary
 test('C6 the card is unchanged for every spell whose page states its own hitpoint line', () => {
   const db = loadSpellDb()
   for (const name of ['Superior Healing', 'Ice Comet', 'Anarchy', 'Clarity', 'Siphon']) {
-    assert.deepEqual(buildSpellDetail(db, name, [], { client: CLIENT }), buildSpellDetail(db, name), `${name} moved`)
+    assert.deepEqual(
+      buildSpellDetail(db, name, [], { client: CLIENT }),
+      buildSpellDetail(db, name),
+      `${name} moved`,
+    )
   }
 })
 
@@ -174,7 +182,7 @@ test('C6 the card is unchanged for every spell whose page states its own hitpoin
 
 test('C7 a client row reaches the reader on its recast alone, and the page still wins', () => {
   const recastOnly: SpellResistTable = {
-    'made up spell': { axis: null, resistAdj: 0, castMs: 0, recastMs: 9000, targetType: 5 }
+    'made up spell': { axis: null, resistAdj: 0, castMs: 0, recastMs: 9000, targetType: 5 },
   }
   const facts = clientHpFor(recastOnly, 'Made Up Spell')
   assert.equal(facts?.recastMs, 9000, 'no effect-0 slot, and it is still worth answering')
@@ -215,8 +223,8 @@ const ETHEREAL: SpellResistTable = {
     mana: 150,
     targetType: 51,
     hp: [{ base: 10, max: 100, calc: 103, perTick: true }],
-    hpDuration: { formula: 3, value: 4 }
-  }
+    hpDuration: { formula: 3, value: 4 },
+  },
 }
 
 /** 10 + 2x44 = 98 a tick at the level a paladin gains it, four ticks, 150 mana, a 30s re-use timer. */
@@ -227,7 +235,7 @@ const ETHEREAL_FIGURES = {
   hot: true,
   overSec: 24,
   recastMs: 30_000,
-  clientCurve: true
+  clientCurve: true,
 }
 
 test('C8 THE REPORT: the paladin heal-over-time reads the client curve, on the row and the card', () => {
@@ -258,7 +266,7 @@ test('C8 THE REPORT: the paladin heal-over-time reads the client curve, on the r
       'hps 12',
       '2.6 heal/mana',
       'over 24s',
-      'recast 30s'
+      'recast 30s',
     ])
   } finally {
     resetLevelUnlocksCache()
@@ -284,7 +292,13 @@ test('C10 the mana column is resolved main-side, once, and only over a stated ze
   // all and these rows are what the real parse produces for those two ids.
   const zeroMana: SpellResistTable = {
     'chords of dissonance': { axis: 'magic', resistAdj: -100, castMs: 3000, targetType: 4 },
-    'denon`s desperate dirge': { axis: 'magic', resistAdj: 0, castMs: 3000, mana: 800, targetType: 8 }
+    'denon`s desperate dirge': {
+      axis: 'magic',
+      resistAdj: 0,
+      castMs: 3000,
+      mana: 800,
+      targetType: 8,
+    },
   }
   // CENSUS (2026-08-23): NO catalog spell placed at a level is in the wiki-silent/client-positive
   // shape — the eight rows that are, are all NPC-only or unlearnable. So the mana rule moves nothing
@@ -293,7 +307,9 @@ test('C10 the mana column is resolved main-side, once, and only over a stated ze
   try {
     const plain = buildLevelUnlocks(null).spells.map((s) => `${s.name}:${String(s.mana ?? '')}`)
     resetLevelUnlocksCache()
-    const withClient = buildLevelUnlocks(zeroMana).spells.map((s) => `${s.name}:${String(s.mana ?? '')}`)
+    const withClient = buildLevelUnlocks(zeroMana).spells.map(
+      (s) => `${s.name}:${String(s.mana ?? '')}`,
+    )
     assert.deepEqual(withClient, plain)
   } finally {
     resetLevelUnlocksCache()
@@ -301,6 +317,10 @@ test('C10 the mana column is resolved main-side, once, and only over a stated ze
   // The client charges 0 for every bard song the catalog charges 0 for, which is why nothing moved:
   // the only mana-costing bard rows in the owner's file are `Denon's Desperate Dirge` (800, which
   // the catalog already states) and the level-75-and-up `Denon's Dirge of ...` line.
-  assert.equal(clientHpFor(zeroMana, 'Chords of Dissonance'), undefined, 'a stated 0 is not a fact to carry')
-  assert.equal(clientHpFor(zeroMana, "Denon`s Desperate Dirge")?.mana, 800)
+  assert.equal(
+    clientHpFor(zeroMana, 'Chords of Dissonance'),
+    undefined,
+    'a stated 0 is not a fact to carry',
+  )
+  assert.equal(clientHpFor(zeroMana, 'Denon`s Desperate Dirge')?.mana, 800)
 })

@@ -13,7 +13,11 @@
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { flattenSkills, groupSlay, skillsForTarget } from '../src/renderer/src/features/combat/dashboardData'
+import {
+  flattenSkills,
+  groupSlay,
+  skillsForTarget,
+} from '../src/renderer/src/features/combat/dashboardData'
 import type { SkillView, SourceView, TimelineEvent, TimelineView } from '../src/shared/combat'
 
 function skill(name: string, over: Partial<SkillView> = {}): SkillView {
@@ -25,7 +29,10 @@ function source(categories: SourceView['categories']): SourceView {
   return { categories } as unknown as SourceView
 }
 
-function cat(category: SourceView['categories'][number]['category'], skills: SkillView[]): SourceView['categories'][number] {
+function cat(
+  category: SourceView['categories'][number]['category'],
+  skills: SkillView[],
+): SourceView['categories'][number] {
   const total = skills.reduce((n, s) => n + s.total, 0)
   return {
     category,
@@ -37,19 +44,23 @@ function cat(category: SourceView['categories'][number]['category'], skills: Ski
     max: Math.max(0, ...skills.map((s) => s.max)),
     resists: 0,
     resistPct: 0,
-    skills
+    skills,
   }
 }
 
 test('flattenSkills collapses every slay skill into ONE "Slay Undead" row', () => {
   const e = source([
-    cat('melee', [skill('Melee', { total: 5000, hits: 100, crits: 4, max: 120, min: 10, misses: 20 })]),
+    cat('melee', [
+      skill('Melee', { total: 5000, hits: 100, crits: 4, max: 120, min: 10, misses: 20 }),
+    ]),
     cat('slay', [
       skill('Melee', { total: 3000, hits: 30, crits: 2, max: 300, min: 40, misses: 5 }),
       skill('Backstab', { total: 2000, hits: 10, crits: 1, max: 500, min: 60 }),
-      skill('Bash', { total: 1000, hits: 8, crits: 0, max: 200, min: 25, misses: 3 })
+      skill('Bash', { total: 1000, hits: 8, crits: 0, max: 200, min: 25, misses: 3 }),
     ]),
-    cat('spell', [skill('Ancient Wrath', { total: 4000, hits: 5, crits: 0, max: 900, min: 700, resists: 2 })])
+    cat('spell', [
+      skill('Ancient Wrath', { total: 4000, hits: 5, crits: 0, max: 900, min: 700, resists: 2 }),
+    ]),
   ])
 
   const rows = flattenSkills(e)
@@ -64,14 +75,21 @@ test('flattenSkills collapses every slay skill into ONE "Slay Undead" row', () =
   // max/min span ALL weapons: the biggest proc anywhere, and the smallest LANDED one.
   assert.equal(slay.max, 500)
   assert.equal(slay.min, 25)
-  assert.deepEqual(slay.children?.map((c) => c.name), ['Melee', 'Backstab', 'Bash'], 'children ranked by damage')
+  assert.deepEqual(
+    slay.children?.map((c) => c.name),
+    ['Melee', 'Backstab', 'Bash'],
+    'children ranked by damage',
+  )
 
   // Conservation: grouping moves no damage, and no non-slay row is touched.
   const before = e.categories.flatMap((c) => c.skills).reduce((n, s) => n + s.total, 0)
-  assert.equal(rows.reduce((n, r) => n + r.total, 0), before)
+  assert.equal(
+    rows.reduce((n, r) => n + r.total, 0),
+    before,
+  )
   assert.deepEqual(
     rows.filter((r) => r.category !== 'slay').map((r) => r.name),
-    ['Melee', 'Ancient Wrath']
+    ['Melee', 'Ancient Wrath'],
   )
 
   // pct is re-based on the NEW global max — the merged row is now the biggest bar.
@@ -82,7 +100,7 @@ test('flattenSkills collapses every slay skill into ONE "Slay Undead" row', () =
 test('a lone slay skill is left exactly as it is (a group of one is a wrapper around nothing)', () => {
   const e = source([
     cat('melee', [skill('Melee', { total: 5000, hits: 100, max: 120, min: 10 })]),
-    cat('slay', [skill('Backstab', { total: 900, hits: 3, max: 400, min: 200 })])
+    cat('slay', [skill('Backstab', { total: 900, hits: 3, max: 400, min: 200 })]),
   ])
   const rows = flattenSkills(e)
   const slay = rows.filter((r) => r.category === 'slay')
@@ -94,7 +112,7 @@ test('a lone slay skill is left exactly as it is (a group of one is a wrapper ar
 test('groupSlay ignores a min of 0 (a resist/miss-only lane carries no amount)', () => {
   const rows = groupSlay([
     { ...skill('Melee', { total: 100, hits: 1, max: 100, min: 100 }), category: 'slay' },
-    { ...skill('Kick', { total: 0, hits: 0, max: 0, misses: 4 }), category: 'slay' }
+    { ...skill('Kick', { total: 0, hits: 0, max: 0, misses: 4 }), category: 'slay' },
   ])
   assert.equal(rows.length, 1)
   assert.equal(rows[0].min, 100, 'the min never collapses to 0 on an all-avoided lane')
@@ -102,14 +120,18 @@ test('groupSlay ignores a min of 0 (a resist/miss-only lane carries no amount)',
 })
 
 test('the per-mob list groups slay the same way, over sample-scaled numbers', () => {
-  const ev = (lane: string, category: TimelineEvent['category'], amount: number): TimelineEvent => ({
+  const ev = (
+    lane: string,
+    category: TimelineEvent['category'],
+    amount: number,
+  ): TimelineEvent => ({
     t: 0,
     lane,
     category,
     amount,
     crit: false,
     kind: 'you',
-    target: 'a decaying skeleton'
+    target: 'a decaying skeleton',
   })
   const events: TimelineEvent[] = [
     ev('Melee', 'melee', 50),
@@ -118,7 +140,7 @@ test('the per-mob list groups slay the same way, over sample-scaled numbers', ()
     ev('Bash', 'slay', 100),
     { ...ev('Melee', 'slay', 0), outcome: 'miss' },
     // a different defender must not leak in
-    { ...ev('Melee', 'slay', 999), target: 'a rat' }
+    { ...ev('Melee', 'slay', 999), target: 'a rat' },
   ]
   const tl: TimelineView = {
     id: 'e1',
@@ -135,7 +157,7 @@ test('the per-mob list groups slay the same way, over sample-scaled numbers', ()
     // the only loss is the (unbiased) stride. See combatRingTruncation.test.mts for the
     // truncated case, where these two diverge.
     totalCount: events.length * 2,
-    truncated: false
+    truncated: false,
   }
 
   const detail = skillsForTarget(tl, 'a decaying skeleton')
@@ -151,11 +173,11 @@ test('the per-mob list groups slay the same way, over sample-scaled numbers', ()
   assert.equal(
     slay[0].children?.reduce((n, c) => n + c.total, 0),
     slay[0].total,
-    'the group is exactly the sum of the rows it stands for'
+    'the group is exactly the sum of the rows it stands for',
   )
   assert.deepEqual(
     detail.rows.filter((r) => r.category !== 'slay').map((r) => r.name),
     ['Melee'],
-    'plain melee stays its own row'
+    'plain melee stays its own row',
   )
 })

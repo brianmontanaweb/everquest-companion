@@ -46,7 +46,11 @@ import spellsJson from '../src/main/data/spells.json' with { type: 'json' }
 
 const RAW = (spellsJson as SpellDbFile).spells
 const row = (name: string): (typeof RAW)[number] | undefined => RAW.find((s) => s.name === name)
-const combo = (...resolved: ClassAbbr[]): ComboClasses => ({ resolved, candidates: [], ambiguous: false })
+const combo = (...resolved: ClassAbbr[]): ComboClasses => ({
+  resolved,
+  candidates: [],
+  ambiguous: false,
+})
 
 test('JOS-439 A: the scrape brought Lifebite in whole, and its fields agree with its siblings', () => {
   const lifebite = row('Lifebite')
@@ -73,11 +77,11 @@ test('JOS-439 A: the scrape brought Lifebite in whole, and its fields agree with
   assert.equal(lifebite.illusion, false)
   assert.deepEqual(lifebite.effects, [
     'Decrease Hitpoints by 42 to 42',
-    'Increase Hitpoints by 42 to 42 (Self)'
+    'Increase Hitpoints by 42 to 42 (Self)',
   ])
   assert.equal(
     lifebite.classes,
-    '* Necromancer - Level 8 (Autogranted) * Shadow Knight - Level 10 (Autogranted)'
+    '* Necromancer - Level 8 (Autogranted) * Shadow Knight - Level 10 (Autogranted)',
   )
 })
 
@@ -87,7 +91,7 @@ test('JOS-439 B: spell search and the spell card resolve it', () => {
   assert.equal(detail.name, 'Lifebite')
   assert.deepEqual(detail.classLevels, [
     { cls: 'NEC', level: 8 },
-    { cls: 'SHD', level: 10 }
+    { cls: 'SHD', level: 10 },
   ])
   // The lookup runs through the CORRECTED catalog, and a name is the only join key it has — so a
   // card that resolves is also the proof the name the game prints is the name the registry carries.
@@ -98,17 +102,28 @@ test('JOS-439 B: spell search and the spell card resolve it', () => {
 
 test('JOS-439 C: the unlock cards offer it at Necromancer 8 and Shadow Knight 10', () => {
   const data = buildLevelUnlocks()
-  for (const [cls, level] of [['NEC', 8], ['SHD', 10]] as [ClassAbbr, number][]) {
+  for (const [cls, level] of [
+    ['NEC', 8],
+    ['SHD', 10],
+  ] as [ClassAbbr, number][]) {
     const at = unlocksAtLevel(data, combo(cls), level)
-    assert.equal(at.spells.some((r) => r.name === 'Lifebite'), true, `${cls} ${String(level)} omits it`)
-    assert.equal(at.outOfEraSpells.some((r) => r.name === 'Lifebite'), false, `${cls} folded it`)
+    assert.equal(
+      at.spells.some((r) => r.name === 'Lifebite'),
+      true,
+      `${cls} ${String(level)} omits it`,
+    )
+    assert.equal(
+      at.outOfEraSpells.some((r) => r.name === 'Lifebite'),
+      false,
+      `${cls} folded it`,
+    )
   }
   // …and NOT at the other class's level, which is the whole reason the card reads a per-class level
   // rather than a single number off the row.
   assert.equal(
     unlocksAtLevel(data, combo('NEC'), 10).spells.some((r) => r.name === 'Lifebite'),
     false,
-    'a necromancer gains it at 8, so 10 is not its unlock level for him'
+    'a necromancer gains it at 8, so 10 is not its unlock level for him',
   )
 })
 
@@ -119,12 +134,12 @@ test('JOS-439 D: both lifetap ladders place it between Lifespike and Lifedraw', 
   assert.deepEqual(replacedBy('Lifebite', 'NEC'), {
     replaces: 'Lifespike',
     replacedBy: 'Lifedraw',
-    line: 'Lifetap (instant drain)'
+    line: 'Lifetap (instant drain)',
   })
   assert.deepEqual(replacedBy('Lifebite', 'SHD'), {
     replaces: 'Lifespike',
     replacedBy: 'Lifedraw',
-    line: 'Direct Lifetap line'
+    line: 'Direct Lifetap line',
   })
   // The neighbours' own answers moved with it — the insertion is in the LIST, not a special case
   // hung off one lookup.

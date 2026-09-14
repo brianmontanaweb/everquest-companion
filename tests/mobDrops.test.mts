@@ -26,7 +26,7 @@ import {
   respawnCardNote,
   respawnProvenance,
   type RespawnCandidate,
-  type RespawnRow
+  type RespawnRow,
 } from '../src/shared/respawn'
 import type { MobKnowledge } from '../src/shared/mobTypes'
 
@@ -39,14 +39,14 @@ function knowledge(over: Partial<MobKnowledge> = {}): MobKnowledge {
 test('the wiki table leads, in the page order, and your counts ride on its rows', () => {
   const k = knowledge({
     dropsWiki: [{ item: 'Ghoulbane' }, { item: 'Rusty Dagger', rarity: 'Common' }],
-    dropsSeen: [{ item: 'rusty dagger', count: 4, lastTs: T }]
+    dropsSeen: [{ item: 'rusty dagger', count: 4, lastTs: T }],
   })
   const split = splitMobDrops(k)
   assert.deepEqual(split.wiki, [
     { item: 'Ghoulbane' },
     // Rarity is carried EXACTLY as the page stated it, and the count is yours, joined
     // case-insensitively (law 2) while both sides display raw.
-    { item: 'Rusty Dagger', rarity: 'Common', seenCount: 4 }
+    { item: 'Rusty Dagger', rarity: 'Common', seenCount: 4 },
   ])
   // Corroboration never becomes a second row.
   assert.deepEqual(split.extraSeen, [])
@@ -58,9 +58,9 @@ test('an item only YOUR history knows is secondary, never mixed into the table',
       dropsWiki: [{ item: 'Ghoulbane' }],
       dropsSeen: [
         { item: 'Bone Chips', count: 12, lastTs: T },
-        { item: 'Ghoulbane', count: 1, lastTs: T }
-      ]
-    })
+        { item: 'Ghoulbane', count: 1, lastTs: T },
+      ],
+    }),
   )
   assert.deepEqual(split.wiki, [{ item: 'Ghoulbane', seenCount: 1 }])
   assert.deepEqual(split.extraSeen, [{ item: 'Bone Chips', count: 12, lastTs: T }])
@@ -92,7 +92,8 @@ test('a source that said nothing produces nothing — never an empty table dress
  * watching it. This asserts the identity, so that drift is not expressible.
  */
 test('the hover CARD states the timer knowledge in the one provenance string', () => {
-  const fmt = (ms: number | null | undefined): string => (ms == null ? '-' : `${String(Math.round(ms / 1000))}s`)
+  const fmt = (ms: number | null | undefined): string =>
+    ms == null ? '-' : `${String(Math.round(ms / 1000))}s`
   const r: RespawnRow = {
     id: 'z::m',
     key: 'm',
@@ -104,10 +105,14 @@ test('the hover CARD states the timer knowledge in the one provenance string', (
     samples: 2,
     kills: 3,
     observedMs: 300_000,
-    estimateMs: 300_000
+    estimateMs: 300_000,
   }
   const note = respawnCardNote(r, fmt)
-  assert.equal(note.text, respawnProvenance(r, fmt), 'the card block is the provenance, not a second spelling')
+  assert.equal(
+    note.text,
+    respawnProvenance(r, fmt),
+    'the card block is the provenance, not a second spelling',
+  )
   assert.equal(note.label, RESPAWN_CARD_LABEL)
   // A section TITLE inside a floating card, never a sentence of its own.
   assert.ok(note.label.length <= 16, note.label)
@@ -130,7 +135,7 @@ test('a Recently-killed entry gets the same card, with the shorter note', () => 
     zone: 'The Ruins of Old Guk',
     lastTs: T,
     kills: 1,
-    watched: false
+    watched: false,
   }
   const bare = respawnCandidateNote(base)
   assert.equal(bare.label, RESPAWN_CARD_LABEL, 'one section title across both surfaces')
@@ -152,12 +157,12 @@ test('a page that lists an item twice still joins your count onto each listing',
   const split = splitMobDrops(
     knowledge({
       dropsWiki: [{ item: 'Bone Chips' }, { item: 'Bone Chips', rarity: '18.4%' }],
-      dropsSeen: [{ item: 'Bone Chips', count: 7, lastTs: T }]
-    })
+      dropsSeen: [{ item: 'Bone Chips', count: 7, lastTs: T }],
+    }),
   )
   assert.deepEqual(split.wiki, [
     { item: 'Bone Chips', seenCount: 7 },
-    { item: 'Bone Chips', rarity: '18.4%', seenCount: 7 }
+    { item: 'Bone Chips', rarity: '18.4%', seenCount: 7 },
   ])
   assert.deepEqual(split.extraSeen, [])
 })

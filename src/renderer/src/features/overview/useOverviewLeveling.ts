@@ -18,7 +18,6 @@ import { useModule } from '../../lib/useModule'
 import { EMPTY_PROGRESSION } from '../leveling/progressionDelta'
 import { overviewLeveling, type OverviewLevelingState } from './overviewLevelingData'
 
-
 /**
  * The leveling card's whole state. Pre-hydration the module hook returns null and
  * `EMPTY_PROGRESSION` stands in — which derives to `empty: true`, the card's quiet state, and

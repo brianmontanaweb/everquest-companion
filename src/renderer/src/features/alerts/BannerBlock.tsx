@@ -33,7 +33,7 @@ import {
   MAX_BANNER_CHARS,
   alertShowsOnScreen,
   defaultShowOnScreen,
-  type AlertBannerColor
+  type AlertBannerColor,
 } from '@shared/alertBanner'
 
 /** The dialog's banner sub-form. `'default'` is the FORM's spelling of the def's absent colour. */
@@ -74,7 +74,7 @@ export function useBannerForm(open: boolean, initial: AlertDef | null): BannerFo
     bannerText,
     setBannerText,
     bannerColor,
-    setBannerColor
+    setBannerColor,
   }
 }
 
@@ -92,13 +92,15 @@ export function useBannerForm(open: boolean, initial: AlertDef | null): BannerFo
  */
 export function bannerFieldsFor(
   f: BannerForm,
-  trigger: AlertTrigger
+  trigger: AlertTrigger,
 ): Pick<AlertDef, 'showOnScreen' | 'bannerText' | 'bannerColor'> {
   const text = f.bannerText.trim()
   return {
-    ...(f.showOnScreen === defaultShowOnScreen({ trigger }) ? {} : { showOnScreen: f.showOnScreen }),
+    ...(f.showOnScreen === defaultShowOnScreen({ trigger })
+      ? {}
+      : { showOnScreen: f.showOnScreen }),
     ...(text ? { bannerText: text.slice(0, MAX_BANNER_CHARS) } : {}),
-    ...(f.bannerColor === 'default' ? {} : { bannerColor: f.bannerColor })
+    ...(f.bannerColor === 'default' ? {} : { bannerColor: f.bannerColor }),
   }
 }
 
@@ -108,7 +110,13 @@ function swatchLabel(c: AlertBannerColor): string {
 }
 
 /** The one swatch row. Six buttons, no picker — the argument is in shared/alertBanner.ts. */
-function ColorRow({ value, onChange }: { value: AlertBannerColor; onChange: (c: AlertBannerColor) => void }): JSX.Element {
+function ColorRow({
+  value,
+  onChange,
+}: {
+  value: AlertBannerColor
+  onChange: (c: AlertBannerColor) => void
+}): JSX.Element {
   return (
     <Stack direction="row" spacing={1} alignItems="center" data-testid="alert-banner-colors">
       <Typography variant="caption" color="text.secondary">
@@ -130,7 +138,7 @@ function ColorRow({ value, onChange }: { value: AlertBannerColor; onChange: (c: 
               borderRadius: 4,
               cursor: 'pointer',
               background: ALERT_BANNER_COLOR_HEX[c],
-              border: value === c ? '2px solid #fff' : '1px solid rgba(255,255,255,0.25)'
+              border: value === c ? '2px solid #fff' : '1px solid rgba(255,255,255,0.25)',
             }}
           />
         </Tooltip>
@@ -173,7 +181,7 @@ export default function BannerBlock({
   alertName,
   form,
   enabled,
-  onOpenPrefs
+  onOpenPrefs,
 }: {
   /**
    * What this alert would PRINT right now with the field left empty — its name, live from the

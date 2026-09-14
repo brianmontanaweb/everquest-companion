@@ -33,7 +33,7 @@ import type { KillMap, KillTierRun, RaidTarget } from '../src/shared/types'
 const NAGAFEN: RaidTarget = {
   name: 'Lord Nagafen',
   category: 'Dragons',
-  match: ['Lord Nagafen']
+  match: ['Lord Nagafen'],
 } as RaidTarget
 
 /**
@@ -52,8 +52,8 @@ function killed(count: number, tier: number, lastTs: number): KillMap {
       lastTs,
       credited: count,
       display: 'Lord Nagafen',
-      tiers: { [tier]: run }
-    }
+      tiers: { [tier]: run },
+    },
   }
 }
 
@@ -71,7 +71,11 @@ test('B1 a REPEAT kill at the SAME tier is a kill — the case the sound used to
   assert.equal(fired.length, 1, 'the second kill counts')
   assert.equal(fired[0].status.target.name, 'Lord Nagafen')
   assert.equal(fired[0].status.count, 2)
-  assert.equal(fired[0].status.bestTier, 0, 'no new tier was reached — that used to be the disqualifier')
+  assert.equal(
+    fired[0].status.bestTier,
+    0,
+    'no new tier was reached — that used to be the disqualifier',
+  )
   assert.equal(fired[0].tier, 0, 'and the kill reports the tier it happened on (JOS-165)')
 
   // The third, the fourth, the tenth: nothing about the predicate decays with repetition.
@@ -81,12 +85,19 @@ test('B1 a REPEAT kill at the SAME tier is a kill — the case the sound used to
 
 test('B2 no kill, no signal — the credited count must actually move', () => {
   const same = killed(2, 0, 1_785_000_600_000)
-  assert.equal(bossKills(prevOf(same), allStatuses([NAGAFEN], same)).length, 0, 'a re-render is not a kill')
+  assert.equal(
+    bossKills(prevOf(same), allStatuses([NAGAFEN], same)).length,
+    0,
+    'a re-render is not a kill',
+  )
 
   // An unkilled roster entry is never a defeat, and a FIRST kill still is (the old predicate's
   // one true case is still true).
   assert.equal(bossKills(prevOf({}), allStatuses([NAGAFEN], {})).length, 0)
-  assert.equal(bossKills(prevOf({}), allStatuses([NAGAFEN], killed(1, 0, 1_785_000_000_000))).length, 1)
+  assert.equal(
+    bossKills(prevOf({}), allStatuses([NAGAFEN], killed(1, 0, 1_785_000_000_000))).length,
+    1,
+  )
 })
 
 test('B3 the sound rides the every-kill callback, and the baseline guard is still there', () => {
@@ -108,7 +119,7 @@ test('B3 the sound rides the every-kill callback, and the baseline guard is stil
   assert.equal(
     (app.match(/fireAppSignal\('bossDefeat'/g) ?? []).length,
     0,
-    'the app root grew a second always-mounted boss detector'
+    'the app root grew a second always-mounted boss detector',
   )
   // The callback takes the KILL, not the target (JOS-165): `{ status: s, tier }`.
   const onKill = /onKill:\s*\(\{[^}]*\}\)\s*=>\s*\{([\s\S]*?)\n\s{4}\}/.exec(celebrations)
@@ -123,9 +134,13 @@ test('B3 the sound rides the every-kill callback, and the baseline guard is stil
   assert.equal(
     /onNewDefeat/.test(code(app) + code(celebrations) + code(hook)),
     false,
-    'no first-kill-only callback remains'
+    'no first-kill-only callback remains',
   )
-  assert.equal(/newDefeats/.test(code(status) + code(hook)), false, 'and no first-kill-only predicate')
+  assert.equal(
+    /newDefeats/.test(code(status) + code(hook)),
+    false,
+    'and no first-kill-only predicate',
+  )
 
   // THE CELEBRATIONS LAW IS UNTOUCHED: hydration still seeds a silent baseline (`prevRef`
   // starts null and is only compared once set), which is what keeps replay quiet.

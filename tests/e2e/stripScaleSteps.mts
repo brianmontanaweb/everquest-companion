@@ -47,7 +47,9 @@ const SLACK = 2
 /** Where a kind's overlay window IS, asked of main — identified by the `?kind=` it was opened with. */
 export function overlayBounds(app: ElectronApplication, kind: string): Promise<Bounds | null> {
   return app.evaluate(({ BrowserWindow }, k) => {
-    const w = BrowserWindow.getAllWindows().find((x) => x.webContents.getURL().includes(`kind=${k}`))
+    const w = BrowserWindow.getAllWindows().find((x) =>
+      x.webContents.getURL().includes(`kind=${k}`),
+    )
     return w ? w.getBounds() : null
   }, kind)
 }
@@ -57,9 +59,11 @@ export function setOverlayTextScale(page: Page, textScale: number): Promise<unkn
   return page.evaluate(
     (s) =>
       (
-        window as unknown as { eqOverlay: { setConfig: (p: { textScale: number }) => Promise<unknown> } }
+        window as unknown as {
+          eqOverlay: { setConfig: (p: { textScale: number }) => Promise<unknown> }
+        }
       ).eqOverlay.setConfig({ textScale: s }),
-    textScale
+    textScale,
   )
 }
 
@@ -75,7 +79,7 @@ export function storedBounds(page: Page): Promise<Bounds | undefined> {
 export function clipCheck(page: Page): Promise<{ scroll: number; client: number }> {
   return page.evaluate(() => ({
     scroll: document.documentElement.scrollWidth,
-    client: document.documentElement.clientWidth
+    client: document.documentElement.clientWidth,
   }))
 }
 
@@ -91,7 +95,7 @@ export async function shootOverlay(
   app: ElectronApplication,
   page: Page,
   kind: string,
-  file: string
+  file: string,
 ): Promise<void> {
   const path = join(ARTIFACTS, file)
   const setShown = (shown: boolean): Promise<void> =>
@@ -103,7 +107,7 @@ export async function shootOverlay(
           else w.hide()
         }
       },
-      { k: kind, show: shown }
+      { k: kind, show: shown },
     )
   try {
     mkdirSync(ARTIFACTS, { recursive: true })
@@ -122,7 +126,7 @@ function settleWidth(app: ElectronApplication, kind: string, want: number): Prom
   return settle(
     () => overlayBounds(app, kind),
     (b) => b !== null && Math.abs(b.width - want) <= SLACK,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
 }
 
@@ -136,7 +140,7 @@ export async function stepStripScalesWithText(
   app: ElectronApplication,
   strip: Page,
   kind: string,
-  label: string
+  label: string,
 ): Promise<void> {
   const before = await overlayBounds(app, kind)
   if (!check(`the ${label} window has bounds to read`, before !== null)) return
@@ -150,7 +154,7 @@ export async function stepStripScalesWithText(
     check(
       `…and it is exactly TWICE the window it was, not a zoomed card in the old one`,
       Math.abs(big.width - b.width * MAX_SCALE) <= SLACK,
-      `${String(b.width)} -> ${String(big.width)}`
+      `${String(b.width)} -> ${String(big.width)}`,
     )
     // CENTRE-PRESERVING: a strip that grew from its left edge would walk across the screen every
     // time somebody pressed A+. (Unless the work area clamped it, which is its own right answer —
@@ -158,13 +162,13 @@ export async function stepStripScalesWithText(
     check(
       '…grown about its own MIDDLE, with the top edge unmoved',
       Math.abs(big.x + big.width / 2 - (b.x + b.width / 2)) <= SLACK && big.y === b.y,
-      `${JSON.stringify(b)} -> ${JSON.stringify(big)}`
+      `${JSON.stringify(b)} -> ${JSON.stringify(big)}`,
     )
     const clip = await clipCheck(strip)
     check(
       `…and nothing on the ${label} is clipped off the edge at 200%`,
       clip.scroll <= clip.client + 1,
-      `${String(clip.scroll)}px of content in a ${String(clip.client)}px window`
+      `${String(clip.scroll)}px of content in a ${String(clip.client)}px window`,
     )
     await shootOverlay(app, strip, kind, `${kind}-200.png`)
   }
@@ -175,7 +179,7 @@ export async function stepStripScalesWithText(
   check(
     `…and turning the size back down puts the ${label} window back exactly where it was`,
     back !== null && Math.abs((back as Bounds).width - b.width) <= SLACK,
-    `${String((back as Bounds | null)?.width)} vs ${String(b.width)}`
+    `${String((back as Bounds | null)?.width)} vs ${String(b.width)}`,
   )
 }
 
@@ -202,9 +206,11 @@ function setOverlayBgAlpha(page: Page, bgAlpha: number): Promise<unknown> {
   return page.evaluate(
     (a) =>
       (
-        window as unknown as { eqOverlay: { setConfig: (p: { bgAlpha: number }) => Promise<unknown> } }
+        window as unknown as {
+          eqOverlay: { setConfig: (p: { bgAlpha: number }) => Promise<unknown> }
+        }
       ).eqOverlay.setConfig({ bgAlpha: a }),
-    bgAlpha
+    bgAlpha,
   )
 }
 
@@ -222,7 +228,11 @@ function setOverlayBgAlpha(page: Page, bgAlpha: number): Promise<unknown> {
  * state and the alpha — because it runs in the middle of three long specs and a step that left a
  * strip unlocked would silently change what every step after it is looking at.
  */
-export async function stepStripBgSlider(strip: Page, frameTestId: string, label: string): Promise<void> {
+export async function stepStripBgSlider(
+  strip: Page,
+  frameTestId: string,
+  label: string,
+): Promise<void> {
   const wasLocked = await strip.evaluate(async () => {
     const eq = window as unknown as {
       eqOverlay: { getConfig: () => Promise<{ locked?: boolean }>; setLocked: (v: boolean) => void }
@@ -232,28 +242,49 @@ export async function stepStripBgSlider(strip: Page, frameTestId: string, label:
     return locked
   })
   const frame = `[data-testid="${frameTestId}"]`
-  const shown = await settle(() => countOf(strip, frame), (n) => n === 1, { timeoutMs: 15_000 }).catch(() => 0)
+  const shown = await settle(
+    () => countOf(strip, frame),
+    (n) => n === 1,
+    { timeoutMs: 15_000 },
+  ).catch(() => 0)
   const restore = async (): Promise<void> => {
     await strip.evaluate(
-      (v) => (window as unknown as { eqOverlay: { setLocked: (b: boolean) => void } }).eqOverlay.setLocked(v),
-      wasLocked
+      (v) =>
+        (
+          window as unknown as { eqOverlay: { setLocked: (b: boolean) => void } }
+        ).eqOverlay.setLocked(v),
+      wasLocked,
     )
   }
   if (!check(`the ${label}'s drag frame appears when it is unlocked`, shown === 1)) return restore()
   const slider = `${frame} [data-testid="overlay-bg-alpha"]`
-  check(`…carrying a bg slider — the first transparency control this kind has ever had`,
-    (await countOf(strip, slider)) === 1)
+  check(
+    `…carrying a bg slider — the first transparency control this kind has ever had`,
+    (await countOf(strip, slider)) === 1,
+  )
 
   const before = await cardAlpha(strip)
-  if (!check(`the ${label} paints a card background to measure against`, Number.isFinite(before), String(before))) {
+  if (
+    !check(
+      `the ${label} paints a card background to measure against`,
+      Number.isFinite(before),
+      String(before),
+    )
+  ) {
     return restore()
   }
   const want = Math.abs(before - 0.3) < 0.001 ? 0.9 : 0.3
   await setOverlayBgAlpha(strip, want)
-  const after = await settle(() => cardAlpha(strip), (a) => Math.abs(a - want) < 0.001, { timeoutMs: 15_000 })
-    .catch(() => NaN)
-  check(`…and moving it repaints the ${label}, live`, Math.abs(after - want) < 0.001,
-    `${String(before)} -> ${String(after)}`)
+  const after = await settle(
+    () => cardAlpha(strip),
+    (a) => Math.abs(a - want) < 0.001,
+    { timeoutMs: 15_000 },
+  ).catch(() => NaN)
+  check(
+    `…and moving it repaints the ${label}, live`,
+    Math.abs(after - want) < 0.001,
+    `${String(before)} -> ${String(after)}`,
+  )
   await setOverlayBgAlpha(strip, before)
   await restore()
 }

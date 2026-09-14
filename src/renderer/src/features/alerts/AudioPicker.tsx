@@ -52,7 +52,7 @@ import {
   Select,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import type { AlertDef, SoundPack, SpeechMode } from '@shared/types'
@@ -71,7 +71,7 @@ import {
   writeBase,
   withPhrase,
   withSoundId,
-  withSpeechMode
+  withSpeechMode,
 } from './audioChoice'
 import { fallbackPack, packLabel } from './SoundPicker'
 import { DEFAULT_PACK_ID } from './suggestions'
@@ -92,7 +92,7 @@ const SAY_LABELS: Record<SpeechMode, string> = {
   alertName: 'Speak: alert name',
   spellName: 'Speak: spell name',
   spellFirstWord: 'Speak: first word',
-  custom: 'Speak: custom…'
+  custom: 'Speak: custom…',
 }
 
 /**
@@ -119,7 +119,7 @@ function sayValueLabel(mode: SpeechMode, phrase: string): string {
 const GRID_SX = {
   minWidth: 0,
   width: '100%',
-  '& .MuiSelect-select': { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+  '& .MuiSelect-select': { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
 } as const
 
 /**
@@ -205,7 +205,7 @@ function SayPicker({
   mode,
   phrase,
   onMode,
-  onCustom
+  onCustom,
 }: {
   selectRef: Ref<HTMLDivElement>
   mode: SpeechMode
@@ -257,7 +257,7 @@ function PhrasePopover({
   initial,
   tokenHint,
   onCancel,
-  onCommit
+  onCommit,
 }: {
   anchorEl: HTMLElement | null
   initial: string
@@ -319,7 +319,7 @@ export default function AudioPicker({
   def,
   voiceSetup,
   defaultPackId,
-  onChange
+  onChange,
 }: {
   packs: SoundPack[]
   def: AlertDef

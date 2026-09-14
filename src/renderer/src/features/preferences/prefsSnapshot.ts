@@ -39,7 +39,14 @@ import type { PerfHudPrefs, StartupProfile } from '@shared/perf'
 import type { ProcessPriorityPrefs } from '@shared/processPriority'
 import type { ResistPrefs } from '@shared/resistPrefs'
 import type { TelemetryPayloadView } from '@shared/telemetry'
-import type { AlertDef, EqConfig, OverlayConfig, OverlayKind, UpdateStatus, VoicePrefs } from '@shared/types'
+import type {
+  AlertDef,
+  EqConfig,
+  OverlayConfig,
+  OverlayKind,
+  UpdateStatus,
+  VoicePrefs,
+} from '@shared/types'
 
 /** The toast overlay's two facts, which come from two different reads and are one control pair. */
 export interface ToastSeed {
@@ -244,7 +251,7 @@ export async function readPrefsSnapshot(eq: PrefsReader): Promise<PrefsSnapshot>
     resists,
     version,
     updateStatus,
-    alerts
+    alerts,
   ] = await Promise.all([
     eq.getEqConfig(),
     eq.getUiScale(),
@@ -271,7 +278,7 @@ export async function readPrefsSnapshot(eq: PrefsReader): Promise<PrefsSnapshot>
     eq.getResistPrefs(),
     eq.getAppVersion(),
     eq.getUpdateStatus(),
-    eq.listAlerts()
+    eq.listAlerts(),
   ])
   return {
     eqConfig,
@@ -297,12 +304,12 @@ export async function readPrefsSnapshot(eq: PrefsReader): Promise<PrefsSnapshot>
     alertBanner: {
       open: overlayState.alertBanner,
       locked: bannerConfig.locked,
-      cfg: normalizeAlertBannerConfig(bannerConfig.alertBanner)
+      cfg: normalizeAlertBannerConfig(bannerConfig.alertBanner),
     },
     conCard: {
       open: overlayState.conCard,
       locked: conCardConfig.locked,
-      cfg: normalizeConCardConfig(conCardConfig.conCard)
+      cfg: normalizeConCardConfig(conCardConfig.conCard),
     },
     buffTrust,
     cursorRing,
@@ -314,7 +321,7 @@ export async function readPrefsSnapshot(eq: PrefsReader): Promise<PrefsSnapshot>
     resists,
     version,
     updateStatus,
-    alertCount: alerts.length
+    alertCount: alerts.length,
   }
 }
 
@@ -349,7 +356,7 @@ export function loadPrefsSnapshot(eq: PrefsReader): Promise<PrefsSnapshot> {
     (err: unknown) => {
       inflight = null
       throw err
-    }
+    },
   )
   return inflight
 }

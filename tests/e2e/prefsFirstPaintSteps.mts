@@ -75,7 +75,7 @@ export const WATCHED: Watch[] = [
   { id: 'pref-hide-when-unfocused', kind: 'switch' },
   { id: 'pref-banner-enabled', kind: 'switch' },
   { id: 'pref-text-size-value', kind: 'text' },
-  { id: 'pref-overlay-independent', kind: 'switch' }
+  { id: 'pref-overlay-independent', kind: 'switch' },
 ]
 
 /** What the page exposes once the recorder is armed. Declared for the in-page casts below. */
@@ -194,7 +194,7 @@ export async function recorded(page: Page): Promise<Record<string, string[]>> {
         rec?.sample()
         return JSON.stringify(rec?.seen ?? {})
       }),
-    { timeoutMs: 10_000, stable: 4, pollMs: 120 }
+    { timeoutMs: 10_000, stable: 4, pollMs: 120 },
   )
   return page.evaluate(() => {
     const rec = (window as unknown as Recorded).__jos340
@@ -215,7 +215,7 @@ export function checkFirstPaint(
   seen: Record<string, string[]>,
   id: string,
   expected: string,
-  what: string
+  what: string,
 ): boolean {
   const log = seen[id] ?? []
   const ok = log.length === 1 && log[0] === expected
@@ -240,20 +240,27 @@ export async function openSection(page: Page, id: string, marker: string): Promi
 }
 
 /** The stored auto-hide prefs, straight from main - the arrange step's proof, not the UI's. */
-export function storedAutoHide(page: Page): Promise<{ hideWhenNotRunning: boolean; hideWhenUnfocused: boolean }> {
+export function storedAutoHide(
+  page: Page,
+): Promise<{ hideWhenNotRunning: boolean; hideWhenUnfocused: boolean }> {
   return page.evaluate(() =>
     (
       window as unknown as {
-        eq: { getOverlayAutoHide: () => Promise<{ hideWhenNotRunning: boolean; hideWhenUnfocused: boolean }> }
+        eq: {
+          getOverlayAutoHide: () => Promise<{
+            hideWhenNotRunning: boolean
+            hideWhenUnfocused: boolean
+          }>
+        }
       }
-    ).eq.getOverlayAutoHide()
+    ).eq.getOverlayAutoHide(),
   )
 }
 
 /** The stored text scale, likewise. */
 export function storedScale(page: Page): Promise<number> {
   return page.evaluate(() =>
-    (window as unknown as { eq: { getUiScale: () => Promise<number> } }).eq.getUiScale()
+    (window as unknown as { eq: { getUiScale: () => Promise<number> } }).eq.getUiScale(),
   )
 }
 
@@ -272,6 +279,10 @@ export async function setSwitch(page: Page, id: string, on: boolean): Promise<bo
   const sel = `[data-testid="${id}"] input`
   await page.waitForSelector(sel, { timeout: 20_000 })
   if ((await switchIsOn(page, id)) !== on) await page.click(sel, { timeout: 15_000 })
-  const settled = await settle(() => switchIsOn(page, id), (v) => v === on, { timeoutMs: 8_000 })
+  const settled = await settle(
+    () => switchIsOn(page, id),
+    (v) => v === on,
+    { timeoutMs: 8_000 },
+  )
   return settled === on
 }

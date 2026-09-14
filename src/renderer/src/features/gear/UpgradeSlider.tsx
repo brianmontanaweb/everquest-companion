@@ -40,7 +40,8 @@ export interface UpgradeSliderProps {
 
 export default function UpgradeSlider({ state, onChange }: UpgradeSliderProps): JSX.Element {
   const max = fractionMax(state.full)
-  const base = state.full === ITEM_UPGRADE_BASE.full && state.fraction === ITEM_UPGRADE_BASE.fraction
+  const base =
+    state.full === ITEM_UPGRADE_BASE.full && state.fraction === ITEM_UPGRADE_BASE.fraction
   return (
     <Stack
       direction="row"

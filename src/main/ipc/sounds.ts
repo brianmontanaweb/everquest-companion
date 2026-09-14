@@ -7,7 +7,7 @@ import {
   fetchPreviewSound,
   fetchRegistry,
   findRegistryPack,
-  uninstallPack
+  uninstallPack,
 } from '../packRegistry'
 import { installPackWithRetry } from '../packInstallRun'
 import { isSafePackId } from '../security'
@@ -17,7 +17,7 @@ import {
   getDefaultSoundPackId,
   getSoundPackPrefs,
   recordPackRemoved,
-  setDefaultSoundPack
+  setDefaultSoundPack,
 } from '../storeSoundPacks'
 import { importUserSounds, listImportedSounds, removeUserSound } from '../userSounds'
 import { getMainWindow, sendToMain } from '../windows'
@@ -36,7 +36,7 @@ export function registerSoundsIpc(): void {
   // and it is read HERE rather than inside sounds.ts because that module is loaded by node:test
   // and the store is not. One read per fetch is a store hit on a cached object, not a file read.
   ipcMain.handle(IPC.getSoundData, (_e, packId: string, soundId: string) =>
-    isSafePackId(packId) ? getSoundData(packId, soundId, getDefaultSoundPackId()) : null
+    isSafePackId(packId) ? getSoundData(packId, soundId, getDefaultSoundPackId()) : null,
   )
 
   // ---- the default-pack preference (JOS-273) ----
@@ -45,7 +45,7 @@ export function registerSoundsIpc(): void {
   // real value meaning "use whatever the app ships".
   ipcMain.handle(IPC.getSoundPackPrefs, () => getSoundPackPrefs())
   ipcMain.handle(IPC.setDefaultSoundPack, (_e, packId: string | null) =>
-    setDefaultSoundPack(isSafePackId(packId) ? packId : null)
+    setDefaultSoundPack(isSafePackId(packId) ? packId : null),
   )
 
   // ---- the user's own sounds (JOS-68) ----
@@ -56,7 +56,7 @@ export function registerSoundsIpc(): void {
   ipcMain.handle(IPC.listUserSounds, () => listImportedSounds())
   ipcMain.handle(IPC.importUserSounds, () => importUserSounds(getMainWindow()))
   ipcMain.handle(IPC.removeUserSound, (_e, soundId: string) =>
-    removeUserSound(typeof soundId === 'string' ? soundId : '')
+    removeUserSound(typeof soundId === 'string' ? soundId : ''),
   )
 
   // ---- sound-pack registry (openpeon.com integration, Task #29) ----
@@ -95,7 +95,9 @@ export function registerSoundsIpc(): void {
     // (storeSoundPacks.ts decides which ids qualify). A failed one is not a statement about
     // anything, so nothing is written on that path.
     if (ok) recordPackRemoved(name)
-    return ok ? { ok: true as const } : { ok: false as const, error: 'pack not found or not removable' }
+    return ok
+      ? { ok: true as const }
+      : { ok: false as const, error: 'pack not found or not removable' }
   })
   // Preview a registry pack BEFORE install (Task #31): list its sounds / stream one.
   ipcMain.handle(IPC.packsPreviewList, async (_e, name: string) => {

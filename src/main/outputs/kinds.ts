@@ -26,7 +26,7 @@ export {
   OUTPUT_KINDS,
   type OutputFileStatus,
   type OutputKindDef,
-  type OutputKindId
+  type OutputKindId,
 } from '../../shared/outputs/kinds'
 
 /** The inventory kind's payload — the deep model (shared/outputs/inventory.ts). */
@@ -70,6 +70,6 @@ export function parseOutput(id: OutputKindId, text: string): OutputParseResult {
     ok: false,
     kind: id,
     reason: 'unsupported',
-    message: `unsupported: no verified sample for ${def.command}. ${def.note}`
+    message: `unsupported: no verified sample for ${def.command}. ${def.note}`,
   }
 }

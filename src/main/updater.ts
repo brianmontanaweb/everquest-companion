@@ -150,7 +150,7 @@ import {
   isInterruptedFailure,
   isStaleVersion,
   nextCheckDelayMs,
-  shouldRetryCheck
+  shouldRetryCheck,
 } from '../shared/update'
 import { logError, logInfo, logWarn } from './errorLog'
 import {
@@ -159,7 +159,7 @@ import {
   logUpdateFailure,
   routeUpdaterLibraryError,
   type UpdateLogSinks,
-  type UpdateStep
+  type UpdateStep,
 } from './updateLog'
 import { getUpdateChannel, getUpdateLastCheckedAt, setUpdateLastCheckedAt } from './store'
 import { classifyFailure, recordEvent } from './telemetry'
@@ -196,7 +196,7 @@ const LIBRARY_LOGGER = {
       default:
         logError(UPDATER_LIBRARY_SOURCE, message)
     }
-  }
+  },
 }
 
 let timer: ReturnType<typeof setTimeout> | null = null
@@ -420,7 +420,7 @@ function applyStagedUpdate(flushStore: () => void): void {
  */
 function registerUpdaterEvents(
   currentVersion: string,
-  { push, checkDone, retryOnResume }: StatusSinks
+  { push, checkDone, retryOnResume }: StatusSinks,
 ): void {
   autoUpdater.on('checking-for-update', () => push({ state: 'checking' }))
 
@@ -449,7 +449,7 @@ function registerUpdaterEvents(
         // symptom and the security software is the thing the user can do something about.
         message: downloadBlocked
           ? SIGNATURE_BLOCKED_PAUSED_MESSAGE
-          : `Download of v${key} failed ${attempts} times - paused. Use "Check for updates" to retry.`
+          : `Download of v${key} failed ${attempts} times - paused. Use "Check for updates" to retry.`,
       })
       return
     }
@@ -472,8 +472,8 @@ function registerUpdaterEvents(
     push({
       state: 'downloading',
       percent: Math.round(p?.percent ?? 0),
-      version: downloading ?? lastStatus.version
-    })
+      version: downloading ?? lastStatus.version,
+    }),
   )
 
   autoUpdater.on('update-downloaded', (info) => {
@@ -525,7 +525,12 @@ function registerUpdaterEvents(
     // Downloads are untouched: they have their own bounded retry (MAX_DOWNLOAD_ATTEMPTS).
     // `checkInFlight` is what makes the swallow safe: only a failure `runCheck` is
     // waiting on may be withheld, so a stray 'error' can never leave a verdict unpushed.
-    if (step === 'check' && checkInFlight && !retryPending && shouldRetryCheck(err, checkAttempts)) {
+    if (
+      step === 'check' &&
+      checkInFlight &&
+      !retryPending &&
+      shouldRetryCheck(err, checkAttempts)
+    ) {
       // THE SWALLOWED ATTEMPT IS LOGGED ANYWAY (JOS-295), and it is logged as `retrying`. No
       // verdict, no telemetry and no backoff tick belong to it — but the RAW error does, or the
       // store would describe a single-shot check and could never answer whether the retry helps.
@@ -568,7 +573,7 @@ function registerUpdaterEvents(
  */
 export function initUpdater(
   getMainWindow: () => BrowserWindow | null,
-  flushStore: () => void
+  flushStore: () => void,
 ): void {
   // PERSISTED "last checked" (Task #60): read before anything else so the very
   // first status the renderer pulls already carries a truthful age. An

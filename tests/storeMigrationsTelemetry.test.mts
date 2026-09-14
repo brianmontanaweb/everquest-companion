@@ -32,7 +32,7 @@ import {
   CURRENT_SCHEMA_VERSION,
   SCHEMA_VERSION_KEY,
   migrateStoreData,
-  type StoreData
+  type StoreData,
 } from '../src/main/storeMigrations'
 import { DEFAULT_TELEMETRY_PREFS } from '../src/shared/telemetry'
 
@@ -61,13 +61,24 @@ test('a v5 store gains the telemetry blob at its defaults, and nothing else move
     enabled: true,
     noticeShown: false,
     analyticsId: null,
-    funnelsDone: []
+    funnelsDone: [],
   })
 
   // Everything the user already had is byte-identical: this step ADDS, it never edits.
-  const untouched = ['byCharacter', 'activeLogPath', 'eqInstallDir', 'windowBounds', 'alerts',
-    'alertPrefs', 'alertSoundMigration', 'overlays', 'updateChannel', 'updateLastCheckedAt',
-    'cursorRing', 'overlayAutoHide']
+  const untouched = [
+    'byCharacter',
+    'activeLogPath',
+    'eqInstallDir',
+    'windowBounds',
+    'alerts',
+    'alertPrefs',
+    'alertSoundMigration',
+    'overlays',
+    'updateChannel',
+    'updateLastCheckedAt',
+    'cursorRing',
+    'overlayAutoHide',
+  ]
   for (const key of untouched) {
     assert.deepEqual(data[key], before[key], `${key} must come through untouched`)
   }
@@ -79,7 +90,7 @@ test('a v5 store gains the telemetry blob at its defaults, and nothing else move
     engine: was['engine'],
     voiceId: was['voiceId'],
     rate: was['rate'],
-    volume: was['volume']
+    volume: was['volume'],
   })
 })
 
@@ -101,13 +112,13 @@ test('an EXISTING telemetry blob is repaired field by field, never replaced whol
   // something that is not a UUID (the collector then mints a fresh one).
   const { data } = migrateStoreData({
     [SCHEMA_VERSION_KEY]: 5,
-    telemetry: { enabled: false, noticeShown: true, analyticsId: 'Primitive@freeport' }
+    telemetry: { enabled: false, noticeShown: true, analyticsId: 'Primitive@freeport' },
   })
   assert.deepEqual(data['telemetry'], {
     enabled: false,
     noticeShown: true,
     analyticsId: null,
-    funnelsDone: []
+    funnelsDone: [],
   })
 
   // A real id survives untouched — rotation is the user's action, never a side effect.
@@ -116,12 +127,16 @@ test('an EXISTING telemetry blob is repaired field by field, never replaced whol
     enabled: true,
     noticeShown: false,
     analyticsId: ID,
-    funnelsDone: []
+    funnelsDone: [],
   })
 
   for (const junk of [null, 42, 'nonsense', [], { nested: true }]) {
     const out = migrateStoreData({ [SCHEMA_VERSION_KEY]: 5, telemetry: junk })
-    assert.deepEqual(out.data['telemetry'], DEFAULT_TELEMETRY_PREFS, `${JSON.stringify(junk)} ⇒ defaults`)
+    assert.deepEqual(
+      out.data['telemetry'],
+      DEFAULT_TELEMETRY_PREFS,
+      `${JSON.stringify(junk)} ⇒ defaults`,
+    )
   }
 })
 
@@ -131,7 +146,7 @@ test('a store that already carries the blob is not re-defaulted by a later run',
   const once = migrateStoreData(fixture(V5))
   const configured = {
     ...once.data,
-    telemetry: { enabled: false, noticeShown: true, analyticsId: ID }
+    telemetry: { enabled: false, noticeShown: true, analyticsId: ID },
   }
   const twice = migrateStoreData(configured)
   assert.equal(twice.status, 'up-to-date')

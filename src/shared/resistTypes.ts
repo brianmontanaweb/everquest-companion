@@ -484,7 +484,8 @@ export type ResistTag = 'weak' | 'normal' | 'resistant' | 'very resistant'
  * The tag is the label and this is the advice, and they are the same three bands read two ways —
  * `resistant` means `needs overchannel`, every time, on every surface.
  */
-export type ResistGuidance = 'should land' | 'needs overchannel' | 'may not land even with overchannel'
+export type ResistGuidance =
+  'should land' | 'needs overchannel' | 'may not land even with overchannel'
 
 /** One axis row on the card. `tag` is null ONLY at n = 0, which draws as "no data". */
 export interface MobResistAxis {

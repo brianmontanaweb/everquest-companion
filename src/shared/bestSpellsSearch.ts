@@ -57,7 +57,7 @@ import {
   type BestSpellFocus,
   type BestSpellRow,
   type BestSpellSort,
-  type BestSpellTab
+  type BestSpellTab,
 } from './bestSpells'
 import type { WornFocus } from './wornFocus'
 import type { ClassAbbr } from './classCombo'
@@ -70,7 +70,7 @@ import {
   matchesCompiledQuery,
   type CompiledSpellQuery,
   type SearchClassLevel,
-  type SpellSearchToken
+  type SpellSearchToken,
 } from './spellSearch'
 import { foldClassLevels, unlockSearchSurface } from './unlockSearch'
 
@@ -118,7 +118,7 @@ export const EMPTY_BEST_SPELL_SEARCH: BestSpellSearchResults = {
   rows: [],
   matched: 0,
   hidden: 0,
-  elsewhere: 0
+  elsewhere: 0,
 }
 
 /**
@@ -196,7 +196,11 @@ interface SpellReading {
  * all, and a heal is not a DD row. The ranks are the readout's own (`max(observed, simulated)`),
  * so a result and a ranked row of the same spell can never disagree about which rung it is read at.
  */
-function readingOf(spell: UnlockSpell, ask: BestSpellSearchAsk, gainedAt: number): SpellReading | null {
+function readingOf(
+  spell: UnlockSpell,
+  ask: BestSpellSearchAsk,
+  gainedAt: number,
+): SpellReading | null {
   const area = ask.tab === 'aoe'
   if (area && !isAeTargetType(spell.targetType)) return null
   const observedRank = normalizeSpellRank(observedRankRow(ask.observed, spell.name)?.rank)
@@ -209,7 +213,7 @@ function readingOf(spell: UnlockSpell, ask: BestSpellSearchAsk, gainedAt: number
     rank,
     targets,
     focusDamagePct: pctOfSide(focus, 'damage'),
-    focusHealPct: pctOfSide(focus, 'heal')
+    focusHealPct: pctOfSide(focus, 'heal'),
   })
   if (!metrics || !spellInTab(ask.tab, metrics)) return null
   return { metrics, rank, observedRank, targets, focus }
@@ -223,13 +227,20 @@ function readingOf(spell: UnlockSpell, ask: BestSpellSearchAsk, gainedAt: number
  * game gets it at — because that is the honest answer to "when does this exist", and the chips
  * beside it name which class that is.
  */
-function gainLevelOf(owned: { gainedAt: number } | null, levels: readonly SearchClassLevel[]): number {
+function gainLevelOf(
+  owned: { gainedAt: number } | null,
+  levels: readonly SearchClassLevel[],
+): number {
   if (owned) return owned.gainedAt
   return levels.length > 0 ? Math.min(...levels.map((p) => p.level)) : 0
 }
 
 /** One matched spell as a result row, or null when this tab cannot read it. */
-function searchRow(found: FoldedMatch, ask: BestSpellSearchAsk, want: ReadonlySet<string>): BestSpellSearchRow | null {
+function searchRow(
+  found: FoldedMatch,
+  ask: BestSpellSearchAsk,
+  want: ReadonlySet<string>,
+): BestSpellSearchRow | null {
   // The gain level is resolved FIRST since JOS-452: it is the level the row prints and the level the
   // focus's `Limit Max Level` is tested against, and those two must be one number.
   const levels = foldClassLevels(found.pairs)
@@ -250,7 +261,7 @@ function searchRow(found: FoldedMatch, ask: BestSpellSearchAsk, want: ReadonlySe
     hits: spellHitsFor(found.spell, reading.targets),
     ...(reading.focus.length > 0 ? { focus: reading.focus } : {}),
     levels,
-    owned: owned !== null
+    owned: owned !== null,
   }
 }
 
@@ -265,7 +276,7 @@ function searchRow(found: FoldedMatch, ask: BestSpellSearchAsk, want: ReadonlySe
 export function searchBestSpells(
   data: LevelUnlockData,
   tokens: readonly SpellSearchToken[],
-  ask: BestSpellSearchAsk
+  ask: BestSpellSearchAsk,
 ): BestSpellSearchResults {
   if (tokens.length === 0 || !Number.isFinite(ask.level)) return EMPTY_BEST_SPELL_SEARCH
   const q = compileSpellQuery(tokens)
@@ -283,7 +294,7 @@ export function searchBestSpells(
     rows: sorted.slice(0, cap),
     matched: sorted.length,
     hidden: Math.max(0, sorted.length - cap),
-    elsewhere
+    elsewhere,
   }
 }
 

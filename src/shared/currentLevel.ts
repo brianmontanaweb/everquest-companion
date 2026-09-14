@@ -138,7 +138,7 @@ function agoText(ms: number): string {
 /** The words for each source, in the two places they are needed. */
 const SOURCE_WORDS: Record<LevelSource, { from: string; said: string }> = {
   who: { from: '/who', said: 'Your own /who row stated this level' },
-  ding: { from: 'level-up', said: 'Your last level-up reported this level' }
+  ding: { from: 'level-up', said: 'Your last level-up reported this level' },
 }
 
 /**
@@ -158,7 +158,7 @@ const STALE_CAVEAT =
  */
 export function currentLevelRead(
   fact: LevelStatement | null | undefined,
-  snap: ProgressionSnap
+  snap: ProgressionSnap,
 ): CurrentLevelRead | null {
   const statement = fact ?? dingStatement(snap)
   if (!statement) return null
@@ -181,6 +181,6 @@ export function currentLevelRead(
     stale,
     from: words.from,
     cue,
-    title
+    title,
   }
 }

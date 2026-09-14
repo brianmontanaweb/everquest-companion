@@ -20,7 +20,13 @@ import type { OverlayDrill, CharacterSnap } from '@shared/types'
 import { type DamageCategory, type SegmentView, type SourceView } from '@shared/combat'
 import { formatNum as fmt, formatRate } from '../lib/formatRate'
 import { type FlatSkill, type SkillRow } from '../features/combat/dashboardData'
-import { laneDps, meterPanel, type MeterPanel, type OwnRow, type PetRow } from '../features/combat/petRows'
+import {
+  laneDps,
+  meterPanel,
+  type MeterPanel,
+  type OwnRow,
+  type PetRow,
+} from '../features/combat/petRows'
 import { useCombinePetRow } from '../features/combat/useCombatPrefs'
 import { useOverlayModule } from './useOverlayModule'
 import { selfMeterLabel, withSelfLabel } from '../features/combat/selfMeterLabel'
@@ -53,7 +59,7 @@ const KIND_COLOR: Record<string, string> = {
   allyPet: '#5b7f95',
   member: '#7fbf8f',
   other: '#5f8f74',
-  enemy: '#cf6679'
+  enemy: '#cf6679',
 }
 // The one-word tag after a bar's name. KEEP IN SYNC with the app's KIND_TAG (features/combat/
 // EntityRow.tsx), which carries the argument for each word — in particular why `other` (JOS-430)
@@ -62,7 +68,7 @@ const KIND_SUFFIX: Record<string, string> = {
   pet: ' ·pet',
   member: ' ·group',
   allyPet: ' ·ally',
-  other: ' ·other'
+  other: ' ·other',
 }
 // KEEP IN SYNC with the app's CAT_COLOR (features/combat/combatShared.tsx) — the overlay is a
 // separate renderer entry with no MUI theme, so it carries its own copy. 'slay' is a radiant
@@ -73,9 +79,8 @@ const CAT_COLOR: Record<DamageCategory, string> = {
   slay: '#f6f0da',
   spell: '#a98fe0',
   dot: '#6fb3d2',
-  ds: '#cf6679'
+  ds: '#cf6679',
 }
-
 
 /**
  * A single horizontal bar: label + right-text + pct-fill. Dense + high-contrast. Clickable to drill.
@@ -92,7 +97,7 @@ function Bar({
   label,
   right,
   onClick,
-  accent
+  accent,
 }: {
   color: string
   pct: number
@@ -116,11 +121,23 @@ function Bar({
         marginBottom: 2,
         overflow: 'hidden',
         cursor: onClick ? 'pointer' : 'default',
-        background: 'rgba(255,255,255,0.06)'
+        background: 'rgba(255,255,255,0.06)',
       }}
     >
-      <div style={{ position: 'absolute', inset: 0, width: `${Math.max(2, pct)}%`, background: color, opacity: 0.55 }} />
-      {accent && <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: accent }} />}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: `${Math.max(2, pct)}%`,
+          background: color,
+          opacity: 0.55,
+        }}
+      />
+      {accent && (
+        <div
+          style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: accent }}
+        />
+      )}
       <div
         style={{
           position: 'absolute',
@@ -131,13 +148,23 @@ function Bar({
           gap: 6,
           fontSize: 11,
           lineHeight: 1,
-          textShadow: '0 1px 2px rgba(0,0,0,0.9)'
+          textShadow: '0 1px 2px rgba(0,0,0,0.9)',
         }}
       >
         {rank != null && (
-          <span style={{ color: 'rgba(255,255,255,0.55)', width: 12, textAlign: 'right' }}>{rank}</span>
+          <span style={{ color: 'rgba(255,255,255,0.55)', width: 12, textAlign: 'right' }}>
+            {rank}
+          </span>
         )}
-        <span style={{ fontWeight: 600, flexGrow: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <span
+          style={{
+            fontWeight: 600,
+            flexGrow: 1,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
           {label}
         </span>
         <span style={{ whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{right}</span>
@@ -223,11 +250,16 @@ function SkillLine({ s, activeSec }: { s: SkillRow; activeSec: number }): JSX.El
             <span style={{ color: CAT_COLOR.slay, fontWeight: 600 }}> · Slay Undead</span>
           )}
           {s.children && s.children.length > 0 && (
-            <span style={{ color: 'rgba(255,255,255,0.62)', fontWeight: 400 }}> · {s.children.length} skills</span>
+            <span style={{ color: 'rgba(255,255,255,0.62)', fontWeight: 400 }}>
+              {' '}
+              · {s.children.length} skills
+            </span>
           )}
           {/* Labeled stats ride inside the bar, dimmed against the name; the right end
               of every row stays the total alone so the list scans as a ranking. */}
-          <span style={{ marginLeft: 6, color: 'rgba(255,255,255,0.62)', fontWeight: 400 }}>{skillStat(s)}</span>
+          <span style={{ marginLeft: 6, color: 'rgba(255,255,255,0.62)', fontWeight: 400 }}>
+            {skillStat(s)}
+          </span>
         </>
       }
       right={`${formatRate(laneDps(s.total, activeSec))} · ${fmt(s.total)}`}
@@ -245,7 +277,15 @@ function SkillLine({ s, activeSec }: { s: SkillRow; activeSec: number }): JSX.El
  * Its right-hand text is a rate + total, exactly like a level-1 source bar, because that is what
  * it stands for — a whole source, folded to one line.
  */
-function PetLine({ pet, pct, onDrill }: { pet: PetRow; pct: number; onDrill?: () => void }): JSX.Element {
+function PetLine({
+  pet,
+  pct,
+  onDrill,
+}: {
+  pet: PetRow
+  pct: number
+  onDrill?: () => void
+}): JSX.Element {
   return (
     <Bar
       color={KIND_COLOR.pet}
@@ -277,7 +317,7 @@ function MeterEmpty({ live }: { live: boolean }): JSX.Element {
  *  you which of your group is worth seeing. */
 function SourceLines({
   sources,
-  setDrill
+  setDrill,
 }: {
   sources: SourceView[]
   setDrill: ((d: Drill | null) => void) | null
@@ -305,7 +345,11 @@ function SourceLines({
 }
 
 /** One row of a level-2 list: a lane of the subject's, or a whole pet folded into one line. */
-function ownLine(r: OwnRow, activeSec: number, setDrill: ((d: Drill | null) => void) | null): JSX.Element {
+function ownLine(
+  r: OwnRow,
+  activeSec: number,
+  setDrill: ((d: Drill | null) => void) | null,
+): JSX.Element {
   return r.kind === 'pet' ? (
     <PetLine
       key={r.pet.id}
@@ -333,7 +377,7 @@ function DrilledBars({
   activeSec,
   dur,
   total,
-  setDrill
+  setDrill,
 }: {
   panel: Extract<MeterPanel, { level: 2 }>
   activeSec: number
@@ -381,12 +425,16 @@ export function MeterBars({
   const [combine] = useCombinePetRow()
   // The self row as the character's own name — the SAME pref and the SAME localStorage key the
   // Combat tab reads (one origin, one store, a 'storage' event when Preferences writes it).
-  const selfName = useOverlayModule<CharacterSnap>('character', NO_CHARACTER).character?.name ?? null
+  const selfName =
+    useOverlayModule<CharacterSnap>('character', NO_CHARACTER).character?.name ?? null
   const selfLabel = selfMeterLabel(selfName, useShowSelfName())
   // …and the SAME scope filter, out of the same shared module (features/combat/meterScope). It
   // returns the identical array by reference when nothing is filtered out, so a solo session
   // pays nothing and this memo does not churn.
-  const scoped = useMemo(() => scopeSources(seg?.entities ?? [], scope, roster), [seg, scope, roster])
+  const scoped = useMemo(
+    () => scopeSources(seg?.entities ?? [], scope, roster),
+    [seg, scope, roster],
+  )
   // The self relabel rides on top — `withSelfLabel` returns `scoped` BY REFERENCE when the label
   // is null (pref off, or the name not known yet) or no row is the self row, so the default path
   // is reference-stable and this memo does not churn either.
@@ -410,7 +458,15 @@ export function MeterBars({
   const total: CrumbTotal = { text: formatRate(seg.outDps), accent: ACCENT }
 
   if (panel.level !== 1)
-    return <DrilledBars panel={panel} activeSec={seg.activeSec} dur={dur} total={total} setDrill={setDrill} />
+    return (
+      <DrilledBars
+        panel={panel}
+        activeSec={seg.activeSec}
+        dur={dur}
+        total={total}
+        setDrill={setDrill}
+      />
+    )
 
   return (
     <MeterCrumb name={null} dur={dur} total={total} onBack={null}>

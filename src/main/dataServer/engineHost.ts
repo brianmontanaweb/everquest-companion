@@ -86,14 +86,14 @@ import {
   isCargoTargetBinary,
   stagedEngineNames,
   type EngineBinaryEnv,
-  type EngineProfile
+  type EngineProfile,
 } from './engineProtocol'
 import { connectToEngine } from './socketChannel'
 import {
   createEngineSupervisor,
   type EngineStatus,
   type EngineSupervisor,
-  type SupervisedChild
+  type SupervisedChild,
 } from './supervisor'
 // THE APP'S OWN CLIENT (JOS-479, phase 3). It lives behind THIS file's flag and nothing else, which
 // is why it reads no environment variable of its own: one gate, in one place.
@@ -110,7 +110,7 @@ import {
   noteEngineCandidates,
   noteEngineFault,
   noteEngineRetrying,
-  noteEngineStarting
+  noteEngineStarting,
 } from './engineLaunchState'
 
 /** How long a loopback connect may take before the probe gives up on it. Loopback either answers
@@ -190,7 +190,7 @@ function resolveEngineBinary(): string | null {
     // …AND THE PROFILE OPT-IN (JOS-520), read here because this file owns the environment and
     // `engineProtocol.ts` owns nothing but arithmetic. Per LAUNCH and never written down, which is
     // the whole of "afterwards it should swap back".
-    profile: devEngineProfile()
+    profile: devEngineProfile(),
   }
   const candidates = engineBinaryCandidates(env)
   // THE SAME LIST THE NARRATION USES, KEPT FOR THE PERSON (JOS-503). "Where it looked" is the
@@ -211,7 +211,7 @@ function resolveEngineBinary(): string | null {
     if (!app.isPackaged && env.profile === undefined) {
       logInfo(
         `[everquest-companion] …a cargo DEBUG build is not a candidate unless a launch names it: ` +
-          `set ${ENGINE_PROFILE_ENV}=debug to run it, or build release with \`cargo build --release -p engined\``
+          `set ${ENGINE_PROFILE_ENV}=debug to run it, or build release with \`cargo build --release -p engined\``,
       )
     }
     return null
@@ -248,7 +248,7 @@ function devEngineProfile(): EngineProfile | undefined {
   if (profile === null && raw.trim() !== '') {
     logWarn(
       `[everquest-companion] ${ENGINE_PROFILE_ENV}=${raw} is not a cargo profile — ` +
-        'expected `debug` or `release`; this launch resolves the RELEASE engine as usual'
+        'expected `debug` or `release`; this launch resolves the RELEASE engine as usual',
     )
   }
   return profile ?? undefined
@@ -330,7 +330,9 @@ function stageDevBinary(binPath: string): string {
   try {
     mkdirSync(dir, { recursive: true })
   } catch (err) {
-    logInfo(`[everquest-companion] data-server engine: no staging directory (${describeErr(err)}); running the cargo binary in place`)
+    logInfo(
+      `[everquest-companion] data-server engine: no staging directory (${describeErr(err)}); running the cargo binary in place`,
+    )
     return binPath
   }
   if (!swept) {
@@ -345,13 +347,17 @@ function stageDevBinary(binPath: string): string {
     const dest = join(dir, name)
     try {
       copyFileSync(binPath, dest)
-      logInfo(`[everquest-companion] data-server engine: running a copy at ${dest} so cargo can relink ${binPath}`)
+      logInfo(
+        `[everquest-companion] data-server engine: running a copy at ${dest} so cargo can relink ${binPath}`,
+      )
       return dest
     } catch (err) {
       lastErr = err
     }
   }
-  logInfo(`[everquest-companion] data-server engine: could not stage a copy (${describeErr(lastErr)}); running the cargo binary in place — a build will fail to link while this app is up`)
+  logInfo(
+    `[everquest-companion] data-server engine: could not stage a copy (${describeErr(lastErr)}); running the cargo binary in place — a build will fail to link while this app is up`,
+  )
   return binPath
 }
 
@@ -374,7 +380,7 @@ function spawnEngine(binPath: string): SupervisedChild {
   return spawn(binPath, [], {
     stdio: ['pipe', 'pipe', 'pipe'],
     windowsHide: true,
-    cwd: dirOf(binPath)
+    cwd: dirOf(binPath),
   })
 }
 
@@ -439,8 +445,12 @@ export function startEngineSupervisor(): void {
     // probe still armed answers for an engine that is not awake yet; the watchdog stands down and
     // asks again after a grace instead. Never removed: a supervisor lives as long as the process.
     powerEvents: (handlers) => {
-      powerMonitor.on('suspend', () => { handlers.suspend() })
-      powerMonitor.on('resume', () => { handlers.resume() })
+      powerMonitor.on('suspend', () => {
+        handlers.suspend()
+      })
+      powerMonitor.on('resume', () => {
+        handlers.resume()
+      })
     },
     debug: (line) => logInfo(`[everquest-companion] ${line}`),
     // The name/message/code triple `engineProtocol.ts` built. `logError` reads `name`, `message`,
@@ -518,7 +528,7 @@ export function startEngineSupervisor(): void {
     // supervisor's own (`report`); this is the sequence a crash report carries.
     onServedExit: () => {
       noteEngineEdge('engine:cycled')
-    }
+    },
   })
   supervisor.start()
 }

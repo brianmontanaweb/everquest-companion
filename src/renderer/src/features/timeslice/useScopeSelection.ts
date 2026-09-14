@@ -38,7 +38,7 @@ import {
   SCOPE_SELECTION_OPENING,
   normalizeScopeSelection,
   sameScopeSelection,
-  type ScopeSelection
+  type ScopeSelection,
 } from '../../../../shared/scopeSelection'
 
 /**
@@ -140,10 +140,20 @@ export function useScopeSelection(bridge: ScopeSelectionBridge | undefined): Sco
       adopt({ ...selection, ...p })
       bridge?.setScopeSelection(p)
     },
-    [bridge]
+    [bridge],
   )
-  const setZoneScope = useCallback((next: ZoneScope) => { patch({ zoneScope: next }) }, [patch])
-  const setBasis = useCallback((next: RateBasis) => { patch({ basis: next }) }, [patch])
+  const setZoneScope = useCallback(
+    (next: ZoneScope) => {
+      patch({ zoneScope: next })
+    },
+    [patch],
+  )
+  const setBasis = useCallback(
+    (next: RateBasis) => {
+      patch({ basis: next })
+    },
+    [patch],
+  )
 
   return { ...selection, setZoneScope, setBasis }
 }

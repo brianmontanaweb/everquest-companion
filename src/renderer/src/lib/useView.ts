@@ -63,7 +63,7 @@ function descriptorKey(descriptor: ViewDescriptor): string {
     descriptor.source,
     descriptor.filter ?? null,
     descriptor.sort ?? null,
-    descriptor.window ?? null
+    descriptor.window ?? null,
   ])
 }
 

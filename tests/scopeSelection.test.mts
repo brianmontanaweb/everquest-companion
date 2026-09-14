@@ -38,7 +38,7 @@ import {
   normalizeScopePatch,
   normalizeScopeSelection,
   sameScopeSelection,
-  type ScopeSelection
+  type ScopeSelection,
 } from '../src/shared/scopeSelection'
 import { RATE_BASIS_DEFAULT, RATE_BASIS_OPENING } from '../src/shared/rateBasis'
 import { ZONE_SCOPE_DEFAULT, ZONE_SCOPE_OPENING } from '../src/shared/zoneScope'
@@ -72,14 +72,18 @@ test('a PATCH is rebuilt, never trusted — it arrives on an ipcMain channel', (
   assert.deepEqual(normalizeScopePatch({ basis: 'active' }), { basis: 'active' })
   assert.deepEqual(normalizeScopePatch({ zoneScope: 'exactTier', basis: 'active' }), {
     zoneScope: 'exactTier',
-    basis: 'active'
+    basis: 'active',
   })
   // Unknown VALUES are dropped per field, so half a valid patch still lands — the honest read of
   // "this build cannot name that membership" is "that half does not move".
-  assert.deepEqual(normalizeScopePatch({ zoneScope: 'everyTier', basis: 'active' }), { basis: 'active' })
+  assert.deepEqual(normalizeScopePatch({ zoneScope: 'everyTier', basis: 'active' }), {
+    basis: 'active',
+  })
   assert.deepEqual(normalizeScopePatch({ basis: 'wall' }), {})
   // Unknown KEYS never survive: the wire cannot grow a third knob by being sent one.
-  assert.deepEqual(normalizeScopePatch({ zoneScope: 'exactTier', xpSlice: 'h1' }), { zoneScope: 'exactTier' })
+  assert.deepEqual(normalizeScopePatch({ zoneScope: 'exactTier', xpSlice: 'h1' }), {
+    zoneScope: 'exactTier',
+  })
   // And the shapes a hand-crafted send can take.
   for (const junk of [null, undefined, 2, 'exactTier', [], true]) {
     assert.deepEqual(normalizeScopePatch(junk), {}, `${JSON.stringify(junk)} is not a patch`)
@@ -90,9 +94,12 @@ test('a patch moves ONE half and leaves the other exactly where it was', () => {
   const current: ScopeSelection = { zoneScope: 'allTiers', basis: 'active' }
   assert.deepEqual(applyScopePatch(current, { zoneScope: 'exactTier' }), {
     zoneScope: 'exactTier',
-    basis: 'active'
+    basis: 'active',
   })
-  assert.deepEqual(applyScopePatch(current, { basis: 'elapsed' }), { zoneScope: 'allTiers', basis: 'elapsed' })
+  assert.deepEqual(applyScopePatch(current, { basis: 'elapsed' }), {
+    zoneScope: 'allTiers',
+    basis: 'elapsed',
+  })
   // A rejected patch is a NO-OP, not a reset: `setScopeSelection` leans on this to broadcast
   // nothing, and a reset here would hand every window the opening on a malformed send.
   assert.deepEqual(applyScopePatch(current, { basis: 'wall' }), current)
@@ -102,7 +109,7 @@ test('a patch moves ONE half and leaves the other exactly where it was', () => {
 test('a WHOLE selection falls back to the OPENING, never to the model defaults', () => {
   assert.deepEqual(normalizeScopeSelection({ zoneScope: 'allTiers', basis: 'active' }), {
     zoneScope: 'allTiers',
-    basis: 'active'
+    basis: 'active',
   })
   // A window that could not read the answer must show what a fresh window shows — not the
   // pre-JOS-291 read, which is what `ZONE_SCOPE_DEFAULT` would have given it.
@@ -122,16 +129,27 @@ test('equality is what makes a re-press free, in main and in the renderer alike'
 
 test('MAIN holds the selection, and holds it EPHEMERALLY', () => {
   const mod = code('../src/main/scopeSelection.ts')
-  assert.match(mod, /let selection: ScopeSelection = SCOPE_SELECTION_OPENING/, 'module scope IS the reset')
+  assert.match(
+    mod,
+    /let selection: ScopeSelection = SCOPE_SELECTION_OPENING/,
+    'module scope IS the reset',
+  )
   // No store, no migration: one fact cannot have two lifetimes, and this one is session-lifetime.
-  assert.doesNotMatch(mod, /electron-store|settingsStore|from '\.\/store'/, 'the selection grew a persisted home')
+  assert.doesNotMatch(
+    mod,
+    /electron-store|settingsStore|from '\.\/store'/,
+    'the selection grew a persisted home',
+  )
   // Untrusted input is rebuilt by the SHARED normalizer, never by a predicate written in main.
   assert.match(mod, /applyScopePatch\(selection, patch\)/)
   // A no-op write broadcasts nothing.
   assert.match(mod, /if \(sameScopeSelection\(next, selection\)\) return selection/)
   // EVERY window, on one channel — the main window and all overlay kinds, exactly like the fight
   // selection beside it. A subscriber registry is the thing this shape refuses.
-  assert.match(mod, /\[getMainWindow\(\), \.\.\.OVERLAY_KINDS\.map\(\(k\) => getOverlayWindow\(k\)\)\]/)
+  assert.match(
+    mod,
+    /\[getMainWindow\(\), \.\.\.OVERLAY_KINDS\.map\(\(k\) => getOverlayWindow\(k\)\)\]/,
+  )
   assert.match(mod, /webContents\.send\(IPC\.onScopeSelection, selection\)/)
 })
 
@@ -142,7 +160,10 @@ test('the handler pair is registered where the fight selection is, and validates
   // Three distinct channels, and none of them collides with the fight selection's.
   const ids = [IPC.scopeSelectionGet, IPC.scopeSelectionSet, IPC.onScopeSelection]
   assert.equal(new Set(ids).size, 3)
-  assert.ok(ids.every((id) => id.startsWith('scopeSelection:')), ids.join(', '))
+  assert.ok(
+    ids.every((id) => id.startsWith('scopeSelection:')),
+    ids.join(', '),
+  )
 })
 
 // ── 3. the bridge identity: the same three members, under the same names, in both preloads ──
@@ -152,13 +173,18 @@ test('BOTH preloads expose the same three members under the same names', () => {
   const overlay = code('../src/preload/overlay.ts')
   for (const [name, file] of [
     ['the main app bridge', app],
-    ['the overlay bridge', overlay]
+    ['the overlay bridge', overlay],
   ] as const) {
-    assert.match(file, /getScopeSelection: \(\): Promise<ScopeSelection> => ipcRenderer\.invoke\(IPC\.scopeSelectionGet\)/, name)
     assert.match(
       file,
+      /getScopeSelection: \(\): Promise<ScopeSelection> => ipcRenderer\.invoke\(IPC\.scopeSelectionGet\)/,
+      name,
+    )
+    // Prettier may wrap this arrow's body onto its own line; collapse whitespace before pinning.
+    assert.match(
+      file.replace(/\s+/g, ' '),
       /setScopeSelection: \(patch: Partial<ScopeSelection>\): void => ipcRenderer\.send\(IPC\.scopeSelectionSet, patch\)/,
-      name
+      name,
     )
     assert.match(file, /onScopeSelection: \(cb: \(s: ScopeSelection\) => void\)/, name)
     // The subscription is REMOVABLE — a preload that only ever adds listeners leaks one per mount.
@@ -178,7 +204,11 @@ test('the renderer store is a CACHE — one per window, written through to main'
   // Hydrate then subscribe, at most once per bridge.
   assert.match(hook, /bridge\.getScopeSelection\(\)\.then\(adopt/)
   assert.match(hook, /bridge\.onScopeSelection\(adopt\)/)
-  assert.match(hook, /if \(wiredTo === bridge\) return/, 'every consumer runs the effect; the wire must not')
+  assert.match(
+    hook,
+    /if \(wiredTo === bridge\) return/,
+    'every consumer runs the effect; the wire must not',
+  )
   // Optimistic locally, authoritative in main — and main's echo is free because `adopt` rebuilds
   // and compares.
   assert.match(hook, /bridge\?\.setScopeSelection\(p\)/)
@@ -190,7 +220,16 @@ test('the renderer store is a CACHE — one per window, written through to main'
 })
 
 test('both bundles call that ONE hook, each over its own bridge', () => {
-  assert.match(code('../src/renderer/src/features/timeslice/useTimeslice.ts'), /useScopeSelection\(window\.eq\)/)
-  assert.match(code('../src/renderer/src/features/timeslice/useRateBasis.ts'), /useScopeSelection\(window\.eq\)/)
-  assert.match(code('../src/renderer/src/overlay/XpOverlay.tsx'), /useScopeSelection\(window\.eqOverlay\)/)
+  assert.match(
+    code('../src/renderer/src/features/timeslice/useTimeslice.ts'),
+    /useScopeSelection\(window\.eq\)/,
+  )
+  assert.match(
+    code('../src/renderer/src/features/timeslice/useRateBasis.ts'),
+    /useScopeSelection\(window\.eq\)/,
+  )
+  assert.match(
+    code('../src/renderer/src/overlay/XpOverlay.tsx'),
+    /useScopeSelection\(window\.eqOverlay\)/,
+  )
 })

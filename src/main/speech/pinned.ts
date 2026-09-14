@@ -55,7 +55,7 @@ export const KOKORO_MODEL: PinnedAsset = {
   name: 'kokoro-v1.0.int8.onnx',
   url: 'https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.int8.onnx',
   sha256: '6e742170d309016e5891a994e1ce1559c702a2ccd0075e67ef7157974f6406cb',
-  bytes: 92_361_271
+  bytes: 92_361_271,
 }
 
 /** The 54-voice style-vector pack (`.npz`, stored entries — see voicePack.ts). */
@@ -63,7 +63,7 @@ export const KOKORO_VOICES_PACK: PinnedAsset = {
   name: 'voices-v1.0.bin',
   url: 'https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin',
   sha256: 'bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d',
-  bytes: 28_214_398
+  bytes: 28_214_398,
 }
 
 /** Everything the tier needs, in download order (model first — it is the long one). */
@@ -134,7 +134,7 @@ export const KOKORO_VOICE_ROWS: readonly KokoroVoiceRow[] = [
   { id: 'bm_fable', label: 'Fable (UK, male)', lang: GB },
   { id: 'bm_george', label: 'George (UK, male)', lang: GB },
   { id: 'bm_daniel', label: 'Daniel (UK, male)', lang: GB },
-  { id: 'bm_lewis', label: 'Lewis (UK, male)', lang: GB }
+  { id: 'bm_lewis', label: 'Lewis (UK, male)', lang: GB },
 ]
 
 /** The default voice when the user has expressed no preference — upstream's top-graded one. */
@@ -157,7 +157,7 @@ export function kokoroVoicesFor(availableIds: ReadonlySet<string>): SpeechVoice[
     id: r.id,
     label: r.label,
     engine: 'kokoro' as const,
-    lang: r.lang
+    lang: r.lang,
   }))
 }
 
@@ -242,15 +242,31 @@ const vcFile = (name: string, sha256: string, bytes: number): VcRuntimeFile => (
   name,
   path: `${VC_ENTRY_DIR}${name}`,
   sha256,
-  bytes
+  bytes,
 })
 
 /** The measured import closure, in dependency order (each imports only the ones before it). */
 export const VC_RUNTIME_FILES: readonly VcRuntimeFile[] = [
-  vcFile('vcruntime140.dll', 'd5e4d9a3e835fa679450145d6a7d94e36573a509317111904d9b3712c30d9066', 124_544),
-  vcFile('vcruntime140_1.dll', '1f2d41c4aa5db0bc33ebf7b66d72943a817d7ce6cbe880502a9403823633093f', 49_792),
-  vcFile('msvcp140.dll', '0f885b509a685d2bbfa652fed26b5fb31d88fbdab0a978c641d1c7b8aa460aa9', 557_728),
-  vcFile('msvcp140_1.dll', 'bfad5aef4c63a669e3c140655cdfdf395b6c979b400a447bd5dcb65ed8826c3d', 35_952)
+  vcFile(
+    'vcruntime140.dll',
+    'd5e4d9a3e835fa679450145d6a7d94e36573a509317111904d9b3712c30d9066',
+    124_544,
+  ),
+  vcFile(
+    'vcruntime140_1.dll',
+    '1f2d41c4aa5db0bc33ebf7b66d72943a817d7ce6cbe880502a9403823633093f',
+    49_792,
+  ),
+  vcFile(
+    'msvcp140.dll',
+    '0f885b509a685d2bbfa652fed26b5fb31d88fbdab0a978c641d1c7b8aa460aa9',
+    557_728,
+  ),
+  vcFile(
+    'msvcp140_1.dll',
+    'bfad5aef4c63a669e3c140655cdfdf395b6c979b400a447bd5dcb65ed8826c3d',
+    35_952,
+  ),
 ]
 
 /** The archive those four come out of — downloaded by the same pinned machinery as the model. */
@@ -261,5 +277,5 @@ export const VC_REDIST_PAYLOAD: PinnedAsset = {
     '4aaf54db0bfc9435f7c3660e1a00237a4b556042bfeea64bde44c2e0194e6ee5/' +
     'Microsoft.VC.14.44.17.14.CRT.Redist.X64.base.vsix',
   sha256: '4aaf54db0bfc9435f7c3660e1a00237a4b556042bfeea64bde44c2e0194e6ee5',
-  bytes: 3_224_191
+  bytes: 3_224_191,
 }

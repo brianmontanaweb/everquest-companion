@@ -77,7 +77,7 @@ export const EXTERNAL_LINK_ALLOWLIST: readonly ExternalLinkRule[] = [
   { host: 'eqlwiki.com' },
   { host: 'www.eqlwiki.com' },
   { host: 'wiki.project1999.com' },
-  { host: 'github.com', pathPrefix: '/jmoyers/everquest-companion' }
+  { host: 'github.com', pathPrefix: '/jmoyers/everquest-companion' },
 ]
 
 const ALLOWED_LINK_RULES = new Map(EXTERNAL_LINK_ALLOWLIST.map((r) => [r.host, r] as const))
@@ -248,7 +248,12 @@ export function isInsideDir(path: string, dir: string): boolean {
  * refused too, so a pack can never be `..` or a hidden dir.
  */
 export function isSafePackId(id: unknown): id is string {
-  return typeof id === 'string' && id.length > 0 && id.length <= 128 && /^[A-Za-z0-9_][A-Za-z0-9._-]*$/.test(id)
+  return (
+    typeof id === 'string' &&
+    id.length > 0 &&
+    id.length <= 128 &&
+    /^[A-Za-z0-9_][A-Za-z0-9._-]*$/.test(id)
+  )
 }
 
 // ---- registry `source_*` fields: same registry, same trust as the pack name ----------
@@ -320,5 +325,7 @@ export function isSafeSourcePath(v: unknown): v is string {
   if (v.startsWith('/') || /^[A-Za-z]:/.test(v)) return false
   const trimmed = v.replace(/\/+$/, '')
   if (trimmed === '') return false
-  return trimmed.split('/').every((s) => s !== '' && s !== '.' && s !== '..' && /^[A-Za-z0-9._-]+$/.test(s))
+  return trimmed
+    .split('/')
+    .every((s) => s !== '' && s !== '.' && s !== '..' && /^[A-Za-z0-9._-]+$/.test(s))
 }

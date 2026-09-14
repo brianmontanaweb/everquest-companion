@@ -27,7 +27,7 @@ import {
   RESIST_LEDGER_SCHEMA,
   type ResistLedger,
   type ResistRow,
-  type SpellResistTable
+  type SpellResistTable,
 } from '../src/shared/resistTypes'
 
 const PATH = join(import.meta.dirname, '..', 'src', 'main', 'data', 'resistBaseline.json')
@@ -108,7 +108,10 @@ test('it is big enough to be worth shipping and small enough to inline', () => {
 
 test('every row carries at least the threshold the generator states', () => {
   for (const row of ROWS) {
-    assert.ok(rowTotal(row) >= 5, `${row.mobKey} / ${row.spellKey} carries ${String(rowTotal(row))}`)
+    assert.ok(
+      rowTotal(row) >= 5,
+      `${row.mobKey} / ${row.spellKey} carries ${String(rowTotal(row))}`,
+    )
   }
 })
 
@@ -171,15 +174,22 @@ test("Largo's is a SONG, with the denominator its pulses printed", () => {
   assert.equal(ROWS.filter((r) => r.spellKey === "largo's assonant binding").length, 0)
 })
 
-test('a mob a bard sang at reads NORMAL, not nearly immune', { skip: !HAVE_CLIENT && 'no client spells_us.txt' }, () => {
-  // `soldier of v`zher`, the mob the defect was found on. Before: R 188 [188,226] off 70 resists
-  // and no landings whatever. After: the song's own pulses supply the denominator.
-  const rows = rowsFor("soldier of v'zher")
-  const est = estimate(rows, spells(), { axis: 'magic', mobLevel: 26 })
-  assert.ok(est.byFamily.song.n > 300, `song observations: ${String(est.byFamily.song.n)}`)
-  assert.ok(est.R >= 15 && est.R <= 45, `R=${String(est.R)} outside the 15-45 a 315/70 split implies`)
-  assert.equal(resistBenchmark(est.R, 50, 26).guidance, 'should land')
-})
+test(
+  'a mob a bard sang at reads NORMAL, not nearly immune',
+  { skip: !HAVE_CLIENT && 'no client spells_us.txt' },
+  () => {
+    // `soldier of v`zher`, the mob the defect was found on. Before: R 188 [188,226] off 70 resists
+    // and no landings whatever. After: the song's own pulses supply the denominator.
+    const rows = rowsFor("soldier of v'zher")
+    const est = estimate(rows, spells(), { axis: 'magic', mobLevel: 26 })
+    assert.ok(est.byFamily.song.n > 300, `song observations: ${String(est.byFamily.song.n)}`)
+    assert.ok(
+      est.R >= 15 && est.R <= 45,
+      `R=${String(est.R)} outside the 15-45 a 315/70 split implies`,
+    )
+    assert.equal(resistBenchmark(est.R, 50, 26).guidance, 'should land')
+  },
+)
 
 test('only casters the owner ruled admissible are in it', () => {
   const kinds = new Set(ROWS.map((r) => r.casterKind))
@@ -199,7 +209,10 @@ test('the npc family is here, it carries LEVELS, and it is never a song (JOS-385
   // level for most of them, so most npc rows carry an rc and can actually reach a number. A `pc`
   // row never can — nothing in this app's inputs states another player's level.
   const levelled = npc.filter((r) => r.casterLevel !== null).length
-  assert.ok(levelled / npc.length > 0.6, `only ${String(levelled)} of ${String(npc.length)} npc rows carry a level`)
+  assert.ok(
+    levelled / npc.length > 0.6,
+    `only ${String(levelled)} of ${String(npc.length)} npc rows carry a level`,
+  )
   assert.equal(ROWS.filter((r) => r.casterKind === 'pc' && r.casterLevel !== null).length, 0)
   // Songs are the tailed character's bard, decided by spell identity. An NPC casting a bard song
   // is refused by `SongFold` before anything is filed, so this set is empty by construction.
@@ -220,62 +233,82 @@ test('EVERY KEY IN THE FILE IS A CREATURE, not a person (JOS-385)', () => {
     if (/[\s'`*-]/.test(row.mobKey)) continue
     assert.ok(
       localMobEntry(row.mobKey) !== null,
-      `${row.mobKey} is shaped like a player's name and the catalog has never heard of it`
+      `${row.mobKey} is shaped like a player's name and the catalog has never heard of it`,
     )
   }
 })
 
-test('the imp protector can finally speak about FIRE, and only because of the npc family', { skip: !HAVE_CLIENT && 'no client spells_us.txt' }, () => {
-  // THE CELL THE PREVIOUS ROUND HAD TO GIVE UP ON, named in the test below this one: every fire
-  // observation this log holds for an imp protector is imp protectors throwing Dry Bone Fire Burst
-  // at each other, so under JOS-382's ruling the axis the plan headlines ("FR ~70% resisted") was
-  // a blank row. That is the whole case for the family, and it is one assertion.
-  const rows = rowsFor('an imp protector')
-  const withNpc = estimate(rows, spells(), { axis: 'fire', mobLevel: 45, includeNpcCasters: true })
-  const without = estimate(rows, spells(), { axis: 'fire', mobLevel: 45, includeNpcCasters: false })
-  assert.ok(withNpc.n > 100, `n=${String(withNpc.n)}`)
-  assert.equal(without.n, 0, 'no player ever cast fire at one in this log')
-  assert.equal(resistBenchmark(withNpc.R, 50, 45).guidance, 'may not land even with overchannel')
-  // AND THE COUNTS SURVIVE THE SWITCH. A family that is not weighed is still a family that was
-  // observed, which is what the mob page prints as "(not included)".
-  assert.equal(without.byCaster.npc.n, withNpc.byCaster.npc.n)
-  assert.equal(without.npcIncluded, false)
-})
+test(
+  'the imp protector can finally speak about FIRE, and only because of the npc family',
+  { skip: !HAVE_CLIENT && 'no client spells_us.txt' },
+  () => {
+    // THE CELL THE PREVIOUS ROUND HAD TO GIVE UP ON, named in the test below this one: every fire
+    // observation this log holds for an imp protector is imp protectors throwing Dry Bone Fire Burst
+    // at each other, so under JOS-382's ruling the axis the plan headlines ("FR ~70% resisted") was
+    // a blank row. That is the whole case for the family, and it is one assertion.
+    const rows = rowsFor('an imp protector')
+    const withNpc = estimate(rows, spells(), {
+      axis: 'fire',
+      mobLevel: 45,
+      includeNpcCasters: true,
+    })
+    const without = estimate(rows, spells(), {
+      axis: 'fire',
+      mobLevel: 45,
+      includeNpcCasters: false,
+    })
+    assert.ok(withNpc.n > 100, `n=${String(withNpc.n)}`)
+    assert.equal(without.n, 0, 'no player ever cast fire at one in this log')
+    assert.equal(resistBenchmark(withNpc.R, 50, 45).guidance, 'may not land even with overchannel')
+    // AND THE COUNTS SURVIVE THE SWITCH. A family that is not weighed is still a family that was
+    // observed, which is what the mob page prints as "(not included)".
+    assert.equal(without.byCaster.npc.n, withNpc.byCaster.npc.n)
+    assert.equal(without.npcIncluded, false)
+  },
+)
 
-test('Lord Nagafen reads the magic resistance the plan predicted', { skip: !HAVE_CLIENT && 'no client spells_us.txt' }, () => {
-  const rows = rowsFor('lord nagafen')
-  assert.ok(rows.length > 0)
-  const est = estimate(rows, spells(), { axis: 'magic', mobLevel: 55 })
-  // docs/plans/resist-mining.md section 3, hand-derived from this same log before any of this
-  // code existed: R_magic 140 [92,206] from fixed damage, 126 [110,144] from all-or-nothing.
-  assert.ok(est.n > 200, `n=${String(est.n)}`)
-  assert.ok(est.R >= 90 && est.R <= 210, `R=${String(est.R)} outside the predicted [90, 210]`)
-})
+test(
+  'Lord Nagafen reads the magic resistance the plan predicted',
+  { skip: !HAVE_CLIENT && 'no client spells_us.txt' },
+  () => {
+    const rows = rowsFor('lord nagafen')
+    assert.ok(rows.length > 0)
+    const est = estimate(rows, spells(), { axis: 'magic', mobLevel: 55 })
+    // docs/plans/resist-mining.md section 3, hand-derived from this same log before any of this
+    // code existed: R_magic 140 [92,206] from fixed damage, 126 [110,144] from all-or-nothing.
+    assert.ok(est.n > 200, `n=${String(est.n)}`)
+    assert.ok(est.R >= 90 && est.R <= 210, `R=${String(est.R)} outside the predicted [90, 210]`)
+  },
+)
 
-test('a loathling lich is provably DISEASE-resistant, from the owner\'s own casts', { skip: !HAVE_CLIENT && 'no client spells_us.txt' }, () => {
-  // THE HEADLINE CLAIM FROM THE TAILED CHARACTER'S OWN CASTS. The test above is the same shape of
-  // claim standing on the npc family; this one stands on nothing but the player's own nukes, and
-  // it is one the plan predicted by hand before any of this code existed (section 3: a loathling
-  // lich, disease 51% resisted against 1% magic and 2% fire).
-  const rows = rowsFor('a loathling lich')
-  const disease = estimate(rows, spells(), { axis: 'disease', mobLevel: 51, modes: MODES })
-  const magic = estimate(rows, spells(), { axis: 'magic', mobLevel: 51, modes: MODES })
-  assert.ok(disease.nInformative >= 60, `disease n=${String(disease.nInformative)}`)
-  assert.ok(magic.nInformative >= 60, `magic n=${String(magic.nInformative)}`)
-  assert.ok(disease.R > magic.R, `disease R=${String(disease.R)} vs magic R=${String(magic.R)}`)
-  // AND BY A MARGIN THE INTERVALS SUPPORT: the whole disease interval sits above the magic
-  // estimate, which is what turns "looks higher" into a statement a player can act on.
-  //
-  // THE CLAIM WAS `disease.lo > magic.hi` UNTIL JOS-387, and its weakening is the interval getting
-  // MORE HONEST rather than the evidence getting worse. The interval is now the central 95% of the
-  // posterior instead of a profile-likelihood cut on the evidence alone, so it carries the prior's
-  // own width; on this cell the two ends now touch by two grid steps (disease from 64, magic to
-  // 68). The separation itself is unchanged and larger than either interval's half-width.
-  assert.ok(
-    disease.lo > magic.R && disease.R - magic.R >= 20,
-    `disease [${String(disease.lo)},${String(disease.hi)}] R=${String(disease.R)} vs magic [${String(magic.lo)},${String(magic.hi)}] R=${String(magic.R)}`
-  )
-})
+test(
+  "a loathling lich is provably DISEASE-resistant, from the owner's own casts",
+  { skip: !HAVE_CLIENT && 'no client spells_us.txt' },
+  () => {
+    // THE HEADLINE CLAIM FROM THE TAILED CHARACTER'S OWN CASTS. The test above is the same shape of
+    // claim standing on the npc family; this one stands on nothing but the player's own nukes, and
+    // it is one the plan predicted by hand before any of this code existed (section 3: a loathling
+    // lich, disease 51% resisted against 1% magic and 2% fire).
+    const rows = rowsFor('a loathling lich')
+    const disease = estimate(rows, spells(), { axis: 'disease', mobLevel: 51, modes: MODES })
+    const magic = estimate(rows, spells(), { axis: 'magic', mobLevel: 51, modes: MODES })
+    assert.ok(disease.nInformative >= 60, `disease n=${String(disease.nInformative)}`)
+    assert.ok(magic.nInformative >= 60, `magic n=${String(magic.nInformative)}`)
+    assert.ok(disease.R > magic.R, `disease R=${String(disease.R)} vs magic R=${String(magic.R)}`)
+    // AND BY A MARGIN THE INTERVALS SUPPORT: the whole disease interval sits above the magic
+    // estimate, which is what turns "looks higher" into a statement a player can act on.
+    //
+    // THE CLAIM WAS `disease.lo > magic.hi` UNTIL JOS-387, and its weakening is the interval getting
+    // MORE HONEST rather than the evidence getting worse. The interval is now the central 95% of the
+    // posterior instead of a profile-likelihood cut on the evidence alone, so it carries the prior's
+    // own width; on this cell the two ends now touch by two grid steps (disease from 64, magic to
+    // 68). The separation itself is unchanged and larger than either interval's half-width.
+    assert.ok(
+      disease.lo > magic.R && disease.R - magic.R >= 20,
+      `disease [${String(disease.lo)},${String(disease.hi)}] R=${String(disease.R)} vs magic [${String(magic.lo)},${String(magic.hi)}] R=${String(magic.R)}`,
+    )
+  },
+)
 
 test('THE ZOL GHOUL KNIGHT LOST ITS COLD CLAIM, and that is the fix working (JOS-385)', () => {
   // WORTH A TEST OF ITS OWN, because a claim this suite used to make is gone and the reason is the
@@ -291,7 +324,10 @@ test('THE ZOL GHOUL KNIGHT LOST ITS COLD CLAIM, and that is the fix working (JOS
   const rows = rowsFor('a zol ghoul knight')
   const cold = estimate(rows, spells(), { axis: 'cold', mobLevel: 38, modes: MODES })
   const magic = estimate(rows, spells(), { axis: 'magic', mobLevel: 38, modes: MODES })
-  assert.ok(cold.hi >= magic.lo && magic.hi >= cold.lo, 'the intervals overlap: no separation is claimed')
+  assert.ok(
+    cold.hi >= magic.lo && magic.hi >= cold.lo,
+    'the intervals overlap: no separation is claimed',
+  )
   // …and the magic cell is where the OTHER defect shows on this mob: 1,294 observations of which
   // 606 could have gone either way, because Smiting Strike is a -250 proc cast 689 times.
   assert.ok(magic.nInformative < magic.n / 2, `${String(magic.nInformative)} of ${String(magic.n)}`)
@@ -300,26 +336,37 @@ test('THE ZOL GHOUL KNIGHT LOST ITS COLD CLAIM, and that is the fix working (JOS
   assert.equal(proc?.resistAdj, -250)
   // And it is sorted BELOW every spell that tested the mob, however many times it was cast.
   const informativeCasts = magic.perSpell.filter((e) => e.informative).length
-  assert.ok(magic.perSpell.slice(0, informativeCasts).every((e) => e.informative), 'informative first')
+  assert.ok(
+    magic.perSpell.slice(0, informativeCasts).every((e) => e.informative),
+    'informative first',
+  )
 })
 
-test('every axis answers for a well-observed mob, and thin ones say so', { skip: !HAVE_CLIENT && 'no client spells_us.txt' }, () => {
-  const rows = rowsFor('a zol ghoul knight')
-  const counts = RESIST_AXES.map((axis) => estimate(rows, spells(), { axis, mobLevel: 38 }).n)
-  // Five rows, always. Some of them are zero, and a zero is a real answer the card prints as
-  // "not enough data" rather than omitting.
-  assert.equal(counts.length, 5)
-  assert.ok(counts.filter((n) => n >= 5).length >= 3, `axes with data: ${counts.join(',')}`)
-})
+test(
+  'every axis answers for a well-observed mob, and thin ones say so',
+  { skip: !HAVE_CLIENT && 'no client spells_us.txt' },
+  () => {
+    const rows = rowsFor('a zol ghoul knight')
+    const counts = RESIST_AXES.map((axis) => estimate(rows, spells(), { axis, mobLevel: 38 }).n)
+    // Five rows, always. Some of them are zero, and a zero is a real answer the card prints as
+    // "not enough data" rather than omitting.
+    assert.equal(counts.length, 5)
+    assert.ok(counts.filter((n) => n >= 5).length >= 3, `axes with data: ${counts.join(',')}`)
+  },
+)
 
-test('the shipped rows are all baseline-weighted until a user has any of their own', { skip: !HAVE_CLIENT && 'no client spells_us.txt' }, () => {
-  const rows = rowsFor('a zol ghoul knight').map((r) => ({ ...r, source: 'baseline' as const }))
-  const est = estimate(rows, spells(), { axis: 'magic', mobLevel: 38 })
-  assert.equal(est.fromYou, 0)
-  assert.ok(est.fromBaseline > 0)
-  // With nothing of your own, K/(K+0) = 1: the shipped data counts in full, which is the whole
-  // point of shipping it.
-  assert.equal(est.baselineWeight, 1)
-  assert.equal(est.userOnly, false)
-  assert.equal(est.differsFromShipped, false)
-})
+test(
+  'the shipped rows are all baseline-weighted until a user has any of their own',
+  { skip: !HAVE_CLIENT && 'no client spells_us.txt' },
+  () => {
+    const rows = rowsFor('a zol ghoul knight').map((r) => ({ ...r, source: 'baseline' as const }))
+    const est = estimate(rows, spells(), { axis: 'magic', mobLevel: 38 })
+    assert.equal(est.fromYou, 0)
+    assert.ok(est.fromBaseline > 0)
+    // With nothing of your own, K/(K+0) = 1: the shipped data counts in full, which is the whole
+    // point of shipping it.
+    assert.equal(est.baselineWeight, 1)
+    assert.equal(est.userOnly, false)
+    assert.equal(est.differsFromShipped, false)
+  },
+)

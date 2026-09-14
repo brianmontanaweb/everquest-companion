@@ -114,7 +114,7 @@ export default function OverviewView({
   onOpenCombat,
   onOpenMob,
   onOpenLoot,
-  onOpenLeveling
+  onOpenLeveling,
 }: OverviewViewProps): JSX.Element {
   const snap = useOverviewCombat()
   const mob = useCurrentMob(snap)
@@ -146,7 +146,7 @@ export default function OverviewView({
           // grows), so `min-content` rows are safe here and keep the regions from being stretched
           // into tall empty boxes on a big window.
           gridAutoRows: 'min-content',
-          '& > *': { minWidth: 0, minHeight: 0 }
+          '& > *': { minWidth: 0, minHeight: 0 },
         }}
       >
         {hydrating ? (
@@ -166,10 +166,13 @@ export default function OverviewView({
                 gridTemplateColumns: {
                   xs: 'minmax(0, 1fr)',
                   md: 'repeat(2, minmax(0, 1fr))',
-                  lg: 'repeat(3, minmax(0, 1fr))'
+                  lg: 'repeat(3, minmax(0, 1fr))',
                 },
-                gridAutoRows: { xs: 'min-content', md: `minmax(${String(NOW_ROW_MIN_PX)}px, auto)` },
-                '& > *': { minWidth: 0, minHeight: 0 }
+                gridAutoRows: {
+                  xs: 'min-content',
+                  md: `minmax(${String(NOW_ROW_MIN_PX)}px, auto)`,
+                },
+                '& > *': { minWidth: 0, minHeight: 0 },
               }}
             >
               <DpsCard snap={snap} onOpenCombat={onOpenCombat} />
@@ -196,7 +199,7 @@ export default function OverviewView({
             gap: 1.5,
             minWidth: 0,
             gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' },
-            '& > *': { minWidth: 0, minHeight: 0 }
+            '& > *': { minWidth: 0, minHeight: 0 },
           }}
         >
           <RecentDropsCard rows={rows} onOpenLoot={onOpenLoot} />

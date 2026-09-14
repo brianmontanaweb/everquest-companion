@@ -51,7 +51,7 @@ import {
   snapMovingBounds,
   type SnapDragSession,
   type SnapRect,
-  type SnapTargets
+  type SnapTargets,
 } from '../src/shared/overlaySnap'
 
 /** A 1920x1080 primary whose work area stops 40px short of the bottom (a taskbar). */
@@ -59,7 +59,12 @@ const PRIMARY: SnapRect = { x: 0, y: 0, width: 1920, height: 1040 }
 /** A second monitor to the right, no taskbar. */
 const SECOND: SnapRect = { x: 1920, y: 0, width: 1920, height: 1080 }
 
-const rect = (x: number, y: number, width = 300, height = 200): SnapRect => ({ x, y, width, height })
+const rect = (x: number, y: number, width = 300, height = 200): SnapRect => ({
+  x,
+  y,
+  width,
+  height,
+})
 
 /** Targets with no screens at all — for the claims that are only about neighbouring windows. */
 const windowsOnly = (...windows: SnapRect[]): SnapTargets => ({ windows, screens: [] })
@@ -94,11 +99,15 @@ test('THE HOLD REACHES ALL THREE PLACES — the store, the drag, and the pane', 
   assert.match(
     drag,
     /if \(SNAP_RELEASE_HOLD\) return/,
-    'installOverlaySnap refuses before it hooks will-move — held, not one line of this runs on a drag'
+    'installOverlaySnap refuses before it hooks will-move — held, not one line of this runs on a drag',
   )
 
   const view = read('../src/renderer/src/features/preferences/PreferencesView.tsx')
-  assert.match(view, /if \(SNAP_RELEASE_HOLD\) return \[\]/, 'the card is not built into the Overlays section')
+  assert.match(
+    view,
+    /if \(SNAP_RELEASE_HOLD\) return \[\]/,
+    'the card is not built into the Overlays section',
+  )
   // …and it is built by a factory the section SPREADS, so the item is absent from the pane and
   // from the search index together — a switch a user can find but not have is worse than none.
   assert.match(view, /\.\.\.snapItems\(\)/, 'the section spreads whatever the hold leaves')
@@ -180,7 +189,11 @@ test('ALIGNMENT: right edges go flush too, even when the widths differ', () => {
   // A narrower window under it whose right edge is at 896.
   const out = snapMovingBounds(rect(696, 300, 200), windowsOnly(neighbour))
   assert.equal(out.x, 700, 'right edge (700+200) meets the neighbour’s 900')
-  assert.equal(out.width, 200, 'and the width is NOT matched to the neighbour — that is not this feature')
+  assert.equal(
+    out.width,
+    200,
+    'and the width is NOT matched to the neighbour — that is not this feature',
+  )
 })
 
 test('BOTH AXES snap independently in one move', () => {
@@ -288,19 +301,24 @@ test('TRANSPOSE THE DESKTOP AND THE ANSWER TRANSPOSES — over 4000 generated wo
   // x-only or y-only arithmetic — a transposition, a size read off the wrong dimension — fails it.
   const rand = lcg(0x5eed)
   const pick = (n: number): number => Math.floor(rand() * n)
-  const some = (): SnapRect => ({ x: pick(1200), y: pick(1200), width: 100 + pick(400), height: 100 + pick(300) })
+  const some = (): SnapRect => ({
+    x: pick(1200),
+    y: pick(1200),
+    width: 100 + pick(400),
+    height: 100 + pick(300),
+  })
   for (let i = 0; i < 4000; i++) {
     const moving = some()
     const targets: SnapTargets = { windows: [some(), some()], screens: [PRIMARY] }
     const straight = snapMovingBounds(moving, targets)
     const flipped = snapMovingBounds(flip(moving), {
       windows: targets.windows.map(flip),
-      screens: targets.screens.map(flip)
+      screens: targets.screens.map(flip),
     })
     assert.deepEqual(
       { x: flipped.y, y: flipped.x },
       { x: straight.x, y: straight.y },
-      `world ${String(i)}: the two axes disagree — ${JSON.stringify({ moving, targets })}`
+      `world ${String(i)}: the two axes disagree — ${JSON.stringify({ moving, targets })}`,
     )
   }
 })
@@ -350,7 +368,11 @@ test('a snapped overlay LETS GO once the hand has travelled past the snap distan
   // THE WHOLE CLAIM, IN ONE NUMBER: at the end of the drag the window is exactly where the hand
   // took it. The snap borrowed 5px on the way in and gave every one of them back on the way out.
   const travelled = deltas.reduce((a, b) => a + b, 0)
-  assert.equal(seen[seen.length - 1].x, start.x + travelled, 'thereafter it tracks the hand exactly')
+  assert.equal(
+    seen[seen.length - 1].x,
+    start.x + travelled,
+    'thereafter it tracks the hand exactly',
+  )
 })
 
 test('…and one long pull escapes in a single message, keeping every pixel of it', () => {
@@ -366,7 +388,12 @@ test('a drag that never comes near anything is never touched at all', () => {
   for (let i = 0; i < 5; i++) {
     clock += 16
     const proposal = rect(100 + i * 7, 100)
-    const step = snapDrag(session, { proposal, current: rect(93 + i * 7, 100), targets, now: clock })
+    const step = snapDrag(session, {
+      proposal,
+      current: rect(93 + i * 7, 100),
+      targets,
+      now: clock,
+    })
     session = step.session
     assert.equal(step.apply, null, 'no veto, no setBounds — the drag the user has always had')
   }
@@ -375,7 +402,12 @@ test('a drag that never comes near anything is never touched at all', () => {
 test('a PAUSE ends the drag: the next message re-anchors instead of replaying old travel', () => {
   const neighbour = rect(600, 100)
   const targets = windowsOnly(neighbour)
-  const snapped = snapDrag(null, { proposal: rect(297, 100), current: rect(292, 100), targets, now: 1000 })
+  const snapped = snapDrag(null, {
+    proposal: rect(297, 100),
+    current: rect(292, 100),
+    targets,
+    now: 1000,
+  })
   assert.equal(snapped.apply?.x, 300, 'snapped, so the session is carrying 3px of correction')
 
   // Same drag, moments later: the correction is still in play and the stop still holds.
@@ -383,7 +415,7 @@ test('a PAUSE ends the drag: the next message re-anchors instead of replaying ol
     proposal: rect(303, 100),
     current: rect(300, 100),
     targets,
-    now: 1000 + DRAG_RESUME_MS
+    now: 1000 + DRAG_RESUME_MS,
   })
   assert.equal(soon.apply?.x, 300, 'still stuck — the hand is 6px past the stop, inside the pull')
 
@@ -393,17 +425,27 @@ test('a PAUSE ends the drag: the next message re-anchors instead of replaying ol
     proposal: rect(303, 100),
     current: rect(300, 100),
     targets,
-    now: 1000 + DRAG_RESUME_MS + 1
+    now: 1000 + DRAG_RESUME_MS + 1,
   })
   assert.equal(later.session.virtual.x, 303, 'the proposal itself is the new anchor')
 })
 
 test('somebody ELSE moving the window ends the drag too', () => {
   const targets = windowsOnly(rect(600, 100))
-  const first = snapDrag(null, { proposal: rect(297, 100), current: rect(292, 100), targets, now: 500 })
+  const first = snapDrag(null, {
+    proposal: rect(297, 100),
+    current: rect(292, 100),
+    targets,
+    now: 500,
+  })
   // The keep-on-screen pass (or a display change) has since put the window somewhere of its own
   // choosing, so our idea of what the OS is offsetting is fiction and must be dropped.
-  const next = snapDrag(first.session, { proposal: rect(801, 400), current: rect(795, 400), targets, now: 510 })
+  const next = snapDrag(first.session, {
+    proposal: rect(801, 400),
+    current: rect(795, 400),
+    targets,
+    now: 510,
+  })
   assert.equal(next.session.virtual.x, 801, 'anchored on what is actually happening now')
 })
 
@@ -413,14 +455,22 @@ test('SCREEN EDGES are the work area — a snapped window sits BESIDE the taskba
   // PRIMARY's work area ends at y=1040; the full screen is 1080 tall. A window dragged to 843 has
   // its bottom edge at 1043 — 3px past the work area's floor.
   const out = snapMovingBounds(rect(500, 843), screensOnly(PRIMARY))
-  assert.equal(out.y, 840, 'bottom edge (840+200) rests on the work area floor, 40px above the screen')
+  assert.equal(
+    out.y,
+    840,
+    'bottom edge (840+200) rests on the work area floor, 40px above the screen',
+  )
 })
 
 test('the left and top edges pull the same way', () => {
   assert.equal(snapMovingBounds(rect(5, 500), screensOnly(PRIMARY)).x, 0)
   assert.equal(snapMovingBounds(rect(500, 6), screensOnly(PRIMARY)).y, 0)
   // …and the right edge, which is the one whose arithmetic involves the window's own width.
-  assert.equal(snapMovingBounds(rect(1616, 500), screensOnly(PRIMARY)).x, 1620, 'right edge to 1920')
+  assert.equal(
+    snapMovingBounds(rect(1616, 500), screensOnly(PRIMARY)).x,
+    1620,
+    'right edge to 1920',
+  )
 })
 
 test('only the display you are ON gets to pull you', () => {
@@ -428,7 +478,11 @@ test('only the display you are ON gets to pull you', () => {
   // edges are 2000px away and its rectangle does not contain this window at all, so the only stop
   // in play is the seam between the two displays.
   const onSecond = rect(1924, 500)
-  assert.equal(snapMovingBounds(onSecond, screensOnly(PRIMARY, SECOND)).x, 1920, 'the seam, not x=0')
+  assert.equal(
+    snapMovingBounds(onSecond, screensOnly(PRIMARY, SECOND)).x,
+    1920,
+    'the seam, not x=0',
+  )
 
   // And a window that STRADDLES the seam is still answered by an edge it is touching. Its right
   // edge (2216) is nowhere near the primary's 1920, so the primary offers nothing reachable; the

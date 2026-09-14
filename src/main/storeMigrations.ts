@@ -46,7 +46,7 @@ import {
   ALERT_AUDIO_ACTIONS,
   MAX_SPEECH_CHARS,
   SPEECH_MODES,
-  normalizeVoicePrefs
+  normalizeVoicePrefs,
 } from '../shared/speechText'
 // The SECOND such exception, for exactly the same reason: shared/presencePrefs.ts is a pure
 // prefs module (no Electron, no types.ts, no LogEvent union) and duplicating the ring's clamps
@@ -135,7 +135,8 @@ export const PRE_CHARACTER_PROGRESS_KEY = 'legacy:pre-character'
  */
 const migrateToV2: Migration = {
   to: 2,
-  describe: 'stamp schemaVersion; recover pre-character progress; drop liveLoot; fold overlay → overlays.fight',
+  describe:
+    'stamp schemaVersion; recover pre-character progress; drop liveLoot; fold overlay → overlays.fight',
   migrate(data) {
     // (a) + (b) — per-character progress.
     const byCharacter: StoreData = isPlainObject(data.byCharacter) ? { ...data.byCharacter } : {}
@@ -165,7 +166,7 @@ const migrateToV2: Migration = {
       delete data.overlay
     }
     return data
-  }
+  },
 }
 
 /**
@@ -215,11 +216,14 @@ const migrateToV3: Migration = {
       if (!isPlainObject(progress)) continue
       const existing = isPlainObject(progress.combo) ? progress.combo : {}
       const corrections = Array.isArray(existing.corrections) ? existing.corrections : []
-      byCharacter[charId] = { ...progress, combo: { corrections: corrections.filter(isLiveCorrection) } }
+      byCharacter[charId] = {
+        ...progress,
+        combo: { corrections: corrections.filter(isLiveCorrection) },
+      }
     }
     data.byCharacter = byCharacter
     return data
-  }
+  },
 }
 
 // ------------------------------------------------------------------ 3 → 4: voice alerts
@@ -299,7 +303,7 @@ const migrateToV4: Migration = {
       data.alerts = (data.alerts as unknown[]).map(normalizeAlertVoiceFields)
     }
     return data
-  }
+  },
 }
 
 // ------------------------------------------- 4 → 5: cursor ring + overlay auto-hide
@@ -328,7 +332,7 @@ const migrateToV5: Migration = {
     data.cursorRing = normalizeCursorRing(data.cursorRing)
     data.overlayAutoHide = normalizeOverlayAutoHide(data.overlayAutoHide)
     return data
-  }
+  },
 }
 
 // -------------------------------------------------- 5 → 6: usage-analytics prefs
@@ -361,7 +365,7 @@ const migrateToV6: Migration = {
   migrate(data) {
     data.telemetry = normalizeTelemetryPrefs(data.telemetry)
     return data
-  }
+  },
 }
 
 // ------------------------------------------------------ 6 → 7: the performance HUD switch
@@ -389,7 +393,7 @@ const migrateToV7: Migration = {
   migrate(data) {
     data.perfHud = normalizePerfHudPrefs(data.perfHud)
     return data
-  }
+  },
 }
 
 // ------------------------------------------------ 7 → 8: the voice master switch is retired
@@ -443,7 +447,7 @@ const migrateToV8: Migration = {
       data.alerts = (data.alerts as unknown[]).map(silenceSpokenAlert)
     }
     return data
-  }
+  },
 }
 
 // ------------------------------------------ 8 → 9: the celebration toast defaults ON
@@ -481,7 +485,7 @@ const migrateToV9: Migration = {
     if (isPlainObject(toast) && toast.open === false) overlays.toast = { ...toast, open: true }
     data.overlays = overlays
     return data
-  }
+  },
 }
 
 // ------------------------------------------------ 9 → 10: the graphics compatibility switches
@@ -515,7 +519,7 @@ const migrateToV10: Migration = {
     const v = isPlainObject(data.graphics) ? data.graphics : {}
     data.graphics = { safeMode: v.safeMode === true, opaqueOverlays: v.opaqueOverlays === true }
     return data
-  }
+  },
 }
 
 // ------------------------------- 10 → 11: the graphics switches gain an `auto` state (JOS-31)
@@ -550,10 +554,10 @@ const migrateToV11: Migration = {
     const v = isPlainObject(data.graphics) ? data.graphics : {}
     data.graphics = normalizeGraphicsPrefs({
       safeMode: v.safeMode === true ? 'on' : 'auto',
-      opaqueOverlays: v.opaqueOverlays === true ? 'on' : 'auto'
+      opaqueOverlays: v.opaqueOverlays === true ? 'on' : 'auto',
     })
     return data
-  }
+  },
 }
 
 // ------------------------------- 11 → 12: the companion yields the CPU to the game (JOS-366)
@@ -583,7 +587,7 @@ const migrateToV12: Migration = {
   migrate(data) {
     data.processPriority = normalizeProcessPriorityPrefs(data.processPriority)
     return data
-  }
+  },
 }
 
 // ------------------------------- 12 → 13: the exclusive-fullscreen note's memory (JOS-375)
@@ -606,11 +610,11 @@ const migrateToV12: Migration = {
 // since JOS-368 shipped in no release at all, is every install outside the dev cohort.
 const migrateToV13: Migration = {
   to: 13,
-  describe: "drop eqExclusiveNoticeDismissedVersion (the note it remembered is gone)",
+  describe: 'drop eqExclusiveNoticeDismissedVersion (the note it remembered is gone)',
   migrate(data) {
     delete data.eqExclusiveNoticeDismissedVersion
     return data
-  }
+  },
 }
 
 // ------------------------------- 13 → 14: which casters teach the resist profiles (JOS-385)
@@ -641,7 +645,7 @@ const migrateToV14: Migration = {
   migrate(data) {
     data.resists = normalizeResistPrefs(data.resists)
     return data
-  }
+  },
 }
 
 /**
@@ -662,7 +666,7 @@ export const MIGRATIONS: readonly Migration[] = [
   migrateToV11,
   migrateToV12,
   migrateToV13,
-  migrateToV14
+  migrateToV14,
 ]
 
 /** Version recorded in `data`; anything absent, non-integer or < 1 means "pre-framework" ⇒ 1. */
@@ -754,10 +758,9 @@ export function migrateStoreData(input: StoreData, opts: MigrateOptions = {}): M
         applied,
         failed: { to: step.to, error: err instanceof Error ? err.message : String(err) },
         data,
-        changed: applied.length > 0
+        changed: applied.length > 0,
       }
     }
   }
   return { status: 'migrated', from, to: at, applied, data, changed: true }
 }
-

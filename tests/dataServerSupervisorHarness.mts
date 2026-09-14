@@ -10,12 +10,25 @@
 // satisfied by SHAPE, and every list it hands back is simply what the supervisor said through one
 // of them — which is what lets an assertion be about a CALLBACK SEQUENCE rather than about a spy.
 
-import { createEngineSupervisor, type EngineFaultCause, type EngineSupervisorDeps, type ReadyEngine } from '../src/main/dataServer/supervisor'
+import {
+  createEngineSupervisor,
+  type EngineFaultCause,
+  type EngineSupervisorDeps,
+  type ReadyEngine,
+} from '../src/main/dataServer/supervisor'
 import type { EngineExitLog, EnginePowerHandlers } from '../src/main/dataServer/engineProtocol'
-import { FakeChild, connectError, fakeClock, scriptedChannel, type ChannelBehaviour } from './dataServerSupervisorFakes.mts'
+import {
+  FakeChild,
+  connectError,
+  fakeClock,
+  scriptedChannel,
+  type ChannelBehaviour,
+} from './dataServerSupervisorFakes.mts'
 
 /** Everything one supervisor-under-test is wired to, and everything it said. */
-export function harness(opts: { binary?: string | null; behaviour?: ChannelBehaviour; spawnThrows?: Error } = {}) {
+export function harness(
+  opts: { binary?: string | null; behaviour?: ChannelBehaviour; spawnThrows?: Error } = {},
+) {
   const clock = fakeClock()
   const children: FakeChild[] = []
   let power: EnginePowerHandlers | null = null
@@ -39,7 +52,8 @@ export function harness(opts: { binary?: string | null; behaviour?: ChannelBehav
   const queued: ChannelBehaviour[] = []
   const connects: ChannelBehaviour[] = []
   const deps: EngineSupervisorDeps = {
-    resolveBinary: () => (opts.binary === undefined ? 'C:/repo/engine/target/debug/engined.exe' : opts.binary),
+    resolveBinary: () =>
+      opts.binary === undefined ? 'C:/repo/engine/target/debug/engined.exe' : opts.binary,
     spawn: () => {
       if (opts.spawnThrows) throw opts.spawnThrows
       const child = new FakeChild()
@@ -68,7 +82,7 @@ export function harness(opts: { binary?: string | null; behaviour?: ChannelBehav
     onReady: (engine) => readies.push(engine),
     onFault: (fault) => faults.push(fault),
     onServedExit: () => servedExits.push(clock.now()),
-    powerEvents: (handlers) => (power = handlers)
+    powerEvents: (handlers) => (power = handlers),
   }
   return {
     clock,
@@ -88,7 +102,7 @@ export function harness(opts: { binary?: string | null; behaviour?: ChannelBehav
     queueBehaviours: (...next: ChannelBehaviour[]) => queued.push(...next),
     /** The machine, as `powerMonitor` would say it. */
     suspend: () => power?.suspend(),
-    resume: () => power?.resume()
+    resume: () => power?.resume(),
   }
 }
 

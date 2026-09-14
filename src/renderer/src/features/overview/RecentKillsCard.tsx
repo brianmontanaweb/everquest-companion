@@ -69,7 +69,13 @@ function ExpCell({ row }: { row: ProgressionKill }): JSX.Element {
   )
 }
 
-function Row({ row, onOpenMob }: { row: ProgressionKill; onOpenMob: (t: MobTarget) => void }): JSX.Element {
+function Row({
+  row,
+  onOpenMob,
+}: {
+  row: ProgressionKill
+  onOpenMob: (t: MobTarget) => void
+}): JSX.Element {
   const party = ((row.expFlag ?? 0) & EXP_PARTY) !== 0
   const open = (): void => {
     onOpenMob({ mob: row.name })
@@ -100,7 +106,7 @@ function Row({ row, onOpenMob }: { row: ProgressionKill; onOpenMob: (t: MobTarge
           cursor: 'pointer',
           textDecoration: 'underline dotted',
           textUnderlineOffset: 3,
-          '&:hover': { color: 'primary.main' }
+          '&:hover': { color: 'primary.main' },
         }}
       >
         {row.name}
@@ -112,7 +118,12 @@ function Row({ row, onOpenMob }: { row: ProgressionKill; onOpenMob: (t: MobTarge
       )}
       <Box sx={{ flexGrow: 1 }} />
       {row.zone !== '' && (
-        <Typography variant="caption" color="text.secondary" noWrap sx={{ flexShrink: 1, minWidth: 0 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          noWrap
+          sx={{ flexShrink: 1, minWidth: 0 }}
+        >
           {row.zone}
         </Typography>
       )}
@@ -129,7 +140,11 @@ function Row({ row, onOpenMob }: { row: ProgressionKill; onOpenMob: (t: MobTarge
   )
 }
 
-export function RecentKillsCard({ rows, onOpenLeveling, onOpenMob }: RecentKillsCardProps): JSX.Element {
+export function RecentKillsCard({
+  rows,
+  onOpenLeveling,
+  onOpenMob,
+}: RecentKillsCardProps): JSX.Element {
   return (
     <DashCard
       title="Recent kills"
@@ -153,7 +168,11 @@ export function RecentKillsCard({ rows, onOpenLeveling, onOpenMob }: RecentKills
           <QuietNote>Nothing killed yet - your kills land here as you make them.</QuietNote>
         ) : (
           rows.map((row, i) => (
-            <Row key={`${String(row.ts)}|${row.name}|${String(i)}`} row={row} onOpenMob={onOpenMob} />
+            <Row
+              key={`${String(row.ts)}|${row.name}|${String(i)}`}
+              row={row}
+              onOpenMob={onOpenMob}
+            />
           ))
         )}
       </Box>

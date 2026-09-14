@@ -56,13 +56,17 @@ function overlayTiming(o: ScopeOption, now: number): string {
 }
 
 /** Scope-filtered rows for the overlay selector: head first, then the rest. */
-function selectorRows(head: ScopeOption | null, rest: ScopeOption[], now: number): OverlaySelectRow[] {
+function selectorRows(
+  head: ScopeOption | null,
+  rest: ScopeOption[],
+  now: number,
+): OverlaySelectRow[] {
   return [...(head ? [head] : []), ...rest].map((o) => ({
     value: o.value,
     label: o.label,
     rate: formatRate(o.dps),
     timing: overlayTiming(o, now),
-    live: o.live
+    live: o.live,
   }))
 }
 
@@ -83,11 +87,11 @@ function headerFor(
   snap: CombatSnapshot | null,
   seg: SegmentView | undefined,
   isFight: boolean,
-  hydrating: boolean
+  hydrating: boolean,
 ): Pick<MeterView, 'live' | 'headerName'> {
   return {
     live: !hydrating && !!snap?.inCombat,
-    headerName: hydrating ? 'Reading log…' : seg?.name ?? (isFight ? 'No fight' : 'No zone')
+    headerName: hydrating ? 'Reading log…' : (seg?.name ?? (isFight ? 'No fight' : 'No zone')),
   }
 }
 
@@ -96,12 +100,12 @@ function scopeRows(
   snap: CombatSnapshot | null,
   isFight: boolean,
   hydrating: boolean,
-  now: number
+  now: number,
 ): { rows: OverlaySelectRow[]; head: ScopeOption | null } {
   const opts = scopeOptions(
     isFight ? 'fight' : 'overall',
-    hydrating ? [] : snap?.segments ?? [],
-    hydrating ? [] : snap?.zoneSessions ?? []
+    hydrating ? [] : (snap?.segments ?? []),
+    hydrating ? [] : (snap?.zoneSessions ?? []),
   )
   return { rows: selectorRows(opts.head, opts.rest, now), head: opts.head }
 }
@@ -116,16 +120,16 @@ function meterView(
   snap: CombatSnapshot | null,
   isFight: boolean,
   selection: string,
-  now: number
+  now: number,
 ): MeterView {
   const hydrating = snap?.hydrating ?? true
-  const seg = hydrating ? undefined : snap?.selected ?? undefined
+  const seg = hydrating ? undefined : (snap?.selected ?? undefined)
   const { rows, head } = scopeRows(snap, isFight, hydrating, now)
   return {
     seg,
     ...headerFor(snap, seg, isFight, hydrating),
     rows,
-    headIsLast: selection === LIVE && !!head && !head.live
+    headIsLast: selection === LIVE && !!head && !head.live,
   }
 }
 
@@ -169,7 +173,7 @@ function useNewSessionAction(isFight: boolean, after: () => void): OverlayHeader
     glyph: '⚑',
     onClick: () => {
       void press().then(after, () => undefined)
-    }
+    },
   }
 }
 
@@ -191,8 +195,19 @@ export default function OverlayMeter(): JSX.Element {
   const selection = isFight ? fightId : zoneSelection
 
   const snap = useOverlayCombat(selection === LIVE ? undefined : selection)
-  const { locked, bgAlpha, textScale, drill, hovering, patch, setDrill, toggleLock, capture, dragRegion, noDrag } =
-    useOverlayChrome()
+  const {
+    locked,
+    bgAlpha,
+    textScale,
+    drill,
+    hovering,
+    patch,
+    setDrill,
+    toggleLock,
+    capture,
+    dragRegion,
+    noDrag,
+  } = useOverlayChrome()
   // WHOSE damage (docs/plans/group-model.md §2). ONE app-wide preference since JOS-115: the
   // Combat tab, the Overview card and every floating meter read this key, and only
   // Preferences > Combat writes it. The roster itself is the snapshot's, so this window and the
@@ -212,7 +227,7 @@ export default function OverlayMeter(): JSX.Element {
     snap,
     isFight,
     selection,
-    Date.now()
+    Date.now(),
   )
 
   /** A drill is per-segment: picking a different fight / zone session undrills. This lives on the
@@ -249,7 +264,7 @@ export default function OverlayMeter(): JSX.Element {
         border: locked ? '1px solid rgba(255,255,255,0.04)' : `1px solid rgba(217,178,95,0.4)`,
         borderRadius: 8,
         boxSizing: 'border-box',
-        overflow: 'hidden'
+        overflow: 'hidden',
       }}
     >
       {/* Header AND selector, one row: the title is the selected segment's own name, and the row
@@ -305,7 +320,9 @@ export default function OverlayMeter(): JSX.Element {
         />
       </MeterPane>
 
-      {!locked && <MeterFooter bgAlpha={bgAlpha} textScale={textScale} patch={patch} noDrag={noDrag} />}
+      {!locked && (
+        <MeterFooter bgAlpha={bgAlpha} textScale={textScale} patch={patch} noDrag={noDrag} />
+      )}
     </div>
   )
 }
@@ -323,7 +340,7 @@ function MeterFooter({
   bgAlpha,
   textScale,
   patch,
-  noDrag
+  noDrag,
 }: {
   bgAlpha: number
   textScale: number
@@ -337,7 +354,7 @@ function MeterFooter({
         ...noDrag,
         gap: 8,
         fontSize: 10,
-        color: 'rgba(255,255,255,0.6)'
+        color: 'rgba(255,255,255,0.6)',
       }}
     >
       {/* The word IS the label (JOS-358) — the footer names its own controls, it does not hover. */}
@@ -349,7 +366,14 @@ function MeterFooter({
         step={0.02}
         value={bgAlpha}
         onChange={(e) => patch({ bgAlpha: Number(e.target.value) })}
-        style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 24, accentColor: GOLD, height: 4 }}
+        style={{
+          flexGrow: 1,
+          flexShrink: 1,
+          flexBasis: 0,
+          minWidth: 24,
+          accentColor: GOLD,
+          height: 4,
+        }}
       />
       <TextScaleStepper textScale={textScale} patch={patch} noDrag={noDrag} />
     </div>

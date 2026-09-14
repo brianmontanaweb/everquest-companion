@@ -67,7 +67,7 @@ function notFound(queried: string, combo: readonly ClassAbbr[]): SpellDetail {
     effectClasses: [],
     lineage: null,
     linePath: null,
-    combo: [...combo]
+    combo: [...combo],
   }
 }
 
@@ -106,7 +106,7 @@ function buildLineage(
   queried: string,
   db: SpellDb,
   observed: readonly string[],
-  row: SpellEntry
+  row: SpellEntry,
 ): SpellDetail['lineage'] {
   const { base, rank, suffixed } = parseSpellRank(queried)
   const key = spellLineKey(queried)
@@ -122,7 +122,8 @@ function buildLineage(
   // The highest rank BELOW this one that somebody names. Not "the previous rank": if a source
   // names III and V and you asked about V, what it can honestly say is that III came before it.
   const below = members.filter(
-    (m) => m.rank < rank && !(standIn && m.name.trim().toLowerCase() === row.name.trim().toLowerCase())
+    (m) =>
+      m.rank < rank && !(standIn && m.name.trim().toLowerCase() === row.name.trim().toLowerCase()),
   )
   const replaces = below.length > 0 ? below[below.length - 1].name : undefined
   return { rank, suffixed, base, members, ...(replaces !== undefined ? { replaces } : {}) }
@@ -144,7 +145,7 @@ export function buildSpellDetail(
   db: SpellDb,
   queried: string,
   observedRanks: readonly string[] = [],
-  sources: SpellDetailSources = {}
+  sources: SpellDetailSources = {},
 ): SpellDetail {
   const name = queried.trim()
   const combo = sources.combo ?? []
@@ -167,7 +168,7 @@ export function buildSpellDetail(
     // research table files `Celestial Remedy`, and a hover on `Celestial Remedy III` has to reach
     // the same progression the row it borrowed its facts from sits on.
     linePath: buildSpellLinePath(db, entry.name, combo),
-    combo: [...combo]
+    combo: [...combo],
   }
 }
 
@@ -198,7 +199,7 @@ export function buildSpellDetail(
 function worthFields(
   e: SpellEntry,
   classLevels: readonly { level: number }[],
-  sources: SpellDetailSources
+  sources: SpellDetailSources,
 ): Partial<SpellDetail> {
   const level = classLevels.length > 0 ? Math.min(...classLevels.map((c) => c.level)) : 1
   const client = clientHpFor(sources.client ?? null, e.name)
@@ -239,10 +240,16 @@ function focusFields(
   e: SpellEntry,
   level: number,
   reading: FocusReading,
-  worn: readonly WornFocus[]
+  worn: readonly WornFocus[],
 ): Partial<SpellDetail> {
   if (worn.length === 0) return {}
-  const facts = { name: e.name, level, spellType: e.spellType, durationMs: e.durationMs ?? undefined, targetType: e.targetType }
+  const facts = {
+    name: e.name,
+    level,
+    spellType: e.spellType,
+    durationMs: e.durationMs ?? undefined,
+    targetType: e.targetType,
+  }
   const sources: SpellDetailFocus[] = []
   const pct: { focusDamagePct?: number; focusHealPct?: number } = {}
   for (const side of ['damage', 'heal'] as const) {
@@ -256,7 +263,7 @@ function focusFields(
   const withFocus = spellMetricsAt(
     { ...reading.spell, ...(reading.rank > 0 ? { rank: reading.rank } : {}), ...pct },
     level,
-    reading.client
+    reading.client,
   )
   return withFocus ? { metricsWithFocus: withFocus, focusSources: sources } : {}
 }

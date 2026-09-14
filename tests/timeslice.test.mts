@@ -50,7 +50,7 @@ import {
   sessionStartOf,
   sliceDurationMs,
   sliceLabel,
-  type SliceId
+  type SliceId,
 } from '../src/shared/timeslice'
 
 const MIN = 60_000
@@ -61,13 +61,28 @@ const T0 = Date.parse('Sat Aug 01 12:00:00 2026')
 
 function emptySnap(): ProgressionSnap {
   return {
-    expTs: [], expPct: [], expFlag: [],
-    killTs: [], killZone: [], killCredit: [],
-    witnessTs: [], recentKills: [], lootTs: [],
-    zoneStart: [], zoneEnd: [], zoneName: [],
-    offlineStart: [], offlineEnd: [], offlineCamped: [],
-    levelTs: [], levelValue: [], aaGainTs: [], aaGainAmount: [],
-    lastTs: 0, windowStart: 0, dropped: 0
+    expTs: [],
+    expPct: [],
+    expFlag: [],
+    killTs: [],
+    killZone: [],
+    killCredit: [],
+    witnessTs: [],
+    recentKills: [],
+    lootTs: [],
+    zoneStart: [],
+    zoneEnd: [],
+    zoneName: [],
+    offlineStart: [],
+    offlineEnd: [],
+    offlineCamped: [],
+    levelTs: [],
+    levelValue: [],
+    aaGainTs: [],
+    aaGainAmount: [],
+    lastTs: 0,
+    windowStart: 0,
+    dropped: 0,
   }
 }
 
@@ -129,13 +144,21 @@ test('Session is the newest LOGIN the log states, and nothing about the clock', 
   const { snap, login } = twoSessionSnap()
   assert.equal(sessionStartOf(snap), login, 'the end of the newest offlineGap — the "Welcome" line')
   const plain = emptySnap()
-  assert.equal(sessionStartOf(plain), null, 'no logout in the record ⇒ no boundary, and none invented')
+  assert.equal(
+    sessionStartOf(plain),
+    null,
+    'no logout in the record ⇒ no boundary, and none invented',
+  )
 })
 
 test('the current zone is the last zone line, raw name and folded key', () => {
   const { snap } = twoSessionSnap()
   assert.deepEqual(currentZoneOf(snap), { key: 'lower guk', name: 'Lower Guk' })
-  assert.equal(currentZoneOf(emptySnap()), null, 'before the first zone line there is no current zone')
+  assert.equal(
+    currentZoneOf(emptySnap()),
+    null,
+    'before the first zone line there is no current zone',
+  )
 })
 
 test('a preset that would restate another is NOT offered', () => {
@@ -183,7 +206,11 @@ test('a pick the record cannot define degrades to All rather than to a slice nob
   assert.equal(resolveSliceId('session', bare, bounds), 'all')
   assert.equal(resolveSliceId('custom', bare, bounds), 'custom', 'custom is always definable')
   const { snap, lo, hi } = twoSessionSnap()
-  assert.equal(resolveSliceId('zoneSession', snap, { lo, hi }), 'zoneSession', 'kept when the log defines it')
+  assert.equal(
+    resolveSliceId('zoneSession', snap, { lo, hi }),
+    'zoneSession',
+    'kept when the log defines it',
+  )
 })
 
 test('every preset resolves to the range and the zone its definition states', () => {
@@ -191,7 +218,11 @@ test('every preset resolves to the range and the zone its definition states', ()
   const bounds = { lo, hi }
   const of = (id: SliceId): ReturnType<typeof resolveSlice> => resolveSlice({ snap, bounds, id })
 
-  assert.deepEqual(of('all').range, { t0: lo, t1: hi + TAIL_MS }, 'All is the record, tail millisecond and all')
+  assert.deepEqual(
+    of('all').range,
+    { t0: lo, t1: hi + TAIL_MS },
+    'All is the record, tail millisecond and all',
+  )
   assert.equal(of('all').zoneKey, null)
 
   assert.deepEqual(of('session').range, { t0: login, t1: hi + TAIL_MS })
@@ -205,7 +236,11 @@ test('every preset resolves to the range and the zone its definition states', ()
 
   // A rung reaches back its own length from the NEWEST EVENT (`hi`), and then carries the same
   // tail millisecond every slice does — so it spans its hour of record and holds the last line.
-  assert.deepEqual(of('h1').range, { t0: hi - HOUR, t1: hi + TAIL_MS }, 'a rung ends at the newest event')
+  assert.deepEqual(
+    of('h1').range,
+    { t0: hi - HOUR, t1: hi + TAIL_MS },
+    'a rung ends at the newest event',
+  )
 })
 
 test('a custom range is clamped inside the record and never inverted', () => {
@@ -216,9 +251,16 @@ test('a custom range is clamped inside the record and never inverted', () => {
   const wild = resolveSlice({ snap, bounds, id: 'custom', custom: { t0: lo - DAY, t1: hi + DAY } })
   assert.deepEqual(wild.range, { t0: lo, t1: hi + TAIL_MS }, 'a range past both ends is the record')
   const backwards = resolveSlice({ snap, bounds, id: 'custom', custom: { t0: hi, t1: lo } })
-  assert.ok(backwards.range.t1 >= backwards.range.t0, 'never an inverted range for a rate to divide by')
+  assert.ok(
+    backwards.range.t1 >= backwards.range.t0,
+    'never an inverted range for a rate to divide by',
+  )
   const none = resolveSlice({ snap, bounds, id: 'custom' })
-  assert.deepEqual(none.range, { t0: lo, t1: hi + TAIL_MS }, 'a custom range nobody has chosen is the whole record')
+  assert.deepEqual(
+    none.range,
+    { t0: lo, t1: hi + TAIL_MS },
+    'a custom range nobody has chosen is the whole record',
+  )
 })
 
 test('a record with no timestamps at all resolves to an empty range rather than to NaN', () => {
@@ -238,7 +280,7 @@ test('every slice has ONE label and ONE in-sentence spelling', () => {
   assert.equal(resolveSlice({ snap, bounds, id: 'zone' }).caption, 'Lower Guk, every tier')
   assert.equal(
     resolveSlice({ snap, bounds, id: 'zoneSession' }).caption,
-    'Lower Guk this session, every tier'
+    'Lower Guk this session, every tier',
   )
   // The duration rungs keep the JOS-71 spelling, so `windowScope.timescaleLabel` and this agree.
   assert.equal(resolveSlice({ snap, bounds, id: 'h24' }).caption, 'last 24h of the log')
@@ -253,7 +295,10 @@ test('inSlice is half-open at the top and folds the zone exactly like the rows d
   assert.ok(inSlice(zone, lo + HOUR, 'Lower Guk'))
   assert.ok(inSlice(zone, lo + HOUR, 'lower guk'), 'the fold is case-insensitive, like zoneIdKey')
   assert.ok(!inSlice(zone, lo + HOUR, 'Befallen'), 'a drop from another zone is out')
-  assert.ok(!inSlice(zone, lo + HOUR), 'a row with no zone belongs to `unknown`, not to a named zone')
+  assert.ok(
+    !inSlice(zone, lo + HOUR),
+    'a row with no zone belongs to `unknown`, not to a named zone',
+  )
 
   const custom = resolveSlice({ snap, bounds, id: 'custom', custom: { t0: lo, t1: lo + HOUR } })
   assert.ok(inSlice(custom, lo), 'closed at the bottom')
@@ -277,14 +322,38 @@ test('the zone filter PARTITIONS the range — Σ over the zones is the whole of
   const keys = [...new Set(all.zones.map((z) => zoneKey(z.zone)))]
   const parts = keys.map((k) => rangeStats({ snap, range, zoneKey: k }))
 
-  const sum = (pick: (s: (typeof parts)[number]) => number): number => parts.reduce((n, p) => n + pick(p), 0)
-  assert.equal(sum((p) => p.durationMs), all.durationMs, 'every millisecond of the range is in exactly one zone')
-  assert.equal(sum((p) => p.activeMs), all.activeMs)
-  assert.equal(sum((p) => p.idleMs), all.idleMs)
-  assert.equal(sum((p) => p.offlineMs), all.offlineMs)
-  assert.equal(sum((p) => p.kills), all.kills, 'and every credited kill')
-  assert.equal(sum((p) => p.expSamples), all.expSamples)
-  assert.equal(sum((p) => p.aaGainEvents), all.aaGainEvents)
+  const sum = (pick: (s: (typeof parts)[number]) => number): number =>
+    parts.reduce((n, p) => n + pick(p), 0)
+  assert.equal(
+    sum((p) => p.durationMs),
+    all.durationMs,
+    'every millisecond of the range is in exactly one zone',
+  )
+  assert.equal(
+    sum((p) => p.activeMs),
+    all.activeMs,
+  )
+  assert.equal(
+    sum((p) => p.idleMs),
+    all.idleMs,
+  )
+  assert.equal(
+    sum((p) => p.offlineMs),
+    all.offlineMs,
+  )
+  assert.equal(
+    sum((p) => p.kills),
+    all.kills,
+    'and every credited kill',
+  )
+  assert.equal(
+    sum((p) => p.expSamples),
+    all.expSamples,
+  )
+  assert.equal(
+    sum((p) => p.aaGainEvents),
+    all.aaGainEvents,
+  )
   assert.ok(Math.abs(sum((p) => p.levelEquiv) - all.levelEquiv) < 1e-9)
 })
 
@@ -294,7 +363,11 @@ test('the Σ identity survives a range full of holes: active + idle + offline ==
   for (const zoneKey of [null, 'befallen', 'lower guk']) {
     const s = rangeStats({ snap, range, zoneKey })
     assert.equal(s.activeMs + s.idleMs + s.offlineMs, s.durationMs, `zone ${String(zoneKey)}`)
-    assert.equal(s.zones.reduce((n, z) => n + z.spanMs, 0), s.durationMs, 'and the rows still tile it')
+    assert.equal(
+      s.zones.reduce((n, z) => n + z.spanMs, 0),
+      s.durationMs,
+      'and the rows still tile it',
+    )
   }
 })
 
@@ -336,8 +409,16 @@ test('an INSTANCE RE-ENTRY is the same camp — the slice folds the tier and the
   const bounds = { lo: T0, hi: snap.lastTs }
 
   const slice = resolveSlice({ snap, bounds, id: 'zone' })
-  assert.equal(slice.zoneKey, "nagafen's lair", 'the ordinal, the tier and the article all fold away')
-  assert.equal(slice.zoneName, "The Nagafen's Lair - Solo 7 (Awakened)", 'but the CAPTION shows the raw name (law 2)')
+  assert.equal(
+    slice.zoneKey,
+    "nagafen's lair",
+    'the ordinal, the tier and the article all fold away',
+  )
+  assert.equal(
+    slice.zoneName,
+    "The Nagafen's Lair - Solo 7 (Awakened)",
+    'but the CAPTION shows the raw name (law 2)',
+  )
 
   const s = rangeStats({ snap, range: slice.range, zoneKey: slice.zoneKey })
   assert.equal(s.kills, 120, 'both instances of the camp are counted, and Befallen is not')
@@ -352,12 +433,12 @@ test('an INSTANCE RE-ENTRY is the same camp — the slice folds the tier and the
   const events: LootEvent[] = [
     { ts: T0 + 10 * MIN, item: 'Mote', zone: "Nagafen's Lair - Solo 4 (Refined)" },
     { ts: T0 + HOUR + 10 * MIN, item: 'Mote', zone: 'Befallen' },
-    { ts: T0 + 2 * HOUR + 10 * MIN, item: 'Mote', zone: "The Nagafen's Lair - Solo 7 (Awakened)" }
+    { ts: T0 + 2 * HOUR + 10 * MIN, item: 'Mote', zone: "The Nagafen's Lair - Solo 7 (Awakened)" },
   ]
   assert.deepEqual(
     events.filter((e) => inSlice(slice, e.ts, e.zone)).length,
     2,
-    'the ledger admits both instances of the camp and neither of the neighbours'
+    'the ledger admits both instances of the camp and neither of the neighbours',
   )
 })
 
@@ -365,10 +446,18 @@ test('a filter for a zone the range never held is empty rather than clamped onto
   const { snap, lo, hi } = twoSessionSnap()
   const s = rangeStats({ snap, range: { t0: lo, t1: hi + TAIL_MS }, zoneKey: 'najena' })
   assert.equal(s.durationMs, 0)
-  assert.equal(s.kills, 0, 'a kill next door is NOT clamped into the nearest visit of the zone asked for')
+  assert.equal(
+    s.kills,
+    0,
+    'a kill next door is NOT clamped into the nearest visit of the zone asked for',
+  )
   assert.equal(s.expSamples, 0)
   assert.deepEqual(s.zones, [])
-  assert.equal(s.levelsPerHourActive, null, 'and no rate is fabricated over a range with no time in it')
+  assert.equal(
+    s.levelsPerHourActive,
+    null,
+    'and no rate is fabricated over a range with no time in it',
+  )
 })
 
 test('a zone-filtered scope is DOMINATED by the unfiltered one, count for count', () => {
@@ -392,21 +481,34 @@ const drops: LootEvent[] = [
   { ts: T0 + 20 * MIN, item: 'Mote of Potential', zone: 'Befallen', count: 3 },
   { ts: T0 + 4 * HOUR + 10 * MIN, item: 'Mote of Potential', zone: 'Lower Guk' },
   { ts: T0 + 4 * HOUR + 20 * MIN, item: 'Rusty Dagger', zone: 'Lower Guk' },
-  { ts: T0 + 30 * MIN, item: 'Bone Chips' }
+  { ts: T0 + 30 * MIN, item: 'Bone Chips' },
 ]
 
 test('windowItemRows applies the slice ZONE as well as its range', () => {
   // JOS-288: the spans travel as one object now (both denominators or neither, lootRates rule 5).
-  const args = { events: drops, t0: T0, t1: T0 + DAY, spans: { durationMs: HOUR, activeMs: HOUR, offlineMs: 0 } }
+  const args = {
+    events: drops,
+    t0: T0,
+    t1: T0 + DAY,
+    spans: { durationMs: HOUR, activeMs: HOUR, offlineMs: 0 },
+  }
   const everywhere = windowItemRows(args)
-  assert.equal(everywhere.find((r) => r.key === 'mote of potential')?.drops, 5, '1 + 3 + 1, stacks counted')
+  assert.equal(
+    everywhere.find((r) => r.key === 'mote of potential')?.drops,
+    5,
+    '1 + 3 + 1, stacks counted',
+  )
 
   const befallen = windowItemRows({ ...args, zoneKey: 'befallen' })
   assert.equal(befallen.length, 1, 'one item dropped there')
   assert.equal(befallen[0].drops, 4, 'and the Lower Guk mote is not counted against Befallen hours')
 
   const unknown = windowItemRows({ ...args, zoneKey: 'unknown' })
-  assert.equal(unknown.length, 1, 'the pre-first-zone-line row has its own bucket, named like the zone row')
+  assert.equal(
+    unknown.length,
+    1,
+    'the pre-first-zone-line row has its own bucket, named like the zone row',
+  )
   assert.equal(unknown[0].item, 'Bone Chips')
 })
 
@@ -421,7 +523,7 @@ test('the ledger filter and the stats query agree about which rows are in the sl
       t0: slice.range.t0,
       t1: slice.range.t1,
       spans: { durationMs: HOUR, activeMs: HOUR, offlineMs: 0 },
-      zoneKey: slice.zoneKey
+      zoneKey: slice.zoneKey,
     })
     const counted = rows.reduce((n, r) => n + r.events, 0)
     assert.equal(counted, ledger.length, `${id}: the two sides admit the same rows`)

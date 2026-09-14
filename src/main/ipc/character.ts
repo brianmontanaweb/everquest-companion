@@ -17,7 +17,7 @@ import {
   buildEqConfig,
   getActiveCharacter,
   inventoryWrittenAt,
-  tailCharacter
+  tailCharacter,
 } from '../session'
 import { getProgress, setEqInstallDir, setInventory, setQuestTurnIns } from '../store'
 import { setItemOverride } from '../storeItemOverrides'
@@ -80,7 +80,7 @@ export function registerCharacterIpc(): void {
     return pickInto({
       title: 'Select your EverQuest Legends install folder',
       defaultPath: existsSync(current.root) ? current.root : undefined,
-      properties: ['openDirectory']
+      properties: ['openDirectory'],
     })
   })
 
@@ -106,9 +106,9 @@ export function registerCharacterIpc(): void {
       defaultPath: existsSync(start) ? start : undefined,
       filters: [
         { name: 'EverQuest character log', extensions: ['txt'] },
-        { name: 'All files', extensions: ['*'] }
+        { name: 'All files', extensions: ['*'] },
       ],
-      properties: ['openFile']
+      properties: ['openFile'],
     })
   })
   // Set the override to an explicit dir (undefined/'' ⇒ revert to auto-detect).
@@ -140,7 +140,12 @@ export function registerCharacterIpc(): void {
   })
   ipcMain.handle(
     IPC.setQuestTurnIns,
-    (_e, questKey: string, instants: number[], offered?: Record<number, Record<string, number>>) => {
+    (
+      _e,
+      questKey: string,
+      instants: number[],
+      offered?: Record<number, Record<string, number>>,
+    ) => {
       // `offered` (the Sky over-hand-in fix) rides the SAME write as the instants that were
       // detected alongside it — one getProgress/setProgress/broadcast, not two.
       const progress = setQuestTurnIns(activeCharId(), questKey, instants, offered)
@@ -148,16 +153,13 @@ export function registerCharacterIpc(): void {
       // view without a refetch race.
       sendToMain(IPC.onProgress, progress)
       return progress
-    }
+    },
   )
   // ONE item's held count, stated (or taken back) by hand — JOS-186. Pushed like every other
   // progress write, because the Loot ledger and the Sky tab read the same corrected number.
-  ipcMain.handle(
-    IPC.setItemOverride,
-    (_e, key: string, name: string, count: number | null) => {
-      const progress = setItemOverride(activeCharId(), key, name, count)
-      sendToMain(IPC.onProgress, progress)
-      return progress
-    }
-  )
+  ipcMain.handle(IPC.setItemOverride, (_e, key: string, name: string, count: number | null) => {
+    const progress = setItemOverride(activeCharId(), key, name, count)
+    sendToMain(IPC.onProgress, progress)
+    return progress
+  })
 }

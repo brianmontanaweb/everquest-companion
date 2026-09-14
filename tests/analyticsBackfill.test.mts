@@ -33,7 +33,7 @@ import {
   spanOf,
   stagingDdl,
   verifyTables,
-  type InstallSpan
+  type InstallSpan,
 } from '../scripts/analyticsBackfill.mjs'
 import type { Clients, Row } from '../src/main/triage/store'
 
@@ -119,7 +119,9 @@ function fakeCluster(seed: Record<string, Row[]>): Fake {
     if (m) {
       const rows = rowsOf(m[1])
       // NUMERIC comes back from node-postgres as a STRING; the module's `big()` is what copes.
-      return [{ rows: rows.length, total: String(rows.reduce((sum, r) => sum + Number(r.n ?? 0), 0)) }]
+      return [
+        { rows: rows.length, total: String(rows.reduce((sum, r) => sum + Number(r.n ?? 0), 0)) },
+      ]
     }
     m = /^SELECT (.+) FROM (\w+) ORDER BY .+ LIMIT \$1 OFFSET \$2$/.exec(text)
     if (!m) return null
@@ -129,14 +131,22 @@ function fakeCluster(seed: Record<string, Row[]>): Fake {
   }
 
   const runWrite = (text: string, params: unknown[]): Row[] | null => {
-    let m = /^UPDATE analytics_install SET cohort = \$1 WHERE cohort IS NULL AND analytics_id = ANY/.exec(text)
+    let m =
+      /^UPDATE analytics_install SET cohort = \$1 WHERE cohort IS NULL AND analytics_id = ANY/.exec(
+        text,
+      )
     if (m) {
       const ids = params[1] as string[]
-      const hit = rowsOf('analytics_install').filter((r) => r.cohort === null && ids.includes(String(r.analytics_id)))
+      const hit = rowsOf('analytics_install').filter(
+        (r) => r.cohort === null && ids.includes(String(r.analytics_id)),
+      )
       for (const r of hit) r.cohort = params[0]
       return hit
     }
-    m = /^INSERT INTO (\w+) \(([^)]+)\) VALUES .* ON CONFLICT \(([^)]+)\) DO UPDATE SET n = EXCLUDED\.n$/.exec(text)
+    m =
+      /^INSERT INTO (\w+) \(([^)]+)\) VALUES .* ON CONFLICT \(([^)]+)\) DO UPDATE SET n = EXCLUDED\.n$/.exec(
+        text,
+      )
     if (!m) return null
     const cols = m[2].split(',').map((s) => s.trim())
     const dest = rowsOf(m[1])
@@ -163,7 +173,7 @@ function fakeCluster(seed: Record<string, Row[]>): Fake {
     execute: (sql: string, params: unknown[] = []) => Promise.resolve(run(sql, params).length),
     s3: {},
     stack: {},
-    close: () => Promise.resolve()
+    close: () => Promise.resolve(),
   } as unknown as Clients
   return {
     clients,
@@ -174,11 +184,16 @@ function fakeCluster(seed: Record<string, Row[]>): Fake {
     },
     set telemetryAccepting(v: boolean) {
       state.telemetryAccepting = v
-    }
+    },
   }
 }
 
-const counter = (day: string, metric: string, dim: string, n: number): Row => ({ day, metric, dim, n })
+const counter = (day: string, metric: string, dim: string, n: number): Row => ({
+  day,
+  metric,
+  dim,
+  n,
+})
 
 interface FakeInstall {
   id: string
@@ -194,7 +209,7 @@ const installRow = ({ id, channel, seen, cohort = null }: FakeInstall): Row => (
   last_seen_day: seen[1],
   cohort,
   days_seen: 1,
-  app_version: '0.3.2'
+  app_version: '0.3.2',
 })
 
 /** The live shape: the two counter tables WITHOUT cohort, plus the install rows. */
@@ -203,16 +218,23 @@ function preCohortCluster(): Fake {
     feedback_config: [{ id: 'FEEDBACK', telemetry_accepting: false }],
     analytics_install: [
       installRow({ id: 'a-dev', channel: 'dev', seen: ['2026-08-04', '2026-08-05'] }),
-      installRow({ id: 'a-user', channel: 'prod', seen: ['2026-08-05', '2026-08-05'] })
+      installRow({ id: 'a-user', channel: 'prod', seen: ['2026-08-05', '2026-08-05'] }),
     ],
     usage_daily: [
       counter('2026-08-04', 'sessions', '-', 12),
       counter('2026-08-04', 'featureUse', 'mapOpen', 30),
-      counter('2026-08-05', 'sessions', '-', 4)
+      counter('2026-08-05', 'sessions', '-', 4),
     ],
     usage_funnel_daily: [
-      { day: '2026-08-04', funnel: 'firstRun', step: 'notice', outcome: 'ok', app_version: '0.3.2', n: 2 }
-    ]
+      {
+        day: '2026-08-04',
+        funnel: 'firstRun',
+        step: 'notice',
+        outcome: 'ok',
+        app_version: '0.3.2',
+        n: 2,
+      },
+    ],
   })
 }
 
@@ -223,14 +245,21 @@ test('the staging DDL is schema.sql’s own CREATE with only the NAME changed', 
   assert.match(sql, /^CREATE TABLE IF NOT EXISTS usage_daily_v2 \(/)
   // Every column and the four-part key come across verbatim — this is what makes the staging
   // table safe to rename INTO the name the app reads.
-  for (const col of ['day', 'cohort', 'metric', 'dim', 'n']) assert.match(sql, new RegExp(`\\b${col}\\b`))
+  for (const col of ['day', 'cohort', 'metric', 'dim', 'n'])
+    assert.match(sql, new RegExp(`\\b${col}\\b`))
   assert.match(sql, /PRIMARY KEY \(day, cohort, metric, dim\)/)
   assert.doesNotMatch(sql, /CREATE TABLE IF NOT EXISTS usage_daily \(/)
-  assert.match(stagingDdl(SCHEMA, FUNNEL), /PRIMARY KEY \(day, cohort, funnel, step, outcome, app_version\)/)
+  assert.match(
+    stagingDdl(SCHEMA, FUNNEL),
+    /PRIMARY KEY \(day, cohort, funnel, step, outcome, app_version\)/,
+  )
 })
 
 test('a schema whose PRIMARY KEY lost `cohort` is REFUSED — copying into it would be a silent no-op', () => {
-  const stale = SCHEMA.replace('PRIMARY KEY (day, cohort, metric, dim)', 'PRIMARY KEY (day, metric, dim)')
+  const stale = SCHEMA.replace(
+    'PRIMARY KEY (day, cohort, metric, dim)',
+    'PRIMARY KEY (day, metric, dim)',
+  )
   assert.throws(() => stagingDdl(stale, USAGE), /does not carry cohort/)
   assert.throws(() => stagingDdl('-- nothing here', USAGE), /no "CREATE TABLE/)
 })
@@ -239,14 +268,28 @@ test('a schema whose PRIMARY KEY lost `cohort` is REFUSED — copying into it wo
 
 test('a span is OWNER when the row SAYS so — dev channel, or a hand mark. Never otherwise', () => {
   assert.equal(spanOf(installRow({ id: 'x', channel: 'dev', seen: ['1', '2'] })).cohort, 'owner')
-  assert.equal(spanOf(installRow({ id: 'x', channel: 'prod', seen: ['1', '2'], cohort: 'owner' })).cohort, 'owner')
+  assert.equal(
+    spanOf(installRow({ id: 'x', channel: 'prod', seen: ['1', '2'], cohort: 'owner' })).cohort,
+    'owner',
+  )
   assert.equal(spanOf(installRow({ id: 'x', channel: 'prod', seen: ['1', '2'] })).cohort, 'user')
-  assert.equal(spanOf(installRow({ id: 'x', channel: 'prod', seen: ['1', '2'], cohort: 'user' })).cohort, 'user')
+  assert.equal(
+    spanOf(installRow({ id: 'x', channel: 'prod', seen: ['1', '2'], cohort: 'user' })).cohort,
+    'user',
+  )
 })
 
 test('a day a USER could have contributed to stays USER — the fail-safe direction', () => {
-  const owner: InstallSpan = { firstSeenDay: '2026-08-01', lastSeenDay: '2026-08-09', cohort: 'owner' }
-  const user: InstallSpan = { firstSeenDay: '2026-08-05', lastSeenDay: '2026-08-06', cohort: 'user' }
+  const owner: InstallSpan = {
+    firstSeenDay: '2026-08-01',
+    lastSeenDay: '2026-08-09',
+    cohort: 'owner',
+  }
+  const user: InstallSpan = {
+    firstSeenDay: '2026-08-05',
+    lastSeenDay: '2026-08-06',
+    cohort: 'user',
+  }
   // Only the owner was there: those counters can only be his, and that is a derivation.
   assert.equal(cohortForDay([owner, user], '2026-08-04'), 'owner')
   // Both were there. The rows carry no id, so splitting them would be inventing a number.
@@ -261,7 +304,10 @@ test('a day a USER could have contributed to stays USER — the fail-safe direct
 test('the copy carries every row, with the derived cohort, and the totals match', async () => {
   const f = preCohortCluster()
   const out = await runBackfill(f.clients, SCHEMA)
-  assert.deepEqual(out.tables.map((t) => t.copied), [3, 1])
+  assert.deepEqual(
+    out.tables.map((t) => t.copied),
+    [3, 1],
+  )
   // Aug 4: only the dev install's span covers it -> owner. Aug 5: a prod install is there too.
   const copied = f.tables.get('usage_daily_v2') ?? []
   assert.deepEqual(
@@ -269,14 +315,17 @@ test('the copy carries every row, with the derived cohort, and the totals match'
     [
       ['2026-08-04', 'owner', 'sessions', 12],
       ['2026-08-04', 'owner', 'featureUse', 30],
-      ['2026-08-05', 'user', 'sessions', 4]
-    ]
+      ['2026-08-05', 'user', 'sessions', 4],
+    ],
   )
   // The originals are untouched — that is the whole promise of this step.
   assert.equal((f.tables.get('usage_daily') ?? []).length, 3)
   assert.equal(out.installs, 2, 'both install rows were given an explicit cohort')
   const verified = await verifyTables(f.clients)
-  assert.deepEqual(verified.map((v) => v.ok), [true, true])
+  assert.deepEqual(
+    verified.map((v) => v.ok),
+    [true, true],
+  )
   assert.deepEqual(verified[0].from, verified[0].to)
 })
 
@@ -291,14 +340,19 @@ test('running the copy TWICE is the same cluster — assignment upsert, not addi
 
 test('the copy PAGES — more rows than one page still land, exactly once each', async () => {
   const rows: Row[] = []
-  for (let i = 0; i < PAGE + 7; i++) rows.push(counter('2026-08-04', 'featureUse', `dim${String(i).padStart(4, '0')}`, i))
+  for (let i = 0; i < PAGE + 7; i++)
+    rows.push(counter('2026-08-04', 'featureUse', `dim${String(i).padStart(4, '0')}`, i))
   const f = fakeCluster({
     feedback_config: [{ id: 'FEEDBACK', telemetry_accepting: false }],
-    analytics_install: [installRow({ id: 'a-dev', channel: 'dev', seen: ['2026-08-04', '2026-08-04'] })],
+    analytics_install: [
+      installRow({ id: 'a-dev', channel: 'dev', seen: ['2026-08-04', '2026-08-04'] }),
+    ],
     usage_daily: rows,
-    usage_daily_v2: []
+    usage_daily_v2: [],
   })
-  const copied = await copyTable(f.clients, USAGE, [{ firstSeenDay: '2026-08-04', lastSeenDay: '2026-08-04', cohort: 'owner' }])
+  const copied = await copyTable(f.clients, USAGE, [
+    { firstSeenDay: '2026-08-04', lastSeenDay: '2026-08-04', cohort: 'owner' },
+  ])
   assert.equal(copied, PAGE + 7)
   assert.equal((f.tables.get('usage_daily_v2') ?? []).length, PAGE + 7)
 })
@@ -316,12 +370,15 @@ test('the swap DROPS THEN RENAMES, in that order, and only after re-verifying', 
   const f = preCohortCluster()
   await runBackfill(f.clients, SCHEMA)
   const steps = await runSwap(f.clients)
-  assert.deepEqual(steps.map((s) => s.sql), [
-    'DROP TABLE usage_daily',
-    'ALTER TABLE usage_daily_v2 RENAME TO usage_daily',
-    'DROP TABLE usage_funnel_daily',
-    'ALTER TABLE usage_funnel_daily_v2 RENAME TO usage_funnel_daily'
-  ])
+  assert.deepEqual(
+    steps.map((s) => s.sql),
+    [
+      'DROP TABLE usage_daily',
+      'ALTER TABLE usage_daily_v2 RENAME TO usage_daily',
+      'DROP TABLE usage_funnel_daily',
+      'ALTER TABLE usage_funnel_daily_v2 RENAME TO usage_funnel_daily',
+    ],
+  )
   // The real names now hold the cohort-keyed rows, and the staging names are gone.
   assert.equal(f.tables.has('usage_daily_v2'), false)
   assert.equal((f.tables.get('usage_daily') ?? [])[0]?.cohort, 'owner')
@@ -344,11 +401,14 @@ test('a swap INTERRUPTED between its two statements finishes on a re-run', async
   // every reader answers 42P01, which the CLI and the tab both render as a NAMED state.
   f.tables.delete('usage_daily')
   const steps = await runSwap(f.clients)
-  assert.deepEqual(steps.map((s) => s.sql), [
-    'ALTER TABLE usage_daily_v2 RENAME TO usage_daily',
-    'DROP TABLE usage_funnel_daily',
-    'ALTER TABLE usage_funnel_daily_v2 RENAME TO usage_funnel_daily'
-  ])
+  assert.deepEqual(
+    steps.map((s) => s.sql),
+    [
+      'ALTER TABLE usage_daily_v2 RENAME TO usage_daily',
+      'DROP TABLE usage_funnel_daily',
+      'ALTER TABLE usage_funnel_daily_v2 RENAME TO usage_funnel_daily',
+    ],
+  )
   assert.equal((f.tables.get('usage_daily') ?? []).length, 3)
 })
 
@@ -357,5 +417,8 @@ test('a swap that already happened is a no-op, not an error', async () => {
   await runBackfill(f.clients, SCHEMA)
   await runSwap(f.clients)
   const again = await runSwap(f.clients)
-  assert.deepEqual(again.map((s) => s.done), [false, false])
+  assert.deepEqual(
+    again.map((s) => s.done),
+    [false, false],
+  )
 })

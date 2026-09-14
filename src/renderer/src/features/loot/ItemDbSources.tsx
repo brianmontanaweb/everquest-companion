@@ -28,7 +28,13 @@
 import { type JSX, useEffect, useMemo } from 'react'
 import { Box, Chip, Stack, Typography } from '@mui/material'
 import type { ItemKnowledge } from '@shared/types'
-import { mergeItemSources, sourceIndex, sourceItemKey, sourcesFor, type ItemSource } from '../../lib/itemSources'
+import {
+  mergeItemSources,
+  sourceIndex,
+  sourceItemKey,
+  sourcesFor,
+  type ItemSource,
+} from '../../lib/itemSources'
 import { Tooltip } from '../../lib/Tooltip'
 
 /**
@@ -47,7 +53,13 @@ const DB_HINT = 'What the wiki says drops it, not what you have seen.'
 export function DbChip(): JSX.Element {
   return (
     <Tooltip title={DB_HINT}>
-      <Chip size="small" variant="outlined" label="db" data-testid="loot-db-chip" sx={{ height: 18, fontSize: 10 }} />
+      <Chip
+        size="small"
+        variant="outlined"
+        label="db"
+        data-testid="loot-db-chip"
+        sx={{ height: 18, fontSize: 10 }}
+      />
     </Tooltip>
   )
 }
@@ -79,7 +91,10 @@ function SourceRow({ source }: { source: ItemSource }): JSX.Element {
       <Typography variant="caption" sx={{ display: 'block' }}>
         {source.mob}
         {source.levelText != null && (
-          <Box component="span" sx={{ color: 'text.disabled' }}> · lvl {source.levelText}</Box>
+          <Box component="span" sx={{ color: 'text.disabled' }}>
+            {' '}
+            · lvl {source.levelText}
+          </Box>
         )}
       </Typography>
       {source.zones.length > 0 && (
@@ -136,7 +151,12 @@ function DbZonesColumn({ zones }: { zones: { zone: string; mobs: number }[] }): 
       )}
       <Box sx={LIST_SX}>
         {shown.map((z) => (
-          <Typography key={z.zone} variant="caption" data-testid="loot-db-zone" sx={{ display: 'block', py: 0.25 }}>
+          <Typography
+            key={z.zone}
+            variant="caption"
+            data-testid="loot-db-zone"
+            sx={{ display: 'block', py: 0.25 }}
+          >
             {z.zone}
             <Box component="span" sx={{ color: 'text.disabled' }}>
               {' '}
@@ -174,7 +194,7 @@ export function ItemDbSources({ item, knowledge }: ItemDbSourcesProps): JSX.Elem
 
   const sources = useMemo(
     () => mergeItemSources(sourcesFor(sourceItemKey(item)), knowledge?.dropsFrom),
-    [item, knowledge]
+    [item, knowledge],
   )
   const zones = useMemo(() => zoneTally(sources), [sources])
 

@@ -87,7 +87,7 @@ function FoldBar({ readout }: { readout: FoldReadout }): JSX.Element {
         px: 2,
         py: 1,
         borderBottom: `1px solid ${theme.palette.divider}`,
-        bgcolor: theme.palette.background.paper
+        bgcolor: theme.palette.background.paper,
       }}
     >
       <Stack direction="row" spacing={1} alignItems="baseline" sx={{ mb: 0.75 }}>
@@ -97,7 +97,11 @@ function FoldBar({ readout }: { readout: FoldReadout }): JSX.Element {
         <Typography variant="body2" color="text.secondary" data-testid="engine-launch-progress-pct">
           {readout.pctText}
         </Typography>
-        <Typography variant="body2" color="text.secondary" data-testid="engine-launch-progress-bytes">
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          data-testid="engine-launch-progress-bytes"
+        >
           {readout.bytesText}
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -105,12 +109,20 @@ function FoldBar({ readout }: { readout: FoldReadout }): JSX.Element {
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
         {readout.etaText !== null && (
-          <Typography variant="body2" color="text.secondary" data-testid="engine-launch-progress-eta">
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            data-testid="engine-launch-progress-eta"
+          >
             {readout.etaText}
           </Typography>
         )}
       </Stack>
-      <LinearProgress variant="determinate" value={readout.pct} sx={{ height: 4, borderRadius: 2 }} />
+      <LinearProgress
+        variant="determinate"
+        value={readout.pct}
+        sx={{ height: 4, borderRadius: 2 }}
+      />
     </Box>
   )
 }
@@ -127,7 +139,10 @@ function FoldBar({ readout }: { readout: FoldReadout }): JSX.Element {
  * the same way the fault edge simply puts a fresh count on this card. What the disable actually
  * buys is that a frustrated double-click is one ask rather than two.
  */
-function FailureCard({ fault, onReport }: EngineLaunchBannerProps & { fault: EngineFaultSay }): JSX.Element {
+function FailureCard({
+  fault,
+  onReport,
+}: EngineLaunchBannerProps & { fault: EngineFaultSay }): JSX.Element {
   const theme = useTheme()
   const [showPaths, setShowPaths] = useState(false)
   const words = failureWords(fault)
@@ -140,7 +155,7 @@ function FailureCard({ fault, onReport }: EngineLaunchBannerProps & { fault: Eng
         px: 2,
         py: 1.5,
         borderBottom: `1px solid ${theme.palette.divider}`,
-        bgcolor: theme.palette.action.hover
+        bgcolor: theme.palette.action.hover,
       }}
     >
       <Stack direction="row" spacing={1.5} alignItems="flex-start">
@@ -153,7 +168,11 @@ function FailureCard({ fault, onReport }: EngineLaunchBannerProps & { fault: Eng
           >
             {words.headline}
           </Typography>
-          <Typography variant="body2" color="text.secondary" data-testid="engine-launch-failure-body">
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            data-testid="engine-launch-failure-body"
+          >
             {words.body}
           </Typography>
           {words.remedy !== null && (
@@ -224,7 +243,7 @@ function CardActions({
   fault,
   onReport,
   showPaths,
-  onTogglePaths
+  onTogglePaths,
 }: EngineLaunchBannerProps & {
   fault: EngineFaultSay
   showPaths: boolean

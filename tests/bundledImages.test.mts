@@ -31,14 +31,14 @@ import { fileURLToPath } from 'node:url'
 import {
   BUNDLED_IMAGES_DIR_NAME,
   bundledImageRoots,
-  findBundledImagesDir
+  findBundledImagesDir,
 } from '../src/main/bundledImages'
 import {
   bundledCandidatePaths,
   cacheCandidateNames,
   normalizeUpstreamImageUrl,
   urlCacheHash,
-  wikiItemIconUrl
+  wikiItemIconUrl,
 } from '../src/main/imageCache'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -48,7 +48,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const PATHS = {
   appPath: join('C:', 'app', 'resources', 'app.asar'),
   resourcesPath: join('C:', 'app', 'resources'),
-  cwd: join('C:', 'checkout')
+  cwd: join('C:', 'checkout'),
 }
 
 test('bundledImageRoots tries the asar, then the unpacked copy, then resources, then cwd', () => {
@@ -57,7 +57,7 @@ test('bundledImageRoots tries the asar, then the unpacked copy, then resources, 
     join(PATHS.appPath, 'resources', BUNDLED_IMAGES_DIR_NAME),
     join(`${PATHS.appPath}.unpacked`, 'resources', BUNDLED_IMAGES_DIR_NAME),
     join(PATHS.resourcesPath, BUNDLED_IMAGES_DIR_NAME),
-    join(PATHS.cwd, 'resources', BUNDLED_IMAGES_DIR_NAME)
+    join(PATHS.cwd, 'resources', BUNDLED_IMAGES_DIR_NAME),
   ])
 })
 
@@ -80,19 +80,22 @@ test('findBundledImagesDir returns the FIRST root that exists', () => {
 test('findBundledImagesDir returns null when this build ships no images', () => {
   // A SUPPORTED state, not an error: a source build that never ran `npm run fetch:images`
   // falls back to the runtime cache, which still works.
-  assert.equal(findBundledImagesDir(bundledImageRoots(PATHS), () => false), null)
+  assert.equal(
+    findBundledImagesDir(bundledImageRoots(PATHS), () => false),
+    null,
+  )
 })
 
-test("bundled lookup uses the runtime cache own names, so the two roots are one namespace", () => {
+test('bundled lookup uses the runtime cache own names, so the two roots are one namespace', () => {
   const dir = join('C:', 'bundle')
   assert.deepEqual(bundledCandidatePaths(dir, { kind: 'item', id: '1234' }), [
-    join(dir, 'item-1234.png')
+    join(dir, 'item-1234.png'),
   ])
   const url = 'https://wiki.project1999.com/images/Npc_master_yael.png'
   const req = { kind: 'url', url, hash: urlCacheHash(url) } as const
   assert.deepEqual(
     bundledCandidatePaths(dir, req),
-    cacheCandidateNames(req).map((n) => join(dir, n))
+    cacheCandidateNames(req).map((n) => join(dir, n)),
   )
 })
 
@@ -110,7 +113,9 @@ interface ManifestEntry {
 const imagesDir = join(ROOT, 'resources', BUNDLED_IMAGES_DIR_NAME)
 const manifestPath = join(imagesDir, 'manifest.json')
 const haveBundle = existsSync(manifestPath)
-const skip = haveBundle ? false : 'resources/wiki-images/manifest.json not present (run `npm run fetch:images`)'
+const skip = haveBundle
+  ? false
+  : 'resources/wiki-images/manifest.json not present (run `npm run fetch:images`)'
 
 function manifest(): { images: ManifestEntry[]; totals: { files: number; bytes: number } } {
   return JSON.parse(readFileSync(manifestPath, 'utf8')) as {
@@ -125,14 +130,15 @@ function itemIconIds(): Set<number> {
     items: Record<string, { iconId?: number }>
   }
   const ids = new Set<number>()
-  for (const item of Object.values(db.items)) if (typeof item.iconId === 'number') ids.add(item.iconId)
+  for (const item of Object.values(db.items))
+    if (typeof item.iconId === 'number') ids.add(item.iconId)
   return ids
 }
 
 /** Every boss portrait URL in the committed raid-target list, normalized as the app would. */
 function bossImageUrls(): string[] {
   const db = JSON.parse(
-    readFileSync(join(ROOT, 'src', 'renderer', 'src', 'data', 'eqlegends', 'bosses.json'), 'utf8')
+    readFileSync(join(ROOT, 'src', 'renderer', 'src', 'data', 'eqlegends', 'bosses.json'), 'utf8'),
   ) as { targets: { image?: string }[] }
   const urls: string[] = []
   for (const t of db.targets) {
@@ -162,21 +168,33 @@ function bossImageUrls(): string[] {
 const UPSTREAM_HAS_NO_FILE = new Set([2850, 1918, 1920])
 
 test('every item icon the app can ask for is in the bundle', { skip }, () => {
-  const shipped = new Set(manifest().images.filter((i) => i.kind === 'item').map((i) => i.url))
+  const shipped = new Set(
+    manifest()
+      .images.filter((i) => i.kind === 'item')
+      .map((i) => i.url),
+  )
   const missing = [...itemIconIds()].filter(
-    (id) => !shipped.has(wikiItemIconUrl(String(id))) && !UPSTREAM_HAS_NO_FILE.has(id)
+    (id) => !shipped.has(wikiItemIconUrl(String(id))) && !UPSTREAM_HAS_NO_FILE.has(id),
   )
   assert.deepEqual(
     missing,
     [],
-    `items.json has icon ids the bundle does not ship — re-run \`npm run fetch:images\`: ${missing.slice(0, 10).join(', ')}`
+    `items.json has icon ids the bundle does not ship — re-run \`npm run fetch:images\`: ${missing.slice(0, 10).join(', ')}`,
   )
 })
 
 test('every boss portrait is in the bundle', { skip }, () => {
-  const shipped = new Set(manifest().images.filter((i) => i.kind === 'boss').map((i) => i.url))
+  const shipped = new Set(
+    manifest()
+      .images.filter((i) => i.kind === 'boss')
+      .map((i) => i.url),
+  )
   const missing = bossImageUrls().filter((u) => !shipped.has(u))
-  assert.deepEqual(missing, [], `bosses.json portraits missing from the bundle: ${missing.join(', ')}`)
+  assert.deepEqual(
+    missing,
+    [],
+    `bosses.json portraits missing from the bundle: ${missing.join(', ')}`,
+  )
 })
 
 test('every manifest row names a real file with the bytes it claims', { skip }, () => {
@@ -186,11 +204,15 @@ test('every manifest row names a real file with the bytes it claims', { skip }, 
     const path = join(imagesDir, entry.file)
     assert.ok(existsSync(path), `manifest names a file that is not there: ${entry.file}`)
     const bytes = readFileSync(path)
-    assert.equal(bytes.length, entry.bytes, `${entry.file}: byte length does not match the manifest`)
+    assert.equal(
+      bytes.length,
+      entry.bytes,
+      `${entry.file}: byte length does not match the manifest`,
+    )
     assert.equal(
       createHash('sha256').update(bytes).digest('hex'),
       entry.sha256,
-      `${entry.file}: contents do not match the sha256 the manifest recorded`
+      `${entry.file}: contents do not match the sha256 the manifest recorded`,
     )
     total += bytes.length
   }
@@ -214,7 +236,7 @@ test('every shipped image came from one of the two credited wikis', { skip }, ()
     assert.equal(
       normalizeUpstreamImageUrl(entry.url),
       entry.url,
-      `${entry.file} came from a host the app is not allowed to fetch: ${entry.url}`
+      `${entry.file} came from a host the app is not allowed to fetch: ${entry.url}`,
     )
   }
 })

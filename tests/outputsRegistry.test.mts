@@ -31,13 +31,13 @@ import {
   outputFileStatus,
   outputKind,
   preferredOutputFile,
-  OUTPUT_KINDS
+  OUTPUT_KINDS,
 } from '../src/shared/outputs/kinds'
 import {
   outputAgeLabel,
   outputIsStale,
   outputLoadedLabel,
-  outputUpdatedMillis
+  outputUpdatedMillis,
 } from '../src/renderer/src/lib/outputFreshness'
 
 const INVENTORY = outputKind('inventory')
@@ -83,7 +83,10 @@ test('the no-guessing law: only a graduated kind may claim a verified filename',
 test('an unknown kind throws rather than resolving to undefined', () => {
   // The union is closed, so this can only be reached by a cast — which is exactly the case the
   // throw exists for (a channel payload, a persisted id from a future version).
-  assert.throws(() => outputKind('mercenaries' as (typeof OUTPUT_KINDS)[number]['id']), /Unknown output kind/)
+  assert.throws(
+    () => outputKind('mercenaries' as (typeof OUTPUT_KINDS)[number]['id']),
+    /Unknown output kind/,
+  )
 })
 
 // ---------------------------------------------------------------------------
@@ -97,7 +100,11 @@ test('a kind claims its own files, case-insensitively, and nobody else’s', () 
   // Another kind's dump, the log itself, and a near-miss suffix are all not ours.
   assert.equal(isOutputFileName(INVENTORY, 'Primitive_freeport-Guild.txt'), false)
   assert.equal(isOutputFileName(INVENTORY, 'eqlog_Primitive_freeport.txt'), false)
-  assert.equal(isOutputFileName(INVENTORY, 'Inventory.txt'), false, 'the hyphen is part of the rule')
+  assert.equal(
+    isOutputFileName(INVENTORY, 'Inventory.txt'),
+    false,
+    'the hyphen is part of the rule',
+  )
   assert.equal(isOutputFileName(INVENTORY, 'Primitive-Inventory.txt.bak'), false)
   assert.ok(isOutputFileName(outputKind('guild'), 'Primitive_freeport-Guild.txt'))
 })
@@ -105,7 +112,7 @@ test('a kind claims its own files, case-insensitively, and nobody else’s', () 
 test('the preferred filenames are most-specific first, and stop where knowledge stops', () => {
   assert.deepEqual(outputFileNames(INVENTORY, 'Primitive', 'freeport'), [
     'Primitive_freeport-Inventory.txt',
-    'Primitive-Inventory.txt'
+    'Primitive-Inventory.txt',
   ])
   // A server with no character names nothing: the `_server` form needs both halves.
   assert.deepEqual(outputFileNames(INVENTORY, undefined, 'freeport'), [])
@@ -119,26 +126,41 @@ test('a character’s own dump wins over a newer one belonging to somebody else'
   assert.equal(
     preferredOutputFile(files, INVENTORY, 'Primitive', 'freeport'),
     'Primitive_freeport-Inventory.txt',
-    'the named character’s file, not the newest file'
+    'the named character’s file, not the newest file',
   )
   // …and case never decides it (the client’s spelling of the server is not ours to assume).
   assert.equal(
-    preferredOutputFile(['ALT_FREEPORT-INVENTORY.TXT', 'primitive_FREEPORT-Inventory.txt'], INVENTORY, 'Primitive', 'freeport'),
-    'primitive_FREEPORT-Inventory.txt'
+    preferredOutputFile(
+      ['ALT_FREEPORT-INVENTORY.TXT', 'primitive_FREEPORT-Inventory.txt'],
+      INVENTORY,
+      'Primitive',
+      'freeport',
+    ),
+    'primitive_FREEPORT-Inventory.txt',
   )
 })
 
 test('the bare <name>-Kind.txt form is the fallback, and the newest file the last resort', () => {
   // The `_server` form is absent, so the older resolver's form resolves.
   assert.equal(
-    preferredOutputFile(['Alt-Inventory.txt', 'Primitive-Inventory.txt'], INVENTORY, 'Primitive', 'freeport'),
-    'Primitive-Inventory.txt'
+    preferredOutputFile(
+      ['Alt-Inventory.txt', 'Primitive-Inventory.txt'],
+      INVENTORY,
+      'Primitive',
+      'freeport',
+    ),
+    'Primitive-Inventory.txt',
   )
   // Nothing matches the character at all ⇒ the newest file, which is what a one-character
   // machine always lands on (measured: the dev machine only ever has the `_server` form).
   assert.equal(
-    preferredOutputFile(['Somebody_else-Inventory.txt', 'Older-Inventory.txt'], INVENTORY, 'Primitive', 'freeport'),
-    'Somebody_else-Inventory.txt'
+    preferredOutputFile(
+      ['Somebody_else-Inventory.txt', 'Older-Inventory.txt'],
+      INVENTORY,
+      'Primitive',
+      'freeport',
+    ),
+    'Somebody_else-Inventory.txt',
   )
   // No character named at all — same rule, no crash.
   assert.equal(preferredOutputFile(['A-Inventory.txt'], INVENTORY), 'A-Inventory.txt')
@@ -168,7 +190,7 @@ test('the inventory kind teaches how to capture the CONDITIONAL storages, not ju
   for (const s of [/Bank/, /Hoard/, /Depot/]) {
     assert.ok(
       steps.slice(0, typeAt).some((step) => s.test(step)),
-      `the ${String(s)} step must come before the command is typed`
+      `the ${String(s)} step must come before the command is typed`,
     )
   }
 
@@ -200,7 +222,7 @@ test('a status is the def’s facts plus the file’s own mtime — nothing inve
     steps: INVENTORY.steps,
     supported: true,
     path,
-    updatedAt: dumpedAt
+    updatedAt: dumpedAt,
   })
   assert.ok(INVENTORY.steps.length > 0, 'the one graduated kind carries real capture steps')
 
@@ -233,13 +255,25 @@ test('the freshness line reads never-run, fresh and stale out of one slot', () =
   assert.equal(outputAgeLabel(outputUpdatedMillis(undefined), now), 'not yet run')
 
   // FRESH — the dump the player just wrote, and one from earlier in the session.
-  assert.equal(outputAgeLabel(outputUpdatedMillis('2026-08-05T17:59:30.000Z'), now), 'updated just now')
-  assert.equal(outputAgeLabel(outputUpdatedMillis('2026-08-05T17:38:00.000Z'), now), 'updated 22m ago')
+  assert.equal(
+    outputAgeLabel(outputUpdatedMillis('2026-08-05T17:59:30.000Z'), now),
+    'updated just now',
+  )
+  assert.equal(
+    outputAgeLabel(outputUpdatedMillis('2026-08-05T17:38:00.000Z'), now),
+    'updated 22m ago',
+  )
 
   // STALE — the same slot, the same wording, a bigger number. That number IS the warning; there
   // is no threshold, because EverQuest does not define one.
-  assert.equal(outputAgeLabel(outputUpdatedMillis('2026-08-05T14:00:00.000Z'), now), 'updated 4h ago')
-  assert.equal(outputAgeLabel(outputUpdatedMillis('2026-08-02T18:00:00.000Z'), now), 'updated 3d ago')
+  assert.equal(
+    outputAgeLabel(outputUpdatedMillis('2026-08-05T14:00:00.000Z'), now),
+    'updated 4h ago',
+  )
+  assert.equal(
+    outputAgeLabel(outputUpdatedMillis('2026-08-02T18:00:00.000Z'), now),
+    'updated 3d ago',
+  )
 
   // A garbled mtime is the never-run state, not `updated NaN ago` and not the epoch.
   assert.equal(outputUpdatedMillis('not a date'), undefined)
@@ -247,7 +281,10 @@ test('the freshness line reads never-run, fresh and stale out of one slot', () =
 
   // …and a clock that is behind the file (mid-session DST, a network drive) never reads as a
   // future age: `formatAge` floors at zero, so it says "just now".
-  assert.equal(outputAgeLabel(outputUpdatedMillis('2026-08-05T18:05:00.000Z'), now), 'updated just now')
+  assert.equal(
+    outputAgeLabel(outputUpdatedMillis('2026-08-05T18:05:00.000Z'), now),
+    'updated just now',
+  )
 })
 
 // ---------------------------------------------------------------------------

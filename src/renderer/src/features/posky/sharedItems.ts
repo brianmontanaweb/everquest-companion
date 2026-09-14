@@ -84,7 +84,7 @@ function distinctItemRefs(q: PoskyQuest): ItemRef[] {
 
 /** Pass 1: item counting key -> { display name, every quest requiring it }. */
 function indexQuestsByItem(
-  quests: PoskyQuest[]
+  quests: PoskyQuest[],
 ): Map<string, { name: string; quests: SharingQuest[] }> {
   const byItem = new Map<string, { name: string; quests: SharingQuest[] }>()
   for (const q of quests) {
@@ -93,7 +93,7 @@ function indexQuestsByItem(
       className: q.className,
       name: q.name,
       ...(q.reward ? { reward: q.reward } : {}),
-      ...(q.rewardStats ? { rewardStats: q.rewardStats } : {})
+      ...(q.rewardStats ? { rewardStats: q.rewardStats } : {}),
     }
     for (const ref of distinctItemRefs(q)) {
       let entry = byItem.get(ref.key)
@@ -110,7 +110,7 @@ function indexQuestsByItem(
 /** Pass 2, for one quest: the items it shares with at least one OTHER quest. */
 function contestedItems(
   q: PoskyQuest,
-  byItem: Map<string, { name: string; quests: SharingQuest[] }>
+  byItem: Map<string, { name: string; quests: SharingQuest[] }>,
 ): SharedItem[] {
   const key = questKey(q)
   const shared: SharedItem[] = []

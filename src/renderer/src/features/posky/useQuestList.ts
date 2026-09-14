@@ -154,7 +154,7 @@ function useStoredFlag(key: string, whenAbsent = false): [boolean, (v: boolean) 
  */
 function useVisibleQuests(
   quests: QuestProgress[],
-  ignoredKeys: ReadonlySet<string>
+  ignoredKeys: ReadonlySet<string>,
 ): [QuestProgress[], QuestProgress[], QuestProgress[]] {
   return useMemo(() => {
     const shown: QuestProgress[] = []
@@ -232,7 +232,7 @@ function usePaging(selectionKey: string): {
     },
     reset: () => {
       setPageCap(QUEST_PAGE)
-    }
+    },
   }
 }
 
@@ -254,16 +254,15 @@ function useReadySet(allReady: QuestProgress[]): {
   const [readyFirstTimeOnly, setReadyFirstTimeOnly] = useStoredFlag(READY_FIRST_TIME_KEY, true)
   const ready = useMemo(
     () => (readyFirstTimeOnly ? firstTimeReady(allReady) : allReady),
-    [allReady, readyFirstTimeOnly]
+    [allReady, readyFirstTimeOnly],
   )
   return {
     ready,
     readyFirstTimeOnly,
     setReadyFirstTimeOnly,
-    readyRefarmCount: allReady.length - ready.length
+    readyRefarmCount: allReady.length - ready.length,
   }
 }
-
 
 /**
  * The Targets tab's model (issue #30), derived from the VISIBLE quests and from nothing else —
@@ -285,17 +284,23 @@ function useTargetsModel(visible: QuestProgress[]): {
   setTargetsFirstTimeOnly: (v: boolean) => void
   targetsRefarmCount: number
 } {
-  const [targetsFirstTimeOnly, setTargetsFirstTimeOnly] = useStoredFlag(TARGETS_FIRST_TIME_KEY, true)
+  const [targetsFirstTimeOnly, setTargetsFirstTimeOnly] = useStoredFlag(
+    TARGETS_FIRST_TIME_KEY,
+    true,
+  )
   const targets = useMemo(
     () => skyTargets(visible, targetsFirstTimeOnly),
-    [visible, targetsFirstTimeOnly]
+    [visible, targetsFirstTimeOnly],
   )
   // A quest the box is holding back AND that still wants something — `missing` is
   // computeQuestProgress's own per-quest list, so a refarm sitting at full holdings is not counted
   // as work the user is being denied a view of.
   const targetsRefarmCount = useMemo(
-    () => (targetsFirstTimeOnly ? visible.filter((q) => everTurnedIn(q) && q.missing.length > 0).length : 0),
-    [visible, targetsFirstTimeOnly]
+    () =>
+      targetsFirstTimeOnly
+        ? visible.filter((q) => everTurnedIn(q) && q.missing.length > 0).length
+        : 0,
+    [visible, targetsFirstTimeOnly],
   )
   return { targets, targetsFirstTimeOnly, setTargetsFirstTimeOnly, targetsRefarmCount }
 }
@@ -320,7 +325,8 @@ interface QuestSelection {
 function selectQuests(sel: QuestSelection): QuestProgress[] {
   const { isFavorite, isQuestFavorite } = sel
   let list: readonly QuestProgress[] = sel.quests
-  if (sel.selectedClasses.length) list = list.filter((x) => sel.selectedClasses.includes(x.className))
+  if (sel.selectedClasses.length)
+    list = list.filter((x) => sel.selectedClasses.includes(x.className))
   // The island/boss facets, both dimensions in one pass (questFacets.ts owns the semantics).
   list = filterByFacets(list, sel)
   // The two readings of "done", as two independent narrowings applied one after the other, which
@@ -515,7 +521,7 @@ function questNavigation(set: {
       // they had paged.
       set.setSelectedClasses([className])
       set.resetPaging()
-    }
+    },
   }
 }
 
@@ -568,7 +574,7 @@ export function useQuestList(quests: QuestProgress[]): QuestListState {
         hideNoItems,
         favoritesOnly,
         isFavorite,
-        isQuestFavorite: (questKey) => questFavorites.has(questKey)
+        isQuestFavorite: (questKey) => questFavorites.has(questKey),
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -583,18 +589,31 @@ export function useQuestList(quests: QuestProgress[]): QuestListState {
       hideNoItems,
       favoritesOnly,
       favorites,
-      questFavorites.keys
-    ]
+      questFavorites.keys,
+    ],
   )
 
   // The page cap. Its reset key is the SELECTION — every control that decides which rows belong in
   // the list — and deliberately NOT the filtered array, which changes identity whenever a drop
   // lands or a star is clicked (usePaging states the defect that was, JOS-191).
-  const { visibleCount, showMore, showAll, setShowAll, reset: resetPaging } = usePaging(
+  const {
+    visibleCount,
+    showMore,
+    showAll,
+    setShowAll,
+    reset: resetPaging,
+  } = usePaging(
     JSON.stringify([
-      selectedClasses, islands, bosses, deferredQuery, sort,
-      hideCompleted, hideTurnedIn, hideNoItems, favoritesOnly
-    ])
+      selectedClasses,
+      islands,
+      bosses,
+      deferredQuery,
+      sort,
+      hideCompleted,
+      hideTurnedIn,
+      hideNoItems,
+      favoritesOnly,
+    ]),
   )
 
   return {
@@ -636,8 +655,16 @@ export function useQuestList(quests: QuestProgress[]): QuestListState {
     questIgnored,
     // Both navigations, from the one function above that states how they differ.
     ...questNavigation({
-      setTab, setQuery, setSelectedClasses, setIslands, setBosses,
-      setHideCompleted, setHideTurnedIn, setHideNoItems, setFavoritesOnly, resetPaging
-    })
+      setTab,
+      setQuery,
+      setSelectedClasses,
+      setIslands,
+      setBosses,
+      setHideCompleted,
+      setHideTurnedIn,
+      setHideNoItems,
+      setFavoritesOnly,
+      resetPaging,
+    }),
   }
 }

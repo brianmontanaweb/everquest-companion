@@ -17,7 +17,7 @@ import { parentPort } from 'node:worker_threads'
 import {
   LIVE_PROBE_FOLD_MS,
   LIVE_PROBE_INTERVAL_MS,
-  LIVE_PROBE_REPORT_MS
+  LIVE_PROBE_REPORT_MS,
 } from '../shared/perfLive'
 
 const port = parentPort

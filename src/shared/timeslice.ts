@@ -104,7 +104,7 @@ import {
   resolveZoneScope,
   zoneAdmits,
   zoneIdKey,
-  type ZoneScope
+  type ZoneScope,
 } from './zoneScope'
 // The one spelling of "the stretch the log could not place" — `zoneSegments` names that row, and
 // `lootRates` joins onto it. Imported rather than re-spelled, for the same reason as the fold.
@@ -124,14 +124,15 @@ const HOUR = 60 * MIN
 const DAY = 24 * HOUR
 
 /** Every slice this app can describe. The four duration rungs carry JOS-71's own ids. */
-export type SliceId = 'all' | 'session' | 'zone' | 'zoneSession' | 'd7' | 'h24' | 'h6' | 'h1' | 'custom'
+export type SliceId =
+  'all' | 'session' | 'zone' | 'zoneSession' | 'd7' | 'h24' | 'h6' | 'h1' | 'custom'
 
 /** Fixed lengths for the duration rungs, in ms. 0 is not a member: `all` is not a length. */
 const DURATION_MS: Partial<Record<SliceId, number>> = {
   d7: 7 * DAY,
   h24: DAY,
   h6: 6 * HOUR,
-  h1: HOUR
+  h1: HOUR,
 }
 
 /** The rung's own length, or null when the slice is not a fixed-length one. */
@@ -203,7 +204,7 @@ const LABELS: Record<SliceId, string> = {
   h24: '24h',
   h6: '6h',
   h1: '1h',
-  custom: 'Custom'
+  custom: 'Custom',
 }
 
 export function sliceLabel(id: SliceId): string {
@@ -264,7 +265,8 @@ export function availableSlices(snap: ProgressionSnap, bounds: RecordBounds | nu
   const zone = currentZoneOf(snap)
   const spanMs = bounds ? bounds.hi - bounds.lo : 0
   // A session boundary at or before the first instant of the record describes the whole record.
-  const hasSession = session !== null && bounds !== null && session > bounds.lo && session <= bounds.hi
+  const hasSession =
+    session !== null && bounds !== null && session > bounds.lo && session <= bounds.hi
   if (hasSession) out.push('session')
   if (zone) out.push('zone')
   if (hasSession && zone) out.push('zoneSession')
@@ -279,7 +281,11 @@ export function availableSlices(snap: ProgressionSnap, bounds: RecordBounds | nu
 /** The picked id if this record can offer it, else `all`. A character switch can shrink the
  *  record under the current pick, and the answer must degrade to the honest slice rather than to
  *  one the log cannot define. */
-export function resolveSliceId(id: SliceId, snap: ProgressionSnap, bounds: RecordBounds | null): SliceId {
+export function resolveSliceId(
+  id: SliceId,
+  snap: ProgressionSnap,
+  bounds: RecordBounds | null,
+): SliceId {
   return availableSlices(snap, bounds).includes(id) ? id : 'all'
 }
 
@@ -355,7 +361,9 @@ function zoneCaptionOf(zoneName: string | null, scope: ZoneScope): string | null
  * three ways of saying "nobody named this" (absent, null, empty) are answered in ONE place.
  */
 function customCaptionOf(supplied?: string | null): string {
-  return supplied === null || supplied === undefined || supplied === '' ? 'the custom range' : supplied
+  return supplied === null || supplied === undefined || supplied === ''
+    ? 'the custom range'
+    : supplied
 }
 
 /** How a slice is worded inside a sentence. `zone` is the pair `zoneCaptionOf` composes from, so
@@ -363,7 +371,7 @@ function customCaptionOf(supplied?: string | null): string {
 function captionOf(
   id: SliceId,
   zone: { name: string; scope: ZoneScope } | null,
-  customCaption?: string | null
+  customCaption?: string | null,
 ): string {
   switch (id) {
     case 'session':
@@ -427,9 +435,13 @@ export function resolveSlice(args: ResolveSliceArgs): Timeslice {
   return {
     id,
     label: LABELS[id],
-    caption: captionOf(id, zone ? { name: zone.name, scope: where.zoneScope } : null, args.customCaption),
+    caption: captionOf(
+      id,
+      zone ? { name: zone.name, scope: where.zoneScope } : null,
+      args.customCaption,
+    ),
     range: rangeFor(args),
-    ...where
+    ...where,
   }
 }
 
@@ -437,9 +449,16 @@ export function resolveSlice(args: ResolveSliceArgs): Timeslice {
  *  three of them from one membership and the fourth from another. */
 function zoneHalfOf(
   zone: { key: string; name: string } | null,
-  picked: ZoneScope | null | undefined
+  picked: ZoneScope | null | undefined,
 ): Pick<Timeslice, 'zoneKey' | 'zoneName' | 'zoneScope' | 'zoneExactKey' | 'zoneCaption'> {
-  if (!zone) return { zoneKey: null, zoneName: null, zoneScope: 'allTiers', zoneExactKey: null, zoneCaption: null }
+  if (!zone)
+    return {
+      zoneKey: null,
+      zoneName: null,
+      zoneScope: 'allTiers',
+      zoneExactKey: null,
+      zoneCaption: null,
+    }
   const zoneScope = resolveZoneScope(picked)
   return {
     zoneKey: zone.key,
@@ -449,7 +468,7 @@ function zoneHalfOf(
     // is byte-identical to the read before this existed" is a property of the DATA rather than a
     // rule each caller has to remember.
     zoneExactKey: zoneScope === 'exactTier' ? zoneIdKey(zone.name) : null,
-    zoneCaption: zoneCaptionOf(zone.name, zoneScope)
+    zoneCaption: zoneCaptionOf(zone.name, zoneScope),
   }
 }
 

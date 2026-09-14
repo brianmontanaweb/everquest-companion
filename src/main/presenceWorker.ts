@@ -49,7 +49,7 @@ import {
   loadPresenceNative,
   type ForegroundWindow,
   type MutablePoint,
-  type PresenceNative
+  type PresenceNative,
 } from './presenceNative'
 import {
   WATCHER_STOP_MESSAGE,
@@ -58,7 +58,7 @@ import {
   pointInHoverZone,
   watcherCadence,
   type HoverZone,
-  type PresenceWorkerInit
+  type PresenceWorkerInit,
 } from './presenceProtocol'
 
 const init = workerData as PresenceWorkerInit
@@ -147,7 +147,7 @@ function makeHover(): {
       if (insideNow.get(key) === true) setInside(key, false)
       insideNow.delete(key)
     }
-    return had !== (zones.size > 0)
+    return had !== zones.size > 0
   }
 
   return { point, active: () => zones.size > 0, test, apply }
@@ -194,7 +194,7 @@ function run(native: PresenceNative): void {
       paths.get(fg.pid) ?? '',
       // The title is LAST because it is the only field that may contain anything, `|` included —
       // but NOT a line break, which would split one record into two on the way through the codec.
-      fg.title.replace(/[\r\n]/g, ' ')
+      fg.title.replace(/[\r\n]/g, ' '),
     ].join('|')
     if (line !== lastFg) {
       lastFg = line

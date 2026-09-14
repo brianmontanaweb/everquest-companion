@@ -29,11 +29,16 @@ import {
   DialogContent,
   DialogTitle,
   Stack,
-  Typography
+  Typography,
 } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
-import { MAX_COMBO_SLOTS, resolvedClasses, type ClassAbbr, type ComboInterval } from '@shared/classCombo'
+import {
+  MAX_COMBO_SLOTS,
+  resolvedClasses,
+  type ClassAbbr,
+  type ComboInterval,
+} from '@shared/classCombo'
 import { classDisplayName } from '@shared/spellLevels'
 import { ProvenanceChip, SlotChips } from './ClassComboChips'
 import { loadoutSourceText, overruledText } from './ClassComboLabels'
@@ -74,7 +79,7 @@ function useWriter(onDone: () => void): {
 function OverrideDialog({
   interval,
   open,
-  onClose
+  onClose,
 }: {
   interval: ComboInterval
   open: boolean
@@ -90,15 +95,18 @@ function OverrideDialog({
       <DialogTitle sx={{ pb: 1 }}>Set your current classes</DialogTitle>
       <DialogContent>
         <Stack spacing={1.5}>
-          <ClassPicker picked={picked} onToggle={(c) => setPicked((prev) => togglePicked(prev, c))} />
+          <ClassPicker
+            picked={picked}
+            onToggle={(c) => setPicked((prev) => togglePicked(prev, c))}
+          />
           <Typography variant="caption" color="text.secondary" data-testid="loadout-override-count">
             {picked.length === 0
               ? 'Pick 1 to 3 classes.'
               : `${picked.map(classDisplayName).join(' / ')} - ${picked.length} of ${MAX_COMBO_SLOTS} slots.`}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            This applies from the start of your current loadout onward and stays until you change
-            it or go back to autodetect.
+            This applies from the start of your current loadout onward and stays until you change it
+            or go back to autodetect.
           </Typography>
           {error && <Alert severity="warning">{error}</Alert>}
         </Stack>
@@ -128,15 +136,19 @@ function OverrideDialog({
  * override needs a span to attach to, and manufacturing one before the log has said anything
  * would put a correction on a timeline that does not exist.
  */
-export default function LoadoutOverride({ current }: { current: ComboInterval | null }): JSX.Element {
+export default function LoadoutOverride({
+  current,
+}: {
+  current: ComboInterval | null
+}): JSX.Element {
   const [editing, setEditing] = useState(false)
   const { busy, error, run } = useWriter(() => undefined)
 
   if (!current) {
     return (
       <Typography variant="caption" color="text.disabled" data-testid="loadout-override">
-        No loadout read yet - one appears as soon as the log names classes you played, and you
-        can set it by hand from there.
+        No loadout read yet - one appears as soon as the log names classes you played, and you can
+        set it by hand from there.
       </Typography>
     )
   }

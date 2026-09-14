@@ -40,13 +40,18 @@ const TABS = ['dd', 'dot', 'aoe', 'heal', 'hot'] as const
 /** How many result rows and how many ranked tables are in the document, as one reading. */
 function bodies(page: Page): Promise<number[]> {
   return page.evaluate(
-    (sels) => [document.querySelectorAll(sels[0]).length, document.querySelectorAll(sels[1]).length],
-    [RESULTS, SECTION]
+    (sels) => [
+      document.querySelectorAll(sels[0]).length,
+      document.querySelectorAll(sels[1]).length,
+    ],
+    [RESULTS, SECTION],
   )
 }
 
 /** One spell of the committed catalog that exactly one class learns, and that class is not yours. */
-function outsideClassSpell(loadout: readonly string[]): { name: string; cls: string; level: number } | null {
+function outsideClassSpell(
+  loadout: readonly string[],
+): { name: string; cls: string; level: number } | null {
   for (const spell of buildLevelUnlocks().spells) {
     // Single class, in era, with hitpoint lines - so the readout has a figure to print for it and
     // exactly one chip, whose class is unambiguously not one of yours. A name carrying an
@@ -65,15 +70,16 @@ function outsideClassSpell(loadout: readonly string[]): { name: string; cls: str
 function resultCells(page: Page, name: string): Promise<number> {
   return countOf(
     page,
-    `${RESULTS} [data-testid="best-spells-row"][data-name="${name}"] [data-testid="best-spells-cell"]`
+    `${RESULTS} [data-testid="best-spells-row"][data-name="${name}"] [data-testid="best-spells-cell"]`,
   )
 }
 
 /** The class-level chips on the named result row, as the DOM spells them (`DRU 40`). */
 function resultChips(page: Page, name: string): Promise<string[]> {
   return page.evaluate(
-    (sel) => Array.from(document.querySelectorAll(sel)).map((c) => (c as HTMLElement).innerText.trim()),
-    `${RESULTS} [data-testid="best-spells-name-row"][data-name="${name}"] [data-testid="best-spells-result-class"]`
+    (sel) =>
+      Array.from(document.querySelectorAll(sel)).map((c) => (c as HTMLElement).innerText.trim()),
+    `${RESULTS} [data-testid="best-spells-name-row"][data-name="${name}"] [data-testid="best-spells-result-class"]`,
   )
 }
 
@@ -81,7 +87,11 @@ function resultChips(page: Page, name: string): Promise<string[]> {
 async function findResult(page: Page, name: string): Promise<string | null> {
   for (const tab of TABS) {
     await page.click(`${TAB}[data-tab="${tab}"]`, { timeout: 10_000 })
-    const drawn = await settle(() => resultCells(page, name), (n) => n > 0, { timeoutMs: 3_000 })
+    const drawn = await settle(
+      () => resultCells(page, name),
+      (n) => n > 0,
+      { timeoutMs: 3_000 },
+    )
     if (drawn > 0) return tab
   }
   return null
@@ -97,13 +107,18 @@ async function findResult(page: Page, name: string): Promise<string | null> {
  */
 export async function fillOutsideClassQuery(page: Page): Promise<boolean> {
   const loadout = await page.evaluate(
-    (s) => Array.from(document.querySelectorAll(s)).map((el) => (el as HTMLElement).innerText.trim()),
-    COMBO_CHIP
+    (s) =>
+      Array.from(document.querySelectorAll(s)).map((el) => (el as HTMLElement).innerText.trim()),
+    COMBO_CHIP,
   )
   const target = loadout.length === 0 ? null : outsideClassSpell(loadout)
   if (!target) return false
   await page.fill(SEARCH, target.name, { timeout: 10_000 })
-  const drawn = await settle(() => countOf(page, RESULTS), (n) => n === 1, { timeoutMs: 8_000 })
+  const drawn = await settle(
+    () => countOf(page, RESULTS),
+    (n) => n === 1,
+    { timeoutMs: 8_000 },
+  )
   return drawn === 1
 }
 
@@ -114,21 +129,25 @@ export async function clearBestSpellsSearch(page: Page): Promise<void> {
 }
 
 /** The three claims about the row itself: it is a readout row, and its chip names a class not yours. */
-async function checkResultRow(page: Page, target: { name: string; cls: string; level: number }, loadout: readonly string[]): Promise<void> {
+async function checkResultRow(
+  page: Page,
+  target: { name: string; cls: string; level: number },
+  loadout: readonly string[],
+): Promise<void> {
   check(
     `…drawn as a row of THIS readout, with its own figure cells under the name`,
-    (await resultCells(page, target.name)) > 0
+    (await resultCells(page, target.name)) > 0,
   )
   const chips = await resultChips(page, target.name)
   check(
     `…wearing the class-level chip that says whose it is`,
     chips.includes(`${target.cls} ${String(target.level)}`),
-    chips.join(' | ')
+    chips.join(' | '),
   )
   check(
     '…and no chip on it names a class this loadout could be running',
     chips.length > 0 && chips.every((c) => !loadout.includes(c.split(' ')[0])),
-    `${chips.join(' | ')} vs ${loadout.join('/')}`
+    `${chips.join(' | ')} vs ${loadout.join('/')}`,
   )
 }
 
@@ -164,10 +183,9 @@ function catalogueRows(page: Page): Promise<{ name: string; category: string }[]
     (sels) =>
       Array.from(document.querySelectorAll(sels[0])).map((r) => ({
         name: (r as HTMLElement).dataset.name ?? '',
-        category:
-          (r.querySelector(sels[1]) as HTMLElement | null)?.dataset.category ?? ''
+        category: (r.querySelector(sels[1]) as HTMLElement | null)?.dataset.category ?? '',
       })),
-    [CATALOGUE_ROW, '[data-testid="best-spells-catalogue-category"]']
+    [CATALOGUE_ROW, '[data-testid="best-spells-catalogue-category"]'],
   )
 }
 
@@ -189,7 +207,12 @@ function catalogueRows(page: Page): Promise<{ name: string; category: string }[]
  * class, so the step never has to guess what loadout the fixture log inferred.
  */
 export async function stepBestSpellsTypeSearch(page: Page): Promise<void> {
-  if (!check('the readout offers a spell-TYPE filter beside its search box', (await countOf(page, TYPE)) === 1)) {
+  if (
+    !check(
+      'the readout offers a spell-TYPE filter beside its search box',
+      (await countOf(page, TYPE)) === 1,
+    )
+  ) {
     return
   }
   // THE CONTROL ASKS THE ENGINE WHEN IT IS OPENED, and the vocabulary it offers is the player's own
@@ -198,11 +221,14 @@ export async function stepBestSpellsTypeSearch(page: Page): Promise<void> {
   const options = await settle(
     () =>
       page.evaluate(
-        (sel) => Array.from(document.querySelectorAll(sel)).map((o) => (o as HTMLElement).dataset.value ?? ''),
-        TYPE_OPTION
+        (sel) =>
+          Array.from(document.querySelectorAll(sel)).map(
+            (o) => (o as HTMLElement).dataset.value ?? '',
+          ),
+        TYPE_OPTION,
       ),
     (v) => v.length > 1,
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   )
   const types = options.filter((v) => v !== '')
   if (types.length === 0) {
@@ -210,29 +236,29 @@ export async function stepBestSpellsTypeSearch(page: Page): Promise<void> {
     // this step was first written the harness was silently dropping the staged client tables, and a
     // note that could only say "no engine connection, or no table" reported the wrong cause for two
     // full runs. The two states now read straight off the control.
-    const why = await page.evaluate(
-      (sel) => {
-        const el = document.querySelector(sel) as HTMLElement | null
-        return `offline=${el?.dataset.offline ?? '?'} table=${el?.dataset.table ?? '?'}`
-      },
-      TYPE
-    )
+    const why = await page.evaluate((sel) => {
+      const el = document.querySelector(sel) as HTMLElement | null
+      return `offline=${el?.dataset.offline ?? '?'} table=${el?.dataset.table ?? '?'}`
+    }, TYPE)
     note(`the type control offered nothing - ${why}`)
     await page.keyboard.press('Escape')
     return
   }
-  check(`the control offers the client table's own categories (${types.join('/')})`, types.includes('Taps'))
+  check(
+    `the control offers the client table's own categories (${types.join('/')})`,
+    types.includes('Taps'),
+  )
 
   await page.click(`${TYPE_OPTION}[data-value="Taps"]`, { timeout: 10_000 })
   const swapped = await settle(
     () => bodies(page).then(async (b) => [...b, await countOf(page, CATALOGUE)]),
     (n) => n[2] === 1 && n[1] === 0,
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   )
   check(
     'picking a type swaps in the catalogue body - the ranked table is GONE, not merely hidden',
     swapped[2] === 1 && swapped[1] === 0,
-    `${String(swapped[0])} results / ${String(swapped[1])} tables / ${String(swapped[2])} catalogues`
+    `${String(swapped[0])} results / ${String(swapped[1])} tables / ${String(swapped[2])} catalogues`,
   )
 
   // WAIT FOR THE FILTER, NOT FOR ROWS. See `catalogueRows` — settling on "any rows" reads the
@@ -240,14 +266,14 @@ export async function stepBestSpellsTypeSearch(page: Page): Promise<void> {
   const rows = await settle(
     () => catalogueRows(page),
     (rs) => rs.length > 0 && rs.every((r) => r.category === 'Taps'),
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   )
   const names = rows.map((r) => r.name)
   const filtered = rows.length > 0 && rows.every((r) => r.category === 'Taps')
   check(
     'the picked type actually FILTERS - every row drawn is one of that category',
     filtered,
-    rows.map((r) => `${r.name} [${r.category}]`).join(' | ')
+    rows.map((r) => `${r.name} [${r.category}]`).join(' | '),
   )
   if (check('…and it draws rows out of the client table', names.length > 0, names.join(' | '))) {
     // THE TICKET'S OWN CLAIM, and it only means anything above the filter check: a name-only filter
@@ -256,12 +282,22 @@ export async function stepBestSpellsTypeSearch(page: Page): Promise<void> {
     check(
       'a TYPE search finds spells whose NAME does not contain the word - the whole capability',
       byType.length > 0 && filtered,
-      `by type: ${byType.join(' | ')} — of ${names.join(' | ')}`
+      `by type: ${byType.join(' | ')} — of ${names.join(' | ')}`,
     )
     // Every row wears the two words the game prints in those columns.
-    const chips = await countOf(page, `${CATALOGUE_ROW} [data-testid="best-spells-catalogue-category"]`)
-    check('…and every row carries its Category chip', chips === names.length, `${String(chips)} of ${String(names.length)}`)
-    const level = await countOf(page, `${CATALOGUE_ROW} [data-testid="best-spells-catalogue-level"]`)
+    const chips = await countOf(
+      page,
+      `${CATALOGUE_ROW} [data-testid="best-spells-catalogue-category"]`,
+    )
+    check(
+      '…and every row carries its Category chip',
+      chips === names.length,
+      `${String(chips)} of ${String(names.length)}`,
+    )
+    const level = await countOf(
+      page,
+      `${CATALOGUE_ROW} [data-testid="best-spells-catalogue-level"]`,
+    )
     check('…and its Level, which is what the list is sorted by', level === names.length)
     // THE DRILL SEAM (JOS-508), VERIFIED RATHER THAN ASSUMED. Every spell name in the main window is
     // a link because `SpellTooltip` publishes one from a context; a row that wrapped its name in
@@ -271,7 +307,7 @@ export async function stepBestSpellsTypeSearch(page: Page): Promise<void> {
     check(
       'a spell found by TYPE drills like any other - its name is inside the app-wide link seam',
       links === names.length,
-      `${String(links)} of ${String(names.length)} rows`
+      `${String(links)} of ${String(names.length)} rows`,
     )
   }
 
@@ -281,12 +317,12 @@ export async function stepBestSpellsTypeSearch(page: Page): Promise<void> {
   const restored = await settle(
     () => bodies(page).then(async (b) => [...b, await countOf(page, CATALOGUE)]),
     (n) => n[2] === 0 && n[1] === 1,
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   )
   check(
     'clearing the type filter hands the ranked table back',
     restored[2] === 0 && restored[1] === 1,
-    `${String(restored[1])} tables / ${String(restored[2])} catalogues`
+    `${String(restored[1])} tables / ${String(restored[2])} catalogues`,
   )
 }
 
@@ -295,10 +331,12 @@ export async function stepBestSpellsTypeSearch(page: Page): Promise<void> {
  * the checks after it in `stepBestSpells` are claims about the ranked table.
  */
 export async function stepBestSpellsSearch(page: Page): Promise<void> {
-  if (!check('the readout offers a whole-catalog search box', (await countOf(page, SEARCH)) === 1)) return
+  if (!check('the readout offers a whole-catalog search box', (await countOf(page, SEARCH)) === 1))
+    return
   const loadout = await page.evaluate(
-    (s) => Array.from(document.querySelectorAll(s)).map((el) => (el as HTMLElement).innerText.trim()),
-    COMBO_CHIP
+    (s) =>
+      Array.from(document.querySelectorAll(s)).map((el) => (el as HTMLElement).innerText.trim()),
+    COMBO_CHIP,
   )
   if (loadout.length === 0) {
     note('no loadout chips on the panel opposite, so there is no "outside my class" to search for')
@@ -306,16 +344,22 @@ export async function stepBestSpellsSearch(page: Page): Promise<void> {
   }
   const target = outsideClassSpell(loadout)
   if (!target) {
-    note(`every single-class spell in the catalog belongs to ${loadout.join('/')} - nothing to compare`)
+    note(
+      `every single-class spell in the catalog belongs to ${loadout.join('/')} - nothing to compare`,
+    )
     return
   }
 
   await page.fill(SEARCH, target.name, { timeout: 10_000 })
-  const swapped = await settle(() => bodies(page), (n) => n[0] === 1 && n[1] === 0, { timeoutMs: 8_000 })
+  const swapped = await settle(
+    () => bodies(page),
+    (n) => n[0] === 1 && n[1] === 0,
+    { timeoutMs: 8_000 },
+  )
   check(
     'typing swaps the ranked table for results - the table is GONE, not merely hidden',
     swapped[0] === 1 && swapped[1] === 0,
-    `${String(swapped[0])} results / ${String(swapped[1])} tables`
+    `${String(swapped[0])} results / ${String(swapped[1])} tables`,
   )
 
   // THE ROW IS ON WHICHEVER TAB CAN READ IT, and which of the five that is depends on the spell -
@@ -329,10 +373,14 @@ export async function stepBestSpellsSearch(page: Page): Promise<void> {
   }
 
   await clearBestSpellsSearch(page)
-  const restored = await settle(() => bodies(page), (n) => n[0] === 0 && n[1] === 1, { timeoutMs: 8_000 })
+  const restored = await settle(
+    () => bodies(page),
+    (n) => n[0] === 0 && n[1] === 1,
+    { timeoutMs: 8_000 },
+  )
   check(
     'clearing the box hands the ranked table back',
     restored[0] === 0 && restored[1] === 1,
-    `${String(restored[0])} results / ${String(restored[1])} tables`
+    `${String(restored[0])} results / ${String(restored[1])} tables`,
   )
 }

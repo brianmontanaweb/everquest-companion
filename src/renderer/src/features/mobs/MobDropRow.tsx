@@ -37,8 +37,10 @@ import { perceivedDropRate, type SeenVariantGroup } from './seenVariants'
 // The Plane of Sky dataset, reused exactly as LootView reads it, so an item drilled into from a
 // mob page gets the same "Plane of Sky" badge and offline stat blob it gets from the loot table.
 const posky = getPoskyData()
-// eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 8: PoskyQuest comes from a corpus still bundled in the renderer (mobs/posky/bosses JSON). Moves behind knowledge queries when that surface cuts over.
-const questItemNames = new Set<string>(posky.quests.flatMap((q) => q.items.map((i) => itemCountKey(i.name))))
+const questItemNames = new Set<string>(
+  // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 8: PoskyQuest comes from a corpus still bundled in the renderer (mobs/posky/bosses JSON). Moves behind knowledge queries when that surface cuts over.
+  posky.quests.flatMap((q) => q.items.map((i) => itemCountKey(i.name))),
+)
 const itemStats: Record<string, string> = {}
 for (const q of posky.quests) {
   for (const it of q.items) if (it.stats) itemStats[itemCountKey(it.name)] = it.stats
@@ -52,7 +54,7 @@ export type OpenItem = (item: string, family?: boolean) => void
 function ItemName({
   name,
   onOpen,
-  dim
+  dim,
 }: {
   name: string
   onOpen: () => void
@@ -74,7 +76,7 @@ function ItemName({
           cursor: 'pointer',
           textDecoration: 'underline dotted',
           textUnderlineOffset: 2,
-          '&:hover': { color: 'primary.main' }
+          '&:hover': { color: 'primary.main' },
         }}
       >
         {name}
@@ -94,7 +96,11 @@ function ItemName({
 function SeenNote({ seen, kills }: { seen: SeenVariantGroup; kills?: number }): JSX.Element {
   const rate = perceivedDropRate(seen.count, kills)
   return (
-    <Typography variant="caption" sx={{ color: 'success.main', flexShrink: 0 }} data-testid="mob-drop-seen">
+    <Typography
+      variant="caption"
+      sx={{ color: 'success.main', flexShrink: 0 }}
+      data-testid="mob-drop-seen"
+    >
       seen by you: {seen.count}×
       {rate != null && (
         <Tooltip
@@ -112,7 +118,7 @@ function SeenNote({ seen, kills }: { seen: SeenVariantGroup; kills?: number }): 
 function VariantToggle({
   count,
   open,
-  onToggle
+  onToggle,
 }: {
   count: number
   open: boolean
@@ -131,7 +137,12 @@ function VariantToggle({
           if (e.key === 'Enter' || e.key === ' ') onToggle()
         }}
         data-testid="mob-drop-variants-toggle"
-        sx={{ flexShrink: 0, cursor: 'pointer', color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+        sx={{
+          flexShrink: 0,
+          cursor: 'pointer',
+          color: 'text.secondary',
+          '&:hover': { color: 'primary.main' },
+        }}
       >
         <Typography variant="caption">
           {count} variant{count === 1 ? '' : 's'}
@@ -146,7 +157,13 @@ function VariantToggle({
 }
 
 /** The breakdown: one line per raw spelling, in upgrade order, each its own drill-down. */
-function VariantList({ seen, onOpenItem }: { seen: SeenVariantGroup; onOpenItem: OpenItem }): JSX.Element {
+function VariantList({
+  seen,
+  onOpenItem,
+}: {
+  seen: SeenVariantGroup
+  onOpenItem: OpenItem
+}): JSX.Element {
   return (
     <Box sx={{ pl: 2, borderLeft: 1, borderColor: 'divider', ml: 0.5, mb: 0.3 }}>
       {seen.variants.map((v) => (
@@ -181,7 +198,7 @@ export function DropRow({
   era,
   seen,
   kills,
-  onOpenItem
+  onOpenItem,
 }: {
   item: string
   rarity?: string
@@ -235,7 +252,7 @@ export function DropRow({
 export function ItemDrillDown({
   item,
   family,
-  onClose
+  onClose,
 }: {
   item: string
   family?: boolean

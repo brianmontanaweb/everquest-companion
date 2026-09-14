@@ -60,7 +60,7 @@ import type { CharacterRef } from '../../shared/types'
  */
 export function projectCharacterList(
   askedAbout: string,
-  reply: LogsListResult
+  reply: LogsListResult,
 ): CharacterRef[] | null {
   if (reply.dir !== askedAbout) return null
   if (reply.readable === 'unreadable') return null
@@ -68,6 +68,6 @@ export function projectCharacterList(
     name: c.name,
     server: c.server,
     logPath: c.logPath,
-    ...(c.lastPlayed === undefined ? {} : { lastPlayed: c.lastPlayed })
+    ...(c.lastPlayed === undefined ? {} : { lastPlayed: c.lastPlayed }),
   }))
 }

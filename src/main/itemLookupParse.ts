@@ -167,7 +167,7 @@ import type {
   ItemDropSource,
   ItemKnowledge,
   ItemQuestUse,
-  ItemRecipeUse
+  ItemRecipeUse,
 } from '../shared/types'
 import { itemBaseName, parseStatsBlock, type ItemStatBlock } from '../shared/itemStats'
 // The ONE question this parser asks the era tables: "is this a token you name?" — the guard on the
@@ -186,7 +186,7 @@ export function templateField(wikitext: string, field: string): string | null {
   // Values can contain newlines and bullet lists.
   const re = new RegExp(
     `\\|\\s*${field}\\s*=([\\s\\S]*?)(?=\\n\\s*\\|\\s*[a-zA-Z_]+\\s*=|\\n\\s*\\}\\})`,
-    'i'
+    'i',
   )
   const m = re.exec(wikitext)
   return m ? m[1].trim() : null
@@ -236,13 +236,17 @@ function bulletLines(block: string): string[] {
 /** The shared tail of both tradeskill parsers: the prose fallback fires ONLY when nothing
  *  structured was read, and `note` is left OFF the object rather than set to undefined. */
 function withNote<T>(recipes: T[], leftovers: string[]): { recipes: T[]; note?: string } {
-  const note = recipes.length === 0 && leftovers.length > 0 ? cleanSummary(leftovers.join(' ')) : undefined
+  const note =
+    recipes.length === 0 && leftovers.length > 0 ? cleanSummary(leftovers.join(' ')) : undefined
   return note ? { recipes, note } : { recipes }
 }
 
 /** The tradeskill a `*` heading names. Usually a link ([[Baking]]); a bare word is accepted
  *  too, and a heading with neither leaves the current tradeskill unnamed. */
-function headingTradeskill(body: string, link: { page: string; label: string } | null): string | undefined {
+function headingTradeskill(
+  body: string,
+  link: { page: string; label: string } | null,
+): string | undefined {
   return link?.label ?? (body.replace(TRIVIAL_RE, '').trim() || undefined)
 }
 
@@ -251,7 +255,7 @@ function headingTradeskill(body: string, link: { page: string; label: string } |
 function recipeFromLine(
   body: string,
   link: { page: string; label: string },
-  tradeskill: string | undefined
+  tradeskill: string | undefined,
 ): ItemRecipeUse {
   const trivialM = TRIVIAL_RE.exec(body)
   const use: ItemRecipeUse = { recipe: link.label }
@@ -302,7 +306,9 @@ export function parseRecipeUses(block: string): { recipes: ItemRecipeUse[]; note
 
 /** One `::` ingredient row's item, quantity and source list. Null when the row names no
  *  item — we never invent an ingredient. */
-function parseIngredientRow(body: string): { name: string; qty?: number; sources?: string[] } | null {
+function parseIngredientRow(
+  body: string,
+): { name: string; qty?: number; sources?: string[] } | null {
   const link = firstLink(body)
   if (!link) return null
   const ing: { name: string; qty?: number; sources?: string[] } = { name: link.label }
@@ -312,7 +318,12 @@ function parseIngredientRow(body: string): { name: string; qty?: number; sources
   // containing a dash can't be mistaken for the source list.
   const close = body.indexOf(']]')
   const tail = close >= 0 ? /^\s*-\s*(.+)$/.exec(body.slice(close + 2)) : null
-  const sources = tail ? tail[1].split(',').map((s) => s.trim()).filter(Boolean) : []
+  const sources = tail
+    ? tail[1]
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : []
   if (sources.length > 0) ing.sources = sources
   return ing
 }
@@ -320,7 +331,10 @@ function parseIngredientRow(body: string): { name: string; qty?: number; sources
 /** Attach a `::` ingredient row to the open recipe. With no recipe open the row's text is
  *  kept as prose instead (it is not an ingredient of anything we read). */
 function readIngredientRow(line: string, cur: ItemCraftRecipe | null, leftovers: string[]): void {
-  const body = line.replace(/^:+\s*/, '').replace(/\{\{[^}]*\}\}/g, '').trim()
+  const body = line
+    .replace(/^:+\s*/, '')
+    .replace(/\{\{[^}]*\}\}/g, '')
+    .trim()
   if (!cur) {
     if (body) leftovers.push(body)
     return
@@ -700,7 +714,8 @@ export function parsePageEraTag(wikitext: string): string | undefined {
  * page's, duplicates removed.
  */
 /** The namespaces eqlwiki's own `eraFilter` skips before it asks about a link target. */
-const EXCLUDED_NS = /^(File|Image|Category|Template|Special|Help|MediaWiki|User|Talk|Media|Portal)\s*:/i
+const EXCLUDED_NS =
+  /^(File|Image|Category|Template|Special|Help|MediaWiki|User|Talk|Media|Portal)\s*:/i
 
 export function notesLinkTargets(wikitext: string): string[] {
   const notes = templateField(wikitext, 'notes')
@@ -755,14 +770,14 @@ function parseIconId(iconRaw: string | null): number | undefined {
  */
 function tradeskillFields(
   recipeParse: { recipes: ItemRecipeUse[]; note?: string } | null,
-  craftParse: { recipes: ItemCraftRecipe[]; note?: string } | null
+  craftParse: { recipes: ItemCraftRecipe[]; note?: string } | null,
 ): Pick<ItemKnowledge, 'recipes' | 'recipesNote' | 'playerCrafted' | 'craftedBy' | 'craftedNote'> {
   return {
     recipes: recipeParse && recipeParse.recipes.length > 0 ? recipeParse.recipes : undefined,
     recipesNote: recipeParse?.note,
     playerCrafted: craftParse && craftParse.recipes.length > 0 ? true : undefined,
     craftedBy: craftParse && craftParse.recipes.length > 0 ? craftParse.recipes : undefined,
-    craftedNote: craftParse?.note
+    craftedNote: craftParse?.note,
   }
 }
 
@@ -782,7 +797,7 @@ function tradeskillFields(
  */
 export function parseItemWikitext(
   _name: string,
-  wikitext: string
+  wikitext: string,
 ): Pick<
   ItemKnowledge,
   | 'lore'
@@ -838,7 +853,10 @@ export function parseItemWikitext(
     eraTag: pageEraTag(wikitext),
     ...tradeskillFields(recipeParse, craftParse),
     statsBlock: statsBlock
-      ? statsBlock.replace(/<br\s*\/?>/gi, '\n').replace(/[ \t]{2,}/g, ' ').trim()
-      : undefined
+      ? statsBlock
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/[ \t]{2,}/g, ' ')
+          .trim()
+      : undefined,
   }
 }

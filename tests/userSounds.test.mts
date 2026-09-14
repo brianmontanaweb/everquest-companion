@@ -26,14 +26,14 @@ import {
   USER_SOUNDS_PACK_NAME,
   USER_SOUND_EXTENSIONS,
   userSoundId,
-  userSoundLabel
+  userSoundLabel,
 } from '../src/shared/userSounds'
 import { isSafePackId } from '../src/main/security'
 import {
   importUserSoundFiles,
   listUserSounds,
   readUserManifest,
-  removeUserSoundFrom
+  removeUserSoundFrom,
 } from '../src/main/userSounds'
 import { getSoundDataIn, listPacksIn, type SoundRoots } from '../src/main/sounds'
 import { DEFAULT_ALERT_PACK_ID, DEFAULT_ALERT_SOUNDS } from '../src/main/data/defaultPacks'
@@ -65,8 +65,8 @@ function fakePack(root: string, id: string, soundId: string): void {
     JSON.stringify({
       id,
       name: id,
-      sounds: { [soundId]: { file: `sounds/${soundId}.wav`, label: soundId } }
-    })
+      sounds: { [soundId]: { file: `sounds/${soundId}.wav`, label: soundId } },
+    }),
   )
 }
 
@@ -86,7 +86,7 @@ test('a minted soundId is filesystem-safe whatever the filename was', () => {
     '   spaces   everywhere .wav',
     'ünïcødé.wav',
     '!!!.wav',
-    `${'x'.repeat(400)}.wav`
+    `${'x'.repeat(400)}.wav`,
   ]
   for (const name of hostile) {
     const id = userSoundId(name, new Set())
@@ -145,7 +145,9 @@ test('an import COPIES the file under the minted id and never keeps the original
 
   // Deleting the original leaves the pack whole — the reason the copy exists at all.
   rmSync(chosen)
-  assert.deepEqual(listUserSounds(root), [{ soundId: 'one-winged-angel', label: 'One Winged Angel' }])
+  assert.deepEqual(listUserSounds(root), [
+    { soundId: 'one-winged-angel', label: 'One Winged Angel' },
+  ])
 
   // Nothing anywhere in the manifest names the folder the user browsed.
   const manifestText = readFileSync(join(root, 'manifest.json'), 'utf8')
@@ -190,7 +192,10 @@ test('absurd files and undecodable formats are refused politely, by basename', (
 test('removing a sound takes its file and its entry, and an unknown id takes nothing', () => {
   const tree = tempTree()
   const root = join(tree, 'my-sounds')
-  importUserSoundFiles(root, [fakeAudio(join(tree, 'a'), 'ding.wav'), fakeAudio(join(tree, 'b'), 'horn.mp3')])
+  importUserSoundFiles(root, [
+    fakeAudio(join(tree, 'a'), 'ding.wav'),
+    fakeAudio(join(tree, 'b'), 'horn.mp3'),
+  ])
 
   const missing = removeUserSoundFrom(root, 'never-imported')
   assert.equal(missing.removed, false)
@@ -198,7 +203,10 @@ test('removing a sound takes its file and its entry, and an unknown id takes not
 
   const gone = removeUserSoundFrom(root, 'ding')
   assert.equal(gone.removed, true)
-  assert.deepEqual(gone.sounds.map((s) => s.soundId), ['horn'])
+  assert.deepEqual(
+    gone.sounds.map((s) => s.soundId),
+    ['horn'],
+  )
   assert.equal(existsSync(join(root, 'sounds', 'ding.wav')), false)
   assert.equal(existsSync(join(root, 'sounds', 'horn.mp3')), true, 'the other one survives')
 })
@@ -209,7 +217,11 @@ test('a hand-edited manifest cannot re-title the reserved pack', () => {
   importUserSoundFiles(root, [fakeAudio(join(tree, 'a'), 'ding.wav')])
   writeFileSync(
     join(root, 'manifest.json'),
-    JSON.stringify({ id: 'alan-rickman', name: 'Alan Rickman', sounds: readUserManifest(root).sounds })
+    JSON.stringify({
+      id: 'alan-rickman',
+      name: 'Alan Rickman',
+      sounds: readUserManifest(root).sounds,
+    }),
   )
   const manifest = readUserManifest(root)
   assert.equal(manifest.id, USER_SOUNDS_PACK_ID)
@@ -227,7 +239,7 @@ function rootsIn(tree: string): SoundRoots {
   return {
     bundled: [join(tree, 'resources')],
     user: join(tree, 'soundpacks'),
-    mine: join(tree, USER_SOUNDS_PACK_ID)
+    mine: join(tree, USER_SOUNDS_PACK_ID),
   }
 }
 
@@ -241,12 +253,15 @@ test('the reserved pack is listed once it has a sound — and not before', () =>
   // worse than no entry at all, so it is absent.
   assert.deepEqual(
     listPacksIn(roots).map((p) => p.id),
-    [DEFAULT_ALERT_PACK_ID, 'portal-turret']
+    [DEFAULT_ALERT_PACK_ID, 'portal-turret'],
   )
 
   importUserSoundFiles(roots.mine, [fakeAudio(join(tree, 'dl'), 'Fanfare.mp3')])
   const packs = listPacksIn(roots)
-  assert.deepEqual(packs.map((p) => p.id), [DEFAULT_ALERT_PACK_ID, 'portal-turret', USER_SOUNDS_PACK_ID])
+  assert.deepEqual(
+    packs.map((p) => p.id),
+    [DEFAULT_ALERT_PACK_ID, 'portal-turret', USER_SOUNDS_PACK_ID],
+  )
 
   // It arrives with the identity the constants state, marked as the user's, carrying the
   // imported sound under its display label — which is all any picker needs.
@@ -267,7 +282,11 @@ test('a soundpacks dir claiming the reserved id never displaces the real one', (
 
   const listed = listPacksIn(roots).filter((p) => p.id === USER_SOUNDS_PACK_ID)
   assert.equal(listed.length, 1, 'one entry, not two')
-  assert.deepEqual(Object.keys(listed[0].sounds), ['fanfare'], 'the imported sound, not the impostor')
+  assert.deepEqual(
+    Object.keys(listed[0].sounds),
+    ['fanfare'],
+    'the imported sound, not the impostor',
+  )
   // Serving agrees with the listing: the imported sound answers as itself…
   const own = getSoundDataIn(roots, USER_SOUNDS_PACK_ID, 'fanfare')
   assert.equal(own?.mime, 'audio/mpeg')
@@ -303,7 +322,7 @@ test('a removed custom sound falls back to the shipped default line instead of g
   assert.deepEqual(
     getSoundDataIn(roots, 'portal-turret', 'anything'),
     shipped,
-    'an uninstalled pack resolves through the default rather than going mute'
+    'an uninstalled pack resolves through the default rather than going mute',
   )
 
   // What is STILL null is the honestly unanswerable case: nothing installed at all.

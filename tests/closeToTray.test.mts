@@ -43,7 +43,7 @@ import {
   normalizeCloseToTray,
   shouldShowTrayNotice,
   trayNoticeBounds,
-  type NoticeRect
+  type NoticeRect,
 } from '../src/shared/closeToTray'
 
 const read = (rel: string): string => readFileSync(new URL(rel, import.meta.url), 'utf8')
@@ -56,7 +56,7 @@ test('THE DEFAULT IS OFF (owner reversal, 2026-08-16), and every unreadable stor
     assert.deepEqual(
       normalizeCloseToTray(junk),
       { enabled: false, noticeAcknowledged: false },
-      `${JSON.stringify(junk)} reads as the shipped behaviour`
+      `${JSON.stringify(junk)} reads as the shipped behaviour`,
     )
   }
 })
@@ -64,17 +64,17 @@ test('THE DEFAULT IS OFF (owner reversal, 2026-08-16), and every unreadable stor
 test('a stored answer is kept, in both directions and field by field', () => {
   assert.deepEqual(normalizeCloseToTray({ enabled: true, noticeAcknowledged: true }), {
     enabled: true,
-    noticeAcknowledged: true
+    noticeAcknowledged: true,
   })
   // The half-written store an older build (or a hand edit) can leave behind.
   assert.deepEqual(normalizeCloseToTray({ enabled: true }), {
     enabled: true,
-    noticeAcknowledged: false
+    noticeAcknowledged: false,
   })
   // …and a missing switch falls to the shipped OFF, whatever the notice flag says.
   assert.deepEqual(normalizeCloseToTray({ noticeAcknowledged: true }), {
     enabled: false,
-    noticeAcknowledged: true
+    noticeAcknowledged: true,
   })
 })
 
@@ -83,12 +83,15 @@ test('A PATCH KEEPS WHAT IT DOES NOT NAME — one merge for both writers', () =>
   // The tray menu's checkbox: one field, and the acknowledgement must survive it.
   assert.deepEqual(mergeCloseToTray({ enabled: false }, stored), {
     enabled: false,
-    noticeAcknowledged: true
+    noticeAcknowledged: true,
   })
   // The popover's `Always quit instead`: both fields at once.
   assert.deepEqual(
-    mergeCloseToTray({ enabled: false, noticeAcknowledged: true }, { enabled: true, noticeAcknowledged: false }),
-    { enabled: false, noticeAcknowledged: true }
+    mergeCloseToTray(
+      { enabled: false, noticeAcknowledged: true },
+      { enabled: true, noticeAcknowledged: false },
+    ),
+    { enabled: false, noticeAcknowledged: true },
   )
   // A patch of the wrong shape changes nothing at all rather than resetting to the defaults.
   assert.deepEqual(mergeCloseToTray('nonsense', stored), stored)
@@ -98,21 +101,51 @@ test('A PATCH KEEPS WHAT IT DOES NOT NAME — one merge for both writers', () =>
 // ---- 3 + 4. the close decision ------------------------------------------------------------------
 
 test('THE WHOLE CLOSE POLICY, as a table', () => {
-  const table: { enabled: boolean; quitting: boolean; trayAvailable: boolean; want: string; why: string }[] = [
-    { enabled: true, quitting: false, trayAvailable: true, want: 'hide', why: 'the feature, once opted into' },
-    { enabled: false, quitting: false, trayAvailable: true, want: 'close', why: 'the user asked for the X to quit' },
-    { enabled: true, quitting: true, trayAvailable: true, want: 'close', why: 'the app is already quitting' },
-    { enabled: true, quitting: false, trayAvailable: false, want: 'close', why: 'nothing could bring it back' },
+  const table: {
+    enabled: boolean
+    quitting: boolean
+    trayAvailable: boolean
+    want: string
+    why: string
+  }[] = [
+    {
+      enabled: true,
+      quitting: false,
+      trayAvailable: true,
+      want: 'hide',
+      why: 'the feature, once opted into',
+    },
+    {
+      enabled: false,
+      quitting: false,
+      trayAvailable: true,
+      want: 'close',
+      why: 'the user asked for the X to quit',
+    },
+    {
+      enabled: true,
+      quitting: true,
+      trayAvailable: true,
+      want: 'close',
+      why: 'the app is already quitting',
+    },
+    {
+      enabled: true,
+      quitting: false,
+      trayAvailable: false,
+      want: 'close',
+      why: 'nothing could bring it back',
+    },
     { enabled: false, quitting: true, trayAvailable: true, want: 'close', why: '' },
     { enabled: false, quitting: false, trayAvailable: false, want: 'close', why: '' },
     { enabled: true, quitting: true, trayAvailable: false, want: 'close', why: '' },
-    { enabled: false, quitting: true, trayAvailable: false, want: 'close', why: '' }
+    { enabled: false, quitting: true, trayAvailable: false, want: 'close', why: '' },
   ]
   for (const row of table) {
     assert.equal(
       closeIntent(row),
       row.want,
-      `${JSON.stringify({ enabled: row.enabled, quitting: row.quitting, tray: row.trayAvailable })} ${row.why}`
+      `${JSON.stringify({ enabled: row.enabled, quitting: row.quitting, tray: row.trayAvailable })} ${row.why}`,
     )
   }
   // Exactly ONE of the eight hides. Stated as a count as well as a table, because the risk here is
@@ -150,7 +183,10 @@ test('THE CARD IS SHOWN UNTIL IT IS ACKNOWLEDGED, and fifteen seconds is not an 
   assert.match(tray, /setTimeout\(dismissTrayNotice, TRAY_NOTICE_MS\)/, 'and so does the clock')
 
   // `Quit now` deliberately does NOT acknowledge; the other two do.
-  const quitHandler = tray.slice(tray.indexOf('IPC.trayNoticeQuit'), tray.indexOf('IPC.trayNoticeAlwaysQuit'))
+  const quitHandler = tray.slice(
+    tray.indexOf('IPC.trayNoticeQuit'),
+    tray.indexOf('IPC.trayNoticeAlwaysQuit'),
+  )
   assert.ok(!quitHandler.includes('noticeAcknowledged'), 'quitting is not reading')
   assert.match(tray, /applyCloseToTray\(\{ enabled: false, noticeAcknowledged: true \}\)/)
   assert.match(tray, /applyCloseToTray\(\{ noticeAcknowledged: true \}\)/)
@@ -164,7 +200,10 @@ const WORK: NoticeRect = { x: 0, y: 0, width: 1920, height: 1040 }
 const BOTTOM_TRAY: NoticeRect = { x: 1840, y: 1046, width: 24, height: 24 }
 
 const inside = (r: NoticeRect, area: NoticeRect): boolean =>
-  r.x >= area.x && r.y >= area.y && r.x + r.width <= area.x + area.width && r.y + r.height <= area.y + area.height
+  r.x >= area.x &&
+  r.y >= area.y &&
+  r.x + r.width <= area.x + area.width &&
+  r.y + r.height <= area.y + area.height
 
 test('THE CARD SITS ABOVE THE ICON, centred on it, and inside the work area', () => {
   const b = trayNoticeBounds(BOTTOM_TRAY, WORK)
@@ -227,14 +266,17 @@ test('THE HIDE PATH RETURNS BEFORE THE OVERLAYS ARE DESTROYED — the feature it
 
   // The geometry is still written on BOTH paths (JOS-248): a window that was left somewhere and
   // then hidden was still left there.
-  assert.ok(handler.indexOf('flushMainWindowState()') < asked, 'the state flush precedes the question')
+  assert.ok(
+    handler.indexOf('flushMainWindowState()') < asked,
+    'the state flush precedes the question',
+  )
 
   // And the hide itself is never a block: the interceptor hides in the same breath as it prevents.
   const tray = read('../src/main/tray.ts')
   const intercept = tray.slice(tray.indexOf('export function hideMainWindowToTray'))
   assert.ok(
     intercept.indexOf('e.preventDefault()') < intercept.indexOf('w.hide()'),
-    'preventDefault always comes with a hide'
+    'preventDefault always comes with a hide',
   )
 })
 
@@ -243,7 +285,10 @@ test('THE TRAY QUIT RUNS THE SAME TEARDOWN THE X ALWAYS DID', () => {
   // telemetry sessionEnd, the perf profile and the learned message-overlay flush off exactly that
   // event. So the tray's Quit latches and CLOSES THE WINDOW, which is the path those steps live on.
   const tray = read('../src/main/tray.ts')
-  const quit = tray.slice(tray.indexOf('function requestQuit('), tray.indexOf('// -----', tray.indexOf('function requestQuit(')))
+  const quit = tray.slice(
+    tray.indexOf('function requestQuit('),
+    tray.indexOf('// -----', tray.indexOf('function requestQuit(')),
+  )
   assert.match(quit, /quitting = true/, 'the latch first, so the close is a real one')
   assert.match(quit, /w\.close\(\)/, 'then the window closes, which is what runs window-all-closed')
   assert.match(quit, /app\.quit\(\)/, 'and a window that is already gone still quits')
@@ -260,19 +305,22 @@ test('A REAL CLOSE TAKES THE CARD WITH IT — a hidden window is still an open o
   const tray = read('../src/main/tray.ts')
   const intercept = tray.slice(
     tray.indexOf('export function hideMainWindowToTray'),
-    tray.indexOf('function restoreMainWindow(')
+    tray.indexOf('function restoreMainWindow('),
   )
   const closes = intercept.indexOf("if (intent === 'close')")
   assert.ok(closes > 0)
   assert.ok(
     intercept.indexOf('destroyTrayNotice()', closes) < intercept.indexOf('return false', closes),
-    'the close branch destroys the card before it hands the close on'
+    'the close branch destroys the card before it hands the close on',
   )
 })
 
 test('THE POPOVER TAKES THE ONE SHARED SECURITY POSTURE, never a second opinion', () => {
   const tray = read('../src/main/tray.ts')
-  assert.match(tray, /webPreferences: WEB_PREFERENCES\(join\(__dirname, '\.\.\/preload\/tray\.js'\)\)/)
+  assert.match(
+    tray,
+    /webPreferences: WEB_PREFERENCES\(join\(__dirname, '\.\.\/preload\/tray\.js'\)\)/,
+  )
   // Nothing in this app re-states focusability outside windows.ts's one guarded helper (JOS-199).
   assert.ok(!tray.includes('setFocusable('), 'a tray window must not move the foreground by hand')
 })

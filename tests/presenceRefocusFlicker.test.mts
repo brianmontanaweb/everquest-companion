@@ -30,7 +30,7 @@ import {
   describeOverlayVisibility,
   focusCountsAsEq,
   overlaysShouldHide,
-  type ForegroundSide
+  type ForegroundSide,
 } from '../src/main/presenceProtocol'
 import * as protocol from '../src/main/presenceProtocol'
 import { INITIAL_PRESENCE } from '../src/shared/presencePrefs'
@@ -58,7 +58,7 @@ test('THE FOCUS MATRIX, including the raise grace', () => {
     ['own-app', false, false],
     ['own-app', true, true],
     ['other', false, false],
-    ['other', true, false]
+    ['other', true, false],
   ]
   for (const [side, raise, expect] of cases) {
     assert.equal(focusCountsAsEq(side, raise), expect, `${side} raise=${String(raise)}`)
@@ -90,7 +90,7 @@ interface Edge {
  *  unobserved state failing open. Edges are indexed by record, not by clock: there is no clock. */
 function driveWatcher(
   events: readonly Rec[],
-  prefs: OverlayAutoHidePrefs
+  prefs: OverlayAutoHidePrefs,
 ): { readonly edges: readonly Edge[]; readonly hidden: boolean } {
   let state: PresenceState = INITIAL_PRESENCE
   let ownRaise = false
@@ -129,7 +129,7 @@ function firstTick(side: ForegroundSide, running: boolean): readonly Rec[] {
   return [
     { t: 'cursor', visible: true },
     { t: 'fg', side, pid: side === 'eq' ? 4321 : 777 },
-    { t: 'run', running }
+    { t: 'run', running },
   ]
 }
 
@@ -158,19 +158,22 @@ test('ALT-TAB IS TWO EDGES, INSTANT BOTH WAYS — the latency the debounce used 
   const session = driveWatcher([...firstTick('eq', true), FG('other'), FG('eq')], BOTH_ON)
   assert.deepEqual(session.edges, [
     { i: 3, hidden: true },
-    { i: 4, hidden: false }
+    { i: 4, hidden: false },
   ])
 })
 
 test('THE TRANSITION FLAP IS ABSORBED BY EVIDENCE, NOT TIME: a pid-0 sample moves nothing', () => {
   // Windows hands the foreground to NO window during transitions — the flap the old debounce
   // existed to wait out. Nothing gained focus, so nothing was left.
-  const flap = driveWatcher([...firstTick('eq', true), { t: 'fg', side: 'other', pid: 0 }, FG('eq')], BOTH_ON)
+  const flap = driveWatcher(
+    [...firstTick('eq', true), { t: 'fg', side: 'other', pid: 0 }, FG('eq')],
+    BOTH_ON,
+  )
   assert.deepEqual(flap.edges, [], 'no window ≠ not EverQuest')
   // And the mirror: parked (user elsewhere), a pid-0 sample does not un-park either.
   const parked = driveWatcher(
     [...firstTick('other', true), { t: 'fg', side: 'other', pid: 0 }],
-    BOTH_ON
+    BOTH_ON,
   )
   assert.deepEqual(parked.edges, [{ i: 1, hidden: true }], 'the empty moment keeps the last answer')
 })
@@ -180,7 +183,7 @@ test('THE RAISE GRACE: an overlay-initiated raise of the app window parks nothin
   // the foreground. Owner ruling: still EverQuest, spiritually.
   const graced = driveWatcher(
     [...firstTick('eq', true), { t: 'raise' }, FG('own-app'), FG('eq')],
-    BOTH_ON
+    BOTH_ON,
   )
   assert.deepEqual(graced.edges, [], 'using an overlay is not leaving the game')
 
@@ -188,7 +191,7 @@ test('THE RAISE GRACE: an overlay-initiated raise of the app window parks nothin
   // window in front means what it always meant (JOS-199).
   const ended = driveWatcher(
     [...firstTick('eq', true), { t: 'raise' }, FG('own-app'), FG('other'), FG('own-app')],
-    BOTH_ON
+    BOTH_ON,
   )
   assert.deepEqual(ended.edges, [{ i: 5, hidden: true }], 'one grace per raise, ended by evidence')
 
@@ -214,7 +217,7 @@ const EQ_FG = {
   pid: 4321,
   exePath: `${EQ_ROOT}\\eqgame.exe`,
   title: 'EverQuest',
-  side: 'eq' as const
+  side: 'eq' as const,
 }
 const AT = Date.parse('2026-08-19T18:30:00.000Z')
 
@@ -233,13 +236,16 @@ test('A FLIP SAYS WHAT DROVE IT: the value, the clock, the pid and the image', (
   const line = describeFocusTransition({ committed: true, at: AT, driver: EQ_FG })
   assert.equal(
     line,
-    'presence: eqFocused -> true at 2026-08-19T18:30:00.000Z; foreground pid 4321 eqgame.exe [eq] "EverQuest"'
+    'presence: eqFocused -> true at 2026-08-19T18:30:00.000Z; foreground pid 4321 eqgame.exe [eq] "EverQuest"',
   )
 })
 
 test('a flip with no foreground record yet says so rather than inventing one', () => {
   const line = describeFocusTransition({ committed: false, at: AT, driver: null })
-  assert.equal(line, 'presence: eqFocused -> false at 2026-08-19T18:30:00.000Z; no foreground record yet')
+  assert.equal(
+    line,
+    'presence: eqFocused -> false at 2026-08-19T18:30:00.000Z; no foreground record yet',
+  )
 })
 
 test('THE LINE IS ONE LINE, AND A WINDOW TITLE CANNOT FORGE A SECOND', () => {
@@ -250,8 +256,8 @@ test('THE LINE IS ONE LINE, AND A WINDOW TITLE CANNOT FORGE A SECOND', () => {
       pid: 9,
       exePath: 'C:\\x\\evil.exe',
       title: 'line one\r\nline "two"\tand a very long tail '.repeat(8),
-      side: 'other'
-    }
+      side: 'other',
+    },
   })
   assert.equal(hostile.includes('\n'), false)
   assert.equal(hostile.includes('\r'), false)
@@ -261,10 +267,19 @@ test('THE LINE IS ONE LINE, AND A WINDOW TITLE CANNOT FORGE A SECOND', () => {
 })
 
 test('THE PARK HAS ITS OWN WORD, so dev.log tells it from a real gate hide at a glance', () => {
-  assert.equal(describeOverlayPark(true, AT), 'presence: overlays parked at 2026-08-19T18:30:00.000Z')
-  assert.equal(describeOverlayPark(false, AT), 'presence: overlays unparked at 2026-08-19T18:30:00.000Z')
+  assert.equal(
+    describeOverlayPark(true, AT),
+    'presence: overlays parked at 2026-08-19T18:30:00.000Z',
+  )
+  assert.equal(
+    describeOverlayPark(false, AT),
+    'presence: overlays unparked at 2026-08-19T18:30:00.000Z',
+  )
   // The gate's copy is unchanged — a "hidden" line now always means the gate (or teardown).
-  assert.equal(describeOverlayVisibility(true, AT), 'presence: overlays hidden at 2026-08-19T18:30:00.000Z')
+  assert.equal(
+    describeOverlayVisibility(true, AT),
+    'presence: overlays hidden at 2026-08-19T18:30:00.000Z',
+  )
 })
 
 test('NOTHING BUT logInfo TOUCHES THE FLIP LINE — the telemetry bright line, at the sink', () => {
@@ -284,8 +299,14 @@ test('presence.ts: the pid-0 return, the grace lifetime, and the two-argument fo
   const src = readFileSync(new URL('../src/main/presence.ts', import.meta.url), 'utf8')
   const record = body('../src/main/presence.ts', 'function applyRecord')
   assert.ok(record.includes('rec.pid === 0'), 'the no-window sample is answered before the fold')
-  assert.ok(record.indexOf('rec.pid === 0') < record.indexOf('foregroundSide('), 'and before the side is read')
-  assert.ok(record.includes("if (side !== 'own-app') ownWindowRaise = false"), 'the grace ends at the first foreign foreground')
+  assert.ok(
+    record.indexOf('rec.pid === 0') < record.indexOf('foregroundSide('),
+    'and before the side is read',
+  )
+  assert.ok(
+    record.includes("if (side !== 'own-app') ownWindowRaise = false"),
+    'the grace ends at the first foreign foreground',
+  )
   assert.ok(record.includes('focusCountsAsEq(side, ownWindowRaise)'), 'the fold reads the grace')
   // Both reset paths retire the grace with the generation.
   const resets = src.split('ownWindowRaise = false').length - 1
@@ -298,7 +319,10 @@ test('windowControls.ts: the raise is graced BEFORE the focus moves, and narrate
   const focus = src.indexOf('w.focus()')
   assert.notEqual(raise, -1)
   assert.ok(raise < focus, 'grace first — the record can arrive on the very next watcher tick')
-  assert.ok(src.includes('focusView raise ->'), 'one of exactly two deliberate foreground moves, narrated')
+  assert.ok(
+    src.includes('focusView raise ->'),
+    'one of exactly two deliberate foreground moves, narrated',
+  )
 })
 
 test('presenceEffects.ts parks; windows.ts parkOverlays never hides', () => {

@@ -105,10 +105,13 @@ async function categoryMembers(title: string): Promise<Member[]> {
       action: 'query',
       list: 'categorymembers',
       cmtitle: title,
-      cmlimit: '500'
+      cmlimit: '500',
     }
     if (cont) params.cmcontinue = cont
-    const j = await api<{ query?: { categorymembers?: Member[] }; continue?: { cmcontinue?: string } }>(params)
+    const j = await api<{
+      query?: { categorymembers?: Member[] }
+      continue?: { cmcontinue?: string }
+    }>(params)
     out.push(...(j.query?.categorymembers ?? []))
     cont = j.continue?.cmcontinue
     if (!cont) break
@@ -121,7 +124,11 @@ async function allCategories(): Promise<string[]> {
   const out: string[] = []
   let cont: string | undefined
   for (let page = 0; page < 100; page++) {
-    const params: Record<string, string> = { action: 'query', list: 'allcategories', aclimit: '500' }
+    const params: Record<string, string> = {
+      action: 'query',
+      list: 'allcategories',
+      aclimit: '500',
+    }
     if (cont) params.accontinue = cont
     const j = await api<{
       query?: { allcategories?: { category: string }[] }
@@ -165,7 +172,7 @@ async function fetchWikitext(pageid: number): Promise<string | null> {
     action: 'parse',
     pageid: String(pageid),
     prop: 'wikitext',
-    redirects: '1'
+    redirects: '1',
   })
   const wt = j.parse?.wikitext
   if (j.error || wt == null) return null
@@ -193,7 +200,9 @@ async function collectQuestPages(): Promise<Member[]> {
   }
   console.log('Enumerating quest categories…')
   const cats = questCategoryNames(await allCategories())
-  console.log(`  ${cats.length} quest categories: ${cats.map((c) => c.replace('Category:', '')).join(', ')}`)
+  console.log(
+    `  ${cats.length} quest categories: ${cats.map((c) => c.replace('Category:', '')).join(', ')}`,
+  )
 
   const byTitle = new Map<string, Member>()
   const seenCats = new Set<string>()
@@ -234,7 +243,7 @@ const ITEM_CATEGORIES = [
   'Category:Items',
   'Category:Inventory Items',
   'Category:Quest Items',
-  'Category:Player Crafted'
+  'Category:Player Crafted',
 ]
 
 /** Lowercased title set of every ITEM page on the wiki (the prose-link filter). */
@@ -277,7 +286,8 @@ function nonQuestReason(parsed: ParsedQuestPage): string | null {
   const indexPage =
     !parsed.hasTopTable && !parsed.giver && !parsed.startZone && parsed.requiredItems.length > 40
   if (parsed.disambiguation && isEmptyParse(parsed)) return 'disambiguation hub'
-  if (indexPage) return `index/list page (${parsed.requiredItems.length} item links, no quest header)`
+  if (indexPage)
+    return `index/list page (${parsed.requiredItems.length} item links, no quest header)`
   if (isEmptyParse(parsed)) return 'no quest fields parsed'
   return null
 }
@@ -314,7 +324,7 @@ function printSummary(quests: QuestEntry[], skipped: { page: string; reason: str
   console.log(`\nWrote ${quests.length} quests → ${OUT_PATH}`)
   console.log(
     `  items indexed: ${indexed.size} unique (${reqCount} required refs, ${rewCount} reward refs)  ` +
-      `givers: ${quests.filter((q) => q.giver).length}  exp: ${quests.filter((q) => q.expReward).length}`
+      `givers: ${quests.filter((q) => q.giver).length}  exp: ${quests.filter((q) => q.expReward).length}`,
   )
   if (skipped.length) {
     console.log(`\nSkipped ${skipped.length} pages (nothing parsed):`)
@@ -324,7 +334,8 @@ function printSummary(quests: QuestEntry[], skipped: { page: string; reason: str
 
 async function main(): Promise<void> {
   const itemTitles = await collectItemTitles()
-  const isItem = (title: string): boolean => itemTitles.has(title.toLowerCase().replace(/\s+/g, ' ').trim())
+  const isItem = (title: string): boolean =>
+    itemTitles.has(title.toLowerCase().replace(/\s+/g, ' ').trim())
 
   const pages = await collectQuestPages()
   console.log(`\nFetching + parsing ${pages.length} quest pages…`)
@@ -340,7 +351,8 @@ async function main(): Promise<void> {
       skipped.push({ page: p.title, reason: `fetch failed: ${(err as Error).message}` })
     }
     if (wt == null) {
-      if (!skipped.some((s) => s.page === p.title)) skipped.push({ page: p.title, reason: 'no wikitext' })
+      if (!skipped.some((s) => s.page === p.title))
+        skipped.push({ page: p.title, reason: 'no wikitext' })
     } else {
       const parsed = parseQuestPage(p.title, wt, isItem)
       const reason = nonQuestReason(parsed)
@@ -354,7 +366,7 @@ async function main(): Promise<void> {
   const out: QuestData = {
     scrapedAt: new Date().toISOString(),
     source: 'eqlwiki.com — Category:Quests + quest subcategories',
-    quests
+    quests,
   }
   mkdirSync(dirname(OUT_PATH), { recursive: true })
   writeFileSync(OUT_PATH, JSON.stringify(out, null, 2))

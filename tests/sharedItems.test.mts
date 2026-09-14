@@ -21,7 +21,7 @@ import {
   computeSharedItems,
   isCurrencyItem,
   ambiguousQuestNames,
-  sharingQuestLabel
+  sharingQuestLabel,
 } from '../src/renderer/src/features/posky/sharedItems'
 import { questKey } from '../src/renderer/src/features/posky/keys'
 import { itemCountKey } from '../src/renderer/src/lib/itemName'
@@ -56,11 +56,17 @@ test('a contested item appears in BOTH quests, each pointing at the other', () =
   // A's shared list has exactly Sphinx Claw, pointing at B.
   assert.equal(sa!.length, 1)
   assert.equal(sa![0].key, itemCountKey('Sphinx Claw'))
-  assert.deepEqual(sa![0].quests.map((q) => q.name), ['Test of Love'])
+  assert.deepEqual(
+    sa![0].quests.map((q) => q.name),
+    ['Test of Love'],
+  )
 
   // B's shared list has exactly Sphinx Claw, pointing at A.
   assert.equal(sb!.length, 1)
-  assert.deepEqual(sb![0].quests.map((q) => q.name), ['Test of Claw'])
+  assert.deepEqual(
+    sb![0].quests.map((q) => q.name),
+    ['Test of Claw'],
+  )
 
   // Non-shared items (Bear Pelt, Golden Hilt) never appear.
   assert.ok(!sa!.some((s) => s.name === 'Bear Pelt'))
@@ -103,11 +109,11 @@ test('class-prefix labels only ambiguous (cross-class-repeated) quest names', ()
   assert.equal(ambiguous.has('Test of Faith'), false)
   assert.equal(
     sharingQuestLabel({ key: questKey(a), className: 'Monk', name: 'Test of Body' }, ambiguous),
-    'Monk · Test of Body'
+    'Monk · Test of Body',
   )
   assert.equal(
     sharingQuestLabel({ key: questKey(c), className: 'Cleric', name: 'Test of Faith' }, ambiguous),
-    'Test of Faith'
+    'Test of Faith',
   )
 })
 
@@ -119,7 +125,7 @@ test('a sharing quest carries its own reward, and carries nothing when it has no
   const a: PoskyQuest = {
     ...quest('Beastlord', 'Test of Claw', [item('Sphinx Claw')]),
     reward: 'Savage Lord Bracer',
-    rewardStats: 'AC 12 STR +5'
+    rewardStats: 'AC 12 STR +5',
   }
   const b = quest('Paladin', 'Test of Love', [item('Sphinx Claw')]) // no reward on the page
   const map = computeSharedItems([a, b])
@@ -139,16 +145,20 @@ test('a sharing quest carries its own reward, and carries nothing when it has no
 
 test('real posky.json: contended quests mostly state a reward, and every stated one is non-empty', () => {
   const sharers = [...computeSharedItems(quests).values()].flatMap((list) =>
-    list.flatMap((si) => si.quests)
+    list.flatMap((si) => si.quests),
   )
   const stated = sharers.filter((sq) => sq.reward !== undefined)
-  for (const sq of stated) assert.notEqual(sq.reward, '', `${sq.name} must not carry an empty reward`)
+  for (const sq of stated)
+    assert.notEqual(sq.reward, '', `${sq.name} must not carry an empty reward`)
   const total = sharers.length
   const withReward = stated.length
   // A floor, not today's count (the scrape grows): the feature is worth having only if the data
   // actually carries rewards for the contended quests.
   assert.ok(total > 0, 'the real data has contended quests')
-  assert.ok(withReward / total > 0.5, `only ${String(withReward)}/${String(total)} sharers state a reward`)
+  assert.ok(
+    withReward / total > 0.5,
+    `only ${String(withReward)}/${String(total)} sharers state a reward`,
+  )
 })
 
 test('real posky.json: overlap stats are sane and Wind Runes never appear', () => {
@@ -170,5 +180,8 @@ test('real posky.json: overlap stats are sane and Wind Runes never appear', () =
   assert.equal(map.size, 23, 'exactly 23 quests have ≥1 contested item')
   assert.equal(contestedNames.size, 14, 'exactly 14 distinct contested items')
   assert.ok(contestedNames.has('Sphinx Claw'), 'Sphinx Claw is a known contested item')
-  assert.ok(contestedNames.has('Brass Knuckles'), 'Brass Knuckles (restored, Task #46) is contested')
+  assert.ok(
+    contestedNames.has('Brass Knuckles'),
+    'Brass Knuckles (restored, Task #46) is contested',
+  )
 })

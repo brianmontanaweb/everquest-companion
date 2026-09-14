@@ -58,7 +58,7 @@ import type {
   TriageReleaseCoverageDay,
   TriageReleaseHealthDay,
   TriageReleaseHealthVersion,
-  TriageReleaseIssue
+  TriageReleaseIssue,
 } from '../../shared/triage'
 // THE SHARED VALIDATOR, run one more time on a row read back out of the database (JOS-100) —
 // defense in depth at the last boundary before a human looks at it. See `parseExemplar`.
@@ -69,7 +69,7 @@ import {
   ratio,
   type BugReportRow,
   type ErrorIssueRow,
-  type UsageRow
+  type UsageRow,
 } from './usageRows'
 
 /** Builds shown. The funnel and startup sections' own cap, plus a little: this table deliberately
@@ -79,7 +79,7 @@ const MAX_RELEASE_VERSIONS = 8
 /** `version -> release date`, from committed source. Built once at module load — `RELEASE_NOTES`
  *  is a frozen literal and cannot change while the process runs. */
 const RELEASE_DATES: ReadonlyMap<string, string> = new Map(
-  RELEASE_NOTES.map((n) => [n.version, n.date])
+  RELEASE_NOTES.map((n) => [n.version, n.date]),
 )
 
 /**
@@ -163,7 +163,7 @@ function daysOf(
   version: string,
   rows: readonly UsageRow[],
   days: readonly string[],
-  activeByDay: Map<string, number>
+  activeByDay: Map<string, number>,
 ): TriageReleaseHealthDay[] {
   const reports = byDay(rows, USAGE_METRICS.healthReports, version)
   const errors = errorsByDay(rows, version)
@@ -177,7 +177,7 @@ function daysOf(
       errors: errors.get(day) ?? 0,
       rate: ratio(errors.get(day) ?? 0, n),
       active,
-      share: ratio(active, activeByDay.get(day) ?? 0) ?? 0
+      share: ratio(active, activeByDay.get(day) ?? 0) ?? 0,
     }
   })
 }
@@ -197,7 +197,9 @@ function daysOf(
  */
 function topIssuesFor(version: string, issues: readonly ErrorIssueRow[]): TriageReleaseIssue[] {
   const bag = new Map<string, TriageReleaseIssue>()
-  for (const r of [...issues].filter((i) => i.version === version).sort((a, b) => a.day.localeCompare(b.day))) {
+  for (const r of [...issues]
+    .filter((i) => i.version === version)
+    .sort((a, b) => a.day.localeCompare(b.day))) {
     const held = bag.get(r.fingerprint)
     if (held) {
       foldInto(held, r)
@@ -209,7 +211,7 @@ function topIssuesFor(version: string, issues: readonly ErrorIssueRow[]): Triage
       count: r.n,
       firstSeen: r.day,
       lastSeen: r.day,
-      ...describe(exemplar)
+      ...describe(exemplar),
     })
   }
   return [...bag.values()].sort((a, b) => b.count - a.count).slice(0, MAX_TOP_ISSUES)
@@ -243,7 +245,7 @@ function describe(exemplar: TriageErrorExemplar | null): {
     // NOT an empty string: a blank cell reads as "the message was blank", which is a different
     // fact from "the example did not survive". The panel shows this text verbatim.
     redactedMessage: exemplar?.redactedMessage ?? '(no example stored)',
-    exemplar
+    exemplar,
   }
 }
 
@@ -270,7 +272,7 @@ function parseExemplar(raw: string): TriageErrorExemplar | null {
       breadcrumbs: e.breadcrumbs,
       view: e.view,
       sessionAgeBucket: e.sessionAgeBucket,
-      mode: e.mode
+      mode: e.mode,
     }
     // The optional four are copied only when the validated event HAS them, so the panel can read
     // "absent" as the fact it is (an older client, or nothing to say) rather than as a default
@@ -294,7 +296,7 @@ function versionRow(
     activeByDay: Map<string, number>
     reports: Map<string, number>
     issues: readonly ErrorIssueRow[]
-  }
+  },
 ): TriageReleaseHealthVersion {
   const reports = ctx.reports.get(version) ?? 0
   // `byField` KEEPS every field (the mix is the readout, and hiding a counted thing from it would
@@ -318,7 +320,7 @@ function versionRow(
     bugReports: bugs.get(version) ?? 0,
     peakShare: perDay.reduce((max, d) => (d.share > max ? d.share : max), 0),
     days: perDay,
-    topIssues: topIssuesFor(version, ctx.issues)
+    topIssues: topIssuesFor(version, ctx.issues),
   }
 }
 
@@ -336,7 +338,7 @@ function coverageOf(
   rows: readonly UsageRow[],
   days: readonly string[],
   activeByDay: Map<string, number>,
-  reportingVersions: ReadonlySet<string>
+  reportingVersions: ReadonlySet<string>,
 ): TriageReleaseCoverageDay[] {
   const coveredByDay = new Map<string, number>()
   for (const r of rows) {
@@ -361,7 +363,7 @@ export function buildReleaseHealth(
   days: readonly string[],
   /** The stored error issues (JOS-100). DEFAULTED so every existing caller and every existing
    *  test compiles unchanged — a fleet with no error rows renders exactly as it did before. */
-  issues: readonly ErrorIssueRow[] = []
+  issues: readonly ErrorIssueRow[] = [],
 ): TriageAnalyticsReleaseHealth {
   // DIM_NONE IS NOT A VERSION, and dropping it is a deploy-skew guard rather than tidiness.
   // `healthReports` used to be written with no dimension at all, so an ingest Lambda that has not
@@ -371,7 +373,7 @@ export function buildReleaseHealth(
   // Skipped, the same skew degrades the honest way: those reports are invisible here until the
   // deploy lands, and the section says "not reporting", which is exactly true of what it can see.
   const reports = new Map(
-    [...dimsOf(usage, USAGE_METRICS.healthReports)].filter(([dim]) => dim !== DIM_NONE)
+    [...dimsOf(usage, USAGE_METRICS.healthReports)].filter(([dim]) => dim !== DIM_NONE),
   )
   const activeByDay = byDay(usage, USAGE_METRICS.activeInstalls)
   const bugs = new Map<string, number>()
@@ -384,7 +386,7 @@ export function buildReleaseHealth(
   const names = new Set<string>([
     ...dimsOf(usage, USAGE_METRICS.version).keys(),
     ...reports.keys(),
-    ...bugs.keys()
+    ...bugs.keys(),
   ])
   const reportingVersions = new Set([...reports].filter(([, n]) => n > 0).map(([v]) => v))
   const coverage = coverageOf(usage, days, activeByDay, reportingVersions)
@@ -397,8 +399,8 @@ export function buildReleaseHealth(
     coverage,
     coverageShare: ratio(
       coverage.reduce((sum, c) => sum + c.covered, 0),
-      totalActive
+      totalActive,
     ),
-    anyReporting: reportingVersions.size > 0
+    anyReporting: reportingVersions.size > 0,
   }
 }

@@ -134,8 +134,7 @@ function toConfig(row: ContextRow | undefined): FeedbackConfig {
   const closed = row?.closed_message
   const max = row?.max_per_day
   return {
-    acceptingReports:
-      typeof accepting === 'boolean' ? accepting : DEFAULT_CONFIG.acceptingReports,
+    acceptingReports: typeof accepting === 'boolean' ? accepting : DEFAULT_CONFIG.acceptingReports,
     closedMessage: typeof closed === 'string' ? closed : DEFAULT_CONFIG.closedMessage,
     maxPerInstallPerDay:
       typeof max === 'number' && max > 0 ? max : DEFAULT_CONFIG.maxPerInstallPerDay,
@@ -179,9 +178,9 @@ function encodeBase32(value: number, length: number): string {
 }
 
 function ulid(now: number): string {
-  const random = Array.from({ length: 16 }, () =>
-    CROCKFORD[Math.floor(Math.random() * 32)],
-  ).join('')
+  const random = Array.from({ length: 16 }, () => CROCKFORD[Math.floor(Math.random() * 32)]).join(
+    '',
+  )
   return encodeBase32(now, 10) + random
 }
 
@@ -267,8 +266,7 @@ const CONTEXT_CACHED_SQL = `SELECT${PROFILE_AND_IDEMP}`
 
 /** Step 3: config + install profile + idempotency probe in ONE round trip. */
 async function loadContext(req: SubmitRequest, now: number): Promise<LoadedContext> {
-  const cached =
-    configCache && now - configCache.at < CONFIG_CACHE_MS ? configCache.value : null
+  const cached = configCache && now - configCache.at < CONFIG_CACHE_MS ? configCache.value : null
   const rows = await query<ContextRow>(cached ? CONTEXT_CACHED_SQL : CONTEXT_SQL, [
     req.installId,
     req.clientReportId,
@@ -435,12 +433,7 @@ VALUES ($1, $2, $3, $4)`
 const IDEMP_LOOKUP_SQL = `SELECT report_id FROM report_idempotency
  WHERE install_id = $1 AND client_report_id = $2`
 
-function reportParams(
-  req: SubmitRequest,
-  reportId: string,
-  score: number,
-  now: number,
-): unknown[] {
+function reportParams(req: SubmitRequest, reportId: string, score: number, now: number): unknown[] {
   return [
     reportId,
     req.installId,
@@ -481,12 +474,7 @@ async function writeReport(
     await withRetry('report', () =>
       transaction(async (c) => {
         await c.query(REPORT_SQL, reportParams(req, reportId, score, now))
-        await c.query(IDEMP_SQL, [
-          req.installId,
-          req.clientReportId,
-          reportId,
-          now + IDEMP_TTL_MS,
-        ])
+        await c.query(IDEMP_SQL, [req.installId, req.clientReportId, reportId, now + IDEMP_TTL_MS])
       }),
     )
     return { reportId, created: true }

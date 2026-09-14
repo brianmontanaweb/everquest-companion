@@ -90,7 +90,7 @@ export function zoneMatches(short: ZoneShort, q: string): boolean {
 export function filterZones(
   zones: readonly ZoneShort[],
   query: string,
-  limit = ZONE_OPTIONS_MAX
+  limit = ZONE_OPTIONS_MAX,
 ): ZoneShort[] {
   const q = tokenize(query)
   if (q.length === 0) return zones.slice(0, limit)

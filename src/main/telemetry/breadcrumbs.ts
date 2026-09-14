@@ -191,7 +191,8 @@ export function readBreadcrumbs(): Breadcrumb[] {
   for (let i = 0; i < written; i++) {
     const at = (newestAt - i + RING) % RING
     const raw = newest - stamps[at]
-    const offset = Number.isFinite(raw) && raw > 0 ? Math.round(raw / OFFSET_ROUND_MS) * OFFSET_ROUND_MS : 0
+    const offset =
+      Number.isFinite(raw) && raw > 0 ? Math.round(raw / OFFSET_ROUND_MS) * OFFSET_ROUND_MS : 0
     out.push({ kind: kinds[at], offsetMs: Math.min(offset, MAX_OFFSET_MS) })
   }
   return out

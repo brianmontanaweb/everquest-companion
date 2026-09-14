@@ -25,7 +25,7 @@ import {
   zoneAt,
   zoneColor,
   zoneLegend,
-  type ZoneColumns
+  type ZoneColumns,
 } from '../src/renderer/src/features/leveling/zoneBands'
 import { CHART_W, xOf } from '../src/renderer/src/features/leveling/levelChartGeometry'
 import type { ProgressionSnap } from '../src/shared/progressionTypes'
@@ -39,21 +39,34 @@ function cols(rows: [string, number, number][], lastTs: number): ZoneColumns {
     zoneStart: rows.map((r) => r[1]),
     zoneEnd: rows.map((r) => r[2]),
     zoneName: rows.map((r) => r[0]),
-    lastTs
+    lastTs,
   }
 }
 
 function blankSnap(): ProgressionSnap {
   return {
-    expTs: [], expPct: [], expFlag: [],
-    killTs: [], killZone: [], killCredit: [],
+    expTs: [],
+    expPct: [],
+    expFlag: [],
+    killTs: [],
+    killZone: [],
+    killCredit: [],
     witnessTs: [],
     recentKills: [],
     lootTs: [],
-    zoneStart: [], zoneEnd: [], zoneName: [],
-    offlineStart: [], offlineEnd: [], offlineCamped: [],
-    levelTs: [], levelValue: [], aaGainTs: [], aaGainAmount: [],
-    lastTs: 0, windowStart: 0, dropped: 0
+    zoneStart: [],
+    zoneEnd: [],
+    zoneName: [],
+    offlineStart: [],
+    offlineEnd: [],
+    offlineCamped: [],
+    levelTs: [],
+    levelValue: [],
+    aaGainTs: [],
+    aaGainAmount: [],
+    lastTs: 0,
+    windowStart: 0,
+    dropped: 0,
   }
 }
 
@@ -64,12 +77,12 @@ test('consecutive intervals of the same zone merge into one band', () => {
         ['Befallen', T0, T0 + 30 * M],
         ['Befallen', T0 + 30 * M, T0 + 30 * M + 4000],
         ['Befallen', T0 + 30 * M + 4000, T0 + H],
-        ["Nagafen's Lair", T0 + H, T0 + 2 * H]
+        ["Nagafen's Lair", T0 + H, T0 + 2 * H],
       ],
-      T0 + 2 * H
+      T0 + 2 * H,
     ),
     T0,
-    T0 + 2 * H
+    T0 + 2 * H,
   )
   assert.equal(bands.length, 2, 'three Befallen bounces are ONE stay')
   assert.equal(bands[0].name, 'Befallen')
@@ -85,12 +98,12 @@ test('instance tier / solo-group noise folds to the same zone', () => {
       [
         ['The Plane of Hate', T0, T0 + 10 * M],
         ['The Plane of Hate - Solo', T0 + 10 * M, T0 + 20 * M],
-        ['The Plane of Hate 2 (Awakened)', T0 + 20 * M, T0 + 30 * M]
+        ['The Plane of Hate 2 (Awakened)', T0 + 20 * M, T0 + 30 * M],
       ],
-      T0 + 30 * M
+      T0 + 30 * M,
     ),
     T0,
-    T0 + 30 * M
+    T0 + 30 * M,
   )
   assert.equal(bands.length, 1, 'one place, re-entered twice')
   assert.equal(bands[0].name, 'The Plane of Hate', 'the RAW first-seen name is what displays')
@@ -102,20 +115,27 @@ test('a different zone between two visits does NOT merge them', () => {
       [
         ['Befallen', T0, T0 + 10 * M],
         ['The Commonlands', T0 + 10 * M, T0 + 11 * M],
-        ['Befallen', T0 + 11 * M, T0 + 30 * M]
+        ['Befallen', T0 + 11 * M, T0 + 30 * M],
       ],
-      T0 + 30 * M
+      T0 + 30 * M,
     ),
     T0,
-    T0 + 30 * M
+    T0 + 30 * M,
   )
   assert.equal(bands.length, 3)
-  assert.deepEqual(bands.map((b) => b.name), ['Befallen', 'The Commonlands', 'Befallen'])
+  assert.deepEqual(
+    bands.map((b) => b.name),
+    ['Befallen', 'The Commonlands', 'Befallen'],
+  )
 })
 
 test('the still-open final interval clamps to lastTs, then to the domain', () => {
   const open = cols([['Befallen', T0, 0]], T0 + 3 * H)
-  assert.equal(mergeZoneBands(open, T0, T0 + 10 * H)[0].end, T0 + 3 * H, 'clamped to the last folded event')
+  assert.equal(
+    mergeZoneBands(open, T0, T0 + 10 * H)[0].end,
+    T0 + 3 * H,
+    'clamped to the last folded event',
+  )
   assert.equal(mergeZoneBands(open, T0, T0 + H)[0].end, T0 + H, 'and then to the visible domain')
 })
 
@@ -124,9 +144,9 @@ test('intervals outside the domain are dropped and partial ones are clipped', ()
     [
       ['Befallen', T0 - 5 * H, T0 - 4 * H],
       ['Najena', T0 - M, T0 + M],
-      ['Guk', T0 + 5 * H, T0 + 6 * H]
+      ['Guk', T0 + 5 * H, T0 + 6 * H],
     ],
-    T0 + 6 * H
+    T0 + 6 * H,
   )
   const bands = mergeZoneBands(c, T0, T0 + H)
   assert.equal(bands.length, 1, 'only the interval overlapping the domain survives')
@@ -139,8 +159,15 @@ test('zoneColor is stable and agrees whichever spelling the caller holds', () =>
   const raw = "Nagafen's Lair"
   assert.equal(zoneColor(raw), zoneColor(raw), 'stable across calls')
   assert.equal(zoneColor(raw), zoneColor("NAGAFEN'S LAIR"), 'case-insensitive')
-  assert.equal(zoneColor('The Plane of Hate'), zoneColor('The Plane of Hate - Solo'), 'instance noise folds')
-  assert.equal(zoneColor(raw), zoneColor(mergeZoneBands(cols([[raw, T0, T0 + H]], T0 + H), T0, T0 + H)[0].key))
+  assert.equal(
+    zoneColor('The Plane of Hate'),
+    zoneColor('The Plane of Hate - Solo'),
+    'instance noise folds',
+  )
+  assert.equal(
+    zoneColor(raw),
+    zoneColor(mergeZoneBands(cols([[raw, T0, T0 + H]], T0 + H), T0, T0 + H)[0].key),
+  )
   for (const z of ['Befallen', 'Najena', 'Guk', 'The Plane of Sky', '']) {
     assert.ok(ZONE_PALETTE.includes(zoneColor(z)), `${z} lands inside the palette`)
   }
@@ -154,17 +181,24 @@ test('bandRects drops sub-pixel bands from the DRAWING only', () => {
       [
         ['Befallen', T0, T0 + 12 * H],
         ['Najena', T0 + 12 * H, T0 + 12 * H + 20_000],
-        ['Guk', T0 + 12 * H + 20_000, T0 + 24 * H]
+        ['Guk', T0 + 12 * H + 20_000, T0 + 24 * H],
       ],
-      T0 + 24 * H
+      T0 + 24 * H,
     ),
     scale.t0,
-    scale.t1
+    scale.t1,
   )
   assert.equal(bands.length, 3, 'all three are in the DATA')
   const rects = bandRects(bands, scale)
-  assert.deepEqual(rects.map((r) => r.name), ['Befallen', 'Guk'], 'the sliver is not drawn')
-  assert.ok(Math.abs(rects[0].x - xOf(scale, T0)) < 1e-9, 'rect x is the chart mapping, not a second copy')
+  assert.deepEqual(
+    rects.map((r) => r.name),
+    ['Befallen', 'Guk'],
+    'the sliver is not drawn',
+  )
+  assert.ok(
+    Math.abs(rects[0].x - xOf(scale, T0)) < 1e-9,
+    'rect x is the chart mapping, not a second copy',
+  )
   assert.ok(rects[0].w > 300 && rects[1].w > 300)
   assert.equal(bandRects(bands, scale, 0).length, 3, 'the threshold is the only reason it went')
 })
@@ -192,12 +226,12 @@ test('the legend sums every visit of a zone across the domain', () => {
       [
         ['Befallen', T0, T0 + H],
         ['Najena', T0 + H, T0 + 2 * H],
-        ['Befallen', T0 + 2 * H, T0 + 4 * H]
+        ['Befallen', T0 + 2 * H, T0 + 4 * H],
       ],
-      T0 + 4 * H
+      T0 + 4 * H,
     ),
     T0,
-    T0 + 4 * H
+    T0 + 4 * H,
   )
   const legend = zoneLegend(bands)
   assert.equal(legend.rows[0].name, 'Befallen')
@@ -214,16 +248,20 @@ test('zoneAt finds the covering band and respects half-open bounds', () => {
     cols(
       [
         ['Befallen', T0, T0 + H],
-        ["Nagafen's Lair", T0 + H, T0 + 2 * H]
+        ["Nagafen's Lair", T0 + H, T0 + 2 * H],
       ],
-      T0 + 2 * H
+      T0 + 2 * H,
     ),
     T0,
-    T0 + 2 * H
+    T0 + 2 * H,
   )
   assert.equal(zoneAt(bands, T0 + 30 * M)?.name, 'Befallen', 'mid-band')
   assert.equal(zoneAt(bands, T0)?.name, 'Befallen', 'start is INSIDE the band')
-  assert.equal(zoneAt(bands, T0 + H)?.name, "Nagafen's Lair", 'the boundary instant belongs to the NEW zone, not both')
+  assert.equal(
+    zoneAt(bands, T0 + H)?.name,
+    "Nagafen's Lair",
+    'the boundary instant belongs to the NEW zone, not both',
+  )
   assert.equal(zoneAt(bands, T0 + 2 * H), null, 'the far end is exclusive')
   assert.equal(zoneAt(bands, T0 + 2 * H - 1)?.name, "Nagafen's Lair", 'one ms inside still hits')
 })
@@ -233,15 +271,19 @@ test('zoneAt is null before the first band and inside a gap', () => {
     cols(
       [
         ['Najena', T0 + H, T0 + 2 * H],
-        ['Guk', T0 + 5 * H, T0 + 6 * H]
+        ['Guk', T0 + 5 * H, T0 + 6 * H],
       ],
-      T0 + 6 * H
+      T0 + 6 * H,
     ),
     T0,
-    T0 + 6 * H
+    T0 + 6 * H,
   )
   assert.equal(zoneAt(bands, T0), null, 'pre-first-zone: the log has not said where you are')
-  assert.equal(zoneAt(bands, T0 + 3 * H), null, 'a hole in the capped zone column is never filled in')
+  assert.equal(
+    zoneAt(bands, T0 + 3 * H),
+    null,
+    'a hole in the capped zone column is never filled in',
+  )
   assert.equal(zoneAt([], T0 + H), null, 'no bands at all')
 })
 
@@ -253,17 +295,25 @@ test('zoneAt reports a merged instance bounce as its base zone', () => {
       [
         ['The Plane of Hate', T0, T0 + 10 * M],
         ['The Plane of Hate - Solo', T0 + 10 * M, T0 + 20 * M],
-        ['The Plane of Hate 2 (Awakened)', T0 + 20 * M, T0 + 30 * M]
+        ['The Plane of Hate 2 (Awakened)', T0 + 20 * M, T0 + 30 * M],
       ],
-      T0 + 30 * M
+      T0 + 30 * M,
     ),
     T0,
-    T0 + 30 * M
+    T0 + 30 * M,
   )
   assert.equal(bands.length, 1)
   for (const ts of [T0, T0 + 15 * M, T0 + 25 * M]) {
-    assert.equal(zoneAt(bands, ts)?.name, 'The Plane of Hate', 'the raw first-seen spelling, everywhere in the stay')
-    assert.equal(zoneColor(zoneAt(bands, ts)?.key ?? ''), zoneColor('The Plane of Hate'), "and the strip's own hue")
+    assert.equal(
+      zoneAt(bands, ts)?.name,
+      'The Plane of Hate',
+      'the raw first-seen spelling, everywhere in the stay',
+    )
+    assert.equal(
+      zoneColor(zoneAt(bands, ts)?.key ?? ''),
+      zoneColor('The Plane of Hate'),
+      "and the strip's own hue",
+    )
   }
 })
 

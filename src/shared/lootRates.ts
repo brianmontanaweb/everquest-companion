@@ -189,7 +189,7 @@ export function itemZoneRows(args: ItemZoneArgs): ItemZoneRow[] {
         spanMs: span?.spanMs ?? 0,
         dropsPerHourActive: null,
         firstTs: e.ts,
-        lastTs: e.ts
+        lastTs: e.ts,
       }
       rows.set(key, row)
     }
@@ -201,7 +201,9 @@ export function itemZoneRows(args: ItemZoneArgs): ItemZoneRow[] {
 
   const out = [...rows.values()]
   for (const row of out) row.dropsPerHourActive = perHour(row.drops, row.activeMs)
-  return out.sort((a, b) => b.drops - a.drops || b.activeMs - a.activeMs || a.zone.localeCompare(b.zone))
+  return out.sort(
+    (a, b) => b.drops - a.drops || b.activeMs - a.activeMs || a.zone.localeCompare(b.zone),
+  )
 }
 
 /** One item observed dropping inside a window. */
@@ -295,7 +297,7 @@ export function windowItemRows(args: WindowItemArgs): WindowItemRow[] {
         dropsPerHourActive: null,
         dropsPerHourWall: null,
         firstTs: e.ts,
-        lastTs: e.ts
+        lastTs: e.ts,
       }
       rows.set(key, row)
     }
@@ -309,7 +311,9 @@ export function windowItemRows(args: WindowItemArgs): WindowItemRow[] {
     row.dropsPerHourActive = perHour(row.drops, spans.activeMs)
     row.dropsPerHourWall = perHour(row.drops, wall)
   }
-  return out.sort((a, b) => b.drops - a.drops || b.lastTs - a.lastTs || a.item.localeCompare(b.item))
+  return out.sort(
+    (a, b) => b.drops - a.drops || b.lastTs - a.lastTs || a.item.localeCompare(b.item),
+  )
 }
 
 /**
@@ -388,6 +392,6 @@ export function windowLootRates(args: WindowRatesArgs): WindowLootRates {
     activeMs: spans.activeMs,
     wallMs: wall,
     dropsPerHourActive: perHour(drops, spans.activeMs),
-    dropsPerHourWall: perHour(drops, wall)
+    dropsPerHourWall: perHour(drops, wall),
   }
 }

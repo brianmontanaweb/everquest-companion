@@ -33,12 +33,12 @@ import {
   matchesSpellQuery,
   sectionFor,
   tokenizeSpellQuery,
-  type SearchableSpell
+  type SearchableSpell,
 } from '../src/shared/spellSearch'
 import {
   MAX_ROWS,
   buildSuggestResults,
-  filterAlertGroups
+  filterAlertGroups,
 } from '../src/renderer/src/features/alerts/resultSections'
 import { VERIFIED_ALERT_GROUPS } from '../src/shared/alertGroups'
 import type { SpellCatalogEntry } from '../src/shared/types'
@@ -51,7 +51,7 @@ function row(over: Partial<SpellCatalogEntry> & { name: string }): SpellCatalogE
     templates: { wearsOff: false, fade: false, lands: false },
     usageCount: 0,
     searchText: over.name.toLowerCase(),
-    ...over
+    ...over,
   }
 }
 
@@ -68,24 +68,49 @@ test('S1 the tokenizer: five forms, whitespace-split, and what a typo degrades t
   assert.deepEqual(
     tokenizeSpellQuery('slow  level:25').map((t) => t.kind),
     ['text', 'level'],
-    'runs of whitespace split once'
+    'runs of whitespace split once',
   )
-  assert.deepEqual(tokenizeSpellQuery('level:20-30')[0], { kind: 'level', raw: 'level:20-30', lo: 20, hi: 30 })
+  assert.deepEqual(tokenizeSpellQuery('level:20-30')[0], {
+    kind: 'level',
+    raw: 'level:20-30',
+    lo: 20,
+    hi: 30,
+  })
   assert.deepEqual(
     tokenizeSpellQuery('level:30-20')[0],
     { kind: 'level', raw: 'level:30-20', lo: 20, hi: 30 },
-    'a backwards range is the same range — the user meant the span'
+    'a backwards range is the same range — the user meant the span',
   )
   assert.deepEqual(tokenizeSpellQuery('lvl:9')[0], { kind: 'level', raw: 'lvl:9', lo: 9, hi: 9 })
-  assert.deepEqual(tokenizeSpellQuery('class:Shaman')[0], { kind: 'class', raw: 'class:Shaman', cls: 'SHM' })
-  assert.deepEqual(tokenizeSpellQuery('class:shm')[0], { kind: 'class', raw: 'class:shm', cls: 'SHM' })
-  assert.deepEqual(tokenizeSpellQuery('type:poison')[0], { kind: 'facet', raw: 'type:poison', facet: 'poison' })
+  assert.deepEqual(tokenizeSpellQuery('class:Shaman')[0], {
+    kind: 'class',
+    raw: 'class:Shaman',
+    cls: 'SHM',
+  })
+  assert.deepEqual(tokenizeSpellQuery('class:shm')[0], {
+    kind: 'class',
+    raw: 'class:shm',
+    cls: 'SHM',
+  })
+  assert.deepEqual(tokenizeSpellQuery('type:poison')[0], {
+    kind: 'facet',
+    raw: 'type:poison',
+    facet: 'poison',
+  })
   assert.deepEqual(tokenizeSpellQuery('25')[0], { kind: 'number', raw: '25', text: '25', n: 25 })
 
   // A token that names something we do not know is NULLED, not dropped: it must narrow the
   // result set to zero rather than silently widen it to everything.
-  assert.deepEqual(tokenizeSpellQuery('class:jedi')[0], { kind: 'class', raw: 'class:jedi', cls: null })
-  assert.deepEqual(tokenizeSpellQuery('type:slow')[0], { kind: 'facet', raw: 'type:slow', facet: null })
+  assert.deepEqual(tokenizeSpellQuery('class:jedi')[0], {
+    kind: 'class',
+    raw: 'class:jedi',
+    cls: null,
+  })
+  assert.deepEqual(tokenizeSpellQuery('type:slow')[0], {
+    kind: 'facet',
+    raw: 'type:slow',
+    facet: null,
+  })
   // A HALF-TYPED prefix is text (the list holds still while you finish the word), and a
   // malformed level is text too — "level:abc" is nobody's level.
   assert.equal(tokenizeSpellQuery('level:')[0].kind, 'text')
@@ -103,7 +128,7 @@ test('S2 the matcher truth table: every form, AND-composed', () => {
     usageCount: 3,
     classLevels: [{ cls: 'ENC', level: 34 }],
     rankNames: ['Clarity', 'Clarity II'],
-    searchText: 'clarity clarity ii a cool breeze slips through your mind. the cool breeze fades.'
+    searchText: 'clarity clarity ii a cool breeze slips through your mind. the cool breeze fades.',
   })
 
   // TEXT — name, rank name, and (the point of the redesign) the MESSAGE text.
@@ -140,7 +165,11 @@ test('S2 the matcher truth table: every form, AND-composed', () => {
 
   // A BARE NUMBER is deliberately OR: a level, or the digits in the text.
   assert.equal(hit(clarity, '34'), true, 'matches the class level')
-  assert.equal(hit(row({ name: 'Bind Sight 2', searchText: 'bind sight 2' }), '2'), true, 'matches the name')
+  assert.equal(
+    hit(row({ name: 'Bind Sight 2', searchText: 'bind sight 2' }), '2'),
+    true,
+    'matches the name',
+  )
   assert.equal(hit(clarity, '99'), false)
 
   // Composition across FORMS, which is what a real query looks like.
@@ -160,7 +189,7 @@ test('S2b THE HEADLINE CASE: "slow" finds Weakening Strike by its landing emote'
   const entry = row({
     name: ws.name,
     spellType: ws.spellType,
-    searchText: searchTextFor(ws, [ws.name])
+    searchText: searchTextFor(ws, [ws.name]),
   })
 
   // Its NAME contains no "slow" at all — the emote is the only reason this matches, which is
@@ -178,7 +207,7 @@ test('S2b THE HEADLINE CASE: "slow" finds Weakening Strike by its landing emote'
   assert.ok(byMessageOnly.length >= 5, 'the message text is doing real work over the shipped DB')
   assert.ok(
     byMessageOnly.some((e) => e.name === 'Languid Pace'),
-    'the enchanter slow is found by "You slow down." — never by its name'
+    'the enchanter slow is found by "You slow down." — never by its name',
   )
 })
 
@@ -192,15 +221,19 @@ test('S3 every catalog row carries a lowercase searchText of name + ranks + the 
   // …and APOSTROPHE-FOLDED (JOS-342), which is why every `includes` here folds its needle: the
   // surface holds `aanyas animation`, not `aanya's animation`, and the query folds to meet it.
   for (const e of catalog.entries) {
-    assert.equal(e.searchText, e.searchText.toLowerCase(), `${e.name}: searchText must be lowercased`)
+    assert.equal(
+      e.searchText,
+      e.searchText.toLowerCase(),
+      `${e.name}: searchText must be lowercased`,
+    )
     assert.ok(
       e.searchText.includes(foldApostrophes(e.name.toLowerCase())),
-      `${e.name}: its own name must be in it`
+      `${e.name}: its own name must be in it`,
     )
     for (const rank of e.rankNames ?? []) {
       assert.ok(
         e.searchText.includes(foldApostrophes(rank.toLowerCase())),
-        `${e.name}: rank ${rank} must be in it`
+        `${e.name}: rank ${rank} must be in it`,
       )
     }
   }
@@ -215,7 +248,9 @@ test('S3 every catalog row carries a lowercase searchText of name + ranks + the 
 
   // A spell the DB gives no messages at all still gets a surface — its name.
   const bare = catalog.entries.find(
-    (e) => (db.byKey.get(e.key)?.msgCastOnYou ?? '') === '' && (db.byKey.get(e.key)?.msgWearsOff ?? '') === ''
+    (e) =>
+      (db.byKey.get(e.key)?.msgCastOnYou ?? '') === '' &&
+      (db.byKey.get(e.key)?.msgWearsOff ?? '') === '',
   )
   if (bare) assert.ok(bare.searchText.length > 0)
 })
@@ -228,7 +263,8 @@ test('S4 the four spell sections partition the catalog: total, disjoint, and hon
   const grouped = groupSpellSections(catalog.entries)
   const sum = SPELL_SECTIONS.reduce((n, s) => n + grouped[s].length, 0)
   assert.equal(sum, catalog.entries.length, 'every row lands in exactly one section')
-  for (const s of SPELL_SECTIONS) assert.ok(grouped[s].length > 0, `${s} is not empty in the real DB`)
+  for (const s of SPELL_SECTIONS)
+    assert.ok(grouped[s].length > 0, `${s} is not empty in the real DB`)
 
   // The classifier's precedence, stated: a poison coat is Beneficial and an illusion is too,
   // and neither is usefully called "a buff".
@@ -244,7 +280,9 @@ test('S4 the four spell sections partition the catalog: total, disjoint, and hon
 test('S4b "From your fights" is exactly the observed rows, and MAX_ROWS caps the WHOLE dialog', () => {
   const entries: SpellCatalogEntry[] = []
   for (let i = 0; i < 150; i++) {
-    entries.push(row({ name: `Seen ${i}`, key: `seen ${i}`, spellType: 'Beneficial', usageCount: 1 }))
+    entries.push(
+      row({ name: `Seen ${i}`, key: `seen ${i}`, spellType: 'Beneficial', usageCount: 1 }),
+    )
   }
   for (let i = 0; i < 300; i++) {
     entries.push(row({ name: `Unseen ${i}`, key: `unseen ${i}`, spellType: 'Beneficial' }))
@@ -285,7 +323,7 @@ test('S4c the ready-made sets answer TEXT queries and decline spell-only ones', 
   const slow = filterAlertGroups(VERIFIED_ALERT_GROUPS, tokenizeSpellQuery('slow'))
   assert.ok(
     slow.some((g) => g.title.toLowerCase().includes('slow')),
-    'the rogue-slow set is reachable by typing what it is'
+    'the rogue-slow set is reachable by typing what it is',
   )
   assert.equal(filterAlertGroups(VERIFIED_ALERT_GROUPS, tokenizeSpellQuery('zzzz')).length, 0)
 
@@ -304,18 +342,20 @@ test('S4c the ready-made sets answer TEXT queries and decline spell-only ones', 
   assert.equal(
     filterAlertGroups(VERIFIED_ALERT_GROUPS, tokenizeSpellQuery('class:mag')).length,
     0,
-    'the DECLARED spelling is a statement about spells and still stands the section down'
+    'the DECLARED spelling is a statement about spells and still stands the section down',
   )
 
   // THE PROPERTY BEHIND BOTH, checked over the shipped sets rather than assumed: every word a set
   // is reachable by is one this grammar reads as text or as a class word with a text half. A future
   // set quoting a bare NUMBER fails here, which is the moment to decide what its query should mean.
   for (const g of VERIFIED_ALERT_GROUPS) {
-    const words = [g.title, g.subtitle, ...g.defs.map((d) => `${d.name} ${d.line}`)].join(' ').toLowerCase()
+    const words = [g.title, g.subtitle, ...g.defs.map((d) => `${d.name} ${d.line}`)]
+      .join(' ')
+      .toLowerCase()
     for (const w of words.split(/[^a-z0-9]+/).filter((x) => x !== '')) {
       assert.ok(
         filterAlertGroups(VERIFIED_ALERT_GROUPS, tokenizeSpellQuery(w)).some((x) => x.id === g.id),
-        `the set "${g.title}" carries the word "${w}" but is not reachable by typing it`
+        `the set "${g.title}" carries the word "${w}" but is not reachable by typing it`,
       )
     }
   }
@@ -354,7 +394,7 @@ test('S5 THE REPORTED CASE: Snails Healing answers to the possessive the owner t
     "snail's healing", // as the owner typed it
     "snail's", // …and half-typed, which is what a live search box sees first
     'snails',
-    'snail’s healing' // the curly apostrophe a phone or Word substitutes while you type
+    'snail’s healing', // the curly apostrophe a phone or Word substitutes while you type
   ]) {
     assert.ok(found(entries, query).includes('Snails Healing'), `"${query}" must reach it`)
   }
@@ -371,7 +411,7 @@ test('S5b …and the OTHER direction: an apostrophe in the DB, omitted by the us
     ["aanya's animation", "Aanya's Animation"], // …and spelled the DB's way
     ['aanya’s animation', "Aanya's Animation"], // …and with the keyboard's curly one
     ['atols spectral shackles', 'Atol`s Spectral Shackles'], // the wiki's BACKTICK possessive
-    ["atol's spectral shackles", 'Atol`s Spectral Shackles'] // …reached by the apostrophe instead
+    ["atol's spectral shackles", 'Atol`s Spectral Shackles'], // …reached by the apostrophe instead
   ]
   for (const [typed, want] of cases) {
     assert.ok(found(entries, typed).includes(want), `"${typed}" must reach ${want}`)
@@ -390,15 +430,18 @@ test('S5c EXHAUSTIVE: every apostrophe-bearing row the app ships is findable BOT
     assert.equal(
       matchesSpellQuery(e, tokenizeSpellQuery(e.name)),
       true,
-      `${e.name}: must be found by the name as the DB spells it`
+      `${e.name}: must be found by the name as the DB spells it`,
     )
     assert.equal(
       matchesSpellQuery(e, tokenizeSpellQuery(foldApostrophes(e.name))),
       true,
-      `${e.name}: must be found by the same name without the punctuation`
+      `${e.name}: must be found by the same name without the punctuation`,
     )
   }
-  assert.ok(population > 100, `the apostrophe population is real (${String(population)} catalog rows)`)
+  assert.ok(
+    population > 100,
+    `the apostrophe population is real (${String(population)} catalog rows)`,
+  )
 })
 
 test('S5d the fold deletes, and never touches the echo the user sees', () => {
@@ -430,18 +473,33 @@ const CROSS_CLASS = row({
   classLevels: [
     { cls: 'CLR', level: 27 },
     { cls: 'SHM', level: 34 },
-    { cls: 'PAL', level: 45 }
+    { cls: 'PAL', level: 45 },
   ],
-  searchText: 'superior healing you feel much better.'
+  searchText: 'superior healing you feel much better.',
 })
 
 test('S6 the bare tokens: a class word, a band, and the two-word join', () => {
-  assert.deepEqual(tokenizeSpellQuery('cleric')[0], { kind: 'class', raw: 'cleric', cls: 'CLR', text: 'cleric' })
-  assert.deepEqual(tokenizeSpellQuery('clr')[0], { kind: 'class', raw: 'clr', cls: 'CLR', text: 'clr' })
+  assert.deepEqual(tokenizeSpellQuery('cleric')[0], {
+    kind: 'class',
+    raw: 'cleric',
+    cls: 'CLR',
+    text: 'cleric',
+  })
+  assert.deepEqual(tokenizeSpellQuery('clr')[0], {
+    kind: 'class',
+    raw: 'clr',
+    cls: 'CLR',
+    text: 'clr',
+  })
   assert.deepEqual(tokenizeSpellQuery('27-28')[0], { kind: 'level', raw: '27-28', lo: 27, hi: 28 })
   // The en dash a phone substitutes, and the `..` half the tools beside the game use.
   assert.deepEqual(tokenizeSpellQuery('27–28')[0], { kind: 'level', raw: '27–28', lo: 27, hi: 28 })
-  assert.deepEqual(tokenizeSpellQuery('27..28')[0], { kind: 'level', raw: '27..28', lo: 27, hi: 28 })
+  assert.deepEqual(tokenizeSpellQuery('27..28')[0], {
+    kind: 'level',
+    raw: '27..28',
+    lo: 27,
+    hi: 28,
+  })
   // A bare number is NOT a range and keeps its old meaning: a level or the digits in the text.
   assert.equal(tokenizeSpellQuery('27')[0].kind, 'number')
 
@@ -450,13 +508,22 @@ test('S6 the bare tokens: a class word, a band, and the two-word join', () => {
     kind: 'class',
     raw: 'shadow knight',
     cls: 'SHD',
-    text: 'shadow knight'
+    text: 'shadow knight',
   })
-  assert.deepEqual(tokenizeSpellQuery('beast lord').map((t) => t.kind), ['class'])
+  assert.deepEqual(
+    tokenizeSpellQuery('beast lord').map((t) => t.kind),
+    ['class'],
+  )
   // …and the join is never greedy: two class words in a row stay two tokens, and two text words
   // that do not name a class together stay two text tokens.
-  assert.deepEqual(tokenizeSpellQuery('clr shm').map((t) => t.kind), ['class', 'class'])
-  assert.deepEqual(tokenizeSpellQuery('shadow step').map((t) => t.kind), ['text', 'text'])
+  assert.deepEqual(
+    tokenizeSpellQuery('clr shm').map((t) => t.kind),
+    ['class', 'class'],
+  )
+  assert.deepEqual(
+    tokenizeSpellQuery('shadow step').map((t) => t.kind),
+    ['text', 'text'],
+  )
 })
 
 test('S6b ORDER-FREE, AND-across-kinds, OR-within: the owner query and its permutations', () => {
@@ -510,27 +577,37 @@ test('S6c a bare class word KEEPS ITS TEXT HALF, which is what keeps names finda
 test('S6d the REAL catalog answers the owner query, and every hit is a cleric or shaman at 27-28', () => {
   const entries = buildSpellCatalog(loadSpellDb(), new Map()).entries
   const hits = filterSpells(entries, tokenizeSpellQuery('27-28 cleric shaman'))
-  assert.ok(hits.length > 5, `the shipped catalog answers the owner query (${String(hits.length)} rows)`)
+  assert.ok(
+    hits.length > 5,
+    `the shipped catalog answers the owner query (${String(hits.length)} rows)`,
+  )
   for (const e of hits) {
     const ok = (e.classLevels ?? []).some(
-      (c) => (c.cls === 'CLR' || c.cls === 'SHM') && c.level >= 27 && c.level <= 28
+      (c) => (c.cls === 'CLR' || c.cls === 'SHM') && c.level >= 27 && c.level <= 28,
     )
     assert.ok(ok, `${e.name}: every row must be a CLR/SHM row inside the band`)
   }
   // The permutation returns the same set — order-free means order-free over the real data too.
-  const flipped = filterSpells(entries, tokenizeSpellQuery('shaman 27-28 cleric')).map((e) => e.name)
-  assert.deepEqual(hits.map((e) => e.name), flipped)
+  const flipped = filterSpells(entries, tokenizeSpellQuery('shaman 27-28 cleric')).map(
+    (e) => e.name,
+  )
+  assert.deepEqual(
+    hits.map((e) => e.name),
+    flipped,
+  )
 
   // A NAME still finds its spell, with no class or level said at all.
   assert.ok(
-    filterSpells(entries, tokenizeSpellQuery('Complete Heal')).some((e) => e.name === 'Complete Heal'),
-    'a spell name is still a spell name'
+    filterSpells(entries, tokenizeSpellQuery('Complete Heal')).some(
+      (e) => e.name === 'Complete Heal',
+    ),
+    'a spell name is still a spell name',
   )
   // `shadow knight 30-32`, the two-word pin, over the shipped rows.
   for (const e of filterSpells(entries, tokenizeSpellQuery('shadow knight 30-32'))) {
     assert.ok(
       (e.classLevels ?? []).some((c) => c.cls === 'SHD' && c.level >= 30 && c.level <= 32),
-      `${e.name}: a two-word class name must scope like a one-word one`
+      `${e.name}: a two-word class name must scope like a one-word one`,
     )
   }
 })

@@ -19,7 +19,7 @@ import {
   intervalConfidence,
   type ComboInterval,
   type ComboProvenance,
-  type ComboSlot
+  type ComboSlot,
 } from '@shared/classCombo'
 import { loadoutUncertain } from '@shared/comboIndex'
 import {
@@ -29,7 +29,7 @@ import {
   provenanceLabel,
   slotKind,
   slotLabel,
-  uncertainText
+  uncertainText,
 } from './ClassComboLabels'
 import { Tooltip } from '../../lib/Tooltip'
 
@@ -56,7 +56,7 @@ export function SlotChip({ slot }: { slot: ComboSlot }): JSX.Element {
         sx={{
           ...CHIP_SX,
           fontWeight: kind === 'resolved' ? 700 : 400,
-          opacity: kind === 'unknown' ? 0.55 : 1
+          opacity: kind === 'unknown' ? 0.55 : 1,
         }}
       />
     </Tooltip>
@@ -66,7 +66,14 @@ export function SlotChip({ slot }: { slot: ComboSlot }): JSX.Element {
 /** The loadout as chips, slot order preserved. Zero slots renders nothing, not an empty box. */
 export function SlotChips({ slots }: { slots: readonly ComboSlot[] }): JSX.Element {
   return (
-    <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap sx={{ minWidth: 0 }}>
+    <Stack
+      direction="row"
+      spacing={0.5}
+      alignItems="center"
+      flexWrap="wrap"
+      useFlexGap
+      sx={{ minWidth: 0 }}
+    >
       {slots.map((slot, i) => (
         <SlotChip key={`${i}:${slot.candidates.join('|')}`} slot={slot} />
       ))}
@@ -89,7 +96,7 @@ const PROVENANCE_TITLE: Record<ComboProvenance, string> = {
   inferred:
     'Read from the classes that show up in the log. Not the ones you are playing? A /who on yourself restates them, or correct the range on the Profile tab.',
   who: 'Your own /who row named this loadout outright.',
-  user: 'You set this range yourself.'
+  user: 'You set this range yourself.',
 }
 
 export function ProvenanceChip({ interval }: { interval: ComboInterval }): JSX.Element {
@@ -159,7 +166,13 @@ export function OverruledChip({ interval }: { interval: ComboInterval }): JSX.El
   if (!text) return null
   return (
     <Tooltip title={text}>
-      <Chip size="small" variant="outlined" color="warning" label="/who overrode you" sx={CHIP_SX} />
+      <Chip
+        size="small"
+        variant="outlined"
+        color="warning"
+        label="/who overrode you"
+        sx={CHIP_SX}
+      />
     </Tooltip>
   )
 }

@@ -27,7 +27,7 @@ import {
   UI_SCALE_STEPS,
   normalizeUiScale,
   stepUiScale,
-  uiScalePercent
+  uiScalePercent,
 } from '../src/shared/uiScale'
 
 const src = (rel: string): string => readFileSync(new URL(rel, import.meta.url), 'utf8')
@@ -36,7 +36,11 @@ const src = (rel: string): string => readFileSync(new URL(rel, import.meta.url),
 
 test('the ladder is ascending, unique, and contains the size everyone is already running at', () => {
   assert.ok(UI_SCALE_STEPS.length >= 3, 'a ladder of two is a toggle')
-  assert.deepEqual([...UI_SCALE_STEPS], [...UI_SCALE_STEPS].sort((a, b) => a - b), 'ascending')
+  assert.deepEqual(
+    [...UI_SCALE_STEPS],
+    [...UI_SCALE_STEPS].sort((a, b) => a - b),
+    'ascending',
+  )
   assert.equal(new Set(UI_SCALE_STEPS).size, UI_SCALE_STEPS.length, 'no duplicate stops')
   // Without 100% on the ladder there would be no way back to the size the app shipped at.
   assert.ok(UI_SCALE_STEPS.includes(UI_SCALE_DEFAULT), 'the default must be one of the stops')
@@ -123,7 +127,11 @@ test('A+ / A− move ONE RUNG, and the rungs are the ladder — not a fixed incr
     const here = UI_SCALE_STEPS[i] as number
     const next = UI_SCALE_STEPS[i + 1] as number
     assert.equal(stepUiScale(here, 1), next, `${String(here)} does not step up to ${String(next)}`)
-    assert.equal(stepUiScale(next, -1), here, `${String(next)} does not step down to ${String(here)}`)
+    assert.equal(
+      stepUiScale(next, -1),
+      here,
+      `${String(next)} does not step down to ${String(here)}`,
+    )
   }
 })
 
@@ -144,7 +152,10 @@ test('an off-ladder or malformed value is SNAPPED before it is stepped', () => {
   // …and every answer is on the ladder, whatever went in.
   for (const v of [-5, 0, 0.83, 1.07, 3, 1000]) {
     for (const dir of [1, -1] as const) {
-      assert.ok(UI_SCALE_STEPS.includes(stepUiScale(v, dir)), `${String(v)} ${String(dir)} left the ladder`)
+      assert.ok(
+        UI_SCALE_STEPS.includes(stepUiScale(v, dir)),
+        `${String(v)} ${String(dir)} left the ladder`,
+      )
     }
   }
 })
@@ -160,12 +171,16 @@ test('the store normalizes the scale on the way OUT as well as in', () => {
   // Write side: the value comes from a renderer, so the handler is not where it is decided.
   assert.match(
     accessors,
-    /const next = normalizeUiScale\(value\)\s*\n\s*settingsStore\.set\('uiScale', next\)/
+    /const next = normalizeUiScale\(value\)\s*\n\s*settingsStore\.set\('uiScale', next\)/,
   )
   // Multiline-anchored rather than newline-wrapped: this tree is checked out with CRLF endings.
   // `StoreShape` moved to its own module in JOS-140 (store.ts hit the 400-code-line ceiling); the
   // claim is unchanged — the key has to be DECLARED somewhere, or nothing would type it.
-  assert.match(src('../src/main/storeShape.ts'), /^ {2}uiScale\?: number$/m, 'the key must be in StoreShape')
+  assert.match(
+    src('../src/main/storeShape.ts'),
+    /^ {2}uiScale\?: number$/m,
+    'the key must be in StoreShape',
+  )
 })
 
 test('NO SCHEMA BUMP: an additive optional key needs no migration, and must not get one', () => {
@@ -184,8 +199,13 @@ test('the scale is part of the main window CONSTRUCTION, so a launch never jumps
   const win = src('../src/main/windows.ts')
   // `webPreferences.zoomFactor` is applied before the first paint. Calling setZoomFactor after
   // the page loads would show the user a window resizing its own contents on every launch.
-  assert.match(win, /zoomFactor: getUiScale\(\)/, 'the main window must be built at the stored size')
-  const prefs = /webPreferences: \{\s*\n\s*\.\.\.WEB_PREFERENCES\(join\(__dirname, '\.\.\/preload\/index\.js'\)\)/
+  assert.match(
+    win,
+    /zoomFactor: getUiScale\(\)/,
+    'the main window must be built at the stored size',
+  )
+  const prefs =
+    /webPreferences: \{\s*\n\s*\.\.\.WEB_PREFERENCES\(join\(__dirname, '\.\.\/preload\/index\.js'\)\)/
   assert.match(win, prefs, 'and the shared security posture must be spread in whole, not re-typed')
 })
 
@@ -209,7 +229,7 @@ test('the setter changes the window in the SAME call that stores it', () => {
   assert.match(
     win,
     /export function applyMainWindowScale\(scale: number\): void \{\s*\n\s*getMainWindow\(\)\?\.webContents\.setZoomFactor\(scale\)/,
-    'and the BrowserWindow call stays inside windows.ts, like every other push'
+    'and the BrowserWindow call stays inside windows.ts, like every other push',
   )
 })
 

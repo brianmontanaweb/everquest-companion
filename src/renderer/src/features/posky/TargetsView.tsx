@@ -50,12 +50,20 @@ import type { CountSource } from '@shared/types'
 import { dropperFacts, islandLabel, islandNumber } from './poskyDroppers'
 import { DropperName } from './DropperCell'
 import { InventorySource } from './QuestFilterBar'
-import { groupTargetsByIsland, type NeededItem, type SkyTargetsModel, type TargetMob } from './skyTargets'
+import {
+  groupTargetsByIsland,
+  type NeededItem,
+  type SkyTargetsModel,
+  type TargetMob,
+} from './skyTargets'
 import type { MobTarget } from '../mobs/mobTarget'
 
 /** Selector-safe row handle: `sky-target-row-the-spiroc-lord`. */
 function rowSlug(page: string): string {
-  return page.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()
+  return page
+    .replace(/[^a-z0-9]+/gi, '-')
+    .replace(/^-|-$/g, '')
+    .toLowerCase()
 }
 
 /**
@@ -66,7 +74,7 @@ function rowSlug(page: string): string {
  */
 function NeededItemLine({
   item,
-  onOpenQuest
+  onOpenQuest,
 }: {
   item: NeededItem
   onOpenQuest: (name: string) => void
@@ -109,7 +117,7 @@ function NeededItemLine({
 function TargetRow({
   target,
   onOpenMob,
-  onOpenQuest
+  onOpenQuest,
 }: {
   target: TargetMob
   onOpenMob: (t: MobTarget) => void
@@ -159,7 +167,7 @@ function IslandSection({
   island,
   mobs,
   onOpenMob,
-  onOpenQuest
+  onOpenQuest,
 }: {
   island: string | null
   mobs: readonly TargetMob[]
@@ -197,7 +205,7 @@ function RemainderSection({
   title,
   items,
   testid,
-  onOpenQuest
+  onOpenQuest,
 }: {
   title: string
   items: readonly NeededItem[]
@@ -206,7 +214,10 @@ function RemainderSection({
 }): JSX.Element | null {
   if (items.length === 0) return null
   return (
-    <Box data-testid={testid} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, px: 2, py: 1.5 }}>
+    <Box
+      data-testid={testid}
+      sx={{ border: 1, borderColor: 'divider', borderRadius: 1, px: 2, py: 1.5 }}
+    >
       <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
         {title}
       </Typography>
@@ -224,7 +235,7 @@ function RemainderSection({
  *  pane is empty. */
 function TargetsFirstTimeToggle({
   firstTimeOnly,
-  onFirstTimeOnly
+  onFirstTimeOnly,
 }: {
   firstTimeOnly: boolean
   onFirstTimeOnly: (v: boolean) => void
@@ -281,7 +292,7 @@ export function TargetsView({
   inventoryLoadedAt,
   firstTimeOnly,
   onFirstTimeOnly,
-  refarmCount
+  refarmCount,
 }: TargetsViewProps): JSX.Element {
   const n = targets.mobs.length
   const empty = n === 0 && targets.randomDrop.length === 0 && targets.unsourced.length === 0

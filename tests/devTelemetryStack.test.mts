@@ -28,7 +28,7 @@ import { DIM_NONE, USAGE_METRICS } from '../src/shared/telemetryRollup'
 import {
   MAX_TELEMETRY_BODY_BYTES,
   type TelemetryBatch,
-  type TelemetryEvent
+  type TelemetryEvent,
 } from '../src/shared/telemetry'
 
 const dir = (): string => mkdtempSync(join(tmpdir(), 'eq-devstack-tele-'))
@@ -36,8 +36,14 @@ const dir = (): string => mkdtempSync(join(tmpdir(), 'eq-devstack-tele-'))
 function batch(events: TelemetryEvent[], analyticsId = randomUUID()): TelemetryBatch {
   return {
     v: 1,
-    env: { analyticsId, appVersion: '0.2.0', channel: 'dev', platform: 'win32', tzOffsetBucket: -7 },
-    events: events.map((ev, i) => ({ ts: 1_000 + i, ev }))
+    env: {
+      analyticsId,
+      appVersion: '0.2.0',
+      channel: 'dev',
+      platform: 'win32',
+      tzOffsetBucket: -7,
+    },
+    events: events.map((ev, i) => ({ ts: 1_000 + i, ev })),
   }
 }
 
@@ -50,7 +56,7 @@ async function post(stack: DevStack, body: unknown): Promise<Answer> {
   const res = await fetch(stack.telemetryUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: typeof body === 'string' ? body : JSON.stringify(body)
+    body: typeof body === 'string' ? body : JSON.stringify(body),
   })
   return { status: res.status, body: (await res.json()) as Record<string, unknown> }
 }
@@ -116,7 +122,10 @@ test('a malformed batch is 400 and NAMES THE FIELD — the shared validator’s 
     assert.equal(bad.status, 400)
     assert.equal(bad.body.field, 'v')
 
-    const badId = await post(stack, { ...batch([]), env: { ...batch([]).env, analyticsId: 'nope' } })
+    const badId = await post(stack, {
+      ...batch([]),
+      env: { ...batch([]).env, analyticsId: 'nope' },
+    })
     assert.equal(badId.body.field, 'env.analyticsId')
 
     // The event union is closed; an unknown `t` is refused rather than stored as "other".
@@ -133,7 +142,7 @@ test('A FIELD THE SCHEMA HAS NO ROOM FOR NEVER LANDS — it is dropped, not stor
       view: 'combat',
       ms: 5_000,
       characterName: 'Primitive',
-      zone: 'Plane of Sky'
+      zone: 'Plane of Sky',
     } as unknown as TelemetryEvent
     assert.equal((await post(stack, batch([smuggled]))).status, 202)
     const json = JSON.stringify(await tables(stack))
@@ -156,10 +165,10 @@ test('THE ROUND TRIP: a batch becomes the counters the readout consumes', async 
           { t: 'viewDwell', view: 'combat', ms: 30_000 },
           { t: 'viewDwell', view: 'combat', ms: 10_000 },
           { t: 'featureUse', feature: 'mapOpen', count: 3 },
-          { t: 'funnelStep', funnel: 'first-run', step: 'installed' }
+          { t: 'funnelStep', funnel: 'first-run', step: 'installed' },
         ],
-        id
-      )
+        id,
+      ),
     )
     const t = await tables(stack)
     assert.equal(counterOf(t, USAGE_METRICS.sessions), 1)
@@ -170,7 +179,7 @@ test('THE ROUND TRIP: a batch becomes the counters the readout consumes', async 
     assert.equal(counterOf(t, USAGE_METRICS.version, '0.2.0'), 1)
     assert.deepEqual(
       t.usageFunnelDaily.map((r) => [r.funnel, r.step, r.app_version, r.n]),
-      [['first-run', 'installed', '0.2.0', 1]]
+      [['first-run', 'installed', '0.2.0', 1]],
     )
     assert.equal(t.analyticsInstall.length, 1)
     assert.equal(t.analyticsInstall[0].days_seen, 1)
@@ -213,7 +222,10 @@ test('two ids on one day are two active installs and ONE set of counters', async
 test('the kill switch answers 503 and moves NO counter', () => {
   const state = emptyTelemetryState()
   state.mode.closed = true
-  const res = telemetryRoute(state, Buffer.from(JSON.stringify(batch([{ t: 'sessionStart', coldStartMsBucket: 0 }]))))
+  const res = telemetryRoute(
+    state,
+    Buffer.from(JSON.stringify(batch([{ t: 'sessionStart', coldStartMsBucket: 0 }]))),
+  )
   assert.equal(res.status, 503)
   assert.equal(state.usage.size, 0)
   assert.equal(state.installs.size, 0, 'a closed endpoint does not even learn the id exists')
@@ -221,10 +233,14 @@ test('the kill switch answers 503 and moves NO counter', () => {
 
 test('the per-id daily cap answers 429, and it is a FLOOR: the batch that crosses it lands', () => {
   const state = emptyTelemetryState(3)
-  const body = Buffer.from(JSON.stringify(batch([
-    { t: 'sessionHeartbeat', uptimeMs: 1 },
-    { t: 'sessionHeartbeat', uptimeMs: 2 }
-  ])))
+  const body = Buffer.from(
+    JSON.stringify(
+      batch([
+        { t: 'sessionHeartbeat', uptimeMs: 1 },
+        { t: 'sessionHeartbeat', uptimeMs: 2 },
+      ]),
+    ),
+  )
   assert.equal(telemetryRoute(state, body).status, 202)
   // 2 events counted, cap 3: the guard reads the count BEFORE this batch, so this one lands.
   assert.equal(telemetryRoute(state, body).status, 202)

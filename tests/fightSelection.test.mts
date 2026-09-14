@@ -27,11 +27,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import {
-  LIVE_FIGHT,
-  isFightSelection,
-  normalizeFightSelection
-} from '../src/shared/fightSelection'
+import { LIVE_FIGHT, isFightSelection, normalizeFightSelection } from '../src/shared/fightSelection'
 import { LIVE_SELECTION, defaultSelection } from '../src/renderer/src/features/combat/dashboardData'
 import { IPC } from '../src/shared/ipc'
 
@@ -54,7 +50,24 @@ test('a zone-session selection is NOT a fight selection — the carve-out, enfor
 })
 
 test('renderer input that is not a selection at all is dropped, never stored', () => {
-  for (const bad of [undefined, null, 42, {}, [], '', 'e', 'e0', 'e01', 'E1', 'e1 ', ' e1', 'e-1', 'e1.5', '__live__x', 'e9999999999']) {
+  for (const bad of [
+    undefined,
+    null,
+    42,
+    {},
+    [],
+    '',
+    'e',
+    'e0',
+    'e01',
+    'E1',
+    'e1 ',
+    ' e1',
+    'e-1',
+    'e1.5',
+    '__live__x',
+    'e9999999999',
+  ]) {
     assert.equal(normalizeFightSelection(bad), null, `${JSON.stringify(bad)} was accepted`)
   }
 })
@@ -98,7 +111,11 @@ test('the three channels exist and are distinct', () => {
 test('MAIN OWNS IT, EPHEMERALLY: no store, no migration, no persisted key', () => {
   const mod = code('../src/main/fightSelection.ts')
   assert.doesNotMatch(mod, /from '\.\/store'/, 'the global selection grew a persisted home')
-  assert.doesNotMatch(mod, /electron-store|storeMigrations|setOverlayConfig/, 'the global selection reached the store')
+  assert.doesNotMatch(
+    mod,
+    /electron-store|storeMigrations|setOverlayConfig/,
+    'the global selection reached the store',
+  )
   // It resets by being module scope — the initializer IS the reset, so there is nothing else to
   // check and nothing else that could go stale across launches.
   assert.match(mod, /let fightId: string = LIVE_FIGHT/)
@@ -119,7 +136,7 @@ test('the handler validates rather than storing what it is handed', () => {
 test('ONE HOOK, BOTH BUNDLES: both preload bridges expose the same three members', () => {
   const bridges = {
     'the main app bridge': src('../src/preload/windows.ts'),
-    'the overlay bridge': src('../src/preload/overlay.ts')
+    'the overlay bridge': src('../src/preload/overlay.ts'),
   }
   for (const [who, text] of Object.entries(bridges)) {
     for (const member of ['getFightSelection', 'setFightSelection', 'onFightSelection']) {
@@ -135,7 +152,7 @@ test('EVERY fight-scoped selector writes the global, and none keeps a private fi
   const surfaces = {
     'the Combat tab': src('../src/renderer/src/features/combat/useCombat.ts'),
     'the fight overlay': src('../src/renderer/src/overlay/OverlayMeter.tsx'),
-    'the heal-fight overlay': src('../src/renderer/src/overlay/HealMeter.tsx')
+    'the heal-fight overlay': src('../src/renderer/src/overlay/HealMeter.tsx'),
   }
   for (const [who, text] of Object.entries(surfaces)) {
     assert.match(text, /useGlobalFight\(/, `${who} does not use the shared selection hook`)
@@ -145,7 +162,7 @@ test('EVERY fight-scoped selector writes the global, and none keeps a private fi
     assert.doesNotMatch(
       text,
       /useState<string>\(\s*(LIVE|LIVE_SELECTION|LIVE_FIGHT|'__live__')/,
-      `${who} keeps a private fight selection again`
+      `${who} keeps a private fight selection again`,
     )
   }
 })
@@ -154,14 +171,22 @@ test('the zone-session selectors are untouched: local state, and no global write
   const surfaces = {
     'the Combat tab': src('../src/renderer/src/features/combat/useCombat.ts'),
     'the fight overlay': src('../src/renderer/src/overlay/OverlayMeter.tsx'),
-    'the heal-fight overlay': src('../src/renderer/src/overlay/HealMeter.tsx')
+    'the heal-fight overlay': src('../src/renderer/src/overlay/HealMeter.tsx'),
   }
   for (const [who, text] of Object.entries(surfaces)) {
     // Each of these files serves BOTH scopes, and the zone half must stay ordinary local state.
-    assert.match(text, /useState<string>\('zone'\)/, `${who} moved the zone selection out of local state`)
+    assert.match(
+      text,
+      /useState<string>\('zone'\)/,
+      `${who} moved the zone selection out of local state`,
+    )
     // …and the write path is a branch, never unconditional: `selectFight` may only be reached
     // when the surface is fight-scoped.
-    assert.match(text, /if \((isFight|scope === 'fight')\) selectFight\(/, `${who} writes the global unconditionally`)
+    assert.match(
+      text,
+      /if \((isFight|scope === 'fight')\) selectFight\(/,
+      `${who} writes the global unconditionally`,
+    )
   }
 })
 
@@ -169,10 +194,18 @@ test('SELECTION IS NOT SCOPE (P5): nothing in the selection path touches the sco
   const hook = code('../src/renderer/src/features/combat/useGlobalFight.ts')
   assert.doesNotMatch(hook, /scope/i, 'the shared selection hook learned about scope')
   const mod = src('../src/main/fightSelection.ts')
-  assert.doesNotMatch(mod, /eq\.combat\.scope|CombatScope/, 'main’s selection module learned about scope')
+  assert.doesNotMatch(
+    mod,
+    /eq\.combat\.scope|CombatScope/,
+    'main’s selection module learned about scope',
+  )
   // The standing law's own storage key is written in exactly one place, by an explicit user
   // choice — a selection arriving from another window must never reach it.
   const combat = src('../src/renderer/src/features/combat/useCombat.ts')
   const writes = combat.match(/localStorage\.setItem\(SCOPE_KEY/g) ?? []
-  assert.equal(writes.length, 2, 'the scope pref is written somewhere other than setScope/focusFight')
+  assert.equal(
+    writes.length,
+    2,
+    'the scope pref is written somewhere other than setScope/focusFight',
+  )
 })

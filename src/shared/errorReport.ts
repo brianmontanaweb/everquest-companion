@@ -102,9 +102,9 @@ const PATH_RE = new RegExp(
     // 2. POSIX home directories, by name.
     String.raw`\/(?:home|Users|root)\/[^'"<>|\r\n]*[^\s'"<>|\r\n]`,
     // 3. POSIX, generic: three segments or more.
-    String.raw`\/(?:[^\s'"<>|\r\n\\/]+\/){2,}[^\s'"<>|\r\n\\/]*`
+    String.raw`\/(?:[^\s'"<>|\r\n\\/]+\/){2,}[^\s'"<>|\r\n\\/]*`,
   ].join('|'),
-  'g'
+  'g',
 )
 
 /**
@@ -294,7 +294,7 @@ export const BUNDLE_FILE_PATTERN = BUNDLE_FILE_RE.source
 export function framesFrom(
   stack: unknown,
   normalize: (raw: string) => string | null,
-  max: number
+  max: number,
 ): ErrorFrame[] {
   if (typeof stack !== 'string') return []
   const out: ErrorFrame[] = []
@@ -309,7 +309,7 @@ export function framesFrom(
       file,
       line: Math.min(Number(m[3]), MAX_FRAME_POSITION),
       col: Math.min(Number(m[4]), MAX_FRAME_POSITION),
-      func: FUNC_ALLOWED_RE.test(func) ? func.slice(0, MAX_FRAME_FUNC) : '<anonymous>'
+      func: FUNC_ALLOWED_RE.test(func) ? func.slice(0, MAX_FRAME_FUNC) : '<anonymous>',
     })
   }
   return out
@@ -367,10 +367,11 @@ const hex8 = (n: number): string => n.toString(16).padStart(8, '0')
 export function errorFingerprint(
   errorName: string,
   frames: readonly ErrorFrame[],
-  fallback = ''
+  fallback = '',
 ): string {
   const parts = [errorName]
-  for (const f of frames.slice(0, FINGERPRINT_FRAMES)) parts.push(`${f.file}:${String(f.line)}:${f.func}`)
+  for (const f of frames.slice(0, FINGERPRINT_FRAMES))
+    parts.push(`${f.file}:${String(f.line)}:${f.func}`)
   if (frames.length === 0 && fallback !== '') parts.push(fallback)
   const text = parts.join('|')
   return `${hex8(fnv1a(text, 0x811c9dc5))}${hex8(fnv1a(text, 0x01000193))}`

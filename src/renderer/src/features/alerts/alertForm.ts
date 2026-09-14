@@ -32,7 +32,7 @@ import {
   conditionFieldValErr,
   conditionRawErr,
   draftFromPrimitive,
-  primitiveFromDraft
+  primitiveFromDraft,
 } from './conditionDraft'
 import { fallbackPack, firstSoundId } from './SoundPicker'
 import { type SpeechForm, speechFieldsFor, useSpeechForm } from './SpeechBlock'
@@ -45,7 +45,12 @@ export const DEFAULT_COOLDOWN_MS = 2000
 export type CooldownScope = NonNullable<AlertDef['cooldownScope']>
 
 function newId(name: string): string {
-  const base = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'alert'
+  const base =
+    name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'alert'
   return `${base}-${Math.random().toString(36).slice(2, 6)}`
 }
 
@@ -107,7 +112,7 @@ function hydrateForm(
   s: FormSetters,
   initial: AlertDef | null,
   packs: SoundPack[],
-  defaultPackId?: string
+  defaultPackId?: string,
 ): void {
   if (!initial) {
     const preset = fallbackPack(packs, defaultPackId)
@@ -144,7 +149,7 @@ export function useAlertForm(
   initial: AlertDef | null,
   packs: SoundPack[],
   /** The user's default-pack preference (JOS-273) — what a NEW alert opens on. */
-  defaultPackId?: string
+  defaultPackId?: string,
 ): AlertForm {
   const [name, setName] = useState('')
   const [mode, setMode] = useState<CombineMode>('single')
@@ -186,7 +191,7 @@ export function useAlertForm(
         setVolume,
         setCooldownMs,
         setCooldownScope,
-        setEarlyWarnSec
+        setEarlyWarnSec,
       }
       hydrateForm(setters, initial, packs, defaultPackId)
       return
@@ -232,7 +237,7 @@ export function useAlertForm(
     earlyWarnSec,
     setEarlyWarnSec,
     speech,
-    banner
+    banner,
   }
 }
 
@@ -254,7 +259,9 @@ export function formCanSave(f: AlertForm): boolean {
   // are not going to quietly lose this" the dialog has.
   const conditionsValid = f.conditions.every(
     (c) =>
-      conditionRawErr(c) == null && conditionFieldValErr(c) == null && conditionFieldKeyErr(c) == null
+      conditionRawErr(c) == null &&
+      conditionFieldValErr(c) == null &&
+      conditionFieldKeyErr(c) == null,
   )
   return (
     f.name.trim().length > 0 &&
@@ -292,6 +299,6 @@ export function defFromForm(f: AlertForm, initial: AlertDef | null): AlertDef {
     // showOnScreen / bannerText / bannerColor, on exactly the same terms (BannerBlock.
     // bannerFieldsFor): every one of them is written only when it is not the default, so an alert
     // that never touched the banner saves the bytes it always did.
-    ...bannerFieldsFor(f.banner, trigger)
+    ...bannerFieldsFor(f.banner, trigger),
   }
 }

@@ -34,7 +34,7 @@ function GroupChip({
   group,
   existingIds,
   defaultPackId,
-  onCreate
+  onCreate,
 }: {
   group: AlertGroup
   existingIds: ReadonlySet<string>
@@ -72,7 +72,7 @@ export default function AlertGroupsPanel({
   groups,
   existingIds,
   defaultPackId,
-  onCreate
+  onCreate,
 }: {
   /** the sets to show — the dialog narrows them with the search box (suggestResults.ts). */
   groups: readonly AlertGroup[]

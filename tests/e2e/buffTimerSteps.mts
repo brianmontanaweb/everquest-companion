@@ -38,8 +38,8 @@ export async function timerRows(overlay: Page): Promise<TimerRow[]> {
       name: el.getAttribute('data-spell') ?? '',
       time: (el.querySelector('[data-testid="buff-timer-time"]')?.textContent ?? '').trim(),
       mode: el.getAttribute('data-timer-mode') ?? '',
-      target: el.getAttribute('data-target') ?? ''
-    }))
+      target: el.getAttribute('data-target') ?? '',
+    })),
   )
 }
 
@@ -53,7 +53,7 @@ export async function timerGroups(overlay: Page): Promise<string[]> {
     [...document.querySelectorAll('[data-testid="buff-timer-group"]')]
       .map((el) => el.firstElementChild)
       .filter((n) => n !== null && n.getAttribute('data-testid') !== 'buff-timer-row')
-      .map((n) => (n?.textContent ?? '').trim())
+      .map((n) => (n?.textContent ?? '').trim()),
   )
 }
 
@@ -73,10 +73,12 @@ export async function timerTargets(overlay: Page): Promise<string[]> {
 export async function setTimerGrouping(overlay: Page, grouping: 'none' | 'target'): Promise<void> {
   await overlay.evaluate(
     (g) =>
-      (window as unknown as { eqOverlay: { setConfig: (p: unknown) => Promise<unknown> } }).eqOverlay.setConfig({
-        grouping: g
+      (
+        window as unknown as { eqOverlay: { setConfig: (p: unknown) => Promise<unknown> } }
+      ).eqOverlay.setConfig({
+        grouping: g,
       }),
-    grouping
+    grouping,
   )
 }
 
@@ -88,9 +90,11 @@ export async function setTimerGrouping(overlay: Page, grouping: 'none' | 'target
 export async function setShowPermanent(overlay: Page, show: boolean): Promise<void> {
   await overlay.evaluate(
     (v) =>
-      (window as unknown as { eqOverlay: { setConfig: (p: unknown) => Promise<unknown> } }).eqOverlay.setConfig({
-        showPermanent: v
+      (
+        window as unknown as { eqOverlay: { setConfig: (p: unknown) => Promise<unknown> } }
+      ).eqOverlay.setConfig({
+        showPermanent: v,
       }),
-    show
+    show,
   )
 }

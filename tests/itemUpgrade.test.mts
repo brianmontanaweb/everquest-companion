@@ -38,7 +38,7 @@ import {
   totalProgression,
   upgradePercent,
   upgradeStatClass,
-  type ItemUpgradeState
+  type ItemUpgradeState,
 } from '../src/shared/itemUpgrade'
 
 // ---- fixtures (verbatim `items.json` stat blocks) --------------------------------
@@ -46,23 +46,23 @@ import {
 const THELVORN = parseStatsBlock(
   'MAGIC ITEM LORE ITEM NO DROP\n\nSlot: PRIMARY\n\nSkill: 1H Slashing Atk Delay: 26\n\n' +
     'DMG: 20 \n\nWIS: +15\n\nEffect: [[Dismiss Summoned]] (Combat, Casting Time: Instant) at Level 45\n\n' +
-    'WT: 3.0 Size: MEDIUM\n\nClass: PAL\n\nRace: ALL'
+    'WT: 3.0 Size: MEDIUM\n\nClass: PAL\n\nRace: ALL',
 )
 
 const CROWN = parseStatsBlock(
   'MAGIC ITEM LORE ITEM\n\nSlot: HEAD\n\nAC: 13\n\nCHA: +15\n\nSV MAGIC: +20\n\n' +
-    'Effect: [[Serpent Sight]] (Worn)\n\nWT: 1.0 Size: SMALL\n\nClass: ALL\n\nRace: ALL'
+    'Effect: [[Serpent Sight]] (Worn)\n\nWT: 1.0 Size: SMALL\n\nClass: ALL\n\nRace: ALL',
 )
 
 const AXE = parseStatsBlock(
   'MAGIC ITEM LORE ITEM \n\nSlot: PRIMARY\n\nSkill: 2H Slashing Atk Delay: 40\n\nDMG: 30 AC: -5\n\n' +
     'STR: +10 STA: +10 WIS: -5 INT: -5\n\n' +
     'SV FIRE: +5 SV DISEASE: +5 SV COLD: +5 SV MAGIC: +5 SV POISON: +5\n\n' +
-    'WT: 12.0 Size: LARGE\n\nClass: WAR PAL RNG SHD\n\nRace: ALL'
+    'WT: 12.0 Size: LARGE\n\nClass: WAR PAL RNG SHD\n\nRace: ALL',
 )
 
 const GHOUL_HEART = parseStatsBlock(
-  'LORE ITEM NODROP\n\nSlot: NECK \n\nCHA: -10 \n\nWT: 0.1 Size: TINY \n\nClass: ALL \n\nRace: ALL'
+  'LORE ITEM NODROP\n\nSlot: NECK \n\nCHA: -10 \n\nWT: 0.1 Size: TINY \n\nClass: ALL \n\nRace: ALL',
 )
 
 const at = (full: number, fraction = 0): ItemUpgradeState => ({ full, fraction })
@@ -135,7 +135,19 @@ test('Thelvorn: the whole-level DMG / WIS / WT / ratio tables', () => {
   const dmg = ['20', '22', '24', '26', '28', '30', '32', '34', '36', '38', '40']
   const wis = ['15', '17', '18', '20', '21', '23', '24', '26', '27', '29', '30']
   const wt = ['3.0', '2.8', '2.5', '2.2', '2.0', '1.7', '1.4', '1.2', '0.9', '0.6', '0.4']
-  const ratio = ['0.77', '0.85', '0.92', '1.00', '1.08', '1.15', '1.23', '1.31', '1.38', '1.46', '1.54']
+  const ratio = [
+    '0.77',
+    '0.85',
+    '0.92',
+    '1.00',
+    '1.08',
+    '1.15',
+    '1.23',
+    '1.31',
+    '1.38',
+    '1.46',
+    '1.54',
+  ]
 
   for (const full of WHOLE) {
     const s = scaleStatBlock(THELVORN, at(full))
@@ -167,7 +179,7 @@ test('Crown of King Tranix at tier 2 + 3/4, synthetic SV VOID included', () => {
   assert.equal(s.weight, '0.8')
   assert.deepEqual(
     s.saves.map((v) => `${v.key} ${v.value}`),
-    ['SV MAGIC +26', 'SV VOID +2']
+    ['SV MAGIC +26', 'SV VOID +2'],
   )
 })
 
@@ -289,13 +301,24 @@ test('stat keys normalize longest-first, and heroics are not attributes', () => 
   assert.equal(upgradeStatClass('DMG'), 'damage')
   assert.equal(upgradeStatClass('Atk Delay'), 'delay')
   assert.equal(upgradeStatClass('WT'), 'weight')
-  for (const k of ['Attack', 'Dmg Bon', 'Backstab', 'Range', 'Size', 'Rec Level', 'HEROIC STR', 'Charges']) {
+  for (const k of [
+    'Attack',
+    'Dmg Bon',
+    'Backstab',
+    'Range',
+    'Size',
+    'Rec Level',
+    'HEROIC STR',
+    'Charges',
+  ]) {
     assert.equal(upgradeStatClass(k), 'unchanged', k)
   }
 })
 
 test('a flat stat takes the tier and keeps its own spelling; unmodeled fields are copied', () => {
-  const b = parseStatsBlock('Haste: 36% Regen: +2\n\nAttack: +10 Backstab: 25 Dmg Bon: 24\n\nRec Level: 45')
+  const b = parseStatsBlock(
+    'Haste: 36% Regen: +2\n\nAttack: +10 Backstab: 25 Dmg Bon: 24\n\nRec Level: 45',
+  )
   const s = scaleStatBlock(b, at(3, 5))
   assert.equal(statOf(s, 'HASTE'), '39%') // +full, fraction ignored, unit preserved
   assert.equal(statOf(s, 'REGEN'), '+5')

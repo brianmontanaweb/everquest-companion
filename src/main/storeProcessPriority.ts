@@ -16,10 +16,7 @@
 // else.
 
 import { settingsStore } from './store'
-import {
-  normalizeProcessPriorityPrefs,
-  type ProcessPriorityPrefs
-} from '../shared/processPriority'
+import { normalizeProcessPriorityPrefs, type ProcessPriorityPrefs } from '../shared/processPriority'
 
 /** The stored blob, defaulted. Never throws, never returns a partial. */
 export function getProcessPriorityPrefs(): ProcessPriorityPrefs {
@@ -31,7 +28,9 @@ export function getProcessPriorityPrefs(): ProcessPriorityPrefs {
  * write landed on the value it sent. VALIDATED HERE because the renderer supplies it (the
  * `sounds:getData` rule).
  */
-export function setProcessPriorityPrefs(patch: Partial<ProcessPriorityPrefs>): ProcessPriorityPrefs {
+export function setProcessPriorityPrefs(
+  patch: Partial<ProcessPriorityPrefs>,
+): ProcessPriorityPrefs {
   const next = normalizeProcessPriorityPrefs({ ...getProcessPriorityPrefs(), ...patch })
   settingsStore.set('processPriority', next)
   return next

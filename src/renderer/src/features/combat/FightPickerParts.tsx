@@ -10,7 +10,7 @@ import {
   emptyRowText,
   type FrozenList,
   type PickerRow,
-  type SearchState
+  type SearchState,
 } from './fightPickerRows'
 
 /**
@@ -33,7 +33,7 @@ export function SelectorRow({
   rate,
   timing,
   live,
-  hideRate
+  hideRate,
 }: {
   name: string
   rate: string
@@ -44,20 +44,39 @@ export function SelectorRow({
   return (
     <Box sx={{ minWidth: 0, width: '100%', py: 0.25 }}>
       <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
-        {live && <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'success.main', flexShrink: 0 }} />}
+        {live && (
+          <Box
+            sx={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              bgcolor: 'success.main',
+              flexShrink: 0,
+            }}
+          />
+        )}
         <Typography variant="body2" noWrap sx={{ fontWeight: 600, flexGrow: 1, minWidth: 0 }}>
           {name}
         </Typography>
         {!hideRate && (
           <Typography
             variant="caption"
-            sx={{ whiteSpace: 'nowrap', color: 'primary.main', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
+            sx={{
+              whiteSpace: 'nowrap',
+              color: 'primary.main',
+              fontWeight: 600,
+              fontVariantNumeric: 'tabular-nums',
+            }}
           >
             {rate}
           </Typography>
         )}
       </Stack>
-      <Typography variant="caption" noWrap sx={{ display: 'block', color: 'text.disabled', fontSize: 10.5 }}>
+      <Typography
+        variant="caption"
+        noWrap
+        sx={{ display: 'block', color: 'text.disabled', fontSize: 10.5 }}
+      >
         {timing}
       </Typography>
     </Box>
@@ -70,7 +89,7 @@ export function Row({
   active,
   selected,
   onHover,
-  onPick
+  onPick,
 }: {
   row: PickerRow
   idx: number
@@ -97,12 +116,18 @@ export function Row({
         bgcolor: active ? 'action.hover' : selected ? 'action.selected' : 'transparent',
         // The pinned head row is separated from history by a hairline — the Select's menu implied
         // that boundary by ordering alone, which a searchable list can no longer rely on.
-        ...(row.head ? { mb: 0.5, pb: 0.5, borderBottom: '1px solid', borderColor: 'divider' } : null)
+        ...(row.head
+          ? { mb: 0.5, pb: 0.5, borderBottom: '1px solid', borderColor: 'divider' }
+          : null),
       }}
     >
       <SelectorRow name={row.label} rate={row.rate} timing={row.timing} live={row.live} />
       {row.zone && (
-        <Typography variant="caption" noWrap sx={{ display: 'block', color: 'text.disabled', fontSize: 10.5 }}>
+        <Typography
+          variant="caption"
+          noWrap
+          sx={{ display: 'block', color: 'text.disabled', fontSize: 10.5 }}
+        >
           {row.zone}
         </Typography>
       )}
@@ -115,7 +140,13 @@ export function Row({
  * states what is waiting (N new fights), never how the freeze works. When nothing has changed
  * there is nothing to say, so nothing is rendered.
  */
-export function FreezeNote({ frozen, live }: { frozen: FrozenList | null; live: ScopeOptions }): React.JSX.Element | null {
+export function FreezeNote({
+  frozen,
+  live,
+}: {
+  frozen: FrozenList | null
+  live: ScopeOptions
+}): React.JSX.Element | null {
   if (!frozen) return null
   const known = new Set(frozen.rest.map((o) => o.value))
   if (frozen.head) known.add(frozen.head.value)
@@ -134,7 +165,7 @@ export function FreezeNote({ frozen, live }: { frozen: FrozenList | null; live: 
 export function EmptyRow({
   scope,
   query,
-  results
+  results,
 }: {
   scope: CombatScope
   query: string
@@ -154,14 +185,26 @@ export function EmptyRow({
  * `data-value`: they are not segments, and both the e2e harness and the overlay read the
  * selectable set as `li[data-value]`.
  */
-export function LoadMoreRow({ show, onLoadMore }: { show: boolean; onLoadMore: () => void }): React.JSX.Element | null {
+export function LoadMoreRow({
+  show,
+  onLoadMore,
+}: {
+  show: boolean
+  onLoadMore: () => void
+}): React.JSX.Element | null {
   if (!show) return null
   return (
     <Box
       component="li"
       data-testid="fight-loadmore"
       onClick={onLoadMore}
-      sx={{ px: 1.25, py: 0.75, borderRadius: 1, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+      sx={{
+        px: 1.25,
+        py: 0.75,
+        borderRadius: 1,
+        cursor: 'pointer',
+        '&:hover': { bgcolor: 'action.hover' },
+      }}
     >
       <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
         Load more fights…
@@ -174,7 +217,7 @@ export function LoadMoreRow({ show, onLoadMore }: { show: boolean; onLoadMore: (
 export function SearchMoreNote({
   scope,
   inSearch,
-  results
+  results,
 }: {
   scope: CombatScope
   inSearch: boolean

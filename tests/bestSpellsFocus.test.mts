@@ -13,7 +13,12 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import type { ClassAbbr, ComboInterval, ComboSlot } from '../src/shared/classCombo'
-import { bestSpellsAt, defaultSorts, type BestSpellRow, type BestSpellsView } from '../src/shared/bestSpells'
+import {
+  bestSpellsAt,
+  defaultSorts,
+  type BestSpellRow,
+  type BestSpellsView,
+} from '../src/shared/bestSpells'
 import { comboClassesOf, type LevelUnlockData } from '../src/shared/levelUnlocks'
 import { buildLevelUnlocks } from '../src/main/data/levelUnlocks'
 import { parseWornFocus, type WornFocus } from '../src/shared/wornFocus'
@@ -24,7 +29,7 @@ const slot = (candidates: ClassAbbr[]): ComboSlot => ({
   candidates,
   confidence: 1,
   provenance: 'inferred',
-  because: []
+  because: [],
 })
 
 function interval(slots: ComboSlot[]): ComboInterval {
@@ -42,7 +47,7 @@ function interval(slots: ComboSlot[]): ComboInterval {
     levelLo: null,
     levelHi: null,
     evidenceCount: slots.length,
-    userLocked: false
+    userLocked: false,
   }
 }
 
@@ -62,14 +67,14 @@ const IMPROVED_DAMAGE_II = focus('Improved Damage II', 'Polished Mithril Mask (E
   'Limit Effect: Current HP',
   'Limit Max Duration: 0s',
   'Limit Type: Detrimental',
-  'Limit Target: Exclude Target AE'
+  'Limit Target: Exclude Target AE',
 ])
 
 const IMPROVED_HEALING_III = focus('Improved Healing III', 'Idol of the Underking', [
   'Increase Healing by 1% to 20%',
   'Limit Max Level: 60 (lose 5% per level after)',
   'Limit Max Duration: 0s',
-  'Limit Type: Beneficial'
+  'Limit Type: Beneficial',
 ])
 
 /**
@@ -89,7 +94,7 @@ const DATA: LevelUnlockData = {
       recastMs: 0,
       targetType: 'Single',
       spellType: 'Detrimental',
-      hpLines: ['Decrease Hitpoints by 1000']
+      hpLines: ['Decrease Hitpoints by 1000'],
     },
     {
       name: 'Test Heal',
@@ -99,7 +104,7 @@ const DATA: LevelUnlockData = {
       recastMs: 0,
       targetType: 'Single',
       spellType: 'Beneficial',
-      hpLines: ['Increase Hitpoints by 1000']
+      hpLines: ['Increase Hitpoints by 1000'],
     },
     {
       name: 'Test DoT',
@@ -110,16 +115,19 @@ const DATA: LevelUnlockData = {
       targetType: 'Single',
       spellType: 'Detrimental',
       durationMs: 60_000,
-      hpLines: ['Decrease Hitpoints by 100 per tick']
-    }
+      hpLines: ['Decrease Hitpoints by 100 per tick'],
+    },
   ],
   skills: [],
   discs: [],
-  innates: []
+  innates: [],
 }
 
 const WIZ = comboOf(['WIZ'])
-const view = (worn: readonly WornFocus[]): BestSpellsView => ({ sorts: defaultSorts(), focus: worn })
+const view = (worn: readonly WornFocus[]): BestSpellsView => ({
+  sorts: defaultSorts(),
+  focus: worn,
+})
 
 const rowOf = (rows: readonly BestSpellRow[], name: string): BestSpellRow => {
   const row = rows.find((r) => r.name === name)
@@ -147,7 +155,12 @@ test('a damage focus lifts the DD figures and names the item that did it', () =>
   assert.equal(nuke.metrics.dps, 1105, 'the per-second figure moves with the total')
   assert.equal(nuke.metrics.damagePerMana, 11.1, 'and so does the per-mana ratio')
   assert.deepEqual(nuke.focus, [
-    { side: 'damage', pct: 10.5, effect: 'Improved Damage II', item: 'Polished Mithril Mask (Exaltation)' }
+    {
+      side: 'damage',
+      pct: 10.5,
+      effect: 'Improved Damage II',
+      item: 'Polished Mithril Mask (Exaltation)',
+    },
   ])
 })
 
@@ -176,12 +189,18 @@ test('THE LEVEL RANGE IS THE SPELL`S GAIN LEVEL, not the level being viewed', ()
   // reader steps the panel. A cap that moved with the VIEWED level would fade this row at 65.
   for (const level of [20, 44, 50, 65]) {
     const best = bestSpellsAt(DATA, WIZ, level, view([IMPROVED_DAMAGE_II]))
-    assert.equal(rowOf(best.tabs.dd.shown, 'Test Nuke').metrics.damage, 1105, `viewed at ${String(level)}`)
+    assert.equal(
+      rowOf(best.tabs.dd.shown, 'Test Nuke').metrics.damage,
+      1105,
+      `viewed at ${String(level)}`,
+    )
   }
   // A spell GAINED above the cap is the case that decays: same corpus, one spell moved to 54.
   const late: LevelUnlockData = {
     ...DATA,
-    spells: DATA.spells.map((s) => (s.name === 'Test Nuke' ? { ...s, at: [{ cls: 'WIZ' as const, level: 54 }] } : s))
+    spells: DATA.spells.map((s) =>
+      s.name === 'Test Nuke' ? { ...s, at: [{ cls: 'WIZ' as const, level: 54 }] } : s,
+    ),
   }
   const best = bestSpellsAt(late, WIZ, 60, view([IMPROVED_DAMAGE_II]))
   // Ten levels over the cap keeps half of 10.5%, which is 5.25%.
@@ -197,9 +216,9 @@ test('a mixed table is captioned with the RANGE it really used', () => {
       {
         ...DATA.spells[0],
         name: 'Test Late Nuke',
-        at: [{ cls: 'WIZ', level: 54 }]
-      }
-    ]
+        at: [{ cls: 'WIZ', level: 54 }],
+      },
+    ],
   }
   const best = bestSpellsAt(mixed, WIZ, 60, view([IMPROVED_DAMAGE_II]))
   assert.equal(best.tabs.dd.wornFocus, 'worn +5% to +11%')
@@ -208,7 +227,7 @@ test('a mixed table is captioned with the RANGE it really used', () => {
 test('the AOE reading gets no damage focus, because the focus page excludes area spells', () => {
   const area: LevelUnlockData = {
     ...DATA,
-    spells: [{ ...DATA.spells[0], name: 'Test AE', targetType: 'Targeted AE' }]
+    spells: [{ ...DATA.spells[0], name: 'Test AE', targetType: 'Targeted AE' }],
   }
   const best = bestSpellsAt(area, WIZ, 30, view([IMPROVED_DAMAGE_II]))
   // Present in both tabs, focused in neither: `Limit Target: Exclude Target AE`.
@@ -229,7 +248,11 @@ test('acceptance: the owner`s wizard nuke wears his Improved Damage II, and the 
   const after = rowOf(worn.tabs.dd.shown, "Garrison's Mighty Mana Shock")
   assert.equal(before.metrics.damage, 333, 'the base figure this app has always printed')
   assert.equal(after.metrics.damage, 368, '333 with the middle of a 1..20 band on it')
-  assert.equal(after.focus?.[0].item, 'Polished Mithril Mask (Exaltation)', 'and the card can name it')
+  assert.equal(
+    after.focus?.[0].item,
+    'Polished Mithril Mask (Exaltation)',
+    'and the card can name it',
+  )
   assert.ok(worn.tabs.dd.wornFocus?.startsWith('worn +'), worn.tabs.dd.wornFocus ?? 'no marker')
 })
 
@@ -244,7 +267,7 @@ test('acceptance: one table, three states - full focus, a faded one, and none at
     'Limit Effect: Current HP',
     'Limit Max Duration: 0s',
     'Limit Type: Detrimental',
-    'Limit Target: Exclude Target AE'
+    'Limit Target: Exclude Target AE',
   ])
   const bare = bestSpellsAt(REAL, WIZ, 60, { sorts: defaultSorts() })
   const worn = bestSpellsAt(REAL, WIZ, 60, view([tierOne]))
@@ -272,7 +295,10 @@ test('acceptance: one table, three states - full focus, a faded one, and none at
     if (row.gainedAt <= 20) full++
     else faded++
   }
-  assert.ok(full > 0 && faded > 0 && none > 0, `full ${String(full)} faded ${String(faded)} none ${String(none)}`)
+  assert.ok(
+    full > 0 && faded > 0 && none > 0,
+    `full ${String(full)} faded ${String(faded)} none ${String(none)}`,
+  )
   // The marker states the RANGE the table really spans, low end first.
   assert.match(worn.tabs.dd.wornFocus ?? '', /^worn \+\d+% to \+11%$/)
 })

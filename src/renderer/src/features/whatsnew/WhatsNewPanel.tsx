@@ -39,7 +39,7 @@ import {
   hasReportedEntry,
   type ReleaseEntry,
   type ReleaseEntryKind,
-  type ReleaseNote
+  type ReleaseNote,
 } from '@shared/releaseNotes'
 import { DEV_TOOLS } from '../../devFlags'
 import { formatCalendarDate } from '../../lib/formatDate'
@@ -72,7 +72,7 @@ const GITHUB_RELEASES_URL = 'https://github.com/jmoyers/everquest-companion/rele
 const KIND_LABEL: Record<ReleaseEntryKind, string> = {
   new: 'New',
   fixed: 'Fixed',
-  changed: 'Changed'
+  changed: 'Changed',
 }
 
 /** Sub-header order. Fixed before Changed because "what stopped being wrong" is the thing people
@@ -104,7 +104,13 @@ function EntryBullet({ entry }: { entry: ReleaseEntry }): JSX.Element {
           variant="outlined"
           label="player report"
           data-testid="whats-new-report-chip"
-          sx={{ height: 16, fontSize: 10, ml: 0.75, verticalAlign: 'text-bottom', '& .MuiChip-label': { px: 0.6 } }}
+          sx={{
+            height: 16,
+            fontSize: 10,
+            ml: 0.75,
+            verticalAlign: 'text-bottom',
+            '& .MuiChip-label': { px: 0.6 },
+          }}
         />
       )}
     </Box>
@@ -112,11 +118,21 @@ function EntryBullet({ entry }: { entry: ReleaseEntry }): JSX.Element {
 }
 
 /** One group of bullets under its sub-header, or a bare list when the entries carry no kind. */
-function EntryGroup({ label, entries }: { label: string | null; entries: readonly ReleaseEntry[] }): JSX.Element {
+function EntryGroup({
+  label,
+  entries,
+}: {
+  label: string | null
+  entries: readonly ReleaseEntry[]
+}): JSX.Element {
   return (
     <Stack spacing={0.25}>
       {label !== null && (
-        <Typography variant="caption" sx={{ fontWeight: 700, letterSpacing: 0.5 }} color="text.secondary">
+        <Typography
+          variant="caption"
+          sx={{ fontWeight: 700, letterSpacing: 0.5 }}
+          color="text.secondary"
+        >
           {label}
         </Typography>
       )}
@@ -137,7 +153,11 @@ function EntryGroup({ label, entries }: { label: string | null; entries: readonl
 function ReleaseBlock({ note, isNew }: { note: ReleaseNote; isNew: boolean }): JSX.Element {
   const unkinded = note.entries.filter((e) => e.kind === undefined)
   return (
-    <Stack spacing={0.75} data-testid={`whats-new-release-${note.version}`} data-new={isNew ? 'true' : undefined}>
+    <Stack
+      spacing={0.75}
+      data-testid={`whats-new-release-${note.version}`}
+      data-new={isNew ? 'true' : undefined}
+    >
       <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
           v{note.version}
@@ -158,7 +178,9 @@ function ReleaseBlock({ note, isNew }: { note: ReleaseNote; isNew: boolean }): J
       </Stack>
       {KIND_ORDER.map((kind) => {
         const entries = note.entries.filter((e) => e.kind === kind)
-        return entries.length === 0 ? null : <EntryGroup key={kind} label={KIND_LABEL[kind]} entries={entries} />
+        return entries.length === 0 ? null : (
+          <EntryGroup key={kind} label={KIND_LABEL[kind]} entries={entries} />
+        )
       })}
       {unkinded.length > 0 && <EntryGroup label={null} entries={unkinded} />}
     </Stack>
@@ -186,9 +208,9 @@ export function whatsNewSection(): PrefSection {
         label: 'Release notes',
         keywords:
           'whats new release notes changelog changes history updates version fixed added changed news log recent thanks report',
-        content: <WhatsNewPanel />
-      }
-    ]
+        content: <WhatsNewPanel />,
+      },
+    ],
   }
 }
 
@@ -234,7 +256,7 @@ export function WhatsNewPanel(): JSX.Element {
           pr: 1,
           display: 'flex',
           flexDirection: 'column',
-          gap: 1.5
+          gap: 1.5,
         }}
       >
         {RELEASE_NOTES.map((note, i) => (

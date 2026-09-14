@@ -51,14 +51,24 @@ const CARD: CSSProperties = {
   border: '1px solid rgba(255,255,255,0.15)',
   fontFamily: 'inherit',
   fontSize: 12,
-  lineHeight: 1.5
+  lineHeight: 1.5,
 }
 const TITLE: CSSProperties = { color: '#f0f0f0', fontWeight: 600, whiteSpace: 'nowrap' }
 const SUBTITLE: CSSProperties = { color: '#9aa0aa', whiteSpace: 'nowrap' }
-const ROW: CSSProperties = { display: 'flex', gap: 10, justifyContent: 'space-between', whiteSpace: 'nowrap' }
+const ROW: CSSProperties = {
+  display: 'flex',
+  gap: 10,
+  justifyContent: 'space-between',
+  whiteSpace: 'nowrap',
+}
 const ROW_LABEL: CSSProperties = { color: '#9aa0aa' }
 const ROW_VALUE: CSSProperties = { color: '#dcdcdc' }
-const NOTE: CSSProperties = { color: '#7c828c', fontStyle: 'italic', whiteSpace: 'nowrap', marginTop: 2 }
+const NOTE: CSSProperties = {
+  color: '#7c828c',
+  fontStyle: 'italic',
+  whiteSpace: 'nowrap',
+  marginTop: 2,
+}
 
 /** Everything that changes the card's SIZE — measuring on this instead of on every move keeps
  *  the layout read off the pointer path. */
@@ -86,13 +96,17 @@ export function ChartTooltip(m: ChartTooltipModel): React.JSX.Element {
     const el = ref.current
     if (!el) return
     const r = el.getBoundingClientRect()
-    setSize((s) => (Math.abs(s.w - r.width) < 0.5 && Math.abs(s.h - r.height) < 0.5 ? s : { w: r.width, h: r.height }))
+    setSize((s) =>
+      Math.abs(s.w - r.width) < 0.5 && Math.abs(s.h - r.height) < 0.5
+        ? s
+        : { w: r.width, h: r.height },
+    )
   }, [key])
 
   const style: CSSProperties = {
     ...CARD,
     left: place(m.x, size.w, OFF_X, m.bounds.w),
-    top: place(m.y, size.h, OFF_Y, m.bounds.h)
+    top: place(m.y, size.h, OFF_Y, m.bounds.h),
   }
   return (
     <div ref={ref} style={style} data-testid="chart-tooltip">
@@ -101,7 +115,9 @@ export function ChartTooltip(m: ChartTooltipModel): React.JSX.Element {
       {m.rows.map((r, i) => (
         <div key={i} style={ROW}>
           {r.label != null && <span style={ROW_LABEL}>{r.label}</span>}
-          <span style={r.color != null ? { ...ROW_VALUE, color: r.color } : ROW_VALUE}>{r.value}</span>
+          <span style={r.color != null ? { ...ROW_VALUE, color: r.color } : ROW_VALUE}>
+            {r.value}
+          </span>
         </div>
       ))}
       {m.note != null && <div style={NOTE}>{m.note}</div>}

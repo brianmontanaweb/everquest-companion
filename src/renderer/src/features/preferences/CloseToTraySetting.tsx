@@ -102,8 +102,8 @@ export function windowSection(): PrefSection {
         label: 'Closing the window',
         keywords:
           'tray systray system tray minimize minimise close closing quit exit x background hide notification area taskbar alt tab',
-        content: <CloseToTraySetting />
-      }
-    ]
+        content: <CloseToTraySetting />,
+      },
+    ],
   }
 }

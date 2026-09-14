@@ -39,7 +39,7 @@ const u = (d: string, metric: string, dim: string, n: number): UsageRow => ({
   cohort: 'user',
   metric,
   dim,
-  n
+  n,
 })
 
 const buildWith = (o: { usage?: UsageRow[]; issues?: ErrorIssueRow[] }) =>
@@ -49,7 +49,7 @@ const buildWith = (o: { usage?: UsageRow[]; issues?: ErrorIssueRow[] }) =>
     installs: [],
     issues: o.issues ?? [],
     windowDays: 30,
-    nowMs: NOW
+    nowMs: NOW,
   })
 
 /** One stored `error_report` row, as the reader maps it. `exemplar` is the raw column text. */
@@ -65,7 +65,7 @@ const issue = (o: {
   version: o.version ?? '0.11.0',
   fingerprint: o.fingerprint ?? '0123456789abcdef',
   n: o.n ?? 1,
-  exemplar: o.exemplar === undefined ? '' : JSON.stringify(o.exemplar)
+  exemplar: o.exemplar === undefined ? '' : JSON.stringify(o.exemplar),
 })
 
 /** A valid stored exemplar — it has to BE valid, because the reader re-validates on the way out. */
@@ -80,7 +80,7 @@ const exemplarOf = (over: Record<string, unknown> = {}): Record<string, unknown>
   sessionAgeBucket: 2,
   mode: 'live',
   count: 1,
-  ...over
+  ...over,
 })
 
 const versionRow = (d: ReturnType<typeof buildWith>, version: string) =>
@@ -90,12 +90,12 @@ test('TOP ISSUES: day rows fold into one issue, counts add, FIRST exemplar wins'
   const d = buildWith({
     usage: [
       u(TODAY, USAGE_METRICS.version, '0.11.0', 20),
-      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 20)
+      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 20),
     ],
     issues: [
       issue({ day: day(2), n: 3, exemplar: exemplarOf({ redactedMessage: 'the first one' }) }),
-      issue({ day: TODAY, n: 4, exemplar: exemplarOf({ redactedMessage: 'a later one' }) })
-    ]
+      issue({ day: TODAY, n: 4, exemplar: exemplarOf({ redactedMessage: 'a later one' }) }),
+    ],
   })
   const v = versionRow(d, '0.11.0')
   assert.ok(v)
@@ -115,19 +115,23 @@ test('TOP ISSUES: ranked by count, and never mixed between builds', () => {
     usage: [
       u(TODAY, USAGE_METRICS.version, '0.11.0', 20),
       u(TODAY, USAGE_METRICS.version, '0.10.0', 20),
-      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 20)
+      u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 20),
     ],
     issues: [
       issue({ fingerprint: 'aaaaaaaaaaaaaaaa', n: 5, exemplar: exemplarOf() }),
       issue({ fingerprint: 'bbbbbbbbbbbbbbbb', n: 99, exemplar: exemplarOf() }),
-      issue({ version: '0.10.0', fingerprint: 'cccccccccccccccc', n: 400, exemplar: exemplarOf() })
-    ]
+      issue({ version: '0.10.0', fingerprint: 'cccccccccccccccc', n: 400, exemplar: exemplarOf() }),
+    ],
   })
-  assert.deepEqual(versionRow(d, '0.11.0')?.topIssues.map((i) => i.count), [99, 5], 'most frequent first')
+  assert.deepEqual(
+    versionRow(d, '0.11.0')?.topIssues.map((i) => i.count),
+    [99, 5],
+    'most frequent first',
+  )
   // The 400-count issue belongs to 0.10.0 and must not appear on 0.11.0's row.
   assert.equal(
     versionRow(d, '0.11.0')?.topIssues.some((i) => i.fingerprint === 'cccccccccccccccc'),
-    false
+    false,
   )
   assert.equal(versionRow(d, '0.10.0')?.topIssues[0].count, 400)
 })
@@ -138,7 +142,7 @@ test('TOP ISSUES: a row whose exemplar did not survive keeps its COUNT', () => {
   for (const exemplar of [undefined, { t: 'errorReport', errorName: 'nope' }, { junk: true }]) {
     const d = buildWith({
       usage: [u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 5)],
-      issues: [issue({ n: 42, ...(exemplar === undefined ? {} : { exemplar }) })]
+      issues: [issue({ n: 42, ...(exemplar === undefined ? {} : { exemplar }) })],
     })
     const [i] = versionRow(d, '0.11.0')?.topIssues ?? []
     assert.equal(i.count, 42, JSON.stringify(exemplar))
@@ -158,9 +162,9 @@ test('TOP ISSUES: an exemplar that is no longer schema-legal is REFUSED at the l
     issues: [
       issue({
         n: 9,
-        exemplar: exemplarOf({ redactedMessage: "ENOENT: open 'C:\\Users\\jmoye\\a.json'" })
-      })
-    ]
+        exemplar: exemplarOf({ redactedMessage: "ENOENT: open 'C:\\Users\\jmoye\\a.json'" }),
+      }),
+    ],
   })
   const [i] = versionRow(d, '0.11.0')?.topIssues ?? []
   assert.equal(i.exemplar, null, 'an unredacted message does not reach the panel')
@@ -172,8 +176,8 @@ test('TOP ISSUES: a build with no error rows has an empty list, reporting or not
     usage: [
       u(TODAY, USAGE_METRICS.version, '0.11.0', 20),
       u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 20),
-      u(TODAY, USAGE_METRICS.version, '0.8.0', 10)
-    ]
+      u(TODAY, USAGE_METRICS.version, '0.8.0', 10),
+    ],
   })
   // BOTH are empty, and that is exactly why the panel must never infer "reporting" from this
   // list: the clean build and the build that cannot report look identical HERE, and are told

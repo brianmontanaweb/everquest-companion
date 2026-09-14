@@ -26,7 +26,7 @@ import type {
   FeedbackAchievementsPreview,
   FeedbackEnv,
   FeedbackInventoryPreview,
-  LogSliceMeta
+  LogSliceMeta,
 } from '../../shared/feedback'
 import { logError } from '../errorLog'
 import { getMainWindow } from '../windows'
@@ -38,7 +38,7 @@ import {
   cachedSlice,
   currentAchievements,
   currentInventory,
-  feedbackEnv
+  feedbackEnv,
 } from './submit'
 import { queuedCount } from './state'
 
@@ -117,7 +117,7 @@ export async function feedbackContext(): Promise<FeedbackContext> {
     inventoryAvailable: updatedAt !== null,
     inventoryUpdatedAt: updatedAt,
     achievementsAvailable: achUpdatedAt !== null,
-    achievementsUpdatedAt: achUpdatedAt
+    achievementsUpdatedAt: achUpdatedAt,
   }
 }
 
@@ -136,7 +136,7 @@ export async function buildInventoryPreview(): Promise<FeedbackInventoryPreview>
       unavailable: dump.reason,
       previewLines: [],
       truncatedPreview: false,
-      fileName: activeInventoryPath()?.fileName ?? null
+      fileName: activeInventoryPath()?.fileName ?? null,
     }
   }
   const { bytes, lines, updatedAt, sha256, previewLines, truncatedPreview, fileName } = dump
@@ -145,7 +145,7 @@ export async function buildInventoryPreview(): Promise<FeedbackInventoryPreview>
     unavailable: null,
     previewLines,
     truncatedPreview,
-    fileName
+    fileName,
   }
 }
 
@@ -158,7 +158,7 @@ export async function buildAchievementsPreview(): Promise<FeedbackAchievementsPr
       unavailable: dump.reason,
       previewLines: [],
       truncatedPreview: false,
-      fileName: activeAchievementsPath()?.fileName ?? null
+      fileName: activeAchievementsPath()?.fileName ?? null,
     }
   }
   const { bytes, lines, updatedAt, sha256, previewLines, truncatedPreview, fileName } = dump
@@ -167,7 +167,7 @@ export async function buildAchievementsPreview(): Promise<FeedbackAchievementsPr
     unavailable: null,
     previewLines,
     truncatedPreview,
-    fileName
+    fileName,
   }
 }
 
@@ -190,7 +190,7 @@ export async function buildLogSlice(windowMinutes: number): Promise<FeedbackSlic
     sha256,
     previewLines,
     truncatedPreview,
-    windowMinutes: slice.windowMinutes
+    windowMinutes: slice.windowMinutes,
   }
 }
 
@@ -210,7 +210,7 @@ function defaultSliceName(toMs: number): string {
  * inspecting what they are about to disclose should not have to unzip anything to do it.
  */
 export async function saveSliceToFile(
-  windowMinutes: number
+  windowMinutes: number,
 ): Promise<{ ok: boolean; path?: string; canceled?: boolean }> {
   const slice = await cachedSlice(windowMinutes)
   if (slice === null) return { ok: false }
@@ -218,9 +218,10 @@ export async function saveSliceToFile(
   const opts = {
     title: 'Save log slice',
     defaultPath: defaultSliceName(slice.toMs),
-    filters: [{ name: 'Log', extensions: ['log', 'txt'] }]
+    filters: [{ name: 'Log', extensions: ['log', 'txt'] }],
   }
-  const res = win === null ? await dialog.showSaveDialog(opts) : await dialog.showSaveDialog(win, opts)
+  const res =
+    win === null ? await dialog.showSaveDialog(opts) : await dialog.showSaveDialog(win, opts)
   if (res.canceled || !res.filePath) return { ok: false, canceled: true }
   try {
     await writeFile(res.filePath, slice.text, 'utf8')

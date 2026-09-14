@@ -56,7 +56,7 @@ import type {
   LootEvent,
   LootSnap,
   OverlayConfig,
-  ProgressionSnap
+  ProgressionSnap,
 } from '@shared/types'
 import {
   availableSlices,
@@ -64,7 +64,7 @@ import {
   resolveSliceId,
   sliceLabel,
   type SliceId,
-  type Timeslice
+  type Timeslice,
 } from '@shared/timeslice'
 import { toggleXpRow, XP_ROW_IDS, xpRowVisible, type XpRowId } from '@shared/xpOverlay'
 import { toggleRateBasis, type RateBasis } from '@shared/rateBasis'
@@ -134,7 +134,7 @@ function XpRowLine({ row }: { row: XpOverlayRow }): JSX.Element {
           textTransform: 'uppercase',
           color: 'rgba(255,255,255,0.45)',
           flexShrink: 0,
-          minWidth: 54
+          minWidth: 54,
         }}
       >
         {row.label}
@@ -150,10 +150,14 @@ function XpRowLine({ row }: { row: XpOverlayRow }): JSX.Element {
       >
         {row.value}
       </span>
-      {row.unit !== '' && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)' }}>{row.unit}</span>}
+      {row.unit !== '' && (
+        <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)' }}>{row.unit}</span>
+      )}
       <span style={{ flexGrow: 1 }} />
       {row.detail !== '' && (
-        <span style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap' }}>{row.detail}</span>
+        <span style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap' }}>
+          {row.detail}
+        </span>
       )}
     </div>
   )
@@ -165,7 +169,7 @@ function RowToggle({
   id,
   on,
   onClick,
-  noDrag
+  noDrag,
 }: {
   id: XpRowId
   on: boolean
@@ -192,7 +196,7 @@ function RowToggle({
         letterSpacing: 0.4,
         textTransform: 'uppercase',
         padding: '1px 5px',
-        cursor: 'pointer'
+        cursor: 'pointer',
       }}
     >
       {ROW_LABEL[id]}
@@ -214,7 +218,7 @@ function RowToggle({
 function BasisToggle({
   basis,
   onClick,
-  noDrag
+  noDrag,
 }: {
   basis: RateBasis
   onClick: () => void
@@ -239,7 +243,7 @@ function BasisToggle({
         letterSpacing: 0.4,
         textTransform: 'uppercase',
         padding: '1px 5px',
-        cursor: 'pointer'
+        cursor: 'pointer',
       }}
     >
       {basis}
@@ -259,7 +263,7 @@ function TierToggle({
   scope,
   zoneName,
   onClick,
-  noDrag
+  noDrag,
 }: {
   scope: ZoneScope
   zoneName: string
@@ -289,7 +293,7 @@ function TierToggle({
         letterSpacing: 0.4,
         textTransform: 'uppercase',
         padding: '1px 5px',
-        cursor: 'pointer'
+        cursor: 'pointer',
       }}
     >
       {ZONE_SCOPE_LABEL[scope]}
@@ -316,7 +320,7 @@ function XpFooter({
   patch,
   setZoneScope,
   setBasis,
-  noDrag
+  noDrag,
 }: {
   bgAlpha: number
   textScale: number
@@ -338,7 +342,7 @@ function XpFooter({
         ...noDrag,
         gap: 6,
         fontSize: 10,
-        color: 'rgba(255,255,255,0.6)'
+        color: 'rgba(255,255,255,0.6)',
       }}
     >
       {/* No hover on the slider (JOS-358); it looks like what it is. */}
@@ -352,7 +356,14 @@ function XpFooter({
         onChange={(e) => {
           patch({ bgAlpha: Number(e.target.value) })
         }}
-        style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 20, accentColor: ACCENT, height: 4 }}
+        style={{
+          flexGrow: 1,
+          flexShrink: 1,
+          flexBasis: 0,
+          minWidth: 20,
+          accentColor: ACCENT,
+          height: 4,
+        }}
       />
       {/* THE WHOLE OF THE CONFIGURABILITY (owner scope). Each press writes the SAME persisted
           per-kind config the alpha slider beside it writes, so the window remembers its rows the
@@ -407,7 +418,7 @@ function sliceRows(
   snap: ProgressionSnap,
   ids: SliceId[],
   bounds: ReturnType<typeof dataBounds>,
-  zoneScope: ZoneScope
+  zoneScope: ZoneScope,
 ): OverlaySelectRow[] {
   return ids.map((id) => ({
     value: id,
@@ -416,7 +427,7 @@ function sliceRows(
     // The disambiguation line the popup already draws: the slice's own sentence-form wording, so
     // 'Zone' says which zone and 'Session' says what a session is measured from.
     timing: resolveSlice({ snap, bounds, id, zoneScope }).caption,
-    live: false
+    live: false,
   }))
 }
 
@@ -432,7 +443,7 @@ function useXpSlice(
   prog: ProgressionSnap,
   bounds: ReturnType<typeof dataBounds>,
   config: OverlayConfig | null,
-  zoneScope: ZoneScope
+  zoneScope: ZoneScope,
 ): { id: SliceId; slice: Timeslice } {
   // ABSENT means `zoneSession` — and `resolveSliceId` then degrades it to `All` on a record that
   // cannot define one, which is the same fallback the tab's control performs. The SLICE is still
@@ -441,7 +452,7 @@ function useXpSlice(
   const id = resolveSliceId(config?.xpSlice ?? 'zoneSession', prog, bounds)
   const slice = useMemo(
     () => resolveSlice({ snap: prog, bounds, id, zoneScope }),
-    [prog, bounds, id, zoneScope]
+    [prog, bounds, id, zoneScope],
   )
   return { id, slice }
 }
@@ -456,8 +467,18 @@ export default function XpOverlay(): JSX.Element {
   // announcing the level of a class you are no longer running; your own `/who` row is what
   // corrects it, and it arrives here.
   const who = useOverlayModule<CharacterSnap>('character', NO_CHARACTER)
-  const { locked, bgAlpha, textScale, hovering, config, patch, toggleLock, capture, dragRegion, noDrag } =
-    useOverlayChrome()
+  const {
+    locked,
+    bgAlpha,
+    textScale,
+    hovering,
+    config,
+    patch,
+    toggleLock,
+    capture,
+    dragRegion,
+    noDrag,
+  } = useOverlayChrome()
   useSlowClock()
 
   // THE TWO KNOBS THIS WINDOW SHARES WITH THE APP (JOS-332) — which tiers count, and which hour
@@ -474,7 +495,7 @@ export default function XpOverlay(): JSX.Element {
   const visible = config?.xpRows
   const view = useMemo(
     () => xpOverlayView({ snap: prog, loot, slice, visible, level: who.level, basis }),
-    [prog, loot, slice, visible, who.level, basis]
+    [prog, loot, slice, visible, who.level, basis],
   )
 
   return (
@@ -493,7 +514,7 @@ export default function XpOverlay(): JSX.Element {
         border: locked ? '1px solid rgba(255,255,255,0.04)' : `1px solid ${ACCENT}66`,
         borderRadius: 8,
         boxSizing: 'border-box',
-        overflow: 'hidden'
+        overflow: 'hidden',
       }}
     >
       {/* The slice picker rides the header exactly as the meters' fight picker does — including
@@ -504,10 +525,19 @@ export default function XpOverlay(): JSX.Element {
         tag="XP"
         title={sliceLabel(id)}
         titleColor={ACCENT}
-        tail={view.level === null ? undefined : `lvl ${view.level}${view.levelCue ? ` ${view.levelCue}` : ''}`}
+        tail={
+          view.level === null
+            ? undefined
+            : `lvl ${view.level}${view.levelCue ? ` ${view.levelCue}` : ''}`
+        }
         tailTitle={view.levelTitle}
         iconAccentBg={ACCENT_BG}
-        select={{ rows: sliceRows(prog, available, bounds, zoneScope), value: id, onChange: (v) => patch({ xpSlice: v as SliceId }), accent: ACCENT }}
+        select={{
+          rows: sliceRows(prog, available, bounds, zoneScope),
+          value: id,
+          onChange: (v) => patch({ xpSlice: v as SliceId }),
+          accent: ACCENT,
+        }}
         chrome={{ locked, hovering, dragRegion, noDrag, toggleLock, capture }}
       />
 

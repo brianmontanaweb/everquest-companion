@@ -203,8 +203,10 @@ export function comboClassesOf(interval: ComboInterval | null): ComboClasses {
   }
   return {
     resolved: [...new Set(resolved)].sort((a, b) => a.localeCompare(b)),
-    candidates: [...new Set(candidates)].filter((c) => !resolved.includes(c)).sort((a, b) => a.localeCompare(b)),
-    ambiguous
+    candidates: [...new Set(candidates)]
+      .filter((c) => !resolved.includes(c))
+      .sort((a, b) => a.localeCompare(b)),
+    ambiguous,
   }
 }
 
@@ -294,7 +296,13 @@ function spellRows(data: LevelUnlockData, want: ReadonlySet<string>, level: numb
     const key = spell.name.toLowerCase()
     const row = byName.get(key)
     if (!row) {
-      const next: UnlockRow = { kind: 'spell', name: spell.name, classes: [...new Set(classes)], level, spell }
+      const next: UnlockRow = {
+        kind: 'spell',
+        name: spell.name,
+        classes: [...new Set(classes)],
+        level,
+        spell,
+      }
       const earlier = earlierClasses(spell, want, level)
       if (earlier.length > 0) next.earlier = earlier
       byName.set(key, next)
@@ -318,7 +326,7 @@ function spellRows(data: LevelUnlockData, want: ReadonlySet<string>, level: numb
 function earlierClasses(
   spell: UnlockSpell,
   want: ReadonlySet<string>,
-  level: number
+  level: number,
 ): { cls: ClassAbbr; level: number }[] {
   const lowest = new Map<ClassAbbr, number>()
   for (const p of spell.at) {
@@ -380,10 +388,15 @@ function addSkillRow(byKey: Map<string, UnlockRow>, cls: ClassAbbr, s: UnlockSki
  * Every skill/disc/innate the queried classes gain at `level`, folded by (name, kind) so a skill
  * two classes in the loadout both get at 10 is ONE row wearing two chips.
  */
-function skillRows(data: LevelUnlockData, classes: readonly ClassAbbr[], level: number): UnlockRow[] {
+function skillRows(
+  data: LevelUnlockData,
+  classes: readonly ClassAbbr[],
+  level: number,
+): UnlockRow[] {
   const byKey = new Map<string, UnlockRow>()
   for (const cls of classes) {
-    for (const s of (data.skills[cls] ?? []).filter((r) => r.level === level)) addSkillRow(byKey, cls, s)
+    for (const s of (data.skills[cls] ?? []).filter((r) => r.level === level))
+      addSkillRow(byKey, cls, s)
   }
   for (const row of byKey.values()) row.classes.sort((a, b) => a.localeCompare(b))
   return [...byKey.values()].sort((a, b) => a.name.localeCompare(b.name))
@@ -399,7 +412,7 @@ function skillRows(data: LevelUnlockData, classes: readonly ClassAbbr[], level: 
 export function unlocksAtLevel(
   data: LevelUnlockData,
   combo: ComboClasses,
-  level: number
+  level: number,
 ): LevelUnlocks {
   const classes = comboClassSet(combo)
   if (classes.length === 0 || !Number.isFinite(level)) return emptyUnlocks(level, combo.ambiguous)
@@ -411,7 +424,7 @@ export function unlocksAtLevel(
     outOfEraSpells: out,
     skills: skillRows(data, classes, level),
     classes,
-    ambiguous: combo.ambiguous
+    ambiguous: combo.ambiguous,
   }
 }
 

@@ -53,7 +53,7 @@ const SOURCE_RANK: Record<RosterSource, number> = {
   joined: 3,
   stated: 2,
   confirmed: 1,
-  buffed: 0
+  buffed: 0,
 }
 
 /** True when `next` is at least as authoritative as `cur` (see RosterSource). */
@@ -67,7 +67,7 @@ export const SOURCE_LABEL: Record<RosterSource, string> = {
   joined: 'joined',
   stated: 'group leader',
   confirmed: 'confirmed',
-  buffed: 'group buff'
+  buffed: 'group buff',
 }
 
 export interface RosterMember {
@@ -139,7 +139,7 @@ export interface RosterView {
 export const EMPTY_ROSTER_VIEW: RosterView = {
   members: new Set<string>(),
   admitted: new Set<string>(),
-  nameOf: () => undefined
+  nameOf: () => undefined,
 }
 
 // ----- Meter scope (design doc §2) -----
@@ -182,7 +182,7 @@ export function effectiveScope(scope: MeterScope, roster: Pick<RosterSnap, 'seen
 export const SCOPE_LABEL: Record<MeterScope, string> = {
   you: 'You',
   group: 'Group',
-  everyone: 'Everyone'
+  everyone: 'Everyone',
 }
 
 /**
@@ -194,7 +194,7 @@ export const SCOPE_LABEL: Record<MeterScope, string> = {
 export const SCOPE_HINT: Record<MeterScope, string> = {
   you: 'You and your pets only',
   group: 'You, your pets and everyone on your group roster',
-  everyone: 'Every combatant the log named, including people your group roster never knew about'
+  everyone: 'Every combatant the log named, including people your group roster never knew about',
 }
 
 /** The scope chip's text: the chosen scope, plus the fallback reason when Group has nothing to
@@ -243,7 +243,7 @@ export function scopeAllows(
   scope: MeterScope,
   roster: RosterSnap,
   kind: ScopeKind,
-  key?: string
+  key?: string,
 ): boolean {
   if (kind === 'enemy') return true
   const eff = effectiveScope(scope, roster)

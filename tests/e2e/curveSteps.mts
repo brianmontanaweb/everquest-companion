@@ -34,7 +34,17 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { ElectronApplication, Page } from 'playwright-core'
-import { ARTIFACTS, check, countOf, hoverAt, note, settle, settleCount, settleGone, settleStable } from './appHarness.mjs'
+import {
+  ARTIFACTS,
+  check,
+  countOf,
+  hoverAt,
+  note,
+  settle,
+  settleCount,
+  settleGone,
+  settleStable,
+} from './appHarness.mjs'
 // The JOS-339 shape tripwires the camera fires at every window — next door, same line budget rule.
 import { checkChartShape } from './chartShapeSteps.mjs'
 
@@ -76,18 +86,27 @@ function curveGeometry(page: Page, sels: { curve: string; gap: string }): Promis
     const gaps = Array.from(document.querySelectorAll<SVGRectElement>(s.gap)).map((r) => ({
       kind: r.getAttribute('data-kind') ?? '',
       x: r.x.baseVal.value,
-      w: r.width.baseVal.value
+      w: r.width.baseVal.value,
     }))
-    const svg = lines[0]?.ownerSVGElement ?? document.querySelector<SVGSVGElement>(s.gap)?.ownerSVGElement
-    return { points, gaps, vbW: svg?.viewBox.baseVal.width ?? 0, vbH: svg?.viewBox.baseVal.height ?? 0 }
+    const svg =
+      lines[0]?.ownerSVGElement ?? document.querySelector<SVGSVGElement>(s.gap)?.ownerSVGElement
+    return {
+      points,
+      gaps,
+      vbW: svg?.viewBox.baseVal.width ?? 0,
+      vbH: svg?.viewBox.baseVal.height ?? 0,
+    }
   }, sels)
 }
 
 /** The rendered tooltip text, whitespace-folded; '' when no card is up. */
 function tooltipText(page: Page): Promise<string> {
   return page.evaluate(
-    (s) => ((document.querySelector(s) as HTMLElement | null)?.innerText ?? '').replace(/\s+/g, ' ').trim(),
-    TOOLTIP
+    (s) =>
+      ((document.querySelector(s) as HTMLElement | null)?.innerText ?? '')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    TOOLTIP,
   )
 }
 
@@ -117,7 +136,7 @@ export async function stepLevelCurve(page: Page, chart: string): Promise<void> {
     !check(
       'the level chart draws a curve',
       geo.points.length > 0,
-      `${String(geo.points.length)} vertices over ${String(dings)} ding markers`
+      `${String(geo.points.length)} vertices over ${String(dings)} ding markers`,
     )
   ) {
     return
@@ -130,17 +149,19 @@ export async function stepLevelCurve(page: Page, chart: string): Promise<void> {
   check(
     'the curve carries the stated percentages between dings, not just the dings',
     geo.points.length > Math.max(4, dings * 2),
-    `${String(geo.points.length)} vertices vs ${String(dings)} dings`
+    `${String(geo.points.length)} vertices vs ${String(dings)} dings`,
   )
   check('…and the dings are still drawn, as markers on it', dings > 0, `${String(dings)} markers`)
 
   // 3. INSIDE THE PLOT. The y domain grew a level to give the live bar's fraction somewhere to
   // be; a vertex outside the viewBox means the axis and the curve stopped agreeing.
-  const outside = geo.points.filter((p) => p.x < -0.01 || p.x > geo.vbW + 0.01 || p.y < -0.01 || p.y > geo.vbH + 0.01)
+  const outside = geo.points.filter(
+    (p) => p.x < -0.01 || p.x > geo.vbW + 0.01 || p.y < -0.01 || p.y > geo.vbH + 0.01,
+  )
   check(
     'every curve vertex is inside the plot it is drawn in',
     outside.length === 0,
-    `${String(outside.length)} of ${String(geo.points.length)} outside ${String(geo.vbW)}x${String(geo.vbH)}`
+    `${String(outside.length)} of ${String(geo.points.length)} outside ${String(geo.vbW)}x${String(geo.vbH)}`,
   )
 
   await stepCurveRefusals(page, chart, geo)
@@ -151,50 +172,59 @@ async function stepCurveRefusals(page: Page, chart: string, geo: CurveGeometry):
   if (geo.gaps.length === 0) {
     // A legitimate outcome on a log whose every experience line states a percentage — the WL40
     // farm run is exactly that shape. Nothing to draw is not a half-drawn feature.
-    note('every experience line in this window stated its percentage, so the curve draws no uncertainty band this run')
+    note(
+      'every experience line in this window stated its percentage, so the curve draws no uncertainty band this run',
+    )
     return
   }
   const kinds = [...new Set(geo.gaps.map((g) => g.kind))]
   check(
     'each uncertainty band names WHY the log could not place it',
     kinds.every((k) => REFUSALS.includes(k)),
-    `[${kinds.join(', ')}]`
+    `[${kinds.join(', ')}]`,
   )
 
   // THE CLAIM, READ BACK OUT OF THE PIXELS: not one vertex inside a refused span. A dashed
   // interpolation across an unstated line would put dozens here.
-  const inside = geo.points.filter((p) => geo.gaps.some((g) => p.x > g.x + 0.01 && p.x < g.x + g.w - 0.01))
+  const inside = geo.points.filter((p) =>
+    geo.gaps.some((g) => p.x > g.x + 0.01 && p.x < g.x + g.w - 0.01),
+  )
   check(
     'no curve vertex is drawn inside a span the log did not state (nothing is interpolated through one)',
     inside.length === 0,
-    `${String(inside.length)} of ${String(geo.points.length)} vertices inside a band`
+    `${String(inside.length)} of ${String(geo.points.length)} vertices inside a band`,
   )
 
   // 5. THE READOUT. Widest band, so the hover has room to land inside it whatever the window.
   const widest = geo.gaps.reduce((m, g) => (g.w > m.w ? g : m), geo.gaps[0])
   if (widest.w < 12) {
-    note('the widest uncertainty band is under 12 user units — too narrow to land a cursor inside honestly, so the readout assertion is skipped this run')
+    note(
+      'the widest uncertainty band is under 12 user units — too narrow to land a cursor inside honestly, so the readout assertion is skipped this run',
+    )
     return
   }
   const refused = await readAt(page, chart, widest.x + widest.w / 2, geo.vbW)
-  if (!check('the hover readout resolves a cursor inside an uncertainty band', refused.length > 0)) return
+  if (!check('the hover readout resolves a cursor inside an uncertainty band', refused.length > 0))
+    return
   check(
     'standing on a refused span, the readout says so instead of naming a bar position',
     refused.includes('unstated') && !/into the bar\s*\d/.test(refused),
-    refused.slice(0, 160)
+    refused.slice(0, 160),
   )
 
   // …and the other side of the same claim: on the curve itself there IS a bar position. The
   // MEDIAN clear vertex, not the first: the first is a run's anchor, which sits exactly on a
   // ding and legitimately reads 0.0% — a true answer that proves nothing about the accumulation.
-  const clear = geo.points.filter((p) => !geo.gaps.some((g) => p.x >= g.x && p.x <= g.x + g.w)).sort((a, b) => a.x - b.x)
+  const clear = geo.points
+    .filter((p) => !geo.gaps.some((g) => p.x >= g.x && p.x <= g.x + g.w))
+    .sort((a, b) => a.x - b.x)
   const onCurve = clear[Math.floor(clear.length / 2)] as { x: number; y: number } | undefined
   if (!onCurve) return
   const stated = await readAt(page, chart, onCurve.x, geo.vbW)
   check(
     '…and standing on the curve it names one',
     stated.includes('into the bar'),
-    stated.slice(0, 160)
+    stated.slice(0, 160),
   )
   await page.mouse.move(2, 2)
   await settleGone(page, TOOLTIP, { timeoutMs: 5000 })
@@ -269,17 +299,25 @@ function toLocalInput(ts: number): string {
  * the renderer's own viewport first (a resize crosses Electron, the OS, Chromium and React before
  * any box moves), and only then the drawn geometry settling.
  */
-async function resizeTo(app: ElectronApplication, page: Page, width: number, height: number): Promise<number> {
+async function resizeTo(
+  app: ElectronApplication,
+  page: Page,
+  width: number,
+  height: number,
+): Promise<number> {
   const win = await app.browserWindow(page)
-  await win.evaluate((w, b) => {
-    // See SHOT_W: a maximized window ignores setBounds, and a wide-enough request maximizes it.
-    if (w.isMaximized()) w.unmaximize()
-    w.setBounds({ ...w.getBounds(), width: b.w, height: b.h })
-  }, { w: width, h: height })
+  await win.evaluate(
+    (w, b) => {
+      // See SHOT_W: a maximized window ignores setBounds, and a wide-enough request maximizes it.
+      if (w.isMaximized()) w.unmaximize()
+      w.setBounds({ ...w.getBounds(), width: b.w, height: b.h })
+    },
+    { w: width, h: height },
+  )
   const got = await settle(
     () => page.evaluate(() => document.documentElement.clientWidth),
     (v) => Math.abs(v - width) <= 24,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   await settleStable(() => plotGeometry(page).then((g) => JSON.stringify(g)), { timeoutMs: 15_000 })
   return got
@@ -292,19 +330,22 @@ async function shotSize(app: ElectronApplication): Promise<{ w: number; h: numbe
     .catch(() => ({ width: SHOT_W, height: SHOT_H }))
   return {
     w: Math.max(1280, Math.min(SHOT_W, area.width - SCREEN_MARGIN)),
-    h: Math.max(800, Math.min(SHOT_H, area.height - SCREEN_MARGIN))
+    h: Math.max(800, Math.min(SHOT_H, area.height - SCREEN_MARGIN)),
   }
 }
 
 /** The two plots' boxes — the thing that must stop moving before a shutter opens. */
 function plotGeometry(page: Page): Promise<{ w: number; h: number }[]> {
-  return page.evaluate((sels) =>
-    sels.flatMap((s) =>
-      Array.from(document.querySelectorAll(s)).map((el) => {
-        const r = el.getBoundingClientRect()
-        return { w: Math.round(r.width), h: Math.round(r.height) }
-      })
-    ), [AA_CHART, LEVEL_CHART])
+  return page.evaluate(
+    (sels) =>
+      sels.flatMap((s) =>
+        Array.from(document.querySelectorAll(s)).map((el) => {
+          const r = el.getBoundingClientRect()
+          return { w: Math.round(r.width), h: Math.round(r.height) }
+        }),
+      ),
+    [AA_CHART, LEVEL_CHART],
+  )
 }
 
 /**
@@ -315,12 +356,15 @@ function plotGeometry(page: Page): Promise<{ w: number; h: number }[]> {
  * scroller's own offset is the only way to ask for that.
  */
 async function alignToSlice(page: Page): Promise<void> {
-  await page.evaluate(([scrollerSel, sliceSel]) => {
-    const sc = document.querySelector(scrollerSel)
-    const el = document.querySelector(sliceSel)
-    if (!sc || !el) return
-    sc.scrollTop += el.getBoundingClientRect().top - sc.getBoundingClientRect().top - 10
-  }, [SCROLLER, SLICE])
+  await page.evaluate(
+    ([scrollerSel, sliceSel]) => {
+      const sc = document.querySelector(scrollerSel)
+      const el = document.querySelector(sliceSel)
+      if (!sc || !el) return
+      sc.scrollTop += el.getBoundingClientRect().top - sc.getBoundingClientRect().top - 10
+    },
+    [SCROLLER, SLICE],
+  )
   await settleStable(() => plotGeometry(page).then((g) => JSON.stringify(g)), { timeoutMs: 8_000 })
 }
 
@@ -339,33 +383,36 @@ interface Clip {
  * picture, never a lost one.
  */
 function unionRect(page: Page, sels: readonly string[], pad = 12): Promise<Clip | null> {
-  return page.evaluate((arg: { sels: string[]; pad: number }) => {
-    let x0 = Infinity
-    let y0 = Infinity
-    let x1 = -Infinity
-    let y1 = -Infinity
-    for (const s of arg.sels) {
-      const el = document.querySelector(s)
-      if (!el) continue
-      const r = el.getBoundingClientRect()
-      if (r.width < 1 || r.height < 1) continue
-      x0 = Math.min(x0, r.left)
-      y0 = Math.min(y0, r.top)
-      x1 = Math.max(x1, r.right)
-      y1 = Math.max(y1, r.bottom)
-    }
-    if (!Number.isFinite(x0)) return null
-    const vw = document.documentElement.clientWidth
-    const vh = document.documentElement.clientHeight
-    const x = Math.max(0, Math.floor(x0 - arg.pad))
-    const y = Math.max(0, Math.floor(y0 - arg.pad))
-    return {
-      x,
-      y,
-      width: Math.max(1, Math.min(vw - x, Math.ceil(x1 - x0 + arg.pad * 2))),
-      height: Math.max(1, Math.min(vh - y, Math.ceil(y1 - y0 + arg.pad * 2)))
-    }
-  }, { sels: [...sels], pad })
+  return page.evaluate(
+    (arg: { sels: string[]; pad: number }) => {
+      let x0 = Infinity
+      let y0 = Infinity
+      let x1 = -Infinity
+      let y1 = -Infinity
+      for (const s of arg.sels) {
+        const el = document.querySelector(s)
+        if (!el) continue
+        const r = el.getBoundingClientRect()
+        if (r.width < 1 || r.height < 1) continue
+        x0 = Math.min(x0, r.left)
+        y0 = Math.min(y0, r.top)
+        x1 = Math.max(x1, r.right)
+        y1 = Math.max(y1, r.bottom)
+      }
+      if (!Number.isFinite(x0)) return null
+      const vw = document.documentElement.clientWidth
+      const vh = document.documentElement.clientHeight
+      const x = Math.max(0, Math.floor(x0 - arg.pad))
+      const y = Math.max(0, Math.floor(y0 - arg.pad))
+      return {
+        x,
+        y,
+        width: Math.max(1, Math.min(vw - x, Math.ceil(x1 - x0 + arg.pad * 2))),
+        height: Math.max(1, Math.min(vh - y, Math.ceil(y1 - y0 + arg.pad * 2))),
+      }
+    },
+    { sels: [...sels], pad },
+  )
 }
 
 /**
@@ -408,47 +455,50 @@ let lastShot = ''
  */
 function writeColumnHtml(page: Page, path: string, width: number): Promise<boolean> {
   return page
-    .evaluate((arg: { sels: { sel: string; paper: boolean }[]; width: number }) => {
-      // `paper: true` walks up to the panel the plot lives in, so the picture carries the title and
-      // the caption that say what the reader is looking at.
-      const parts = arg.sels
-        .map((s) => {
-          const el = document.querySelector(s.sel)
-          if (!el) return ''
-          return (s.paper ? (el.closest('.MuiPaper-root') ?? el) : el).outerHTML
-        })
-        .filter((h) => h.length > 0)
-      if (parts.length === 0) return ''
-      // THE RULES, NOT THE TAGS. Emotion (MUI's engine) inserts its rules through `insertRule` in
-      // production, so every `<style>` element in this document has EMPTY text content — the first
-      // cut of this artifact shipped four blank style tags and a page of unstyled markup. The rules
-      // are only reachable through the CSSOM.
-      const styles = Array.from(document.styleSheets)
-        .map((sheet) => {
-          try {
-            return Array.from(sheet.cssRules)
-              .map((r) => r.cssText)
-              .join('\n')
-          } catch {
-            return ''
-          }
-        })
-        .join('\n')
-      const bg = getComputedStyle(document.body).backgroundColor
-      return [
-        '<!doctype html><meta charset="utf-8">',
-        `<style>${styles}</style>`,
-        `<body style="margin:0;padding:16px;background:${bg}">`,
-        `<div style="width:${String(arg.width)}px">${parts.join('')}</div>`
-      ].join('\n')
-    }, {
-      sels: [
-        { sel: SLICE_WINDOW, paper: false },
-        { sel: AA_CHART, paper: true },
-        { sel: LEVEL_CHART, paper: true }
-      ],
-      width
-    })
+    .evaluate(
+      (arg: { sels: { sel: string; paper: boolean }[]; width: number }) => {
+        // `paper: true` walks up to the panel the plot lives in, so the picture carries the title and
+        // the caption that say what the reader is looking at.
+        const parts = arg.sels
+          .map((s) => {
+            const el = document.querySelector(s.sel)
+            if (!el) return ''
+            return (s.paper ? (el.closest('.MuiPaper-root') ?? el) : el).outerHTML
+          })
+          .filter((h) => h.length > 0)
+        if (parts.length === 0) return ''
+        // THE RULES, NOT THE TAGS. Emotion (MUI's engine) inserts its rules through `insertRule` in
+        // production, so every `<style>` element in this document has EMPTY text content — the first
+        // cut of this artifact shipped four blank style tags and a page of unstyled markup. The rules
+        // are only reachable through the CSSOM.
+        const styles = Array.from(document.styleSheets)
+          .map((sheet) => {
+            try {
+              return Array.from(sheet.cssRules)
+                .map((r) => r.cssText)
+                .join('\n')
+            } catch {
+              return ''
+            }
+          })
+          .join('\n')
+        const bg = getComputedStyle(document.body).backgroundColor
+        return [
+          '<!doctype html><meta charset="utf-8">',
+          `<style>${styles}</style>`,
+          `<body style="margin:0;padding:16px;background:${bg}">`,
+          `<div style="width:${String(arg.width)}px">${parts.join('')}</div>`,
+        ].join('\n')
+      },
+      {
+        sels: [
+          { sel: SLICE_WINDOW, paper: false },
+          { sel: AA_CHART, paper: true },
+          { sel: LEVEL_CHART, paper: true },
+        ],
+        width,
+      },
+    )
     .then((html) => {
       if (!html) return false
       writeFileSync(path, html, 'utf8')
@@ -468,7 +518,12 @@ function writeColumnHtml(page: Page, path: string, width: number): Promise<boole
  * cannot legitimately produce the same pixels — and a rejected shot is a note, never a failure. The
  * HTML above is the artifact the acceptance rests on.
  */
-async function shootPng(app: ElectronApplication, page: Page, path: string, clip: Clip): Promise<boolean> {
+async function shootPng(
+  app: ElectronApplication,
+  page: Page,
+  path: string,
+  clip: Clip,
+): Promise<boolean> {
   const win = await app.browserWindow(page)
   for (let attempt = 0; attempt < 3; attempt++) {
     await page.evaluate((s) => {
@@ -520,7 +575,10 @@ async function shoot(app: ElectronApplication, page: Page, window: string): Prom
 /** The caption the slice bar prints — the window in words, and the thing that must CHANGE when a
  *  different one is picked. */
 function windowText(page: Page): Promise<string> {
-  return page.evaluate((s) => document.querySelector(s)?.textContent?.replace(/\s+/g, ' ').trim() ?? '', SLICE_WINDOW)
+  return page.evaluate(
+    (s) => document.querySelector(s)?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
+    SLICE_WINDOW,
+  )
 }
 
 /** Pick a preset rung and wait for the caption to move off `from`; null when this log has no such
@@ -529,7 +587,11 @@ async function pickPreset(page: Page, id: string, from: string): Promise<string 
   const button = `[data-testid="leveling-slice-${id}"]`
   if ((await page.locator(button).count()) === 0) return null
   await page.click(button, { timeout: 10_000 })
-  return settle(() => windowText(page), (t) => t !== from, { timeoutMs: 10_000 })
+  return settle(
+    () => windowText(page),
+    (t) => t !== from,
+    { timeoutMs: 10_000 },
+  )
 }
 
 /**
@@ -539,16 +601,32 @@ async function pickPreset(page: Page, id: string, from: string): Promise<string 
  * `To` field already holds the last instant this log knows about — the short slice is that value
  * minus the span, which is precisely how a user reaches the shape in the owner's report.
  */
-async function pickCustomMinutes(page: Page, minutes: number, from: string): Promise<string | null> {
+async function pickCustomMinutes(
+  page: Page,
+  minutes: number,
+  from: string,
+): Promise<string | null> {
   const button = '[data-testid="leveling-slice-custom"]'
   if ((await page.locator(button).count()) === 0) return null
   await page.click(button, { timeout: 10_000 })
   const toField = '[data-testid="leveling-slice-custom-to"] input'
-  const gotTo = await page.locator(toField).first().inputValue().catch(() => '')
+  const gotTo = await page
+    .locator(toField)
+    .first()
+    .inputValue()
+    .catch(() => '')
   const t1 = new Date(gotTo).getTime()
   if (!Number.isFinite(t1)) return null
-  await page.fill('[data-testid="leveling-slice-custom-from"] input', toLocalInput(t1 - minutes * 60_000), { timeout: 10_000 })
-  return settle(() => windowText(page), (t) => t !== from && t.length > 0, { timeoutMs: 10_000 })
+  await page.fill(
+    '[data-testid="leveling-slice-custom-from"] input',
+    toLocalInput(t1 - minutes * 60_000),
+    { timeout: 10_000 },
+  )
+  return settle(
+    () => windowText(page),
+    (t) => t !== from && t.length > 0,
+    { timeoutMs: 10_000 },
+  )
 }
 
 /** One window to photograph: what to call the file, and how to get the tab into that window.
@@ -565,9 +643,17 @@ interface ShotPlan {
  */
 function planFor(page: Page): ShotPlan[] {
   return [
-    { name: '12m', why: 'no 12-minute custom window this log can define', go: (f) => pickCustomMinutes(page, 12, f) },
+    {
+      name: '12m',
+      why: 'no 12-minute custom window this log can define',
+      go: (f) => pickCustomMinutes(page, 12, f),
+    },
     { name: '1h', why: 'no 1h rung offered for this log', go: (f) => pickPreset(page, 'h1', f) },
-    { name: 'all', why: 'no All rung — impossible, but not assumed', go: (f) => pickPreset(page, 'all', f) }
+    {
+      name: 'all',
+      why: 'no All rung — impossible, but not assumed',
+      go: (f) => pickPreset(page, 'all', f),
+    },
   ]
 }
 
@@ -590,7 +676,7 @@ export async function stepChartShots(app: ElectronApplication, page: Page): Prom
     note(
       `chart shots at ${String(width)}px of viewport: the plot pane measures ${String(pane)}px ` +
         `against a ${String(VIEWBOX_W)}u viewBox — everything drawn inside it is scaled ` +
-        `${(pane / VIEWBOX_W).toFixed(2)}x horizontally`
+        `${(pane / VIEWBOX_W).toFixed(2)}x horizontally`,
     )
     for (const plan of planFor(page)) {
       const landed = await plan.go(from)
@@ -607,13 +693,18 @@ export async function stepChartShots(app: ElectronApplication, page: Page): Prom
     check(
       'the chart column was photographed at every window shape the ticket names',
       shots.length === 3,
-      shots.length === 3 ? shots.map((s) => s.split(/[\\/]/).pop()).join(' · ') : `${String(shots.length)}/3 shots`
+      shots.length === 3
+        ? shots.map((s) => s.split(/[\\/]/).pop()).join(' · ')
+        : `${String(shots.length)}/3 shots`,
     )
   } finally {
     // The window goes back whatever happened above — everything after this step measures boxes.
     await resizeTo(app, page, was.width, was.height).catch(() => 0)
-    await page.click('[data-testid="leveling-slice-all"]', { timeout: 10_000 }).catch(() => undefined)
-    await settleStable(() => plotGeometry(page).then((g) => JSON.stringify(g)), { timeoutMs: 10_000 }).catch(() => '')
+    await page
+      .click('[data-testid="leveling-slice-all"]', { timeout: 10_000 })
+      .catch(() => undefined)
+    await settleStable(() => plotGeometry(page).then((g) => JSON.stringify(g)), {
+      timeoutMs: 10_000,
+    }).catch(() => '')
   }
 }
-

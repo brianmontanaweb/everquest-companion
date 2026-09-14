@@ -37,13 +37,18 @@ import {
   type EngineFaultSay,
   type EngineLaunchPhase,
   type FoldRing,
-  type FoldSay
+  type FoldSay,
 } from '../src/shared/engineLaunch'
 
 const MB = 1024 * 1024
 
 /** A fold walking forward at a stated rate, sampled at the engine's own ~4 Hz cadence. */
-function walk(opts: { from?: number; total: number; bytesPerSecond: number; frames: number }): FoldRing {
+function walk(opts: {
+  from?: number
+  total: number
+  bytesPerSecond: number
+  frames: number
+}): FoldRing {
   let ring = NEW_FOLD_RING
   let bytes = opts.from ?? 0
   let at = 1_000_000
@@ -81,7 +86,8 @@ test('A SPAN TOO SHORT TO MEASURE OVER GIVES NO ESTIMATE', () => {
 
 test('A STALLED FOLD GIVES NO ESTIMATE RATHER THAN AN INFINITE ONE', () => {
   let ring = NEW_FOLD_RING
-  for (let i = 0; i < 8; i += 1) ring = pushFold(ring, sample(10 * MB, 200 * MB, 1_000_000 + i * 250))
+  for (let i = 0; i < 8; i += 1)
+    ring = pushFold(ring, sample(10 * MB, 200 * MB, 1_000_000 + i * 250))
   assert.equal(foldRate(ring), null, 'nothing moved, so there is no rate — not a rate of zero')
   assert.equal(foldReadout(ring)?.etaText, null)
 })
@@ -93,7 +99,7 @@ test('A STEADY FOLD ESTIMATES, AND THE ARITHMETIC IS THE OBVIOUS ONE', () => {
   assert.ok(readout)
   assert.match(readout.etaText ?? '', /^about \d+s left$/)
   const rate = foldRate(ring)
-  assert.ok(rate !== null && Math.abs(rate - 8 * MB / 1000) < 1)
+  assert.ok(rate !== null && Math.abs(rate - (8 * MB) / 1000) < 1)
 })
 
 test('A MARK THAT WENT BACKWARDS STARTS A NEW RING — a character switch, not a negative rate', () => {
@@ -104,7 +110,11 @@ test('A MARK THAT WENT BACKWARDS STARTS A NEW RING — a character switch, not a
   const fresh = pushFold(done, sample(2 * MB, 90 * MB, 1_100_000))
   assert.equal(foldRate(fresh), null, 'the new fold has one sample, so it has no rate yet')
   const readout = foldReadout(fresh)
-  assert.equal(readout?.bytesText, '2.0 MB of 90.0 MB', 'and it draws the NEW file, not the old one')
+  assert.equal(
+    readout?.bytesText,
+    '2.0 MB of 90.0 MB',
+    'and it draws the NEW file, not the old one',
+  )
   assert.equal(readout?.etaText, null)
 })
 
@@ -162,7 +172,7 @@ const EVERY_KIND: readonly EngineFaultKind[] = [
   'announce-timeout',
   'bad-announce',
   'unhealthy',
-  'exited'
+  'exited',
 ]
 
 function fault(kind: EngineFaultKind, attempts = 3): EngineFaultSay {
@@ -176,7 +186,11 @@ test('EVERY FAILURE CLASS HAS WORDS — a new one cannot ship as a blank card', 
     assert.ok(words.body.length > 20, `${kind} has no body`)
     // AND THEY ARE PLAIN. The word "engine" is ours; a user's word for it is the thing that reads
     // their log, so every class says that somewhere rather than assuming the jargon.
-    assert.match(`${words.headline} ${words.body}`, /log file|data engine/i, `${kind} speaks jargon`)
+    assert.match(
+      `${words.headline} ${words.body}`,
+      /log file|data engine/i,
+      `${kind} speaks jargon`,
+    )
   }
 })
 
@@ -218,7 +232,7 @@ test('THE REPORT PREFILL CARRIES THE CLASS AND NOTHING ELSE', () => {
     kind: 'no-binary',
     attempts: 0,
     lookedIn: ['C:/Users/somebody/app/engine/target/debug/engined.exe'],
-    detail: null
+    detail: null,
   }
   assert.doesNotMatch(reportPrefill(withPaths), /somebody/)
   assert.doesNotMatch(reportPrefill(withPaths), /engined\.exe/)
@@ -256,11 +270,14 @@ test('`noteFoldProgress` ASKS THAT QUESTION rather than spelling its own', () =>
   // caller cannot be imported here at all (`engineLaunchState.ts` reaches `windows.ts`, which
   // imports Electron), so the seam is asserted over the source. Same instrument
   // `serveDeltaArm.test.mts` uses on `engineClientHost.ts`, for the same reason.
-  const state = readFileSync(join(ROOT, 'src', 'main', 'dataServer', 'engineLaunchState.ts'), 'utf8')
+  const state = readFileSync(
+    join(ROOT, 'src', 'main', 'dataServer', 'engineLaunchState.ts'),
+    'utf8',
+  )
   assert.match(state, /if \(!foldFrameCounts\(say\.phase, progress\.live\)\) return/)
   assert.doesNotMatch(
     state,
     /if \(say\.phase !== 'folding'\) return[\s\S]{0,40}const fold: FoldSay/,
-    'the phase-only test came back — it is the defence that failed'
+    'the phase-only test came back — it is the defence that failed',
   )
 })

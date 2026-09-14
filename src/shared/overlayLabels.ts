@@ -31,7 +31,7 @@ export const OVERLAY_KIND_LABEL: Record<OverlayKind, string> = {
   respawn: 'Respawn',
   toast: 'Celebration toasts',
   alertBanner: 'Alert banner',
-  conCard: 'Mob card on con'
+  conCard: 'Mob card on con',
 }
 
 /**
@@ -57,7 +57,7 @@ export const OVERLAY_LABEL_ORDER: readonly OverlayKind[] = [
   'respawn',
   'toast',
   'alertBanner',
-  'conCard'
+  'conCard',
 ]
 
 /** Where the strips start in `OVERLAY_LABEL_ORDER` — the seam a grouped list draws across. */

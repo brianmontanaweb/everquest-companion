@@ -108,7 +108,7 @@ import {
   settle,
   settleGone,
   settleStable,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { launchOnRealInstall, mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { stepLoadoutSectionsAreHonest } from './loadoutSectionSteps.mjs'
@@ -147,9 +147,9 @@ function ladderLabels(page: Page): Promise<string[]> {
   return page.evaluate(
     (sel) =>
       [...document.querySelectorAll(sel)].map((row) =>
-        [...row.children].map((n) => n.textContent ?? '').join(',')
+        [...row.children].map((n) => n.textContent ?? '').join(','),
       ),
-    LADDER
+    LADDER,
   )
 }
 
@@ -158,7 +158,7 @@ function rungAnswers(page: Page): Promise<string[]> {
   return page.evaluate(
     (sel) =>
       [...document.querySelectorAll(`${sel} > *`)].map((n) => n.getAttribute('data-cleared') ?? ''),
-    LADDER
+    LADDER,
   )
 }
 
@@ -176,22 +176,28 @@ interface CardTail {
 }
 
 function cardTails(page: Page): Promise<CardTail> {
-  return page.evaluate((sel) => {
-    const cards = [...document.querySelectorAll(sel.card)]
-    let ladderLast = 0
-    let lockedCaption = 0
-    for (const card of cards) {
-      const ladder = card.querySelector(sel.ladder)
-      if (ladder && ladder.parentElement?.lastElementChild === ladder) ladderLast++
-      // Only the CAPTION word is hunted. "open" still appears on the corner tier chip of a card
-      // with no lock at all (JOS-169), which this ticket did not touch.
-      if ((card.textContent ?? '').includes('Locked')) lockedCaption++
-    }
-    const rungTitles = [...document.querySelectorAll(`${sel.ladder} > *`)].map(
-      (n): [string, string | null] => [n.getAttribute('data-cleared') ?? '', n.getAttribute('title')]
-    )
-    return { cards: cards.length, ladderLast, lockedCaption, rungTitles }
-  }, { card: CARD, ladder: LADDER })
+  return page.evaluate(
+    (sel) => {
+      const cards = [...document.querySelectorAll(sel.card)]
+      let ladderLast = 0
+      let lockedCaption = 0
+      for (const card of cards) {
+        const ladder = card.querySelector(sel.ladder)
+        if (ladder && ladder.parentElement?.lastElementChild === ladder) ladderLast++
+        // Only the CAPTION word is hunted. "open" still appears on the corner tier chip of a card
+        // with no lock at all (JOS-169), which this ticket did not touch.
+        if ((card.textContent ?? '').includes('Locked')) lockedCaption++
+      }
+      const rungTitles = [...document.querySelectorAll(`${sel.ladder} > *`)].map(
+        (n): [string, string | null] => [
+          n.getAttribute('data-cleared') ?? '',
+          n.getAttribute('title'),
+        ],
+      )
+      return { cards: cards.length, ladderLast, lockedCaption, rungTitles }
+    },
+    { card: CARD, ladder: LADDER },
+  )
 }
 
 /** One card as this spec reads it: which target, and what the card itself says about it. */
@@ -226,22 +232,25 @@ interface FilterView {
  * something" and "the switch hid the right things".
  */
 function filterView(page: Page): Promise<FilterView> {
-  return page.evaluate((sel) => {
-    const root = document.querySelector(sel.toggle)
-    const input = root instanceof HTMLInputElement ? root : (root?.querySelector('input') ?? null)
-    const counts = /^\s*(\d+)\s*\/\s*(\d+)/.exec(
-      document.querySelector(sel.tally)?.textContent ?? ''
-    )
-    return {
-      on: input instanceof HTMLInputElement ? input.checked : null,
-      tally: { n: Number(counts?.[1] ?? -1), total: Number(counts?.[2] ?? -1) },
-      cards: [...document.querySelectorAll(sel.card)].map((card) => ({
-        name: (card.getAttribute('title') ?? '').split(' - ')[0],
-        cleared: card.querySelector(`${sel.ladder} > [data-cleared="1"]`) !== null,
-        undefeated: (card.textContent ?? '').includes('not defeated')
-      }))
-    }
-  }, { card: CARD, ladder: LADDER, toggle: DEFEATED, tally: TALLY })
+  return page.evaluate(
+    (sel) => {
+      const root = document.querySelector(sel.toggle)
+      const input = root instanceof HTMLInputElement ? root : (root?.querySelector('input') ?? null)
+      const counts = /^\s*(\d+)\s*\/\s*(\d+)/.exec(
+        document.querySelector(sel.tally)?.textContent ?? '',
+      )
+      return {
+        on: input instanceof HTMLInputElement ? input.checked : null,
+        tally: { n: Number(counts?.[1] ?? -1), total: Number(counts?.[2] ?? -1) },
+        cards: [...document.querySelectorAll(sel.card)].map((card) => ({
+          name: (card.getAttribute('title') ?? '').split(' - ')[0],
+          cleared: card.querySelector(`${sel.ladder} > [data-cleared="1"]`) !== null,
+          undefeated: (card.textContent ?? '').includes('not defeated'),
+        })),
+      }
+    },
+    { card: CARD, ladder: LADDER, toggle: DEFEATED, tally: TALLY },
+  )
 }
 
 /** Whether the Defeated switch is on. `null` when the control is not mounted. */
@@ -290,7 +299,9 @@ async function readUnder(page: Page, on: boolean, attempts = 3): Promise<FilterV
 function defeatedLabel(page: Page): Promise<string> {
   return page.evaluate((sel) => {
     const root = document.querySelector(sel)
-    const label = root?.closest('.MuiFormControlLabel-root')?.querySelector('.MuiFormControlLabel-label')
+    const label = root
+      ?.closest('.MuiFormControlLabel-root')
+      ?.querySelector('.MuiFormControlLabel-label')
     return label?.textContent?.trim() ?? ''
   }, DEFEATED)
 }
@@ -299,7 +310,13 @@ function defeatedLabel(page: Page): Promise<string> {
 async function setDefeatedOnly(page: Page, on: boolean): Promise<boolean> {
   if ((await defeatedOn(page)) === on) return true
   await page.click(DEFEATED, { timeout: 15_000 })
-  return (await settle(() => defeatedOn(page), (v) => v === on, { timeoutMs: 8_000 })) === on
+  return (
+    (await settle(
+      () => defeatedOn(page),
+      (v) => v === on,
+      { timeoutMs: 8_000 },
+    )) === on
+  )
 }
 
 /**
@@ -321,29 +338,39 @@ async function stepDefeatedOnlyIsThisWeek(page: Page): Promise<void> {
   // The fold has to be OVER before two readings of this roster describe the same world.
   await waitHydrated(page)
   const label = await defeatedLabel(page)
-  check('THE SWITCH SAYS WHICH WEEK IT MEANS on the week view', label === 'Defeated this week', label)
+  check(
+    'THE SWITCH SAYS WHICH WEEK IT MEANS on the week view',
+    label === 'Defeated this week',
+    label,
+  )
   if (!check('the switch is off to begin with', (await defeatedOn(page)) === false)) return
 
   const before = await readUnder(page, false)
   const shown = await readUnder(page, true)
-  if (!check('the week roster reads cleanly with the switch off and on', before !== null && shown !== null)) return
+  if (
+    !check(
+      'the week roster reads cleanly with the switch off and on',
+      before !== null && shown !== null,
+    )
+  )
+    return
   const roster = before as FilterView
   const kept = shown as FilterView
   check(
     'the unfiltered week view is the whole roster',
     roster.cards.length === roster.tally.total,
-    `${String(roster.cards.length)} cards / ${String(roster.tally.total)} targets`
+    `${String(roster.cards.length)} cards / ${String(roster.tally.total)} targets`,
   )
 
   check(
     'DEFEATED ONLY, ON THIS WEEK, IS THIS WEEK - it leaves exactly what the tally calls locked',
     kept.cards.length === kept.tally.n,
-    `${String(kept.cards.length)} shown / ${String(kept.tally.n)} locked of ${String(kept.tally.total)}`
+    `${String(kept.cards.length)} shown / ${String(kept.tally.n)} locked of ${String(kept.tally.total)}`,
   )
   check(
     'every card that survived the filter is showing a green rung',
     kept.cards.every((c) => c.cleared),
-    `${String(kept.cards.length)} cards`
+    `${String(kept.cards.length)} cards`,
   )
   // …and they are the same cards the UNFILTERED view drew green. Only comparable when the two
   // readings agree about the week; the live log is allowed to move between them, and a kill
@@ -353,28 +380,38 @@ async function stepDefeatedOnlyIsThisWeek(page: Page): Promise<void> {
     check(
       '…and they are the cards the unfiltered view drew green, one for one',
       names(kept.cards).join('|') === green.join('|'),
-      `${String(kept.cards.length)} shown / ${String(green.length)} green`
+      `${String(kept.cards.length)} shown / ${String(green.length)} green`,
     )
   } else {
-    note(`bosses-week: the week moved between readings (${String(roster.tally.n)} then ${String(kept.tally.n)} locked) - set comparison skipped`)
+    note(
+      `bosses-week: the week moved between readings (${String(roster.tally.n)} then ${String(kept.tally.n)} locked) - set comparison skipped`,
+    )
   }
 
   // The other mode measures the set this switch USED to show here, so the two can be compared.
   const everDefeated = await stepDefeatedOnlyIsAllTime(page)
   if (everDefeated === kept.tally.n) {
     note(
-      `bosses-week: this week's locks and the whole kill history are the same size (${String(everDefeated)}), so the all-time/this-week split is not separable on this run`
+      `bosses-week: this week's locks and the whole kill history are the same size (${String(everDefeated)}), so the all-time/this-week split is not separable on this run`,
     )
   } else {
     check(
       '…and the week view showed THIS WEEK rather than the all-time roster it used to',
       kept.cards.length !== everDefeated,
-      `${String(kept.cards.length)} shown this week vs ${String(everDefeated)} ever defeated`
+      `${String(kept.cards.length)} shown this week vs ${String(everDefeated)} ever defeated`,
     )
   }
 
-  const back = await settle(() => countOf(page, CARD), (n) => n === roster.tally.total, { timeoutMs: 15_000 })
-  check('…and with the switch off the whole roster is back', back === roster.tally.total, `${String(back)} / ${String(roster.tally.total)}`)
+  const back = await settle(
+    () => countOf(page, CARD),
+    (n) => n === roster.tally.total,
+    { timeoutMs: 15_000 },
+  )
+  check(
+    '…and with the switch off the whole roster is back',
+    back === roster.tally.total,
+    `${String(back)} / ${String(roster.tally.total)}`,
+  )
 }
 
 /**
@@ -389,13 +426,19 @@ async function stepDefeatedOnlyIsThisWeek(page: Page): Promise<void> {
  */
 async function stepDefeatedOnlyIsAllTime(page: Page): Promise<number> {
   const picked = await setMode(page, MODE_OVERALL, 'overall')
-  if (!check('switching to Overall with the filter still on', picked === 'overall', String(picked))) return -1
+  if (!check('switching to Overall with the filter still on', picked === 'overall', String(picked)))
+    return -1
   const label = await defeatedLabel(page)
   check('THE LABEL GOES BACK to the all-time wording', label === 'Defeated only', label)
 
   const filtered = await readUnder(page, true)
   const all = await readUnder(page, false)
-  if (!check('the overall roster reads cleanly with the switch on and off', filtered !== null && all !== null)) {
+  if (
+    !check(
+      'the overall roster reads cleanly with the switch on and off',
+      filtered !== null && all !== null,
+    )
+  ) {
     return -1
   }
   const kept = filtered as FilterView
@@ -404,17 +447,17 @@ async function stepDefeatedOnlyIsAllTime(page: Page): Promise<number> {
   check(
     'DEFEATED ONLY, ON OVERALL, IS STILL EVER-DEFEATED - the tally its own view states',
     kept.cards.length === everDefeated,
-    `${String(kept.cards.length)} shown / ${String(everDefeated)} defeated of ${String(kept.tally.total)} targets`
+    `${String(kept.cards.length)} shown / ${String(everDefeated)} defeated of ${String(kept.tally.total)} targets`,
   )
   check(
     '…so no `not defeated` card survives it',
     kept.cards.every((c) => !c.undefeated),
-    `${String(kept.cards.filter((c) => c.undefeated).length)} undefeated of ${String(kept.cards.length)}`
+    `${String(kept.cards.filter((c) => c.undefeated).length)} undefeated of ${String(kept.cards.length)}`,
   )
   check(
     '…and switching it off puts every target back',
     roster.cards.length === roster.tally.total,
-    `${String(roster.cards.length)} cards / ${String(roster.tally.total)} targets`
+    `${String(roster.cards.length)} cards / ${String(roster.tally.total)} targets`,
   )
 
   const week = await setMode(page, MODE_WEEK, 'week')
@@ -427,7 +470,7 @@ async function openBosses(page: Page, timeoutMs = 60_000): Promise<boolean> {
   await page.click(NAV_BOSSES, { timeout: 30_000 })
   return page.waitForSelector(MODE, { timeout: timeoutMs }).then(
     () => true,
-    () => false
+    () => false,
   )
 }
 
@@ -442,7 +485,9 @@ async function leaveBosses(page: Page): Promise<boolean> {
 
 /** Away to the Overview and back to Bosses, with the unmount actually asserted in between. */
 async function awayAndBack(page: Page): Promise<boolean> {
-  if (!check('leaving the Bosses tab unmounts it (the mode toggle is gone)', await leaveBosses(page))) {
+  if (
+    !check('leaving the Bosses tab unmounts it (the mode toggle is gone)', await leaveBosses(page))
+  ) {
     return false
   }
   return check('…and the Bosses tab comes back', await openBosses(page))
@@ -451,18 +496,26 @@ async function awayAndBack(page: Page): Promise<boolean> {
 /** Click a mode button and wait for the group to report the mode we asked for. */
 async function setMode(page: Page, button: string, want: string): Promise<string | null> {
   await page.click(button, { timeout: 15_000 })
-  return settle(() => modeState(page), (v) => v === want, { timeoutMs: 8_000 })
+  return settle(
+    () => modeState(page),
+    (v) => v === want,
+    { timeoutMs: 8_000 },
+  )
 }
 
 /** A fresh install opens on OVERALL - the key is absent, and absence is the default. */
 async function stepDefault(page: Page): Promise<void> {
   check('a fresh install opens the Bosses tab on OVERALL', (await modeState(page)) === 'overall')
   check('…and has written no preference yet', (await storedMode(page)) === null)
-  const cards = await settle(() => countOf(page, CARD), (n) => n > 0, { timeoutMs: 30_000 })
+  const cards = await settle(
+    () => countOf(page, CARD),
+    (n) => n > 0,
+    { timeoutMs: 30_000 },
+  )
   check('…and the roster has cards on it', cards > 0, String(cards))
   check(
     'THE LADDER BELONGS TO THE WEEK VIEW - the overall roster draws none',
-    (await countOf(page, LADDER)) === 0
+    (await countOf(page, LADDER)) === 0,
   )
   // The OVERALL roster is where every target is on screen at once, so it is the widest sample of
   // portraits this spec ever has — which is why the JOS-198 check is made here rather than in the
@@ -491,7 +544,12 @@ async function stepDefault(page: Page): Promise<void> {
  * choices rather than this app's behaviour. `> 1` is the entire content of the claim.
  */
 async function stepPortraitsShipped(page: Page): Promise<void> {
-  const readPortraits = (): Promise<{ total: number; loaded: number; tiny: number; sample: string }> =>
+  const readPortraits = (): Promise<{
+    total: number
+    loaded: number
+    tiny: number
+    sample: string
+  }> =>
     page.evaluate((sel) => {
       const imgs = [...document.querySelectorAll<HTMLImageElement>(`${sel} img`)]
       const loaded = imgs.filter((i) => i.complete && i.naturalWidth > 0)
@@ -501,24 +559,26 @@ async function stepPortraitsShipped(page: Page): Promise<void> {
         total: imgs.length,
         loaded: loaded.length,
         tiny: tiny.length,
-        sample: first ? `${first.naturalWidth}x${first.naturalHeight} ${first.currentSrc.slice(0, 60)}` : 'none'
+        sample: first
+          ? `${first.naturalWidth}x${first.naturalHeight} ${first.currentSrc.slice(0, 60)}`
+          : 'none',
       }
     }, CARD)
 
   // Decoding is asynchronous even for a local protocol response, so wait for the READING to
   // stop moving rather than for a clock (AGENTS.md wave E3) — `loaded` climbing to `total`.
   const seen = await settle(readPortraits, (r) => r.total > 0 && r.loaded === r.total, {
-    timeoutMs: 30_000
+    timeoutMs: 30_000,
   })
   check(
     'EVERY BOSS CARD DRAWS A PORTRAIT, and every one of them decoded',
     seen.total > 0 && seen.loaded === seen.total,
-    `${String(seen.loaded)} / ${String(seen.total)} decoded`
+    `${String(seen.loaded)} / ${String(seen.total)} decoded`,
   )
   check(
     'THE PORTRAITS ARE REAL PIXELS FROM THE INSTALL - not the 1x1 blank a cache miss serves',
     seen.loaded > 0 && seen.tiny === 0,
-    `${String(seen.tiny)} blank of ${String(seen.loaded)}; first: ${seen.sample}`
+    `${String(seen.tiny)} blank of ${String(seen.loaded)}; first: ${seen.sample}`,
   )
   // …and they arrived over the app's own scheme, never as an https URL the CSP would have had
   // to allow. A regression that "fixed" a missing image by un-wrapping `cachedImageUrl` would
@@ -526,18 +586,22 @@ async function stepPortraitsShipped(page: Page): Promise<void> {
   check(
     '…and they came over eqimg://, so nothing reached out to a wiki to draw them',
     seen.sample.includes('eqimg://'),
-    seen.sample
+    seen.sample,
   )
 }
 
 /** THE LADDER: five rungs a card, base first, on every card the week view draws. */
 async function stepLadder(page: Page): Promise<void> {
   const cards = await countOf(page, CARD)
-  const ladders = await settle(() => countOf(page, LADDER), (n) => n === cards, { timeoutMs: 15_000 })
+  const ladders = await settle(
+    () => countOf(page, LADDER),
+    (n) => n === cards,
+    { timeoutMs: 15_000 },
+  )
   check(
     'EVERY WEEK-VIEW CARD CARRIES A LADDER, not only the ones with a lock',
     ladders === cards && cards > 0,
-    `${String(ladders)} ladders / ${String(cards)} cards`
+    `${String(ladders)} ladders / ${String(cards)} cards`,
   )
 
   const labels = await ladderLabels(page)
@@ -545,7 +609,7 @@ async function stepLadder(page: Page): Promise<void> {
   check(
     'EVERY LADDER IS THE FIVE DIFFICULTIES, BASE FIRST',
     labels.length > 0 && wrong.length === 0,
-    wrong.length ? `first offender: ${wrong[0]}` : `${String(labels.length)} ladders`
+    wrong.length ? `first offender: ${wrong[0]}` : `${String(labels.length)} ladders`,
   )
 
   // Not WHICH answer - see the header. Only that no rung is drawn without one, which is what
@@ -555,7 +619,7 @@ async function stepLadder(page: Page): Promise<void> {
   check(
     'every rung states an answer (cleared or open), and none is drawn without one',
     answers.length === labels.length * 5 && silent.length === 0,
-    `${String(answers.length)} rungs, ${String(silent.length)} silent`
+    `${String(answers.length)} rungs, ${String(silent.length)} silent`,
   )
 
   await stepChipsAreTheEnd(page)
@@ -579,12 +643,12 @@ async function stepChipsAreTheEnd(page: Page): Promise<void> {
   check(
     'THE LADDER IS THE LAST THING ON A WEEK CARD - nothing is written beneath the chips',
     tail.cards > 0 && tail.ladderLast === tail.cards,
-    `${String(tail.ladderLast)} / ${String(tail.cards)} cards end in their ladder`
+    `${String(tail.ladderLast)} / ${String(tail.cards)} cards end in their ladder`,
   )
   check(
     '…and the Locked caption line is gone from every card',
     tail.lockedCaption === 0,
-    `${String(tail.lockedCaption)} cards still write it`
+    `${String(tail.lockedCaption)} cards still write it`,
   )
 
   const cleared = tail.rungTitles.filter(([bit]) => bit === '1')
@@ -595,13 +659,15 @@ async function stepChipsAreTheEnd(page: Page): Promise<void> {
   check(
     'A CLEARED RUNG HOVERS ITS LAST KILL AND SAYS NOTHING ELSE',
     chatty.length === 0,
-    cleared.length ? `${String(cleared.length)} cleared, offender: ${String(chatty[0]?.[1])}` : 'none cleared this week'
+    cleared.length
+      ? `${String(cleared.length)} cleared, offender: ${String(chatty[0]?.[1])}`
+      : 'none cleared this week',
   )
   const noisy = open.filter(([, t]) => t !== null)
   check(
     '…and an open rung carries no title attribute at all, not an empty one',
     open.length > 0 && noisy.length === 0,
-    `${String(open.length)} open, ${String(noisy.length)} with a title`
+    `${String(open.length)} open, ${String(noisy.length)} with a title`,
   )
 }
 
@@ -609,16 +675,32 @@ async function stepChipsAreTheEnd(page: Page): Promise<void> {
 async function stepWeekSticksAcrossTabs(page: Page): Promise<void> {
   const picked = await setMode(page, MODE_WEEK, 'week')
   if (!check('the This week button selects when clicked', picked === 'week', String(picked))) return
-  const stored = await settle(() => storedMode(page), (v) => v === 'week', { timeoutMs: 8_000 })
+  const stored = await settle(
+    () => storedMode(page),
+    (v) => v === 'week',
+    { timeoutMs: 8_000 },
+  )
   check(`the choice is stored under ${KEY}`, stored === 'week', `stored ${String(stored)}`)
 
   await stepLadder(page)
   await stepDefeatedOnlyIsThisWeek(page)
 
   if (!(await awayAndBack(page))) return
-  const after = await settle(() => modeState(page), (v) => v !== null, { timeoutMs: 8_000 })
-  check('THIS WEEK SURVIVES LEAVING AND RETURNING TO THE BOSSES TAB', after === 'week', String(after))
-  const ladders = await settle(() => countOf(page, LADDER), (n) => n > 0, { timeoutMs: 15_000 })
+  const after = await settle(
+    () => modeState(page),
+    (v) => v !== null,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    'THIS WEEK SURVIVES LEAVING AND RETURNING TO THE BOSSES TAB',
+    after === 'week',
+    String(after),
+  )
+  const ladders = await settle(
+    () => countOf(page, LADDER),
+    (n) => n > 0,
+    { timeoutMs: 15_000 },
+  )
   check('…and the ladders come back with it', ladders > 0, String(ladders))
 }
 
@@ -631,23 +713,54 @@ async function stepWeekSticksAcrossTabs(page: Page): Promise<void> {
 async function stepOverallSticksToo(page: Page): Promise<void> {
   const picked = await setMode(page, MODE_OVERALL, 'overall')
   if (!check('the Overall button selects again', picked === 'overall', String(picked))) return
-  const stored = await settle(() => storedMode(page), (v) => v === 'overall', { timeoutMs: 8_000 })
-  check('…and OVERALL is stored too, not merely un-remembered', stored === 'overall', String(stored))
+  const stored = await settle(
+    () => storedMode(page),
+    (v) => v === 'overall',
+    { timeoutMs: 8_000 },
+  )
+  check(
+    '…and OVERALL is stored too, not merely un-remembered',
+    stored === 'overall',
+    String(stored),
+  )
 
   if (!(await awayAndBack(page))) return
-  const after = await settle(() => modeState(page), (v) => v !== null, { timeoutMs: 8_000 })
-  check('…so the tab comes back on OVERALL, the way it was left', after === 'overall', String(after))
+  const after = await settle(
+    () => modeState(page),
+    (v) => v !== null,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    '…so the tab comes back on OVERALL, the way it was left',
+    after === 'overall',
+    String(after),
+  )
   check('…with no ladder on it', (await countOf(page, LADDER)) === 0)
 }
 
 /** THE RESTART: a second process, the same userData dir, the same tab. */
 async function stepSurvivesRestart(page: Page): Promise<void> {
   if (!check('the Bosses tab opens after a restart', await openBosses(page))) return
-  const after = await settle(() => modeState(page), (v) => v !== null, { timeoutMs: 8_000 })
+  const after = await settle(
+    () => modeState(page),
+    (v) => v !== null,
+    { timeoutMs: 8_000 },
+  )
   check('THIS WEEK SURVIVES A FULL RESTART', after === 'week', String(after))
-  check('…and the stored choice crossed the process boundary intact', (await storedMode(page)) === 'week')
-  const ladders = await settle(() => countOf(page, LADDER), (n) => n > 0, { timeoutMs: 30_000 })
-  check('…and the difficulty ladders are drawn on the tab it opened on', ladders > 0, String(ladders))
+  check(
+    '…and the stored choice crossed the process boundary intact',
+    (await storedMode(page)) === 'week',
+  )
+  const ladders = await settle(
+    () => countOf(page, LADDER),
+    (n) => n > 0,
+    { timeoutMs: 30_000 },
+  )
+  check(
+    '…and the difficulty ladders are drawn on the tab it opened on',
+    ladders > 0,
+    String(ladders),
+  )
   await stepManualClearSurvivedRestart(page)
 }
 

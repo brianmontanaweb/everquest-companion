@@ -18,7 +18,7 @@ import {
   itemTierFromName,
   statLabel,
   tierBonusPct,
-  unlockedExaltationSlots
+  unlockedExaltationSlots,
 } from '../src/shared/itemStats'
 
 // =================================================================================
@@ -143,7 +143,7 @@ test('Red Dragonscale Armor: the full armor window — flags, slot, AC, attribut
   assert.deepEqual(s.stats, [{ key: 'STR', value: '+20' }])
   assert.deepEqual(s.saves, [
     { key: 'SV FIRE', value: '+10' },
-    { key: 'SV MAGIC', value: '+10' }
+    { key: 'SV MAGIC', value: '+10' },
   ])
   assert.equal(s.weight, '2.5')
   assert.equal(s.size, 'LARGE')
@@ -166,9 +166,11 @@ test('Skycleaver: weapon line pairs (Skill/Atk Delay, DMG/Dmg Bon) + a Combat Ef
   assert.equal(s.dmgBonus, 24)
   assert.deepEqual(s.stats, [
     { key: 'STA', value: '+5' },
-    { key: 'DEX', value: '+10' }
+    { key: 'DEX', value: '+10' },
   ])
-  assert.deepEqual(s.effects, [{ kind: 'combat', name: 'Haste', detail: 'Req Level 30', reqLevel: 30 }])
+  assert.deepEqual(s.effects, [
+    { kind: 'combat', name: 'Haste', detail: 'Req Level 30', reqLevel: 30 },
+  ])
   // "Lore Equipped" counts as the LORE flag for the knowledge card.
   assert.equal(k.lore, true)
   assert.equal(damageRatio(s.dmg, s.atkDelay)?.toFixed(2), '0.86')
@@ -194,7 +196,7 @@ test("Djarn's Amethyst Ring: |focus_effect lives outside the stats block, still 
   assert.equal(s.slot, 'FINGER')
   assert.deepEqual(s.stats, [
     { key: 'AGI', value: '+9' },
-    { key: 'HP', value: '+80' }
+    { key: 'HP', value: '+80' },
   ])
   assert.deepEqual(s.effects, [{ kind: 'focus', name: 'Spell Haste II' }])
 })
@@ -211,20 +213,27 @@ test('Boots of the Long Road: click effect + the one page that states an exaltat
   assert.equal(s.effects[0].name, 'Spirit of the Traveler')
   assert.deepEqual(
     s.stats.map((x) => x.key),
-    ['HP', 'CAST TIME', 'COOLDOWN']
+    ['HP', 'CAST TIME', 'COOLDOWN'],
   )
 })
 
 test('effect kind falls back to the parenthetical when the key is a bare "Effect:"', () => {
   const worn = parseStatsBlock('Effect: [[Serpent Sight]] (Worn)<br>')
   assert.deepEqual(worn.effects, [{ kind: 'worn', name: 'Serpent Sight', detail: 'Worn' }])
-  const combat = parseStatsBlock('Effect:  [[Dismiss Undead]] (Combat, Casting Time: Instant) at Level 20<br>')
+  const combat = parseStatsBlock(
+    'Effect:  [[Dismiss Undead]] (Combat, Casting Time: Instant) at Level 20<br>',
+  )
   assert.deepEqual(combat.effects, [
-    { kind: 'combat', name: 'Dismiss Undead', detail: 'Combat, Casting Time: Instant', reqLevel: 20 }
+    {
+      kind: 'combat',
+      name: 'Dismiss Undead',
+      detail: 'Combat, Casting Time: Instant',
+      reqLevel: 20,
+    },
   ])
   // A piped link whose label is a <span> still resolves to the plain effect name.
   const span = parseStatsBlock(
-    "Effect:  [[Dismiss Summoned|<span class='itemeff'>Dismiss Summoned</span>]] (Combat, Casting Time: Instant) at Level 45<br>"
+    "Effect:  [[Dismiss Summoned|<span class='itemeff'>Dismiss Summoned</span>]] (Combat, Casting Time: Instant) at Level 45<br>",
   )
   assert.equal(span.effects[0].name, 'Dismiss Summoned')
   assert.equal(span.effects[0].reqLevel, 45)
@@ -239,41 +248,51 @@ test('effect kind falls back to the parenthetical when the key is a bare "Effect
 test('JOS-438: a Cooldown: inside the effect parenthetical does not split the line', () => {
   // `Cooldown` is a real top-level stat key, so the key scanner used to cut the value at it —
   // leaving an unbalanced `(` in the NAME and throwing the socket detail away entirely.
-  const s = parseStatsBlock('Effect: [[Feign Death]] (Must Equip, Casting Time: Instant, Cooldown: 300 seconds.) at Level 45<br>')
+  const s = parseStatsBlock(
+    'Effect: [[Feign Death]] (Must Equip, Casting Time: Instant, Cooldown: 300 seconds.) at Level 45<br>',
+  )
   assert.deepEqual(s.effects, [
     {
       kind: 'click',
       name: 'Feign Death',
       detail: 'Must Equip, Casting Time: Instant, Cooldown: 300 seconds.',
-      reqLevel: 45
-    }
+      reqLevel: 45,
+    },
   ])
   // A `Cooldown:` on its OWN line is still an ordinary stat — the fix narrows nothing.
-  assert.deepEqual(parseStatsBlock('Cooldown: 120s<br>').stats, [{ key: 'COOLDOWN', value: '120s' }])
+  assert.deepEqual(parseStatsBlock('Cooldown: 120s<br>').stats, [
+    { key: 'COOLDOWN', value: '120s' },
+  ])
 })
 
 test("JOS-438: the wiki's page-name suffix is not the socket — Rain Caller's Firestrike is a CLICK", () => {
   // `[[Firestrike (proc)]]` is a DISAMBIGUATION on the spell's wiki page, not a statement about
   // the item's socket. Reading the first parenthetical made `(proc)` the detail, which left the
   // effect kind unclassifiable and the name carrying the rest of the line.
-  const s = parseStatsBlock('Effect: [[Firestrike (proc)]] (Must Equip, Casting Time: Instant, Cooldown: 120s) at Level 40<br>')
+  const s = parseStatsBlock(
+    'Effect: [[Firestrike (proc)]] (Must Equip, Casting Time: Instant, Cooldown: 120s) at Level 40<br>',
+  )
   assert.deepEqual(s.effects, [
     {
       kind: 'click',
       name: 'Firestrike',
       detail: 'Must Equip, Casting Time: Instant, Cooldown: 120s',
-      reqLevel: 40
-    }
+      reqLevel: 40,
+    },
   ])
   // Same shape, a different disambiguator, and an `Any Slot` socket.
-  const probe = parseStatsBlock('Effect: [[Stalking Probe (Spell)]] (Any Slot, Casting Time: Instant)<br>')
+  const probe = parseStatsBlock(
+    'Effect: [[Stalking Probe (Spell)]] (Any Slot, Casting Time: Instant)<br>',
+  )
   assert.deepEqual(probe.effects, [
-    { kind: 'click', name: 'Stalking Probe', detail: 'Any Slot, Casting Time: Instant' }
+    { kind: 'click', name: 'Stalking Probe', detail: 'Any Slot, Casting Time: Instant' },
   ])
 })
 
 test('JOS-438: `at 45` states a level exactly as `at Level 45` does', () => {
-  const s = parseStatsBlock('Effect: [[Promised Renewal]] (Any Slot, Casting Time: 2.0 seconds, Cooldown: 1200 seconds) at 45<br>')
+  const s = parseStatsBlock(
+    'Effect: [[Promised Renewal]] (Any Slot, Casting Time: 2.0 seconds, Cooldown: 1200 seconds) at 45<br>',
+  )
   assert.equal(s.effects[0].name, 'Promised Renewal')
   assert.equal(s.effects[0].reqLevel, 45)
 })
@@ -306,7 +325,7 @@ test('tier rules match the wiki tables (Item Upgrade System / Exaltations)', () 
   // a Tier 1 window shows 2 socket rows and a Tier 7 window shows all 5.
   assert.deepEqual(
     unlockedExaltationSlots(1).map((x) => x.type),
-    ['Ornamentation', 'Focus']
+    ['Ornamentation', 'Focus'],
   )
   assert.equal(unlockedExaltationSlots(7).length, 5)
   assert.equal(unlockedExaltationSlots(0).length, 1)

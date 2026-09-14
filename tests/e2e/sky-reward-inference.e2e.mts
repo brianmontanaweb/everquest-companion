@@ -40,7 +40,15 @@
  * Run: `npm run test:e2e -- sky-reward-inference`.
  */
 import type { Page } from 'playwright-core'
-import { buildIfStale, check, countOf, dumpArtifacts, failures, reportRun, settle } from './appHarness.mjs'
+import {
+  buildIfStale,
+  check,
+  countOf,
+  dumpArtifacts,
+  failures,
+  reportRun,
+  settle,
+} from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
 
@@ -71,7 +79,9 @@ function filteredCount(page: Page): Promise<number | null> {
 }
 
 /** The badge as the DOM states it: the count it claims and whether it says where that came from. */
-function badge(page: Page): Promise<{ count: number | null; inferred: string | null; title: string }> {
+function badge(
+  page: Page,
+): Promise<{ count: number | null; inferred: string | null; title: string }> {
   return page.evaluate((sel) => {
     const el = document.querySelector(sel)
     if (!el) return { count: null, inferred: null, title: '' }
@@ -79,7 +89,7 @@ function badge(page: Page): Promise<{ count: number | null; inferred: string | n
     return {
       count: n === null ? null : Number(n),
       inferred: el.getAttribute('data-inferred'),
-      title: el.getAttribute('title') ?? ''
+      title: el.getAttribute('title') ?? '',
     }
   }, BADGE)
 }
@@ -92,7 +102,7 @@ function undo(page: Page): Promise<{ disabled: boolean | null; title: string }> 
     // The title lives on the SPAN the tooltip needed, because a disabled button swallows no events.
     return {
       disabled: (el as HTMLButtonElement).disabled,
-      title: el.closest('span')?.getAttribute('title') ?? ''
+      title: el.closest('span')?.getAttribute('title') ?? '',
     }
   }, UNDO)
 }
@@ -100,10 +110,19 @@ function undo(page: Page): Promise<{ disabled: boolean | null; title: string }> 
 /** Narrow the list to one quest by name, and expand it so its detail toolbar exists. */
 async function openQuest(page: Page, name: string): Promise<boolean> {
   await page.fill(`${SEARCH} input`, name)
-  const only = await settle(() => filteredCount(page), (n) => n === 1, { timeoutMs: 30_000 })
-  if (!check(`the search narrows to ${name} alone`, only === 1, `filtered=${String(only)}`)) return false
+  const only = await settle(
+    () => filteredCount(page),
+    (n) => n === 1,
+    { timeoutMs: 30_000 },
+  )
+  if (!check(`the search narrows to ${name} alone`, only === 1, `filtered=${String(only)}`))
+    return false
   await page.click(SUMMARY, { timeout: 15_000 })
-  const drawn = await settle(() => countOf(page, TURNIN_COUNT), (n) => n === 1, { timeoutMs: 20_000 })
+  const drawn = await settle(
+    () => countOf(page, TURNIN_COUNT),
+    (n) => n === 1,
+    { timeoutMs: 20_000 },
+  )
   return check(`…and expanding ${name} draws its turn-in controls`, drawn === 1, String(drawn))
 }
 
@@ -112,7 +131,7 @@ async function openSky(page: Page): Promise<boolean> {
   await page.click(NAV_SKY, { timeout: 30_000 })
   const bar = await page.waitForSelector(SEARCH, { timeout: 60_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
   if (!check('the Sky tab opens on its filter bar', bar)) return false
   // The search box and the counts line are not the same render: the box needs no quest data and
@@ -121,7 +140,11 @@ async function openSky(page: Page): Promise<boolean> {
   // dump staged beside the log — to flip this from "always wins the race" to "usually does").
   // settle() is what every OTHER counts-line read in this file already uses; this is the one that
   // was missing it.
-  const counts = await settle(() => filteredCount(page), (n) => n !== null, { timeoutMs: 30_000 })
+  const counts = await settle(
+    () => filteredCount(page),
+    (n) => n !== null,
+    { timeoutMs: 30_000 },
+  )
   return check('…with the counts line under it', counts !== null)
 }
 
@@ -138,26 +161,43 @@ async function openSky(page: Page): Promise<boolean> {
  * difference is the inference and nothing else.
  */
 async function stepOnlyOneQuestIsVouchedFor(page: Page): Promise<number | null> {
-  const all = await settle(() => filteredCount(page), (n) => n !== null && n > 1, { timeoutMs: 45_000 })
-  if (!check('the tab opens on the whole Plane', all !== null && all > 1, `quests=${String(all)}`)) return null
+  const all = await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n > 1,
+    { timeoutMs: 45_000 },
+  )
+  if (!check('the tab opens on the whole Plane', all !== null && all > 1, `quests=${String(all)}`))
+    return null
   await page.click(HIDE_TURNED_IN, { timeout: 15_000 })
-  const kept = await settle(() => filteredCount(page), (n) => n !== null && n < (all ?? 0), { timeoutMs: 20_000 })
+  const kept = await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n < (all ?? 0),
+    { timeoutMs: 20_000 },
+  )
   check(
     'THE LOADED EXPORT VOUCHES FOR EXACTLY ONE QUEST, not for everything it can name',
     all !== null && kept === all - 1,
-    `of ${String(all)} quests, ${String((all ?? 0) - (kept ?? 0))} read as turned in`
+    `of ${String(all)} quests, ${String((all ?? 0) - (kept ?? 0))} read as turned in`,
   )
   // …and it is THIS one. The count above says how many; the search says which.
   await page.fill(`${SEARCH} input`, VOUCHED)
-  const hidden = await settle(() => filteredCount(page), (n) => n === 0, { timeoutMs: 20_000 })
+  const hidden = await settle(
+    () => filteredCount(page),
+    (n) => n === 0,
+    { timeoutMs: 20_000 },
+  )
   check(
     `…and the one it hides is ${VOUCHED} — a filter that never heard of the inference reads the floored count`,
     hidden === 0,
-    `filtered=${String(hidden)}`
+    `filtered=${String(hidden)}`,
   )
   await page.fill(`${SEARCH} input`, '')
   await page.click(HIDE_TURNED_IN, { timeout: 15_000 })
-  const back = await settle(() => filteredCount(page), (n) => n === all, { timeoutMs: 20_000 })
+  const back = await settle(
+    () => filteredCount(page),
+    (n) => n === all,
+    { timeoutMs: 20_000 },
+  )
   check('…and unticking the box leaves the tab exactly as it was found', back === all, String(back))
   return all
 }
@@ -171,24 +211,32 @@ async function stepOnlyOneQuestIsVouchedFor(page: Page): Promise<number | null> 
 async function stepTheRewardReadsAsATurnIn(page: Page): Promise<void> {
   if (!(await openQuest(page, VOUCHED))) return
   const b = await badge(page)
-  check(`${VOUCHED} reads TURNED IN off the export alone`, b.count === 1, `count=${String(b.count)}`)
+  check(
+    `${VOUCHED} reads TURNED IN off the export alone`,
+    b.count === 1,
+    `count=${String(b.count)}`,
+  )
   check(
     '…and the badge SAYS the reading is derived rather than read out of the log',
     b.inferred === 'true',
-    `data-inferred=${String(b.inferred)}`
+    `data-inferred=${String(b.inferred)}`,
   )
   check(
     '…in words, on hover, naming the export as the evidence',
     b.title.includes('inventory export'),
-    b.title
+    b.title,
   )
   const u = await undo(page)
   check(
     'THE UNDO IS HONESTLY DEAD: the reward is still in the bag, so a take-back would not survive',
     u.disabled === true,
-    `disabled=${String(u.disabled)}`
+    `disabled=${String(u.disabled)}`,
   )
-  check('…and says exactly that instead of looking broken', u.title.includes('inventory export'), u.title)
+  check(
+    '…and says exactly that instead of looking broken',
+    u.title.includes('inventory export'),
+    u.title,
+  )
 }
 
 /**
@@ -198,9 +246,17 @@ async function stepTheRewardReadsAsATurnIn(page: Page): Promise<void> {
 async function stepAQuestItSaysNothingAboutIsUntouched(page: Page): Promise<void> {
   if (!(await openQuest(page, UNVOUCHED))) return
   const b = await badge(page)
-  check(`${UNVOUCHED} has no badge at all — absence proves nothing either way`, b.count === null, String(b.count))
+  check(
+    `${UNVOUCHED} has no badge at all — absence proves nothing either way`,
+    b.count === null,
+    String(b.count),
+  )
   const u = await undo(page)
-  check('…and its undo is dead for the OLD reason, with the old words', u.title === 'Nothing to take back', u.title)
+  check(
+    '…and its undo is dead for the OLD reason, with the old words',
+    u.title === 'Nothing to take back',
+    u.title,
+  )
 }
 
 async function main(): Promise<void> {

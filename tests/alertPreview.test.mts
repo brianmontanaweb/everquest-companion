@@ -27,7 +27,7 @@ function def(over: Partial<AlertDef> = {}): AlertDef {
     enabled: true,
     trigger: { type: 'event', kind: 'uncharm' },
     sound: { packId: 'alan-rickman', soundId: 'attention' },
-    ...over
+    ...over,
   }
 }
 
@@ -47,7 +47,7 @@ test('▶ on a row still STORING the retired combined channel previews what it w
   assert.deepEqual(
     previewPlan(def({ audio: 'both', speech: { mode: 'custom', phrase: 'Charm break' } }), false),
     { sound: false, speak: 'Charm break' },
-    'a phrase ⇒ spoken, and nothing plays alongside it'
+    'a phrase ⇒ spoken, and nothing plays alongside it',
   )
   assert.deepEqual(previewPlan(def({ audio: 'both' }), false), { sound: true, speak: null })
 })
@@ -57,7 +57,7 @@ test('▶ on a sound row is unchanged — the pack sound, as it always was', () 
     assert.deepEqual(
       previewPlan(def(audio ? { audio } : {}), false),
       { sound: true, speak: null },
-      `audio:${String(audio)}`
+      `audio:${String(audio)}`,
     )
   }
 })
@@ -77,7 +77,7 @@ test('MUTE is not an exception: ▶ makes no noise while the app is muted', () =
     assert.deepEqual(
       previewPlan(def(audio ? { audio } : {}), true),
       { sound: false, speak: null },
-      `audio:${String(audio)} must be silent while muted`
+      `audio:${String(audio)} must be silent while muted`,
     )
   }
 })
@@ -91,7 +91,7 @@ test('preview resolves to EXACTLY what a real firing of the same def resolves to
       assert.deepEqual(
         previewPlan(d, muted),
         speechPlan(d, null, muted),
-        `audio:${String(audio)} muted:${String(muted)}`
+        `audio:${String(audio)} muted:${String(muted)}`,
       )
     }
   }
@@ -102,7 +102,7 @@ test('…including every speech configuration, since preview changes none of the
     undefined,
     { mode: 'alertName' },
     { mode: 'custom', phrase: 'incoming' },
-    { mode: 'spellFirstWord', voiceId: 'urn:sapi:David?en-US' }
+    { mode: 'spellFirstWord', voiceId: 'urn:sapi:David?en-US' },
   ]
   for (const speech of configs) {
     for (const audio of ['speech', 'both'] as const) {
@@ -120,7 +120,7 @@ test('preview forces exactly two fields — enabled and alwaysPlay — and touch
     enabled: false,
     volume: 0.3,
     cooldownMs: 5000,
-    speech: { mode: 'custom', phrase: 'run away', voiceId: 'urn:sapi:Zira?en-US' }
+    speech: { mode: 'custom', phrase: 'run away', voiceId: 'urn:sapi:Zira?en-US' },
   })
   const preview = previewDef(original)
   assert.equal(preview.enabled, true, 'a disabled alert must still be auditionable')
@@ -128,7 +128,7 @@ test('preview forces exactly two fields — enabled and alwaysPlay — and touch
   assert.deepEqual(
     { ...preview, enabled: original.enabled, alwaysPlay: original.alwaysPlay },
     { ...original, alwaysPlay: original.alwaysPlay },
-    'every other field comes through untouched'
+    'every other field comes through untouched',
   )
 })
 
@@ -143,7 +143,7 @@ test('preview forces exactly two fields — enabled and alwaysPlay — and touch
 test('▶ shows the SAME line a real firing would — same words, same swatch, same switch', () => {
   const original = def({
     speech: { mode: 'custom', phrase: 'Charm broke on {target}' },
-    bannerColor: 'red'
+    bannerColor: 'red',
   })
   const preview = previewDef(original)
   assert.equal(alertBannerText(preview), alertBannerText(original), 'one derivation')
@@ -153,11 +153,18 @@ test('▶ shows the SAME line a real firing would — same words, same swatch, s
 
 test('…and an alert TAMED off the screen previews silently there too — preview IS the firing', () => {
   const original = def({ showOnScreen: false })
-  assert.equal(alertShowsOnScreen(previewDef(original)), false, 'no line, because a firing shows none')
+  assert.equal(
+    alertShowsOnScreen(previewDef(original)),
+    false,
+    'no line, because a firing shows none',
+  )
 })
 
 test('an On-screen override is auditioned, not bypassed', () => {
-  const original = def({ speech: { mode: 'custom', phrase: 'a long spoken sentence' }, bannerText: 'CHARM' })
+  const original = def({
+    speech: { mode: 'custom', phrase: 'a long spoken sentence' },
+    bannerText: 'CHARM',
+  })
   assert.equal(alertBannerText(previewDef(original)), 'CHARM')
 })
 

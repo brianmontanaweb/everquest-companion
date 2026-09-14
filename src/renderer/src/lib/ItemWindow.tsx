@@ -23,7 +23,7 @@ import {
   tierBonusPct,
   unlockedExaltationSlots,
   ITEM_MAX_TIER,
-  type ItemStatBlock
+  type ItemStatBlock,
 } from '@shared/itemStats'
 import { Tooltip } from './Tooltip'
 
@@ -37,7 +37,7 @@ export const EQ_ITEM_COLORS = {
   value: '#e9eaf2',
   effect: '#f08ae0', // effects + filled exaltations — magenta
   ratio: '#ff8079', // damage ratio — red
-  meter: '#d9b25f'
+  meter: '#d9b25f',
 } as const
 
 const MONO = '"Consolas","Courier New",monospace'
@@ -61,7 +61,7 @@ function Row({
   label,
   value,
   color,
-  compact
+  compact,
 }: {
   label?: string
   value: string
@@ -71,7 +71,10 @@ function Row({
   return (
     <Stack direction="row" justifyContent="space-between" spacing={1} sx={{ lineHeight: 1.45 }}>
       {label && (
-        <Typography component="span" sx={{ color: EQ_ITEM_COLORS.label, fontSize: compact ? 11 : 12, fontFamily: MONO }}>
+        <Typography
+          component="span"
+          sx={{ color: EQ_ITEM_COLORS.label, fontSize: compact ? 11 : 12, fontFamily: MONO }}
+        >
           {label}
         </Typography>
       )}
@@ -82,7 +85,7 @@ function Row({
           fontSize: compact ? 11 : 12,
           fontFamily: MONO,
           textAlign: 'right',
-          whiteSpace: 'nowrap'
+          whiteSpace: 'nowrap',
         }}
       >
         {value}
@@ -91,11 +94,24 @@ function Row({
   )
 }
 
-function Line({ children, color, compact }: { children: React.ReactNode; color?: string; compact?: boolean }): JSX.Element {
+function Line({
+  children,
+  color,
+  compact,
+}: {
+  children: React.ReactNode
+  color?: string
+  compact?: boolean
+}): JSX.Element {
   return (
     <Typography
       component="div"
-      sx={{ color: color ?? EQ_ITEM_COLORS.text, fontSize: compact ? 11 : 12, fontFamily: MONO, lineHeight: 1.45 }}
+      sx={{
+        color: color ?? EQ_ITEM_COLORS.text,
+        fontSize: compact ? 11 : 12,
+        fontFamily: MONO,
+        lineHeight: 1.45,
+      }}
     >
       {children}
     </Typography>
@@ -115,7 +131,7 @@ function Line({ children, color, compact }: { children: React.ReactNode; color?:
 function TierBlock({
   tier,
   compact,
-  observed
+  observed,
 }: {
   tier: number
   compact?: boolean
@@ -126,15 +142,22 @@ function TierBlock({
   return (
     <Box sx={{ my: 0.75 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="baseline">
-        <Typography sx={{ color: EQ_ITEM_COLORS.text, fontSize: compact ? 11 : 12, fontFamily: MONO }}>
+        <Typography
+          sx={{ color: EQ_ITEM_COLORS.text, fontSize: compact ? 11 : 12, fontFamily: MONO }}
+        >
           Tier {tier}
-          <Typography component="span" sx={{ color: EQ_ITEM_COLORS.label, fontSize: 'inherit', fontFamily: MONO }}>
+          <Typography
+            component="span"
+            sx={{ color: EQ_ITEM_COLORS.label, fontSize: 'inherit', fontFamily: MONO }}
+          >
             {' '}
             / {ITEM_MAX_TIER}
             {observed ? ' · yours' : ''}
           </Typography>
         </Typography>
-        <Typography sx={{ color: EQ_ITEM_COLORS.label, fontSize: compact ? 10 : 11, fontFamily: MONO }}>
+        <Typography
+          sx={{ color: EQ_ITEM_COLORS.label, fontSize: compact ? 10 : 11, fontFamily: MONO }}
+        >
           +{tierBonusPct(tier)}% stats
         </Typography>
       </Stack>
@@ -144,12 +167,19 @@ function TierBlock({
             height: 5,
             width: `${(Math.min(tier, ITEM_MAX_TIER) / ITEM_MAX_TIER) * 100}%`,
             bgcolor: EQ_ITEM_COLORS.meter,
-            borderRadius: 1
+            borderRadius: 1,
           }}
         />
       </Box>
       {next !== null && (
-        <Typography sx={{ color: EQ_ITEM_COLORS.label, fontSize: compact ? 10 : 11, fontFamily: MONO, mt: 0.3 }}>
+        <Typography
+          sx={{
+            color: EQ_ITEM_COLORS.label,
+            fontSize: compact ? 10 : 11,
+            fontFamily: MONO,
+            mt: 0.3,
+          }}
+        >
           {next} item exp merged reaches Tier {tier + 1}
         </Typography>
       )}
@@ -166,7 +196,7 @@ function TierBlock({
                   fontSize: 10,
                   fontFamily: MONO,
                   color: EQ_ITEM_COLORS.label,
-                  borderColor: 'rgba(255,255,255,0.18)'
+                  borderColor: 'rgba(255,255,255,0.18)',
                 }}
               />
             </Tooltip>
@@ -210,7 +240,7 @@ function shellSx(compact?: boolean): Record<string, unknown> {
     border: compact ? 'none' : `1px solid ${EQ_ITEM_COLORS.border}`,
     borderRadius: 1,
     p: compact ? 0.25 : 1.25,
-    minWidth: compact ? 190 : 260
+    minWidth: compact ? 190 : 260,
   }
 }
 
@@ -218,7 +248,7 @@ function shellSx(compact?: boolean): Record<string, unknown> {
 function ItemHeader({
   name,
   iconId,
-  compact
+  compact,
 }: {
   name: string
   iconId?: number
@@ -234,7 +264,12 @@ function ItemHeader({
           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
             e.currentTarget.style.display = 'none'
           }}
-          sx={{ width: compact ? 22 : 32, height: compact ? 22 : 32, imageRendering: 'pixelated', flexShrink: 0 }}
+          sx={{
+            width: compact ? 22 : 32,
+            height: compact ? 22 : 32,
+            imageRendering: 'pixelated',
+            flexShrink: 0,
+          }}
         />
       )}
       <Typography
@@ -244,7 +279,7 @@ function ItemHeader({
           fontWeight: 700,
           fontSize: compact ? 12.5 : 14,
           fontFamily: MONO,
-          lineHeight: 1.25
+          lineHeight: 1.25,
         }}
       >
         {name}
@@ -256,7 +291,7 @@ function ItemHeader({
 /** Flags (white), then class / race / slot — each line exists only when the data does. */
 function IdentityLines({
   block,
-  compact
+  compact,
 }: {
   block?: ItemStatBlock
   compact?: boolean
@@ -294,7 +329,13 @@ function combatRows(block?: ItemStatBlock): [string, string][] {
 }
 
 /** Stat grid: physical | combat, with the damage ratio (red) closing the combat column. */
-function StatGrid({ block, compact }: { block?: ItemStatBlock; compact?: boolean }): JSX.Element | null {
+function StatGrid({
+  block,
+  compact,
+}: {
+  block?: ItemStatBlock
+  compact?: boolean
+}): JSX.Element | null {
   const left = physicalRows(block)
   const right = combatRows(block)
   const ratio = damageRatio(block?.dmg, block?.atkDelay)
@@ -306,7 +347,7 @@ function StatGrid({ block, compact }: { block?: ItemStatBlock; compact?: boolean
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
         columnGap: 2,
-        alignItems: 'start'
+        alignItems: 'start',
       }}
     >
       <Box>
@@ -319,7 +360,12 @@ function StatGrid({ block, compact }: { block?: ItemStatBlock; compact?: boolean
           <Row key={l} label={l} value={v} compact={compact} />
         ))}
         {ratio !== undefined && (
-          <Row label="Ratio" value={ratio.toFixed(1)} color={EQ_ITEM_COLORS.ratio} compact={compact} />
+          <Row
+            label="Ratio"
+            value={ratio.toFixed(1)}
+            color={EQ_ITEM_COLORS.ratio}
+            compact={compact}
+          />
         )}
       </Box>
     </Box>
@@ -329,7 +375,7 @@ function StatGrid({ block, compact }: { block?: ItemStatBlock; compact?: boolean
 /** A two-column key/value grid — used for attributes and, again, for saves. */
 function StatPairs({
   rows,
-  compact
+  compact,
 }: {
   rows: { key: string; value: string }[]
   compact?: boolean
@@ -348,7 +394,7 @@ function StatPairs({
 function EffectsBlock({
   block,
   timing,
-  compact
+  compact,
 }: {
   block?: ItemStatBlock
   timing: { key: string; value: string }[]
@@ -360,7 +406,11 @@ function EffectsBlock({
       {block.effects.map((e, i) => (
         <Line key={`${e.kind}${i}`} color={EQ_ITEM_COLORS.effect} compact={compact}>
           {EFFECT_LABEL[e.kind]}: {e.name}
-          {e.reqLevel !== undefined ? ` (Req Level ${e.reqLevel})` : e.detail ? ` (${e.detail})` : ''}
+          {e.reqLevel !== undefined
+            ? ` (Req Level ${e.reqLevel})`
+            : e.detail
+              ? ` (${e.detail})`
+              : ''}
         </Line>
       ))}
       {timing.length > 0 && (
@@ -375,7 +425,7 @@ function EffectsBlock({
 /** Exaltation sockets — ONLY those the source actually described. */
 function ExaltationBlock({
   block,
-  compact
+  compact,
 }: {
   block?: ItemStatBlock
   compact?: boolean
@@ -399,7 +449,7 @@ function ExaltationBlock({
 /** Anything the parser didn't model, verbatim — never dropped. */
 function ExtrasBlock({
   block,
-  compact
+  compact,
 }: {
   block?: ItemStatBlock
   compact?: boolean
@@ -427,9 +477,12 @@ export function ItemWindow({
   iconId,
   flavor,
   compact,
-  observedTier
+  observedTier,
 }: ItemWindowProps): JSX.Element {
-  const block = useMemo(() => stats ?? (rawStats ? parseStatsBlock(rawStats) : undefined), [stats, rawStats])
+  const block = useMemo(
+    () => stats ?? (rawStats ? parseStatsBlock(rawStats) : undefined),
+    [stats, rawStats],
+  )
   // The displayed NAME wins when it states a level: that is this exact instance's tier, and
   // it is what the game itself would print. Our observed tier is the fallback for a base
   // name — it answers "what have I got this item to?" where the wiki has nothing to say.

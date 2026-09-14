@@ -50,6 +50,6 @@ export function normalizeProcessPriorityPrefs(value: unknown): ProcessPriorityPr
     yieldToGame:
       typeof v.yieldToGame === 'boolean'
         ? v.yieldToGame
-        : DEFAULT_PROCESS_PRIORITY_PREFS.yieldToGame
+        : DEFAULT_PROCESS_PRIORITY_PREFS.yieldToGame,
   }
 }

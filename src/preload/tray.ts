@@ -25,7 +25,7 @@ const trayApi = {
   /** "Always quit instead." Turns the preference OFF, then quits: the next X ends the app. */
   alwaysQuit: (): void => ipcRenderer.send(IPC.trayNoticeAlwaysQuit),
   /** "Got it." The card has been read; it never appears again on this install. */
-  acknowledge: (): void => ipcRenderer.send(IPC.trayNoticeAcknowledge)
+  acknowledge: (): void => ipcRenderer.send(IPC.trayNoticeAcknowledge),
 }
 
 export type EqTrayApi = typeof trayApi

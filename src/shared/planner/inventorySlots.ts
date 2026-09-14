@@ -36,7 +36,7 @@ import {
   PRIMARY_ITEM_SECTION,
   walkEntries,
   type InventoryDump,
-  type InventoryEntry
+  type InventoryEntry,
 } from '../outputs/inventory'
 import type { EquipLocationToken } from '../outputs/inventory'
 import { ANY_CELLS, cellsForSlot, type EquipSlot, type PlanSlotId } from './types'
@@ -68,7 +68,7 @@ export const SLOT_OF_LOCATION: Record<EquipLocationToken, EquipSlot | null> = {
   Secondary: 'SECONDARY',
   Shoulders: 'SHOULDERS',
   Waist: 'WAIST',
-  Wrist: 'WRIST'
+  Wrist: 'WRIST',
 }
 
 /** One equipped item, in planner terms. */
@@ -116,7 +116,7 @@ export interface PlannerInventory {
  * here beside the table, not a condition buried in a function.
  */
 export const ANY_CELL_LOCATIONS: ReadonlySet<EquipLocationToken> = new Set<EquipLocationToken>([
-  'Any Slot'
+  'Any Slot',
 ])
 
 /**

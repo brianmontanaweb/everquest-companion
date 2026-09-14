@@ -85,7 +85,10 @@ export function wishFromGear(row: Pick<GearRow, 'key' | 'name'>, now: number): W
  * carried because they answer different questions later — the effect names the reason, the socket
  * is what lets the row state a merge cost on a machine whose corpus no longer has the row.
  */
-export function wishFromDonor(donor: Pick<DonorRow, 'key' | 'name' | 'effect' | 'socket'>, now: number): WishEntry {
+export function wishFromDonor(
+  donor: Pick<DonorRow, 'key' | 'name' | 'effect' | 'socket'>,
+  now: number,
+): WishEntry {
   return {
     itemKey: donor.key,
     name: donor.name,
@@ -93,7 +96,7 @@ export function wishFromDonor(donor: Pick<DonorRow, 'key' | 'name' | 'effect' | 
     effect: donor.effect,
     socket: donor.socket,
     addedAt: now,
-    source: 'user'
+    source: 'user',
   }
 }
 
@@ -102,7 +105,10 @@ export function wishFromHit(hit: WishHit, now: number): WishEntry {
   if (hit.kind === 'gear' || hit.effect === undefined || hit.socket === undefined) {
     return wishFromGear(hit, now)
   }
-  return wishFromDonor({ key: hit.key, name: hit.name, effect: hit.effect, socket: hit.socket }, now)
+  return wishFromDonor(
+    { key: hit.key, name: hit.name, effect: hit.effect, socket: hit.socket },
+    now,
+  )
 }
 
 // ---- the search -----------------------------------------------------------------------------
@@ -132,7 +138,7 @@ function gearHit(row: GearRow): WishHit {
     name: row.name,
     kind: 'gear',
     slots: row.slots,
-    classes: row.classes
+    classes: row.classes,
   }
   if (row.iconId !== undefined) hit.iconId = row.iconId
   if (row.wikiSources !== undefined) hit.wikiSources = row.wikiSources
@@ -149,7 +155,7 @@ function donorHit(row: DonorRow): WishHit {
     classes: row.classes,
     effect: row.effect,
     socket: row.socket,
-    tierRequired: row.tierRequired
+    tierRequired: row.tierRequired,
   }
   if (row.iconId !== undefined) hit.iconId = row.iconId
   if (row.detail !== undefined) hit.detail = row.detail
@@ -170,7 +176,7 @@ interface ItemOffers {
 function offersFor(
   gear: readonly GearRow[],
   donors: readonly DonorRow[],
-  needle: string
+  needle: string,
 ): Map<string, ItemOffers> {
   const byItem = new Map<string, ItemOffers>()
   const open = (key: string, name: string): ItemOffers => {
@@ -200,18 +206,20 @@ export function searchWishCorpus(
   gear: readonly GearRow[],
   donors: readonly DonorRow[],
   query: string,
-  limit: number = WISH_HIT_LIMIT
+  limit: number = WISH_HIT_LIMIT,
 ): WishHit[] {
   const needle = query.trim().toLowerCase()
   if (needle.length < MIN_WISH_QUERY) return []
   const items = [...offersFor(gear, donors, needle).values()].sort(
-    (a, b) => a.score - b.score || a.name.length - b.name.length || a.name.localeCompare(b.name)
+    (a, b) => a.score - b.score || a.name.length - b.name.length || a.name.localeCompare(b.name),
   )
   const out: WishHit[] = []
   for (const item of items) {
     if (out.length >= limit) break
     if (item.gear !== null) out.push(item.gear)
-    for (const donor of [...item.donors].sort((a, b) => (a.effect ?? '').localeCompare(b.effect ?? ''))) {
+    for (const donor of [...item.donors].sort((a, b) =>
+      (a.effect ?? '').localeCompare(b.effect ?? ''),
+    )) {
       out.push(donor)
     }
   }

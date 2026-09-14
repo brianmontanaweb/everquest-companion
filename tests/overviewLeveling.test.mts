@@ -52,7 +52,7 @@ import {
   overviewLeveling,
   paceVerdict,
   recentLevelSpans,
-  type LevelSpan
+  type LevelSpan,
 } from '../src/renderer/src/features/overview/overviewLevelingData'
 import { rangeStats } from '../src/shared/progressionStats'
 import { NONE } from '../src/renderer/src/features/leveling/rangeStatsRows'
@@ -67,13 +67,28 @@ const T0 = Date.parse('Sat Aug 01 12:00:00 2026')
 
 function emptySnap(): ProgressionSnap {
   return {
-    expTs: [], expPct: [], expFlag: [],
-    killTs: [], killZone: [], killCredit: [],
-    witnessTs: [], recentKills: [], lootTs: [],
-    zoneStart: [], zoneEnd: [], zoneName: [],
-    offlineStart: [], offlineEnd: [], offlineCamped: [],
-    levelTs: [], levelValue: [], aaGainTs: [], aaGainAmount: [],
-    lastTs: 0, windowStart: 0, dropped: 0
+    expTs: [],
+    expPct: [],
+    expFlag: [],
+    killTs: [],
+    killZone: [],
+    killCredit: [],
+    witnessTs: [],
+    recentKills: [],
+    lootTs: [],
+    zoneStart: [],
+    zoneEnd: [],
+    zoneName: [],
+    offlineStart: [],
+    offlineEnd: [],
+    offlineCamped: [],
+    levelTs: [],
+    levelValue: [],
+    aaGainTs: [],
+    aaGainAmount: [],
+    lastTs: 0,
+    windowStart: 0,
+    dropped: 0,
   }
 }
 
@@ -93,7 +108,12 @@ function offline(snap: ProgressionSnap, fromTs: number, toTs: number, camped = t
  * sample landing exactly on the end instant belongs to the next window, not this one. At a
  * one-minute cadence that makes 59 samples in the hour, and the expectations below say 59.
  */
-function farming(opts: { everyMs: number; pct: number; unstated?: boolean; zoneStart?: number }): ProgressionSnap {
+function farming(opts: {
+  everyMs: number
+  pct: number
+  unstated?: boolean
+  zoneStart?: number
+}): ProgressionSnap {
   const s = emptySnap()
   const lastTs = T0
   const start = lastTs - HOUR
@@ -154,8 +174,10 @@ test('window B is the last zone interval, and names the zone raw', () => {
   assert.ok(state.zoneLine.startsWith('in Plane of Sky: '), state.zoneLine)
   assert.ok(state.zoneLine.includes(' lvl/hr · '), state.zoneLine)
   assert.ok(
-    state.zoneLine.endsWith(`since ${formatTime(T0 - 20 * MIN, { hour: '2-digit', minute: '2-digit' })}`),
-    state.zoneLine
+    state.zoneLine.endsWith(
+      `since ${formatTime(T0 - 20 * MIN, { hour: '2-digit', minute: '2-digit' })}`,
+    ),
+    state.zoneLine,
   )
 })
 
@@ -283,7 +305,11 @@ test('next level: an at-cap line since the ding poisons the sum ⇒ no estimate'
   const state = overviewLeveling(snap)
   assert.equal(state.eta, null)
   assert.ok(state.etaTitle.includes('unknown, not zero'), state.etaTitle)
-  assert.equal(state.rate, '0.58 lvl/hr', 'the headline still stands — one unstated line is not at-cap')
+  assert.equal(
+    state.rate,
+    '0.58 lvl/hr',
+    'the headline still stands — one unstated line is not at-cap',
+  )
 })
 
 test('next level: a retention floor past the ding ⇒ no estimate (dropped samples are a hole)', () => {
@@ -346,14 +372,17 @@ test('level history stops at a class swap and never bridges one', () => {
     spans.map((s) => [s.fromLevel, s.toLevel]),
     [
       [38, 39],
-      [39, 40]
-    ]
+      [39, 40],
+    ],
   )
   assert.equal(spans[0].ms, 2 * HOUR)
   assert.equal(spans[1].ms, 6 * HOUR)
   const history = overviewLeveling(snap).history ?? ''
   assert.equal(history, 'lvl 38→39 2.0h · 39→40 6.0h')
-  assert.ok(!history.includes('45'), 'the pre-swap run is unreachable — its span covers unlogged time')
+  assert.ok(
+    !history.includes('45'),
+    'the pre-swap run is unreachable — its span covers unlogged time',
+  )
 })
 
 test('level history: no completed level in this run ⇒ no line at all', () => {
@@ -438,8 +467,18 @@ test('the card wires the estimate, the history and the verdict together', () => 
  * end down to one. The kill three hours back is there so the idle walk has a bracketing sample
  * on the left, exactly as a real log would.
  */
-function campedHour(o: { offFrom: number; offTo: number; first: number; ding?: number }): ProgressionSnap {
-  const s: ProgressionSnap = { ...emptySnap(), zoneStart: [T0 - 3 * HOUR], zoneEnd: [0], zoneName: ['Plane of Sky'] }
+function campedHour(o: {
+  offFrom: number
+  offTo: number
+  first: number
+  ding?: number
+}): ProgressionSnap {
+  const s: ProgressionSnap = {
+    ...emptySnap(),
+    zoneStart: [T0 - 3 * HOUR],
+    zoneEnd: [0],
+    zoneName: ['Plane of Sky'],
+  }
   const kill = (ts: number): void => {
     s.killTs.push(ts)
     s.killZone.push(0)
@@ -464,12 +503,20 @@ test('a logout inside the hour is offline, not idle — and the rates divide by 
   const a = hourStats(snap)
   assert.equal(a.offlineMs, 30 * MIN)
   assert.equal(a.offlineGaps, 1)
-  assert.equal(a.activeMs + a.idleMs + a.offlineMs, a.durationMs, 'the Σ identity, on the card’s own window')
+  assert.equal(
+    a.activeMs + a.idleMs + a.offlineMs,
+    a.durationMs,
+    'the Σ identity, on the card’s own window',
+  )
   // 0.24 levels over the 30 ONLINE minutes, not over the hour the clock advanced.
   assert.ok(Math.abs((a.levelsPerHourWall ?? 0) - 0.48) < 1e-9, String(a.levelsPerHourWall))
 
   const state = overviewLeveling(snap)
-  assert.equal(state.rate, '0.60 lvl/hr', 'the headline was always over ACTIVE time and is unchanged')
+  assert.equal(
+    state.rate,
+    '0.60 lvl/hr',
+    'the headline was always over ACTIVE time and is unchanged',
+  )
   // 5m before camping + 1m after logging back in — the 30m absence is nobody's idle time.
   assert.equal(state.activity, '24m active · 6m idle')
   assert.equal(state.offline, '30m offline')
@@ -484,7 +531,11 @@ test('an hour that is mostly an empty chair states no ETA, and says which hole c
   const state = overviewLeveling(snap)
   assert.equal(state.eta, null)
   assert.ok(state.etaTitle.includes('logged out'), state.etaTitle)
-  assert.notEqual(state.rate, NONE, 'the measured rate still stands — only the PROJECTION is refused')
+  assert.notEqual(
+    state.rate,
+    NONE,
+    'the measured rate still stands — only the PROJECTION is refused',
+  )
 })
 
 test(`the ETA gate is exactly ${ETA_MIN_ONLINE_MS / MIN} online minutes, and only offline can trip it`, () => {
@@ -497,7 +548,14 @@ test(`the ETA gate is exactly ${ETA_MIN_ONLINE_MS / MIN} online minutes, and onl
   // not explained is not evidence of an empty chair (the live-edge limit).
   const idle = farming({ everyMs: MIN, pct: 1 })
   // Keep the first five minutes of the hour and let the other 55 be pure silence.
-  for (const col of [idle.expTs, idle.expPct, idle.expFlag, idle.killTs, idle.killZone, idle.killCredit]) {
+  for (const col of [
+    idle.expTs,
+    idle.expPct,
+    idle.expFlag,
+    idle.killTs,
+    idle.killZone,
+    idle.killCredit,
+  ]) {
     col.length = 5
   }
   ding(idle, idle.expTs[0] - MIN, 43)
@@ -516,7 +574,13 @@ test('the per-level history subtracts logouts from BOTH sides of the comparison'
   offline(snap, T0 - 7 * HOUR, T0 - 3 * HOUR)
 
   const spans = recentLevelSpans(snap)
-  assert.deepEqual(spans.map((s) => [s.ms, s.offlineMs]), [[2 * HOUR, 0], [2 * HOUR, 4 * HOUR]])
+  assert.deepEqual(
+    spans.map((s) => [s.ms, s.offlineMs]),
+    [
+      [2 * HOUR, 0],
+      [2 * HOUR, 4 * HOUR],
+    ],
+  )
   const state = overviewLeveling(snap)
   assert.equal(state.history, 'lvl 38→39 2.0h · 39→40 2.0h')
   // Median 2h of PLAY per level against the last hour's ~1.7h/level: the same pace. Counting
@@ -538,11 +602,18 @@ test('REGRESSION: a logout outside the hour changes nothing the card says', () =
   const state = overviewLeveling(bare)
   assert.equal(state.offline, null, 'no derived logout ⇒ the card says nothing about being offline')
   assert.equal(state.eta, '~1h 12m to level 44')
-  assert.ok(!state.etaTitle.includes('logged out'), 'and the tooltip claims no assumption it did not make')
+  assert.ok(
+    !state.etaTitle.includes('logged out'),
+    'and the tooltip claims no assumption it did not make',
+  )
 })
 
 test('zone comparison: only when the hour actually spans two named camps', () => {
-  assert.equal(overviewLeveling(farming({ everyMs: MIN, pct: 1 })).zoneCompare, null, 'one camp is no comparison')
+  assert.equal(
+    overviewLeveling(farming({ everyMs: MIN, pct: 1 })).zoneCompare,
+    null,
+    'one camp is no comparison',
+  )
   const snap = farming({ everyMs: MIN, pct: 1 })
   snap.zoneEnd[0] = T0 - 30 * MIN
   snap.zoneStart.push(T0 - 30 * MIN)

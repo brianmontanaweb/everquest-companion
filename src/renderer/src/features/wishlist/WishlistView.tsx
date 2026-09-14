@@ -38,7 +38,13 @@ import { seedWishes, type WishEntry, type WishList } from '@shared/planner/wishl
 import { useGearIndex } from '../gear/gearData'
 import { useRememberedSearch } from '../gear/useAreaMemory'
 import { useBrowseClasses } from '../planner/useBrowseClasses'
-import { CURRENT_ERA_LABEL, eraHides, indexDonors, useDonors, useEraOnly } from '../planner/plannerData'
+import {
+  CURRENT_ERA_LABEL,
+  eraHides,
+  indexDonors,
+  useDonors,
+  useEraOnly,
+} from '../planner/plannerData'
 import { groupNeeds, type FarmNeed } from '../planner/plannerFarm'
 import { usePlannerProgress } from '../planner/plannerProgress'
 import WishAdd from './WishAdd'
@@ -51,9 +57,18 @@ import { useWishlist } from './useWishlist'
 /** The empty state. It names what the tab is FOR, not what it is missing. */
 function NoWishes({ searching }: { searching: boolean }): JSX.Element {
   return (
-    <Stack alignItems="center" justifyContent="center" spacing={1.5} sx={{ py: 6, color: 'text.secondary' }}>
+    <Stack
+      alignItems="center"
+      justifyContent="center"
+      spacing={1.5}
+      sx={{ py: 6, color: 'text.secondary' }}
+    >
       <FavoriteBorderIcon sx={{ fontSize: 44, opacity: 0.6 }} />
-      <Typography variant="body2" data-testid="wishlist-empty" sx={{ maxWidth: 460, textAlign: 'center' }}>
+      <Typography
+        variant="body2"
+        data-testid="wishlist-empty"
+        sx={{ maxWidth: 460, textAlign: 'center' }}
+      >
         {searching
           ? 'No wish on your list matches that.'
           : 'Nothing on your wish list yet. Add an item or an exaltation effect and this becomes a route: where it drops, who camps it, and what is left to merge.'}
@@ -160,7 +175,7 @@ function foldWishes({ list, index, progressOf, eraOnly, text }: FoldInputs): Wis
     groups: groupNeeds(kept, { eraOnly }),
     done,
     hidden: wanted.length - kept.length,
-    outstanding: wanted.length
+    outstanding: wanted.length,
   }
 }
 
@@ -187,7 +202,7 @@ export default function WishlistView({ onOpenLoot }: WishlistViewProps = {}): JS
 
   const index: WishIndices = useMemo(
     () => ({ donors: indexDonors(donorsState.donors), gear: indexGear(gearState.rows) }),
-    [donorsState.donors, gearState.rows]
+    [donorsState.donors, gearState.rows],
   )
 
   useSeedFromPlans({
@@ -195,7 +210,7 @@ export default function WishlistView({ onOpenLoot }: WishlistViewProps = {}): JS
     seeded: wishlist.list.seededFromPlans === true,
     index,
     progressOf: progress.of,
-    seed: wishlist.seed
+    seed: wishlist.seed,
   })
 
   const list = wishlist.list
@@ -203,11 +218,11 @@ export default function WishlistView({ onOpenLoot }: WishlistViewProps = {}): JS
   const importedKeys = useMemo(
     // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 8: WishEntry comes from a corpus still bundled in the renderer (mobs/posky/bosses JSON). Moves behind knowledge queries when that surface cuts over.
     () => new Set(entries.filter((e) => e.source === 'planImport').map((e) => e.itemKey)),
-    [entries]
+    [entries],
   )
   const view = useMemo(
     () => foldWishes({ list, index, progressOf: progress.of, eraOnly, text }),
-    [list, index, progress, eraOnly, text]
+    [list, index, progress, eraOnly, text],
   )
   const wished = useMemo(() => new Set(entries.map((e) => e.itemKey)), [entries])
   const nothing = view.groups.length === 0 && view.done.length === 0
@@ -236,7 +251,12 @@ export default function WishlistView({ onOpenLoot }: WishlistViewProps = {}): JS
         <Box sx={{ flexGrow: 1, minWidth: 8 }} />
         {/* The WHOLE list's length, dismissals and fulfilled rows included — the one number on the
             tab that a Clear must not change, because a dismissal is not a deletion. */}
-        <Typography variant="caption" color="text.secondary" data-testid="wishlist-count" sx={{ flexShrink: 0 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          data-testid="wishlist-count"
+          sx={{ flexShrink: 0 }}
+        >
           {entries.length} {entries.length === 1 ? 'wish' : 'wishes'}
         </Typography>
       </Stack>
@@ -248,7 +268,10 @@ export default function WishlistView({ onOpenLoot }: WishlistViewProps = {}): JS
         outstanding={view.outstanding}
       />
 
-      <Box data-testid="wishlist-list" sx={{ flexGrow: 1, minHeight: 0, overflow: 'auto', pr: 0.5 }}>
+      <Box
+        data-testid="wishlist-list"
+        sx={{ flexGrow: 1, minHeight: 0, overflow: 'auto', pr: 0.5 }}
+      >
         <DoneStrip
           rows={view.done}
           onClear={() => wishlist.dismiss(view.done.map((r) => r.itemKey))}
@@ -265,7 +288,12 @@ export default function WishlistView({ onOpenLoot }: WishlistViewProps = {}): JS
         {/* The era filter can empty a NON-empty list, and it must say so rather than letting the
             list read as "you want nothing" (the JOS-67 lesson, in its smallest form). */}
         {!nothing && view.groups.length === 0 && view.outstanding > 0 && (
-          <Typography variant="body2" color="text.secondary" data-testid="wishlist-all-out-of-era" sx={{ p: 2 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            data-testid="wishlist-all-out-of-era"
+            sx={{ p: 2 }}
+          >
             Every wish still to find is out of {CURRENT_ERA_LABEL}.
           </Typography>
         )}

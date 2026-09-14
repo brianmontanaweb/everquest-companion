@@ -33,7 +33,7 @@ const SLOT_SET: ReadonlySet<string> = new Set<string>(EQUIP_SLOTS)
 const SLOT_RENAMES: Record<string, EquipSlot> = {
   SHOULDER: 'SHOULDERS',
   FINGERS: 'FINGER',
-  SECONDAY: 'SECONDARY'
+  SECONDAY: 'SECONDARY',
 }
 
 /** Punctuation the wiki leaves between slot names. Dropped SILENTLY — it is not an unknown slot. */
@@ -41,7 +41,10 @@ const SLOT_NOISE: ReadonlySet<string> = new Set(['/', '-', '&', 'OR', 'AND'])
 
 /** Strip the trailing punctuation the wiki leaves on a token ("BACK," → "BACK") and fold case. */
 function cleanToken(raw: string): string {
-  return raw.trim().replace(/[,.;:]+$/, '').toUpperCase()
+  return raw
+    .trim()
+    .replace(/[,.;:]+$/, '')
+    .toUpperCase()
 }
 
 /**
@@ -132,7 +135,7 @@ const SOCKET_BY_KIND: Record<ItemEffectKind, SocketType | null> = {
   worn: 'worn',
   focus: 'focus',
   click: 'click',
-  effect: null
+  effect: null,
 }
 
 export function socketTypeOf(kind: ItemEffectKind): SocketType | null {
@@ -172,7 +175,7 @@ const HASTE_EFFECTS: ReadonlySet<string> = new Set([
   'swift spirit',
   'wonderous rapidity',
   'blessing of the grove',
-  'speed of the shissar'
+  'speed of the shissar',
 ])
 
 /** The cast-time FOCUS families. Named explicitly so "contains haste" can never capture them. */
@@ -181,7 +184,7 @@ const HASTE_FOCUS_FAMILIES: ReadonlySet<string> = new Set([
   'affliction haste',
   'summoning haste',
   'enhancement haste',
-  'reanimation haste'
+  'reanimation haste',
 ])
 
 /**
@@ -193,7 +196,11 @@ const HASTE_FOCUS_FAMILIES: ReadonlySet<string> = new Set([
  * invent one. V5's parser feeds a GROUPING and must not invent families, so it is strict.
  */
 function effectFamily(name: string): string {
-  return name.trim().replace(/\s+[IVX]+$/i, '').trim().toLowerCase()
+  return name
+    .trim()
+    .replace(/\s+[IVX]+$/i, '')
+    .trim()
+    .toLowerCase()
 }
 
 // ---- V5: the focus family and its tier ------------------------------------------

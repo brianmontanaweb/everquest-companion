@@ -23,7 +23,7 @@ import {
   searchWishCorpus,
   wishFromDonor,
   wishFromGear,
-  wishFromHit
+  wishFromHit,
 } from '../src/renderer/src/features/wishlist/wishSearch'
 
 const T0 = 1_700_000_000_000
@@ -42,7 +42,7 @@ function gear(name: string, searchKey = name): GearRow {
     quest: false,
     playerCrafted: false,
     stats: {},
-    effects: []
+    effects: [],
   }
 }
 
@@ -58,7 +58,7 @@ function donor(name: string, effect: string): DonorRow {
     tierRequired: 4,
     hasteLocked: false,
     quest: false,
-    playerCrafted: false
+    playerCrafted: false,
   }
 }
 
@@ -68,12 +68,12 @@ function donor(name: string, effect: string): DonorRow {
 const GEAR: GearRow[] = [
   gear('Blade of Light', 'Blade of Light Frost Strike'),
   gear('Blade Guard'),
-  gear('Reinforced Breastplate', 'Reinforced Breastplate Improved Healing III')
+  gear('Reinforced Breastplate', 'Reinforced Breastplate Improved Healing III'),
 ]
 const DONORS: DonorRow[] = [
   donor('Blade of Light', 'Frost Strike'),
   donor('Blade of Light', 'Aura of Battle'),
-  donor('Elixir of Speed', 'Improved Healing III')
+  donor('Elixir of Speed', 'Improved Healing III'),
 ]
 
 // ---- the union ------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ test('one query reaches BOTH indices, and every row says which kind it is', () =
   assert.ok(kinds.has('donor'), 'no donor row came back')
   assert.ok(
     hits.every((h) => h.kind === 'gear' || h.kind === 'donor'),
-    'every hit must be labelled'
+    'every hit must be labelled',
   )
 })
 
@@ -93,7 +93,7 @@ test('a donor-only item is reachable — a potion states no equip slot and is no
   const hits = searchWishCorpus(GEAR, DONORS, 'elixir')
   assert.deepEqual(
     hits.map((h) => `${h.kind}:${h.name}`),
-    ['donor:Elixir of Speed']
+    ['donor:Elixir of Speed'],
   )
   assert.equal(hits[0].effect, 'Improved Healing III')
   assert.equal(hits[0].socket, 'proc')
@@ -118,7 +118,7 @@ test("an item's offers are ADJACENT, gear row first — three results with one n
   // The donor rows are ordered by their own effect name, so the list is stable across runs.
   assert.deepEqual(
     light.slice(1).map((h) => h.effect),
-    ['Aura of Battle', 'Frost Strike']
+    ['Aura of Battle', 'Frost Strike'],
   )
 })
 
@@ -130,15 +130,19 @@ test('a NAME match outranks an effect-only match — typing a name meant the nam
   assert.equal(hits[0].name, 'Frostbrand', hits.map((h) => h.name).join(', '))
   assert.ok(
     hits.some((h) => h.name === 'Blade of Light'),
-    'the effect-only match is still an answer, just not the leading one'
+    'the effect-only match is still an answer, just not the leading one',
   )
 })
 
 test('a name SUBSTRING sits between a prefix and an effect-only match', () => {
-  const rows = [gear('Frostbrand'), gear('Blade of Frost'), gear('Plain Helm', 'Plain Helm Frost Strike')]
+  const rows = [
+    gear('Frostbrand'),
+    gear('Blade of Frost'),
+    gear('Plain Helm', 'Plain Helm Frost Strike'),
+  ]
   assert.deepEqual(
     searchWishCorpus(rows, [], 'frost').map((h) => h.name),
-    ['Frostbrand', 'Blade of Frost', 'Plain Helm']
+    ['Frostbrand', 'Blade of Frost', 'Plain Helm'],
   )
 })
 
@@ -146,7 +150,7 @@ test('the shortest name wins a tie, then alphabetical — main`s own picker rule
   const rows = [gear('Ring of Pureblood'), gear('Ring'), gear('Ring of Ash')]
   assert.deepEqual(
     searchWishCorpus(rows, [], 'ring').map((h) => h.name),
-    ['Ring', 'Ring of Ash', 'Ring of Pureblood']
+    ['Ring', 'Ring of Ash', 'Ring of Pureblood'],
   )
 })
 
@@ -172,7 +176,7 @@ test('a taken GEAR offer records the item and claims nothing about an effect', (
     name: 'Blade Guard',
     kind: 'gear',
     addedAt: T0,
-    source: 'user'
+    source: 'user',
   })
 })
 
@@ -185,7 +189,7 @@ test('a taken DONOR offer carries the effect AND the socket — the socket is wh
     effect: 'Frost Strike',
     socket: 'proc',
     addedAt: T0,
-    source: 'user'
+    source: 'user',
   })
 })
 
@@ -194,9 +198,12 @@ test('`wishFromHit` dispatches on the hit`s own kind, and both are labelled `use
   const entries = hits.map((h) => wishFromHit(h, T0))
   assert.deepEqual(
     entries.map((e) => e.kind),
-    hits.map((h) => h.kind)
+    hits.map((h) => h.kind),
   )
-  assert.ok(entries.every((e) => e.source === 'user'), 'nothing the user clicked may claim to be an import')
+  assert.ok(
+    entries.every((e) => e.source === 'user'),
+    'nothing the user clicked may claim to be an import',
+  )
   // Every offer for one item lands on the SAME key, which is what makes the list dedupe them.
   const light = entries.filter((e) => e.name === 'Blade of Light')
   assert.equal(new Set(light.map((e) => e.itemKey)).size, 1)

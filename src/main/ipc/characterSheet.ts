@@ -33,7 +33,7 @@ import {
   type SheetCell,
   type SheetCellView,
   type SheetItemView,
-  type WornItemBlock
+  type WornItemBlock,
 } from '../../shared/characterSheet'
 import { loadInventoryDump } from '../outputs'
 import { getActiveCharacter } from '../session'
@@ -91,7 +91,7 @@ export function registerCharacterSheetIpc(): void {
       totals: sumGear(worn.map(wornOf)),
       // …and the SAME parse, flattened (JOS-327). No DB join and no second read of the file: the
       // ledger the carry-all table draws is by construction the same bytes the grid above it drew.
-      carry: carryAll(loaded.dump)
+      carry: carryAll(loaded.dump),
     }
   })
 }

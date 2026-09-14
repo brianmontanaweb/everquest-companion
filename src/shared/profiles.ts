@@ -32,14 +32,14 @@ export const PROFILES: GameProfile[] = [
     id: 'eqlegends',
     label: 'EverQuest Legends',
     description: 'Daybreak EverQuest Legends server - quest data from eqlwiki.com',
-    available: true
+    available: true,
   },
   {
     id: 'p99',
     label: 'Project 1999',
     description: 'Classic EQ emulator (wiki.project1999.com) - not yet imported',
-    available: false
-  }
+    available: false,
+  },
 ]
 
 export const DEFAULT_PROFILE = 'eqlegends'
@@ -138,7 +138,7 @@ import {
   type AlertSetBody,
   type ExportableOverlayConfig,
   type SettingsBundleBody,
-  type ShareKind
+  type ShareKind,
 } from './shareSchema'
 import type { AlertMergeItem, ScalarChange } from './shareMerge'
 import { clampBgAlpha, type OverlayBgAlphaPrefs } from './overlayBgAlpha'
@@ -162,7 +162,7 @@ export {
   clampStr,
   clamp01,
   sanitizeAlertDef,
-  validateEnvelope
+  validateEnvelope,
 } from './shareSchema'
 export type {
   ShareKind,
@@ -174,7 +174,7 @@ export type {
   UiPrefMerge,
   UiPrefSpec,
   ShareDecodeError,
-  ShareValidation
+  ShareValidation,
 } from './shareSchema'
 
 export {
@@ -183,7 +183,7 @@ export {
   applyAlertMerge,
   planScalarChanges,
   mergeUiPref,
-  defaultSelectedScalars
+  defaultSelectedScalars,
 } from './shareMerge'
 export type { AlertMergeAction, AlertMergeItem, ScalarChange, ScalarContext } from './shareMerge'
 
@@ -213,7 +213,7 @@ export function buildAlertSetBody(alerts: AlertDef[], ids?: readonly string[]): 
 
 /** The overlay PREFERENCES (never the geometry), projected out of the stored configs. */
 function exportableOverlays(
-  stored: SettingsExportInput['overlays']
+  stored: SettingsExportInput['overlays'],
 ): Partial<Record<OverlayKind, ExportableOverlayConfig>> {
   const overlays: Partial<Record<OverlayKind, ExportableOverlayConfig>> = {}
   for (const kind of EXPORTABLE_OVERLAY_KINDS) {
@@ -251,7 +251,7 @@ export function buildSettingsBody(input: SettingsExportInput): SettingsBundleBod
     // Projected only when TRUE (JOS-222), the same rule the store writes it by: a bundle from a
     // machine with the audio throttle on is byte-identical to one written before the preference
     // existed, so no old share string suddenly grows a row it never carried.
-    ...(input.alertPrefs?.alwaysPlayAll === true ? { alwaysPlayAll: true } : {})
+    ...(input.alertPrefs?.alwaysPlayAll === true ? { alwaysPlayAll: true } : {}),
   }
   const overlays = exportableOverlays(input.overlays)
   if (Object.keys(overlays).length) body.overlays = overlays
@@ -263,7 +263,7 @@ export function buildSettingsBody(input: SettingsExportInput): SettingsBundleBod
   if (input.overlayBgAlpha) {
     body.overlayBgAlpha = {
       shared: clampBgAlpha(input.overlayBgAlpha.shared),
-      independent: input.overlayBgAlpha.independent
+      independent: input.overlayBgAlpha.independent,
     }
   }
   const ui = exportableUiPrefs(input.ui)
@@ -307,9 +307,12 @@ export function describeTrigger(t: AlertTrigger): string {
   const one = (p: AlertTrigger): string => {
     if ('conditions' in p) return ''
     if (p.type === 'event') {
-      const where = p.where && Object.keys(p.where).length
-        ? ` {${Object.entries(p.where).map(([k, v]) => `${k}=${v}`).join(', ')}}`
-        : ''
+      const where =
+        p.where && Object.keys(p.where).length
+          ? ` {${Object.entries(p.where)
+              .map(([k, v]) => `${k}=${v}`)
+              .join(', ')}}`
+          : ''
       return `event:${p.kind}${where}`
     }
     if (p.type === 'raw') return `raw:/${p.regex}/i`

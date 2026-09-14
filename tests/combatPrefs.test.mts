@@ -51,7 +51,7 @@ import {
   toggleHiddenLine,
   withAbility,
   withDrill,
-  type DrillMemory
+  type DrillMemory,
 } from '../src/renderer/src/features/combat/combatPrefs'
 import { METER_SCOPES } from '../src/shared/roster'
 
@@ -82,7 +82,17 @@ test('each of the three scopes round-trips, and nothing else does', () => {
   for (const s of METER_SCOPES) assert.equal(readMeterScope(s), s)
   // Hand-edited, capitalised, a future build's fourth state, or a whole JSON blob in the slot:
   // every one of them is the DEFAULT rather than an empty meter.
-  for (const junk of ['You', 'GROUP', 'party', 'raid', '{"scope":"you"}', ' you', 'you ', '0', 'null']) {
+  for (const junk of [
+    'You',
+    'GROUP',
+    'party',
+    'raid',
+    '{"scope":"you"}',
+    ' you',
+    'you ',
+    '0',
+    'null',
+  ]) {
     assert.equal(readMeterScope(junk), 'everyone', `${junk} must degrade to the default`)
   }
 })
@@ -92,7 +102,10 @@ test('the scope is ONE key for every surface — no per-surface suffix survives'
   // left inert; what matters here is that the live key is the bare one, so the Combat tab, the
   // Overview card and every floating overlay are reading and writing the same string.
   assert.equal(METER_SCOPE_KEY, 'eq.combat.meterScope')
-  assert.ok(!METER_SCOPE_KEY.endsWith('.'), 'the key is complete, not a prefix a surface appends to')
+  assert.ok(
+    !METER_SCOPE_KEY.endsWith('.'),
+    'the key is complete, not a prefix a surface appends to',
+  )
 })
 
 // ── JOS-116: where you had drilled to ────────────────────────────────────────────────────
@@ -118,7 +131,7 @@ test('an unreadable stored drill degrades to level 1 rather than to an error', (
     '{"d":{"kind":"entity"}}', // an arm with no id
     '{"d":{"kind":"entity","entityId":""}}',
     '{"d":{"kind":"target","target":42}}',
-    '{"d":"you"}'
+    '{"d":"you"}',
   ]
   for (const raw of bad) {
     assert.deepEqual(parseDrillMemory(raw), NO_DRILL, `${String(raw)} must resolve to level 1`)
@@ -128,7 +141,7 @@ test('an unreadable stored drill degrades to level 1 rather than to an error', (
 test('a real drill round-trips through the store, abilities and all', () => {
   const m: DrillMemory = {
     drill: { kind: 'entity', entityId: 'you' },
-    abilities: [abilityKey('melee', 'Kick'), abilityKey('spell', 'Dragon Punch')]
+    abilities: [abilityKey('melee', 'Kick'), abilityKey('spell', 'Dragon Punch')],
   }
   const raw = serializeDrillMemory(m)
   assert.ok(raw !== null)
@@ -148,7 +161,7 @@ test('a real drill round-trips through the store, abilities and all', () => {
 test('the drilled row NAME round-trips beside its id', () => {
   const m: DrillMemory = {
     drill: { kind: 'entity', entityId: 'pet:i7', name: 'Gorlag' },
-    abilities: [abilityKey('melee', 'Bash')]
+    abilities: [abilityKey('melee', 'Bash')],
   }
   const raw = serializeDrillMemory(m)
   assert.ok(raw !== null)
@@ -171,7 +184,7 @@ test('an unusable name is normalised away rather than passed to the builder', ()
     '{"d":{"kind":"entity","entityId":"you","name":""}}',
     '{"d":{"kind":"entity","entityId":"you","name":42}}',
     '{"d":{"kind":"entity","entityId":"you","name":null}}',
-    '{"d":{"kind":"entity","entityId":"you","name":{"first":"You"}}}'
+    '{"d":{"kind":"entity","entityId":"you","name":{"first":"You"}}}',
   ]) {
     assert.deepEqual(parseDrillMemory(raw).drill, { kind: 'entity', entityId: 'you' }, raw)
   }
@@ -180,13 +193,20 @@ test('an unusable name is normalised away rather than passed to the builder', ()
 test('the name is a resolution hint, not part of WHO the subject is', () => {
   // Re-drilling the same id keeps the expansions even if the name travelling with it differs (a
   // row relabelled between renders). Only the id decides whether the subject changed.
-  const open: DrillMemory = { drill: { kind: 'entity', entityId: 'pet:i7', name: 'Gorlag' }, abilities: ['melee|Bash'] }
+  const open: DrillMemory = {
+    drill: { kind: 'entity', entityId: 'pet:i7', name: 'Gorlag' },
+    abilities: ['melee|Bash'],
+  }
   assert.equal(withDrill(open, { kind: 'entity', entityId: 'pet:i7', name: 'Gorlag' }), open)
-  assert.equal(withDrill(open, { kind: 'entity', entityId: 'pet:i7' }), open, 'same id, no name ⇒ same subject')
+  assert.equal(
+    withDrill(open, { kind: 'entity', entityId: 'pet:i7' }),
+    open,
+    'same id, no name ⇒ same subject',
+  )
   // …and a genuinely different pet still drops them, name or no name.
   assert.deepEqual(withDrill(open, { kind: 'entity', entityId: 'pet:i9', name: 'Vebarn' }), {
     drill: { kind: 'entity', entityId: 'pet:i9', name: 'Vebarn' },
-    abilities: []
+    abilities: [],
   })
 })
 
@@ -204,16 +224,24 @@ test('expanded abilities with NO drill are legal — that is the Incoming direct
 })
 
 test('junk inside the ability list is dropped, not carried', () => {
-  const m = parseDrillMemory('{"d":{"kind":"entity","entityId":"you"},"a":["melee|Kick",7,null,"",{"x":1}]}')
+  const m = parseDrillMemory(
+    '{"d":{"kind":"entity","entityId":"you"},"a":["melee|Kick",7,null,"",{"x":1}]}',
+  )
   assert.deepEqual(m.drill, { kind: 'entity', entityId: 'you' })
   assert.deepEqual(m.abilities, ['melee|Kick'])
   // `a` missing entirely, or the wrong type, is simply nothing expanded.
   assert.deepEqual(parseDrillMemory('{"d":{"kind":"entity","entityId":"you"}}').abilities, [])
-  assert.deepEqual(parseDrillMemory('{"d":{"kind":"entity","entityId":"you"},"a":"melee|Kick"}').abilities, [])
+  assert.deepEqual(
+    parseDrillMemory('{"d":{"kind":"entity","entityId":"you"},"a":"melee|Kick"}').abilities,
+    [],
+  )
 })
 
 test('changing the drilled SUBJECT drops the expansions; re-drilling the same one keeps them', () => {
-  const open: DrillMemory = { drill: { kind: 'entity', entityId: 'you' }, abilities: ['melee|Kick'] }
+  const open: DrillMemory = {
+    drill: { kind: 'entity', entityId: 'you' },
+    abilities: ['melee|Kick'],
+  }
 
   // The same subject again is not a reset — a click that lands where you already are changes
   // nothing, and returns the SAME object so no write and no re-render is provoked.
@@ -223,12 +251,12 @@ test('changing the drilled SUBJECT drops the expansions; re-drilling the same on
   // the pet's would open whatever happened to share the name.
   assert.deepEqual(withDrill(open, { kind: 'entity', entityId: 'pet:Gorlag' }), {
     drill: { kind: 'entity', entityId: 'pet:Gorlag' },
-    abilities: []
+    abilities: [],
   })
   // A mob drill is a subject change too.
   assert.deepEqual(withDrill(open, { kind: 'target', target: 'a puma' }), {
     drill: { kind: 'target', target: 'a puma' },
-    abilities: []
+    abilities: [],
   })
 
   // UN-DRILLING IS ALWAYS A FULL RESET — `null` is not a subject you can already be on, and Back /
@@ -248,7 +276,11 @@ test('an ability opens and closes idempotently, and a no-op click writes nothing
   assert.deepEqual(two.abilities, ['melee|Kick', 'spell|Dragon Punch'])
 
   assert.equal(withAbility(two, 'melee|Kick', true), two, 'opening an open ability changes nothing')
-  assert.equal(withAbility(base, 'melee|Kick', false), base, 'closing a closed ability changes nothing')
+  assert.equal(
+    withAbility(base, 'melee|Kick', false),
+    base,
+    'closing a closed ability changes nothing',
+  )
 
   assert.deepEqual(withAbility(two, 'melee|Kick', false).abilities, ['spell|Dragon Punch'])
   // Closing the last one leaves the drill standing — collapsing stats is not backing out.
@@ -283,7 +315,11 @@ test('a stored hidden set round-trips, in legend order however it was clicked', 
   assert.equal(serializeHiddenLines(['inc', 'pet']), 'pet,inc')
   assert.equal(serializeHiddenLines(['slow', 'out']), 'out,slow')
   for (const k of CHART_LINE_KEYS) {
-    assert.deepEqual(parseHiddenLines(serializeHiddenLines([k])), [k], `${k} must survive a round trip`)
+    assert.deepEqual(
+      parseHiddenLines(serializeHiddenLines([k])),
+      [k],
+      `${k} must survive a round trip`,
+    )
   }
 })
 
@@ -294,9 +330,17 @@ test('an unreadable token is dropped, never the whole set — one bad name canno
   assert.deepEqual(parseHiddenLines('pet,heals,inc'), ['pet', 'inc'])
   assert.deepEqual(parseHiddenLines('nonsense'), [])
   assert.deepEqual(parseHiddenLines(',,,'), [])
-  assert.deepEqual(parseHiddenLines(' pet , inc '), ['pet', 'inc'], 'whitespace is not part of a name')
+  assert.deepEqual(
+    parseHiddenLines(' pet , inc '),
+    ['pet', 'inc'],
+    'whitespace is not part of a name',
+  )
   assert.deepEqual(parseHiddenLines('pet,pet'), ['pet'], 'a repeat is one line, not two')
-  assert.deepEqual(parseHiddenLines('PET'), [], 'the names are exact — a case-folded guess is a guess')
+  assert.deepEqual(
+    parseHiddenLines('PET'),
+    [],
+    'the names are exact — a case-folded guess is a guess',
+  )
 })
 
 test('EVERY line hidden is a legal, storable state', () => {

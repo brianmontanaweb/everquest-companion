@@ -50,7 +50,8 @@ function loadClasses(): ClassAbbr[] {
   const out: ClassAbbr[] = []
   for (const token of raw.split(',')) {
     const abbr = token.trim() as ClassAbbr
-    if (CLASS_ABBRS.includes(abbr) && !out.includes(abbr) && out.length < MAX_COMBO_SLOTS) out.push(abbr)
+    if (CLASS_ABBRS.includes(abbr) && !out.includes(abbr) && out.length < MAX_COMBO_SLOTS)
+      out.push(abbr)
   }
   return out
 }
@@ -85,17 +86,23 @@ export function useBrowseClasses(): BrowseClassesApi {
     setProvenance(from)
   }, [])
 
-  const set = useCallback((next: readonly ClassAbbr[]) => {
-    write(next, 'user')
-  }, [write])
+  const set = useCallback(
+    (next: readonly ClassAbbr[]) => {
+      write(next, 'user')
+    },
+    [write],
+  )
 
   // `adopt` deliberately re-writes the CURRENT provenance rather than taking one: a following
   // filter stays following, and a pinned one that accepts today's detection stays pinned — the
   // user accepted one answer, not handed the filter back forever (plannerClasses.ts states the
   // rule; this is the write half of it).
-  const adopt = useCallback((next: readonly ClassAbbr[]) => {
-    write(next, provenance)
-  }, [write, provenance])
+  const adopt = useCallback(
+    (next: readonly ClassAbbr[]) => {
+      write(next, provenance)
+    },
+    [write, provenance],
+  )
 
   return { classes, provenance, set, adopt }
 }

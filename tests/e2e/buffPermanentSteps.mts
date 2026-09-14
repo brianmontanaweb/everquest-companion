@@ -54,7 +54,9 @@ function castPermanent(log: FixtureLog): void {
 /** Every drop notice currently on screen. */
 async function dropNotices(overlay: Page): Promise<string[]> {
   return overlay.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="buff-timer-drop"]')].map((e) => e.textContent?.trim() ?? '')
+    [...document.querySelectorAll('[data-testid="buff-timer-drop"]')].map(
+      (e) => e.textContent?.trim() ?? '',
+    ),
   )
 }
 
@@ -69,43 +71,69 @@ export async function stepPermanentRows(overlay: Page, log: FixtureLog): Promise
   check(
     'a permanent buff is HIDDEN by default — the owner ruling, on the window a new install gets',
     !hidden.some((r) => r.name === SPELL),
-    JSON.stringify(hidden.map((r) => r.name))
+    JSON.stringify(hidden.map((r) => r.name)),
   )
   check(
     '…and so is every other row that never expires',
     !hidden.some((r) => r.mode === 'permanent'),
-    JSON.stringify(hidden.filter((r) => r.mode === 'permanent'))
+    JSON.stringify(hidden.filter((r) => r.mode === 'permanent')),
   )
 
   // 2. …AND THE PREFERENCE REVEALS IT. The same landing, the same instant: what changed is one
   //    persisted per-kind flag. This is what makes the absence above a claim about the FILTER
   //    rather than about the model having refused the landing all over again.
   await setShowPermanent(overlay, true)
-  const shown = await settle(() => timerRows(overlay), (r) => r.some((x) => x.name === SPELL), {
-    timeoutMs: 20_000
-  })
+  const shown = await settle(
+    () => timerRows(overlay),
+    (r) => r.some((x) => x.name === SPELL),
+    {
+      timeoutMs: 20_000,
+    },
+  )
   const row = shown.find((r) => r.name === SPELL)
-  if (!check(`switching the roster on draws ${SPELL}`, row !== undefined, JSON.stringify(shown.map((r) => r.name)))) {
+  if (
+    !check(
+      `switching the roster on draws ${SPELL}`,
+      row !== undefined,
+      JSON.stringify(shown.map((r) => r.name)),
+    )
+  ) {
     return
   }
   // NO CLOCK, AND IT SAYS SO. `mode: 'permanent'` is the model's answer and `permanent` is the
   // word the time column prints — never a countdown, and never a `+` count-up either.
   check('…as a row with no timer at all', row?.mode === 'permanent', JSON.stringify(row))
-  check('…whose time column says so in a word', row?.time === 'permanent', JSON.stringify(row?.time))
+  check(
+    '…whose time column says so in a word',
+    row?.time === 'permanent',
+    JSON.stringify(row?.time),
+  )
   check('…under Your buffs — it is a self buff', row?.target === '', JSON.stringify(row?.target))
-  check('…and it draws no receding bar', (await barsFor(overlay, SPELL)) === 0, `${SPELL} must have no bar`)
+  check(
+    '…and it draws no receding bar',
+    (await barsFor(overlay, SPELL)) === 0,
+    `${SPELL} must have no bar`,
+  )
 
   // 3. SWITCHING IT BACK OFF IS NOT A DROP. The row leaves, and the window says nothing about it —
   //    the epoch guard in `useDropFlash`. Without it, hiding the roster would announce every
   //    permanent buff the user has as having just worn off.
   await setShowPermanent(overlay, false)
-  const gone = await settle(() => timerRows(overlay), (r) => !r.some((x) => x.name === SPELL), { timeoutMs: 20_000 })
-  check('switching it back off hides the row again', !gone.some((r) => r.name === SPELL), JSON.stringify(gone.map((r) => r.name)))
+  const gone = await settle(
+    () => timerRows(overlay),
+    (r) => !r.some((x) => x.name === SPELL),
+    { timeoutMs: 20_000 },
+  )
+  check(
+    'switching it back off hides the row again',
+    !gone.some((r) => r.name === SPELL),
+    JSON.stringify(gone.map((r) => r.name)),
+  )
   const notices = await settleStable(() => dropNotices(overlay), { timeoutMs: 10_000 })
   check(
     '…and the window does NOT announce it as a drop — a preference is not a spell wearing off',
     !notices.some((t) => t.includes(SPELL)),
-    JSON.stringify(notices)
+    JSON.stringify(notices),
   )
 }
 
@@ -114,8 +142,8 @@ async function barsFor(overlay: Page, spell: string): Promise<number> {
   return overlay.evaluate(
     (name) =>
       document.querySelectorAll(
-        `[data-testid="buff-timer-row"][data-spell="${name}"] [data-testid="buff-timer-fill"]`
+        `[data-testid="buff-timer-row"][data-spell="${name}"] [data-testid="buff-timer-fill"]`,
       ).length,
-    spell
+    spell,
   )
 }

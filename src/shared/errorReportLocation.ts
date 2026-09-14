@@ -78,7 +78,7 @@ const EXT_SEGMENT = String.raw`[A-Za-z0-9_-][A-Za-z0-9_.-]{0,39}`
 const EXTERNAL_FILE_RE = new RegExp(
   `^(?:node:${EXT_SEGMENT}(?:/${EXT_SEGMENT}){0,2}` +
     `|electron/${EXT_SEGMENT}(?:/${EXT_SEGMENT}){0,2}` +
-    `|node_modules/(?:@${EXT_SEGMENT}/)?${EXT_SEGMENT})$`
+    `|node_modules/(?:@${EXT_SEGMENT}/)?${EXT_SEGMENT})$`,
 )
 
 /** The producer's copy of the wire's external-file pattern, exported for the parity pin only. */
@@ -208,7 +208,7 @@ export function caughtFields(payload: unknown, depth = 0): CaughtFields {
       message: payload.message,
       stack: payload.stack,
       // Node hangs `code` off the error object; it is not on the `Error` type.
-      code: (payload as unknown as { code?: unknown }).code
+      code: (payload as unknown as { code?: unknown }).code,
     }
     return typeof payload.stack === 'string' ? self : merge(self, payload, depth)
   }
@@ -230,7 +230,7 @@ function merge(outer: CaughtFields, from: object, depth: number): CaughtFields {
     name: outer.name ?? inner.name,
     message: outer.message ?? inner.message,
     stack: inner.stack,
-    code: outer.code ?? inner.code
+    code: outer.code ?? inner.code,
   }
 }
 

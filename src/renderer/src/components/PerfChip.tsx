@@ -27,7 +27,7 @@ import {
   lagSeverity,
   sparklinePoints,
   type PerfHudSample,
-  type PerfSeverity
+  type PerfSeverity,
 } from '@shared/perf'
 import { usePerfHud } from '../lib/perfHud'
 import { useEnginePerf } from '../lib/enginePerfHud'
@@ -40,13 +40,13 @@ import { Tooltip } from '../lib/Tooltip'
 const SEVERITY_COLOR: Record<PerfSeverity, string> = {
   normal: 'text.secondary',
   warn: 'warning.main',
-  alert: 'error.main'
+  alert: 'error.main',
 }
 
 const SEVERITY_TITLE: Record<PerfSeverity, string> = {
   normal: 'Performance - the event loop is keeping up',
   warn: 'Performance - the event loop is running late (click for detail)',
-  alert: 'Performance - the event loop stalled (click for detail)'
+  alert: 'Performance - the event loop stalled (click for detail)',
 }
 
 const SPARK_W = 240
@@ -64,7 +64,13 @@ function Sparkline({ values, color }: { values: number[]; color: string }): JSX.
       preserveAspectRatio="none"
       sx={{ width: '100%', height: SPARK_H, display: 'block' }}
     >
-      <polyline points={points} fill="none" stroke={color} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        vectorEffect="non-scaling-stroke"
+      />
     </Box>
   )
 }
@@ -102,7 +108,13 @@ function TypeTable({ sample }: { sample: PerfHudSample }): JSX.Element {
 }
 
 /** The lag block: the numbers the chip's colour came from, stated rather than implied. */
-function LagFacts({ sample, longtasks }: { sample: PerfHudSample; longtasks: number }): JSX.Element {
+function LagFacts({
+  sample,
+  longtasks,
+}: {
+  sample: PerfHudSample
+  longtasks: number
+}): JSX.Element {
   const measured = sample.lag.samples > 0
   return (
     <Stack spacing={0.25}>
@@ -128,7 +140,7 @@ function LagFacts({ sample, longtasks }: { sample: PerfHudSample; longtasks: num
 function PerfDetail({
   ring,
   latest,
-  open
+  open,
 }: {
   ring: PerfHudSample[]
   latest: PerfHudSample
@@ -213,7 +225,7 @@ export default function PerfChip(): JSX.Element | null {
             fontVariantNumeric: 'tabular-nums',
             transition: 'background-color 120ms, color 120ms, border-color 120ms',
             '& svg': { fontSize: 14 },
-            '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' }
+            '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
           }}
         >
           <SpeedIcon />

@@ -186,7 +186,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'Someone is engulfed by a swarm.',
     attribution: 'sole',
     evidence:
-      'Reported by a 0.14.0 druid and slice-proven for Drifting Death itself. Owner log: 12 lines of `<T> is engulfed by a swarm.` with no DB owner, 0 of the wiki form. The other three are the same druid DoT ladder (Stinging Swarm 10 → Creeping Crud 24 → Drones of Doom 32 → Drifting Death 40) sharing ONE wiki sentence, so whatever that sentence is it is the same for all four; Winged Death 53 writes a different one and is untouched.'
+      'Reported by a 0.14.0 druid and slice-proven for Drifting Death itself. Owner log: 12 lines of `<T> is engulfed by a swarm.` with no DB owner, 0 of the wiki form. The other three are the same druid DoT ladder (Stinging Swarm 10 → Creeping Crud 24 → Drones of Doom 32 → Drifting Death 40) sharing ONE wiki sentence, so whatever that sentence is it is the same for all four; Winged Death 53 writes a different one and is untouched.',
   },
   // --- the same preposition, three more families ------------------------------------------------
   // THE DARKNESS LINE, IN TWO PASSES — and the second one is why the first was written carefully.
@@ -210,7 +210,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'Someone is engulfed by darkness.',
     attribution: 'db',
     evidence:
-      'Owner log: 123 lines of `<T> is engulfed by darkness.` with no DB owner, 0 of the wiki form, and 78 first-person `You are engulfed by darkness.` matching this same entry`s own msgCastOnYou.'
+      'Owner log: 123 lines of `<T> is engulfed by darkness.` with no DB owner, 0 of the wiki form, and 78 first-person `You are engulfed by darkness.` matching this same entry`s own msgCastOnYou.',
   },
   {
     spells: ['Cascading Darkness', 'Dooming Darkness'],
@@ -219,7 +219,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'Someone is engulfed by darkness.',
     attribution: 'cast',
     evidence:
-      'THE REPORTED DEFECT (01KZNWX8Y6YWXQ8YRM8KGWN48E, v0.18.0, an SK/necro). Owner log, 1,557,569 lines: `<T> is engulfed in darkness.` occurs ZERO times while `<Name> begins casting Dooming Darkness.` occurs 159 times and `Cascading Darkness` 36 — so both ranks ARE cast here, which is precisely what JOS-150 could not establish and why it left them alone. 17 of the 159 Dooming casts and 1 of the 36 Cascading casts are followed within 12 s (p50 3 s) by `<T> is engulfed by darkness.`; the rate is low because that sentence is SHARED with Engulfing Darkness (249 casts, 106 matched) and only the nearest cast can claim each of the 124 landings. Purely additive to the table: the suffix already exists, so this adds two candidates to a sentence the cast anchor already resolves and creates no new tail.'
+      'THE REPORTED DEFECT (01KZNWX8Y6YWXQ8YRM8KGWN48E, v0.18.0, an SK/necro). Owner log, 1,557,569 lines: `<T> is engulfed in darkness.` occurs ZERO times while `<Name> begins casting Dooming Darkness.` occurs 159 times and `Cascading Darkness` 36 — so both ranks ARE cast here, which is precisely what JOS-150 could not establish and why it left them alone. 17 of the 159 Dooming casts and 1 of the 36 Cascading casts are followed within 12 s (p50 3 s) by `<T> is engulfed by darkness.`; the rate is low because that sentence is SHARED with Engulfing Darkness (249 casts, 106 matched) and only the nearest cast can claim each of the 124 landings. Purely additive to the table: the suffix already exists, so this adds two candidates to a sentence the cast anchor already resolves and creates no new tail.',
   },
   // THE BARD BINDING PAIR — NOT CORRECTED FOR THREE TICKETS, AND CORRECTED NOW (JOS-384).
   //
@@ -256,7 +256,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'Someone is bound by strands of solid music.',
     attribution: 'cast',
     evidence:
-      "Owner log, 2,013,844 lines (whole-log, read-only, measured 2026-08-16): `<T> is bound in strands of solid music.` occurs ZERO times, `<T> is bound by strands of solid music.` 4,152 times. The attribution is the RESIST line rather than a cast line, because the aura prints no cast line at all — `You begin singing` occurs 0 times for either song in the whole log — and `<T> resisted your Largo's Melodic Binding!` is first-person, names the spell outright, and occurs 570 times against 0 for the Assonant form; the two shapes interleave on one six-second grid while the character is level 21-24, and a level-21 bard cannot have a level-51 song. Corroborated the `db` way as well: Assonant carries this exact replacement text verbatim, so the DB is its own witness for the wording. Purely additive at the suffix table — Assonant has owned `is bound by strands of solid music.` since the scrape, so this adds a second candidate to a sentence the cast anchor already resolves and mints no new tail."
+      "Owner log, 2,013,844 lines (whole-log, read-only, measured 2026-08-16): `<T> is bound in strands of solid music.` occurs ZERO times, `<T> is bound by strands of solid music.` 4,152 times. The attribution is the RESIST line rather than a cast line, because the aura prints no cast line at all — `You begin singing` occurs 0 times for either song in the whole log — and `<T> resisted your Largo's Melodic Binding!` is first-person, names the spell outright, and occurs 570 times against 0 for the Assonant form; the two shapes interleave on one six-second grid while the character is level 21-24, and a level-21 bard cannot have a level-51 song. Corroborated the `db` way as well: Assonant carries this exact replacement text verbatim, so the DB is its own witness for the wording. Purely additive at the suffix table — Assonant has owned `is bound by strands of solid music.` since the scrape, so this adds a second candidate to a sentence the cast anchor already resolves and mints no new tail.",
   },
   // STILL NOT CORRECTED, and for the reason the entry above has now outgrown: Selo's Chords of
   // Cessation says `in chords` in the wiki against 7 log lines of `by chords` with no DB owner.
@@ -271,7 +271,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'You feel resistant to magic.',
     attribution: 'cast',
     evidence:
-      'Resist Magic 2/4 casts (+3 s each); owner log 2 lines of the `to` form, 0 of the `from` form. The other two casts produced no landing at all.'
+      'Resist Magic 2/4 casts (+3 s each); owner log 2 lines of the `to` form, 0 of the `from` form. The other two casts produced no landing at all.',
   },
   // --- the root line: the wiki names the feet, the game names the target ------------------------
   {
@@ -281,7 +281,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'Someone adheres to the ground.',
     attribution: 'cast',
     evidence:
-      'Root 1/1 cast (+2 s). Owner log: 493 lines of `<T> adheres to the ground.` with NO DB owner at all, 0 of the wiki form. The cast-on-YOU half (`Your feet adhere to the ground.`, 798 lines) is correct and untouched.'
+      'Root 1/1 cast (+2 s). Owner log: 493 lines of `<T> adheres to the ground.` with NO DB owner at all, 0 of the wiki form. The cast-on-YOU half (`Your feet adhere to the ground.`, 798 lines) is correct and untouched.',
   },
   {
     spells: ['Immobilize'],
@@ -290,7 +290,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'Someone adheres to the ground.',
     attribution: 'cast',
     evidence:
-      'Immobilize 14/14 casts (0-8 s). Same 493 lines as the entry above; Immobilize spells the possessive without the wiki space, hence the separate `from`.'
+      'Immobilize 14/14 casts (0-8 s). Same 493 lines as the entry above; Immobilize spells the possessive without the wiki space, hence the separate `from`.',
   },
   // --- the subject placeholder the scrape lost: no `Someone`, so NO suffix and no event ----------
   //
@@ -305,7 +305,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: "Target's skin blisters as it is consumed by pure mana.",
     to: "Someone's skin blisters as it is consumed by pure mana.",
     attribution: 'cast',
-    evidence: '347/352 casts (0-2 s); owner log 341 lines of the shape, which had no DB owner.'
+    evidence: '347/352 casts (0-2 s); owner log 341 lines of the shape, which had no DB owner.',
   },
   {
     spells: ['Cease', 'Desist', 'Sacred Word'],
@@ -314,7 +314,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'Someone is struck by a sudden force.',
     attribution: 'cast',
     evidence:
-      'Cease 122/142 casts, Desist 103/120. The suffix already exists (Force, Markar`s Clash/Discord, Monkey Stun, Stun Command, Tishan`s) and matches 597 lines; these three were simply missing from it.'
+      'Cease 122/142 casts, Desist 103/120. The suffix already exists (Force, Markar`s Clash/Discord, Monkey Stun, Stun Command, Tishan`s) and matches 597 lines; these three were simply missing from it.',
   },
   {
     spells: ['Cancelling of Life', 'Cessation of Life', 'Negation of Life'],
@@ -322,7 +322,8 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: 'is shrouded by anti-life magic.',
     to: 'Someone is shrouded by anti-life magic.',
     attribution: 'cast',
-    evidence: 'Negation of Life 68/83 casts; owner log 239 lines of the shape, which had no DB owner.'
+    evidence:
+      'Negation of Life 68/83 casts; owner log 239 lines of the shape, which had no DB owner.',
   },
   {
     spells: ['Force Snap'],
@@ -330,7 +331,8 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: 'Target has been force struck.',
     to: 'Someone has been force struck.',
     attribution: 'cast',
-    evidence: '6/8 casts (1-2 s); owner log 8 lines of `<T> has been force struck.`, which had no DB owner.'
+    evidence:
+      '6/8 casts (1-2 s); owner log 8 lines of `<T> has been force struck.`, which had no DB owner.',
   },
   {
     spells: ['Thunder of Karana'],
@@ -338,7 +340,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: "'s ears fill with the deafening roar of Karana's Thunder.",
     to: "Someone's ears fill with the deafening roar of Karana's Thunder.",
     attribution: 'cast',
-    evidence: '3/7 casts (+3 s each); owner log 3 lines of the shape, which had no DB owner.'
+    evidence: '3/7 casts (+3 s each); owner log 3 lines of the shape, which had no DB owner.',
   },
   {
     spells: ['Intellectual Advancement'],
@@ -347,7 +349,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: "Someone's mind sharpens.",
     attribution: 'cast',
     evidence:
-      '1/3 casts (+4 s); owner log 31 lines of `<T>`s mind sharpens.`, 0 of the apostrophe-only form. The scrape dropped the possessive s.'
+      '1/3 casts (+4 s); owner log 31 lines of `<T>`s mind sharpens.`, 0 of the apostrophe-only form. The scrape dropped the possessive s.',
   },
   {
     spells: ['Ethereal Cleansing'],
@@ -356,7 +358,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: "Someone's body is covered in ethereal light.",
     attribution: 'sole',
     evidence:
-      'Owner log: 2 lines of `<T>`s body is covered in ethereal light.` with no DB owner. Subject restoration only; the sentence is the wiki`s own and no other spell claims it.'
+      'Owner log: 2 lines of `<T>`s body is covered in ethereal light.` with no DB owner. Subject restoration only; the sentence is the wiki`s own and no other spell claims it.',
   },
   {
     spells: ['Instrument of Nife'],
@@ -364,7 +366,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: "'s weapon becomes an instrument of Rodcet Nife.",
     to: "Someone's weapon becomes an instrument of Rodcet Nife.",
     attribution: 'sole',
-    evidence: 'Owner log: 8 lines of the shape, no DB owner. Subject restoration only.'
+    evidence: 'Owner log: 8 lines of the shape, no DB owner. Subject restoration only.',
   },
   {
     spells: ['Valor of Marr'],
@@ -372,7 +374,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: 'feels the blessing of Mithaniel Marr.',
     to: 'Someone feels the blessing of Mithaniel Marr.',
     attribution: 'sole',
-    evidence: 'Owner log: 5 lines of the shape, no DB owner. Subject restoration only.'
+    evidence: 'Owner log: 5 lines of the shape, no DB owner. Subject restoration only.',
   },
   {
     spells: ['Divine Vigor'],
@@ -380,23 +382,41 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: 'begins to radiate with divine favor.',
     to: 'Someone begins to radiate with divine favor.',
     attribution: 'sole',
-    evidence: 'Owner log: 39 lines of the shape, no DB owner. Subject restoration only.'
+    evidence: 'Owner log: 39 lines of the shape, no DB owner. Subject restoration only.',
   },
   {
     spells: [
-      'Cazic Temple Gate', 'Greater Faydark Gate', 'Nektulos Gate', 'North Karana Gate',
-      'North Ro Gate', 'Ring of Misty Thicket', 'Ring of South Ro', 'Ring of Stonebrunt',
-      'Ring of West Commons', 'Stonebrunt Gate', 'Toxxulia Gate', 'West Commons Gate',
-      'West Karana Gate', 'Zephyr: Butcherblock', 'Zephyr: Feerrott', 'Zephyr: Lavastorm',
-      'Zephyr: Misty Thicket', 'Zephyr: North Karana', 'Zephyr: South Ro', 'Zephyr: Steamfont',
-      'Zephyr: Stonebrunt', 'Zephyr: Surefall Glade', 'Zephyr: Toxxulia', 'Zephyr: West Commons'
+      'Cazic Temple Gate',
+      'Greater Faydark Gate',
+      'Nektulos Gate',
+      'North Karana Gate',
+      'North Ro Gate',
+      'Ring of Misty Thicket',
+      'Ring of South Ro',
+      'Ring of Stonebrunt',
+      'Ring of West Commons',
+      'Stonebrunt Gate',
+      'Toxxulia Gate',
+      'West Commons Gate',
+      'West Karana Gate',
+      'Zephyr: Butcherblock',
+      'Zephyr: Feerrott',
+      'Zephyr: Lavastorm',
+      'Zephyr: Misty Thicket',
+      'Zephyr: North Karana',
+      'Zephyr: South Ro',
+      'Zephyr: Steamfont',
+      'Zephyr: Stonebrunt',
+      'Zephyr: Surefall Glade',
+      'Zephyr: Toxxulia',
+      'Zephyr: West Commons',
     ],
     field: 'msgCastOnOther',
     from: 'Player fades away.',
     to: 'Someone fades away.',
     attribution: 'db',
     evidence:
-      'Twenty-odd sibling gates (Abscond, Gate, Common Gate, Fay Gate, Frost Port, …) already say `Someone fades away.` verbatim, so the suffix already exists and matches 155 owner-log lines; these 24 use the wiki`s other placeholder and were absent from it. Purely additive: no new suffix is created.'
+      'Twenty-odd sibling gates (Abscond, Gate, Common Gate, Fay Gate, Frost Port, …) already say `Someone fades away.` verbatim, so the suffix already exists and matches 155 owner-log lines; these 24 use the wiki`s other placeholder and were absent from it. Purely additive: no new suffix is created.',
   },
   // --- scrape artifacts: HTML, wiki navigation and stray editorial marks in the message ----------
   //
@@ -416,7 +436,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'Your feet come free.',
     attribution: 'db',
     evidence:
-      'The wiki page`s vendor navigation bled into the field. Ten sibling roots (Root, Fetter, Immobilize, Paralyzing Earth, Bonds of Force, …) carry the clean text, which matches 869 owner-log lines.'
+      'The wiki page`s vendor navigation bled into the field. Ten sibling roots (Root, Fetter, Immobilize, Paralyzing Earth, Bonds of Force, …) carry the clean text, which matches 869 owner-log lines.',
   },
   {
     spells: ['Poison'],
@@ -425,7 +445,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'You have been poisoned.',
     attribution: 'db',
     evidence:
-      'An editorial `(?)` from the wiki page. Eighteen sibling poisons carry the clean text, which matches 447 owner-log lines.'
+      'An editorial `(?)` from the wiki page. Eighteen sibling poisons carry the clean text, which matches 447 owner-log lines.',
   },
   {
     spells: ['Poison'],
@@ -433,7 +453,8 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: 'The poison has run its course. (?)',
     to: 'The poison has run its course.',
     attribution: 'db',
-    evidence: 'Same `(?)`; 48 sibling poisons carry the clean text, which matches 168 owner-log lines.'
+    evidence:
+      'Same `(?)`; 48 sibling poisons carry the clean text, which matches 168 owner-log lines.',
   },
   {
     // JOS-251, and the first correction this file has taken for an edit made UPSTREAM rather than a
@@ -452,7 +473,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'You are no longer charmed.',
     attribution: 'db',
     evidence:
-      'Six siblings sharing Beguile`s own landing sentence (`Someone has been charmed.` — Charm, Cajoling Whispers, Boltran`s Agacerie, Dictate, Alluring Whispers, Vampire Charm) all carry `You are no longer charmed.` verbatim. The owner`s log cannot witness either text (he is the charmER: 50 `Your Beguile spell has worn off of <mob>.` lines, 0 self charm fades), which is exactly the unobservable-detrimental state the header describes — so the DB is the only witness and it is unanimous.'
+      'Six siblings sharing Beguile`s own landing sentence (`Someone has been charmed.` — Charm, Cajoling Whispers, Boltran`s Agacerie, Dictate, Alluring Whispers, Vampire Charm) all carry `You are no longer charmed.` verbatim. The owner`s log cannot witness either text (he is the charmER: 50 `Your Beguile spell has worn off of <mob>.` lines, 0 self charm fades), which is exactly the unobservable-detrimental state the header describes — so the DB is the only witness and it is unanimous.',
   },
   {
     spells: ["Ikatiar's Revenge"],
@@ -461,7 +482,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'Someone has been poisoned.',
     attribution: 'db',
     evidence:
-      'The scrape truncated the participle. Forty-seven sibling poisons carry the full suffix, which matches 952 owner-log lines.'
+      'The scrape truncated the participle. Forty-seven sibling poisons carry the full suffix, which matches 952 owner-log lines.',
   },
   {
     spells: ['Frost Shards'],
@@ -470,7 +491,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'You feel your skin freeze.',
     attribution: 'db',
     evidence:
-      'Terminal period lost by the scrape. Four siblings (Ice Comet, Silver Breath, …) carry the full stop, which matches 376 owner-log lines.'
+      'Terminal period lost by the scrape. Four siblings (Ice Comet, Silver Breath, …) carry the full stop, which matches 376 owner-log lines.',
   },
   {
     spells: ['Shock of Frost'],
@@ -478,7 +499,8 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: 'Your feel your skin freeze.',
     to: 'You feel your skin freeze.',
     attribution: 'db',
-    evidence: 'A `Your`/`You` typo on the wiki page; the same four siblings carry the correct sentence.'
+    evidence:
+      'A `Your`/`You` typo on the wiki page; the same four siblings carry the correct sentence.',
   },
   // --- inflection and spelling drift between the wiki text and the shipped string ----------------
   {
@@ -488,7 +510,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'You feel your life force drain away.',
     attribution: 'db',
     evidence:
-      'Seventeen sibling lifetaps (Lifetap, Lifespike, Siphon Life, Drain Soul, …) spell it as two words, which matches 1,639 owner-log lines; the one-word form occurs 0 times.'
+      'Seventeen sibling lifetaps (Lifetap, Lifespike, Siphon Life, Drain Soul, …) spell it as two words, which matches 1,639 owner-log lines; the one-word form occurs 0 times.',
   },
   {
     spells: ['Rune II', 'Rune III', 'Rune IV', 'Rune V'],
@@ -496,7 +518,8 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: 'The shimmer of runes fade.',
     to: 'The shimmer of runes fades.',
     attribution: 'db',
-    evidence: 'Rune I carries the inflected verb, which matches 19 owner-log lines; the bare form occurs 0 times.'
+    evidence:
+      'Rune I carries the inflected verb, which matches 19 owner-log lines; the bare form occurs 0 times.',
   },
   {
     spells: ['Rune IV', 'Rune V'],
@@ -505,7 +528,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'A coat of shimmering runes surrounds you.',
     attribution: 'sole',
     evidence:
-      'Owner log: 19 lines of the inflected sentence with no DB owner at all, 0 of the wiki form; it pairs one-for-one with the 19 fades above.'
+      'Owner log: 19 lines of the inflected sentence with no DB owner at all, 0 of the wiki form; it pairs one-for-one with the 19 fades above.',
   },
   {
     spells: ['Guardian Rhythms'],
@@ -513,7 +536,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: 'You feel an aura of mystic protection surround you.',
     to: 'You feel an aura of mystic protection surrounding you.',
     attribution: 'sole',
-    evidence: 'Owner log: 264 lines of the participle form with no DB owner, 0 of the wiki form.'
+    evidence: 'Owner log: 264 lines of the participle form with no DB owner, 0 of the wiki form.',
   },
   {
     spells: ['Reckoning'],
@@ -522,7 +545,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'You have been struck down by the judgment of the gods.',
     attribution: 'sole',
     evidence:
-      'British spelling on the wiki, American in the game: 14 owner-log lines of `judgment`, 0 of `judgement`, and Reckoning is the only spell with the sentence.'
+      'British spelling on the wiki, American in the game: 14 owner-log lines of `judgment`, 0 of `judgement`, and Reckoning is the only spell with the sentence.',
   },
   {
     spells: ['Torbas Poison Blast'],
@@ -531,7 +554,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'A blast of Poison eats at your skin.',
     attribution: 'sole',
     evidence:
-      'The game capitalizes the damage type: 3 owner-log lines of `A blast of Poison`, 0 of the lowercase form, no DB owner. Matching is case-sensitive, so the case IS the defect.'
+      'The game capitalizes the damage type: 3 owner-log lines of `A blast of Poison`, 0 of the lowercase form, no DB owner. Matching is case-sensitive, so the case IS the defect.',
   },
   {
     spells: ['Scarab Storm'],
@@ -539,7 +562,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: 'Someone shrieks as scarabs burrow into their skin.',
     to: 'Someone shrieks as a scarab burrows into their skin.',
     attribution: 'sole',
-    evidence: 'Owner log: 5 lines of the singular form with no DB owner, 0 of the wiki plural.'
+    evidence: 'Owner log: 5 lines of the singular form with no DB owner, 0 of the wiki plural.',
   },
   {
     spells: ['Scarab Storm'],
@@ -547,7 +570,8 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: 'The scarabs die.',
     to: 'The scarab dies.',
     attribution: 'sole',
-    evidence: 'Owner log: 2 lines of the singular form with no DB owner, 0 of the wiki plural; the same drift as its landing.'
+    evidence:
+      'Owner log: 2 lines of the singular form with no DB owner, 0 of the wiki plural; the same drift as its landing.',
   },
   // --- the stun family: the wiki writes the sentence the game does not print ---------------------
   {
@@ -557,7 +581,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'You are stunned!',
     attribution: 'sole',
     evidence:
-      'Owner log: 1,208 lines of `You are stunned!` with no DB owner, 0 of the period form, against 1,214 of the wear-off `You are no longer stunned.` these same spells already match. The pair is the evidence: the fade half was matching and the landing half was not.'
+      'Owner log: 1,208 lines of `You are stunned!` with no DB owner, 0 of the period form, against 1,214 of the wear-off `You are no longer stunned.` these same spells already match. The pair is the evidence: the fade half was matching and the landing half was not.',
   },
   {
     spells: ['Stun'],
@@ -566,7 +590,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'Someone is struck by a sudden force.',
     attribution: 'cast',
     evidence:
-      '15/20 casts (0-2 s), and NONE of the 20 had another stun-family cast of ours in the prior 20 s, so it is not the neighbouring Cease/Desist. `<T> is stunned.` occurs 0 times whole-log. Left alone for Holy Might and Sound of Force, which share the wiki text and which the log cannot separate.'
+      '15/20 casts (0-2 s), and NONE of the 20 had another stun-family cast of ours in the prior 20 s, so it is not the neighbouring Cease/Desist. `<T> is stunned.` occurs 0 times whole-log. Left alone for Holy Might and Sound of Force, which share the wiki text and which the log cannot separate.',
   },
   // --- the symbol line: the wiki writes one generic sentence, the game names the symbol ----------
   //
@@ -582,7 +606,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: 'A mystic symbol flashes before your eyes.',
     to: 'The symbol of Transal flashes before your eyes.',
     attribution: 'cast',
-    evidence: '12/16 casts (3-10 s); owner log 22 lines of the sentence, 0 of the wiki form.'
+    evidence: '12/16 casts (3-10 s); owner log 22 lines of the sentence, 0 of the wiki form.',
   },
   {
     spells: ['Symbol of Pinzarn'],
@@ -590,7 +614,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: 'A mystic symbol flashes before your eyes.',
     to: 'The symbol of Pinzarn flashes before your eyes.',
     attribution: 'cast',
-    evidence: '1/3 casts; owner log 50 lines of the sentence, 0 of the wiki form.'
+    evidence: '1/3 casts; owner log 50 lines of the sentence, 0 of the wiki form.',
   },
   // --- the absent field: the wiki states nothing, so the sentence had one owner too few ---------
   //
@@ -624,7 +648,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'Someone has been charmed.',
     attribution: 'cast',
     evidence:
-      'Allure VI 108/111 casts, Allure IV 59/65, Allure III 48/51 (215/227, 1-12 s, p50 4 s). 201 of the log`s 423 `<T> has been charmed.` lines have an Allure rank as their nearest preceding own cast, against 95 Charm, 59 Cajoling Whispers and 53 Beguile; 161 `Your Allure spell has worn off of <T>.` lines close the same lifecycle. The five ladder siblings (Charm 11, Beguile 23, Cajoling Whispers 37, Boltran`s Agacerie 53, Dictate 60) already carry this exact sentence, and Allure is the ONLY enchanter detrimental in the DB with no cast-on-other message at all.'
+      'Allure VI 108/111 casts, Allure IV 59/65, Allure III 48/51 (215/227, 1-12 s, p50 4 s). 201 of the log`s 423 `<T> has been charmed.` lines have an Allure rank as their nearest preceding own cast, against 95 Charm, 59 Cajoling Whispers and 53 Beguile; 161 `Your Allure spell has worn off of <T>.` lines close the same lifecycle. The five ladder siblings (Charm 11, Beguile 23, Cajoling Whispers 37, Boltran`s Agacerie 53, Dictate 60) already carry this exact sentence, and Allure is the ONLY enchanter detrimental in the DB with no cast-on-other message at all.',
   },
   // --- the bard mez ladder: one subject token and one dropped word (JOS-161) --------------------
   //
@@ -649,7 +673,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: "Someone 's eyes glaze over.",
     attribution: 'db',
     evidence:
-      'The subject-placeholder drift, on the one song of the ladder that has it: `castOnOtherSuffix` keys the table by what follows the wiki`s `Someone ` subject, so `Target`s ...` is in no table at all and `Sionachie`s Dreams` could not be a candidate for its own landing (JOS-103 measured 68 spells in that state; this is one). The three ladder siblings — Solon`s Song of the Sirens 27, Crission`s Pixie Strike 28, Solon`s Bewitching Bravura 39 — already carry the replacement VERBATIM, spaced possessive included, so the sentence is not being invented. Owner log: 14 lines of `<T>`s eyes glaze over.`, 0 of the wiki form; `Enzee begins singing Sionachie`s Dreams.` (Thu Jul 30 18:32:40) is followed 3 s later by `a revenant`s eyes glaze over.`, and four `Enzee begins singing Solon`s Bewitching Bravura III.` lines are each followed 2-3 s later by one more.'
+      'The subject-placeholder drift, on the one song of the ladder that has it: `castOnOtherSuffix` keys the table by what follows the wiki`s `Someone ` subject, so `Target`s ...` is in no table at all and `Sionachie`s Dreams` could not be a candidate for its own landing (JOS-103 measured 68 spells in that state; this is one). The three ladder siblings — Solon`s Song of the Sirens 27, Crission`s Pixie Strike 28, Solon`s Bewitching Bravura 39 — already carry the replacement VERBATIM, spaced possessive included, so the sentence is not being invented. Owner log: 14 lines of `<T>`s eyes glaze over.`, 0 of the wiki form; `Enzee begins singing Sionachie`s Dreams.` (Thu Jul 30 18:32:40) is followed 3 s later by `a revenant`s eyes glaze over.`, and four `Enzee begins singing Solon`s Bewitching Bravura III.` lines are each followed 2-3 s later by one more.',
   },
   {
     spells: ["Solon's Bravura"],
@@ -658,7 +682,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: "Solon's Bewitching Bravura",
     attribution: 'sole',
     evidence:
-      'The wiki page`s `spellname` is `Solon`s Bravura`; the game has never printed it. Owner log: 20 lines naming `Solon`s Bewitching Bravura` (5 own-guild casts by the bard Enzee, 14 sung AT the player by fire giants, 1 resist) and 0 naming `Solon`s Bravura`. Reporter slice 01KZAG2QAW885YJNRTDDND8BF2 adds `You begin singing Solon`s Bewitching Bravura IX.` x5 and `Your Solon`s Bewitching Bravura spell has worn off of a fire giant warrior.` x5; slice 01KZM7F36JD12WYF15DHCCWNEE ends on `You have finished memorizing Solon`s Bewitching Bravura.`. A dropped word, never a different spell: nothing else in the DB is named Bravura (src/main/log/rulesets.ts says so too), the level, class, cast time, duration and all three messages are untouched, and the entry`s own `You are captivated by the bewitching tune.` carries the missing word already. Both level-39 rows (18 s and the April-2000 1 Min) are renamed together.'
+      'The wiki page`s `spellname` is `Solon`s Bravura`; the game has never printed it. Owner log: 20 lines naming `Solon`s Bewitching Bravura` (5 own-guild casts by the bard Enzee, 14 sung AT the player by fire giants, 1 resist) and 0 naming `Solon`s Bravura`. Reporter slice 01KZAG2QAW885YJNRTDDND8BF2 adds `You begin singing Solon`s Bewitching Bravura IX.` x5 and `Your Solon`s Bewitching Bravura spell has worn off of a fire giant warrior.` x5; slice 01KZM7F36JD12WYF15DHCCWNEE ends on `You have finished memorizing Solon`s Bewitching Bravura.`. A dropped word, never a different spell: nothing else in the DB is named Bravura (src/main/log/rulesets.ts says so too), the level, class, cast time, duration and all three messages are untouched, and the entry`s own `You are captivated by the bewitching tune.` carries the missing word already. Both level-39 rows (18 s and the April-2000 1 Min) are renamed together.',
   },
   // Found by the JOS-387 audit of what the resist fold recognises as a RESIST DEBUFF. The tash
   // ladder, the malo ladder and the whole Scent line are recognised correctly off the catalog`s
@@ -671,7 +695,7 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     from: 'Malisement',
     attribution: 'sole',
     evidence:
-      'The shaman malo ladder`s level-32 rung. Owner log, whole file (2,026,223 lines): 229 lines naming `Malaisement` (123 `<mob> begins casting Malaisement.`, 5 `You begin casting Malaisement.`, the rest interrupts and fades) and 0 naming `Malisement`. One inserted vowel, never a different spell: nothing else in the DB is named Mal*sement, and the entry`s four `Decrease Cold/Magic/Poison/Fire Resist by 36-40` effect lines are exactly the rung between Malaise (15-20) and Malosi (59-60), which the log casts 136 and 63 times under names the catalog already matches. Until this correction `isResistDebuff` (main/resist/world.ts) answered false for all 229 lines, so the debuff was never recorded against a mob and every observation made under it was fitted at an offset 36 to 40 points too small.'
+      'The shaman malo ladder`s level-32 rung. Owner log, whole file (2,026,223 lines): 229 lines naming `Malaisement` (123 `<mob> begins casting Malaisement.`, 5 `You begin casting Malaisement.`, the rest interrupts and fades) and 0 naming `Malisement`. One inserted vowel, never a different spell: nothing else in the DB is named Mal*sement, and the entry`s four `Decrease Cold/Magic/Poison/Fire Resist by 36-40` effect lines are exactly the rung between Malaise (15-20) and Malosi (59-60), which the log casts 136 and 63 times under names the catalog already matches. Until this correction `isResistDebuff` (main/resist/world.ts) answered false for all 229 lines, so the debuff was never recorded against a mob and every observation made under it was fitted at an offset 36 to 40 points too small.',
   },
   // --- the invisibility twins: the wiki retitled the page, the game did not (JOS-440) ------------
   //
@@ -709,8 +733,8 @@ const HAND_DERIVED_CORRECTIONS: readonly SpellCorrection[] = [
     to: 'Invisibility Versus Undead',
     attribution: 'cast',
     evidence:
-      'The wiki page`s `spellname` became `Invisibility vs. Undead` in a 2026-08-18 retitle of pageid 49735; the game has never printed it. Owner log, whole file (2,235,271 lines): 83 lines naming `Invisibility Versus Undead` (28 `You begin casting`, 15 `You have finished memorizing`, 15 `You forget`, 15 `Beginning to memorize`, 7 fizzles, 1 `You have been granted the following spell`, 1 another player`s cast) and 0 naming `Invisibility vs. Undead`. The install`s own table says the same: spells_us.txt id 235 is `Invisibility Versus Undead`. An abbreviation, never a different spell — the two pages state the same five classes at the same five levels and the same three messages, and the surviving row`s own slot line already reads `Invisibility versus Undead`. Blast radius: one catalog entry instead of two; spellClassIndex 1413 -> 1412 with no per-class count moving; the unlock cards draw one row at NEC 1 / SHD 4 / CLR 11 / ENC 14 / PAL 17; `spellLineLookup` and `clientSpellHp` join by name and now reach the row.'
-  }
+      'The wiki page`s `spellname` became `Invisibility vs. Undead` in a 2026-08-18 retitle of pageid 49735; the game has never printed it. Owner log, whole file (2,235,271 lines): 83 lines naming `Invisibility Versus Undead` (28 `You begin casting`, 15 `You have finished memorizing`, 15 `You forget`, 15 `Beginning to memorize`, 7 fizzles, 1 `You have been granted the following spell`, 1 another player`s cast) and 0 naming `Invisibility vs. Undead`. The install`s own table says the same: spells_us.txt id 235 is `Invisibility Versus Undead`. An abbreviation, never a different spell — the two pages state the same five classes at the same five levels and the same three messages, and the surviving row`s own slot line already reads `Invisibility versus Undead`. Blast radius: one catalog entry instead of two; spellClassIndex 1413 -> 1412 with no per-class count moving; the unlock cards draw one row at NEC 1 / SHD 4 / CLR 11 / ENC 14 / PAL 17; `spellLineLookup` and `clientSpellHp` join by name and now reach the row.',
+  },
 ]
 
 /**
@@ -729,5 +753,5 @@ export const SPELL_CORRECTIONS: readonly SpellCorrection[] = [
   ...COLUMN_CORRECTIONS,
   ...SUBJECT_PLACEHOLDER_CORRECTIONS,
   ...HEALING_LADDER_CORRECTIONS,
-  ...POLARITY_CORRECTIONS
+  ...POLARITY_CORRECTIONS,
 ]

@@ -35,7 +35,8 @@ import type { TelemetryBatch, TelemetryPrefs } from '../../shared/telemetry'
  *
  * This is the only value any build can ever use. It is a constant, not a setting.
  */
-export const TELEMETRY_API_URL = 'https://pcy0z3xjp9.execute-api.us-east-1.amazonaws.com/v1/telemetry'
+export const TELEMETRY_API_URL =
+  'https://pcy0z3xjp9.execute-api.us-east-1.amazonaws.com/v1/telemetry'
 
 /** JSON POST budget. A batch is counters, not a log slice — feedback's submit budget is plenty. */
 export const TELEMETRY_TIMEOUT_MS = 15_000
@@ -68,7 +69,7 @@ export function telemetryEndpointConfigured(): boolean {
 export function telemetryFlushEnabled(
   e2e: boolean,
   endpoint: string,
-  prefs: TelemetryPrefs
+  prefs: TelemetryPrefs,
 ): boolean {
   return !e2e && endpoint.length > 0 && prefs.enabled && prefs.noticeShown
 }
@@ -112,14 +113,14 @@ export interface TelemetryAttempt {
  */
 export async function postTelemetryBatch(
   batch: TelemetryBatch,
-  timeoutMs = TELEMETRY_TIMEOUT_MS
+  timeoutMs = TELEMETRY_TIMEOUT_MS,
 ): Promise<TelemetryAttempt> {
   try {
     const res = await fetch(TELEMETRY_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'User-Agent': UA },
       body: JSON.stringify(batch),
-      signal: AbortSignal.timeout(timeoutMs)
+      signal: AbortSignal.timeout(timeoutMs),
     })
     return { status: res.status }
   } catch {

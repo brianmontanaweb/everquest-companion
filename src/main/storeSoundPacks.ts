@@ -24,7 +24,7 @@ import {
   normalizeSoundPackPrefs,
   withDefaultPack,
   withTombstone,
-  type SoundPackPrefs
+  type SoundPackPrefs,
 } from '../shared/soundPacks'
 import { DEFAULT_PACK_IDS } from './data/defaultPacks'
 

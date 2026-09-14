@@ -99,7 +99,7 @@ import {
   type InventoryDump,
   type InventoryEntry,
   type InventoryPlace,
-  type KeyRingEntry
+  type KeyRingEntry,
 } from '../outputs/inventory'
 import { itemTierFromName, itemTierKey } from '../itemStats'
 import { SLOT_OF_LOCATION } from './inventorySlots'
@@ -112,13 +112,7 @@ import type { EquipSlot } from './types'
  * rather than coerced into the nearest member.
  */
 export type OwnershipPlace =
-  | 'equipped'
-  | 'inventory'
-  | 'bank'
-  | 'sharedBank'
-  | 'personalDepot'
-  | 'keyring'
-  | 'unknown'
+  'equipped' | 'inventory' | 'bank' | 'sharedBank' | 'personalDepot' | 'keyring' | 'unknown'
 
 /** How a row hangs off the row above it — see "BAG CONTENTS vs EXALTATION SOCKETS". */
 export type OwnershipContainment = 'top' | 'bag' | 'socket'
@@ -132,7 +126,7 @@ const PLACE_OF_CONTAINER: Record<ContainerKind, OwnershipPlace> = {
   general: 'inventory',
   bank: 'bank',
   sharedBank: 'sharedBank',
-  personalDepot: 'personalDepot'
+  personalDepot: 'personalDepot',
 }
 
 const HELD_KEYRING_SET: ReadonlySet<string> = new Set(HELD_KEYRING_CATEGORIES)
@@ -224,7 +218,7 @@ function rowFromEntry(entry: InventoryEntry, parent: InventoryEntry | undefined)
     exaltation: parsed.exaltation,
     containment: containmentOf(entry),
     itemId: entry.itemId,
-    line: entry.line
+    line: entry.line,
   }
   if (parsed.tier !== undefined) row.tier = parsed.tier
   if (entry.place.kind === 'equip') row.slot = SLOT_OF_LOCATION[entry.place.token]
@@ -248,7 +242,7 @@ function rowFromKeyRing(entry: KeyRingEntry): OwnershipRow {
     containment: 'top',
     keyRingCategory: entry.category,
     itemId: entry.itemId,
-    line: entry.line
+    line: entry.line,
   }
   if (parsed.tier !== undefined) row.tier = parsed.tier
   return row
@@ -354,7 +348,7 @@ export const NO_OWNERSHIP: OwnershipPayload = {
   path: null,
   loadedAt: null,
   entries: [],
-  uncounted: []
+  uncounted: [],
 }
 
 /** Every keyring category the dump names that `HELD_KEYRING_CATEGORIES` does not admit. */
@@ -370,14 +364,14 @@ export function uncountedKeyRings(dump: InventoryDump): UncountedKeyRing[] {
 
 /** The fold plus its provenance, as one payload. `null` in ⇒ `NO_OWNERSHIP` out. */
 export function ownershipPayload(
-  loaded: { path: string; loadedAt: string; dump: InventoryDump } | null
+  loaded: { path: string; loadedAt: string; dump: InventoryDump } | null,
 ): OwnershipPayload {
   if (!loaded) return NO_OWNERSHIP
   return {
     path: loaded.path,
     loadedAt: loaded.loadedAt,
     entries: [...ownershipIndex(loaded.dump)],
-    uncounted: uncountedKeyRings(loaded.dump)
+    uncounted: uncountedKeyRings(loaded.dump),
   }
 }
 

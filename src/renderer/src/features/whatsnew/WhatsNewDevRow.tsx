@@ -32,7 +32,7 @@ import { realLastSeenVersion, resetToRealLastSeen, simulateLastSeen } from './se
 const VARIANTS: readonly { id: WhatsNewVariant; label: string }[] = [
   { id: 'fresh', label: 'Fresh install' },
   { id: 'previous', label: 'From previous' },
-  { id: 'several', label: 'From several back' }
+  { id: 'several', label: 'From several back' },
 ]
 
 /** What a button actually does to the store, said out loud under the row — the difference

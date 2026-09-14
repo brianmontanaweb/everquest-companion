@@ -39,7 +39,7 @@ import {
   openPairOn,
   readPair,
   resizeTo,
-  restoreMinimum
+  restoreMinimum,
 } from './gearCompareSteps.mjs'
 
 const DONOR_ROW = '[data-testid="planner-donor-row"]'
@@ -65,7 +65,8 @@ const SOCKET_TAB = '[data-testid="planner-socket-proc"]'
 const NARROW_W = 900
 
 const rowOf = (key: string): string => `${DONOR_ROW}[data-item-key="${key}"]`
-const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> => settle(fn, (ok) => ok, { timeoutMs: ms })
+const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> =>
+  settle(fn, (ok) => ok, { timeoutMs: ms })
 
 /** Expand a group if the list is all headers — the `ensureDonorRow` retry, minus the add control. */
 async function ensureDonors(page: Page): Promise<boolean> {
@@ -88,8 +89,11 @@ async function ensureDonors(page: Page): Promise<boolean> {
  */
 async function firstHoverableDonor(page: Page): Promise<string> {
   const keys = await page.evaluate(
-    (s) => [...document.querySelectorAll(s)].slice(0, 6).map((r) => r.getAttribute('data-item-key') ?? ''),
-    DONOR_ROW
+    (s) =>
+      [...document.querySelectorAll(s)]
+        .slice(0, 6)
+        .map((r) => r.getAttribute('data-item-key') ?? ''),
+    DONOR_ROW,
   )
   for (const key of keys) {
     if (key === '') continue
@@ -97,37 +101,48 @@ async function firstHoverableDonor(page: Page): Promise<string> {
     if (card.present) return key
     await closePair(page)
   }
-  note(`none of the first ${String(keys.length)} donor names opened a pair — tried ${keys.join(', ')}`)
+  note(
+    `none of the first ${String(keys.length)} donor names opened a pair — tried ${keys.join(', ')}`,
+  )
   return ''
 }
 
 /** 1. THE HOVER EXISTS, IT IS THE PAIR, AND IT IS ABOUT THE NAME UNDER THE POINTER. */
 async function stepDonorHover(page: Page): Promise<string> {
-  check('no comparison pair is open until a donor name is pointed at', (await countOf(page, PAIR)) === 0)
+  check(
+    'no comparison pair is open until a donor name is pointed at',
+    (await countOf(page, PAIR)) === 0,
+  )
   const key = await firstHoverableDonor(page)
-  if (!check('pointing at a donor NAME opens the gear comparison pair (JOS-344)', key !== '')) return ''
+  if (!check('pointing at a donor NAME opens the gear comparison pair (JOS-344)', key !== ''))
+    return ''
   const card = await readPair(page)
-  check('…and the item card is about the donor the pointer is on', card.item === key, `${card.item} vs ${key}`)
+  check(
+    '…and the item card is about the donor the pointer is on',
+    card.item === key,
+    `${card.item} vs ${key}`,
+  )
   check(
     'the donor card states the donor’s own numbers, in the gear table’s vocabulary',
     card.stats !== '',
-    card.stats || '(no stat line)'
+    card.stats || '(no stat line)',
   )
   check(
     '…and admits to no simulation, because this browser has no plus-state slider',
-    !card.simulated
+    !card.simulated,
   )
   // THE EQUIPPED HALF APPLIES UNCHANGED — same staged dump, same freshness line, same two answers.
   check('the equipped card is drawn beside it, off the same staged dump', card.equipped)
   check(
     'the equipped card names at least one cell this donor would go in',
     card.cells.length > 0 || card.noDump,
-    card.cells.map((c) => `${c.cell}=${c.name || (c.empty ? 'empty' : '?')}`).join(' · ') || '(no cells)'
+    card.cells.map((c) => `${c.cell}=${c.name || (c.empty ? 'empty' : '?')}`).join(' · ') ||
+      '(no cells)',
   )
   check(
     'the dump freshness line rides the equipped card here too',
     card.freshness.includes('inventory dump'),
-    card.freshness || '(no line)'
+    card.freshness || '(no line)',
   )
   await checkPairOnScreen(page, 'exalt default size')
   return key
@@ -147,12 +162,19 @@ async function stepStillClickable(page: Page, key: string): Promise<void> {
   for (const [what, selector] of [
     ['the row’s own wish control', `${rowOf(key)} ${ADD}`],
     ['the socket tab in the toolbar above', SOCKET_TAB],
-    ['the browse search box', SEARCH]
+    ['the browse search box', SEARCH],
   ] as const) {
     const verdict = await hitTest(page, selector)
-    check(`with the donor pair open, ${what} is still the thing a click would reach`, verdict === 'hit', verdict)
+    check(
+      `with the donor pair open, ${what} is still the thing a click would reach`,
+      verdict === 'hit',
+      verdict,
+    )
   }
-  check('the pair is still open — the hit test measured a live card', (await countOf(page, PAIR)) === 1)
+  check(
+    'the pair is still open — the hit test measured a live card',
+    (await countOf(page, PAIR)) === 1,
+  )
   check('and it goes with the pointer when it leaves the name', await closePair(page))
 }
 
@@ -202,7 +224,9 @@ async function stepNarrow(app: ElectronApplication, page: Page): Promise<void> {
   await settleStable(() => anchorBoxOfFirst(page), { timeoutMs: 15_000 })
   const key = await firstHoverableDonor(page)
   if (key === '') {
-    note(`narrow: no donor name on screen has a box left to point at, so the on-screen claim is unmeasured here — ${await anchorBoxOfFirst(page)}`)
+    note(
+      `narrow: no donor name on screen has a box left to point at, so the on-screen claim is unmeasured here — ${await anchorBoxOfFirst(page)}`,
+    )
   } else {
     check('narrow: pointing at a donor name still opens the pair', true)
     await checkPairOnScreen(page, 'exalt narrow')

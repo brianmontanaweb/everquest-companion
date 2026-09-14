@@ -12,7 +12,7 @@ import {
   digestLine,
   protocolVersion,
   readSchemaFiles,
-  schemaDigest
+  schemaDigest,
 } from './protocolSchema.mjs'
 
 /** The header both generated files carry. `header` is spelled per language by the caller. */
@@ -28,7 +28,7 @@ export function generatedBanner(digest: string, comment: string): string {
     'schema edit that lands without regenerating turns tests/protocolSchema.test.mts red on the',
     'TypeScript side and the protocol-codegen staleness test red on the Rust side.',
     '',
-    digestLine(digest)
+    digestLine(digest),
   ]
   return lines.map((l) => (l === '' ? comment.trimEnd() : `${comment}${l}`)).join('\n')
 }
@@ -50,9 +50,12 @@ export function stripProvenanceNotes(ts: string): string {
   return ts
     .replace(
       /^\/\*\*\n \* This interface was referenced by [^\n]*\n \* via the `definition` "[^"]*"\.\n \*\/\n/gm,
-      ''
+      '',
     )
-    .replace(/\n \*\n \* This interface was referenced by [^\n]*\n \* via the `definition` "[^"]*"\./g, '')
+    .replace(
+      /\n \*\n \* This interface was referenced by [^\n]*\n \* via the `definition` "[^"]*"\./g,
+      '',
+    )
 }
 
 /**
@@ -74,7 +77,7 @@ export async function renderTypeScript(): Promise<string> {
     declareExternallyReferenced: true,
     enableConstEnums: false,
     format: true,
-    style: { semi: false, singleQuote: true, printWidth: 100 }
+    style: { semi: false, singleQuote: true, printWidth: 100 },
   })
   const clean = stripProvenanceNotes(body).trimEnd()
   const banner = generatedBanner(schemaDigest(files), '// ')
@@ -87,7 +90,7 @@ export async function renderTypeScript(): Promise<string> {
     ' * artifact.',
     ' */',
     `export const PROTOCOL_VERSION = ${String(version)}`,
-    ''
+    '',
   ].join('\n')
   return `${banner}\n\n${clean}\n\n${tail}`
 }

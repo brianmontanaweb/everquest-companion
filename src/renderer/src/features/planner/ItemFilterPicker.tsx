@@ -33,7 +33,13 @@ function wearable(hit: PlannerItemHit): boolean {
   return hit.slots.length > 0
 }
 
-function HitRow({ hit, onPick }: { hit: PlannerItemHit; onPick: (h: PlannerItemHit) => void }): JSX.Element {
+function HitRow({
+  hit,
+  onPick,
+}: {
+  hit: PlannerItemHit
+  onPick: (h: PlannerItemHit) => void
+}): JSX.Element {
   return (
     <Stack
       direction="row"
@@ -41,7 +47,13 @@ function HitRow({ hit, onPick }: { hit: PlannerItemHit; onPick: (h: PlannerItemH
       alignItems="center"
       data-testid="planner-item-hit"
       onClick={() => onPick(hit)}
-      sx={{ px: 1, py: 0.5, cursor: 'pointer', flexWrap: 'nowrap', '&:hover': { bgcolor: 'action.hover' } }}
+      sx={{
+        px: 1,
+        py: 0.5,
+        cursor: 'pointer',
+        flexWrap: 'nowrap',
+        '&:hover': { bgcolor: 'action.hover' },
+      }}
     >
       {hit.iconId !== undefined && (
         <Box
@@ -84,7 +96,11 @@ export interface ItemFilterPickerProps {
   onPick: (hit: PlannerItemHit) => void
 }
 
-export default function ItemFilterPicker({ anchor, onClose, onPick }: ItemFilterPickerProps): JSX.Element {
+export default function ItemFilterPicker({
+  anchor,
+  onClose,
+  onPick,
+}: ItemFilterPickerProps): JSX.Element {
   const [text, setText] = useState('')
   const query = useDeferredValue(text)
   const open = anchor !== null

@@ -22,7 +22,7 @@ import {
   normalizeVoicePrefs,
   resolveAlertAudio,
   speechTextFor,
-  type SpeechFiring
+  type SpeechFiring,
 } from '../src/shared/speechText'
 
 /** A def with just enough shape to resolve; `speechTextFor` reads only name + speech. */
@@ -32,9 +32,11 @@ function def(name: string, mode?: SpeechMode, phrase?: string): AlertDef {
     name,
     enabled: true,
     trigger: { type: 'event', kind: 'castBegin' },
-    sound: { packId: 'alan-rickman', soundId: 'x' }
+    sound: { packId: 'alan-rickman', soundId: 'x' },
   }
-  return mode === undefined ? base : { ...base, speech: phrase === undefined ? { mode } : { mode, phrase } }
+  return mode === undefined
+    ? base
+    : { ...base, speech: phrase === undefined ? { mode } : { mode, phrase } }
 }
 
 const firing = (spell?: string): SpeechFiring => (spell === undefined ? {} : { spell })
@@ -89,7 +91,7 @@ test('JOS-362: resolveAlertAudio — a phrase makes a stored "both" spoken, ever
     name: 'Charm break',
     enabled: true,
     trigger: { type: 'event', kind: 'uncharm' },
-    sound: { packId: 'alan-rickman', soundId: 'attention' }
+    sound: { packId: 'alan-rickman', soundId: 'attention' },
   }
   assert.equal(resolveAlertAudio(base), 'sound', 'an absent channel is the pre-voice default')
   assert.equal(resolveAlertAudio({ ...base, audio: 'sound' }), 'sound')
@@ -98,16 +100,20 @@ test('JOS-362: resolveAlertAudio — a phrase makes a stored "both" spoken, ever
   assert.equal(
     resolveAlertAudio({ ...base, audio: 'both', speech: { mode: 'alertName' } }),
     'sound',
-    'a mode is not a phrase — nobody wrote words for this alert'
+    'a mode is not a phrase — nobody wrote words for this alert',
   )
   assert.equal(
     resolveAlertAudio({ ...base, audio: 'both', speech: { mode: 'custom', phrase: '  ' } }),
     'sound',
-    'and blank words are not words'
+    'and blank words are not words',
   )
   assert.equal(
-    resolveAlertAudio({ ...base, audio: 'both', speech: { mode: 'custom', phrase: 'Charm broke' } }),
-    'speech'
+    resolveAlertAudio({
+      ...base,
+      audio: 'both',
+      speech: { mode: 'custom', phrase: 'Charm broke' },
+    }),
+    'speech',
   )
 })
 
@@ -116,26 +122,36 @@ test('JOS-362: resolveAlertAudio — a phrase makes a stored "both" spoken, ever
 test('spellName strips every roman-numeral rank I–X and leaves unranked names alone', () => {
   const ranks = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
   for (const r of ranks) {
-    assert.equal(speechTextFor(def('n', 'spellName'), firing(`Mesmerization ${r}`)), 'Mesmerization')
+    assert.equal(
+      speechTextFor(def('n', 'spellName'), firing(`Mesmerization ${r}`)),
+      'Mesmerization',
+    )
   }
   // An unsuffixed name is already the base — nothing to strip.
   assert.equal(speechTextFor(def('n', 'spellName'), firing('Clarity')), 'Clarity')
   // Lowercase ranks strip too (the fold is case-insensitive, like spellCanonKey).
   assert.equal(speechTextFor(def('n', 'spellName'), firing('Allure vi')), 'Allure')
   // A roman numeral INSIDE the name is not a rank — only a trailing one is.
-  assert.equal(speechTextFor(def('n', 'spellName'), firing('Vision of Ix Ward')), 'Vision of Ix Ward')
+  assert.equal(
+    speechTextFor(def('n', 'spellName'), firing('Vision of Ix Ward')),
+    'Vision of Ix Ward',
+  )
   // A name that is nothing but a numeral has no leading space, so it is not a rank tail.
   assert.equal(speechTextFor(def('n', 'spellName'), firing('III')), 'III')
 })
 
 test('spellName keeps possessives and punctuation — 712 spell names contain an apostrophe-s', () => {
-  assert.equal(speechTextFor(def('n', 'spellName'), firing("Denon's Desperate Dirge")), "Denon's Desperate Dirge")
+  assert.equal(
+    speechTextFor(def('n', 'spellName'), firing("Denon's Desperate Dirge")),
+    "Denon's Desperate Dirge",
+  )
 })
 
 // ------------------------------------------------------------------------------- first word
 
 test('spellFirstWord is the first word of the RANK-STRIPPED name — the shortest useful utterance', () => {
-  const f = (spell: string): string | null => speechTextFor(def('n', 'spellFirstWord'), firing(spell))
+  const f = (spell: string): string | null =>
+    speechTextFor(def('n', 'spellFirstWord'), firing(spell))
   assert.equal(f('Swift Like the Wind I'), 'Swift')
   assert.equal(f('Lay on Hands X'), 'Lay')
   assert.equal(f('Clarity'), 'Clarity')
@@ -148,8 +164,14 @@ test('spellFirstWord is the first word of the RANK-STRIPPED name — the shortes
 // -------------------------------------------------------------------------------- custom
 
 test('a custom phrase is spoken verbatim, whitespace-collapsed', () => {
-  assert.equal(speechTextFor(def('n', 'custom', 'Adds on the puller!'), firing()), 'Adds on the puller!')
-  assert.equal(speechTextFor(def('n', 'custom', '  two   lines\nfolded '), firing()), 'two lines folded')
+  assert.equal(
+    speechTextFor(def('n', 'custom', 'Adds on the puller!'), firing()),
+    'Adds on the puller!',
+  )
+  assert.equal(
+    speechTextFor(def('n', 'custom', '  two   lines\nfolded '), firing()),
+    'two lines folded',
+  )
 })
 
 test('an EMPTY custom phrase falls back to the alert name rather than speaking nothing', () => {
@@ -173,10 +195,16 @@ test('an over-long utterance is TRUNCATED at MAX_SPEECH_CHARS, never refused', (
   assert.equal(speechTextFor(def('n', 'custom', exact), firing()), exact)
   // The cap applies to EVERY mode, including a pathological alert name and a long spell line.
   assert.equal(speechTextFor(def('c'.repeat(300), 'alertName'), firing())?.length, MAX_SPEECH_CHARS)
-  assert.equal(speechTextFor(def('n', 'spellName'), firing('d'.repeat(300)))?.length, MAX_SPEECH_CHARS)
+  assert.equal(
+    speechTextFor(def('n', 'spellName'), firing('d'.repeat(300)))?.length,
+    MAX_SPEECH_CHARS,
+  )
   // Truncation never leaves a trailing space to be spoken as a pause.
   const spacey = `${'e'.repeat(MAX_SPEECH_CHARS - 1)}   tail`
-  assert.equal(speechTextFor(def('n', 'custom', spacey), firing()), 'e'.repeat(MAX_SPEECH_CHARS - 1))
+  assert.equal(
+    speechTextFor(def('n', 'custom', spacey), firing()),
+    'e'.repeat(MAX_SPEECH_CHARS - 1),
+  )
 })
 
 // ------------------------------------------------------------------------------- defaults

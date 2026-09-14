@@ -50,7 +50,8 @@ const PICK: readonly string[] = ['STA', 'EFF_HP']
 /** The fixture row that states NEITHER half — a weapon with WIS, DMG, DELAY and no hitpoints. */
 const THELVORN_KEY = 'thelvorn, blade of light'
 
-const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> => settle(fn, (ok) => ok, { timeoutMs: ms })
+const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> =>
+  settle(fn, (ok) => ok, { timeoutMs: ms })
 
 const textOf = (page: Page, sel: string): Promise<string> =>
   page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
@@ -72,7 +73,7 @@ async function typeAndSettle(page: Page, value: string): Promise<number> {
       return stable
     },
     (ok) => ok,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
   return last
 }
@@ -98,11 +99,20 @@ function readRows(page: Page): Promise<Reading[]> {
     (sel) =>
       [...document.querySelectorAll(sel)].map((row) => ({
         key: row.getAttribute('data-item-key') ?? '',
-        hp: (row.querySelector('[data-testid="gear-cell-HP"]') as HTMLElement | null)?.innerText.trim() ?? '',
-        sta: (row.querySelector('[data-testid="gear-cell-STA"]') as HTMLElement | null)?.innerText.trim() ?? '',
-        eff: (row.querySelector('[data-testid="gear-cell-EFF_HP"]') as HTMLElement | null)?.innerText.trim() ?? ''
+        hp:
+          (
+            row.querySelector('[data-testid="gear-cell-HP"]') as HTMLElement | null
+          )?.innerText.trim() ?? '',
+        sta:
+          (
+            row.querySelector('[data-testid="gear-cell-STA"]') as HTMLElement | null
+          )?.innerText.trim() ?? '',
+        eff:
+          (
+            row.querySelector('[data-testid="gear-cell-EFF_HP"]') as HTMLElement | null
+          )?.innerText.trim() ?? '',
       })),
-    ROW
+    ROW,
   )
 }
 
@@ -113,7 +123,7 @@ function monotoneDesc(rows: readonly Reading[]): { ranked: boolean; absentLast: 
   const firstBlank = values.indexOf('')
   return {
     ranked: numbers.every((n, i) => i === 0 || (numbers[i - 1] ?? 0) >= n),
-    absentLast: firstBlank === -1 || values.slice(firstBlank).every((t) => t === '')
+    absentLast: firstBlank === -1 || values.slice(firstBlank).every((t) => t === ''),
   }
 }
 
@@ -122,7 +132,12 @@ function monotoneDesc(rows: readonly Reading[]): { ranked: boolean; absentLast: 
  * zero. Returns the rows that disagree plus a census of which arm each row exercised, so the check
  * below can refuse to pass vacuously on a screenful that happened to state nothing.
  */
-function auditSum(rows: readonly Reading[]): { bad: Reading[]; both: number; one: number; neither: number } {
+function auditSum(rows: readonly Reading[]): {
+  bad: Reading[]
+  both: number
+  one: number
+  neither: number
+} {
   const bad: Reading[] = []
   let both = 0
   let one = 0
@@ -148,10 +163,15 @@ function auditSum(rows: readonly Reading[]): { bad: Reading[]; both: number; one
  * budget on message formatting.
  */
 const topEff = (rows: readonly Reading[]): string => rows[0]?.eff ?? '(none)'
-const firstFew = (rows: readonly Reading[]): string => rows.slice(0, 6).map((r) => r.eff).join(' ')
+const firstFew = (rows: readonly Reading[]): string =>
+  rows
+    .slice(0, 6)
+    .map((r) => r.eff)
+    .join(' ')
 function describeAudit(audit: ReturnType<typeof auditSum>, where: string): string {
   const worst = audit.bad[0]
-  if (worst === undefined) return `${String(audit.both)} rows state both halves ${where}, ${String(audit.one)} state one`
+  if (worst === undefined)
+    return `${String(audit.both)} rows state both halves ${where}, ${String(audit.one)} state one`
   return `${String(audit.bad.length)} disagree, first: ${worst.key} ${worst.hp}+${worst.sta}=${worst.eff}`
 }
 
@@ -168,13 +188,16 @@ async function stepPickable(page: Page): Promise<boolean> {
   await typeAndSettle(page, '')
   await pickColumns(page, PICK)
   const drawn = await until(async () => (await countOf(page, SORT_EFF_HP)) === 1, 15_000)
-  if (!check('EFFECTIVE HP is in the columns picker, and picking it draws a SORTABLE header', drawn)) return false
+  if (
+    !check('EFFECTIVE HP is in the columns picker, and picking it draws a SORTABLE header', drawn)
+  )
+    return false
 
   const label = (await textOf(page, SORT_EFF_HP)).replace(/\s+/g, ' ').trim()
   check(
     '…under a label short enough for the 8% column ceiling - the underscore rule`s own spelling',
     label.includes('EFF HP'),
-    `the header reads "${label}"`
+    `the header reads "${label}"`,
   )
   return true
 }
@@ -186,7 +209,10 @@ async function stepPickable(page: Page): Promise<boolean> {
  */
 async function stepSortAndSum(page: Page): Promise<Reading[]> {
   await page.click(SORT_EFF_HP, { timeout: 15_000 })
-  const ready = await until(async () => (await readRows(page)).filter((r) => r.eff !== '').length > 1, 15_000)
+  const ready = await until(
+    async () => (await readRows(page)).filter((r) => r.eff !== '').length > 1,
+    15_000,
+  )
   if (!check('sorting by effective HP leaves rows on screen with sums to compare', ready)) return []
 
   const rows = await readRows(page)
@@ -195,14 +221,17 @@ async function stepSortAndSum(page: Page): Promise<Reading[]> {
   check(
     '…and a row stating neither HP nor STA never outranks one that states either - absent is not zero',
     absentLast,
-    rows.map((r) => (r.eff === '' ? '_' : r.eff)).slice(0, 10).join(' ')
+    rows
+      .map((r) => (r.eff === '' ? '_' : r.eff))
+      .slice(0, 10)
+      .join(' '),
   )
 
   const audit = auditSum(rows)
   check(
     'every row on screen states HP + STA - a stated value counts, a silent one adds nothing',
     audit.bad.length === 0 && audit.both > 0,
-    describeAudit(audit, 'at base')
+    describeAudit(audit, 'at base'),
   )
   return rows
 }
@@ -216,7 +245,7 @@ async function stepBlank(page: Page): Promise<void> {
   check(
     'an item stating neither HP nor STA has a BLANK effective HP - never a 0 the wiki never printed',
     eff === '' && hp === '' && sta === '',
-    `HP "${hp}" STA "${sta}" EFF HP "${eff}"`
+    `HP "${hp}" STA "${sta}" EFF HP "${eff}"`,
   )
   await typeAndSettle(page, '')
 }
@@ -247,21 +276,21 @@ async function stepSlider(page: Page, before: readonly Reading[]): Promise<void>
   check(
     'moving the global plus-state RESTATES the effective HP column',
     moved,
-    `top row read ${topWas} at base and ${topEff(after)} at tier 2 + 3/4`
+    `top row read ${topWas} at base and ${topEff(after)} at tier 2 + 3/4`,
   )
 
   const { ranked, absentLast } = monotoneDesc(after)
   check(
     'THE TABLE RE-RANKS ON THE NEW NUMBERS - the restated column still reads highest-first, top to bottom',
     ranked && absentLast,
-    firstFew(after)
+    firstFew(after),
   )
 
   const audit = auditSum(after)
   check(
     '…and the sum is still of the two cells beside it, now scaled - the sum of the halves, not a scaled sum',
     audit.bad.length === 0 && audit.both > 0,
-    describeAudit(audit, 'at the checkpoint')
+    describeAudit(audit, 'at the checkpoint'),
   )
 
   // WHETHER ANY PAIR ACTUALLY SWAPPED is a fact about today's corpus, so it is REPORTED rather than
@@ -272,7 +301,7 @@ async function stepSlider(page: Page, before: readonly Reading[]): Promise<void>
   note(
     wasOrder === nowOrder
       ? 'the slider restated every effective HP without any visible pair changing places'
-      : 'the slider restated every effective HP and the visible ranking changed places'
+      : 'the slider restated every effective HP and the visible ranking changed places',
   )
 }
 
@@ -295,6 +324,6 @@ export async function stepGearEffectiveHp(page: Page): Promise<void> {
   check(
     'the step hands the tab back at base, with the columns following the sort again',
     (await countOf(page, '[data-testid="gear-sort-STA"]')) === 0,
-    'a picked column left behind would silently un-pick itself in the next step'
+    'a picked column left behind would silently un-pick itself in the next step',
   )
 }

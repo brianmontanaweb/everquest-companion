@@ -84,7 +84,11 @@ function categoryByName(source: SourceView): Map<string, DamageCategory> {
  *     a special (`roundLaneLabel` titles those after the verb — "Slash", "Crush" — and no skill
  *     row carries that name).
  */
-export function lanesForAbility(source: SourceView, name: string, category: DamageCategory): RoundLaneView[] {
+export function lanesForAbility(
+  source: SourceView,
+  name: string,
+  category: DamageCategory,
+): RoundLaneView[] {
   const r = source.roundStats
   if (!r) return []
   const index = categoryByName(source)
@@ -120,13 +124,20 @@ function multiText(doubled: number, tripled: number, quad: number): string {
  * ability the lanes are POOLED (its swings answer several weapon verbs — slash, crush — under one
  * ability), so the rates are over the summed rounds; a named special is its single lane.
  */
-export function abilityMultiAttack(source: SourceView, name: string, category: DamageCategory): AbilityMulti | null {
+export function abilityMultiAttack(
+  source: SourceView,
+  name: string,
+  category: DamageCategory,
+): AbilityMulti | null {
   const lanes = lanesForAbility(source, name, category)
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives RoundLaneView. Becomes a view descriptor when the source lands.
   const rounds = lanes.reduce((n, l) => n + l.rounds, 0)
   const isAutoAttack = name.toLowerCase() === AUTO_ATTACK.toLowerCase() && category === 'melee'
   const flurry = isAutoAttack && source.roundStats ? flurryText(source.roundStats) : null
-  if (rounds <= 0) return flurry ? { rounds: 0, doubledPct: 0, tripledPct: 0, quadPct: 0, estimated: false, text: '', flurry } : null
+  if (rounds <= 0)
+    return flurry
+      ? { rounds: 0, doubledPct: 0, tripledPct: 0, quadPct: 0, estimated: false, text: '', flurry }
+      : null
   const doubledPct = (bucketSum(lanes, 1) / rounds) * 100
   const tripledPct = (bucketSum(lanes, 2) / rounds) * 100
   const quadPct = (bucketSum(lanes, 3) / rounds) * 100
@@ -137,7 +148,7 @@ export function abilityMultiAttack(source: SourceView, name: string, category: D
     quadPct,
     estimated: lanes.some((l) => l.confidence === 'aggregate'),
     text: multiText(doubledPct, tripledPct, quadPct),
-    flurry
+    flurry,
   }
 }
 
@@ -170,7 +181,11 @@ export interface AbilityRiposte {
   text: string
 }
 
-export function abilityRiposte(source: SourceView, name: string, category: DamageCategory): AbilityRiposte | null {
+export function abilityRiposte(
+  source: SourceView,
+  name: string,
+  category: DamageCategory,
+): AbilityRiposte | null {
   const r = source.roundStats
   if (!r || r.ripostesGiven <= 0) return null
   if (name.toLowerCase() !== AUTO_ATTACK.toLowerCase() || category !== 'melee') return null
@@ -180,7 +195,7 @@ export function abilityRiposte(source: SourceView, name: string, category: Damag
     hits: r.riposteLanded,
     damage: r.riposteDamage,
     pct,
-    text: pct > 0 ? `${pct.toFixed(1)}% of swing damage` : 'no damage landed'
+    text: pct > 0 ? `${pct.toFixed(1)}% of swing damage` : 'no damage landed',
   }
 }
 
@@ -214,7 +229,10 @@ function riposteSharePct(source: SourceView, damage: number): number {
  * engine — so it does not expand; its resist rate, if any, already rides the bar face (SkillBar).
  * A damage shield is passive and likewise inert.
  */
-export function abilityExpandable(row: FlatSkill & { children?: unknown[] }, multi: AbilityMulti | null): boolean {
+export function abilityExpandable(
+  row: FlatSkill & { children?: unknown[] },
+  multi: AbilityMulti | null,
+): boolean {
   if (row.category === 'melee' || row.category === 'slay') return true
   if (row.children && row.children.length > 0) return true
   if (multi) return true

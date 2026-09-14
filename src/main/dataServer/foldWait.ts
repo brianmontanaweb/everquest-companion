@@ -137,13 +137,13 @@ export async function waitForFold(deps: FoldWaitDeps): Promise<FoldHealth | null
       if (refusals >= FOLD_REFUSAL_LIMIT) {
         deps.note(
           `data-server client: session.health was refused ${String(refusals)} times running — ` +
-            `this turn stops asking (${describeErr(err)})`
+            `this turn stops asking (${describeErr(err)})`,
         )
         return null
       }
       deps.note(
         `data-server client: session.health was refused (${describeErr(err)}); ` +
-          `asking again (${String(refusals)} of ${String(FOLD_REFUSAL_LIMIT)})`
+          `asking again (${String(refusals)} of ${String(FOLD_REFUSAL_LIMIT)})`,
       )
       await deps.rest(FOLD_REFUSAL_PAUSE_MS)
       if (!deps.mine()) return null
@@ -186,7 +186,8 @@ export function stillFolding(health: FoldHealth, logSize: number | null): string
       : logSize === null
         ? humanBytes(offset)
         : `${humanBytes(offset)} of ${humanBytes(Math.max(offset, logSize))}`
-  const events = health.events === undefined ? '' : `, ${health.events.toLocaleString('en-US')} events`
+  const events =
+    health.events === undefined ? '' : `, ${health.events.toLocaleString('en-US')} events`
   return `data-server client: still folding — ${where}${events} (epoch ${String(health.epoch)})`
 }
 

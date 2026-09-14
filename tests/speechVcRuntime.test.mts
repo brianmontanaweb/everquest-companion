@@ -39,7 +39,7 @@ import {
   provisionVcRuntime,
   systemDllDir,
   vcRuntimeCacheDir,
-  vcRuntimeGap
+  vcRuntimeGap,
 } from '../src/main/speech/vcRuntime'
 import { VC_REDIST_PAYLOAD, VC_RUNTIME_FILES } from '../src/main/speech/pinned'
 import { createSpeechEngine } from '../src/main/speech/engine'
@@ -105,7 +105,7 @@ const DLL_BODIES: readonly (readonly [string, Buffer])[] = [
   ['vcruntime140.dll', Buffer.from('vcruntime140, in spirit'.repeat(9))],
   ['vcruntime140_1.dll', Buffer.from('vcruntime140_1, in spirit'.repeat(7))],
   ['msvcp140.dll', Buffer.from('msvcp140, in spirit'.repeat(11))],
-  ['msvcp140_1.dll', Buffer.from('msvcp140_1, in spirit'.repeat(5))]
+  ['msvcp140_1.dll', Buffer.from('msvcp140_1, in spirit'.repeat(5))],
 ]
 
 const ENTRY_DIR = 'Contents/VC/Redist/MSVC/1.2.3/x64/Microsoft.VC143.CRT/'
@@ -114,14 +114,14 @@ const FAKE_FILES: readonly VcRuntimeFile[] = DLL_BODIES.map(([name, body]) => ({
   name,
   path: `${ENTRY_DIR}${name}`,
   sha256: createHash('sha256').update(body).digest('hex'),
-  bytes: body.length
+  bytes: body.length,
 }))
 
 /** A payload shaped like the real vsix: the four files plus the noise the real one carries. */
 const FAKE_PAYLOAD_BYTES = buildZip([
   { name: 'manifest.json', body: Buffer.from('{"pretend":true}') },
   ...DLL_BODIES.map(([name, body]) => ({ name: `${ENTRY_DIR}${name}`, body })),
-  { name: `${ENTRY_DIR}concrt140.dll`, body: Buffer.from('not imported by anything we load') }
+  { name: `${ENTRY_DIR}concrt140.dll`, body: Buffer.from('not imported by anything we load') },
 ])
 
 const FAKE_SOURCE: VcRuntimeSource = {
@@ -129,9 +129,9 @@ const FAKE_SOURCE: VcRuntimeSource = {
     name: 'CRT.Redist.X64.base.vsix',
     url: 'https://download.visualstudio.microsoft.com/download/pr/deadbeef/CRT.vsix',
     sha256: createHash('sha256').update(FAKE_PAYLOAD_BYTES).digest('hex'),
-    bytes: FAKE_PAYLOAD_BYTES.length
+    bytes: FAKE_PAYLOAD_BYTES.length,
   },
-  files: FAKE_FILES
+  files: FAKE_FILES,
 }
 
 interface FetchCall {
@@ -172,7 +172,7 @@ function runOptions(root: string, binding: string, system: string, log: FetchCal
     systemDir: system,
     source: FAKE_SOURCE,
     fetchImpl: fakeFetch(FAKE_PAYLOAD_BYTES, log),
-    sleep: (): Promise<void> => Promise.resolve()
+    sleep: (): Promise<void> => Promise.resolve(),
   }
 }
 
@@ -181,13 +181,13 @@ function runOptions(root: string, binding: string, system: string, log: FetchCal
 test('the binding roots cover dev, packaged and unpacked — unpacked FIRST', () => {
   const roots = onnxBindingRoots({
     appPath: join('C:', 'app', 'resources', 'app.asar'),
-    cwd: join('C:', 'checkout')
+    cwd: join('C:', 'checkout'),
   })
   const tail = join('node_modules', 'onnxruntime-node', 'bin', 'napi-v3', 'win32', 'x64')
   assert.deepEqual(roots, [
     join('C:', 'app', 'resources', 'app.asar.unpacked', tail),
     join('C:', 'app', 'resources', 'app.asar', tail),
-    join('C:', 'checkout', tail)
+    join('C:', 'checkout', tail),
   ])
   // A .node cannot be dlopen'd from inside an asar, so the unpacked address has to be tried
   // before the archived one or a packaged build would place four DLLs where nothing looks.
@@ -221,7 +221,10 @@ test('systemDllDir reads the environment rather than hardcoding a drive letter',
 
 test('a machine with the redistributable installed has no gap', () => {
   const root = tempRoot()
-  const system = systemDirWith(root, FAKE_FILES.map((f) => f.name))
+  const system = systemDirWith(
+    root,
+    FAKE_FILES.map((f) => f.name),
+  )
   assert.deepEqual(vcRuntimeGap({ placementDir: null, systemDir: system, files: FAKE_FILES }), [])
 })
 
@@ -231,7 +234,10 @@ test('THE JOS-247 SIGNATURE: the 2015 redist without the 2019+ one is a gap', ()
   const root = tempRoot()
   const system = systemDirWith(root, ['vcruntime140.dll', 'msvcp140.dll'])
   const gap = vcRuntimeGap({ placementDir: null, systemDir: system, files: FAKE_FILES })
-  assert.deepEqual(gap.map((f) => f.name), ['vcruntime140_1.dll', 'msvcp140_1.dll'])
+  assert.deepEqual(
+    gap.map((f) => f.name),
+    ['vcruntime140_1.dll', 'msvcp140_1.dll'],
+  )
 })
 
 test('files already placed beside the binding close the gap without a system copy', () => {
@@ -240,7 +246,7 @@ test('files already placed beside the binding close the gap without a system cop
   for (const file of FAKE_FILES) writeFileSync(join(binding, file.name), 'placed earlier')
   assert.deepEqual(
     vcRuntimeGap({ placementDir: binding, systemDir: NOWHERE, files: FAKE_FILES }),
-    []
+    [],
   )
 })
 
@@ -252,19 +258,21 @@ test('a copy that is on neither path does NOT count as resolvable', () => {
   const elsewhere = join(root, 'some-other-app')
   mkdirSync(elsewhere, { recursive: true })
   for (const file of FAKE_FILES) writeFileSync(join(elsewhere, file.name), 'not on our path')
-  const gap = vcRuntimeGap({ placementDir: bindingDirIn(root), systemDir: NOWHERE, files: FAKE_FILES })
+  const gap = vcRuntimeGap({
+    placementDir: bindingDirIn(root),
+    systemDir: NOWHERE,
+    files: FAKE_FILES,
+  })
   assert.equal(gap.length, FAKE_FILES.length)
 })
 
 test('the real pin names exactly the measured import closure', () => {
   // Four files, no more: concrt140/vccorlib140/msvcp140_2 ride in the same payload and are
   // imported by nothing this app loads. Adding one here is a decision, not a tidy-up.
-  assert.deepEqual(VC_RUNTIME_FILES.map((f) => f.name), [
-    'vcruntime140.dll',
-    'vcruntime140_1.dll',
-    'msvcp140.dll',
-    'msvcp140_1.dll'
-  ])
+  assert.deepEqual(
+    VC_RUNTIME_FILES.map((f) => f.name),
+    ['vcruntime140.dll', 'vcruntime140_1.dll', 'msvcp140.dll', 'msvcp140_1.dll'],
+  )
   // The URL is content-addressed: the digest is a path segment, which is what makes it
   // immutable rather than merely stable. A re-pin that loses this property is a regression.
   assert.ok(VC_REDIST_PAYLOAD.url.includes(VC_REDIST_PAYLOAD.sha256))
@@ -277,11 +285,14 @@ test('the reader gets stored and deflated entries out byte-exact', () => {
   const stored = Buffer.from('stored bytes, uncompressed')
   const zip = buildZip([
     { name: 'a/stored.bin', body: stored, method: 0 },
-    { name: 'a/deflated.bin', body: Buffer.from('x'.repeat(5000)) }
+    { name: 'a/deflated.bin', body: Buffer.from('x'.repeat(5000)) },
   ])
   const entries = readZipEntries(zip)
   assert.ok(entries)
-  assert.deepEqual(entries.map((e) => e.name), ['a/stored.bin', 'a/deflated.bin'])
+  assert.deepEqual(
+    entries.map((e) => e.name),
+    ['a/stored.bin', 'a/deflated.bin'],
+  )
   assert.deepEqual(readZipEntryBytes(zip, entries[0]), stored)
   assert.deepEqual(readZipEntryBytes(zip, entries[1]), Buffer.from('x'.repeat(5000)))
 })
@@ -318,7 +329,10 @@ test('the happy path: one request, four DLLs beside the binding', async () => {
 test('a machine that already has the runtime is a NO-OP with zero requests', async () => {
   const root = tempRoot()
   const binding = bindingDirIn(root)
-  const system = systemDirWith(root, FAKE_FILES.map((f) => f.name))
+  const system = systemDirWith(
+    root,
+    FAKE_FILES.map((f) => f.name),
+  )
   const log: FetchCall[] = []
   const result = await provisionVcRuntime(runOptions(root, binding, system, log))
   assert.deepEqual(result, { skipped: true, placed: 0 })
@@ -343,7 +357,7 @@ test('a PAYLOAD digest mismatch places nothing at all', async () => {
   const wrong = Buffer.alloc(FAKE_PAYLOAD_BYTES.length, 7)
   const result = await provisionVcRuntime({
     ...runOptions(root, binding, NOWHERE, log),
-    fetchImpl: fakeFetch(wrong, log)
+    fetchImpl: fakeFetch(wrong, log),
   })
   assert.equal(result.placed, 0)
   assert.match(String(result.message), /sha256 mismatch/)
@@ -357,11 +371,11 @@ test('a per-FILE digest mismatch places nothing, even from a valid archive', asy
   const binding = bindingDirIn(root)
   const tampered: VcRuntimeSource = {
     payload: FAKE_SOURCE.payload,
-    files: FAKE_FILES.map((f, i) => (i === 2 ? { ...f, sha256: 'f'.repeat(64) } : f))
+    files: FAKE_FILES.map((f, i) => (i === 2 ? { ...f, sha256: 'f'.repeat(64) } : f)),
   }
   const result = await provisionVcRuntime({
     ...runOptions(root, binding, NOWHERE, []),
-    source: tampered
+    source: tampered,
   })
   assert.equal(result.placed, 0)
   assert.match(String(result.message), /msvcp140\.dll: sha256 mismatch/)
@@ -373,11 +387,11 @@ test('an entry the payload does not carry is a clean failure, not a crash', asyn
   const binding = bindingDirIn(root)
   const missing: VcRuntimeSource = {
     payload: FAKE_SOURCE.payload,
-    files: [{ ...FAKE_FILES[0], path: `${ENTRY_DIR}not-in-there.dll` }]
+    files: [{ ...FAKE_FILES[0], path: `${ENTRY_DIR}not-in-there.dll` }],
   }
   const result = await provisionVcRuntime({
     ...runOptions(root, binding, NOWHERE, []),
-    source: missing
+    source: missing,
   })
   assert.equal(result.placed, 0)
   assert.match(String(result.message), /is not in the payload/)
@@ -394,7 +408,7 @@ test('an unreachable host gives up after the shared retry budget and says so', a
     sleep: (ms: number): Promise<void> => {
       waits.push(ms)
       return Promise.resolve()
-    }
+    },
   })
   assert.equal(result.placed, 0)
   assert.ok(result.message)
@@ -411,7 +425,7 @@ test('no binding directory is reported, never silently treated as success', asyn
     bindingDir: null,
     systemDir: NOWHERE,
     source: FAKE_SOURCE,
-    fetchImpl: fakeFetch(FAKE_PAYLOAD_BYTES, [])
+    fetchImpl: fakeFetch(FAKE_PAYLOAD_BYTES, []),
   })
   assert.equal(result.placed, 0)
   assert.match(String(result.message), /binding directory was not found/)
@@ -439,20 +453,23 @@ test('an app update wipes the placement and the CACHE puts it back, offline', as
 test('a repair unlatches the engine fault; nothing else does', async () => {
   const root = tempRoot()
   const worker = join(root, 'dying-worker.cjs')
-  writeFileSync(worker, "const e = new Error('dlopen failed'); e.code = 'ERR_DLOPEN_FAILED'; throw e\n")
+  writeFileSync(
+    worker,
+    "const e = new Error('dlopen failed'); e.code = 'ERR_DLOPEN_FAILED'; throw e\n",
+  )
   const engine = createSpeechEngine({
     userData: root,
     workerPath: worker,
-    isInstalled: () => true
+    isInstalled: () => true,
   })
   assert.deepEqual(await engine.say('charm break', 'af_heart'), {
     ok: false,
-    reason: 'engine-unloadable'
+    reason: 'engine-unloadable',
   })
   // The latch is real: a second utterance answers from the fault without spawning anything.
   assert.deepEqual(await engine.say('mesmerization', 'af_heart'), {
     ok: false,
-    reason: 'engine-unloadable'
+    reason: 'engine-unloadable',
   })
   // A repair clears it — once. A second call has nothing to clear, which is how the caller
   // knows not to announce a fix twice.
@@ -462,7 +479,7 @@ test('a repair unlatches the engine fault; nothing else does', async () => {
   // the honest outcome for a repair that did not take.
   assert.deepEqual(await engine.say('root', 'af_heart'), {
     ok: false,
-    reason: 'engine-unloadable'
+    reason: 'engine-unloadable',
   })
   engine.dispose()
 })

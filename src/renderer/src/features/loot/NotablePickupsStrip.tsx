@@ -44,10 +44,13 @@ export function useNotableStrip(history: LootEvent[]): {
   const { byKey, notable } = useNotablePickups(history, dismissed)
   // Tradeskill-only pickups are hidden by default (see TRADESKILL_KEY).
   const [showTradeskill, setShowTradeskill] = useState<boolean>(loadShowTradeskill)
-  const tradeskillHidden = useMemo(() => notable.filter((n) => isTradeskillOnly(n.knowledge)), [notable])
+  const tradeskillHidden = useMemo(
+    () => notable.filter((n) => isTradeskillOnly(n.knowledge)),
+    [notable],
+  )
   const visibleNotable = useMemo(
     () => (showTradeskill ? notable : notable.filter((n) => !isTradeskillOnly(n.knowledge))),
-    [notable, showTradeskill]
+    [notable, showTradeskill],
   )
   const onToggleTradeskill = (v: boolean): void => {
     setShowTradeskill(v)
@@ -64,8 +67,8 @@ export function useNotableStrip(history: LootEvent[]): {
       hiddenTradeskill: showTradeskill ? 0 : tradeskillHidden.length,
       showTradeskill,
       onToggleTradeskill,
-      onDismiss: (key) => setDismissed((prev) => new Set(prev).add(key))
-    }
+      onDismiss: (key) => setDismissed((prev) => new Set(prev).add(key)),
+    },
   }
 }
 
@@ -81,7 +84,7 @@ export function useNotableStrip(history: LootEvent[]): {
 function PickupChip({
   n,
   onSelect,
-  onDismiss
+  onDismiss,
 }: {
   n: NotablePickup
   onSelect: (item: string) => void
@@ -118,7 +121,7 @@ function PickupChip({
 function TradeskillToggle({
   hiddenTradeskill,
   showTradeskill,
-  onToggleTradeskill
+  onToggleTradeskill,
 }: {
   hiddenTradeskill: number
   showTradeskill: boolean
@@ -128,7 +131,11 @@ function TradeskillToggle({
     <FormControlLabel
       sx={{ m: 0 }}
       control={
-        <Switch size="small" checked={showTradeskill} onChange={(e) => onToggleTradeskill(e.target.checked)} />
+        <Switch
+          size="small"
+          checked={showTradeskill}
+          onChange={(e) => onToggleTradeskill(e.target.checked)}
+        />
       }
       label={
         <Typography variant="caption" color="text.secondary">
@@ -153,7 +160,7 @@ export function NotablePickupsStrip({
   showTradeskill,
   onToggleTradeskill,
   onSelect,
-  onDismiss
+  onDismiss,
 }: NotableStripState & { onSelect: (item: string) => void }): JSX.Element | null {
   if (notable.length === 0 && hiddenTradeskill === 0) return null
   return (
@@ -163,7 +170,7 @@ export function NotablePickupsStrip({
         border: 1,
         borderColor: 'divider',
         borderRadius: 1,
-        bgcolor: 'action.hover'
+        bgcolor: 'action.hover',
       }}
     >
       <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>

@@ -27,10 +27,10 @@ function reply(over: Partial<LogsListResult> = {}): LogsListResult {
         name: 'Primitive',
         server: 'freeport',
         logPath: `${DIR}\\eqlog_Primitive_freeport.txt`,
-        lastPlayed: 1_787_181_707_000
-      }
+        lastPlayed: 1_787_181_707_000,
+      },
     ],
-    ...over
+    ...over,
   }
 }
 
@@ -41,8 +41,8 @@ test('a served list becomes the app’s own CharacterRef, field for field', () =
       name: 'Primitive',
       server: 'freeport',
       logPath: `${DIR}\\eqlog_Primitive_freeport.txt`,
-      lastPlayed: 1_787_181_707_000
-    }
+      lastPlayed: 1_787_181_707_000,
+    },
   ])
 })
 
@@ -55,9 +55,9 @@ test('ABSENT lastPlayed STAYS ABSENT — the key is not even present, let alone 
     DIR,
     reply({
       characters: [
-        { name: 'Ghost', server: 'freeport', logPath: `${DIR}\\eqlog_Ghost_freeport.txt` }
-      ]
-    })
+        { name: 'Ghost', server: 'freeport', logPath: `${DIR}\\eqlog_Ghost_freeport.txt` },
+      ],
+    }),
   )
   assert.ok(rows)
   assert.equal('lastPlayed' in rows[0], false)
@@ -103,9 +103,12 @@ test('the served ORDER is passed through untouched — the engine sorted it', ()
       characters: [
         { name: 'Newest', server: 'freeport', logPath: 'c', lastPlayed: 3 },
         { name: 'Middle', server: 'freeport', logPath: 'b', lastPlayed: 2 },
-        { name: 'Oldest', server: 'freeport', logPath: 'a', lastPlayed: 1 }
-      ]
-    })
+        { name: 'Oldest', server: 'freeport', logPath: 'a', lastPlayed: 1 },
+      ],
+    }),
   )
-  assert.deepEqual(rows?.map((c) => c.name), ['Newest', 'Middle', 'Oldest'])
+  assert.deepEqual(
+    rows?.map((c) => c.name),
+    ['Newest', 'Middle', 'Oldest'],
+  )
 })

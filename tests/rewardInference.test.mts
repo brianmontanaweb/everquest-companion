@@ -50,7 +50,7 @@ import { rewardInferredQuests } from '../src/renderer/src/features/posky/rewardI
 import {
   everTurnedIn,
   firstTimeReady,
-  withDerivedCompletion
+  withDerivedCompletion,
 } from '../src/renderer/src/features/posky/questCompletion'
 import type { QuestProgress } from '../src/renderer/src/features/posky/useProgress'
 
@@ -64,20 +64,20 @@ const QUESTS = [
     className: 'Cleric',
     name: 'Cleric Test of Resolution',
     reward: 'Necklace of Resolution',
-    rewardStats: 'MAGIC ITEM LORE ITEM NO DROP\nSlot: NECK'
+    rewardStats: 'MAGIC ITEM LORE ITEM NO DROP\nSlot: NECK',
   },
   {
     className: 'Wizard',
     name: 'Wizard Test of Focus',
     reward: "Al`Kabor's Cap of Binding",
-    rewardStats: 'MAGIC ITEM LORE ITEM NO DROP\nSlot: HEAD'
+    rewardStats: 'MAGIC ITEM LORE ITEM NO DROP\nSlot: HEAD',
   },
   {
     className: 'Rogue',
     name: 'Rogue Test of Thievery',
     reward: 'Wispy Choker of Vigor',
     // The newer scrape shape spells it "No Trade" - both spellings are the same fact.
-    rewardStats: 'Lore Equipped, No Trade\nSlot: NECK'
+    rewardStats: 'Lore Equipped, No Trade\nSlot: NECK',
   },
   // The two REAL tradeable rewards (the committed DB's only ones): no NO DROP, no No Trade.
   // Holding one proves nothing - it can be bought or handed over - so it never vouches.
@@ -85,10 +85,10 @@ const QUESTS = [
     className: 'Necromancer',
     name: 'Necromancer Test of Heart',
     reward: 'Sphinx Heart Amulet',
-    rewardStats: 'MAGIC ITEM LORE ITEM\nSlot: NECK'
+    rewardStats: 'MAGIC ITEM LORE ITEM\nSlot: NECK',
   },
   // The data has no quest without a reward today; the type allows one, so the rule must too.
-  { className: 'Monk', name: 'Monk Test of Stone', reward: undefined, rewardStats: undefined }
+  { className: 'Monk', name: 'Monk Test of Stone', reward: undefined, rewardStats: undefined },
 ]
 
 test('a reward sitting in the export vouches for its quest', () => {
@@ -117,7 +117,7 @@ test('an absent reward proves nothing, and an absent export proves nothing about
 test('a zero or negative count is an absent item, not a held one', () => {
   const keys = rewardInferredQuests(QUESTS, {
     'necklace of resolution': 0,
-    'wispy choker of vigor': -1
+    'wispy choker of vigor': -1,
   })
   assert.equal(keys.size, 0)
 })
@@ -132,7 +132,7 @@ test('a TRADEABLE reward proves nothing: possession is only evidence when the it
 test('both untradeable spellings vouch: the old scrape says NO DROP, the newer says No Trade', () => {
   const keys = rewardInferredQuests(QUESTS, {
     'necklace of resolution': 1,
-    'wispy choker of vigor': 1
+    'wispy choker of vigor': 1,
   })
   assert.ok(keys.has('Cleric::Cleric Test of Resolution'))
   assert.ok(keys.has('Rogue::Rogue Test of Thievery'))
@@ -157,7 +157,7 @@ function questRow(p: { className: string; name: string; turnIns?: number }): Que
     missing: ['Wind Rune Ena', 'Pulsating Ruby'],
     turnIns,
     logTurnIns: 0,
-    completed: turnIns >= 1
+    completed: turnIns >= 1,
   }
 }
 
@@ -192,7 +192,9 @@ test('a quest the export does not vouch for is returned untouched and unlabelled
 })
 
 test('real evidence wins: a ledger count is never floored, relabelled or double-counted', () => {
-  const q = withReward(questRow({ className: 'Cleric', name: 'Cleric Test of Resolution', turnIns: 2 }))
+  const q = withReward(
+    questRow({ className: 'Cleric', name: 'Cleric Test of Resolution', turnIns: 2 }),
+  )
   assert.equal(q.turnIns, 2)
   assert.equal(q.completionEvidence, undefined)
 })
@@ -219,6 +221,6 @@ test('the Ready tab’s first-time default drops an inferred quest: it has been 
   const fresh = questRow({ className: 'Rogue', name: 'Rogue Test of Thievery' })
   assert.deepEqual(
     firstTimeReady([inferred, fresh]).map((q) => q.key),
-    ['Rogue::Rogue Test of Thievery']
+    ['Rogue::Rogue Test of Thievery'],
   )
 })

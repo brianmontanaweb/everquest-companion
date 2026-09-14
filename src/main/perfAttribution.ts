@@ -83,7 +83,7 @@ import {
   type GcSample,
   type GcTally,
   type PerfSeamName,
-  type SeamTally
+  type SeamTally,
 } from '../shared/perfSeams'
 import { LIVE_TIMELINE_MS } from '../shared/perfLive'
 
@@ -281,7 +281,7 @@ export function peekAttributionTimeline(now = Date.now()): AttributionTimeline {
   const cutoff = now - LIVE_TIMELINE_MS
   return {
     seams: seamRing.filter((s) => s.at >= cutoff),
-    gc: gcRing.filter((s) => s.at >= cutoff)
+    gc: gcRing.filter((s) => s.at >= cutoff),
   }
 }
 

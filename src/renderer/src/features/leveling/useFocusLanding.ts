@@ -80,14 +80,14 @@ export const LANDING_PULSE_SX: SxProps<Theme> = {
   '@keyframes eqcLevelLand': {
     '0%': { borderColor: 'rgba(217,178,95,0)', boxShadow: '0 0 0 0 rgba(217,178,95,0)' },
     '30%': { borderColor: 'rgba(217,178,95,0.9)', boxShadow: '0 0 0 3px rgba(217,178,95,0.35)' },
-    '100%': { borderColor: 'rgba(217,178,95,0)', boxShadow: '0 0 0 0 rgba(217,178,95,0)' }
+    '100%': { borderColor: 'rgba(217,178,95,0)', boxShadow: '0 0 0 0 rgba(217,178,95,0)' },
   },
   animation: 'eqcLevelLand 1000ms ease-out 2',
   '@media (prefers-reduced-motion: reduce)': {
     animation: 'none',
     borderColor: 'rgba(217,178,95,0.9)',
-    boxShadow: '0 0 0 2px rgba(217,178,95,0.3)'
-  }
+    boxShadow: '0 0 0 2px rgba(217,178,95,0.3)',
+  },
 }
 
 /**

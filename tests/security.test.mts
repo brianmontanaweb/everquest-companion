@@ -22,7 +22,7 @@ import {
   isSafePackId,
   isSafeSourcePath,
   isSafeSourceRef,
-  isSafeSourceRepo
+  isSafeSourceRepo,
 } from '../src/main/security'
 
 const WIN = process.platform === 'win32'
@@ -33,16 +33,16 @@ test('allowedExternalUrl accepts exactly the links the app produces today', () =
   // shared/wiki.ts wikiPageUrl output, in both of its shapes.
   assert.equal(
     allowedExternalUrl('https://eqlwiki.com/Rod_of_Insidious_Glamour'),
-    'https://eqlwiki.com/Rod_of_Insidious_Glamour'
+    'https://eqlwiki.com/Rod_of_Insidious_Glamour',
   )
   assert.equal(
     allowedExternalUrl('https://eqlwiki.com/Enchanter_Plane_of_Sky_Tests'),
-    'https://eqlwiki.com/Enchanter_Plane_of_Sky_Tests'
+    'https://eqlwiki.com/Enchanter_Plane_of_Sky_Tests',
   )
   // Query + fragment survive (a wiki section link is legitimate).
   assert.equal(
     allowedExternalUrl('https://eqlwiki.com/Plane_of_Sky?action=raw#Quests'),
-    'https://eqlwiki.com/Plane_of_Sky?action=raw#Quests'
+    'https://eqlwiki.com/Plane_of_Sky?action=raw#Quests',
   )
   // Every allowlisted entry, exactly as listed — host-wide entries at the root, scoped entries
   // inside their own subtree. A scoped entry ALSO refuses the bare host, so no entry can quietly
@@ -61,25 +61,25 @@ test('allowedExternalUrl accepts exactly the links the app produces today', () =
   // not scraped text — but it travels the same door as every other link, so it is pinned here.
   assert.equal(
     allowedExternalUrl('https://github.com/jmoyers/everquest-companion/releases'),
-    'https://github.com/jmoyers/everquest-companion/releases'
+    'https://github.com/jmoyers/everquest-companion/releases',
   )
   // The subtree, not just that one leaf: query + fragment survive, and the repo's own front page
   // (the prefix itself, with or without its trailing slash) is inside its own subtree.
   assert.equal(
     allowedExternalUrl('https://github.com/jmoyers/everquest-companion/releases/tag/v0.24.0'),
-    'https://github.com/jmoyers/everquest-companion/releases/tag/v0.24.0'
+    'https://github.com/jmoyers/everquest-companion/releases/tag/v0.24.0',
   )
   assert.equal(
     allowedExternalUrl('https://github.com/jmoyers/everquest-companion/issues?q=is%3Aopen#top'),
-    'https://github.com/jmoyers/everquest-companion/issues?q=is%3Aopen#top'
+    'https://github.com/jmoyers/everquest-companion/issues?q=is%3Aopen#top',
   )
   assert.equal(
     allowedExternalUrl('https://github.com/jmoyers/everquest-companion'),
-    'https://github.com/jmoyers/everquest-companion'
+    'https://github.com/jmoyers/everquest-companion',
   )
   assert.equal(
     allowedExternalUrl('https://github.com/jmoyers/everquest-companion/'),
-    'https://github.com/jmoyers/everquest-companion/'
+    'https://github.com/jmoyers/everquest-companion/',
   )
 })
 
@@ -95,14 +95,26 @@ test('the github.com entry is scoped to THIS repo, not to the host (JOS-263)', (
   // Another owner's repo of the SAME name, and a repo whose name merely starts with ours — the
   // prefix is segment-aware, never a bare startsWith.
   assert.equal(allowedExternalUrl('https://github.com/evil/everquest-companion/releases'), null)
-  assert.equal(allowedExternalUrl('https://github.com/jmoyers/everquest-companion-evil/releases'), null)
+  assert.equal(
+    allowedExternalUrl('https://github.com/jmoyers/everquest-companion-evil/releases'),
+    null,
+  )
   assert.equal(allowedExternalUrl('https://github.com/jmoyers/everquest-companionEVIL'), null)
   // A path that only LOOKS like it is under the prefix: `..` (and its `%2e%2e` spelling) is
   // resolved away by `new URL()` before the check, so both of these arrive as `/other/repo`.
-  assert.equal(allowedExternalUrl('https://github.com/jmoyers/everquest-companion/../../other/repo'), null)
-  assert.equal(allowedExternalUrl('https://github.com/jmoyers/everquest-companion/%2e%2e/%2e%2e/other/repo'), null)
+  assert.equal(
+    allowedExternalUrl('https://github.com/jmoyers/everquest-companion/../../other/repo'),
+    null,
+  )
+  assert.equal(
+    allowedExternalUrl('https://github.com/jmoyers/everquest-companion/%2e%2e/%2e%2e/other/repo'),
+    null,
+  )
   // An encoded separator is not a separator: `%2f` keeps this ONE segment, and it is not ours.
-  assert.equal(allowedExternalUrl('https://github.com/jmoyers%2feverquest-companion/releases'), null)
+  assert.equal(
+    allowedExternalUrl('https://github.com/jmoyers%2feverquest-companion/releases'),
+    null,
+  )
   // The path scope is checked IN ADDITION to the host, never instead of it: our own repo path on
   // somebody else's host stays shut.
   assert.equal(allowedExternalUrl('https://evil.com/jmoyers/everquest-companion/releases'), null)
@@ -113,7 +125,10 @@ test('widening the allowlist for github.com widened nothing else (JOS-254)', () 
   // wiki hosts get, restated for the entry that let renderer text name github at all.
   assert.equal(allowedExternalUrl('https://github.com.evil.com/jmoyers/everquest-companion'), null)
   assert.equal(allowedExternalUrl('https://evil-github.com/jmoyers/everquest-companion'), null)
-  assert.equal(allowedExternalUrl('https://raw.githubusercontent.com/jmoyers/everquest-companion/main/y'), null)
+  assert.equal(
+    allowedExternalUrl('https://raw.githubusercontent.com/jmoyers/everquest-companion/main/y'),
+    null,
+  )
   assert.equal(allowedExternalUrl('https://api.github.com/repos/jmoyers/everquest-companion'), null)
   assert.equal(allowedExternalUrl('https://github.com@evil.com/x'), null)
   assert.equal(allowedExternalUrl('https://github.com.evil.com/jmoyers'), null)
@@ -123,7 +138,10 @@ test('widening the allowlist for github.com widened nothing else (JOS-254)', () 
   assert.equal(allowedExternalUrl('http://github.com/jmoyers'), null)
   assert.equal(allowedExternalUrl('file://github.com/x.exe'), null)
   // A non-default port is a different service here too.
-  assert.equal(allowedExternalUrl('https://github.com:8443/jmoyers/everquest-companion/releases'), null)
+  assert.equal(
+    allowedExternalUrl('https://github.com:8443/jmoyers/everquest-companion/releases'),
+    null,
+  )
 })
 
 test('allowedExternalUrl refuses every scheme but https — the RCE-adjacent shapes', () => {
@@ -216,14 +234,20 @@ test('isInternalPageUrl denies everything outside the bundle', () => {
   assert.equal(isInternalPageUrl('about:blank', o), false)
   assert.equal(isInternalPageUrl('eqimg://item/1234', o), false)
   // Other local files, including the user's own log and the store.
-  assert.equal(isInternalPageUrl(WIN ? 'file:///C:/Windows/win.ini' : 'file:///etc/passwd', o), false)
+  assert.equal(
+    isInternalPageUrl(WIN ? 'file:///C:/Windows/win.ini' : 'file:///etc/passwd', o),
+    false,
+  )
   // Traversal out of the bundle dir, raw and percent-encoded.
   assert.equal(isInternalPageUrl(fileUrl('../../../Windows/win.ini'), o), false)
   assert.equal(isInternalPageUrl(fileUrl('..%2f..%2fsecret.txt'), o), false)
   // A sibling directory that merely starts with the same characters.
   assert.equal(
-    isInternalPageUrl(WIN ? 'file:///C:/app/out/rendererEVIL/x.html' : 'file:///app/out/rendererEVIL/x.html', o),
-    false
+    isInternalPageUrl(
+      WIN ? 'file:///C:/app/out/rendererEVIL/x.html' : 'file:///app/out/rendererEVIL/x.html',
+      o,
+    ),
+    false,
   )
   // UNC: a remote path must never read as "inside" a local directory.
   assert.equal(isInternalPageUrl('file://attacker.example/app/out/renderer/index.html', o), false)
@@ -272,7 +296,7 @@ test('isSafePackId accepts real pack ids and rejects anything path-shaped', () =
     '\\\\server\\share', // UNC
     'pack\0.wav',
     '',
-    'x'.repeat(129)
+    'x'.repeat(129),
   ]) {
     assert.equal(isSafePackId(bad), false, JSON.stringify(bad))
   }
@@ -297,7 +321,7 @@ test('isSafeSourceRepo accepts owner/repo and rejects traversal, extra path, jun
     'heron--/openpeon-mercy-soundpack',
     'a--b/repo', // consecutive hyphens mid-owner
     'x-/repo', // trailing hyphen, minimal
-    `${'a'.repeat(38)}-/repo` // trailing hyphen at the 39-char cap
+    `${'a'.repeat(38)}-/repo`, // trailing hyphen at the 39-char cap
   ]) {
     assert.equal(isSafeSourceRepo(ok), true, ok)
   }
@@ -325,7 +349,7 @@ test('isSafeSourceRepo accepts owner/repo and rejects traversal, extra path, jun
     'owner/re:po', // colon (ADS-ish)
     'owner\\repo', // backslash separator
     `${'a'.repeat(40)}/repo`, // over-long owner
-    ''
+    '',
   ]) {
     assert.equal(isSafeSourceRepo(bad), false, JSON.stringify(bad))
   }
@@ -348,7 +372,7 @@ test('isSafeSourceRef accepts a tag and rejects separators/traversal/leading dot
     'v1:2', // colon
     'v1\\2', // backslash
     'a..b', // embedded ..
-    ''
+    '',
   ]) {
     assert.equal(isSafeSourceRef(bad), false, JSON.stringify(bad))
   }
@@ -366,7 +390,7 @@ test('isSafeSourcePath accepts `.`/relative subpaths and rejects escape shapes',
     'sounds/foo',
     'a/b/c',
     'pack.v2',
-    'sounds/'
+    'sounds/',
   ]) {
     assert.equal(isSafeSourcePath(ok), true, JSON.stringify(ok))
   }
@@ -384,7 +408,7 @@ test('isSafeSourcePath accepts `.`/relative subpaths and rejects escape shapes',
     'sounds/\0', // NUL
     '/', // a bare separator is NOT the empty alias
     '//',
-    ' ' // whitespace is a path segment, not "no path"
+    ' ', // whitespace is a path segment, not "no path"
   ]) {
     assert.equal(isSafeSourcePath(bad), false, JSON.stringify(bad))
   }

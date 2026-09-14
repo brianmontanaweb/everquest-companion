@@ -41,7 +41,7 @@ import {
   reportRun,
   settle,
   settleGone,
-  settleStable
+  settleStable,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture } from './logFixture.mjs'
@@ -58,7 +58,9 @@ interface CloseToTray {
 /** The stored preference, straight from main — the proof, rather than the control's own opinion. */
 function stored(page: Page): Promise<CloseToTray> {
   return page.evaluate(() =>
-    (window as unknown as { eq: { getCloseToTray: () => Promise<CloseToTray> } }).eq.getCloseToTray()
+    (
+      window as unknown as { eq: { getCloseToTray: () => Promise<CloseToTray> } }
+    ).eq.getCloseToTray(),
   )
 }
 
@@ -68,7 +70,7 @@ function liveWindows(app: ElectronApplication): Promise<string[]> {
   return app.evaluate(({ BrowserWindow }) =>
     BrowserWindow.getAllWindows()
       .filter((w) => !w.isDestroyed())
-      .map((w) => w.getTitle())
+      .map((w) => w.getTitle()),
   )
 }
 
@@ -86,10 +88,13 @@ async function stepCard(page: Page): Promise<void> {
   await openPrefs(page)
   check(
     'Preferences grows a `Window` section in the rail',
-    (await countOf(page, '[data-testid="prefs-rail-window"]')) === 1
+    (await countOf(page, '[data-testid="prefs-rail-window"]')) === 1,
   )
   await openSection(page, 'window', CARD)
-  const on = await page.$eval(`[data-testid="${SWITCH}"] input`, (el) => (el as HTMLInputElement).checked)
+  const on = await page.$eval(
+    `[data-testid="${SWITCH}"] input`,
+    (el) => (el as HTMLInputElement).checked,
+  )
   check('and its switch opens OFF, which is the shipped default', !on)
   check('main agrees, on a store that has never been written', !(await stored(page)).enabled)
 }
@@ -98,29 +103,52 @@ async function stepCard(page: Page): Promise<void> {
  *  the hide claim below needs. */
 async function stepRoundTrip(page: Page): Promise<void> {
   check('the switch takes ON', await setSwitch(page, SWITCH, true))
-  const on = await settle(() => stored(page), (p) => p.enabled, { timeoutMs: 8_000 })
-  check('and main stored it, so the card is rendering the reply rather than its own request', on.enabled)
+  const on = await settle(
+    () => stored(page),
+    (p) => p.enabled,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    'and main stored it, so the card is rendering the reply rather than its own request',
+    on.enabled,
+  )
   check(
     'the notice flag is untouched by the switch - it is the card’s memory, not a setting',
     on.noticeAcknowledged === false,
-    JSON.stringify(on)
+    JSON.stringify(on),
   )
 
   check('and it takes OFF again', await setSwitch(page, SWITCH, false))
-  const off = await settle(() => stored(page), (p) => !p.enabled, { timeoutMs: 8_000 })
+  const off = await settle(
+    () => stored(page),
+    (p) => !p.enabled,
+    { timeoutMs: 8_000 },
+  )
   check('with main agreeing both ways', !off.enabled)
 
   check('and ON once more, for the hide claim below', await setSwitch(page, SWITCH, true))
-  await settle(() => stored(page), (p) => p.enabled, { timeoutMs: 8_000 })
+  await settle(
+    () => stored(page),
+    (p) => p.enabled,
+    { timeoutMs: 8_000 },
+  )
 }
 
 /** CLAIM 1c: the words the reports used all lead here. */
 async function stepSearch(page: Page): Promise<void> {
   await page.fill('[data-testid="prefs-search"] input', 'tray')
-  const found = await settle(() => countOf(page, CARD), (n) => n === 1, { timeoutMs: 8_000 })
+  const found = await settle(
+    () => countOf(page, CARD),
+    (n) => n === 1,
+    { timeoutMs: 8_000 },
+  )
   check('searching Preferences for "tray" finds the card', found === 1)
   await page.fill('[data-testid="prefs-search"] input', '')
-  await settle(() => countOf(page, CARD), (n) => n === 1, { timeoutMs: 8_000 })
+  await settle(
+    () => countOf(page, CARD),
+    (n) => n === 1,
+    { timeoutMs: 8_000 },
+  )
 }
 
 /**
@@ -132,16 +160,24 @@ async function stepSearch(page: Page): Promise<void> {
  */
 async function stepHide(app: ElectronApplication, page: Page): Promise<void> {
   await page.evaluate(() =>
-    (window as unknown as { eq: { toggleOverlay: (k: string) => Promise<boolean> } }).eq.toggleOverlay('fight')
+    (
+      window as unknown as { eq: { toggleOverlay: (k: string) => Promise<boolean> } }
+    ).eq.toggleOverlay('fight'),
   )
-  const before = await settle(() => liveWindows(app), (t) => t.length >= 2, { timeoutMs: 15_000 })
+  const before = await settle(
+    () => liveWindows(app),
+    (t) => t.length >= 2,
+    { timeoutMs: 15_000 },
+  )
   check('an overlay is open beside the app window', before.length >= 2, before.join(' | '))
 
   let quit = false
   app.once('close', () => {
     quit = true
   })
-  await page.evaluate(() => (window as unknown as { eq: { closeWindow: () => void } }).eq.closeWindow())
+  await page.evaluate(() =>
+    (window as unknown as { eq: { closeWindow: () => void } }).eq.closeWindow(),
+  )
 
   // AN ABSENCE, SO THE WAIT IS FOR A POSITIVE SIGNAL (the suite's law): poll the window list until
   // it STOPS CHANGING, then assert what it settled on. A teardown would have shrunk it to nothing
@@ -153,7 +189,7 @@ async function stepHide(app: ElectronApplication, page: Page): Promise<void> {
   check('and the process is still running', !quit)
   check(
     'the renderer is still alive in there, folding the log as before',
-    (await page.evaluate(() => document.readyState)) === 'complete'
+    (await page.evaluate(() => document.readyState)) === 'complete',
   )
 }
 
@@ -164,16 +200,23 @@ async function stepHide(app: ElectronApplication, page: Page): Promise<void> {
  */
 async function stepCloseForReal(app: ElectronApplication, page: Page): Promise<void> {
   await page.evaluate(() =>
-    (window as unknown as { eq: { setCloseToTray: (p: unknown) => Promise<unknown> } }).eq.setCloseToTray({
-      enabled: false
-    })
+    (
+      window as unknown as { eq: { setCloseToTray: (p: unknown) => Promise<unknown> } }
+    ).eq.setCloseToTray({
+      enabled: false,
+    }),
   )
   const exited = app.waitForEvent('close', { timeout: 30_000 }).then(
     () => true,
-    () => false
+    () => false,
   )
-  await page.evaluate(() => (window as unknown as { eq: { closeWindow: () => void } }).eq.closeWindow())
-  check('with the preference off, closing the window ends the app exactly as it always did', await exited)
+  await page.evaluate(() =>
+    (window as unknown as { eq: { closeWindow: () => void } }).eq.closeWindow(),
+  )
+  check(
+    'with the preference off, closing the window ends the app exactly as it always did',
+    await exited,
+  )
 }
 
 async function main(): Promise<void> {
@@ -204,9 +247,15 @@ async function main(): Promise<void> {
     await log.dispose()
   }
 
-  check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+  check(
+    'no renderer console errors',
+    consoleErrors.length === 0,
+    consoleErrors.slice(0, 3).join(' | '),
+  )
   if (failures.length === 0) {
-    note('the hide half runs under EQ_TRAY_E2E=1, read only by src/main/tray.ts - no tray icon is ever created here')
+    note(
+      'the hide half runs under EQ_TRAY_E2E=1, read only by src/main/tray.ts - no tray icon is ever created here',
+    )
   }
   reportRun()
 }

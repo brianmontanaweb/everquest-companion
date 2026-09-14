@@ -44,7 +44,12 @@ export default defineConfig({
       // asked for, and for a future closed dependency it would be.
       sourcemap: true,
       externalizeDeps: {
-        include: ['pg', '@aws-sdk/client-s3', '@aws-sdk/credential-providers', '@aws-sdk/dsql-signer']
+        include: [
+          'pg',
+          '@aws-sdk/client-s3',
+          '@aws-sdk/credential-providers',
+          '@aws-sdk/dsql-signer',
+        ],
       },
       rollupOptions: {
         // FOUR main-process bundles. `index` is the app; the other three are worker_threads,
@@ -74,10 +79,10 @@ export default defineConfig({
           speechWorker: resolve(__dirname, 'src/main/speech/worker.ts'),
           presenceWorker: resolve(__dirname, 'src/main/presenceWorker.ts'),
           perfProbeWorker: resolve(__dirname, 'src/main/perfProbeWorker.ts'),
-          resistTableWorker: resolve(__dirname, 'src/main/resistTableWorker.ts')
-        }
-      }
-    }
+          resistTableWorker: resolve(__dirname, 'src/main/resistTableWorker.ts'),
+        },
+      },
+    },
   },
   preload: {
     build: {
@@ -112,10 +117,10 @@ export default defineConfig({
           index: resolve(__dirname, 'src/preload/index.ts'),
           overlay: resolve(__dirname, 'src/preload/overlay.ts'),
           cursor: resolve(__dirname, 'src/preload/cursor.ts'),
-          tray: resolve(__dirname, 'src/preload/tray.ts')
-        }
-      }
-    }
+          tray: resolve(__dirname, 'src/preload/tray.ts'),
+        },
+      },
+    },
   },
   renderer: {
     root: resolve(__dirname, 'src/renderer'),
@@ -135,13 +140,13 @@ export default defineConfig({
     // from the tab must find nothing. `npm run test:e2e` builds the same way, which is why the
     // e2e suite can assert the nav row is ABSENT in a production-shaped build.
     define: {
-      __EQ_DEV_TOOLS__: JSON.stringify(process.env.NODE_ENV_ELECTRON_VITE === 'development')
+      __EQ_DEV_TOOLS__: JSON.stringify(process.env.NODE_ENV_ELECTRON_VITE === 'development'),
     },
     resolve: {
       alias: {
         '@renderer': resolve(__dirname, 'src/renderer/src'),
-        '@shared': resolve(__dirname, 'src/shared')
-      }
+        '@shared': resolve(__dirname, 'src/shared'),
+      },
     },
     plugins: [react()],
     build: {
@@ -157,9 +162,9 @@ export default defineConfig({
           index: resolve(__dirname, 'src/renderer/index.html'),
           overlay: resolve(__dirname, 'src/renderer/overlay.html'),
           cursor: resolve(__dirname, 'src/renderer/cursor.html'),
-          tray: resolve(__dirname, 'src/renderer/tray.html')
-        }
-      }
-    }
-  }
+          tray: resolve(__dirname, 'src/renderer/tray.html'),
+        },
+      },
+    },
+  },
 })

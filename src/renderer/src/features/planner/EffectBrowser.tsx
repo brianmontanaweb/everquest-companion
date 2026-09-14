@@ -81,7 +81,7 @@ import {
   useNonEquip,
   type DonorFilters,
   type DonorRow,
-  type HiddenByView
+  type HiddenByView,
 } from './plannerData'
 import { browserRows, groupDonors, type BrowserRow, type GroupAxis } from './plannerGroups'
 import { itemFits, type ItemFocus } from './plannerPreset'
@@ -93,7 +93,7 @@ import {
   sanitizeBrowseForm,
   sanitizeItemFocus,
   sanitizeOpenGroups,
-  type BrowseFormMemory
+  type BrowseFormMemory,
 } from '../gear/areaMemory'
 import { useRemembered, useRememberedSearch } from '../gear/useAreaMemory'
 // JOS-344 — the donor names get the Gear tab's comparison pair. Same two hooks the Gear tab calls,
@@ -143,8 +143,10 @@ function useVisibleRows(input: RowsInput): { rows: BrowserRow[]; hidden: HiddenB
   const rows = useMemo(() => browserRows(groups, open), [groups, open])
   const hidden = useMemo(
     () =>
-      rows.length > 0 ? NOTHING_HIDDEN : hiddenByView(donors, { ...filters, text }, planClasses, view),
-    [rows.length, donors, filters, text, planClasses, view]
+      rows.length > 0
+        ? NOTHING_HIDDEN
+        : hiddenByView(donors, { ...filters, text }, planClasses, view),
+    [rows.length, donors, filters, text, planClasses, view],
   )
   return { rows, hidden }
 }
@@ -190,38 +192,63 @@ function emptyText(ready: boolean, hidden: HiddenByView, item: string | null): s
   const parts: string[] = []
   if (hidden.era > 0) parts.push(`${String(hidden.era)} outside ${CURRENT_ERA_LABEL}`)
   if (hidden.nonEquip > 0) parts.push(`${String(hidden.nonEquip)} with no equipment slot`)
-  const head = item === null ? 'No effects match these filters' : `Nothing here can be socketed into ${item}`
+  const head =
+    item === null ? 'No effects match these filters' : `Nothing here can be socketed into ${item}`
   if (parts.length === 0) return `${head}.`
   return `${head} - but ${parts.join(' and ')} are hidden by the toggles above.`
 }
 
 /** The bounded scroll box (AGENTS.md UI conventions) and the window of rows inside it. */
 function RowList(props: RowListProps): JSX.Element {
-  const { rows, win, planClasses, wished, ready, hidden, item, onToggle, onToggleWish, onOpenLoot, compare } = props
+  const {
+    rows,
+    win,
+    planClasses,
+    wished,
+    ready,
+    hidden,
+    item,
+    onToggle,
+    onToggleWish,
+    onOpenLoot,
+    compare,
+  } = props
   return (
     <>
       <Box sx={{ height: win.topPad }} />
-      {rows.slice(win.start, win.end).map((row: BrowserRow) =>
-        row.kind === 'header' ? (
-          <GroupLine key={row.group.id} group={row.group} expanded={row.expanded} onToggle={onToggle} />
-        ) : (
-          <DonorLine
-            key={`${row.groupId}:${row.donor.key}:${row.donor.effect}`}
-            donor={row.donor}
-            planClasses={planClasses}
-            wished={wished.has(row.donor.key)}
-            best={row.best}
-            namesEffect={row.namesEffect}
-            namesSays={row.namesSays}
-            onToggleWish={onToggleWish}
-            onOpenLoot={onOpenLoot}
-            compare={compare}
-          />
-        )
-      )}
+      {rows
+        .slice(win.start, win.end)
+        .map((row: BrowserRow) =>
+          row.kind === 'header' ? (
+            <GroupLine
+              key={row.group.id}
+              group={row.group}
+              expanded={row.expanded}
+              onToggle={onToggle}
+            />
+          ) : (
+            <DonorLine
+              key={`${row.groupId}:${row.donor.key}:${row.donor.effect}`}
+              donor={row.donor}
+              planClasses={planClasses}
+              wished={wished.has(row.donor.key)}
+              best={row.best}
+              namesEffect={row.namesEffect}
+              namesSays={row.namesSays}
+              onToggleWish={onToggleWish}
+              onOpenLoot={onOpenLoot}
+              compare={compare}
+            />
+          ),
+        )}
       <Box sx={{ height: win.bottomPad }} />
       {rows.length === 0 && (
-        <Typography variant="body2" color="text.secondary" data-testid="planner-effects-empty" sx={{ p: 2 }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          data-testid="planner-effects-empty"
+          sx={{ p: 2 }}
+        >
           {emptyText(ready, hidden, item)}
         </Typography>
       )}
@@ -266,7 +293,7 @@ function filterWrites(ctx: {
     },
     pickItem: (next) => {
       setPicked(next)
-    }
+    },
   }
 }
 
@@ -296,7 +323,7 @@ export default function EffectBrowser({
   classes,
   wished,
   onToggleWish,
-  onOpenLoot
+  onOpenLoot,
 }: EffectBrowserProps): JSX.Element {
   const { donors, ready } = useDonors()
   const era = useEraOnly()
@@ -308,7 +335,7 @@ export default function EffectBrowser({
   // search box, the item narrowing and the expanded groups last the session. `DEFAULT_FILTERS` is
   // passed IN rather than imported by the sanitizer, so "proc leads" has exactly one home.
   const [storedForm, setStoredForm] = useRemembered<BrowseFormMemory>('eq.planner.filters', (raw) =>
-    sanitizeBrowseForm(raw, DEFAULT_FILTERS)
+    sanitizeBrowseForm(raw, DEFAULT_FILTERS),
   )
   // The item the browser is narrowed to (JOS-210's filter-bar picker). It was the second of two
   // doors into one narrowing; with the Inventory tab's preset gone it is the only one, so the
@@ -323,7 +350,7 @@ export default function EffectBrowser({
     (next: DonorFilters) => {
       setStoredForm({ socket: next.socket, slot: next.slot, trioOnly: next.trioOnly })
     },
-    [setStoredForm]
+    [setStoredForm],
   )
   // The three filter-bar writes — `filterWrites` above.
   const { change, setSocket, pickItem } = filterWrites({ filters, setOwn, setPicked })
@@ -354,7 +381,7 @@ export default function EffectBrowser({
     view,
     focus,
     axis: groupBy[0],
-    open
+    open,
   })
   const win = useWindowedRows({ count: rows.length, rowHeight: ROW_HEIGHT, scrollRef })
 
@@ -401,7 +428,14 @@ export default function EffectBrowser({
       <Box
         ref={scrollRef}
         data-testid="planner-effect-list"
-        sx={{ flexGrow: 1, minHeight: 0, overflow: 'auto', border: 1, borderColor: 'divider', borderRadius: 1 }}
+        sx={{
+          flexGrow: 1,
+          minHeight: 0,
+          overflow: 'auto',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 1,
+        }}
       >
         <RowList
           rows={rows}

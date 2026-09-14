@@ -26,7 +26,7 @@ import {
   buildLogSlice,
   feedbackContext,
   saveSliceToFile,
-  submitFeedback
+  submitFeedback,
 } from '../feedback'
 
 /** The window selector's ONLY legal values (15 / 30 / 60 minutes). */
@@ -37,9 +37,15 @@ function isWindowChoice(v: unknown): v is (typeof LOG_WINDOW_CHOICES)[number] {
 /** A rejection shaped like every other `SubmitResult`, so the dialog has one code path. */
 function refuse(
   message: string,
-  field?: string
+  field?: string,
 ): { ok: false; error: SubmitErrorCode; message: string; queued: boolean; field?: string } {
-  return { ok: false, error: 'invalid_payload', message, queued: false, ...(field === undefined ? {} : { field }) }
+  return {
+    ok: false,
+    error: 'invalid_payload',
+    message,
+    queued: false,
+    ...(field === undefined ? {} : { field }),
+  }
 }
 
 export function registerFeedbackIpc(): void {
@@ -49,12 +55,12 @@ export function registerFeedbackIpc(): void {
   // Build the scrubbed slice and return a CAPPED preview. The gz bytes never cross IPC.
   // An unrecognized window is null (the dialog's "no log to attach" state), never a guess.
   ipcMain.handle(IPC.feedbackBuildSlice, async (_e, windowMinutes: unknown) =>
-    isWindowChoice(windowMinutes) ? await buildLogSlice(windowMinutes) : null
+    isWindowChoice(windowMinutes) ? await buildLogSlice(windowMinutes) : null,
   )
 
   // Write the FULL slice to a user-chosen path via the OS save dialog.
   ipcMain.handle(IPC.feedbackSaveSlice, async (_e, windowMinutes: unknown) =>
-    isWindowChoice(windowMinutes) ? await saveSliceToFile(windowMinutes) : { ok: false }
+    isWindowChoice(windowMinutes) ? await saveSliceToFile(windowMinutes) : { ok: false },
   )
 
   // Package the CURRENT inventory dump and return a CAPPED preview (JOS-296). No arguments to
@@ -77,9 +83,13 @@ export function registerFeedbackIpc(): void {
       attachInventory?: unknown
       attachAchievements?: unknown
     }
-    if (typeof attachLog !== 'boolean') return refuse('attachLog must be true or false.', 'attachLog')
+    if (typeof attachLog !== 'boolean')
+      return refuse('attachLog must be true or false.', 'attachLog')
     if (!isWindowChoice(windowMinutes)) {
-      return refuse(`windowMinutes must be one of: ${LOG_WINDOW_CHOICES.join(', ')}.`, 'windowMinutes')
+      return refuse(
+        `windowMinutes must be one of: ${LOG_WINDOW_CHOICES.join(', ')}.`,
+        'windowMinutes',
+      )
     }
     // Same law as `attachLog`: a boolean, checked at the boundary. There is no path, window or
     // count to validate beside it — the dump is whichever one main resolves.
@@ -93,7 +103,7 @@ export function registerFeedbackIpc(): void {
       attachLog,
       windowMinutes,
       attachInventory,
-      attachAchievements
+      attachAchievements,
     })
   })
 }

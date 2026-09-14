@@ -15,7 +15,7 @@ import { getOverlayBgAlpha, setOverlayBgAlpha } from './storeOverlayBgAlpha'
 import {
   reconcileOverlayIndependent,
   setOverlayIndependent,
-  type IndependentIo
+  type IndependentIo,
 } from '../shared/overlayIndependent'
 
 /** The two stores, as the three operations the shared rule asks for. */
@@ -26,7 +26,7 @@ const IO: IndependentIo = {
   },
   setBg: (independent) => {
     setOverlayBgAlpha({ independent })
-  }
+  },
 }
 
 /** Latched, because the reconcile is a MIGRATION and a migration that runs twice is a bug waiting

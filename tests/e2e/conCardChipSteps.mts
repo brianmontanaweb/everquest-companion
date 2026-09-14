@@ -33,15 +33,19 @@ export const NOTABLE_CON = `${NOTABLE} scowls at you, ready to attack -- what wo
 
 function cardText(page: Page): Promise<string> {
   return page.evaluate(
-    (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').trim() ?? '',
-    CARD
+    (sel) =>
+      (document.querySelector(sel) as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').trim() ??
+      '',
+    CARD,
   )
 }
 
 function textOf(page: Page, sel: string): Promise<string> {
   return page.evaluate(
-    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').trim() ?? '',
-    sel
+    (s) =>
+      (document.querySelector(s) as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').trim() ??
+      '',
+    sel,
   )
 }
 
@@ -59,12 +63,12 @@ async function degraded(card: Page, text: string): Promise<boolean> {
   check(
     '…and the card SAYS the spell data is missing rather than implying the mob is unknown',
     /Resists need your EverQuest install/.test(text),
-    text.slice(0, 200)
+    text.slice(0, 200),
   )
   check(
     '…and says it looked rather than drawing nothing',
     (await countOf(card, '[data-testid="con-card-no-resists"]')) === 1,
-    text.slice(0, 200)
+    text.slice(0, 200),
   )
   return true
 }
@@ -97,25 +101,41 @@ export async function stepNotableChips(card: Page): Promise<void> {
   // is the CUT itself: every chip that survives is one of the two words that change what you cast,
   // and an empty card says it looked.
   if (shown.length === 0) {
-    check('…and a card with nothing to flag SAYS it looked, with the count it looked at', /no notable resists · n=\d+/.test(text), text.slice(0, 200))
+    check(
+      '…and a card with nothing to flag SAYS it looked, with the count it looked at',
+      /no notable resists · n=\d+/.test(text),
+      text.slice(0, 200),
+    )
   } else {
     for (const axis of shown) {
       const word = await textOf(card, `[data-testid="con-chip-tag-${axis}"]`)
       check(
         `the ${axis} chip survived on one of the words that change what you cast`,
         /^(resistant|very resistant)|^resists \d+% of casts/.test(word),
-        word
+        word,
       )
     }
   }
   // No weak/normal axis, and no "no data" chip: the two things this ruling removed.
-  check('a `weak` or `normal` axis is not on the card at all', !/\b(weak|normal)\b/.test(text), text.slice(0, 240))
-  check('and no chip says "no data" — an empty axis leaves rather than shrugging', !/no data/i.test(text), text.slice(0, 240))
+  check(
+    'a `weak` or `normal` axis is not on the card at all',
+    !/\b(weak|normal)\b/.test(text),
+    text.slice(0, 240),
+  )
+  check(
+    'and no chip says "no data" — an empty axis leaves rather than shrugging',
+    !/no data/i.test(text),
+    text.slice(0, 240),
+  )
   // NO ACRONYMS, EVER (the first ruling of 2026-08-16) — the whole reason the words are the labels.
   check('no acronym reaches the card', !/\b(MR|FR|CR|DR|PR)\b/.test(text), text.slice(0, 200))
   // Whatever the machine has, a chip either reports its answer or is not there — never the
   // withheld "not enough data" the owner overruled on 2026-08-16.
-  check('and no chip withholds an answer it has', !/not enough data/i.test(text), text.slice(0, 200))
+  check(
+    'and no chip withholds an answer it has',
+    !/not enough data/i.test(text),
+    text.slice(0, 200),
+  )
 }
 
 /**
@@ -130,32 +150,48 @@ export async function stepNotableChips(card: Page): Promise<void> {
  */
 export async function stepResistantChip(
   card: Page,
-  con: (line: string, expect: string) => Promise<string>
+  con: (line: string, expect: string) => Promise<string>,
 ): Promise<void> {
   const name = await con(NOTABLE_CON, NOTABLE).catch(() => '')
-  if (!check(`conning a resistant creature draws its card (${name})`, name === NOTABLE, name)) return
+  if (!check(`conning a resistant creature draws its card (${name})`, name === NOTABLE, name))
+    return
   const text = await settle(
     () => cardText(card),
     (t) => /spells_us\.txt/.test(t) || /\bR \d+ \(\d+-\d+\)/.test(t),
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   ).catch(() => cardText(card))
   if (/spells_us\.txt/.test(text)) {
     note('no client spell data on this machine - the chip’s three parts cannot be asserted here')
     return
   }
   const shown = await shownAxes(card)
-  check('the card keeps ONLY the axes this creature resists', shown.join(',') === 'magic,fire', shown.join(',') || '(none)')
+  check(
+    'the card keeps ONLY the axes this creature resists',
+    shown.join(',') === 'magic,fire',
+    shown.join(',') || '(none)',
+  )
   if (shown.length === 0) return
   const word = await textOf(card, `[data-testid="con-chip-tag-${shown[0]}"]`)
-  check('the chip is labelled with the scannable WORD', /^(resistant|very resistant)/.test(word), word)
+  check(
+    'the chip is labelled with the scannable WORD',
+    /^(resistant|very resistant)/.test(word),
+    word,
+  )
   const guidance = await textOf(card, `[data-testid="con-chip-guidance-${shown[0]}"]`)
   check(
     '…with the guidance sentence under it',
     ['needs overchannel', 'may not land even with overchannel'].includes(guidance),
-    guidance
+    guidance,
   )
   const bench = await textOf(card, `[data-testid="con-chip-bench-${shown[0]}"]`)
-  check('…and BOTH percentages under that', /^lands \d+% · with overchannel \d+%$/.test(bench), bench)
-  check('…and the number and its interval and its count are still on the chip', /R \d+ \(\d+-\d+\) n=\d+/.test(text), text.slice(0, 240))
+  check(
+    '…and BOTH percentages under that',
+    /^lands \d+% · with overchannel \d+%$/.test(bench),
+    bench,
+  )
+  check(
+    '…and the number and its interval and its count are still on the chip',
+    /R \d+ \(\d+-\d+\) n=\d+/.test(text),
+    text.slice(0, 240),
+  )
 }
-

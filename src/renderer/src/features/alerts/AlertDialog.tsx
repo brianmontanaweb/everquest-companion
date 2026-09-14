@@ -26,7 +26,7 @@ import {
   Slider,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
@@ -42,7 +42,7 @@ import {
   defFromForm,
   formCanSave,
   triggerFromForm,
-  useAlertForm
+  useAlertForm,
 } from './alertForm'
 import ConditionEditor from './ConditionEditor'
 import SoundPicker from './SoundPicker'
@@ -53,7 +53,7 @@ import type { VoiceSetupNotice } from './VoiceSetupLink'
 /** "Fire when…" — the single/any/all combine-mode picker plus the same-event caveat. */
 function CombineModeSection({
   mode,
-  onChange
+  onChange,
 }: {
   mode: CombineMode
   onChange: (next: CombineMode) => void
@@ -76,8 +76,8 @@ function CombineModeSection({
       </Select>
       {mode === 'all' && (
         <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-          “All” requires every condition to match the SAME incoming log event (same-event,
-          not a correlation window).
+          “All” requires every condition to match the SAME incoming log event (same-event, not a
+          correlation window).
         </Typography>
       )}
     </Box>
@@ -90,7 +90,7 @@ function ConditionRow({
   draft,
   canRemove,
   onChange,
-  onRemove
+  onRemove,
 }: {
   index: number
   draft: ConditionDraft
@@ -129,7 +129,7 @@ function ConditionRow({
 function ConditionsSection({
   mode,
   conditions,
-  setConditions
+  setConditions,
 }: {
   mode: CombineMode
   conditions: ConditionDraft[]
@@ -156,7 +156,12 @@ function ConditionsSection({
           onRemove={() => removeCondition(i)}
         />
       ))}
-      <Button startIcon={<AddIcon />} size="small" onClick={addCondition} sx={{ alignSelf: 'flex-start' }}>
+      <Button
+        startIcon={<AddIcon />}
+        size="small"
+        onClick={addCondition}
+        sx={{ alignSelf: 'flex-start' }}
+      >
         Add condition
       </Button>
     </Stack>
@@ -280,7 +285,7 @@ export default function AlertDialog({
   bannerOverlayOn = false,
   onOpenOverlayPrefs,
   onClose,
-  onSave
+  onSave,
 }: {
   open: boolean
   initial: AlertDef | null

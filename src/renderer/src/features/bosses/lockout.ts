@@ -29,7 +29,12 @@ import type { KillTierRun } from '@shared/types'
 // RELATIVE value imports: this module is unit-tested under node/tsx, which has no `@shared` alias
 // and no bundler (the mobSearch.ts precedent - AGENTS.md, Toolchain gotchas). `formatDate` is a
 // dependency-free date formatter, so it travels here without dragging the renderer in.
-import { DIFFICULTY_TIERS, TIER_OPEN_WORLD, TIER_UNKNOWN, isDifficultyTier } from '../../../../shared/kills'
+import {
+  DIFFICULTY_TIERS,
+  TIER_OPEN_WORLD,
+  TIER_UNKNOWN,
+  isDifficultyTier,
+} from '../../../../shared/kills'
 import { formatDate } from '../../lib/formatDate'
 
 /**
@@ -57,7 +62,7 @@ const PACIFIC = new Intl.DateTimeFormat('en-US', {
   day: '2-digit',
   hour: '2-digit',
   minute: '2-digit',
-  second: '2-digit'
+  second: '2-digit',
 })
 
 interface PacificClock {
@@ -80,7 +85,7 @@ function pacificClock(ms: number): PacificClock {
     // Some ICU versions render midnight as hour 24 under hour12:false; fold it back to 0.
     h: Number(p.hour) % 24,
     mi: Number(p.minute),
-    s: Number(p.second)
+    s: Number(p.second),
   }
 }
 
@@ -138,7 +143,7 @@ export function lockoutWindow(now: number): LockoutWindow {
   return {
     start: pacificWallClockToEpoch(p.y, p.m, p.d - back, LOCKOUT_RESET_HOUR),
     now,
-    next: pacificWallClockToEpoch(p.y, p.m, p.d - back + 7, LOCKOUT_RESET_HOUR)
+    next: pacificWallClockToEpoch(p.y, p.m, p.d - back + 7, LOCKOUT_RESET_HOUR),
   }
 }
 
@@ -192,7 +197,7 @@ export function tierLocks(tiers: Record<number, KillTierRun>, w: LockoutWindow):
  */
 export function hasCreditedAmbiguousKill(
   tiers: Record<number, KillTierRun>,
-  w: LockoutWindow
+  w: LockoutWindow,
 ): boolean {
   for (const tier of [TIER_OPEN_WORLD, TIER_UNKNOWN]) {
     const run = tiers[tier]
@@ -206,10 +211,7 @@ export function hasCreditedAmbiguousKill(
  * half-open Pacific week the rest of this file uses. It expires at reset with nothing to sweep:
  * the stored value is a timestamp, and `lockoutWindow` of it either names this week or it does not.
  */
-export function manualClearIsLiveThisWeek(
-  markedTs: number | undefined,
-  w: LockoutWindow
-): boolean {
+export function manualClearIsLiveThisWeek(markedTs: number | undefined, w: LockoutWindow): boolean {
   return markedTs !== undefined && lockoutWindow(markedTs).start === w.start
 }
 

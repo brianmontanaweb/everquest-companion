@@ -39,7 +39,7 @@ import {
   statInteger,
   sumGear,
   wornBlock,
-  type WornItemBlock
+  type WornItemBlock,
 } from '../src/shared/characterSheet'
 import { scaleStatBlock, upgradeStateForTier } from '../src/shared/itemUpgrade'
 import type { ItemStatBlock } from '../src/shared/itemStats'
@@ -47,7 +47,7 @@ import { buildItemDbIndex, itemKey, type ItemDbFile } from '../src/main/itemsDb'
 
 const REAL_DUMP = readFileSync(
   join(import.meta.dirname, 'fixtures', 'Primitive_freeport-Inventory.txt'),
-  'utf8'
+  'utf8',
 )
 const dump = parseInventoryDump(REAL_DUMP)
 const { cells, unplaced } = sheetCells(dump)
@@ -65,7 +65,7 @@ test('the grid is TOTAL over the client tokens, and every cell id is unique', ()
   for (const token of EQUIP_LOCATIONS) {
     assert.ok(
       SHEET_SLOTS.some((s) => s.token === token),
-      `no cell reads the client token ${token} — it would vanish off the sheet`
+      `no cell reads the client token ${token} — it would vanish off the sheet`,
     )
   }
   // Every (token, nth) pair is claimed by exactly one cell, or two cells would fight over a row.
@@ -134,7 +134,7 @@ const block = (over: Partial<ItemStatBlock>): ItemStatBlock => ({
   effects: [],
   exaltationSlots: [],
   extras: [],
-  ...over
+  ...over,
 })
 
 /** A worn item at no ` +N` at all — the base state, and the shape every pre-JOS-416 case used. */
@@ -143,7 +143,7 @@ const worn0 = (over: Partial<ItemStatBlock>): { block: ItemStatBlock } => ({ blo
 test('percentages are STATED side by side, never added', () => {
   const totals = sumGear([
     worn0({ stats: [{ key: 'HASTE', value: '+36%' }] }),
-    worn0({ stats: [{ key: 'HASTE', value: '+21%' }] })
+    worn0({ stats: [{ key: 'HASTE', value: '+21%' }] }),
   ])
   assert.deepEqual(totals.stats, [], 'no percentage may reach a summed row')
   assert.deepEqual(totals.unsummed, [{ label: 'Haste', values: ['+36%', '+21%'] }])
@@ -151,17 +151,31 @@ test('percentages are STATED side by side, never added', () => {
 
 test('integers sum, saves stay split out, and END folds onto ENDURANCE', () => {
   const totals = sumGear([
-    worn0({ ac: 21, stats: [{ key: 'STR', value: '+20' }, { key: 'END', value: '10' }], saves: [{ key: 'SV FIRE', value: '+10' }] }),
-    worn0({ ac: 10, stats: [{ key: 'STR', value: '+5' }, { key: 'ENDURANCE', value: '+5' }], saves: [{ key: 'SV FIRE', value: '+15' }] })
+    worn0({
+      ac: 21,
+      stats: [
+        { key: 'STR', value: '+20' },
+        { key: 'END', value: '10' },
+      ],
+      saves: [{ key: 'SV FIRE', value: '+10' }],
+    }),
+    worn0({
+      ac: 10,
+      stats: [
+        { key: 'STR', value: '+5' },
+        { key: 'ENDURANCE', value: '+5' },
+      ],
+      saves: [{ key: 'SV FIRE', value: '+15' }],
+    }),
   ])
   assert.equal(totals.ac, 31)
   assert.deepEqual(
     totals.stats,
     [
       { label: 'Strength', total: 25, from: 2 },
-      { label: 'Endurance', total: 15, from: 2 }
+      { label: 'Endurance', total: 15, from: 2 },
     ],
-    'attributes come before HP/Mana/Endurance in the canonical order'
+    'attributes come before HP/Mana/Endurance in the canonical order',
   )
   assert.deepEqual(totals.saves, [{ label: 'SV Fire', total: 25, from: 2 }])
   assert.equal(totals.counted, 2)
@@ -180,14 +194,14 @@ test('an item the DB does not know is COUNTED, never treated as zeroes', () => {
 // ---- the join, over the committed corpus ----------------------------------------------
 
 const itemsDb = JSON.parse(
-  readFileSync(join(import.meta.dirname, '..', 'src', 'main', 'data', 'items.json'), 'utf8')
+  readFileSync(join(import.meta.dirname, '..', 'src', 'main', 'data', 'items.json'), 'utf8'),
 ) as ItemDbFile
 const dbIndex = buildItemDbIndex(itemsDb)
 const worn = cells.filter((c) => c.item !== null)
 /** The handler's own read of a cell: the DB block, and the ` +N` the dump's name stated. */
 const wornOf = (c: (typeof worn)[number]): WornItemBlock => ({
   tier: c.item?.tier,
-  block: dbIndex.get(itemKey(c.item?.baseName ?? ''))?.stats
+  block: dbIndex.get(itemKey(c.item?.baseName ?? ''))?.stats,
 })
 const totals = sumGear(worn.map(wornOf))
 
@@ -196,14 +210,20 @@ test('the sum covers exactly the worn items, and says how many it could not read
   assert.equal(
     totals.counted + totals.unknown,
     worn.length,
-    'every worn item is either summed or counted as unknown — none may fall between'
+    'every worn item is either summed or counted as unknown — none may fall between',
   )
   // An IDENTITY, not a frozen number: the corpus is re-scrapable, so this re-derives the total
   // rather than asserting today's number.
   const acs = worn.map((c) => wornBlock(wornOf(c))?.ac ?? 0)
-  assert.equal(totals.ac, acs.reduce((a, b) => a + b, 0))
+  assert.equal(
+    totals.ac,
+    acs.reduce((a, b) => a + b, 0),
+  )
   assert.ok(totals.ac > 0, 'the dev character is wearing armour')
-  assert.ok(totals.stats.some((s) => s.label === 'Strength'), 'and it has stats on it')
+  assert.ok(
+    totals.stats.some((s) => s.label === 'Strength'),
+    'and it has stats on it',
+  )
 })
 
 // ---- the ` +N` uplift IS applied (JOS-416) ---------------------------------------------
@@ -220,11 +240,13 @@ test('the totals are SCALED by the worn ` +N`, through the one algorithm (owner,
     worn.map((c) => {
       const b = dbIndex.get(itemKey(c.item?.baseName ?? ''))?.stats
       return { block: b ? scaleStatBlock(b, upgradeStateForTier(c.item?.tier)) : undefined }
-    })
+    }),
   )
   assert.deepEqual(totals, byHand, 'the sum must be scaleStatBlock item by item, and nothing else')
 
-  const base = sumGear(worn.map((c) => ({ block: dbIndex.get(itemKey(c.item?.baseName ?? ''))?.stats })))
+  const base = sumGear(
+    worn.map((c) => ({ block: dbIndex.get(itemKey(c.item?.baseName ?? ''))?.stats })),
+  )
   assert.notDeepEqual(totals, base, 'upgraded gear must not still read as its base blocks')
   assert.ok(totals.ac > base.ac, 'AC scales, and eleven worn items state a ` +N`')
 
@@ -244,18 +266,18 @@ const COF_BASE: ItemStatBlock = block({
     { key: 'DEX', value: '+9' },
     { key: 'AGI', value: '+9' },
     { key: 'HP', value: '+50' },
-    { key: 'HASTE', value: '+36%' }
+    { key: 'HASTE', value: '+36%' },
   ],
   saves: [{ key: 'SV FIRE', value: '+15' }],
   weight: '0.1',
-  slot: 'BACK'
+  slot: 'BACK',
 })
 
 test('the acceptance case: a `Cloak of Flames +5` reads at +5 in EVERY stat it states', () => {
   assert.deepEqual(
     dbIndex.get(itemKey('Cloak of Flames'))?.stats?.stats,
     COF_BASE.stats,
-    'the committed corpus no longer states the block this case was written against — re-read it'
+    'the committed corpus no longer states the block this case was written against — re-read it',
   )
 
   const totals5 = sumGear([{ tier: 5, block: COF_BASE }])
@@ -271,12 +293,16 @@ test('the acceptance case: a `Cloak of Flames +5` reads at +5 in EVERY stat it s
   assert.deepEqual(totals5.stats, [
     { label: 'Agility', total: 14, from: 1 },
     { label: 'Dexterity', total: 14, from: 1 },
-    { label: 'HP', total: 75, from: 1 }
+    { label: 'HP', total: 75, from: 1 },
   ])
-  assert.deepEqual(totals5.saves, [
-    { label: 'SV Fire', total: 23, from: 1 },
-    { label: 'SV Void', total: 5, from: 1 }
-  ], 'an upgraded item carrying two trigger stats gains the synthetic SV VOID line')
+  assert.deepEqual(
+    totals5.saves,
+    [
+      { label: 'SV Fire', total: 23, from: 1 },
+      { label: 'SV Void', total: 5, from: 1 },
+    ],
+    'an upgraded item carrying two trigger stats gains the synthetic SV VOID line',
+  )
 
   assert.equal(totals5.counted, 1)
   assert.equal(totals5.unknown, 0)
@@ -291,7 +317,7 @@ test('a `+0` item — a name with no ` +N` at all — is BYTE-IDENTICAL to the o
   assert.deepEqual(noSuffix.stats, [
     { label: 'Agility', total: 9, from: 1 },
     { label: 'Dexterity', total: 9, from: 1 },
-    { label: 'HP', total: 50, from: 1 }
+    { label: 'HP', total: 50, from: 1 },
   ])
   assert.deepEqual(noSuffix.saves, [{ label: 'SV Fire', total: 15, from: 1 }], 'no SV VOID at base')
   assert.deepEqual(noSuffix.unsummed, [{ label: 'Haste', values: ['+36%'] }])

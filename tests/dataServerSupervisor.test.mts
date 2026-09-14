@@ -19,7 +19,7 @@ import {
   ENGINE_HEALTH_INTERVAL_MS,
   ENGINE_QUICK_EXIT_STREAK,
   ENGINE_RESTART_BACKOFF_MS,
-  ENGINE_STOP_GRACE_MS
+  ENGINE_STOP_GRACE_MS,
 } from '../src/main/dataServer/engineProtocol'
 import { harness, launched, settle } from './dataServerSupervisorHarness.mts'
 
@@ -52,7 +52,11 @@ test('NO BINARY: the READY edge never fires, which is what keeps the app’s own
   // over and the TypeScript evaluator keeps the sound it has always had.
   const h = harness({ binary: null })
   h.supervisor.start()
-  assert.deepEqual(h.readies, [], 'a build with no engine must never announce a launch to hand off to')
+  assert.deepEqual(
+    h.readies,
+    [],
+    'a build with no engine must never announce a launch to hand off to',
+  )
   // …and it stays that way: absence is not retried, so there is no later edge either. An hour of
   // clock proves it, because the thing being ruled out is a timer nobody armed.
   h.clock.advance(3_600_000)
@@ -69,7 +73,7 @@ test('A FAILED LAUNCH ANNOUNCES ITS LOSS, so a silenced app is always given its 
   child.stdout.emit('this is not an announce\n')
   assert.ok(
     h.readies.includes(null),
-    'the loss edge must fire for a launch that never became ready, or nothing gives the sound back'
+    'the loss edge must fire for a launch that never became ready, or nothing gives the sound back',
   )
 })
 
@@ -216,7 +220,7 @@ test('READY HANDS THE CLIENT A PORT AND THE LAUNCH’S OWN TOKEN — after the r
   // The dev log must read cause-then-consequence: whatever the client does is caused by ready.
   assert.ok(
     h.logs.findIndex((l) => l.includes('ready')) >= 0,
-    'the ready narration precedes the handover, so a log read top to bottom explains itself'
+    'the ready narration precedes the handover, so a log read top to bottom explains itself',
   )
 })
 
@@ -224,7 +228,11 @@ test('A RESPAWN IS A LAUNCH: null on the way down, then a DIFFERENT port’s tok
   const h = harness()
   await launched(h)
   h.children[0].exit(1)
-  assert.deepEqual(h.readies.slice(1), [null], 'a client holding a socket to a dead engine must be told')
+  assert.deepEqual(
+    h.readies.slice(1),
+    [null],
+    'a client holding a socket to a dead engine must be told',
+  )
   h.clock.advance(ENGINE_RESTART_BACKOFF_MS[0])
   h.children[1].announce()
   await settle()
@@ -233,7 +241,11 @@ test('A RESPAWN IS A LAUNCH: null on the way down, then a DIFFERENT port’s tok
   assert.notEqual(second, null)
   if (second === null) return
   assert.equal(second.token, h.tokens[1])
-  assert.notEqual(second.token, h.tokens[0], 'nothing is carried across a respawn — resume is re-query')
+  assert.notEqual(
+    second.token,
+    h.tokens[0],
+    'nothing is carried across a respawn — resume is re-query',
+  )
 })
 
 test('a launch that never reached ready never hands anything out, and still says null when it ends', () => {

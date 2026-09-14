@@ -33,7 +33,13 @@ import { app } from 'electron'
 import { E2E } from './e2e'
 import { logError } from './errorLog'
 import { submitFeedback } from './feedback'
-import { SMOKE_RESULT_PREFIX, SMOKE_WINDOW_MINUTES, smokeDescription, smokeNonce, smokeResultLine } from './smokeGate'
+import {
+  SMOKE_RESULT_PREFIX,
+  SMOKE_WINDOW_MINUTES,
+  smokeDescription,
+  smokeNonce,
+  smokeResultLine,
+} from './smokeGate'
 
 export {
   SMOKE_ENV,
@@ -43,7 +49,7 @@ export {
   smokeNonce,
   smokeOutcome,
   smokeResultLine,
-  type SmokeOutcome
+  type SmokeOutcome,
 } from './smokeGate'
 
 /**
@@ -76,8 +82,8 @@ export async function runSmokeFeedback(): Promise<void> {
         attachLog: true,
         windowMinutes: SMOKE_WINDOW_MINUTES,
         attachInventory: false,
-        attachAchievements: false
-      }
+        attachAchievements: false,
+      },
     )
     line = smokeResultLine(nonce, res)
   } catch (err) {

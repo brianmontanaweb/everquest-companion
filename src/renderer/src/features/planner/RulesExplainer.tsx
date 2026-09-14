@@ -51,7 +51,9 @@ export function useExplainer(): { open: boolean; show: () => void; dismiss: () =
 
 /** "Focus at +1, Click at +2, Worn at +3, Proc at +4" — built from the rule, in unlock order. */
 function unlockLine(): string {
-  return SOCKET_TYPES.map((s: SocketType) => `${SOCKET_LABEL[s]} at +${String(extractionTier(s))}`).join(', ')
+  return SOCKET_TYPES.map(
+    (s: SocketType) => `${SOCKET_LABEL[s]} at +${String(extractionTier(s))}`,
+  ).join(', ')
 }
 
 /** The dearest socket's own arithmetic, quoted from `extractionCost` and never recomputed. */
@@ -93,7 +95,9 @@ export default function RulesExplainer({ onDismiss }: { onDismiss: () => void })
           {`The donor and the destination must share an equipment slot and a class. Socketing then narrows the destination to the overlap - plan a Ranger-only proc into a six-class sword and it becomes a Ranger sword. Wide-class donors are the valuable ones, and the classes on this set are a FILTER on what you are shown, never a rule about what you may keep.`}
         </Rule>
         <Rule title="Haste never travels">
-          {'A haste effect cannot be moved. Haste gear is still worth wearing - it is just worth wearing as itself.'}
+          {
+            'A haste effect cannot be moved. Haste gear is still worth wearing - it is just worth wearing as itself.'
+          }
         </Rule>
         <Rule title="What it costs is merges, not money">{costLine()}</Rule>
         <Rule title="What you are being shown">

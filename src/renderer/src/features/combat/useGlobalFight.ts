@@ -76,7 +76,7 @@ export function useGlobalFight(bridge: FightSelectionBridge | undefined): {
       setLocal(id)
       bridge?.setFightSelection(id)
     },
-    [bridge]
+    [bridge],
   )
 
   return { fightId, selectFight }

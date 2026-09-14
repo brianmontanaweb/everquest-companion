@@ -28,7 +28,14 @@
 // PURE. It is imported by `./feedbackPerf.ts`, which `./feedback.ts` imports, which the ingest
 // Lambda bundles — so it may never reach Electron, the DOM or `node:`.
 
-import { GC_KINDS, PERF_SEAMS, SEAM_LATE_MS, SEAM_STALL_MS, type GcKind, type PerfSeamName } from './perfSeams'
+import {
+  GC_KINDS,
+  PERF_SEAMS,
+  SEAM_LATE_MS,
+  SEAM_STALL_MS,
+  type GcKind,
+  type PerfSeamName,
+} from './perfSeams'
 
 /** Ceilings, restated from `./feedbackPerf.ts` by VALUE rather than imported — that file imports
  *  this one, and an import back would be a cycle inside the Lambda bundle. Pinned equal in the
@@ -135,7 +142,7 @@ function whole(n: number, max: number): number {
  */
 export function foldPerfSeams(
   samples: readonly PerfSeamSample[],
-  win: PerfWindow
+  win: PerfWindow,
 ): FeedbackPerfSeam[] {
   const byName = new Map<PerfSeamName, FeedbackPerfSeam>()
   for (const s of samples) {
@@ -178,7 +185,10 @@ function rowOf(at: number, win: PerfWindow): number | null {
  * said by leaving the field out, exactly as an empty timeline is said by leaving the whole block
  * out (`foldFeedbackPerf` returns `null`).
  */
-export function foldPerfGc(samples: readonly PerfGcSample[], win: PerfWindow): FeedbackPerfGc | null {
+export function foldPerfGc(
+  samples: readonly PerfGcSample[],
+  win: PerfWindow,
+): FeedbackPerfGc | null {
   let out: FeedbackPerfGc | null = null
   for (const s of samples) {
     const t = rowOf(s.at, win)
@@ -215,7 +225,7 @@ export interface PerfOwnerFields {
 
 export function foldPerfOwner(
   rings: { seams: readonly PerfSeamSample[]; gc: readonly PerfGcSample[] },
-  win: PerfWindow
+  win: PerfWindow,
 ): PerfOwnerFields {
   const folded = foldPerfSeams(rings.seams, win)
   const pauses = foldPerfGc(rings.gc, win)
@@ -223,7 +233,7 @@ export function foldPerfOwner(
     // An empty list is OMITTED rather than sent: sixty rows of zeros are a shape, but six seams of
     // zero would be a claim that the app was measured and found fast.
     ...(folded.length === 0 ? {} : { seams: folded }),
-    ...(pauses === null ? {} : { gc: pauses })
+    ...(pauses === null ? {} : { gc: pauses }),
   }
 }
 
@@ -238,8 +248,8 @@ export function validatePerfOwner(raw: Record<string, unknown>): Validated<PerfO
     ok: true,
     value: {
       ...(seams.value === undefined || seams.value.length === 0 ? {} : { seams: seams.value }),
-      ...(gc.value === undefined ? {} : { gc: gc.value })
-    }
+      ...(gc.value === undefined ? {} : { gc: gc.value }),
+    },
   }
 }
 
@@ -253,13 +263,16 @@ export function validatePerfOwner(raw: Record<string, unknown>): Validated<PerfO
  * a real result — it eliminates all six instrumented places at once — and the reader has to be
  * able to tell that from "we did not look".
  */
-export function formatPerfOwner(seams: readonly FeedbackPerfSeam[], gc: FeedbackPerfGc | null): string {
+export function formatPerfOwner(
+  seams: readonly FeedbackPerfSeam[],
+  gc: FeedbackPerfGc | null,
+): string {
   const parts = seams.map(
-    (s) => `${s.seam} ${s.maxMs}ms @t=${s.t}s (${s.lateCalls} over ${SEAM_LATE_MS}ms)`
+    (s) => `${s.seam} ${s.maxMs}ms @t=${s.t}s (${s.lateCalls} over ${SEAM_LATE_MS}ms)`,
   )
   if (gc !== null) {
     parts.push(
-      `gc ${gc.pauses} pause${gc.pauses === 1 ? '' : 's'} (${gc.majorPauses} major) max ${gc.maxMs}ms ${gc.worstKind} @t=${gc.t}s`
+      `gc ${gc.pauses} pause${gc.pauses === 1 ? '' : 's'} (${gc.majorPauses} major) max ${gc.maxMs}ms ${gc.worstKind} @t=${gc.t}s`,
     )
   }
   return parts.length === 0
@@ -270,7 +283,10 @@ export function formatPerfOwner(seams: readonly FeedbackPerfSeam[], gc: Feedback
 /** Did anything here reach the STALL threshold — i.e. is there a culprit worth naming at all, as
  *  opposed to six seams that were merely measurable? The renderers use it to decide whether the
  *  owner line leads or follows. */
-export function ownerIsStall(seams: readonly FeedbackPerfSeam[], gc: FeedbackPerfGc | null): boolean {
+export function ownerIsStall(
+  seams: readonly FeedbackPerfSeam[],
+  gc: FeedbackPerfGc | null,
+): boolean {
   return seams.some((s) => s.maxMs >= SEAM_STALL_MS) || (gc !== null && gc.maxMs >= SEAM_STALL_MS)
 }
 
@@ -281,14 +297,13 @@ export function ownerIsStall(seams: readonly FeedbackPerfSeam[], gc: FeedbackPer
 // `PerfValidated` shape STRUCTURALLY, so `validatePerf` returns one of these straight through.
 
 type Validated<T> =
-  | { ok: true; value: T }
-  | { ok: false; error: 'invalid_payload'; message: string; field: string }
+  { ok: true; value: T } | { ok: false; error: 'invalid_payload'; message: string; field: string }
 
 const bad = (field: string, message: string): Validated<never> => ({
   ok: false,
   error: 'invalid_payload',
   message,
-  field
+  field,
 })
 
 const isRec = (v: unknown): v is Record<string, unknown> =>
@@ -351,13 +366,16 @@ export function validatePerfGc(raw: unknown): Validated<FeedbackPerfGc | undefin
   if (!isRec(raw)) return bad('env.perf.gc', 'env.perf.gc must be an object or null.')
   const kind = GC_KINDS.find((k) => k === raw.worstKind)
   if (kind === undefined)
-    return bad('env.perf.gc.worstKind', `env.perf.gc.worstKind must be one of: ${GC_KINDS.join(', ')}.`)
+    return bad(
+      'env.perf.gc.worstKind',
+      `env.perf.gc.worstKind must be one of: ${GC_KINDS.join(', ')}.`,
+    )
   const spec = [
     ['pauses', MAX_SEAM_COUNT],
     ['majorPauses', MAX_SEAM_COUNT],
     ['maxMs', MAX_SEAM_MS],
     ['totalMs', MAX_SEAM_MS],
-    ['t', MAX_SEAM_T_S]
+    ['t', MAX_SEAM_T_S],
   ] as const
   const nums = {} as Record<(typeof spec)[number][0], number>
   for (const [key, max] of spec) {

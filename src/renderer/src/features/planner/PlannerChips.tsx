@@ -45,7 +45,7 @@ const STATE_COLOR: Record<DonorState, ChipColor> = {
   planned: 'default',
   have: 'primary',
   partial: 'info',
-  ready: 'success'
+  ready: 'success',
 }
 
 /** What each state MEANS, in the hover text — the chip itself stays one word. */
@@ -53,7 +53,7 @@ const STATE_HINT: Record<DonorState, string> = {
   planned: 'Nothing observed yet - no copy held, looted or merged.',
   have: 'You hold a copy, not yet merged.',
   partial: 'Merged to the tier shown, short of the extraction tier.',
-  ready: 'The log saw this item merged to at least the tier its effect extracts at.'
+  ready: 'The log saw this item merged to at least the tier its effect extracts at.',
 }
 
 /** The counts behind the chip, stated only when there are any (law 1: silence, not "0"). */
@@ -75,7 +75,13 @@ function evidence(progress: DonorProgress): string {
  * keeps the shared one by passing nothing. The COUNTS are still appended either way: they are
  * evidence, not vocabulary.
  */
-export function StateChip({ progress, title }: { progress: DonorProgress; title?: string }): JSX.Element {
+export function StateChip({
+  progress,
+  title,
+}: {
+  progress: DonorProgress
+  title?: string
+}): JSX.Element {
   return (
     <Chip
       size="small"
@@ -202,7 +208,7 @@ export function NoSlotChip(): JSX.Element {
 export function DonorName({
   name,
   bold,
-  onOpen
+  onOpen,
 }: {
   name: string
   bold?: boolean
@@ -225,7 +231,7 @@ export function DonorName({
         minWidth: 0,
         overflow: 'hidden',
         textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
       }}
     >
       {name}

@@ -44,7 +44,7 @@ import {
   type CompiledSpellQuery,
   type SearchClassLevel,
   type SearchableSpell,
-  type SpellSearchToken
+  type SpellSearchToken,
 } from './spellSearch'
 
 /** Most result rows the panel mounts at once. Beyond it the reader is told what is not shown. */
@@ -82,7 +82,7 @@ export function unlockSearchSurface(spell: UnlockSpell): SearchableSpell {
     searchText: spell.searchText ?? spell.name.toLowerCase(),
     spellType: spell.spellType,
     illusion: spell.illusion,
-    classLevels: spell.at
+    classLevels: spell.at,
   }
 }
 
@@ -107,14 +107,22 @@ export function foldClassLevels(pairs: readonly SearchClassLevel[]): SearchClass
  * The loadout classes that ALREADY have this spell — they reach it at or below the level the
  * character has actually reached. Ascending, the `already yours (CLR 24)` claim's own order.
  */
-function earlierFor(levels: readonly SearchClassLevel[], ctx: UnlockSearchContext): SearchClassLevel[] {
+function earlierFor(
+  levels: readonly SearchClassLevel[],
+  ctx: UnlockSearchContext,
+): SearchClassLevel[] {
   if (ctx.currentLevel === null) return []
   const at = ctx.currentLevel
   return levels.filter((p) => ctx.classes.includes(p.cls) && p.level <= at)
 }
 
 /** One matching spell as a row: its chips, its scoped context, and the level it sorts on. */
-function searchRow(spell: UnlockSpell, pairs: readonly SearchClassLevel[], q: CompiledSpellQuery, ctx: UnlockSearchContext): UnlockRow {
+function searchRow(
+  spell: UnlockSpell,
+  pairs: readonly SearchClassLevel[],
+  q: CompiledSpellQuery,
+  ctx: UnlockSearchContext,
+): UnlockRow {
   const levels = foldClassLevels(pairs)
   // The pairs that satisfied the query — and, when the row got in on its TEXT alone (a bare number
   // matching a rank numeral, say), every pair it has. A row always sorts on a level it really has.
@@ -123,10 +131,13 @@ function searchRow(spell: UnlockSpell, pairs: readonly SearchClassLevel[], q: Co
   const row: UnlockRow = {
     kind: 'spell',
     name: spell.name,
-    classes: levels.map((p) => p.cls).filter((c) => ctx.classes.includes(c)).sort((a, b) => a.localeCompare(b)),
+    classes: levels
+      .map((p) => p.cls)
+      .filter((c) => ctx.classes.includes(c))
+      .sort((a, b) => a.localeCompare(b)),
     level: sortOn.length > 0 ? Math.min(...sortOn.map((p) => p.level)) : 0,
     levels,
-    spell
+    spell,
   }
   const earlier = earlierFor(levels, ctx)
   if (earlier.length > 0) row.earlier = earlier
@@ -148,7 +159,7 @@ export function searchUnlockSpells(
   spells: readonly UnlockSpell[],
   tokens: readonly SpellSearchToken[],
   ctx: UnlockSearchContext,
-  cap: number = UNLOCK_SEARCH_CAP
+  cap: number = UNLOCK_SEARCH_CAP,
 ): UnlockSearchResults {
   const q = compileSpellQuery(tokens)
   const byName = new Map<string, { spell: UnlockSpell; pairs: SearchClassLevel[] }>()

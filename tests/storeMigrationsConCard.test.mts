@@ -28,7 +28,11 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { CURRENT_SCHEMA_VERSION, migrateStoreData, type StoreData } from '../src/main/storeMigrations'
+import {
+  CURRENT_SCHEMA_VERSION,
+  migrateStoreData,
+  type StoreData,
+} from '../src/main/storeMigrations'
 import { DEFAULT_CON_CARD_CONFIG, normalizeConCardConfig } from '../src/shared/conCard'
 import { OVERLAY_KINDS } from '../src/shared/types'
 
@@ -50,7 +54,8 @@ const src = (rel: string): string => readFileSync(join(HERE, rel), 'utf8')
  */
 const CURRENT = 'store-v14-con-card.json'
 
-const overlaysOf = (d: StoreData): Record<string, StoreData> => d['overlays'] as Record<string, StoreData>
+const overlaysOf = (d: StoreData): Record<string, StoreData> =>
+  d['overlays'] as Record<string, StoreData>
 
 test('a store at today’s schema needs nothing: the chain does not run', () => {
   const before = fixture(CURRENT)
@@ -59,7 +64,11 @@ test('a store at today’s schema needs nothing: the chain does not run', () => 
   assert.equal(out.changed, false)
   assert.deepEqual(out.applied, [])
   assert.deepEqual(out.data, before, 'the file comes back byte-identical')
-  assert.equal(before['schemaVersion'], CURRENT_SCHEMA_VERSION, 'the fixture is pinned to today’s version')
+  assert.equal(
+    before['schemaVersion'],
+    CURRENT_SCHEMA_VERSION,
+    'the fixture is pinned to today’s version',
+  )
 })
 
 test('nothing invents an `overlays.conCard` block — the absent key IS the answer', () => {
@@ -68,9 +77,21 @@ test('nothing invents an `overlays.conCard` block — the absent key IS the answ
   // …and every kind the user HAS configured survives untouched, including the two blobs.
   const before = fixture(CURRENT)
   for (const kind of ['fight', 'toast', 'alertBanner']) {
-    assert.deepEqual(overlaysOf(data)[kind], overlaysOf(before)[kind], `${kind} must survive untouched`)
+    assert.deepEqual(
+      overlaysOf(data)[kind],
+      overlaysOf(before)[kind],
+      `${kind} must survive untouched`,
+    )
   }
-  for (const key of ['byCharacter', 'alerts', 'alertPrefs', 'voice', 'telemetry', 'perfHud', 'processPriority']) {
+  for (const key of [
+    'byCharacter',
+    'alerts',
+    'alertPrefs',
+    'voice',
+    'telemetry',
+    'perfHud',
+    'processPriority',
+  ]) {
     assert.deepEqual(data[key], before[key], `${key} must survive untouched`)
   }
 })
@@ -78,11 +99,19 @@ test('nothing invents an `overlays.conCard` block — the absent key IS the answ
 test('an OLD store reaches today with no con-card key either, however far back it starts', () => {
   // The oldest files this repo can be handed. None of them can carry the key, and none of them
   // grows one on the way through the chain: the whole point of a default is that it needs no step.
-  for (const name of ['store-v1-first-build.json', 'store-v1-pre-framework.json', 'store-v8-toast-off.json']) {
+  for (const name of [
+    'store-v1-first-build.json',
+    'store-v1-pre-framework.json',
+    'store-v8-toast-off.json',
+  ]) {
     const out = migrateStoreData(fixture(name))
     assert.equal(out.data['schemaVersion'], CURRENT_SCHEMA_VERSION, name)
     const overlays = out.data['overlays'] as Record<string, unknown> | undefined
-    assert.equal(overlays === undefined || !('conCard' in overlays), true, `${name}: no key invented`)
+    assert.equal(
+      overlays === undefined || !('conCard' in overlays),
+      true,
+      `${name}: no key invented`,
+    )
   }
 })
 

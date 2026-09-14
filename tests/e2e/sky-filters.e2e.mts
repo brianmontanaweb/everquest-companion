@@ -75,7 +75,7 @@ import {
   reportRun,
   settle,
   settleGone,
-  settleStable
+  settleStable,
 } from './appHarness.mjs'
 import { launchApp, mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 // The remount guard (JOS-279) — see `skyMount` below and that module's header for the argument.
@@ -132,7 +132,7 @@ const PAGE = 40
 function boxState(page: Page, box: string = BOX): Promise<boolean | null> {
   return page.evaluate(
     (sel) => (document.querySelector(`${sel} input`) as HTMLInputElement | null)?.checked ?? null,
-    box
+    box,
   )
 }
 
@@ -161,9 +161,9 @@ function expandedNames(page: Page): Promise<string[]> {
   return page.evaluate(
     (sel) =>
       [...document.querySelectorAll(`${sel}.Mui-expanded`)].map(
-        (n) => n.querySelector('.MuiTypography-subtitle2')?.textContent ?? ''
+        (n) => n.querySelector('.MuiTypography-subtitle2')?.textContent ?? '',
       ),
-    ROW
+    ROW,
   )
 }
 
@@ -186,8 +186,9 @@ const skyMount = (page: Page): MountGuard => mountGuard(page, '[data-testid="pos
 /** The chips a picker is showing, in order — what the user SEES their filter to be. */
 function chipsIn(page: Page, picker: string): Promise<string[]> {
   return page.evaluate(
-    (sel) => [...document.querySelectorAll(`${sel} .MuiChip-label`)].map((n) => n.textContent ?? ''),
-    picker
+    (sel) =>
+      [...document.querySelectorAll(`${sel} .MuiChip-label`)].map((n) => n.textContent ?? ''),
+    picker,
   )
 }
 
@@ -226,7 +227,10 @@ async function dismissFirstRunNotice(page: Page): Promise<void> {
   await page.waitForSelector(notice, { timeout: 30_000 }).catch(() => undefined)
   if ((await countOf(page, notice)) === 0) return
   await page.click('[data-testid="telemetry-notice-off"]')
-  check('the analytics first-run notice can be answered out of the way', await settleGone(page, notice, { timeoutMs: 8_000 }))
+  check(
+    'the analytics first-run notice can be answered out of the way',
+    await settleGone(page, notice, { timeoutMs: 8_000 }),
+  )
 }
 
 /** Open the Sky tab and wait for its toolbar. Safe when the tab is already the open one. */
@@ -234,7 +238,7 @@ async function openSky(page: Page, timeoutMs = 60_000): Promise<boolean> {
   await page.click(NAV_SKY, { timeout: 30_000 })
   return page.waitForSelector(BOX, { timeout: timeoutMs }).then(
     () => true,
-    () => false
+    () => false,
   )
 }
 
@@ -250,7 +254,11 @@ async function leaveSky(page: Page): Promise<boolean> {
 /** Click the box and wait for the tick to reach the state we asked for. */
 async function setBox(page: Page, want: boolean, box: string = BOX): Promise<boolean | null> {
   await page.click(box, { timeout: 15_000 })
-  return settle(() => boxState(page, box), (v) => v === want, { timeoutMs: 8_000 })
+  return settle(
+    () => boxState(page, box),
+    (v) => v === want,
+    { timeoutMs: 8_000 },
+  )
 }
 
 /** Away to the Overview and back to Sky, with the unmount actually asserted in between. */
@@ -264,16 +272,23 @@ async function awayAndBack(page: Page): Promise<boolean> {
 /** A tab round trip: away to the Overview, back to Sky, then read the box. */
 async function roundTrip(page: Page): Promise<boolean | null> {
   if (!(await awayAndBack(page))) return null
-  return settle(() => boxState(page), (v) => v !== null, { timeoutMs: 8_000 })
+  return settle(
+    () => boxState(page),
+    (v) => v !== null,
+    { timeoutMs: 8_000 },
+  )
 }
 
 /** A fresh install shows everything — the pref is absent, and absence is the default, not `false`. */
 async function stepDefault(page: Page): Promise<void> {
-  check('a fresh install opens the Sky tab with "Hide completed" UNTICKED', (await boxState(page)) === false)
+  check(
+    'a fresh install opens the Sky tab with "Hide completed" UNTICKED',
+    (await boxState(page)) === false,
+  )
   check('…and mounts exactly one such box', (await countOf(page, BOX)) === 1)
   check(
     '…and JOS-145\'s "Hide turned in" is beside it, also unticked on a fresh install',
-    (await boxState(page, TURNED_IN_BOX)) === false
+    (await boxState(page, TURNED_IN_BOX)) === false,
   )
   check('…exactly one of it too', (await countOf(page, TURNED_IN_BOX)) === 1)
 }
@@ -302,19 +317,35 @@ async function stepCollapsedRowsDrawNoPanel(page: Page): Promise<void> {
   await mount.run('the panel-unmount step', async () => {
     // The list has to be settled before an absence means anything: a page of rows that is still
     // arriving is trivially a page with no expanded panel in it.
-    await settle(() => countIn(page, ROW), (n) => n === PAGE, { timeoutMs: 15_000 })
+    await settle(
+      () => countIn(page, ROW),
+      (n) => n === PAGE,
+      { timeoutMs: 15_000 },
+    )
     const closed = await settleStable(() => countIn(page, DETAILS), { timeoutMs: 8_000 })
     await page.locator(EXPAND).first().click({ timeout: 15_000 })
-    const opened = await settle(() => countIn(page, DETAILS), (n) => n === 1, { timeoutMs: 8_000 })
+    const opened = await settle(
+      () => countIn(page, DETAILS),
+      (n) => n === 1,
+      { timeoutMs: 8_000 },
+    )
     await page.locator(EXPAND).first().click({ timeout: 15_000 })
     // The Collapse animates out before it unmounts, so this is a settle rather than a read.
-    const gone = await settle(() => countIn(page, DETAILS), (n) => n === 0, { timeoutMs: 8_000 })
+    const gone = await settle(
+      () => countIn(page, DETAILS),
+      (n) => n === 0,
+      { timeoutMs: 8_000 },
+    )
     // EVERY reading is taken before a single check runs; NOW ask whether the tab they were taken
     // from is still the one the mark was planted on. A rebuild would have closed the row this step
     // had just opened — "opening a quest builds its panel" would fail against correct behaviour —
     // and it would also make the closing assertion pass for a reason nobody tested.
     if (!(await mount.intact())) return false
-    check('a list of collapsed quests mounts NO expanded panel at all', closed === 0, String(closed))
+    check(
+      'a list of collapsed quests mounts NO expanded panel at all',
+      closed === 0,
+      String(closed),
+    )
     check('OPENING A QUEST BUILDS ITS PANEL', opened === 1, String(opened))
     check('…AND CLOSING IT TAKES THE PANEL BACK OUT OF THE DOM', gone === 0, String(gone))
     return true
@@ -340,19 +371,46 @@ async function stepCollapsedRowsDrawNoPanel(page: Page): Promise<void> {
  * Leaves "show all" ON; `stepShowFewerPutsTheCapBack` immediately below turns it off again.
  */
 async function stepShowAllSurvivesInteraction(page: Page): Promise<void> {
-  const all = await settle(() => filteredCount(page), (n) => n !== null && n > PAGE, { timeoutMs: 30_000 })
-  if (!check(`the fresh list is longer than one page of ${String(PAGE)}`, all !== null && all > PAGE, String(all))) {
+  const all = await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n > PAGE,
+    { timeoutMs: 30_000 },
+  )
+  if (
+    !check(
+      `the fresh list is longer than one page of ${String(PAGE)}`,
+      all !== null && all > PAGE,
+      String(all),
+    )
+  ) {
     return
   }
-  const first = await settle(() => countIn(page, ROW), (n) => n === PAGE, { timeoutMs: 15_000 })
+  const first = await settle(
+    () => countIn(page, ROW),
+    (n) => n === PAGE,
+    { timeoutMs: 15_000 },
+  )
   check('a fresh install draws the first page and offers the rest', first === PAGE, String(first))
 
   await page.click(SHOW_ALL, { timeout: 15_000 })
-  const opened = await settle(() => countIn(page, ROW), (n) => n === all, { timeoutMs: 15_000 })
-  if (!check('SHOW ALL draws every quest the filters leave', opened === all, `${String(opened)} of ${String(all)}`)) {
+  const opened = await settle(
+    () => countIn(page, ROW),
+    (n) => n === all,
+    { timeoutMs: 15_000 },
+  )
+  if (
+    !check(
+      'SHOW ALL draws every quest the filters leave',
+      opened === all,
+      `${String(opened)} of ${String(all)}`,
+    )
+  ) {
     return
   }
-  check(`…and the ask is stored under ${SHOW_ALL_KEY}`, (await storedValue(page, SHOW_ALL_KEY)) === '1')
+  check(
+    `…and the ask is stored under ${SHOW_ALL_KEY}`,
+    (await storedValue(page, SHOW_ALL_KEY)) === '1',
+  )
 
   // THE EXPANDED HALF RUNS ON A TAB THAT IS HOLDING STILL (JOS-279). This step is the first thing
   // the spec does after the tab opens, which is exactly when the historical fold is still landing
@@ -361,7 +419,11 @@ async function stepShowAllSurvivesInteraction(page: Page): Promise<void> {
   const mount = skyMount(page)
   await mount.run('the show-all interaction step', async () => {
     await page.locator(EXPAND).last().click({ timeout: 15_000 })
-    const open = await settle(() => expandedNames(page), (n) => n.length === 1, { timeoutMs: 8_000 })
+    const open = await settle(
+      () => expandedNames(page),
+      (n) => n.length === 1,
+      { timeoutMs: 8_000 },
+    )
     if (!(await mount.intact())) return false
     if (!check('the LAST quest in the list expands', open.length === 1, open.join())) return true
 
@@ -374,12 +436,24 @@ async function stepShowAllSurvivesInteraction(page: Page): Promise<void> {
       if ((await countOf(page, UNSTAR)) > 0) await page.click(UNSTAR, { timeout: 15_000 })
       return false
     }
-    check('FAVORITING A QUEST LEAVES THE WHOLE LIST LOADED', after === all, `${String(after)} of ${String(all)}`)
-    check('…AND THE QUEST THAT WAS EXPANDED IS STILL EXPANDED', still.join() === open.join(), still.join())
+    check(
+      'FAVORITING A QUEST LEAVES THE WHOLE LIST LOADED',
+      after === all,
+      `${String(after)} of ${String(all)}`,
+    )
+    check(
+      '…AND THE QUEST THAT WAS EXPANDED IS STILL EXPANDED',
+      still.join() === open.join(),
+      still.join(),
+    )
 
     await page.click(UNSTAR, { timeout: 15_000 })
     const cleaned = await settleStable(() => countIn(page, ROW), { timeoutMs: 8_000 })
-    check('…and un-favoriting it does not collapse the list either', cleaned === all, String(cleaned))
+    check(
+      '…and un-favoriting it does not collapse the list either',
+      cleaned === all,
+      String(cleaned),
+    )
     return true
   })
 }
@@ -391,9 +465,16 @@ async function stepShowAllSurvivesInteraction(page: Page): Promise<void> {
  */
 async function stepShowFewerPutsTheCapBack(page: Page): Promise<void> {
   await page.click(SHOW_FEWER, { timeout: 15_000 })
-  const back = await settle(() => countIn(page, ROW), (n) => n === PAGE, { timeoutMs: 15_000 })
+  const back = await settle(
+    () => countIn(page, ROW),
+    (n) => n === PAGE,
+    { timeoutMs: 15_000 },
+  )
   check('SHOW FEWER puts the page cap back', back === PAGE, String(back))
-  check('…and stores the un-ask, not merely un-remembers it', (await storedValue(page, SHOW_ALL_KEY)) === '0')
+  check(
+    '…and stores the un-ask, not merely un-remembers it',
+    (await storedValue(page, SHOW_ALL_KEY)) === '0',
+  )
   check('…and the paging button is on offer again', (await countIn(page, SHOW_MORE)) === 1)
 }
 
@@ -401,11 +482,19 @@ async function stepShowFewerPutsTheCapBack(page: Page): Promise<void> {
 async function stepSticksAcrossTabs(page: Page): Promise<void> {
   const ticked = await setBox(page, true)
   if (!check('the box ticks when clicked', ticked === true, String(ticked))) return
-  const stored = await settle(() => storedValue(page), (v) => v === '1', { timeoutMs: 8_000 })
+  const stored = await settle(
+    () => storedValue(page),
+    (v) => v === '1',
+    { timeoutMs: 8_000 },
+  )
   check(`the tick is stored under ${KEY}`, stored === '1', `stored ${String(stored)}`)
 
   const after = await roundTrip(page)
-  check('HIDE COMPLETED SURVIVES LEAVING AND RETURNING TO THE SKY TAB', after === true, String(after))
+  check(
+    'HIDE COMPLETED SURVIVES LEAVING AND RETURNING TO THE SKY TAB',
+    after === true,
+    String(after),
+  )
 }
 
 /**
@@ -417,8 +506,16 @@ async function stepSticksAcrossTabs(page: Page): Promise<void> {
 async function stepUntickSticksToo(page: Page): Promise<void> {
   const unticked = await setBox(page, false)
   if (!check('the box un-ticks when clicked again', unticked === false, String(unticked))) return
-  const stored = await settle(() => storedValue(page), (v) => v === '0', { timeoutMs: 8_000 })
-  check('…and the un-tick is stored too, not merely un-remembered', stored === '0', `stored ${String(stored)}`)
+  const stored = await settle(
+    () => storedValue(page),
+    (v) => v === '0',
+    { timeoutMs: 8_000 },
+  )
+  check(
+    '…and the un-tick is stored too, not merely un-remembered',
+    stored === '0',
+    `stored ${String(stored)}`,
+  )
 
   const after = await roundTrip(page)
   check('…so the box comes back UNTICKED, the way it was left', after === false, String(after))
@@ -444,18 +541,26 @@ async function stepUntickSticksToo(page: Page): Promise<void> {
 async function stepBoxesAreIndependent(page: Page): Promise<void> {
   const ticked = await setBox(page, true, TURNED_IN_BOX)
   if (!check('"Hide turned in" ticks when clicked', ticked === true, String(ticked))) return
-  const stored = await settle(() => storedValue(page, TURNED_IN_KEY), (v) => v === '1', { timeoutMs: 8_000 })
+  const stored = await settle(
+    () => storedValue(page, TURNED_IN_KEY),
+    (v) => v === '1',
+    { timeoutMs: 8_000 },
+  )
   check(`the tick is stored under ${TURNED_IN_KEY}`, stored === '1', `stored ${String(stored)}`)
   check(
     'TICKING ONE BOX DOES NOT TICK THE OTHER — two readings, two bits',
     (await boxState(page)) === false && (await storedValue(page)) === '0',
-    `completed box ${String(await boxState(page))} / stored ${String(await storedValue(page))}`
+    `completed box ${String(await boxState(page))} / stored ${String(await storedValue(page))}`,
   )
 
   if (!(await awayAndBack(page))) return
   check(
     'HIDE TURNED IN SURVIVES LEAVING AND RETURNING TO THE SKY TAB',
-    (await settle(() => boxState(page, TURNED_IN_BOX), (v) => v !== null, { timeoutMs: 8_000 })) === true
+    (await settle(
+      () => boxState(page, TURNED_IN_BOX),
+      (v) => v !== null,
+      { timeoutMs: 8_000 },
+    )) === true,
   )
   check('…and the box beside it is still the way it was left', (await boxState(page)) === false)
 
@@ -464,14 +569,14 @@ async function stepBoxesAreIndependent(page: Page): Promise<void> {
   const pair = await settle(
     () => Promise.all([storedValue(page), storedValue(page, TURNED_IN_KEY)]),
     ([a, b]) => a === '1' && b === '1',
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
   check('both preferences are stored, separately', pair.join('|') === '1|1', pair.join('|'))
   if (!(await awayAndBack(page))) return
   const both = await settle(
     () => Promise.all([boxState(page), boxState(page, TURNED_IN_BOX)]),
     ([a, b]) => a !== null && b !== null,
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
   check('BOTH BOXES COME BACK TICKED, TOGETHER', both.join('|') === 'true|true', both.join('|'))
 
@@ -489,37 +594,83 @@ async function stepBoxesAreIndependent(page: Page): Promise<void> {
  * counts line never appeared (in which case nothing below it is assertable).
  */
 async function stepFacetsNarrow(page: Page): Promise<number | null> {
-  const all = await settle(() => filteredCount(page), (n) => n !== null && n > 0, { timeoutMs: 30_000 })
-  if (!check('the counts line states how many quests the filters leave', all !== null && all > 0, String(all))) {
+  const all = await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n > 0,
+    { timeoutMs: 30_000 },
+  )
+  if (
+    !check(
+      'the counts line states how many quests the filters leave',
+      all !== null && all > 0,
+      String(all),
+    )
+  ) {
     return null
   }
 
   await pick(page, ISLAND, 'Island 7')
-  const kept = await settle(() => storedValue(page, ISLANDS_KEY), (v) => v === '["Island 7"]', { timeoutMs: 8_000 })
-  if (!check(`the island pick is stored under ${ISLANDS_KEY}`, kept === '["Island 7"]', String(kept))) return null
-  const island = await settle(() => filteredCount(page), (n) => n !== null && n < all, { timeoutMs: 8_000 })
-  check('PICKING AN ISLAND NARROWS THE LIST', island !== null && island > 0 && island < all, `${String(all)} -> ${String(island)}`)
+  const kept = await settle(
+    () => storedValue(page, ISLANDS_KEY),
+    (v) => v === '["Island 7"]',
+    { timeoutMs: 8_000 },
+  )
+  if (
+    !check(`the island pick is stored under ${ISLANDS_KEY}`, kept === '["Island 7"]', String(kept))
+  )
+    return null
+  const island = await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n < all,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    'PICKING AN ISLAND NARROWS THE LIST',
+    island !== null && island > 0 && island < all,
+    `${String(all)} -> ${String(island)}`,
+  )
 
   await pick(page, BOSS, 'Spiroc')
-  const boss = await settle(() => storedValue(page, BOSSES_KEY), (v) => v === '["The Spiroc Lord"]', { timeoutMs: 8_000 })
+  const boss = await settle(
+    () => storedValue(page, BOSSES_KEY),
+    (v) => v === '["The Spiroc Lord"]',
+    { timeoutMs: 8_000 },
+  )
   check(`the boss pick is stored under ${BOSSES_KEY}`, boss === '["The Spiroc Lord"]', String(boss))
   const narrower = island ?? all
-  const both = await settle(() => filteredCount(page), (n) => n !== null && n < narrower, { timeoutMs: 8_000 })
+  const both = await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n < narrower,
+    { timeoutMs: 8_000 },
+  )
   check(
     'A BOSS ON TOP OF THE ISLAND NARROWS AGAIN (the two facets are AND, not OR)',
     both !== null && both > 0 && both < narrower,
-    `${String(island)} -> ${String(both)}`
+    `${String(island)} -> ${String(both)}`,
   )
 
   if (!(await awayAndBack(page))) return null
   check(
     'THE ISLAND AND BOSS PICKS SURVIVE LEAVING AND RETURNING TO THE SKY TAB',
-    (await settle(() => chipsIn(page, ISLAND), (c) => c.length > 0, { timeoutMs: 8_000 })).join() === 'Island 7' &&
-      (await chipsIn(page, BOSS)).join() === 'The Spiroc Lord',
-    `${(await chipsIn(page, ISLAND)).join()} / ${(await chipsIn(page, BOSS)).join()}`
+    (
+      await settle(
+        () => chipsIn(page, ISLAND),
+        (c) => c.length > 0,
+        { timeoutMs: 8_000 },
+      )
+    ).join() === 'Island 7' && (await chipsIn(page, BOSS)).join() === 'The Spiroc Lord',
+    `${(await chipsIn(page, ISLAND)).join()} / ${(await chipsIn(page, BOSS)).join()}`,
   )
-  const after = await settle(() => filteredCount(page), (n) => n === both, { timeoutMs: 8_000 })
-  check('…and so does the narrowing they were doing', after === both, `${String(both)} -> ${String(after)}`)
+  const after = await settle(
+    () => filteredCount(page),
+    (n) => n === both,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    '…and so does the narrowing they were doing',
+    after === both,
+    `${String(both)} -> ${String(after)}`,
+  )
   return all
 }
 
@@ -534,11 +685,23 @@ async function stepFacetsClear(page: Page, all: number): Promise<void> {
   const stored = await settle(
     () => Promise.all([storedValue(page, ISLANDS_KEY), storedValue(page, BOSSES_KEY)]),
     ([i, b]) => i === '[]' && b === '[]',
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
-  check('clearing both pickers empties both stored picks', stored.join('|') === '[]|[]', stored.join('|'))
-  const back = await settle(() => filteredCount(page), (n) => n === all, { timeoutMs: 8_000 })
-  check('CLEARING RESTORES EVERY QUEST THE OTHER FILTERS ALLOW', back === all, `${String(all)} -> ${String(back)}`)
+  check(
+    'clearing both pickers empties both stored picks',
+    stored.join('|') === '[]|[]',
+    stored.join('|'),
+  )
+  const back = await settle(
+    () => filteredCount(page),
+    (n) => n === all,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    'CLEARING RESTORES EVERY QUEST THE OTHER FILTERS ALLOW',
+    back === all,
+    `${String(all)} -> ${String(back)}`,
+  )
 }
 
 /**
@@ -565,49 +728,91 @@ async function stepFacetsClear(page: Page, all: number): Promise<void> {
  */
 async function stepSearchFindsBossesAndIslands(page: Page, all: number): Promise<void> {
   await pick(page, BOSS, BOSS_NAME)
-  const picked = await settle(() => filteredCount(page), (n) => n !== null && n < all, { timeoutMs: 8_000 })
+  const picked = await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n < all,
+    { timeoutMs: 8_000 },
+  )
   if (
     !check(
       `picking ${BOSS_NAME} in the boss picker narrows the list`,
       picked !== null && picked > 0 && picked < all,
-      `${String(all)} -> ${String(picked)}`
+      `${String(all)} -> ${String(picked)}`,
     )
   ) {
     return
   }
   await clearPick(page, BOSS)
-  const cleared = await settle(() => filteredCount(page), (n) => n === all, { timeoutMs: 8_000 })
-  if (!check('…and clearing it restores the list before the search is asked', cleared === all, String(cleared))) {
+  const cleared = await settle(
+    () => filteredCount(page),
+    (n) => n === all,
+    { timeoutMs: 8_000 },
+  )
+  if (
+    !check(
+      '…and clearing it restores the list before the search is asked',
+      cleared === all,
+      String(cleared),
+    )
+  ) {
     return
   }
 
   await page.fill(SEARCH, BOSS_NAME)
-  const typed = await settle(() => filteredCount(page), (n) => n !== null && n < all, { timeoutMs: 15_000 })
+  const typed = await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n < all,
+    { timeoutMs: 15_000 },
+  )
   check(
     `TYPING ${BOSS_NAME} INTO THE SEARCH BOX FINDS THE QUESTS HE STANDS IN FRONT OF`,
     typed === picked,
-    `picker ${String(picked)} vs search ${String(typed)}`
+    `picker ${String(picked)} vs search ${String(typed)}`,
   )
 
   // The island half, by the same two-control equality. "Island 7" is stated by the item rows and
   // by nothing else the box used to read, so this one is exact too.
   await page.fill(SEARCH, '')
-  await settle(() => filteredCount(page), (n) => n === all, { timeoutMs: 15_000 })
+  await settle(
+    () => filteredCount(page),
+    (n) => n === all,
+    { timeoutMs: 15_000 },
+  )
   await pick(page, ISLAND, 'Island 7')
-  const island = await settle(() => filteredCount(page), (n) => n !== null && n < all, { timeoutMs: 8_000 })
+  const island = await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n < all,
+    { timeoutMs: 8_000 },
+  )
   await clearPick(page, ISLAND)
-  await settle(() => filteredCount(page), (n) => n === all, { timeoutMs: 8_000 })
+  await settle(
+    () => filteredCount(page),
+    (n) => n === all,
+    { timeoutMs: 8_000 },
+  )
   await page.fill(SEARCH, 'Island 7')
-  const searched = await settle(() => filteredCount(page), (n) => n !== null && n < all, { timeoutMs: 15_000 })
+  const searched = await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n < all,
+    { timeoutMs: 15_000 },
+  )
   check(
     'TYPING AN ISLAND FINDS THE QUESTS THAT NAME IT — same list as picking it',
     searched === island && island !== null && island > 0,
-    `picker ${String(island)} vs search ${String(searched)}`
+    `picker ${String(island)} vs search ${String(searched)}`,
   )
 
   await page.fill(SEARCH, '')
-  const back = await settle(() => filteredCount(page), (n) => n === all, { timeoutMs: 15_000 })
-  check('clearing the search box restores every quest', back === all, `${String(all)} -> ${String(back)}`)
+  const back = await settle(
+    () => filteredCount(page),
+    (n) => n === all,
+    { timeoutMs: 15_000 },
+  )
+  check(
+    'clearing the search box restores every quest',
+    back === all,
+    `${String(all)} -> ${String(back)}`,
+  )
 }
 
 /**
@@ -625,13 +830,17 @@ async function stepArmRestart(page: Page): Promise<boolean> {
   await page.click(SHOW_ALL, { timeout: 15_000 })
   check(
     'the "show all" ask is armed for the restart check',
-    (await settle(() => storedValue(page, SHOW_ALL_KEY), (v) => v === '1', { timeoutMs: 8_000 })) === '1'
+    (await settle(
+      () => storedValue(page, SHOW_ALL_KEY),
+      (v) => v === '1',
+      { timeoutMs: 8_000 },
+    )) === '1',
   )
   const ticked = await setBox(page, true)
   await pick(page, ISLAND, 'Island 3')
   check(
     'the two boxes are left in DIFFERENT states for the restart check',
-    ticked === true && (await boxState(page, TURNED_IN_BOX)) === false
+    ticked === true && (await boxState(page, TURNED_IN_BOX)) === false,
   )
   return check('the box is left ticked for the restart check', ticked === true, String(ticked))
 }
@@ -639,27 +848,61 @@ async function stepArmRestart(page: Page): Promise<boolean> {
 /** THE RESTART: a second process, the same userData dir, the same answer. */
 async function stepSurvivesRestart(page: Page): Promise<void> {
   if (!check('the Sky tab opens after a restart', await openSky(page))) return
-  const after = await settle(() => boxState(page), (v) => v !== null, { timeoutMs: 8_000 })
+  const after = await settle(
+    () => boxState(page),
+    (v) => v !== null,
+    { timeoutMs: 8_000 },
+  )
   check('HIDE COMPLETED SURVIVES A FULL RESTART', after === true, String(after))
-  check('…and the stored pref crossed the process boundary intact', (await storedValue(page)) === '1')
+  check(
+    '…and the stored pref crossed the process boundary intact',
+    (await storedValue(page)) === '1',
+  )
   check(
     'THE TWO BOXES CROSS A RESTART SEPARATELY — one ticked, one not, exactly as left',
-    (await boxState(page, TURNED_IN_BOX)) === false && (await storedValue(page, TURNED_IN_KEY)) === '0',
-    `${String(await boxState(page, TURNED_IN_BOX))} / ${String(await storedValue(page, TURNED_IN_KEY))}`
+    (await boxState(page, TURNED_IN_BOX)) === false &&
+      (await storedValue(page, TURNED_IN_KEY)) === '0',
+    `${String(await boxState(page, TURNED_IN_BOX))} / ${String(await storedValue(page, TURNED_IN_KEY))}`,
   )
-  const chips = await settle(() => chipsIn(page, ISLAND), (c) => c.length > 0, { timeoutMs: 8_000 })
-  check('THE ISLAND FILTER SURVIVES A FULL RESTART, chip and all', chips.join() === 'Island 3', chips.join())
+  const chips = await settle(
+    () => chipsIn(page, ISLAND),
+    (c) => c.length > 0,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    'THE ISLAND FILTER SURVIVES A FULL RESTART, chip and all',
+    chips.join() === 'Island 3',
+    chips.join(),
+  )
 
   // JOS-191, the far end: the bit crossed, and so did what it MEANS. Clearing the island widens the
   // list back past a page — which is also the moment the cap used to reset — and every row is drawn.
   check('"show all" crossed the process boundary', (await storedValue(page, SHOW_ALL_KEY)) === '1')
   await clearPick(page, ISLAND)
-  const all = await settle(() => filteredCount(page), (n) => n !== null && n > PAGE, { timeoutMs: 15_000 })
-  if (!check('clearing the island leaves more than one page of quests', all !== null && all > PAGE, String(all))) {
+  const all = await settle(
+    () => filteredCount(page),
+    (n) => n !== null && n > PAGE,
+    { timeoutMs: 15_000 },
+  )
+  if (
+    !check(
+      'clearing the island leaves more than one page of quests',
+      all !== null && all > PAGE,
+      String(all),
+    )
+  ) {
     return
   }
-  const rows = await settle(() => countIn(page, ROW), (n) => n === all, { timeoutMs: 15_000 })
-  check('SHOW ALL SURVIVES A FULL RESTART — the whole list draws, uncapped', rows === all, `${String(rows)} of ${String(all)}`)
+  const rows = await settle(
+    () => countIn(page, ROW),
+    (n) => n === all,
+    { timeoutMs: 15_000 },
+  )
+  check(
+    'SHOW ALL SURVIVES A FULL RESTART — the whole list draws, uncapped',
+    rows === all,
+    `${String(rows)} of ${String(all)}`,
+  )
 }
 
 async function main(): Promise<void> {
@@ -669,7 +912,9 @@ async function main(): Promise<void> {
   // process, so `launchApp` must not delete what it did not create.
   const userData = makeUserData()
   try {
-    console.log('launch 1: a fresh install — default, tab round trip, the un-tick, the pair, and the facets…')
+    console.log(
+      'launch 1: a fresh install — default, tab round trip, the un-tick, the pair, and the facets…',
+    )
     const first = await launchApp({ userData })
     let page: Page | null = null
     try {

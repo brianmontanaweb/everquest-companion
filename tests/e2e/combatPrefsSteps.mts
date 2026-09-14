@@ -55,7 +55,7 @@ export async function setMeterScope(page: Page, scope: Scope, back: string): Pro
   await settle(
     async () => (await page.$$(`${button}.Mui-selected`)).length,
     (n) => n === 1,
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
   await page.click(`[data-testid="${back}"]`, { timeout: 30_000 })
 }
@@ -80,7 +80,8 @@ export async function setCombinePet(page: Page, on: boolean, back: string): Prom
   await page.waitForSelector('[data-testid="prefs-rail-combat"]', { timeout: 20_000 })
   await page.click('[data-testid="prefs-rail-combat"]')
   await page.waitForSelector(COMBINE_PET, { timeout: 20_000 })
-  const isOn = (): Promise<boolean> => page.$eval(COMBINE_PET, (el) => (el as HTMLInputElement).checked)
+  const isOn = (): Promise<boolean> =>
+    page.$eval(COMBINE_PET, (el) => (el as HTMLInputElement).checked)
   if ((await isOn()) !== on) await page.click(COMBINE_PET, { timeout: 15_000 })
   // The CONDITION the click produces — the checkbox agreeing it took the value, never a sleep.
   const settled = await settle(isOn, (v) => v === on, { timeoutMs: 8_000 })
@@ -107,7 +108,7 @@ export async function scopeFromPrefs(page: Page, back: string): Promise<string> 
         return on?.getAttribute('data-testid')?.replace('pref-meter-scope-', '') ?? ''
       }),
     (v) => v !== '',
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
   await page.click(`[data-testid="${back}"]`, { timeout: 30_000 })
   return chosen

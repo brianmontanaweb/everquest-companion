@@ -23,7 +23,7 @@ import SpellRow, {
   SUGGEST_ROW_FACTS_SX,
   SUGGEST_ROW_SX,
   TemplateChip,
-  type RowContext
+  type RowContext,
 } from './SpellSuggestionRow'
 import { SUGGEST_TEMPLATES, type Suggestion } from './suggestions'
 import { Tooltip } from '../../lib/Tooltip'
@@ -41,7 +41,7 @@ export function SectionShell({
   open,
   onToggle,
   action,
-  children
+  children,
 }: {
   title: string
   count: number
@@ -69,7 +69,7 @@ export function SectionShell({
           py: 0.25,
           cursor: 'pointer',
           userSelect: 'none',
-          '&:hover': { bgcolor: 'action.hover' }
+          '&:hover': { bgcolor: 'action.hover' },
         }}
       >
         {open ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
@@ -99,7 +99,7 @@ export function SpellRows({
   existingIds,
   onCreate,
   ctx,
-  showType
+  showType,
 }: {
   rows: SpellCatalogEntry[]
   total: number
@@ -121,7 +121,11 @@ export function SpellRows({
         />
       ))}
       {total > rows.length && (
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', px: 1, py: 0.5 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: 'block', px: 1, py: 0.5 }}
+        >
           +{total - rows.length} more - keep typing to narrow it down.
         </Typography>
       )}
@@ -160,7 +164,7 @@ export function PoisonSlowRow({
   existingIds,
   defaultPackId,
   onPersist,
-  onDismiss
+  onDismiss,
 }: {
   offer: PoisonSlowOffer
   existingIds: Set<string>
@@ -213,7 +217,7 @@ export function PoisonSlowRow({
 /** The shared illusion alert, offered as the Illusions section's own inline action. */
 export function IllusionAction({
   created,
-  onCreate
+  onCreate,
 }: {
   created: boolean
   onCreate: () => void

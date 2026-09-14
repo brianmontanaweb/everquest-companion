@@ -77,7 +77,10 @@ function fakeCluster(seed: Record<string, Row[]>): Fake {
     if (!m) return null
     const key = m[2].split(',').map((s) => s.trim())
     const all = [...rowsOf(m[1])].sort((a, b) =>
-      key.map((k) => String(a[k])).join('|').localeCompare(key.map((k) => String(b[k])).join('|')),
+      key
+        .map((k) => String(a[k]))
+        .join('|')
+        .localeCompare(key.map((k) => String(b[k])).join('|')),
     )
     const from = Number(params[1])
     return all.slice(from, from + Number(params[0])).map((r) => ({ ...r }))
@@ -162,7 +165,11 @@ function seeded(): Fake {
 
 const SCHEMA = 'CREATE TABLE a (x text);\nCREATE TABLE b (y text);\n'
 
-function run(fake: Fake, out: string, page = 2): Promise<{ dir: string; manifest: ExportManifest }> {
+function run(
+  fake: Fake,
+  out: string,
+  page = 2,
+): Promise<{ dir: string; manifest: ExportManifest }> {
   return exportAll(fake.clients, { out, nowMs: NOW, page, schemaSql: SCHEMA })
 }
 
@@ -180,13 +187,24 @@ test('export writes a gzipped file and a manifest entry per table, and nothing f
   assert.equal(manifest.schemaRevision, 2, 'the statement count of the schema it was taken under')
 
   const named = manifest.tables.map((t) => t.table).sort()
-  assert.deepEqual(named, ['analytics_install', 'feedback_config', 'usage_daily', 'usage_daily_sharded'])
+  assert.deepEqual(named, [
+    'analytics_install',
+    'feedback_config',
+    'usage_daily',
+    'usage_daily_sharded',
+  ])
   // Every OTHER table in schema.sql is recorded as absent rather than silently skipped.
   const missing = EXPORT_TABLES.map((t) => t.table).filter((t) => !named.includes(t))
   assert.deepEqual([...manifest.missing].sort(), [...missing].sort())
   assert.deepEqual(
     readdirSync(dir).sort(),
-    ['analytics_install.json.gz', 'feedback_config.json.gz', 'manifest.json', 'usage_daily.json.gz', 'usage_daily_sharded.json.gz'],
+    [
+      'analytics_install.json.gz',
+      'feedback_config.json.gz',
+      'manifest.json',
+      'usage_daily.json.gz',
+      'usage_daily_sharded.json.gz',
+    ],
     'an absent table leaves no file behind — a zero-row file would read as "empty" on a restore',
   )
 })
@@ -198,7 +216,11 @@ test('every file round trips through gzip to the rows the cluster held, and its 
   for (const entry of manifest.tables) {
     const bytes = readFileSync(join(dir, entry.file))
     assert.equal(bytes.length, entry.bytes, `${entry.table}: manifest bytes are the file's`)
-    assert.equal(createHash('sha256').update(bytes).digest('hex'), entry.sha256, `${entry.table}: sha256`)
+    assert.equal(
+      createHash('sha256').update(bytes).digest('hex'),
+      entry.sha256,
+      `${entry.table}: sha256`,
+    )
     const rows = JSON.parse(gunzipSync(bytes).toString('utf8')) as Row[]
     assert.equal(rows.length, entry.rows, `${entry.table}: manifest row count`)
     assert.deepEqual(rows, fake.tables.get(entry.table), `${entry.table}: same rows, every column`)
@@ -234,7 +256,15 @@ test('the read is paged — six rows at a page size of two is four statements, t
 function stamp(root: string, at: number, extra: Partial<ExportManifest> = {}): string {
   const dir = join(root, stampOf(at))
   mkdirSync(dir, { recursive: true })
-  const manifest = { version: 1, createdAt: new Date(at).toISOString(), clusterId: 'c', schemaRevision: 1, tables: [], missing: [], ...extra }
+  const manifest = {
+    version: 1,
+    createdAt: new Date(at).toISOString(),
+    clusterId: 'c',
+    schemaRevision: 1,
+    tables: [],
+    missing: [],
+    ...extra,
+  }
   writeFileSync(join(dir, 'manifest.json'), JSON.stringify(manifest))
   return dir
 }
@@ -254,7 +284,8 @@ test('the guard passes on a copy from within six hours and refuses outside it', 
 
 test('the guard refuses when there is no export at all, and names the command that fixes it', () => {
   assert.throws(
-    () => assertFreshExport({ what: 'analytics backfill-swap', nowMs: NOW, root: join(tmp(), 'nope') }),
+    () =>
+      assertFreshExport({ what: 'analytics backfill-swap', nowMs: NOW, root: join(tmp(), 'nope') }),
     /no export in .triage.exports. at all[\s\S]*analytics export/,
   )
 })
@@ -263,7 +294,11 @@ test('a directory whose manifest was never written does not count as an export',
   const root = tmp()
   mkdirSync(join(root, '2026-08-16T1400'), { recursive: true })
   writeFileSync(join(root, '2026-08-16T1400', 'usage_daily.json.gz'), 'half a file')
-  assert.equal(latestExport(root, NOW), null, 'the manifest is written LAST — that is the whole point')
+  assert.equal(
+    latestExport(root, NOW),
+    null,
+    'the manifest is written LAST — that is the whole point',
+  )
 })
 
 test('--no-export-check overrides, and prints the refusal anyway', () => {
@@ -277,7 +312,10 @@ test('--no-export-check overrides, and prints the refusal anyway', () => {
     console.warn = warn
   }
   assert.equal(said.length, 1)
-  assert.match(said[0], /OVERRIDDEN \(--no-export-check\)[\s\S]*refuses to run without a fresh offline copy/)
+  assert.match(
+    said[0],
+    /OVERRIDDEN \(--no-export-check\)[\s\S]*refuses to run without a fresh offline copy/,
+  )
 })
 
 /**
@@ -340,7 +378,11 @@ test('import puts every row back, table for table, and running it twice changes 
 })
 
 test('the upsert is ASSIGNMENT on every non-key column, keyed on the primary key', () => {
-  const sql = upsertSql({ table: 'usage_daily', key: ['day', 'cohort', 'metric', 'dim'] }, ['day', 'cohort', 'metric', 'dim', 'n'], 2)
+  const sql = upsertSql(
+    { table: 'usage_daily', key: ['day', 'cohort', 'metric', 'dim'] },
+    ['day', 'cohort', 'metric', 'dim', 'n'],
+    2,
+  )
   assert.equal(
     sql,
     'INSERT INTO usage_daily (day, cohort, metric, dim, n) VALUES ($1,$2,$3,$4,$5),($6,$7,$8,$9,$10)' +
@@ -367,9 +409,19 @@ test('a manifest naming a table nobody designed for is refused', async () => {
   const dir = tmp()
   writeFileSync(
     join(dir, 'manifest.json'),
-    JSON.stringify({ version: 1, createdAt: new Date(NOW).toISOString(), clusterId: 'c', schemaRevision: 1, missing: [], tables: [{ table: 'pg_authid', file: 'pg_authid.json.gz', rows: 1, bytes: 1, sha256: 'x' }] }),
+    JSON.stringify({
+      version: 1,
+      createdAt: new Date(NOW).toISOString(),
+      clusterId: 'c',
+      schemaRevision: 1,
+      missing: [],
+      tables: [{ table: 'pg_authid', file: 'pg_authid.json.gz', rows: 1, bytes: 1, sha256: 'x' }],
+    }),
   )
-  await assert.rejects(() => importAll(fakeCluster({}).clients, dir), /refusing to import an unlisted table: pg_authid/)
+  await assert.rejects(
+    () => importAll(fakeCluster({}).clients, dir),
+    /refusing to import an unlisted table: pg_authid/,
+  )
 })
 
 // ---- 5. the merged-view shape (JOS-398's nightly S3 export) --------------------------------
@@ -418,7 +470,10 @@ test('--dry-run verifies and counts without issuing a statement', async () => {
   const { dir } = await run(seeded(), tmp())
   const target = fakeCluster({})
   const report = await importAll(target.clients, dir, { dryRun: true })
-  assert.equal(report.reduce((n, r) => n + r.rows, 0), 9)
+  assert.equal(
+    report.reduce((n, r) => n + r.rows, 0),
+    9,
+  )
   assert.equal(target.sql.length, 0)
 })
 
@@ -430,5 +485,8 @@ test('the stamp is sortable, minute-grained and legal on a filesystem', () => {
 
 test('the cluster id is the endpoint label, and a schema revision is its statement count', () => {
   assert.equal(clusterIdOf('abc123.dsql.us-east-1.on.aws'), 'abc123')
-  assert.equal(schemaRevision('CREATE TABLE a (x text);\n-- a comment\nCREATE TABLE b (y text);\n'), 2)
+  assert.equal(
+    schemaRevision('CREATE TABLE a (x text);\n-- a comment\nCREATE TABLE b (y text);\n'),
+    2,
+  )
 })

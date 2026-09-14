@@ -16,7 +16,16 @@
 // swap there is no level to print, and the type makes that unrenderable rather than
 // merely discouraged.
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type JSX, type PointerEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type JSX,
+  type PointerEvent,
+} from 'react'
 import { ChartTooltip, type ChartTooltipModel, type TooltipRow } from '../../lib/ChartTooltip'
 import { rafThrottle } from '../../lib/rafThrottle'
 import { formatDateTime } from '../../lib/formatDate'
@@ -29,7 +38,7 @@ import {
   tOf,
   type AaPoint,
   type ChartScale,
-  type LevelAt
+  type LevelAt,
 } from './levelChartGeometry'
 import type { LevelSegment } from './levelSeries'
 // The fractional curve the level chart now draws (JOS-292). Read here so the readout and the
@@ -50,8 +59,18 @@ const MOVE_EPS_PX = 2
  * would paint over the crosshair.
  */
 const ROOT: CSSProperties = { position: 'absolute', inset: 0, pointerEvents: 'auto' }
-const CROSSHAIR: CSSProperties = { position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2 }
-const TIP_LAYER: CSSProperties = { position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3 }
+const CROSSHAIR: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  pointerEvents: 'none',
+  zIndex: 2,
+}
+const TIP_LAYER: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  pointerEvents: 'none',
+  zIndex: 3,
+}
 
 /** Everything the tooltip needs that is not cursor geometry. */
 type Content = Pick<ChartTooltipModel, 'title' | 'subtitle' | 'rows' | 'note'>
@@ -107,11 +126,17 @@ export interface LevelHoverLayerProps {
  * pixels. Where the curve draws nothing at all (before the first ding) there is no row, which
  * is the same silence the chart keeps there.
  */
-function barRow(curve: LevelCurve | undefined, ts: number): { row: TooltipRow; note?: string } | null {
+function barRow(
+  curve: LevelCurve | undefined,
+  ts: number,
+): { row: TooltipRow; note?: string } | null {
   const at = curve ? curveAt(curve, ts) : null
   if (!at) return null
   if (at.kind === 'refused') {
-    return { row: { label: 'into the bar', value: 'unstated' }, note: CURVE_REFUSAL_NOTE[at.refusal] }
+    return {
+      row: { label: 'into the bar', value: 'unstated' },
+      note: CURVE_REFUSAL_NOTE[at.refusal],
+    }
   }
   return { row: { label: 'into the bar', value: `${((at.y - at.level) * 100).toFixed(1)}%` } }
 }
@@ -120,7 +145,7 @@ function levelContent(
   segments: readonly LevelSegment[],
   aaPoints: readonly AaPoint[],
   ts: number,
-  curve?: LevelCurve
+  curve?: LevelCurve,
 ): Content | null {
   const at = levelAt(segments, ts)
   if (at.kind === 'before-first') return null
@@ -131,15 +156,19 @@ function levelContent(
       rows: [
         { label: 'last reported', value: String(at.beforeLevel) },
         { label: 'next reported', value: String(at.afterLevel) },
-        { label: 'unlogged gap', value: fmtDelta(at.gapMs) }
+        { label: 'unlogged gap', value: fmtDelta(at.gapMs) },
       ],
-      note: 'the class swap is not logged - the level here is unknown'
+      note: 'the class swap is not logged - the level here is unknown',
     }
   }
   const rows: TooltipRow[] = [{ label: 'since', value: formatDateTime(at.sinceTs) }]
   const bar = barRow(curve, ts)
   if (bar) rows.push(bar.row)
-  rows.push(at.nextTs == null ? { value: 'current level' } : { label: 'held', value: fmtDelta(at.nextTs - at.sinceTs) })
+  rows.push(
+    at.nextTs == null
+      ? { value: 'current level' }
+      : { label: 'held', value: fmtDelta(at.nextTs - at.sinceTs) },
+  )
   const cum = cumulativeAt(aaPoints, ts)
   if (cum != null) rows.push({ label: 'AA gained by then', value: cum.toLocaleString() })
   return { title: `Level ${at.level}`, subtitle: formatDateTime(ts), rows, note: bar?.note }
@@ -169,14 +198,14 @@ function aaContent(points: readonly AaPoint[], ts: number, gainIdx: number): Con
     const gained = p.gain ?? p.y - (gainIdx > 0 ? points[gainIdx - 1].y : 0)
     rows.push({
       label: `+${gained} AA`,
-      value: p.nowHave != null ? `${p.nowHave} unspent at the time` : formatDateTime(p.ts)
+      value: p.nowHave != null ? `${p.nowHave} unspent at the time` : formatDateTime(p.ts),
     })
   }
   return {
     title: `${points[i].y.toLocaleString()} AA gained`,
     subtitle: formatDateTime(ts),
     rows,
-    note: 'cumulative gain lines'
+    note: 'cumulative gain lines',
   }
 }
 
@@ -213,7 +242,10 @@ function pickKey(at: LevelAt | null, gainIdx: number, zone: string): string {
 function withZone(content: Content, bands: readonly ZoneBand[], ts: number): Content {
   const band = zoneAt(bands, ts)
   if (!band) return content
-  return { ...content, rows: [{ label: 'zone', value: band.name, color: zoneColor(band.key) }, ...content.rows] }
+  return {
+    ...content,
+    rows: [{ label: 'zone', value: band.name, color: zoneColor(band.key) }, ...content.rows],
+  }
 }
 
 export function LevelHoverLayer({
@@ -224,7 +256,7 @@ export function LevelHoverLayer({
   bands,
   segments,
   curve,
-  suppressed = false
+  suppressed = false,
 }: LevelHoverLayerProps): JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null)
   const [hov, setHov] = useState<Hover | null>(null)
@@ -253,12 +285,24 @@ export function LevelHoverLayer({
         const gainIdx = gi >= 0 && Math.abs(aaPoints[gi].ts - ts) <= tolMs ? gi : -1
         const at = segments ? levelAt(segments, ts) : null
         const bounds = { w: r.width, h: r.height }
-        commit({ ts, x, y: cy - r.top, bounds, gainIdx, key: pickKey(at, gainIdx, zoneAt(bands, ts)?.key ?? '') })
+        commit({
+          ts,
+          x,
+          y: cy - r.top,
+          bounds,
+          gainIdx,
+          key: pickKey(at, gainIdx, zoneAt(bands, ts)?.key ?? ''),
+        })
       }),
-    [scale, aaPoints, bands, segments, commit]
+    [scale, aaPoints, bands, segments, commit],
   )
 
-  useEffect(() => () => { onFrame.cancel() }, [onFrame])
+  useEffect(
+    () => () => {
+      onFrame.cancel()
+    },
+    [onFrame],
+  )
 
   const handleMove = (ev: PointerEvent<HTMLDivElement>): void => {
     // A held button means someone else owns this pointer (pan today, range-select tomorrow).

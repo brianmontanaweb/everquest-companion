@@ -19,7 +19,7 @@ import type {
   TriageAnalyticsData,
   TriageFunnelStepRow,
   TriageLiveSessions,
-  UsageDayPoint
+  UsageDayPoint,
 } from '@shared/triage'
 
 /** `62.5%`. A share is always 0..1 on the way in; anything else is clamped, never rendered raw. */
@@ -68,13 +68,24 @@ export function pulseTiles(d: TriageAnalyticsData): StatTile[] {
     // them would be inventing a number neither table holds.
     { label: 'Installs today', value: formatNum(p.installsToday), note: 'new ids, UTC day' },
     { label: 'Upgrades today', value: formatNum(p.upgradesToday), note: 'builds changed, UTC day' },
-    { label: 'Sessions', value: formatNum(p.sessions), note: `${p.sessionsPerDay.toFixed(1)} per active day` },
+    {
+      label: 'Sessions',
+      value: formatNum(p.sessions),
+      note: `${p.sessionsPerDay.toFixed(1)} per active day`,
+    },
     {
       label: 'Session length',
       value: p.medianSessionLabel ?? '-',
-      note: p.meanSessionMs === null ? 'no session has ended yet' : `median · mean ${durationLabel(p.meanSessionMs)}`
+      note:
+        p.meanSessionMs === null
+          ? 'no session has ended yet'
+          : `median · mean ${durationLabel(p.meanSessionMs)}`,
     },
-    { label: 'Lines parsed', value: formatNum(p.linesParsed), note: 'in this window, re-reads included' }
+    {
+      label: 'Lines parsed',
+      value: formatNum(p.linesParsed),
+      note: 'in this window, re-reads included',
+    },
   ]
 }
 
@@ -101,13 +112,13 @@ export function liveTiles(live: TriageLiveSessions | undefined): StatTile[] {
     // CADENCE (10 min since JOS-269, 5 before it). It is spelled out rather than imported because
     // this is the renderer and that constant lives in main; the note is what the tile PROMISES,
     // so the two move together or the tile is lying about its own window.
-    { label: 'Live now', value: formatNum(live.activeNow), note: 'sessions in the last 10 min' }
+    { label: 'Live now', value: formatNum(live.activeNow), note: 'sessions in the last 10 min' },
   ]
   if (live.avgAgeMs === null) return tiles
   tiles.push({
     label: 'Live session age',
     value: `${live.ageIsFloor ? '≥' : ''}${durationLabel(live.avgAgeMs)}`,
-    note: 'est. mean, from heartbeats'
+    note: 'est. mean, from heartbeats',
   })
   return tiles
 }
@@ -138,7 +149,7 @@ export function funnelBars(steps: readonly TriageFunnelStepRow[]): FunnelBar[] {
     n: s.n,
     widthPct: Math.max(0, Math.min(1, s.conversion)) * 100,
     conversion: pctLabel(s.conversion),
-    dropOff: s.dropOff > 0 ? `−${pctLabel(s.dropOff)}` : null
+    dropOff: s.dropOff > 0 ? `−${pctLabel(s.dropOff)}` : null,
   }))
 }
 

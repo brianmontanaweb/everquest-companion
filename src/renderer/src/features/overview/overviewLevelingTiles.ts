@@ -179,8 +179,8 @@ function levelTile(level: number | null, title: string, cue: string): LevelingTi
       value: String(level),
       unit: '',
       label: cue ? `level · ${cue}` : 'level',
-      title
-    }
+      title,
+    },
   ]
 }
 
@@ -195,8 +195,8 @@ function etaTile(eta: LevelEta): LevelingTile[] {
       value: absurd ? '>1 day' : `~${fmtDuration(eta.ms)}`,
       unit: '',
       label: `to level ${String(eta.toLevel)}`,
-      title: etaTileTitle(eta.toLevel, eta.progress)
-    }
+      title: etaTileTitle(eta.toLevel, eta.progress),
+    },
   ]
 }
 
@@ -216,15 +216,15 @@ export function levelingTiles(input: LevelingTileInput): LevelingTile[] {
       label: 'last hour',
       // The one tile on this card whose denominator is active time, so it says what that is
       // (JOS-249) — the Leveling tab's own sentence, not a second wording.
-      title: withActiveTime('Levels of progress per hour of active time.')
+      title: withActiveTime('Levels of progress per hour of active time.'),
     },
     {
       id: 'aa',
       value: String(input.hour.aaGained),
       unit: '',
       label: 'AA this hour',
-      title: AA_TITLE
+      title: AA_TITLE,
     },
-    ...etaTile(input.eta)
+    ...etaTile(input.eta),
   ]
 }

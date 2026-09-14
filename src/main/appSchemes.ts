@@ -18,7 +18,7 @@ import { EQSPEECH_SCHEME_PRIVILEGES } from './speech/cache'
 /** The slice of Electron's `protocol` module this file uses (structural, so tests can stub). */
 export interface SchemeRegistrar {
   registerSchemesAsPrivileged(
-    schemes: { scheme: string; privileges?: Record<string, boolean> }[]
+    schemes: { scheme: string; privileges?: Record<string, boolean> }[],
   ): void
 }
 
@@ -26,5 +26,7 @@ export interface SchemeRegistrar {
 export const APP_SCHEMES = [EQIMG_SCHEME_PRIVILEGES, EQSPEECH_SCHEME_PRIVILEGES]
 
 export function registerAppSchemes(protocol: SchemeRegistrar): void {
-  protocol.registerSchemesAsPrivileged(APP_SCHEMES.map((s) => ({ ...s, privileges: { ...s.privileges } })))
+  protocol.registerSchemesAsPrivileged(
+    APP_SCHEMES.map((s) => ({ ...s, privileges: { ...s.privileges } })),
+  )
 }

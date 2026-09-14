@@ -37,7 +37,14 @@ const ROOT = join(dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z
 export const SIDECAR = join(ROOT, 'engine', 'crates', 'eqlog', 'data', 'spell-overlay.json')
 
 /** The correction fields the Rust parser's `field_of` knows. See the header's `effects` note. */
-const PARSER_FIELDS = new Set(['name', 'spellType', 'classes', 'msgCastOnYou', 'msgCastOnOther', 'msgWearsOff'])
+const PARSER_FIELDS = new Set([
+  'name',
+  'spellType',
+  'classes',
+  'msgCastOnYou',
+  'msgCastOnOther',
+  'msgWearsOff',
+])
 
 /** The sidecar's bytes, as the generator would write them right now. */
 export function renderSidecar(): string {
@@ -47,8 +54,8 @@ export function renderSidecar(): string {
       spells: [...c.spells],
       field: c.field,
       from: c.from,
-      to: c.to
-    }))
+      to: c.to,
+    })),
   }
   return JSON.stringify(body, null, 2) + '\n'
 }
@@ -67,6 +74,6 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '
   const changed = writeSidecar()
   console.log(
     `[gen-engine-spell-overlay] ${changed ? 'REWROTE' : 'unchanged'} ${SIDECAR} — ` +
-      `${String(SPELL_REMOVALS.length)} removals, ${String(SPELL_CORRECTIONS.length)} corrections.`
+      `${String(SPELL_REMOVALS.length)} removals, ${String(SPELL_CORRECTIONS.length)} corrections.`,
   )
 }

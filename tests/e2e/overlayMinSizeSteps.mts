@@ -53,7 +53,7 @@ export const MIN_H = 90
 function windowOfKind(app: ElectronApplication, kind: string): Promise<Bounds | null> {
   return app.evaluate(({ BrowserWindow }, k) => {
     const w = BrowserWindow.getAllWindows().find(
-      (x) => new URLSearchParams(new URL(x.webContents.getURL()).search).get('kind') === k
+      (x) => new URLSearchParams(new URL(x.webContents.getURL()).search).get('kind') === k,
     )
     return w ? w.getBounds() : null
   }, kind)
@@ -64,11 +64,11 @@ async function askFor(app: ElectronApplication, kind: string, b: Bounds): Promis
   await app.evaluate(
     ({ BrowserWindow }, arg) => {
       const w = BrowserWindow.getAllWindows().find(
-        (x) => new URLSearchParams(new URL(x.webContents.getURL()).search).get('kind') === arg.kind
+        (x) => new URLSearchParams(new URL(x.webContents.getURL()).search).get('kind') === arg.kind,
       )
       w?.setBounds(arg.b)
     },
-    { kind, b }
+    { kind, b },
   )
   return windowOfKind(app, kind)
 }
@@ -97,7 +97,7 @@ function controlsOffWindow(page: Page): Promise<Escapee[]> {
       const named = el.getAttribute('aria-label') ?? el.getAttribute('data-testid')
       out.push({
         what: named ?? `${el.tagName.toLowerCase()}:${(el.textContent ?? '').slice(0, 12)}`,
-        rect: `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)}`
+        rect: `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)}`,
       })
     }
     return out
@@ -114,7 +114,7 @@ function controlsOffWindow(page: Page): Promise<Escapee[]> {
 function rowsWiderThanPane(page: Page): Promise<Escapee[]> {
   return page.evaluate(() => {
     const pane = Array.from(document.querySelectorAll('div')).find(
-      (d) => getComputedStyle(d).overflowY === 'auto'
+      (d) => getComputedStyle(d).overflowY === 'auto',
     )
     if (!pane) return []
     const pr = pane.getBoundingClientRect()
@@ -124,7 +124,7 @@ function rowsWiderThanPane(page: Page): Promise<Escapee[]> {
       if (r.width <= pr.width + 1) continue
       out.push({
         what: (row.textContent ?? '').replace(/\s+/g, ' ').slice(0, 24),
-        rect: `${Math.round(r.width)}px in a ${Math.round(pr.width)}px pane`
+        rect: `${Math.round(r.width)}px in a ${Math.round(pr.width)}px pane`,
       })
     }
     return out
@@ -142,7 +142,7 @@ export async function stepMinimumSize(
   app: ElectronApplication,
   overlay: Page,
   kind: string,
-  label: string
+  label: string,
 ): Promise<void> {
   const was = await windowOfKind(app, kind)
   if (!check(`${label}: the overlay window can be measured`, was !== null)) return
@@ -155,7 +155,7 @@ export async function stepMinimumSize(
   check(
     `${label}: THE FLOOR HOLDS — a drag past it lands on ${MIN_W}x${MIN_H}, not on nothing`,
     at.width === MIN_W && at.height === MIN_H,
-    `${at.width}x${at.height}`
+    `${at.width}x${at.height}`,
   )
 
   // Let the renderer finish laying out at the new size before reading rectangles off it. The
@@ -163,7 +163,7 @@ export async function stepMinimumSize(
   const seen = await settle(
     () => overlay.evaluate(() => `${window.innerWidth}x${window.innerHeight}`),
     (s) => s === `${at.width}x${at.height}`,
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
   note(`${label}: laid out at ${seen}`)
 
@@ -171,13 +171,13 @@ export async function stepMinimumSize(
   check(
     `${label}: AT THE FLOOR, EVERY CONTROL IS STILL INSIDE THE WINDOW`,
     escaped.length === 0,
-    escaped.map((e) => `${e.what} @ ${e.rect}`).join('; ')
+    escaped.map((e) => `${e.what} @ ${e.rect}`).join('; '),
   )
   const wide = await rowsWiderThanPane(overlay)
   check(
     `${label}: …and the rows TRUNCATE rather than run wide — the pane is not overflowed sideways`,
     wide.length === 0,
-    wide.map((e) => `${e.what} — ${e.rect}`).join('; ')
+    wide.map((e) => `${e.what} — ${e.rect}`).join('; '),
   )
 
   await askFor(app, kind, start)

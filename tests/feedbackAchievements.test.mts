@@ -30,12 +30,9 @@ import {
   MAX_ACHIEVEMENTS_LINES,
   MAX_UPLOAD_BYTES,
   validateSubmit,
-  type AchievementsDumpMeta
+  type AchievementsDumpMeta,
 } from '../src/shared/feedback'
-import {
-  achievementsMeta,
-  buildAchievementsAttachment
-} from '../src/main/feedback/achievements'
+import { achievementsMeta, buildAchievementsAttachment } from '../src/main/feedback/achievements'
 import { dumpLines } from '../src/main/feedback/inventory'
 import { achievementsNotes, sanitizeAchievements } from '../src/main/triage/rows'
 import { parseAchievementsDump } from '../src/shared/outputs/achievements'
@@ -104,7 +101,7 @@ const cleanup = (t: Temp): void => {
 test('every way of having nothing is a NAMED reason, never a throw', async () => {
   const missing = await buildAchievementsAttachment(
     join(tmpdir(), 'eqc-no-such-achievements-file.txt'),
-    'x.txt'
+    'x.txt',
   )
   assert.equal(missing.ok, false)
   assert.equal(!missing.ok && missing.reason, 'no-dump')
@@ -121,7 +118,7 @@ test('every way of having nothing is a NAMED reason, never a throw', async () =>
   // lives in two boilerplate rows at the BOTTOM of each class's block, so a dump trimmed from
   // either end can drop exactly the evidence that was worth sending.
   const huge = writeDump(
-    `${Array.from({ length: MAX_ACHIEVEMENTS_LINES + 1 }, (_, i) => `I\tAch ${String(i)}`).join('\r\n')}\r\n`
+    `${Array.from({ length: MAX_ACHIEVEMENTS_LINES + 1 }, (_, i) => `I\tAch ${String(i)}`).join('\r\n')}\r\n`,
   )
   try {
     const res = await buildAchievementsAttachment(huge.path, 'huge.txt')
@@ -160,7 +157,7 @@ test('THE FORMAT SWEEP: the achievements dump carries nothing the log scrubber w
     assert.equal(
       bad,
       undefined,
-      `${where} non-printable byte U+${(bad?.codePointAt(0) ?? 0).toString(16)}`
+      `${where} non-printable byte U+${(bad?.codePointAt(0) ?? 0).toString(16)}`,
     )
 
     // 2. No timestamps. Every log line carries `[Day Mon DD HH:MM:SS YYYY]`; not one row here does.
@@ -170,7 +167,7 @@ test('THE FORMAT SWEEP: the achievements dump carries nothing the log scrubber w
     assert.equal(
       /\b(says|tells you|told you|shouts|auctions)\b/.test(text),
       false,
-      `${where} speech`
+      `${where} speech`,
     )
 
     // 4. No paths, URLs or e-mail-shaped text. Nothing in this file names a machine.
@@ -189,7 +186,7 @@ test('THE FORMAT SWEEP: the achievements dump carries nothing the log scrubber w
     for (const line of freeport) {
       assert.ok(
         /Race Unlock|Militia|Traveler|Visit |Sewers/.test(line),
-        `${where} a Freeport hit that is not a place name: ${line}`
+        `${where} a Freeport hit that is not a place name: ${line}`,
       )
     }
 
@@ -203,9 +200,9 @@ test('THE FORMAT SWEEP: the achievements dump carries nothing the log scrubber w
       quoted,
       [
         "I\t\tComplete the 'Aid the Kerrans of Kerra Isle' Task.",
-        "I\t\tComplete the 'Renouncing Your Faith' task for a mysterious Emissary."
+        "I\t\tComplete the 'Renouncing Your Faith' task for a mysterious Emissary.",
       ],
-      `${where} unexpected quoted text`
+      `${where} unexpected quoted text`,
     )
 
     // 8. It is the tab-indented tree the parser expects: one to four fields, and the indent
@@ -235,7 +232,7 @@ test('the owner-side sanitize is a NO-OP on a real dump, byte for byte', () => {
     assert.deepEqual(
       achievementsNotes({ path, cleaned: out.cleaned, fromLegacyCache: false }),
       [],
-      'so the CLI stays silent, which is what makes the other case loud'
+      'so the CLI stays silent, which is what makes the other case loud',
     )
   }
 })
@@ -245,7 +242,11 @@ test('a forged dump IS flagged, and the warning names the achievements export', 
   const out = sanitizeAchievements(forged)
   assert.equal(out.cleaned, 1, 'exactly the row that carried the escape')
   assert.equal(out.text.includes(''), false)
-  const notes = achievementsNotes({ path: '/tmp/x.txt', cleaned: out.cleaned, fromLegacyCache: false })
+  const notes = achievementsNotes({
+    path: '/tmp/x.txt',
+    cleaned: out.cleaned,
+    fromLegacyCache: false,
+  })
   assert.equal(notes.length, 1)
   assert.match(notes[0], /achievements export/, 'never blamed on the inventory')
 })
@@ -264,7 +265,7 @@ const achMeta = (over: Partial<AchievementsDumpMeta> = {}): unknown => ({
   lines: 1_884,
   updatedAt: 1_754_000_000_000,
   sha256: 'c'.repeat(64),
-  ...over
+  ...over,
 })
 
 /** A whole request with no attachments, so each test names only the one it is about. */
@@ -280,14 +281,14 @@ const submit = (over: Record<string, unknown> = {}): unknown => ({
     arch: 'x64',
     electron: '43.2.0',
     chrome: '150.0.7871.129',
-    node: '24.18.0'
+    node: '24.18.0',
   },
   installId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
   clientReportId: '9c858901-8a57-4791-81fe-4c455b099bc9',
   clientTs: 1_754_000_000_000,
   log: null,
   inventory: null,
-  ...over
+  ...over,
 })
 
 test('validateSubmit accepts the achievements dump, and treats absence as "none attached"', () => {
@@ -312,7 +313,7 @@ test('a malformed achievements dump names ITS OWN field, never the inventory’s
     [achMeta({ bytes: MAX_UPLOAD_BYTES + 1 }), 'achievements.bytes'],
     [achMeta({ bytes: 0 }), 'achievements.bytes'],
     [achMeta({ sha256: 'nope' }), 'achievements.sha256'],
-    ['the whole file', 'achievements']
+    ['the whole file', 'achievements'],
   ]
   for (const [value, field] of cases) {
     const res = validateSubmit(submit({ achievements: value }))
@@ -323,10 +324,10 @@ test('a malformed achievements dump names ITS OWN field, never the inventory’s
   assert.equal(validateSubmit(submit({ achievements: achMeta({ bytes: 1 }) })).ok, true)
   assert.equal(
     validateSubmit(submit({ achievements: achMeta({ bytes: MAX_UPLOAD_BYTES }) })).ok,
-    true
+    true,
   )
   assert.equal(
     validateSubmit(submit({ achievements: achMeta({ lines: MAX_ACHIEVEMENTS_LINES }) })).ok,
-    true
+    true,
   )
 })

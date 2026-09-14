@@ -33,7 +33,7 @@ import {
   gearTableRows,
   scaleAll,
   sortGearRows,
-  sortValue
+  sortValue,
 } from '../src/renderer/src/features/gear/gearFilter'
 import { statText } from '../src/renderer/src/features/gear/gearColumns'
 
@@ -52,22 +52,37 @@ function row(over: Partial<GearRow> & Pick<GearRow, 'key' | 'name'>): GearRow {
     playerCrafted: false,
     stats: {},
     effects: [],
-    ...over
+    ...over,
   }
 }
 
 /** BOTH STATED. The AC rides along so "states nothing else" is never what a blank cell proves. */
-const BOTH = row({ key: 'girdle of vitality', name: 'Girdle of Vitality', slots: ['WAIST'], stats: { HP: 40, STA: 12, AC: 5 } })
+const BOTH = row({
+  key: 'girdle of vitality',
+  name: 'Girdle of Vitality',
+  slots: ['WAIST'],
+  stats: { HP: 40, STA: 12, AC: 5 },
+})
 /** ONE STATED, each way. STA_ONLY ties BOTH at 52 on purpose — see the ranking test's tiebreak. */
-const HP_ONLY = row({ key: 'band of health', name: 'Band of Health', slots: ['FINGER'], stats: { HP: 25 } })
-const STA_ONLY = row({ key: 'belt of stamina', name: 'Belt of Stamina', slots: ['WAIST'], stats: { STA: 52 } })
+const HP_ONLY = row({
+  key: 'band of health',
+  name: 'Band of Health',
+  slots: ['FINGER'],
+  stats: { HP: 25 },
+})
+const STA_ONLY = row({
+  key: 'belt of stamina',
+  name: 'Belt of Stamina',
+  slots: ['WAIST'],
+  stats: { STA: 52 },
+})
 /** NEITHER STATED, and both of them state something ELSE — the case is "no HP and no STA". */
 const WEAPON = row({
   key: 'thelvorn, blade of light',
   name: 'Thelvorn, Blade of Light',
   slots: ['PRIMARY'],
   skill: '1H Slashing',
-  stats: { WIS: 15, DMG: 20, DELAY: 26, WEIGHT: 3 }
+  stats: { WIS: 15, DMG: 20, DELAY: 26, WEIGHT: 3 },
 })
 const CAP = row({ key: 'cloth cap', name: 'Cloth Cap', slots: ['HEAD'], stats: { WEIGHT: 0.5 } })
 
@@ -78,7 +93,12 @@ const CAP = row({ key: 'cloth cap', name: 'Cloth Cap', slots: ['HEAD'], stats: {
  * coincidence of the numbers: it is phase 0's ≤10 rule meeting law 1's "a stated value is a value".
  */
 const ONE_BIG = row({ key: 'plain hoop', name: 'Plain Hoop', slots: ['EAR'], stats: { HP: 9 } })
-const TWO_SMALL = row({ key: 'humble sash', name: 'Humble Sash', slots: ['WAIST'], stats: { HP: 4, STA: 4 } })
+const TWO_SMALL = row({
+  key: 'humble sash',
+  name: 'Humble Sash',
+  slots: ['WAIST'],
+  stats: { HP: 4, STA: 4 },
+})
 
 const ROWS = [BOTH, HP_ONLY, STA_ONLY, CAP, WEAPON]
 
@@ -94,7 +114,11 @@ const names = (rows: readonly GearRow[]): string[] => rows.map((r) => r.name)
 test('EFFECTIVE HP is HP plus STA, and law 1 decides both of the interesting arms', () => {
   // BOTH STATED: the plain sum. No cap modelled, no conversion ratio invented.
   assert.equal(gearEffectiveHp(BOTH.stats), 52, '40 HP + 12 STA, taken raw')
-  assert.equal(sortValue(BOTH, 'EFF_HP'), 52, 'and the sort reads the shared derivation, not a copy of it')
+  assert.equal(
+    sortValue(BOTH, 'EFF_HP'),
+    52,
+    'and the sort reads the shared derivation, not a copy of it',
+  )
 
   // ONE STATED: the sum IS that one. Folding either row into `undefined` for want of its partner
   // would delete a number the corpus actually printed.
@@ -103,7 +127,11 @@ test('EFFECTIVE HP is HP plus STA, and law 1 decides both of the interesting arm
 
   // NEITHER STATED: absent, which renders BLANK and sorts LAST. Both rows state OTHER numbers, so
   // what is pinned is "no HP and no STA", never "no stats at all".
-  assert.equal(sortValue(WEAPON, 'EFF_HP'), undefined, 'a weapon with WIS, DMG and DELAY states neither')
+  assert.equal(
+    sortValue(WEAPON, 'EFF_HP'),
+    undefined,
+    'a weapon with WIS, DMG and DELAY states neither',
+  )
   assert.equal(sortValue(CAP, 'EFF_HP'), undefined, 'nor does a cap that states only a weight')
   assert.equal(gearEffectiveHp({}), undefined)
 
@@ -132,12 +160,20 @@ test('effective HP ranks both ways, with absent LAST either way and the name as 
     'Girdle of Vitality',
     'Band of Health',
     'Cloth Cap',
-    'Thelvorn, Blade of Light'
+    'Thelvorn, Blade of Light',
   ])
 
   const asc = sortGearRows(ROWS, { key: 'EFF_HP', dir: 'asc' })
-  assert.deepEqual(names(asc).slice(0, 3), ['Band of Health', 'Belt of Stamina', 'Girdle of Vitality'])
-  assert.deepEqual(names(asc).slice(3), ['Cloth Cap', 'Thelvorn, Blade of Light'], 'the two silent rows, still last')
+  assert.deepEqual(names(asc).slice(0, 3), [
+    'Band of Health',
+    'Belt of Stamina',
+    'Girdle of Vitality',
+  ])
+  assert.deepEqual(
+    names(asc).slice(3),
+    ['Cloth Cap', 'Thelvorn, Blade of Light'],
+    'the two silent rows, still last',
+  )
 })
 
 // =================================================================================
@@ -148,14 +184,20 @@ test('THE SLIDER MOVES IT, and can RE-RANK on it', () => {
   // At base, one stated HP 9 out-ranks two stated 4s.
   assert.equal(sortValue(ONE_BIG, 'EFF_HP'), 9)
   assert.equal(sortValue(TWO_SMALL, 'EFF_HP'), 8)
-  assert.deepEqual(names(sortGearRows([ONE_BIG, TWO_SMALL], { key: 'EFF_HP', dir: 'desc' })), ['Plain Hoop', 'Humble Sash'])
+  assert.deepEqual(names(sortGearRows([ONE_BIG, TWO_SMALL], { key: 'EFF_HP', dir: 'desc' })), [
+    'Plain Hoop',
+    'Humble Sash',
+  ])
 
   // At the checkpoint the order INVERTS: 9 → 11 against 4 + 4 → 6 + 6. A real ranking change
   // produced by the plus-state alone, which a sum computed once at build could never have shown.
   const [big, small] = scaleAll([ONE_BIG, TWO_SMALL], CHECKPOINT)
   assert.equal(sortValue(big, 'EFF_HP'), 11)
   assert.equal(sortValue(small, 'EFF_HP'), 12)
-  assert.deepEqual(names(sortGearRows([big, small], { key: 'EFF_HP', dir: 'desc' })), ['Humble Sash', 'Plain Hoop'])
+  assert.deepEqual(names(sortGearRows([big, small], { key: 'EFF_HP', dir: 'desc' })), [
+    'Humble Sash',
+    'Plain Hoop',
+  ])
 })
 
 test('the sum is of the SCALED halves, never a scaled sum', () => {
@@ -176,6 +218,13 @@ test('the sum is of the SCALED halves, never a scaled sum', () => {
   // the e2e's slider step watches happen on the real corpus.
   const filters = { ...DEFAULT_GEAR_FILTERS, eraOnly: false }
   const ranked = gearTableRows(ROWS, CHECKPOINT, { filters, sort: { key: 'EFF_HP', dir: 'desc' } })
-  assert.deepEqual(ranked.map((r) => sortValue(r, 'EFF_HP')), [66, 66, 32, undefined, undefined])
-  assert.deepEqual(names(ranked).slice(0, 3), ['Belt of Stamina', 'Girdle of Vitality', 'Band of Health'])
+  assert.deepEqual(
+    ranked.map((r) => sortValue(r, 'EFF_HP')),
+    [66, 66, 32, undefined, undefined],
+  )
+  assert.deepEqual(names(ranked).slice(0, 3), [
+    'Belt of Stamina',
+    'Girdle of Vitality',
+    'Band of Health',
+  ])
 })

@@ -59,7 +59,9 @@ import os from 'node:os'
 export interface PriorityOs {
   setPriority(pid: number, priority: number): void
   getPriority(pid: number): number
-  readonly constants: { readonly priority: { readonly PRIORITY_NORMAL: number; readonly PRIORITY_BELOW_NORMAL: number } }
+  readonly constants: {
+    readonly priority: { readonly PRIORITY_NORMAL: number; readonly PRIORITY_BELOW_NORMAL: number }
+  }
 }
 
 /** Electron's `WebContents`, reduced to what a priority decision needs. The two events are one
@@ -140,12 +142,21 @@ export function selectPriorityPids(input: {
  * whole feature is worth: the app keeps running at the priority it already had. The caller logs;
  * this function reports.
  */
-export function applyPriority(pids: readonly number[], wanted: number, host: PriorityOs): PriorityOutcome[] {
+export function applyPriority(
+  pids: readonly number[],
+  wanted: number,
+  host: PriorityOs,
+): PriorityOutcome[] {
   return pids.map((pid) => {
     try {
       host.setPriority(pid, wanted)
     } catch (err) {
-      return { pid, wanted, readBack: null, error: err instanceof Error ? err.message : String(err) }
+      return {
+        pid,
+        wanted,
+        readBack: null,
+        error: err instanceof Error ? err.message : String(err),
+      }
     }
     // The read-back is a SECOND syscall and it is worth it: this is the only way a silent revert
     // by Chromium's priority manager can ever be seen. It gets its own guard because a pid that
@@ -166,7 +177,8 @@ export function describeOutcomes(outcomes: readonly PriorityOutcome[]): string {
   const parts = outcomes.map((o) => {
     if (o.error !== undefined) return `${String(o.pid)}: refused (${o.error})`
     if (o.readBack === null) return `${String(o.pid)}: set, unreadable`
-    if (o.readBack !== o.wanted) return `${String(o.pid)}: set ${String(o.wanted)} but reads ${String(o.readBack)}`
+    if (o.readBack !== o.wanted)
+      return `${String(o.pid)}: set ${String(o.wanted)} but reads ${String(o.readBack)}`
     return `${String(o.pid)}: ${String(o.readBack)}`
   })
   return `process priority - ${parts.join(', ')}`
@@ -273,7 +285,7 @@ function currentPids(s: PriorityState): number[] {
   return selectPriorityPids({
     mainPid: s.wiring.mainPid,
     rendererPids,
-    childPids: enginePid === null ? [] : [enginePid]
+    childPids: enginePid === null ? [] : [enginePid],
   })
 }
 
@@ -317,10 +329,10 @@ export function initProcessPriority(wiring: PriorityWiring): void {
     host: wiring.os ?? os,
     supported: priorityIsSupported({
       platform: wiring.platform ?? process.platform,
-      e2e: wiring.e2e ?? process.env.EQ_E2E === '1'
+      e2e: wiring.e2e ?? process.env.EQ_E2E === '1',
     }),
     enabled: wiring.enabled,
-    contents: new Set()
+    contents: new Set(),
   }
   state = s
   if (!s.supported) return

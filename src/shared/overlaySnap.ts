@@ -136,9 +136,12 @@ export const DEFAULT_OVERLAY_SNAP: OverlaySnapPrefs = { enabled: false }
  */
 export function mergeOverlaySnap(
   value: unknown,
-  fallback: OverlaySnapPrefs = DEFAULT_OVERLAY_SNAP
+  fallback: OverlaySnapPrefs = DEFAULT_OVERLAY_SNAP,
 ): OverlaySnapPrefs {
-  const v = typeof value === 'object' && value !== null && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
+  const v =
+    typeof value === 'object' && value !== null && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {}
   return { enabled: typeof v.enabled === 'boolean' ? v.enabled : fallback.enabled }
 }
 
@@ -152,7 +155,7 @@ export function mergeOverlaySnap(
  */
 export function normalizeOverlaySnap(
   value: unknown,
-  fallback: OverlaySnapPrefs = DEFAULT_OVERLAY_SNAP
+  fallback: OverlaySnapPrefs = DEFAULT_OVERLAY_SNAP,
 ): OverlaySnapPrefs {
   const merged = mergeOverlaySnap(value, fallback)
   return SNAP_RELEASE_HOLD ? { ...merged, enabled: false } : merged
@@ -272,7 +275,12 @@ function stopsOnAxis(moving: SnapRect, targets: SnapTargets, axis: Axis): number
  * targets the same distance away in opposite directions) and the rule exists only so the answer is
  * a function of the inputs rather than of iteration order.
  */
-function stopOnAxis(moving: SnapRect, targets: SnapTargets, axis: Axis, distance: number): number | null {
+function stopOnAxis(
+  moving: SnapRect,
+  targets: SnapTargets,
+  axis: Axis,
+  distance: number,
+): number | null {
   const from = span(moving, axis).near
   let best: number | null = null
   let bestGap = Infinity
@@ -302,7 +310,7 @@ function stopOnAxis(moving: SnapRect, targets: SnapTargets, axis: Axis, distance
 export function snapMovingBounds(
   moving: SnapRect,
   targets: SnapTargets,
-  distance: number = SNAP_DISTANCE_PX
+  distance: number = SNAP_DISTANCE_PX,
 ): SnapRect {
   if (distance <= 0) return moving
   const x = stopOnAxis(moving, targets, 'x', distance)
@@ -403,7 +411,7 @@ export function snapDrag(prev: SnapDragSession | null, step: SnapDragProposal): 
     ? {
         ...step.proposal,
         x: live.virtual.x + (step.proposal.x - live.applied.x),
-        y: live.virtual.y + (step.proposal.y - live.applied.y)
+        y: live.virtual.y + (step.proposal.y - live.applied.y),
       }
     : step.proposal
   const target = snapMovingBounds(virtual, step.targets, step.distance)

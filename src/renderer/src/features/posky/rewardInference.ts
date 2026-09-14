@@ -76,7 +76,7 @@ function isUntradeable(rewardStats: string | undefined): boolean {
  */
 export function rewardInferredQuests(
   quests: readonly Pick<PoskyQuest, 'className' | 'name' | 'reward' | 'rewardStats'>[],
-  inventory: Record<string, number> | undefined
+  inventory: Record<string, number> | undefined,
 ): Set<string> {
   const vouched = new Set<string>()
   if (!inventory) return vouched

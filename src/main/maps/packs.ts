@@ -43,7 +43,7 @@ import type {
   MapSearchHit,
   MapSearchOpts,
   MapSource,
-  ZoneShort
+  ZoneShort,
 } from '../../shared/maps'
 
 /** `<eqRoot>\maps` — the game's own map directory, and the parent of every shipped pack. */
@@ -109,7 +109,7 @@ function listNames(dir: string): { files: string[]; dirs: string[] } {
     const entries = readdirSync(dir, { withFileTypes: true })
     return {
       files: entries.filter((e) => e.isFile()).map((e) => e.name),
-      dirs: entries.filter((e) => e.isDirectory()).map((e) => e.name)
+      dirs: entries.filter((e) => e.isDirectory()).map((e) => e.name),
     }
   } catch {
     // A missing/unreadable maps dir is the fresh-machine case, not an error (§5.3): the UI
@@ -119,7 +119,10 @@ function listNames(dir: string): { files: string[]; dirs: string[] } {
 }
 
 /** Index one directory as a pack. Null when it holds no `.txt` map file at all. */
-export function indexPackDir(dir: string, pack: Omit<MapPack, 'zoneCount' | 'fileCount'>): PackIndex | null {
+export function indexPackDir(
+  dir: string,
+  pack: Omit<MapPack, 'zoneCount' | 'fileCount'>,
+): PackIndex | null {
   const files = new Map<ZoneShort, Map<MapLayer, string>>()
   let fileCount = 0
   for (const name of listNames(dir).files) {
@@ -178,7 +181,7 @@ export function discoverPacks(opts: MapLibraryOptions): PackIndex[] {
       id: DEFAULT_PACK_ID,
       name: DEFAULT_PACK_NAME,
       dir: mapsDir,
-      origin: 'game'
+      origin: 'game',
     })
     if (def) addPack(out, def)
     addSubdirPacks(out, mapsDir, 'game')
@@ -203,10 +206,17 @@ export interface LayerPick extends MapSource {
  * "search this zone" with a near-empty list for every zone the default set covers. An explicit
  * preference from the renderer, when it names a pack that exists, always goes first.
  */
-export function packOrder(packs: readonly PackIndex[], layer: MapLayer, prefs: MapPackPrefs): PackIndex[] {
+export function packOrder(
+  packs: readonly PackIndex[],
+  layer: MapLayer,
+  prefs: MapPackPrefs,
+): PackIndex[] {
   const labels = LABEL_LAYERS.includes(layer)
   const ordered = labels
-    ? [...packs.filter((p) => p.pack.id !== DEFAULT_PACK_ID), ...packs.filter((p) => p.pack.id === DEFAULT_PACK_ID)]
+    ? [
+        ...packs.filter((p) => p.pack.id !== DEFAULT_PACK_ID),
+        ...packs.filter((p) => p.pack.id === DEFAULT_PACK_ID),
+      ]
     : [...packs]
   const wanted = labels ? prefs.labels : prefs.geometry
   const at = wanted ? ordered.findIndex((p) => p.pack.id === wanted) : -1
@@ -234,7 +244,7 @@ export function resolveLayer(
   packs: readonly PackIndex[],
   zone: ZoneShort,
   layer: MapLayer,
-  prefs: MapPackPrefs
+  prefs: MapPackPrefs,
 ): LayerPick | null {
   const wanted = LABEL_LAYERS.includes(layer) ? prefs.labels : prefs.geometry
   let fallback: LayerPick | null = null
@@ -253,7 +263,7 @@ export function resolveLayer(
 export function resolveZoneLayers(
   packs: readonly PackIndex[],
   zone: ZoneShort,
-  prefs: MapPackPrefs
+  prefs: MapPackPrefs,
 ): LayerPick[] {
   const out: LayerPick[] = []
   for (const layer of LAYERS) {
@@ -382,13 +392,18 @@ export function createMapLibrary(opts: MapLibraryOptions): MapLibrary {
    * overrides a pack, and it is a cache HIT for the map already loaded rather than a second
    * parse. (The corpus index above is deliberately the other way: one index, default prefs.)
    */
-  function inZone(zone: ZoneShort, query: string[], limit: number, prefs: MapPackPrefs): MapSearchHit[] {
+  function inZone(
+    zone: ZoneShort,
+    query: string[],
+    limit: number,
+    prefs: MapPackPrefs,
+  ): MapSearchHit[] {
     const res = get(zone, prefs)
     if (!res.ok) return []
     return rank(
       res.data.points.map((point) => ({ zone, point, hay: tokenize(point.display) })),
       query,
-      limit
+      limit,
     )
   }
 
@@ -433,6 +448,6 @@ export function createMapLibrary(opts: MapLibraryOptions): MapLibrary {
       scanned = null
       corpus = null
       cache.clear()
-    }
+    },
   }
 }

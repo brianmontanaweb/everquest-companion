@@ -56,7 +56,7 @@ import {
   WRITE_RETRY_MAX_MS,
   type AsyncDurableHandle,
   type AsyncDurableIo,
-  type DurableIo
+  type DurableIo,
 } from '../src/main/telemetry/durableWrite'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -76,19 +76,18 @@ function enospc(): NodeJS.ErrnoException {
 /** Wrap the real io, recording the call order and optionally failing one step the way a full
  *  volume fails it — part of the data written, THEN the error. */
 function io(record: string[], fail?: { at: keyof DurableIo; partial?: boolean }): DurableIo {
-  const step =
-    <K extends keyof DurableIo>(name: K, run: DurableIo[K]): DurableIo[K] =>
-      ((...args: unknown[]) => {
-        record.push(name)
-        if (fail?.at === name) {
-          if (fail.partial === true && name === 'write') {
-            const [fd, data] = args as [number, string]
-            nodeIo.write(fd, data.slice(0, Math.floor(data.length / 2)))
-          }
-          throw enospc()
+  const step = <K extends keyof DurableIo>(name: K, run: DurableIo[K]): DurableIo[K] =>
+    ((...args: unknown[]) => {
+      record.push(name)
+      if (fail?.at === name) {
+        if (fail.partial === true && name === 'write') {
+          const [fd, data] = args as [number, string]
+          nodeIo.write(fd, data.slice(0, Math.floor(data.length / 2)))
         }
-        return (run as (...a: unknown[]) => unknown)(...args)
-      }) as DurableIo[K]
+        throw enospc()
+      }
+      return (run as (...a: unknown[]) => unknown)(...args)
+    }) as DurableIo[K]
   return {
     mkdir: step('mkdir', nodeIo.mkdir),
     open: step('open', nodeIo.open),
@@ -96,7 +95,7 @@ function io(record: string[], fail?: { at: keyof DurableIo; partial?: boolean })
     fsync: step('fsync', nodeIo.fsync),
     close: step('close', nodeIo.close),
     rename: step('rename', nodeIo.rename),
-    remove: step('remove', nodeIo.remove)
+    remove: step('remove', nodeIo.remove),
   }
 }
 
@@ -112,20 +111,40 @@ test('THE FULL DISK: a write that runs out of space mid-file leaves no scratch f
     const calls: string[] = []
     assert.throws(
       () => {
-        writeFileDurable(dir, path, JSON.stringify({ version: 1, events: Array.from({ length: 200 }, (_, i) => i) }), io(calls, { at: 'write', partial: true }))
+        writeFileDurable(
+          dir,
+          path,
+          JSON.stringify({ version: 1, events: Array.from({ length: 200 }, (_, i) => i) }),
+          io(calls, { at: 'write', partial: true }),
+        )
       },
-      (err: NodeJS.ErrnoException) => err.code === 'ENOSPC'
+      (err: NodeJS.ErrnoException) => err.code === 'ENOSPC',
     )
 
     // THE POINT: the partial temp is gone, so the bytes went back to the volume that has none.
-    assert.equal(existsSync(tempPathFor(path)), false, 'the scratch file must not survive a failed write')
-    assert.deepEqual(readdirSync(dir), ['telemetry.json'], 'nothing but the live file is left in userData')
+    assert.equal(
+      existsSync(tempPathFor(path)),
+      false,
+      'the scratch file must not survive a failed write',
+    )
+    assert.deepEqual(
+      readdirSync(dir),
+      ['telemetry.json'],
+      'nothing but the live file is left in userData',
+    )
     // And the descriptor was closed before the unlink was attempted — on Windows the unlink of an
     // open handle fails, so the ORDER is what makes the line above true, not a lucky platform.
-    assert.ok(calls.indexOf('close') < calls.indexOf('remove'), `close must precede remove; got ${calls.join(',')}`)
+    assert.ok(
+      calls.indexOf('close') < calls.indexOf('remove'),
+      `close must precede remove; got ${calls.join(',')}`,
+    )
 
     // AND THE LIVE FILE IS UNTOUCHED — still the last thing that was written whole.
-    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), { version: 1, events: [], lastBatch: null })
+    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), {
+      version: 1,
+      events: [],
+      lastBatch: null,
+    })
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
@@ -137,10 +156,19 @@ test('THE FULL DISK: a failed RENAME is survivable the same way', () => {
     const path = join(dir, 'telemetry.json')
     writeFileDurable(dir, path, '{"version":1,"events":[],"lastBatch":null}', io([]))
     assert.throws(() => {
-      writeFileDurable(dir, path, '{"version":1,"events":[1,2,3],"lastBatch":null}', io([], { at: 'rename' }))
+      writeFileDurable(
+        dir,
+        path,
+        '{"version":1,"events":[1,2,3],"lastBatch":null}',
+        io([], { at: 'rename' }),
+      )
     })
     assert.equal(existsSync(tempPathFor(path)), false)
-    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), { version: 1, events: [], lastBatch: null })
+    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), {
+      version: 1,
+      events: [],
+      lastBatch: null,
+    })
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
@@ -287,7 +315,7 @@ function ioAsync(record: string[], fail?: { at: AsyncStep; partial?: boolean }):
           record.push('close')
           await real.close()
           if (fail?.at === 'close') throw enospc()
-        }
+        },
       }
       return wrapped
     },
@@ -298,7 +326,7 @@ function ioAsync(record: string[], fail?: { at: AsyncStep; partial?: boolean }):
     remove: async (path) => {
       await guard('remove')
       await nodeIoAsync.remove(path)
-    }
+    },
   }
 }
 
@@ -306,7 +334,12 @@ test('OFF THE THREAD: a write that runs out of space mid-file still leaves no sc
   const dir = scratchDir()
   try {
     const path = join(dir, 'telemetry.json')
-    await writeFileDurableAsync(dir, path, '{"version":1,"events":[],"lastBatch":null}', ioAsync([]))
+    await writeFileDurableAsync(
+      dir,
+      path,
+      '{"version":1,"events":[],"lastBatch":null}',
+      ioAsync([]),
+    )
 
     const calls: string[] = []
     await assert.rejects(
@@ -314,14 +347,25 @@ test('OFF THE THREAD: a write that runs out of space mid-file still leaves no sc
         dir,
         path,
         JSON.stringify({ version: 1, events: Array.from({ length: 200 }, (_, i) => i) }),
-        ioAsync(calls, { at: 'write', partial: true })
+        ioAsync(calls, { at: 'write', partial: true }),
       ),
-      (err: NodeJS.ErrnoException) => err.code === 'ENOSPC'
+      (err: NodeJS.ErrnoException) => err.code === 'ENOSPC',
     )
-    assert.equal(existsSync(tempPathFor(path)), false, 'the scratch file must not survive a failed write')
+    assert.equal(
+      existsSync(tempPathFor(path)),
+      false,
+      'the scratch file must not survive a failed write',
+    )
     assert.deepEqual(readdirSync(dir), ['telemetry.json'])
-    assert.ok(calls.indexOf('close') < calls.indexOf('remove'), `close must precede remove; got ${calls.join(',')}`)
-    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), { version: 1, events: [], lastBatch: null })
+    assert.ok(
+      calls.indexOf('close') < calls.indexOf('remove'),
+      `close must precede remove; got ${calls.join(',')}`,
+    )
+    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), {
+      version: 1,
+      events: [],
+      lastBatch: null,
+    })
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
@@ -331,12 +375,26 @@ test('OFF THE THREAD: a failed RENAME is survivable the same way', async () => {
   const dir = scratchDir()
   try {
     const path = join(dir, 'telemetry.json')
-    await writeFileDurableAsync(dir, path, '{"version":1,"events":[],"lastBatch":null}', ioAsync([]))
+    await writeFileDurableAsync(
+      dir,
+      path,
+      '{"version":1,"events":[],"lastBatch":null}',
+      ioAsync([]),
+    )
     await assert.rejects(
-      writeFileDurableAsync(dir, path, '{"version":1,"events":[1,2,3],"lastBatch":null}', ioAsync([], { at: 'rename' }))
+      writeFileDurableAsync(
+        dir,
+        path,
+        '{"version":1,"events":[1,2,3],"lastBatch":null}',
+        ioAsync([], { at: 'rename' }),
+      ),
     )
     assert.equal(existsSync(tempPathFor(path)), false)
-    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), { version: 1, events: [], lastBatch: null })
+    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), {
+      version: 1,
+      events: [],
+      lastBatch: null,
+    })
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
@@ -363,7 +421,11 @@ test('OFF THE THREAD: the real async io writes a whole file through a real FileH
   try {
     const path = join(dir, 'telemetry.json')
     await writeFileDurableAsync(dir, path, '{"version":1,"events":[7],"lastBatch":null}')
-    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), { version: 1, events: [7], lastBatch: null })
+    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), {
+      version: 1,
+      events: [7],
+      lastBatch: null,
+    })
     assert.deepEqual(readdirSync(dir), ['telemetry.json'], 'no scratch file outlives a good write')
   } finally {
     rmSync(dir, { recursive: true, force: true })
@@ -381,7 +443,7 @@ test('MEMORY FIRST: writeRing updates the cache BEFORE it consults the gate', ()
   assert.ok(cacheAt > 0 && gateAt > 0, 'writeRing must set the cache and ask the gate')
   assert.ok(
     cacheAt < gateAt,
-    'a skipped write may cost persistence and NEVER an event: the ring in memory is updated first'
+    'a skipped write may cost persistence and NEVER an event: the ring in memory is updated first',
   )
 })
 
@@ -393,8 +455,14 @@ test('ONE WRITE IN FLIGHT: the async ring writer serialises itself and coalesces
   // already contains every event an older one had.
   assert.match(RING_SRC, /let writing = false/)
   assert.match(RING_SRC, /let owed: \{ data: string; now: number \} \| null = null/)
-  const body = RING_SRC.slice(RING_SRC.indexOf('export function writeRing'), RING_SRC.indexOf('export function flushRingSync'))
-  assert.ok(body.indexOf('writeGate.ready(now)') < body.indexOf('owed = {'), 'the gate is still asked before a byte is touched')
+  const body = RING_SRC.slice(
+    RING_SRC.indexOf('export function writeRing'),
+    RING_SRC.indexOf('export function flushRingSync'),
+  )
+  assert.ok(
+    body.indexOf('writeGate.ready(now)') < body.indexOf('owed = {'),
+    'the gate is still asked before a byte is touched',
+  )
   assert.match(body, /if \(writing\) return\r?\n {2}writing = true\r?\n {2}void drainWrites\(\)/)
   // …and there is exactly ONE caller of the async durable write in the file: the drain.
   assert.equal(RING_SRC.match(/writeFileDurableAsync\(/g)?.length, 1)
@@ -412,10 +480,16 @@ test('THE QUIT FINAL: the one sync write left in the ring, and a drop outlives a
   // on top of a threadpool write without two writers ever filling one temp.
   // A drop cannot cancel a write already in the threadpool, so it discards what is owed and asks
   // the drain to delete again on its way out — the file must not come back after "turn it off".
-  const drop = RING_SRC.slice(RING_SRC.indexOf('export function dropRing'), RING_SRC.indexOf('export function resetRingCache'))
+  const drop = RING_SRC.slice(
+    RING_SRC.indexOf('export function dropRing'),
+    RING_SRC.indexOf('export function resetRingCache'),
+  )
   assert.match(drop, /owed = null/)
   assert.match(drop, /if \(writing\) dropDuringWrite = true/)
-  assert.match(RING_SRC, /if \(dropDuringWrite\) \{\r?\n {4}dropDuringWrite = false\r?\n {4}removeRingFiles\(\)/)
+  assert.match(
+    RING_SRC,
+    /if \(dropDuringWrite\) \{\r?\n {4}dropDuringWrite = false\r?\n {4}removeRingFiles\(\)/,
+  )
 })
 
 test('THE FINGERPRINT SURVIVES THE FIX: the failure message is unchanged, character for character', () => {
@@ -425,6 +499,6 @@ test('THE FINGERPRINT SURVIVES THE FIX: the failure message is unchanged, charac
   assert.ok(RING_SRC.includes("{ message: 'telemetry.json write failed', err }"))
   assert.ok(
     !/message: `telemetry\.json write failed/.test(RING_SRC),
-    'the failure message must stay a literal — no interpolated counts, delays or codes'
+    'the failure message must stay a literal — no interpolated counts, delays or codes',
   )
 })

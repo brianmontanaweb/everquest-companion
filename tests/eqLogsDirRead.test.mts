@@ -27,7 +27,7 @@ import {
   countCharacterLogs,
   dirHasCharacterLogs,
   readLogsDir,
-  rootHasLogs
+  rootHasLogs,
 } from '../src/main/log/discovery'
 
 test('readLogsDir: a real Logs dir reports ok + the character-log count', () => {
@@ -129,5 +129,5 @@ test(
         // A locked temp dir must never fail the suite.
       }
     }
-  }
+  },
 )

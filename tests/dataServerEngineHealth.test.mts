@@ -24,7 +24,7 @@ import type {
   EngineMessage,
   HelloReply,
   Reply,
-  ResetMessage
+  ResetMessage,
 } from '../src/shared/dataServer/protocol.generated'
 import {
   engineHealthCheck,
@@ -32,7 +32,7 @@ import {
   healthFailureReason,
   HEALTH_REQUEST_ID,
   isTransientHealthFailure,
-  type EngineHealth
+  type EngineHealth,
 } from '../src/main/dataServer/engineHealth'
 import type { HealthFailure } from '../src/main/dataServer/engineProtocol'
 import { fakeClock } from './dataServerSupervisorFakes.mts'
@@ -88,8 +88,8 @@ function wire(react: (frame: Record<string, unknown>, w: Wire) => void): Wire {
       },
       close() {
         closed = true
-      }
-    }
+      },
+    },
   }
   return w
 }
@@ -110,13 +110,13 @@ const HELLO: HelloReply = {
   kind: 'hello',
   ok: true,
   engineVersion: '0.0.0-scripted',
-  protocolVersion: PROTOCOL
+  protocolVersion: PROTOCOL,
 }
 const HEALTH: Reply = {
   kind: 'reply',
   id: HEALTH_REQUEST_ID,
   ok: true,
-  result: { status: 'folding', epoch: 3, uptimeMs: 1234 }
+  result: { status: 'folding', epoch: 3, uptimeMs: 1234 },
 }
 
 /**
@@ -133,7 +133,7 @@ const EPOCH_PROGRESS: EngineMessage = {
   kind: 'epoch',
   epoch: 3,
   reason: 'progress',
-  progress: { pct: 62.4, events: 918_233, offset: 128_000_000, logSize: 205_000_000 }
+  progress: { pct: 62.4, events: 918_233, offset: 128_000_000, logSize: 205_000_000 },
 }
 const EPOCH_ATTACH: EngineMessage = { kind: 'epoch', epoch: 4, reason: 'attach' }
 const FIRE: EngineMessage = {
@@ -141,7 +141,7 @@ const FIRE: EngineMessage = {
   at: 1_724_700_000_000,
   rule: 'Mez broke',
   sound: 'default/ding',
-  message: 'Your target resisted the Mesmerization spell.'
+  message: 'Your target resisted the Mesmerization spell.',
 }
 const CON_CARD: EngineMessage = {
   kind: 'conCard',
@@ -149,22 +149,29 @@ const CON_CARD: EngineMessage = {
   id: 'a-gnoll-pup',
   name: 'a gnoll pup',
   chips: [],
-  spellData: false
+  spellData: false,
 }
 const MODULE_CHANGED: EngineMessage = { kind: 'moduleChanged', module: 'loot', seq: 77 }
-const KNOWLEDGE_MISS: EngineMessage = { kind: 'knowledgeMiss', domain: 'item', name: 'Cloak of Flames' }
+const KNOWLEDGE_MISS: EngineMessage = {
+  kind: 'knowledgeMiss',
+  domain: 'item',
+  name: 'Cloak of Flames',
+}
 
 /** Run one probe against a scripted wire, with a clock the test owns. */
-function probe(w: Wire, clock = fakeClock()): { result: Promise<EngineHealth>; clock: ReturnType<typeof fakeClock> } {
+function probe(
+  w: Wire,
+  clock = fakeClock(),
+): { result: Promise<EngineHealth>; clock: ReturnType<typeof fakeClock> } {
   return {
     result: engineHealthCheck({
       channel: w.channel,
       token: TOKEN,
       protocolVersion: PROTOCOL,
       timeoutMs: TIMEOUT_MS,
-      timer: clock.timer
+      timer: clock.timer,
     }),
-    clock
+    clock,
   }
 }
 
@@ -301,14 +308,14 @@ test('THE TRANSIENT SET IS EXACTLY THE FOUR A SERVING ENGINE CAN PRODUCE', () =>
     'refused',
     'protocolMismatch',
     'unexpected',
-    'localSocket'
+    'localSocket',
   ]
   assert.deepEqual(every.filter(isTransientHealthFailure), [
     'connect',
     'timeout',
     'closed',
     'transport',
-    'localSocket'
+    'localSocket',
   ])
 })
 
@@ -323,7 +330,8 @@ test('A REJECTION CARRIES ITS REASON, AND ANYTHING ELSE IS THE CONNECT', () => {
 test('THE ERRNO SEPARATES OUR SOCKET FROM THE ENGINE — the field EADDRINUSE was never the listener', () => {
   // The message says `connect … 127.0.0.1:<engine port>` either way: Node stamps the DESTINATION on
   // every connect error, so only the code can say which endpoint failed.
-  const withCode = (code: string): Error => Object.assign(new Error(`connect ${code} 127.0.0.1:51413`), { code })
+  const withCode = (code: string): Error =>
+    Object.assign(new Error(`connect ${code} 127.0.0.1:51413`), { code })
   for (const code of ['EADDRINUSE', 'EADDRNOTAVAIL', 'EMFILE', 'ENFILE', 'ENOBUFS']) {
     assert.equal(healthFailureReason(withCode(code)), 'localSocket', code)
   }
@@ -332,7 +340,10 @@ test('THE ERRNO SEPARATES OUR SOCKET FROM THE ENGINE — the field EADDRINUSE wa
     assert.equal(healthFailureReason(withCode(code)), 'connect', code)
   }
   // The connect TIMEOUT rejects with a plain Error and no code at all.
-  assert.equal(healthFailureReason(new Error('connecting to the engine on port 51413 timed out')), 'connect')
+  assert.equal(
+    healthFailureReason(new Error('connecting to the engine on port 51413 timed out')),
+    'connect',
+  )
 })
 
 test('THE PROBE SAYS EXACTLY TWO THINGS, however many frames it skipped', async () => {

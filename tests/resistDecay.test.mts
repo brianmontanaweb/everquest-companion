@@ -85,7 +85,10 @@ test('A THREE-WEEK-OLD ROW WEIGHS HALF, and a very old one weighs the floor (JOS
 })
 
 test('the newest week is the reference, and it is the ledger-wide one', () => {
-  assert.equal(newestWeekOf([{ week: '2026-W30' }, { week: '2026-W33' }, { week: '2026-W31' }]), '2026-W33')
+  assert.equal(
+    newestWeekOf([{ week: '2026-W30' }, { week: '2026-W33' }, { week: '2026-W31' }]),
+    '2026-W33',
+  )
   assert.equal(newestWeekOf([{}, {}]), undefined)
   assert.equal(newestWeekOf([]), undefined)
 })
@@ -95,11 +98,15 @@ test('A PAUSED LOG DOES NOT DECAY ITSELF: age is measured from the newest observ
   const rows = [blank({ spellKey: 'test hold', family: 'cast', week: old, resist: 20, land: 20 })]
   // Every row is from January, and January is also the newest thing the ledger holds - so nothing
   // is discounted, and the answer is the answer it would have had the week it was gathered.
-  const paused = estimate(rows, SPELLS, { axis: 'magic', mobLevel: 50, unobservable: LANDS_ELSEWHERE })
+  const paused = estimate(rows, SPELLS, {
+    axis: 'magic',
+    mobLevel: 50,
+    unobservable: LANDS_ELSEWHERE,
+  })
   const fresh = estimate(
     [blank({ spellKey: 'test hold', family: 'cast', week: '2026-W33', resist: 20, land: 20 })],
     SPELLS,
-    { axis: 'magic', mobLevel: 50, unobservable: LANDS_ELSEWHERE, newestWeek: '2026-W33' }
+    { axis: 'magic', mobLevel: 50, unobservable: LANDS_ELSEWHERE, newestWeek: '2026-W33' },
   )
   assert.equal(paused.R, fresh.R)
   assert.equal(paused.hi - paused.lo, fresh.hi - fresh.lo)
@@ -109,7 +116,12 @@ test('DECAY WIDENS AN OLD-ONLY CELL, and that is the honest half of the trade', 
   const rows = (week: string): ReturnType<typeof blank>[] => [
     blank({ spellKey: 'test hold', family: 'cast', week, resist: 30, land: 30 }),
   ]
-  const opts = { axis: 'magic' as const, mobLevel: 50, unobservable: LANDS_ELSEWHERE, newestWeek: '2026-W33' }
+  const opts = {
+    axis: 'magic' as const,
+    mobLevel: 50,
+    unobservable: LANDS_ELSEWHERE,
+    newestWeek: '2026-W33',
+  }
   const now = estimate(rows('2026-W33'), SPELLS, opts)
   const stale = estimate(rows('2026-W20'), SPELLS, opts)
 
@@ -117,7 +129,10 @@ test('DECAY WIDENS AN OLD-ONLY CELL, and that is the honest half of the trade', 
   assert.ok(Math.abs(stale.R - now.R) <= 4, `R moved ${String(stale.R - now.R)}`)
   // The INTERVAL widens, because thirteen weeks old is worth the floor and the floor is 15% of a
   // cell. Wide is what "we learned this a season ago" looks like when it is said honestly.
-  assert.ok(stale.hi - stale.lo > (now.hi - now.lo) * 1.5, `${String(stale.hi - stale.lo)} vs ${String(now.hi - now.lo)}`)
+  assert.ok(
+    stale.hi - stale.lo > (now.hi - now.lo) * 1.5,
+    `${String(stale.hi - stale.lo)} vs ${String(now.hi - now.lo)}`,
+  )
   // And the COUNTS are untouched: `n` is what a player could count themselves, decayed or not.
   assert.equal(stale.n, now.n)
   assert.equal(stale.nInformative, now.nInformative)
@@ -138,17 +153,25 @@ test('A RETUNED MOB IS FOLLOWED WITHIN ABOUT THREE WEEKS OF DATA (the ticket acc
     const { resist, land } = playAon(160, 0, 40, next)
     rows.push(blank({ spellKey: 'test hold', family: 'cast', week: weekKey(w), resist, land }))
   }
-  const opts = { axis: 'magic' as const, mobLevel: 50, unobservable: LANDS_ELSEWHERE, newestWeek: weekKey(0) }
+  const opts = {
+    axis: 'magic' as const,
+    mobLevel: 50,
+    unobservable: LANDS_ELSEWHERE,
+    newestWeek: weekKey(0),
+  }
   const decayed = estimate(rows, SPELLS, opts)
   // Undecayed, the same rows are eight weeks of 20 against three of 160 and the pooled answer sits
   // nearer the old truth than the new one. This is the defect the ticket describes.
   const flat = estimate(
     rows.map((r) => ({ ...r, week: weekKey(0) })),
     SPELLS,
-    opts
+    opts,
   )
   assert.ok(flat.R < 90, `flat fit should still be dragged low, got ${String(flat.R)}`)
-  assert.ok(decayed.R > flat.R + 20, `decay should follow the retune: ${String(decayed.R)} vs ${String(flat.R)}`)
+  assert.ok(
+    decayed.R > flat.R + 20,
+    `decay should follow the retune: ${String(decayed.R)} vs ${String(flat.R)}`,
+  )
   // It does not LEAP to the new truth either, and it should not: the floor keeps eight weeks of
   // contrary evidence in the room, which is what stops one bad evening rewriting a cell.
   assert.ok(decayed.R < 160, `and it stays short of the new truth, got ${String(decayed.R)}`)

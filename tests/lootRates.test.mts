@@ -51,13 +51,28 @@ const T0 = Date.parse('Sat Aug 01 12:00:00 2026')
 
 function emptySnap(): ProgressionSnap {
   return {
-    expTs: [], expPct: [], expFlag: [],
-    killTs: [], killZone: [], killCredit: [],
-    witnessTs: [], recentKills: [], lootTs: [],
-    zoneStart: [], zoneEnd: [], zoneName: [],
-    offlineStart: [], offlineEnd: [], offlineCamped: [],
-    levelTs: [], levelValue: [], aaGainTs: [], aaGainAmount: [],
-    lastTs: 0, windowStart: 0, dropped: 0
+    expTs: [],
+    expPct: [],
+    expFlag: [],
+    killTs: [],
+    killZone: [],
+    killCredit: [],
+    witnessTs: [],
+    recentKills: [],
+    lootTs: [],
+    zoneStart: [],
+    zoneEnd: [],
+    zoneName: [],
+    offlineStart: [],
+    offlineEnd: [],
+    offlineCamped: [],
+    levelTs: [],
+    levelValue: [],
+    aaGainTs: [],
+    aaGainAmount: [],
+    lastTs: 0,
+    windowStart: 0,
+    dropped: 0,
   }
 }
 
@@ -114,7 +129,7 @@ test('itemZoneRows: drops per hour of ACTIVE time, per zone, joined on the recor
     loot(T0 + 35 * MIN, 'Mote of Minor Potential', "Nagafen's Lair"),
     loot(T0 + 50 * MIN, 'Mote of Minor Potential', "Nagafen's Lair"),
     loot(T0 + 70 * MIN, 'Mote of Minor Potential', 'The Plane of Hate'),
-    loot(T0 + 100 * MIN, 'Mote of Minor Potential', 'The Plane of Hate')
+    loot(T0 + 100 * MIN, 'Mote of Minor Potential', 'The Plane of Hate'),
   ]
 
   const rows = itemZoneRows({ events, zones: zonesOf(snap, T0, T0 + 2 * HOUR) })
@@ -145,11 +160,18 @@ test('itemZoneRows: a differently-cased zone name joins the SAME row (one fold, 
   snap.lastTs = T0 + HOUR
 
   const rows = itemZoneRows({
-    events: [loot(T0 + 10 * MIN, 'Jacinth', "NAGAFEN'S LAIR"), loot(T0 + 20 * MIN, 'Jacinth', "nagafen's lair")],
-    zones: zonesOf(snap, T0, T0 + HOUR)
+    events: [
+      loot(T0 + 10 * MIN, 'Jacinth', "NAGAFEN'S LAIR"),
+      loot(T0 + 20 * MIN, 'Jacinth', "nagafen's lair"),
+    ],
+    zones: zonesOf(snap, T0, T0 + HOUR),
   })
   assert.equal(rows.length, 1)
-  assert.equal(rows[0].zone, "Nagafen's Lair", 'the zone row’s first-seen spelling wins over the loot line’s')
+  assert.equal(
+    rows[0].zone,
+    "Nagafen's Lair",
+    'the zone row’s first-seen spelling wins over the loot line’s',
+  )
   assert.equal(rows[0].drops, 2)
   assert.equal(rows[0].activeMs, HOUR)
 })
@@ -166,13 +188,20 @@ test('itemZoneRows: a zone-less drop lands on the same `unknown` row the range a
   snap.lastTs = T0 + HOUR
 
   const rows = itemZoneRows({
-    events: [loot(T0 + 10 * MIN, 'Bone Chips'), loot(T0 + 40 * MIN, 'Bone Chips', "Nagafen's Lair")],
-    zones: zonesOf(snap, T0, T0 + HOUR)
+    events: [
+      loot(T0 + 10 * MIN, 'Bone Chips'),
+      loot(T0 + 40 * MIN, 'Bone Chips', "Nagafen's Lair"),
+    ],
+    zones: zonesOf(snap, T0, T0 + HOUR),
   })
   const unknown = rows.find((r) => r.zone === 'unknown')
   assert.ok(unknown, 'the pre-first-zone drop has a row')
   assert.equal(unknown.drops, 1)
-  assert.equal(unknown.activeMs, 30 * MIN, 'and it divides by the very span rangeStats filed as unknown')
+  assert.equal(
+    unknown.activeMs,
+    30 * MIN,
+    'and it divides by the very span rangeStats filed as unknown',
+  )
 })
 
 /**
@@ -193,8 +222,11 @@ test('itemZoneRows: the denominator is ACTIVE time — an idle hour never dilute
   assert.equal(zones[0].activeMs, HOUR, 'rangeStats already carved the silence out')
 
   const rows = itemZoneRows({
-    events: [loot(T0 + 10 * MIN, 'Ruby', "Nagafen's Lair"), loot(T0 + 40 * MIN, 'Ruby', "Nagafen's Lair")],
-    zones
+    events: [
+      loot(T0 + 10 * MIN, 'Ruby', "Nagafen's Lair"),
+      loot(T0 + 40 * MIN, 'Ruby', "Nagafen's Lair"),
+    ],
+    zones,
   })
   assert.equal(rows[0].spanMs, 2 * HOUR)
   assert.equal(rows[0].activeMs, HOUR)
@@ -210,8 +242,11 @@ test('itemZoneRows: the denominator is ACTIVE time — an idle hour never dilute
  */
 test('itemZoneRows: no active time ⇒ a NULL rate, never 0.00', () => {
   const rows = itemZoneRows({
-    events: [loot(T0, 'Efreeti War Staff', 'Solusek B'), loot(T0 + MIN, 'Efreeti War Staff', 'Solusek B')],
-    zones: []
+    events: [
+      loot(T0, 'Efreeti War Staff', 'Solusek B'),
+      loot(T0 + MIN, 'Efreeti War Staff', 'Solusek B'),
+    ],
+    zones: [],
   })
   assert.equal(rows.length, 1)
   assert.equal(rows[0].drops, 2, 'the count is still a fact')
@@ -249,7 +284,7 @@ test('windowItemRows: membership is half-open [t0, t1) — the low edge is in, t
     loot(T0 - 1, 'Ruby', "Nagafen's Lair"),
     loot(T0, 'Ruby', "Nagafen's Lair"),
     loot(T0 + 30 * MIN, 'Ruby', "Nagafen's Lair"),
-    loot(T0 + HOUR, 'Ruby', "Nagafen's Lair")
+    loot(T0 + HOUR, 'Ruby', "Nagafen's Lair"),
   ]
   const rows = windowItemRows({ events, t0: T0, t1: T0 + HOUR, spans: FULL_HOUR })
   assert.equal(rows.length, 1)
@@ -267,7 +302,7 @@ test('windowItemRows: ordered by observed drops, and a stack counts its size', (
     loot(T0 + MIN, 'Jacinth', "Nagafen's Lair"),
     loot(T0 + 2 * MIN, 'Mote of Infinitesimal Potential', "Nagafen's Lair"),
     loot(T0 + 3 * MIN, 'Mote of Infinitesimal Potential', "Nagafen's Lair"),
-    loot(T0 + 4 * MIN, 'Bone Chips', "Nagafen's Lair", 5)
+    loot(T0 + 4 * MIN, 'Bone Chips', "Nagafen's Lair", 5),
   ]
   const rows = windowItemRows({ events, t0: T0, t1: T0 + HOUR, spans: FULL_HOUR })
   assert.deepEqual(
@@ -275,8 +310,8 @@ test('windowItemRows: ordered by observed drops, and a stack counts its size', (
     [
       ['Bone Chips', 5, 1],
       ['Mote of Infinitesimal Potential', 2, 2],
-      ['Jacinth', 1, 1]
-    ]
+      ['Jacinth', 1, 1],
+    ],
   )
   assert.equal(rows[0].dropsPerHourActive?.toFixed(2), '5.00')
 })
@@ -289,9 +324,10 @@ test('windowItemRows: ties break on recency then name (nothing reshuffles betwee
   const events = [
     loot(T0 + 3 * MIN, 'Ruby', 'z'),
     loot(T0 + 1 * MIN, 'Jacinth', 'z'),
-    loot(T0 + 2 * MIN, 'Diamond', 'z')
+    loot(T0 + 2 * MIN, 'Diamond', 'z'),
   ]
-  const order = (): string[] => windowItemRows({ events, t0: T0, t1: T0 + HOUR, spans: FULL_HOUR }).map((r) => r.item)
+  const order = (): string[] =>
+    windowItemRows({ events, t0: T0, t1: T0 + HOUR, spans: FULL_HOUR }).map((r) => r.item)
   assert.deepEqual(order(), ['Ruby', 'Diamond', 'Jacinth'])
   assert.deepEqual(order(), ['Ruby', 'Diamond', 'Jacinth'], 'the sort is stable across calls')
 })
@@ -305,18 +341,18 @@ test('windowItemRows: identity is the ledger’s raw lowercase key — a +N vari
     events: [
       loot(T0, 'Sphinx Claw', 'z'),
       loot(T0 + MIN, 'sphinx claw', 'z'),
-      loot(T0 + 2 * MIN, 'Sphinx Claw +1', 'z')
+      loot(T0 + 2 * MIN, 'Sphinx Claw +1', 'z'),
     ],
     t0: T0,
     t1: T0 + HOUR,
-    spans: FULL_HOUR
+    spans: FULL_HOUR,
   })
   assert.deepEqual(
     rows.map((r) => [r.item, r.drops]),
     [
       ['Sphinx Claw', 2],
-      ['Sphinx Claw +1', 1]
-    ]
+      ['Sphinx Claw +1', 1],
+    ],
   )
 })
 
@@ -329,7 +365,12 @@ test('windowItemRows: identity is the ledger’s raw lowercase key — a +N vari
  * that came up empty goes null; the other keeps answering.
  */
 test('windowItemRows: a window with no active time states NULL rates, never 0.00', () => {
-  const rows = windowItemRows({ events: [loot(T0, 'Ruby', 'z')], t0: T0, t1: T0 + HOUR, spans: NO_ACTIVE })
+  const rows = windowItemRows({
+    events: [loot(T0, 'Ruby', 'z')],
+    t0: T0,
+    t1: T0 + HOUR,
+    spans: NO_ACTIVE,
+  })
   assert.equal(rows[0].drops, 1)
   assert.equal(rows[0].dropsPerHourActive, null)
   assert.equal(rows[0].dropsPerHourWall, 1, 'the elapsed hour was real, and it paid one drop')
@@ -338,16 +379,25 @@ test('windowItemRows: a window with no active time states NULL rates, never 0.00
     events: [loot(T0, 'Ruby', 'z')],
     t0: T0,
     t1: T0 + HOUR,
-    spans: { durationMs: HOUR, activeMs: 0, offlineMs: HOUR }
+    spans: { durationMs: HOUR, activeMs: 0, offlineMs: HOUR },
   })
-  assert.equal(offline[0].dropsPerHourWall, null, 'a logout is carved out of the elapsed denominator')
+  assert.equal(
+    offline[0].dropsPerHourWall,
+    null,
+    'a logout is carved out of the elapsed denominator',
+  )
 })
 
 /** An empty window is a first-class state: no rows, and the panel says which window it is. */
 test('windowItemRows: nothing in range ⇒ no rows', () => {
   assert.deepEqual(
-    windowItemRows({ events: [loot(T0, 'Ruby', 'z')], t0: T0 + HOUR, t1: T0 + 2 * HOUR, spans: FULL_HOUR }),
-    []
+    windowItemRows({
+      events: [loot(T0, 'Ruby', 'z')],
+      t0: T0 + HOUR,
+      t1: T0 + 2 * HOUR,
+      spans: FULL_HOUR,
+    }),
+    [],
   )
 })
 
@@ -371,7 +421,7 @@ test('windowLootRates: both denominators, from the same window — active and wa
   snap.lastTs = T0 + 2 * HOUR
 
   const events: LootEvent[] = [10, 20, 30, 40, 50, 55].map((m) =>
-    loot(T0 + m * MIN, 'Mote of Minor Potential', "Nagafen's Lair")
+    loot(T0 + m * MIN, 'Mote of Minor Potential', "Nagafen's Lair"),
   )
   const spans = rangeStats({ snap, range: { t0: T0, t1: T0 + 2 * HOUR } })
   assert.equal(spans.activeMs, HOUR, 'rangeStats already carved the silence out')
@@ -403,7 +453,10 @@ test('windowLootRates: a logout is carved OUT of the wall denominator, never div
   keepBusy(snap, T0 + 9 * HOUR, T0 + 10 * HOUR)
   snap.lastTs = T0 + 10 * HOUR
 
-  const events = [loot(T0 + 30 * MIN, 'Ruby', 'Befallen'), loot(T0 + 9.5 * HOUR, 'Ruby', 'Befallen')]
+  const events = [
+    loot(T0 + 30 * MIN, 'Ruby', 'Befallen'),
+    loot(T0 + 9.5 * HOUR, 'Ruby', 'Befallen'),
+  ]
   const spans = rangeStats({ snap, range: { t0: T0, t1: T0 + 10 * HOUR } })
   assert.equal(spans.offlineMs, 8 * HOUR)
 
@@ -421,10 +474,14 @@ test('windowLootRates: a logout is carved OUT of the wall denominator, never div
 test('windowLootRates: the numerator counts stack sizes, and lines ride along separately', () => {
   const spans = { durationMs: HOUR, activeMs: HOUR, offlineMs: 0 }
   const r = windowLootRates({
-    events: [loot(T0, 'Bone Chips', 'z', 2), loot(T0 + MIN, 'Bone Chips', 'z', 3), loot(T0 + 2 * MIN, 'Ruby', 'z')],
+    events: [
+      loot(T0, 'Bone Chips', 'z', 2),
+      loot(T0 + MIN, 'Bone Chips', 'z', 3),
+      loot(T0 + 2 * MIN, 'Ruby', 'z'),
+    ],
     t0: T0,
     t1: T0 + HOUR,
-    spans
+    spans,
   })
   assert.equal(r.drops, 6)
   assert.equal(r.events, 3)
@@ -438,15 +495,22 @@ test('windowLootRates: membership is half-open and zone-filtered, exactly like w
     loot(T0 - 1, 'Ruby', 'Befallen'),
     loot(T0, 'Ruby', 'Befallen'),
     loot(T0 + 30 * MIN, 'Ruby', "Nagafen's Lair"),
-    loot(T0 + HOUR, 'Ruby', 'Befallen')
+    loot(T0 + HOUR, 'Ruby', 'Befallen'),
   ]
-  assert.equal(windowLootRates({ events, t0: T0, t1: T0 + HOUR, spans }).drops, 2, 'the low edge is in, the high edge is out')
+  assert.equal(
+    windowLootRates({ events, t0: T0, t1: T0 + HOUR, spans }).drops,
+    2,
+    'the low edge is in, the high edge is out',
+  )
   const inZone = windowLootRates({ events, t0: T0, t1: T0 + HOUR, spans, zoneKey: 'befallen' })
   assert.equal(inZone.drops, 1, 'and a zone-restricted slice counts only that zone’s rows')
   // The counts agree with the per-item derivation over the same window — one membership test.
   assert.equal(
-    windowItemRows({ events, t0: T0, t1: T0 + HOUR, spans: FULL_HOUR }).reduce((n, r) => n + r.drops, 0),
-    2
+    windowItemRows({ events, t0: T0, t1: T0 + HOUR, spans: FULL_HOUR }).reduce(
+      (n, r) => n + r.drops,
+      0,
+    ),
+    2,
   )
 })
 
@@ -465,7 +529,7 @@ test('windowLootRates: `events` equals what timeslice.inSlice admits, row for ro
   const history = [
     loot(T0 + 10 * MIN, 'Ruby', 'Befallen'),
     loot(T0 + 70 * MIN, 'Ruby', "Nagafen's Lair"),
-    loot(T0 + 90 * MIN, 'Ruby', "Nagafen's Lair - Solo 4 (Refined)")
+    loot(T0 + 90 * MIN, 'Ruby', "Nagafen's Lair - Solo 4 (Refined)"),
   ]
   const bounds = { lo: T0, hi: T0 + 2 * HOUR }
   for (const id of ['all', 'zone'] as const) {
@@ -477,7 +541,7 @@ test('windowLootRates: `events` equals what timeslice.inSlice admits, row for ro
       t0: slice.range.t0,
       t1: slice.range.t1,
       spans,
-      zoneKey: slice.zoneKey
+      zoneKey: slice.zoneKey,
     })
     assert.equal(r.events, byLedger.length, `the ${id} slice admits the same rows to both`)
   }

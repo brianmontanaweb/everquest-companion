@@ -26,7 +26,7 @@ import {
   QuietSwitchWatcher,
   logIsQuiet,
   type QuietSwitchObservation,
-  type QuietSwitchOutcome
+  type QuietSwitchOutcome,
 } from '../src/main/log/quietSwitch'
 
 const MINE = 'C:\\EQ\\Logs\\eqlog_Primitive_freeport.txt'
@@ -41,13 +41,13 @@ function poll(
     active?: string
     lastLineAt: number
     sizes: Readonly<Record<string, number>>
-  }
+  },
 ): QuietSwitchOutcome {
   const obs: QuietSwitchObservation = {
     now: o.now,
     activeLogPath: o.active ?? MINE,
     lastLineAt: o.lastLineAt,
-    logs: Object.entries(o.sizes).map(([path, size]) => ({ path, size }))
+    logs: Object.entries(o.sizes).map(([path, size]) => ({ path, size })),
   }
   return w.observe(obs)
 }
@@ -60,16 +60,31 @@ test('the threshold gates everything: before it elapses nothing is even consider
   const w = new QuietSwitchWatcher()
   // A sibling growing hand over fist, while our log has been silent for one second short of the
   // threshold. The whole mechanism must be asleep.
-  let outcome = poll(w, { now: T0 + QUIET_MS - 1, lastLineAt: T0, sizes: { [MINE]: 10, [THEIRS]: 10 } })
+  let outcome = poll(w, {
+    now: T0 + QUIET_MS - 1,
+    lastLineAt: T0,
+    sizes: { [MINE]: 10, [THEIRS]: 10 },
+  })
   assert.equal(outcome.kind, 'live')
-  outcome = poll(w, { now: T0 + QUIET_MS - 1, lastLineAt: T0, sizes: { [MINE]: 10, [THEIRS]: 9_999 } })
-  assert.equal(outcome.kind, 'live', 'growth below the quiet threshold is not this feature s business')
+  outcome = poll(w, {
+    now: T0 + QUIET_MS - 1,
+    lastLineAt: T0,
+    sizes: { [MINE]: 10, [THEIRS]: 9_999 },
+  })
+  assert.equal(
+    outcome.kind,
+    'live',
+    'growth below the quiet threshold is not this feature s business',
+  )
 
   assert.equal(logIsQuiet(T0, T0 + QUIET_MS - 1), false)
   assert.equal(logIsQuiet(T0, T0 + QUIET_MS), true)
   // The generosity is the point (ordinary AFK and zoning must never reach it) and the poll is a
   // small fraction of it, so the first ask lands promptly once it does.
-  assert.ok(QUIET_MS >= 5 * 60_000, 'the threshold stays generous — several minutes, per the ruling')
+  assert.ok(
+    QUIET_MS >= 5 * 60_000,
+    'the threshold stays generous — several minutes, per the ruling',
+  )
   assert.ok(POLL_MS < QUIET_MS / 4)
 })
 
@@ -81,7 +96,7 @@ test('a QUIET LOG ALONE fires nothing — a growing sibling is required', () => 
     const outcome = poll(w, {
       now: QUIET_AT + i * POLL_MS,
       lastLineAt: T0,
-      sizes: { [MINE]: 4_096, [THEIRS]: 2_048 }
+      sizes: { [MINE]: 4_096, [THEIRS]: 2_048 },
     })
     assert.equal(outcome.kind, 'watching')
   }
@@ -91,13 +106,21 @@ test('a sibling seen for the FIRST TIME is not yet growth — the baseline is ea
   const w = new QuietSwitchWatcher()
   // A big sibling on the very first quiet poll proves nothing: it may have been that size for
   // weeks. It joins the baseline instead, and only real growth after that counts.
-  assert.equal(poll(w, { now: QUIET_AT, lastLineAt: T0, sizes: { [MINE]: 10, [THEIRS]: 900_000 } }).kind, 'watching')
   assert.equal(
-    poll(w, { now: QUIET_AT + POLL_MS, lastLineAt: T0, sizes: { [MINE]: 10, [THEIRS]: 900_000 } }).kind,
+    poll(w, { now: QUIET_AT, lastLineAt: T0, sizes: { [MINE]: 10, [THEIRS]: 900_000 } }).kind,
     'watching',
-    'unchanged size is not growth'
   )
-  const asked = poll(w, { now: QUIET_AT + 2 * POLL_MS, lastLineAt: T0, sizes: { [MINE]: 10, [THEIRS]: 900_400 } })
+  assert.equal(
+    poll(w, { now: QUIET_AT + POLL_MS, lastLineAt: T0, sizes: { [MINE]: 10, [THEIRS]: 900_000 } })
+      .kind,
+    'watching',
+    'unchanged size is not growth',
+  )
+  const asked = poll(w, {
+    now: QUIET_AT + 2 * POLL_MS,
+    lastLineAt: T0,
+    sizes: { [MINE]: 10, [THEIRS]: 900_400 },
+  })
   assert.equal(asked.kind, 'nudge')
   assert.equal(asked.kind === 'nudge' && asked.logPath, THEIRS)
   assert.equal(asked.kind === 'nudge' && asked.grewBy, 400)
@@ -113,7 +136,7 @@ test('EXACTLY ONE ask per candidate, however long the sibling keeps growing', ()
     const outcome = poll(w, {
       now: QUIET_AT + i * POLL_MS,
       lastLineAt: T0,
-      sizes: { [MINE]: 10, [THEIRS]: theirs }
+      sizes: { [MINE]: 10, [THEIRS]: theirs },
     })
     if (outcome.kind === 'nudge') asks++
   }
@@ -137,7 +160,11 @@ test('…and a fresh quiet stretch does not un-spend it (the log went live, then
   assert.equal(grow(back, back - 1_000).kind, 'live')
   const quietAgain = back + QUIET_MS + 1
   assert.equal(grow(quietAgain, back).kind, 'watching', 'a new stretch re-earns its baseline')
-  assert.equal(grow(quietAgain + POLL_MS, back).kind, 'watching', 'but the candidate is already spent')
+  assert.equal(
+    grow(quietAgain + POLL_MS, back).kind,
+    'watching',
+    'but the candidate is already spent',
+  )
   assert.equal(grow(quietAgain + 2 * POLL_MS, back).kind, 'watching')
 })
 
@@ -191,7 +218,10 @@ test('the ACTIVE log is never its own candidate, and case never lets one through
   // Our own log growing while the tail sees nothing is a different defect entirely (a wedged
   // tailer), and it is emphatically not "another character's log is active".
   assert.equal(poll(w, { now: QUIET_AT, lastLineAt: T0, sizes: { [MINE]: 10 } }).kind, 'watching')
-  assert.equal(poll(w, { now: QUIET_AT + POLL_MS, lastLineAt: T0, sizes: { [MINE]: 5_000 } }).kind, 'watching')
+  assert.equal(
+    poll(w, { now: QUIET_AT + POLL_MS, lastLineAt: T0, sizes: { [MINE]: 5_000 } }).kind,
+    'watching',
+  )
 
   // Windows hands the same file back under whatever casing the caller used; the memory of having
   // asked must survive that or the whole guarantee is one `readdir` away from failing.
@@ -208,7 +238,11 @@ test('the ACTIVE log is never its own candidate, and case never lets one through
   assert.equal(poll(w, { now, lastLineAt: T0, sizes: recased }).kind, 'watching')
   recased[shouty] += 100
   now += POLL_MS
-  assert.equal(poll(w, { now, lastLineAt: T0, sizes: recased }).kind, 'watching', 'same log, louder')
+  assert.equal(
+    poll(w, { now, lastLineAt: T0, sizes: recased }).kind,
+    'watching',
+    'same log, louder',
+  )
   assert.equal(w.asked(shouty), true)
 })
 
@@ -232,12 +266,12 @@ test('the outcome carries what the card has to say: which log, and how long we w
   const quietFor = QUIET_MS + 7 * 60_000
   assert.equal(
     poll(w, { now: T0 + quietFor, lastLineAt: T0, sizes: { [MINE]: 10, [THEIRS]: 100 } }).kind,
-    'watching'
+    'watching',
   )
   const asked = poll(w, {
     now: T0 + quietFor + POLL_MS,
     lastLineAt: T0,
-    sizes: { [MINE]: 10, [THEIRS]: 350 }
+    sizes: { [MINE]: 10, [THEIRS]: 350 },
   })
   assert.equal(asked.kind, 'nudge')
   assert.equal(asked.kind === 'nudge' && asked.quietMs, quietFor + POLL_MS)
@@ -252,6 +286,10 @@ test('when several siblings grew at once, the busiest one is the offer — and o
   sizes[THIRD] += 5_000
   const asked = poll(w, { now: QUIET_AT + POLL_MS, lastLineAt: T0, sizes })
   assert.equal(asked.kind, 'nudge')
-  assert.equal(asked.kind === 'nudge' && asked.logPath, THIRD, 'no stacking: one card, the busiest log')
+  assert.equal(
+    asked.kind === 'nudge' && asked.logPath,
+    THIRD,
+    'no stacking: one card, the busiest log',
+  )
   assert.equal(w.asked(THEIRS), false, 'the runner-up was not silently spent')
 })

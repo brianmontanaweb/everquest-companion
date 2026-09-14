@@ -32,7 +32,7 @@ import {
   overlayDefaultSize,
   scaledStripBounds,
   stripLayoutBounds,
-  type Bounds
+  type Bounds,
 } from '../src/main/overlayLayout'
 import { OVERLAY_KINDS } from '../src/shared/types'
 
@@ -42,7 +42,7 @@ const WORK_AREAS: Record<string, Bounds> = {
   '1080p': { x: 0, y: 0, width: 1920, height: 1040 },
   '1440p': { x: 0, y: 0, width: 2560, height: 1400 },
   'small laptop': { x: 0, y: 0, width: 1366, height: 728 },
-  'offset display': { x: -1920, y: 120, width: 1920, height: 960 }
+  'offset display': { x: -1920, y: 120, width: 1920, height: 960 },
 }
 
 const overlaps = (a: Bounds, b: Bounds): boolean =>
@@ -60,7 +60,10 @@ test('every METER kind opens at ONE uniform default size', () => {
   // Erring slightly larger than every per-kind size this replaced (the largest was 360x300), so
   // the event log — the only kind that is a list rather than dense bars — is not cramped.
   assert.ok(first.width >= 360, `width ${first.width} must not be smaller than the old event log`)
-  assert.ok(first.height >= 300, `height ${first.height} must not be smaller than the old event log`)
+  assert.ok(
+    first.height >= 300,
+    `height ${first.height} must not be smaller than the old event log`,
+  )
 })
 
 test('…and the size stays uniform ON EVERY DISPLAY, even where it had to shrink', () => {
@@ -70,7 +73,10 @@ test('…and the size stays uniform ON EVERY DISPLAY, even where it had to shrin
       assert.deepEqual(s, sizes[0], `${name}/${METER_KINDS[i]}: not the same size as its siblings`)
     }
     // Never LARGER than the shipped size — the ladder only ever goes down.
-    assert.ok(sizes[0].width <= 380 && sizes[0].height <= 320, `${name}: ${JSON.stringify(sizes[0])}`)
+    assert.ok(
+      sizes[0].width <= 380 && sizes[0].height <= 320,
+      `${name}: ${JSON.stringify(sizes[0])}`,
+    )
   }
 })
 
@@ -121,13 +127,16 @@ test('the reserved slots never overlap and stay inside the work area', () => {
       assert.ok(b.x >= wa.x, `${name}/${METER_KINDS[i]}: off the left edge`)
       assert.ok(b.y >= wa.y, `${name}/${METER_KINDS[i]}: off the top edge`)
       assert.ok(b.x + b.width <= wa.x + wa.width, `${name}/${METER_KINDS[i]}: off the right edge`)
-      assert.ok(b.y + b.height <= wa.y + wa.height, `${name}/${METER_KINDS[i]}: off the bottom edge`)
+      assert.ok(
+        b.y + b.height <= wa.y + wa.height,
+        `${name}/${METER_KINDS[i]}: off the bottom edge`,
+      )
     }
     for (let i = 0; i < placed.length; i++) {
       for (let j = i + 1; j < placed.length; j++) {
         assert.ok(
           !overlaps(placed[i], placed[j]),
-          `${name}: ${METER_KINDS[i]} overlaps ${METER_KINDS[j]} (${JSON.stringify(placed[i])} vs ${JSON.stringify(placed[j])})`
+          `${name}: ${METER_KINDS[i]} overlaps ${METER_KINDS[j]} (${JSON.stringify(placed[i])} vs ${JSON.stringify(placed[j])})`,
         )
       }
     }
@@ -136,7 +145,10 @@ test('the reserved slots never overlap and stay inside the work area', () => {
 
 test('the first kind docks to the bottom-right corner, and the stack walks upward from it', () => {
   const wa = WORK_AREAS['1080p']
-  const [first, second] = [defaultOverlayBounds(METER_KINDS[0], wa), defaultOverlayBounds(METER_KINDS[1], wa)]
+  const [first, second] = [
+    defaultOverlayBounds(METER_KINDS[0], wa),
+    defaultOverlayBounds(METER_KINDS[1], wa),
+  ]
   assert.equal(first.x + first.width, wa.x + wa.width - 16, 'right margin')
   assert.equal(first.y + first.height, wa.y + wa.height - 16, 'bottom margin')
   assert.equal(second.x, first.x, 'the second slot is in the same column')
@@ -202,7 +214,7 @@ test('a first-open overlay is a small window on any display — never a screen-f
       assert.ok(b.x >= wa.x && b.y >= wa.y, `${name}/${kind}: starts off-screen`)
       assert.ok(
         b.x + b.width <= wa.x + wa.width && b.y + b.height <= wa.y + wa.height,
-        `${name}/${kind}: runs past the work area`
+        `${name}/${kind}: runs past the work area`,
       )
     }
   }
@@ -232,7 +244,10 @@ test('the toast holds NO slot in the meter stack — adding it moved nothing', (
  * tests/e2e/buffs-overlay.e2e.mts drives against the real app.
  */
 test('buffs and debuffs are two distinct stacked kinds with two distinct slots', () => {
-  assert.ok(METER_KINDS.includes('buffs') && METER_KINDS.includes('debuffs'), 'both timer kinds stack')
+  assert.ok(
+    METER_KINDS.includes('buffs') && METER_KINDS.includes('debuffs'),
+    'both timer kinds stack',
+  )
   for (const [name, wa] of Object.entries(WORK_AREAS)) {
     const b = defaultOverlayBounds('buffs', wa)
     const d = defaultOverlayBounds('debuffs', wa)
@@ -240,7 +255,10 @@ test('buffs and debuffs are two distinct stacked kinds with two distinct slots',
     assert.ok(!overlaps(b, d), `${name}: ${JSON.stringify(b)} overlaps ${JSON.stringify(d)}`)
     for (const [label, box] of [['buffs', b] as const, ['debuffs', d] as const]) {
       const share = (box.width * box.height) / (wa.width * wa.height)
-      assert.ok(share < 0.25, `${name}/${label}: covers ${(share * 100).toFixed(1)}% of the display`)
+      assert.ok(
+        share < 0.25,
+        `${name}/${label}: covers ${(share * 100).toFixed(1)}% of the display`,
+      )
     }
   }
 })
@@ -270,7 +288,7 @@ test('…and it is a FLOOR: strictly below the size every kind opens at, on ever
       const open = overlayDefaultSize(kind, wa)
       assert.ok(
         open.width > OVERLAY_MIN_SIZE.width && open.height > OVERLAY_MIN_SIZE.height,
-        `${name}/${kind}: opens at ${open.width}x${open.height}, which is not above the floor`
+        `${name}/${kind}: opens at ${open.width}x${open.height}, which is not above the floor`,
       )
     }
   }
@@ -292,7 +310,7 @@ const centredLayout = (width: number, height: number): Bounds => ({
   width,
   height,
   x: STRIP_WA.x + Math.round((STRIP_WA.width - width) / 2),
-  y: STRIP_WA.y + 12
+  y: STRIP_WA.y + 12,
 })
 
 test('a text scale of 1 is the identity — every strip is exactly its layout box', () => {
@@ -317,7 +335,7 @@ test('…and the con card is the one whose HEIGHT is not the scale’s to touch'
   assert.equal(
     scaledStripBounds('conCard', layout, 2, STRIP_WA).height,
     220,
-    'the card measures its own height (JOS-386); scaling the placeholder would be a second opinion'
+    'the card measures its own height (JOS-386); scaling the placeholder would be a second opinion',
   )
   // The toast and the banner have no such measurement, so both of their axes scale.
   const toast = scaledStripBounds('toast', centredLayout(560, 360), 1.5, STRIP_WA)
@@ -382,7 +400,7 @@ test('a con card resize keeps its height out of the arithmetic entirely', () => 
   assert.equal(
     stripLayoutBounds('conCard', chrome, 1.5).height,
     411,
-    'the height is the card’s; `storedOverlayBounds` replaces it with the placeholder anyway'
+    'the height is the card’s; `storedOverlayBounds` replaces it with the placeholder anyway',
   )
 })
 

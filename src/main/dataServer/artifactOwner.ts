@@ -150,7 +150,7 @@ export function attachStateDir(deps: HandoverDeps): string | undefined {
   owner = 'engine'
   deps.note(
     'data-server artifacts: the engine now owns resist-ledger.json and message-overlay.json ' +
-      `(${dir}); this process has stopped persisting them`
+      `(${dir}); this process has stopped persisting them`,
   )
   // …and only now does the caller get something it could put on a socket.
   return dir
@@ -168,7 +168,7 @@ export function takeArtifactsBack(note: (line: string) => void): boolean {
   owner = 'app'
   note(
     'data-server artifacts: the engine is gone, so this process owns resist-ledger.json and ' +
-      'message-overlay.json again'
+      'message-overlay.json again',
   )
   return true
 }

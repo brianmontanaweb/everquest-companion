@@ -36,7 +36,7 @@ import {
   alertHaystack,
   filterAlerts,
   indexPacks,
-  matchesAlert
+  matchesAlert,
 } from '../src/renderer/src/features/alerts/alertSearch'
 import { tokenize } from '../src/shared/fuzzy'
 import type { AlertDef, SoundPack } from '../src/shared/types'
@@ -58,15 +58,15 @@ const PACKS: SoundPack[] = [
     source: 'bundled',
     sounds: {
       'charm-break': { file: 'charm.wav', label: 'I find myself requiring your attention' },
-      'boss-defeat': { file: 'boss.wav', label: 'The matter is settled' }
-    }
+      'boss-defeat': { file: 'boss.wav', label: 'The matter is settled' },
+    },
   },
   {
     id: 'peon',
     name: 'Warcraft Peon',
     source: 'user',
-    sounds: { 'work-work': { file: 'ww.wav', label: 'Work work' } }
-  }
+    sounds: { 'work-work': { file: 'ww.wav', label: 'Work work' } },
+  },
 ]
 
 const CHARM: AlertDef = {
@@ -75,7 +75,7 @@ const CHARM: AlertDef = {
   enabled: true,
   trigger: { type: 'event', kind: 'uncharm' },
   sound: { packId: 'alan-rickman', soundId: 'charm-break' },
-  note: 'Seeded default - fires when a charm spell wears off (you lose your pet).'
+  note: 'Seeded default - fires when a charm spell wears off (you lose your pet).',
 }
 
 const HASTE: AlertDef = {
@@ -85,7 +85,7 @@ const HASTE: AlertDef = {
   trigger: { type: 'event', kind: 'buffExpired', where: { spell: 'Swift Like the Wind' } },
   sound: { packId: 'peon', soundId: 'work-work' },
   audio: 'speech',
-  speech: { mode: 'custom', phrase: 'your quickness is gone' }
+  speech: { mode: 'custom', phrase: 'your quickness is gone' },
 }
 
 const BOSS: AlertDef = {
@@ -93,7 +93,7 @@ const BOSS: AlertDef = {
   name: 'Raid target defeated',
   enabled: true,
   trigger: { type: 'app', signal: 'bossDefeat' },
-  sound: { packId: 'alan-rickman', soundId: 'boss-defeat' }
+  sound: { packId: 'alan-rickman', soundId: 'boss-defeat' },
 }
 
 const PUMA: AlertDef = {
@@ -102,7 +102,7 @@ const PUMA: AlertDef = {
   enabled: false,
   trigger: { type: 'raw', regex: 'growls with the spirit of the wilderness' },
   // A pack this user does not have — a shared def, or a pack they removed.
-  sound: { packId: 'nightfall-horns', soundId: 'reveille' }
+  sound: { packId: 'nightfall-horns', soundId: 'reveille' },
 }
 
 const MEZ: AlertDef = {
@@ -113,10 +113,10 @@ const MEZ: AlertDef = {
     type: 'any',
     conditions: [
       { type: 'event', kind: 'cc', where: { spell: 'Mesmerization', refresh: 'true' } },
-      { type: 'event', kind: 'buffWearOff' }
-    ]
+      { type: 'event', kind: 'buffWearOff' },
+    ],
   },
-  sound: { packId: 'peon', soundId: 'work-work' }
+  sound: { packId: 'peon', soundId: 'work-work' },
 }
 
 const ALERTS: AlertDef[] = [CHARM, HASTE, BOSS, PUMA, MEZ]
@@ -173,7 +173,7 @@ test('a def whose pack is missing still searches, and never throws', () => {
   assert.equal(
     facets.some((f) => f === ''),
     false,
-    'an absent pack name is dropped, never carried as an empty facet'
+    'an absent pack name is dropped, never carried as an empty facet',
   )
   assert.deepEqual(found('nightfall'), ['a4'])
 })
@@ -187,7 +187,7 @@ test('every facet the header promises is in the haystack, by construction', () =
     'Warcraft Peon',
     'work-work',
     'Work work',
-    'your quickness is gone'
+    'your quickness is gone',
   ])
   // The badge is the ROW's own string, not a second opinion assembled here (see alertSearch.ts).
   assert.ok(facets[1].includes('{spell=Swift Like the Wind}'))
@@ -265,13 +265,13 @@ test('SOURCE PIN: the reorder experiment is gone — no module, no gesture, no c
   const gone = [
     'shared/alertOrder.ts',
     'renderer/src/features/alerts/useAlertReorder.ts',
-    'renderer/src/features/alerts/dropTarget.ts'
+    'renderer/src/features/alerts/dropTarget.ts',
   ]
   for (const rel of gone) {
     assert.equal(
       existsSync(fileURLToPath(new URL(`../src/${rel}`, import.meta.url))),
       false,
-      `${rel} was deleted with the feature`
+      `${rel} was deleted with the feature`,
     )
   }
 
@@ -280,12 +280,12 @@ test('SOURCE PIN: the reorder experiment is gone — no module, no gesture, no c
   assert.equal(
     /reorderAlerts/.test(src('preload/index.ts')),
     false,
-    'the preload offers no door to it'
+    'the preload offers no door to it',
   )
   assert.equal(
     /reorderAlerts|applyAlertOrder/.test(src('main/store.ts')),
     false,
-    'main stores the array it is given, with no re-ordering accessor'
+    'main stores the array it is given, with no re-ordering accessor',
   )
 
   const list = src('renderer/src/features/alerts/AlertList.tsx')
@@ -293,7 +293,7 @@ test('SOURCE PIN: the reorder experiment is gone — no module, no gesture, no c
   assert.equal(
     /onReorder/.test(src('renderer/src/features/alerts/AlertsView.tsx')),
     false,
-    'and nothing wired behind one'
+    'and nothing wired behind one',
   )
 })
 
@@ -303,7 +303,7 @@ test('SOURCE PIN: `filtering` survives, and its ONE job is what an empty list sa
   assert.match(
     list,
     /filtering\s*\n?\s*\?\s*'No alerts match that search\.'/,
-    'because "nothing matches" and "you have no alerts yet" are two different sentences'
+    'because "nothing matches" and "you have no alerts yet" are two different sentences',
   )
 })
 
@@ -325,6 +325,6 @@ test('SOURCE PIN: the box searches a DEFERRED query, the house search pattern', 
   assert.match(
     hook,
     /const haystacks = useMemo\(/,
-    'the haystacks are built per list change, never per keystroke'
+    'the haystacks are built per list change, never per keystroke',
   )
 })

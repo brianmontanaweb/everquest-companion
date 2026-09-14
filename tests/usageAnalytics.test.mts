@@ -35,7 +35,7 @@ import {
   windowDays,
   type FunnelRow,
   type InstallRow,
-  type UsageRow
+  type UsageRow,
 } from '../src/main/triage/usageRows'
 import { USAGE_METRICS } from '../src/shared/telemetryRollup'
 import {
@@ -46,7 +46,7 @@ import {
   pulseTiles,
   rateLabel,
   seriesValues,
-  windowIsEmpty
+  windowIsEmpty,
 } from '../src/renderer/src/features/triage/analyticsRows'
 import { renderAnalyticsDigest } from '../scripts/analyticsDigest.mjs'
 
@@ -62,7 +62,7 @@ const u = (d: string, metric: string, dim: string, n: number): UsageRow => ({
   cohort: 'user',
   metric,
   dim,
-  n
+  n,
 })
 /** A funnel row. Named fields rather than five positionals — the repo's max-params is 4. */
 function funnelRow(r: Partial<FunnelRow> & { funnel: string; step: string; n: number }): FunnelRow {
@@ -73,7 +73,7 @@ function funnelRow(r: Partial<FunnelRow> & { funnel: string; step: string; n: nu
     step: r.step,
     outcome: r.outcome ?? '-',
     appVersion: r.appVersion ?? '0.2.0',
-    n: r.n
+    n: r.n,
   }
 }
 
@@ -85,14 +85,14 @@ const install = (first: string, last: string, appVersion = '0.2.0'): InstallRow 
   daysSeen: 1,
   appVersion,
   channel: 'prod',
-  cohort: 'user'
+  cohort: 'user',
 })
 
 const build = (
   usage: UsageRow[] = [],
   funnels: FunnelRow[] = [],
   installs: InstallRow[] = [],
-  days = 30
+  days = 30,
 ) => buildAnalytics({ usage, funnels, installs, windowDays: days, nowMs: NOW })
 
 // ---- row mapping ---------------------------------------------------------------------------
@@ -108,15 +108,22 @@ test('column mapping is TOTAL: a missing or wrong-typed column becomes a default
     // back to bigint so this cannot happen from our own schema; this is the second line.
     // An ABSENT `cohort` (a cluster mid-migration, or the nullable install column) is 'user' —
     // the fail-safe direction: an install nobody marked is a user.
-    { day: '2026-08-01', cohort: 'user', metric: 'sessions', dim: '-', n: 12 }
+    { day: '2026-08-01', cohort: 'user', metric: 'sessions', dim: '-', n: 12 },
   ])
   // The other direction — a string that is NOT a number, an empty one, a NaN — is pinned beside
   // the change that caused it, in tests/telemetryShards.test.mts (this file is at the ceiling).
   assert.deepEqual(toFunnelRows([{}]), [
-    { day: '', cohort: 'user', funnel: '', step: '', outcome: '-', appVersion: '?', n: 0 }
+    { day: '', cohort: 'user', funnel: '', step: '', outcome: '-', appVersion: '?', n: 0 },
   ])
   assert.deepEqual(toInstallRows([{ days_seen: 3 }]), [
-    { firstSeenDay: '', lastSeenDay: '', daysSeen: 3, appVersion: '?', channel: '?', cohort: 'user' }
+    {
+      firstSeenDay: '',
+      lastSeenDay: '',
+      daysSeen: 3,
+      appVersion: '?',
+      channel: '?',
+      cohort: 'user',
+    },
   ])
   // Only the exact string 'owner' is the owner. A junk value is a user row, not a crash.
   assert.equal(toUsageRows([{ cohort: 'owner' }])[0].cohort, 'owner')
@@ -126,7 +133,11 @@ test('column mapping is TOTAL: a missing or wrong-typed column becomes a default
 
 test('THE ID IS NEVER MAPPED: an install row carries population facts and nothing else', () => {
   const rows = toInstallRows([
-    { analytics_id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301', first_seen_day: '2026-08-01', last_seen_day: '2026-08-02' }
+    {
+      analytics_id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+      first_seen_day: '2026-08-01',
+      last_seen_day: '2026-08-02',
+    },
   ])
   assert.equal(JSON.stringify(rows).includes('3f2504e0'), false)
 })
@@ -146,11 +157,19 @@ test('a series is DENSE over the window — a quiet day is a zero, not a missing
   assert.deepEqual(seriesOf([u(TODAY, 'sessions', '-', 4)], 'sessions', days), [
     { day: '2026-08-08', n: 0 },
     { day: '2026-08-09', n: 0 },
-    { day: TODAY, n: 4 }
+    { day: TODAY, n: 4 },
   ])
   assert.equal(sumOf([u(TODAY, 'sessions', '-', 4), u(TODAY, 'other', '-', 9)], 'sessions'), 4)
   assert.deepEqual([...dimsOf([u(TODAY, 'm', 'a', 1), u(day(1), 'm', 'a', 2)], 'm')], [['a', 3]])
-  assert.deepEqual(bucketCounts(new Map([['2', 5], ['0', 1]])), [1, 0, 5])
+  assert.deepEqual(
+    bucketCounts(
+      new Map([
+        ['2', 5],
+        ['0', 1],
+      ]),
+    ),
+    [1, 0, 5],
+  )
   assert.deepEqual(bucketCounts(new Map([['nope', 5]])), [])
 })
 
@@ -159,13 +178,13 @@ test('a series is DENSE over the window — a quiet day is a zero, not a missing
 test('DAU is the last day WITH DATA; WAU/MAU come from the install table, never from sums', () => {
   const usage = [
     u(day(9), USAGE_METRICS.activeInstalls, '-', 3),
-    u(day(2), USAGE_METRICS.activeInstalls, '-', 5)
+    u(day(2), USAGE_METRICS.activeInstalls, '-', 5),
   ]
   const installs = [
     install(day(40), day(2)), // active 2 days before the reference day
     install(day(40), day(3)),
     install(day(40), day(9)), // inside 30 days, outside 7
-    install(day(60), day(45)) // outside both
+    install(day(60), day(45)), // outside both
   ]
   const d = build(usage, [], installs)
   assert.equal(d.pulse.dau, 5, 'the last day with a reading, not the last day of the window')
@@ -185,7 +204,7 @@ test('session length is a mean AND a bucket median, and neither is invented from
     u(TODAY, USAGE_METRICS.sessionEnds, '-', 4),
     u(TODAY, USAGE_METRICS.sessionMsTotal, '-', 40 * 60_000),
     u(TODAY, USAGE_METRICS.sessionLenBucket, '3', 3),
-    u(TODAY, USAGE_METRICS.sessionLenBucket, '5', 1)
+    u(TODAY, USAGE_METRICS.sessionLenBucket, '5', 1),
   ]).pulse
   assert.equal(d.meanSessionMs, 10 * 60_000)
   assert.equal(d.medianSessionLabel, '15 min-30 min')
@@ -194,7 +213,7 @@ test('session length is a mean AND a bucket median, and neither is invented from
 test('sessions per day divides by days WITH DATA, not by the window the caller asked for', () => {
   const usage = [
     u(day(1), USAGE_METRICS.sessions, '-', 4),
-    u(TODAY, USAGE_METRICS.sessions, '-', 6)
+    u(TODAY, USAGE_METRICS.sessions, '-', 6),
   ]
   // 10 sessions over 2 days that reported — asking for 365 days must not make it 0.03.
   assert.equal(build(usage, [], [], 365).pulse.sessionsPerDay, 5)
@@ -208,12 +227,15 @@ test('view dwell share is of TOTAL dwell, and features report uses + uses-per-se
     u(TODAY, USAGE_METRICS.viewDwellMs, 'combat', 75_000),
     u(TODAY, USAGE_METRICS.viewVisits, 'combat', 5),
     u(TODAY, USAGE_METRICS.viewDwellMs, 'maps', 25_000),
-    u(TODAY, USAGE_METRICS.featureUse, 'mapOpen', 20)
+    u(TODAY, USAGE_METRICS.featureUse, 'mapOpen', 20),
   ]).adoption
-  assert.deepEqual(d.views.map((v) => [v.id, v.share, v.visits]), [
-    ['combat', 0.75, 5],
-    ['maps', 0.25, 0]
-  ])
+  assert.deepEqual(
+    d.views.map((v) => [v.id, v.share, v.visits]),
+    [
+      ['combat', 0.75, 5],
+      ['maps', 0.25, 0],
+    ],
+  )
   assert.deepEqual(d.features, [{ id: 'mapOpen', uses: 20, perSession: 2 }])
 })
 
@@ -221,19 +243,27 @@ test('the mixes are sorted by count and deterministic on ties', () => {
   const d = build([
     u(TODAY, USAGE_METRICS.overlayOpen, 'events', 2),
     u(TODAY, USAGE_METRICS.overlayOpen, 'fight', 2),
-    u(TODAY, USAGE_METRICS.overlayOpen, 'overall', 9)
+    u(TODAY, USAGE_METRICS.overlayOpen, 'overall', 9),
   ]).adoption
-  assert.deepEqual(d.overlays.map((o) => o.id), ['overall', 'events', 'fight'])
+  assert.deepEqual(
+    d.overlays.map((o) => o.id),
+    ['overall', 'events', 'fight'],
+  )
 })
 
 test('THE MACHINE CLASS arrives LABELLED — a bucket index is meaningless to a reader (JOS-364)', () => {
   const M = USAGE_METRICS
   const d = build([
-    u(TODAY, M.setupCpu, '4', 12), u(TODAY, M.setupCpu, '7', 3), u(TODAY, M.setupMem, '4', 9),
-    u(TODAY, M.setupGpuVendor, 'nvidia', 11), u(TODAY, M.setupCompositing, 'software', 2),
-    u(TODAY, M.setupSafeMode, 'on', 1), u(TODAY, M.setupDisplays, '2', 6),
-    u(TODAY, M.setupScale, '0', 1), u(TODAY, M.setupScale, '2', 4),
-    u(TODAY, M.setupEqWindowMode, 'fullscreen', 8)
+    u(TODAY, M.setupCpu, '4', 12),
+    u(TODAY, M.setupCpu, '7', 3),
+    u(TODAY, M.setupMem, '4', 9),
+    u(TODAY, M.setupGpuVendor, 'nvidia', 11),
+    u(TODAY, M.setupCompositing, 'software', 2),
+    u(TODAY, M.setupSafeMode, 'on', 1),
+    u(TODAY, M.setupDisplays, '2', 6),
+    u(TODAY, M.setupScale, '0', 1),
+    u(TODAY, M.setupScale, '2', 4),
+    u(TODAY, M.setupEqWindowMode, 'fullscreen', 8),
   ]).adoption
   // A COUNT ladder prints the INCLUSIVE integer span it covers — bucket 4 of [2,4,6,8,12,16,24]
   // holds 8 through 11, and "8 - 12" would be a lie a reader would act on — while the measured
@@ -243,11 +273,21 @@ test('THE MACHINE CLASS arrives LABELLED — a bucket index is meaningless to a 
   // `scale` pair is the pin — 125-150% has four installs and < 100% has one, and the low bucket
   // still comes first. The enum mixes beside them keep `mixRows`' biggest-first order, where the
   // biggest slice really is the reading.
-  assert.deepEqual(d.machine.map((r) => `${r.id} = ${String(r.n)}`), [
-    'cpus 8 - 11 = 12', 'cpus ≥ 24 = 3', 'RAM 16 GB - 24 GB = 9', 'gpu nvidia = 11',
-    'compositing software = 2', 'safe mode on = 1', 'displays 2 = 6', 'scale < 100% = 1',
-    'scale 125% - 150% = 4', 'EQ fullscreen = 8'
-  ])
+  assert.deepEqual(
+    d.machine.map((r) => `${r.id} = ${String(r.n)}`),
+    [
+      'cpus 8 - 11 = 12',
+      'cpus ≥ 24 = 3',
+      'RAM 16 GB - 24 GB = 9',
+      'gpu nvidia = 11',
+      'compositing software = 2',
+      'safe mode on = 1',
+      'displays 2 = 6',
+      'scale < 100% = 1',
+      'scale 125% - 150% = 4',
+      'EQ fullscreen = 8',
+    ],
+  )
   // A fleet that has not reported one yet renders NOTHING, never a row of zeros: this ships in a
   // build most installs do not have, and a zeroed section would read as "nobody has a GPU".
   assert.deepEqual(build([u(TODAY, USAGE_METRICS.sessions, '-', 5)]).adoption.machine, [])
@@ -260,18 +300,21 @@ test('THE MOTIVATING BUG: a step nobody reached is a ZERO IN THE CURVE, not a mi
     [],
     [
       f(TODAY, 'voice-install', 'engineSelected', 40),
-      f(TODAY, 'voice-install', 'downloadStarted', 40)
+      f(TODAY, 'voice-install', 'downloadStarted', 40),
       // downloadCompleted / firstUtterance: nothing, ever.
-    ]
+    ],
   )
   const voice = d.funnels.find((x) => x.funnel === 'voice-install')
   assert.ok(voice)
-  assert.deepEqual(voice.steps.map((s) => [s.step, s.n, s.conversion]), [
-    ['engineSelected', 40, 1],
-    ['downloadStarted', 40, 1],
-    ['downloadCompleted', 0, 0],
-    ['firstUtterance', 0, 0]
-  ])
+  assert.deepEqual(
+    voice.steps.map((s) => [s.step, s.n, s.conversion]),
+    [
+      ['engineSelected', 40, 1],
+      ['downloadStarted', 40, 1],
+      ['downloadCompleted', 0, 0],
+      ['firstUtterance', 0, 0],
+    ],
+  )
   // …and the drop-off names the step where it happened.
   assert.equal(voice.steps[2].dropOff, 1)
   assert.equal(voice.steps[1].dropOff, 0)
@@ -279,11 +322,17 @@ test('THE MOTIVATING BUG: a step nobody reached is a ZERO IN THE CURVE, not a mi
 
 test('EVERY declared funnel gets a view, even one with no rows at all', () => {
   const d = build()
-  assert.deepEqual(d.funnels.map((x) => x.funnel), ['first-run', 'voice-install', 'feedback'])
+  assert.deepEqual(
+    d.funnels.map((x) => x.funnel),
+    ['first-run', 'voice-install', 'feedback'],
+  )
   // A funnel missing from the panel would read as "we do not measure that"; zeros read as
   // "we measure it and nobody got there", which is the true and more alarming statement.
   assert.equal(d.funnels[0].steps.length, 5)
-  assert.equal(d.funnels[0].steps.every((s) => s.n === 0), true)
+  assert.equal(
+    d.funnels[0].steps.every((s) => s.n === 0),
+    true,
+  )
 })
 
 test('the per-version curves are the same computation, restricted — that is how a regression shows', () => {
@@ -293,21 +342,26 @@ test('the per-version curves are the same computation, restricted — that is ho
       funnelRow({ funnel: 'feedback', step: 'dialogOpened', n: 10, appVersion: '0.2.0' }),
       funnelRow({ funnel: 'feedback', step: 'sendPressed', n: 8, appVersion: '0.2.0' }),
       funnelRow({ funnel: 'feedback', step: 'dialogOpened', n: 10, appVersion: '0.3.0' }),
-      funnelRow({ funnel: 'feedback', step: 'sendPressed', n: 1, appVersion: '0.3.0' })
-    ]
+      funnelRow({ funnel: 'feedback', step: 'sendPressed', n: 1, appVersion: '0.3.0' }),
+    ],
   )
   const feedback = d.funnels.find((x) => x.funnel === 'feedback')
   assert.ok(feedback)
-  assert.deepEqual(feedback.byVersion.map((v) => v.version), ['0.3.0', '0.2.0'])
+  assert.deepEqual(
+    feedback.byVersion.map((v) => v.version),
+    ['0.3.0', '0.2.0'],
+  )
   assert.equal(feedback.byVersion[0].steps[1].conversion, 0.1)
   assert.equal(feedback.byVersion[1].steps[1].conversion, 0.8)
 })
 
 test('a funnel failure class is attached to its own funnel and stripped of the prefix', () => {
   const d = build(
-    [u(TODAY, USAGE_METRICS.funnelFailure, 'voice-install:downloadCompleted:checksum', 3),
-     u(TODAY, USAGE_METRICS.funnelFailure, 'feedback:sendFinished:network', 1)],
-    [f(TODAY, 'voice-install', 'engineSelected', 1)]
+    [
+      u(TODAY, USAGE_METRICS.funnelFailure, 'voice-install:downloadCompleted:checksum', 3),
+      u(TODAY, USAGE_METRICS.funnelFailure, 'feedback:sendFinished:network', 1),
+    ],
+    [f(TODAY, 'voice-install', 'engineSelected', 1)],
   )
   const voice = d.funnels.find((x) => x.funnel === 'voice-install')
   assert.deepEqual(voice?.failures, [{ id: 'downloadCompleted:checksum', n: 3 }])
@@ -321,12 +375,12 @@ test('an update step with no reports has an UNKNOWN rate, not a zero one', () =>
     u(TODAY, USAGE_METRICS.update, 'download:ok', 3),
     u(TODAY, USAGE_METRICS.update, 'download:failed', 1),
     u(TODAY, USAGE_METRICS.health, 'rendererCrashes', 2),
-    u(TODAY, USAGE_METRICS.healthReports, '-', 40)
+    u(TODAY, USAGE_METRICS.healthReports, '-', 40),
   ]).health
   assert.deepEqual(d.update, [
     { step: 'check', ok: 9, failed: 0, rate: 1 },
     { step: 'download', ok: 3, failed: 1, rate: 0.75 },
-    { step: 'apply', ok: 0, failed: 0, rate: null }
+    { step: 'apply', ok: 0, failed: 0, rate: null },
   ])
   assert.deepEqual(d.errors, [{ id: 'rendererCrashes', n: 2 }])
   assert.equal(d.reports, 40)
@@ -345,12 +399,12 @@ test('the fleet Health mix strips the VERSION back off, so it stays a question a
     // counted under that name, which is exactly right HERE — a fleet total does not care which
     // build a crash came from.
     u(TODAY, USAGE_METRICS.health, 'speechFailures', 4),
-    u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 10)
+    u(TODAY, USAGE_METRICS.healthReports, '0.11.0', 10),
   ]).health
   // Both classes total 5, so the tie breaks on the id ascending — `mixRows`'s determinism rule.
   assert.deepEqual(d.errors, [
     { id: 'rendererCrashes', n: 5 },
-    { id: 'speechFailures', n: 5 }
+    { id: 'speechFailures', n: 5 },
   ])
   // The denominator sums across version dims too — it is a fleet count in this section.
   assert.equal(d.reports, 10)
@@ -365,7 +419,7 @@ test('days-to-adopt is first-seen -> first MAJORITY day, and is null until there
     u(day(5), USAGE_METRICS.activeInstalls, '-', 10),
     u(day(5), USAGE_METRICS.version, '0.3.0', 7),
     // 0.2.0 peaks at 4 of that day's 10 active installs — a plurality, never a majority.
-    u(day(9), USAGE_METRICS.version, '0.2.0', 4)
+    u(day(9), USAGE_METRICS.version, '0.2.0', 4),
   ]
   const versions = build(usage, [], [install(day(40), day(2), '0.3.0')]).versions
   const three = versions.find((v) => v.version === '0.3.0')
@@ -389,7 +443,7 @@ test('retention is SURVIVAL, and a cohort younger than the horizon reports null 
     install(day(10), day(10)), // first and last seen the same day: never came back
     install(day(10), day(9)), // still seen at +1
     install(day(10), day(2)), // still seen at +7 as well
-    install(day(1), TODAY) // a cohort one day old, seen again today
+    install(day(1), TODAY), // a cohort one day old, seen again today
   ]
   const rows = build([], [], installs).retention
   const older = rows.find((r) => r.cohortDay === day(10))
@@ -397,7 +451,11 @@ test('retention is SURVIVAL, and a cohort younger than the horizon reports null 
   assert.equal(older.installs, 3)
   assert.equal(older.d1, 2)
   assert.equal(older.d7, 1)
-  assert.equal(older.d30, null, 'the +30 horizon has not happened yet — unknown, not "everyone left"')
+  assert.equal(
+    older.d30,
+    null,
+    'the +30 horizon has not happened yet — unknown, not "everyone left"',
+  )
 
   const young = rows.find((r) => r.cohortDay === day(1))
   assert.equal(young?.d1, 1, 'seen on the cohort day and again on +1 counts as surviving')
@@ -412,7 +470,10 @@ test('EMPTY TABLES render as honest zeros — every section exists and nothing t
   assert.equal(d.pulse.dau, 0)
   assert.equal(d.pulse.sessionsPerDay, 0)
   assert.equal(d.pulse.activeSeries.length, 30)
-  assert.equal(d.pulse.activeSeries.every((p) => p.n === 0), true)
+  assert.equal(
+    d.pulse.activeSeries.every((p) => p.n === 0),
+    true,
+  )
   assert.deepEqual(d.adoption.features, [])
   assert.deepEqual(d.versions, [])
   assert.deepEqual(d.retention, [])
@@ -458,17 +519,20 @@ test('a cohort cell shows the count AND its share, or a dash when the horizon is
 
 test('the pulse tiles say what they are counting, and never claim "right now"', () => {
   const tiles = pulseTiles(build())
-  assert.deepEqual(tiles.map((t) => t.label), [
-    'DAU',
-    'WAU',
-    'MAU',
-    'Installs',
-    'Installs today',
-    'Upgrades today',
-    'Sessions',
-    'Session length',
-    'Lines parsed'
-  ])
+  assert.deepEqual(
+    tiles.map((t) => t.label),
+    [
+      'DAU',
+      'WAU',
+      'MAU',
+      'Installs',
+      'Installs today',
+      'Upgrades today',
+      'Sessions',
+      'Session length',
+      'Lines parsed',
+    ],
+  )
   for (const t of tiles) assert.ok(t.note.length > 0, `${t.label} has no note`)
   assert.match(tiles[1].note, /last day with data/)
   // THE COUNTER TILES STILL NEVER SAY "now": the two "today" tiles name their day (UTC) and the
@@ -479,16 +543,27 @@ test('the pulse tiles say what they are counting, and never claim "right now"', 
   assert.equal(tiles[7].value, '-', 'no session ended: the tile does not invent a length')
 })
 
-
 test('funnel bars are relative to STEP ONE, so the curve reads as a shape', () => {
   const bars = funnelBars([
     { step: 'a', n: 10, conversion: 1, dropOff: 0 },
     { step: 'b', n: 5, conversion: 0.5, dropOff: 0.5 },
-    { step: 'c', n: 0, conversion: 0, dropOff: 1 }
+    { step: 'c', n: 0, conversion: 0, dropOff: 1 },
   ])
-  assert.deepEqual(bars.map((b) => b.widthPct), [100, 50, 0])
-  assert.deepEqual(bars.map((b) => b.dropOff), [null, '−50%', '−100%'])
-  assert.deepEqual(seriesValues([{ day: 'a', n: 1 }, { day: 'b', n: 2 }]), [1, 2])
+  assert.deepEqual(
+    bars.map((b) => b.widthPct),
+    [100, 50, 0],
+  )
+  assert.deepEqual(
+    bars.map((b) => b.dropOff),
+    [null, '−50%', '−100%'],
+  )
+  assert.deepEqual(
+    seriesValues([
+      { day: 'a', n: 1 },
+      { day: 'b', n: 2 },
+    ]),
+    [1, 2],
+  )
 })
 
 // ---- the CLI digest -----------------------------------------------------------------------------------
@@ -502,7 +577,7 @@ test('the digest prints the SAME numbers, and says so when the tables are empty'
   assert.match(text, /NO DATA YET/)
   assert.match(
     text,
-    /PULSE[\s\S]*ADOPTION[\s\S]*FUNNELS[\s\S]*HEALTH[\s\S]*STARTUP REPLAY[\s\S]*VERSIONS[\s\S]*RETENTION/
+    /PULSE[\s\S]*ADOPTION[\s\S]*FUNNELS[\s\S]*HEALTH[\s\S]*STARTUP REPLAY[\s\S]*VERSIONS[\s\S]*RETENTION/,
   )
   // An unmeasured startup says so in words; it never prints a build with zeros in it.
   assert.match(text, /\(no launch has reported a replay yet\)/)
@@ -516,11 +591,11 @@ test('the digest renders real numbers without an empty banner', () => {
       [
         u(TODAY, USAGE_METRICS.activeInstalls, '-', 12),
         u(TODAY, USAGE_METRICS.sessions, '-', 30),
-        u(TODAY, USAGE_METRICS.featureUse, 'mapOpen', 60)
+        u(TODAY, USAGE_METRICS.featureUse, 'mapOpen', 60),
       ],
       [f(TODAY, 'first-run', 'installed', 12)],
-      [install(day(3), TODAY)]
-    )
+      [install(day(3), TODAY)],
+    ),
   )
   assert.equal(text.includes('NO DATA YET'), false)
   assert.match(text, /DAU 12/)

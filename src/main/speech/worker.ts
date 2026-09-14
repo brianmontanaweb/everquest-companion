@@ -87,12 +87,14 @@ let queue: Promise<unknown> = Promise.resolve()
 function loadSession(): Promise<LoadedSession> {
   const existing = sessionPromise
   if (existing) return existing
-  const created = ort.InferenceSession.create(init.modelPath, kokoroSessionOptions()).then((session): LoadedSession => {
-    const [tokens, style, speed] = session.inputNames
-    const [audio] = session.outputNames
-    if (!tokens || !style || !speed || !audio) throw new Error('unexpected model signature')
-    return { session, names: { tokens, style, speed, audio } }
-  })
+  const created = ort.InferenceSession.create(init.modelPath, kokoroSessionOptions()).then(
+    (session): LoadedSession => {
+      const [tokens, style, speed] = session.inputNames
+      const [audio] = session.outputNames
+      if (!tokens || !style || !speed || !audio) throw new Error('unexpected model signature')
+      return { session, names: { tokens, style, speed, audio } }
+    },
+  )
   sessionPromise = created
   return created
 }
@@ -145,7 +147,7 @@ async function synthesize(job: SpeechWorkerJob): Promise<void> {
     [names.style]: new ort.Tensor('float32', style, [1, style.length]),
     // Speed stays 1.0: the cache key is (voice, text), so a rate baked into the audio would
     // make one key mean two different sounds. Playback rate is the renderer's to apply.
-    [names.speed]: new ort.Tensor('float32', Float32Array.from([1]), [1])
+    [names.speed]: new ort.Tensor('float32', Float32Array.from([1]), [1]),
   }
   const output = (await session.run(feeds))[names.audio]
   const samples = output.data

@@ -91,8 +91,7 @@ export interface LiveLateSample {
  * and a periodic fold that proves the worker is alive and says how many ticks it saw.
  */
 export type LiveProbeMessage =
-  | ({ k: 'late' } & LiveLateSample)
-  | { k: 'fold'; at: number; ticks: number; maxLateMs: number }
+  ({ k: 'late' } & LiveLateSample) | { k: 'fold'; at: number; ticks: number; maxLateMs: number }
 
 /** One interval's account of ONE thread's lateness, in milliseconds. The wire shape
  *  (`shared/telemetryLive.ts LiveStallStats`) is this with the percentiles bucketed. */
@@ -119,7 +118,7 @@ export function foldLiveLateness(lateMs: readonly number[]): LiveStallFold {
     p95Ms: round(percentile(clean, 95), 0),
     maxMs: round(clean.length > 0 ? Math.max(...clean) : 0, 0),
     over100: clean.filter((d) => d >= LIVE_STALL_LATE_MS).length,
-    over500: clean.filter((d) => d >= LIVE_STALL_FREEZE_MS).length
+    over500: clean.filter((d) => d >= LIVE_STALL_FREEZE_MS).length,
   }
 }
 
@@ -143,7 +142,7 @@ export function foldLiveLateness(lateMs: readonly number[]): LiveStallFold {
  */
 export function coincidentWindows(
   main: readonly LiveLateSample[],
-  worker: readonly LiveLateSample[]
+  worker: readonly LiveLateSample[],
 ): number {
   const late = (s: readonly LiveLateSample[]): LiveLateSample[] =>
     s.filter((x) => x.lateMs >= LIVE_STALL_LATE_MS).sort((a, b) => a.at - b.at)

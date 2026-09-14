@@ -104,20 +104,28 @@ export function engineTable(): EngineTable {
   // EVERY process, in one call, rather than a second query for the links: the chain from an engine
   // up to the launch passes through processes that are not engines, so a query filtered to
   // `engined.exe` cannot answer the only question worth asking.
-  const wmic = spawnSync('wmic', ['process', 'get', 'Name,ParentProcessId,ProcessId', '/FORMAT:CSV'], {
-    encoding: 'utf8',
-    windowsHide: true
-  })
+  const wmic = spawnSync(
+    'wmic',
+    ['process', 'get', 'Name,ParentProcessId,ProcessId', '/FORMAT:CSV'],
+    {
+      encoding: 'utf8',
+      windowsHide: true,
+    },
+  )
   if (!wmic.error && wmic.status === 0) {
     const rows = parseWmicCsv(wmic.stdout)
     const parents = new Map(rows.map((r) => [r.pid, r.parent] as const))
     const pids = rows.filter((r) => r.name.toLowerCase() === ENGINE_PROC_NAME).map((r) => r.pid)
     return { pids, parents }
   }
-  const list = spawnSync('tasklist', ['/FI', `IMAGENAME eq ${ENGINE_PROC_NAME}`, '/FO', 'CSV', '/NH'], {
-    encoding: 'utf8',
-    windowsHide: true
-  })
+  const list = spawnSync(
+    'tasklist',
+    ['/FI', `IMAGENAME eq ${ENGINE_PROC_NAME}`, '/FO', 'CSV', '/NH'],
+    {
+      encoding: 'utf8',
+      windowsHide: true,
+    },
+  )
   return { pids: list.error ? [] : parseTasklistCsv(list.stdout), parents: null }
 }
 
@@ -151,7 +159,7 @@ export function engineDescendantsOf(table: EngineTable, ancestorPid: number): nu
  */
 export async function settleTable(
   ok: (table: EngineTable) => boolean,
-  timeoutMs = 30_000
+  timeoutMs = 30_000,
 ): Promise<EngineTable> {
   const t0 = Date.now()
   let table = engineTable()
@@ -255,11 +263,11 @@ export function tapOutput(app: ElectronApplication): AppOutput {
           port: Number(m[2]),
           protocol: Number(m[3]),
           engineVersion: m[4].trim(),
-          status: m[5]
+          status: m[5],
         })
       }
       return out
-    }
+    },
   }
   TAPS.set(app, tap)
   return tap
@@ -272,7 +280,11 @@ export function tapOutput(app: ElectronApplication): AppOutput {
  * process is ending and arrive on this side a beat later, so a plain read straight after
  * `closeWindows()` is a race the app usually loses.
  */
-export async function settleSaid(out: AppOutput, needle: string, timeoutMs = 8_000): Promise<boolean> {
+export async function settleSaid(
+  out: AppOutput,
+  needle: string,
+  timeoutMs = 8_000,
+): Promise<boolean> {
   const t0 = Date.now()
   while (!out.said(needle)) {
     if (Date.now() - t0 >= timeoutMs) return false
@@ -285,7 +297,7 @@ export async function settleSaid(out: AppOutput, needle: string, timeoutMs = 8_0
 export async function settleReady(
   out: AppOutput,
   notPid: number,
-  timeoutMs = 30_000
+  timeoutMs = 30_000,
 ): Promise<EngineReady | null> {
   const t0 = Date.now()
   for (;;) {
@@ -326,7 +338,7 @@ export function servingRuns(out: AppOutput): ServingSay[] {
   return Array.from(out.text().matchAll(SERVING_RE), (m) => ({
     line: m[0],
     logPath: m[1],
-    epoch: Number(m[2])
+    epoch: Number(m[2]),
   }))
 }
 
@@ -340,7 +352,7 @@ export function servingRuns(out: AppOutput): ServingSay[] {
 export async function settleServing(
   out: AppOutput,
   after = 0,
-  timeoutMs = 180_000
+  timeoutMs = 180_000,
 ): Promise<ServingSay | null> {
   const t0 = Date.now()
   for (;;) {
@@ -367,7 +379,7 @@ export function errorLogText(userData: string): string {
 export async function settleErrorLog(
   userData: string,
   ok: (text: string) => boolean,
-  timeoutMs = 15_000
+  timeoutMs = 15_000,
 ): Promise<string> {
   const t0 = Date.now()
   let text = errorLogText(userData)
@@ -447,7 +459,7 @@ export function knockWithWrongToken(port: number, protocolVersion: number): Prom
  */
 export async function settleEngineServing(
   app: ElectronApplication,
-  timeoutMs = 90_000
+  timeoutMs = 90_000,
 ): Promise<boolean> {
   const out = tapOutput(app)
   const said = await settleServing(out, 0, timeoutMs)
@@ -476,7 +488,7 @@ export async function settleEngineServing(
 export async function settleRealLogFold(
   app: ElectronApplication,
   label: string,
-  timeoutMs = 240_000
+  timeoutMs = 240_000,
 ): Promise<boolean> {
   const began = Date.now()
   const served = await settleEngineServing(app, timeoutMs)
@@ -484,8 +496,7 @@ export async function settleRealLogFold(
   console.log(
     served
       ? `${label}: the engine folded the real log and is serving — ${secs}s`
-      : `${label}: no serving sentence after ${secs}s — served surfaces will read empty`
+      : `${label}: no serving sentence after ${secs}s — served surfaces will read empty`,
   )
   return served
 }
-

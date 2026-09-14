@@ -161,7 +161,11 @@ export function basisRead(basis: RateBasis, spans: BasisSpans): BasisRead {
  * The half of a pre-computed pair that `basis` selects. Both arguments are already-divided rates —
  * this is a pick, not a division.
  */
-export function pickRate(read: BasisRead, active: number | null, elapsed: number | null): number | null {
+export function pickRate(
+  read: BasisRead,
+  active: number | null,
+  elapsed: number | null,
+): number | null {
   if (!read.measurable) return null
   return read.basis === 'active' ? active : elapsed
 }

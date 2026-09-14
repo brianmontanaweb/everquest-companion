@@ -24,7 +24,7 @@ import type {
   PlanSlotId,
   PlanSocket,
   PlannerDonor,
-  SocketType
+  SocketType,
 } from './types'
 
 // ---- R1: which tier extracts which socket ---------------------------------------
@@ -64,7 +64,7 @@ const OK: SocketCompatibility = { ok: true }
 export function socketCompatibility(
   donor: PlannerDonor,
   hostSlots: readonly EquipSlot[],
-  planClasses: readonly ClassAbbr[]
+  planClasses: readonly ClassAbbr[],
 ): SocketCompatibility {
   if (donor.hasteLocked) return { ok: false, reason: 'haste' }
   if (!donor.slots.some((s) => hostSlots.includes(s))) return { ok: false, reason: 'slot' }
@@ -83,7 +83,7 @@ export function socketCompatibility(
  */
 export function narrowedClasses(
   hostClasses: readonly ClassAbbr[],
-  donorClasses: readonly ClassAbbr[]
+  donorClasses: readonly ClassAbbr[],
 ): ClassAbbr[] {
   if (hostClasses.length === 0) return [...donorClasses]
   if (donorClasses.length === 0) return [...hostClasses]
@@ -161,7 +161,7 @@ const REASON_MESSAGE: Record<IncompatibleReason, (donor: PlannerDonor, ctx: Warn
   // Named by CELL, because "can't go in FINGER 2" is what the user is looking at; the RULE it
   // failed is about the slot, and `socketCompatibility` below is asked in those terms.
   slot: (d, ctx) => `${d.name} can't go in ${planSlotLabel(ctx.cell)}`,
-  class: (d, ctx) => `${d.name} - no class overlap with ${ctx.classes.join('/')}`
+  class: (d, ctx) => `${d.name} - no class overlap with ${ctx.classes.join('/')}`,
 }
 
 function socketWarning(ctx: WarnCtx, socket: SocketType, planned: PlanSocket): PlanWarning | null {
@@ -172,7 +172,7 @@ function socketWarning(ctx: WarnCtx, socket: SocketType, planned: PlanSocket): P
       socket,
       kind: 'unknown-donor',
       donorKey: planned.donorKey,
-      message: `${planned.effect} - no donor item in the database`
+      message: `${planned.effect} - no donor item in the database`,
     }
   }
   // `hostSlotsOf`, not the cell's own slot: an any-cell (JOS-104) constrains no slot, so it hands
@@ -185,7 +185,7 @@ function socketWarning(ctx: WarnCtx, socket: SocketType, planned: PlanSocket): P
     socket,
     kind: compat.reason,
     donorKey: donor.key,
-    message: REASON_MESSAGE[compat.reason](donor, ctx)
+    message: REASON_MESSAGE[compat.reason](donor, ctx),
   }
 }
 

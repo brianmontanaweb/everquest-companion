@@ -63,7 +63,7 @@ const ROW = '[data-testid="suggest-row"]'
 const PLAYED_BUFFS: readonly (readonly [string, string, string])[] = [
   ['Spirit of Wolf', 'You feel the spirit of wolf enter you.', 'The spirit of wolf leaves you.'],
   ['Regeneration', 'You begin to regenerate.', 'You have stopped regenerating.'],
-  ['Quickness', 'You feel much faster.', 'Your speed returns to normal.']
+  ['Quickness', 'You feel much faster.', 'Your speed returns to normal.'],
 ]
 
 /** One row's verdict, as the user would see it: what overlapped what, and by how much. */
@@ -133,7 +133,7 @@ function measureRows(page: Page): Promise<Raw> {
         owners.push(i)
         shells.push(true)
         for (const n of Array.from(
-          row.querySelectorAll('.MuiChip-root, .MuiTypography-root, .MuiButtonBase-root')
+          row.querySelectorAll('.MuiChip-root, .MuiTypography-root, .MuiButtonBase-root'),
         )) {
           if (n.parentElement?.closest('.MuiChip-root, .MuiButtonBase-root')) continue
           nodes.push(n as HTMLElement)
@@ -164,7 +164,7 @@ function measureRows(page: Page): Promise<Raw> {
       const list = document.querySelector(listSel) as HTMLElement | null
       return { boxes, chips, hScroll: list ? Math.max(0, list.scrollWidth - list.clientWidth) : 0 }
     },
-    { rowSel: ROW, listSel: `${SUGGEST} .MuiDialogContent-root` }
+    { rowSel: ROW, listSel: `${SUGGEST} .MuiDialogContent-root` },
   )
 }
 
@@ -184,7 +184,7 @@ function verdictOf(shell: Box, items: Box[]): RowProbe {
       const hit = shared(items[i], items[j])
       if (hit) {
         overlaps.push(
-          `"${items[i].text}" over "${items[j].text}" (${String(Math.round(hit.ox))}x${String(Math.round(hit.oy))}px)`
+          `"${items[i].text}" over "${items[j].text}" (${String(Math.round(hit.ox))}x${String(Math.round(hit.oy))}px)`,
         )
       }
     }
@@ -203,14 +203,17 @@ async function probeRows(page: Page): Promise<Probe> {
     const mine = raw.boxes.filter((b) => b.row === i)
     const shell = mine.find((b) => b.shell)
     if (!shell) continue
-    const verdict = verdictOf(shell, mine.filter((b) => !b.shell))
+    const verdict = verdictOf(
+      shell,
+      mine.filter((b) => !b.shell),
+    )
     if (verdict.overlaps.length > 0 || verdict.spill > 1) bad.push(verdict)
   }
   return {
     rows: raw.chips.length,
     bad,
     hScroll: raw.hScroll,
-    maxChips: raw.chips.reduce((n, c) => Math.max(n, c), 0)
+    maxChips: raw.chips.reduce((n, c) => Math.max(n, c), 0),
   }
 }
 
@@ -232,32 +235,49 @@ function hitTest(page: Page, sel: string, nth: number): Promise<string> {
       if (el.contains(top) || top.contains(el)) return 'hit'
       return `covered by ${top.tagName}.${String(top.className).slice(0, 40)}`
     },
-    { s: sel, n: nth }
+    { s: sel, n: nth },
   )
 }
 
 /** Resize and wait for the RENDERER to agree, then for the rows to stop moving (wave E3). */
-async function resizeTo(app: ElectronApplication, page: Page, width: number, height: number): Promise<number> {
+async function resizeTo(
+  app: ElectronApplication,
+  page: Page,
+  width: number,
+  height: number,
+): Promise<number> {
   const win = await app.browserWindow(page)
-  await win.evaluate((w, b) => {
-    w.setMinimumSize(360, 360)
-    w.setBounds({ ...w.getBounds(), width: b.w, height: b.h })
-  }, { w: width, h: height })
+  await win.evaluate(
+    (w, b) => {
+      w.setMinimumSize(360, 360)
+      w.setBounds({ ...w.getBounds(), width: b.w, height: b.h })
+    },
+    { w: width, h: height },
+  )
   const got = await settle(
     () => page.evaluate(() => document.documentElement.clientWidth),
     (v) => Math.abs(v - width) <= 24,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
-  await settleStable(() => probeRows(page).then((p) => `${String(p.rows)}:${String(p.bad.length)}`), {
-    timeoutMs: 15_000
-  })
+  await settleStable(
+    () => probeRows(page).then((p) => `${String(p.rows)}:${String(p.bad.length)}`),
+    {
+      timeoutMs: 15_000,
+    },
+  )
   return got
 }
 
 /** The claim, at one width: every row's boxes sit beside each other, inside the row. */
 async function checkAt(page: Page, tag: string): Promise<void> {
   const probe = await probeRows(page)
-  if (!check(`${tag}: the dialog is showing suggestion rows to measure`, probe.rows > 0, `${String(probe.rows)} rows`)) {
+  if (
+    !check(
+      `${tag}: the dialog is showing suggestion rows to measure`,
+      probe.rows > 0,
+      `${String(probe.rows)} rows`,
+    )
+  ) {
     return
   }
   const colliding = probe.bad.filter((r) => r.overlaps.length > 0)
@@ -269,7 +289,7 @@ async function checkAt(page: Page, tag: string): Promise<void> {
       : `${String(colliding.length)}/${String(probe.rows)} rows collide: ${colliding
           .slice(0, 3)
           .map((r) => `[${r.name}] ${r.overlaps[0]}`)
-          .join(' · ')}`
+          .join(' · ')}`,
   )
   const spilling = probe.bad.filter((r) => r.spill > 1)
   check(
@@ -277,11 +297,22 @@ async function checkAt(page: Page, tag: string): Promise<void> {
     spilling.length === 0,
     spilling.length === 0
       ? 'nothing spills'
-      : `${String(spilling.length)} rows spill: ${spilling.slice(0, 3).map((r) => `[${r.name}] +${String(r.spill)}px`).join(' · ')}`
+      : `${String(spilling.length)} rows spill: ${spilling
+          .slice(0, 3)
+          .map((r) => `[${r.name}] +${String(r.spill)}px`)
+          .join(' · ')}`,
   )
-  check(`${tag}: the list never has to scroll sideways`, probe.hScroll <= 1, `+${String(probe.hScroll)}px`)
+  check(
+    `${tag}: the list never has to scroll sideways`,
+    probe.hScroll <= 1,
+    `+${String(probe.hScroll)}px`,
+  )
   const hit = await hitTest(page, `${ROW} .MuiChip-clickable`, 0)
-  check(`${tag}: the first one-click template chip is still the thing at its own centre`, hit === 'hit', hit)
+  check(
+    `${tag}: the first one-click template chip is still the thing at its own centre`,
+    hit === 'hit',
+    hit,
+  )
   // THE GATE ON THE WHOLE MEASUREMENT. A picker showing only the light two-chip rows cannot
   // collide at any width, so it would pass this step while proving nothing. The played buffs
   // (PLAYED_BUFFS) are what put a watched spell's full complement on a row — name, type, two class
@@ -289,7 +320,7 @@ async function checkAt(page: Page, tag: string): Promise<void> {
   check(
     `${tag}: …and the heaviest row on screen is a WATCHED spell's, the kind the report is about`,
     probe.maxChips >= 9,
-    `${String(probe.maxChips)} chips on the heaviest row`
+    `${String(probe.maxChips)} chips on the heaviest row`,
   )
 }
 
@@ -305,7 +336,7 @@ async function checkAt(page: Page, tag: string): Promise<void> {
 export async function stepSuggestRowLayout(
   app: ElectronApplication,
   page: Page,
-  log: FixtureLog
+  log: FixtureLog,
 ): Promise<void> {
   const win = await app.browserWindow(page)
   const wide = await win.evaluate((w) => w.getBounds())
@@ -324,17 +355,21 @@ export async function stepSuggestRowLayout(
   const used = await settle(
     () =>
       page.evaluate(() =>
-        (window as unknown as {
-          eq: { getSpellCatalog: () => Promise<{ withUsage: number }> }
-        }).eq.getSpellCatalog().then((c) => c.withUsage)
+        (
+          window as unknown as {
+            eq: { getSpellCatalog: () => Promise<{ withUsage: number }> }
+          }
+        ).eq
+          .getSpellCatalog()
+          .then((c) => c.withUsage),
       ) as Promise<number>,
     (n) => n >= PLAYED_BUFFS.length,
-    { timeoutMs: 30_000 }
+    { timeoutMs: 30_000 },
   )
   check(
     'the log the app is tailing now has watched buffs in it, the way the reporter’s did',
     used >= PLAYED_BUFFS.length,
-    `${String(used)} spells with usage, played ${String(PLAYED_BUFFS.length)}`
+    `${String(used)} spells with usage, played ${String(PLAYED_BUFFS.length)}`,
   )
 
   await page.click('[data-testid="nav-alerts"]', { timeout: 60_000 })
@@ -342,9 +377,13 @@ export async function stepSuggestRowLayout(
   await page.click('[data-testid="alerts-add-suggestion"]')
   await page.waitForSelector(SUGGEST, { timeout: 20_000 })
   // The catalog arrives over IPC, so the rows appear a beat after the paper does.
-  await settle(() => page.evaluate((s) => document.querySelectorAll(s).length, ROW), (n) => n > 0, {
-    timeoutMs: 20_000
-  })
+  await settle(
+    () => page.evaluate((s) => document.querySelectorAll(s).length, ROW),
+    (n) => n > 0,
+    {
+      timeoutMs: 20_000,
+    },
+  )
   await settleStable(() => probeRows(page).then((p) => String(p.rows)), { timeoutMs: 15_000 })
 
   await checkAt(page, `default ${String(wide.width)}px`)

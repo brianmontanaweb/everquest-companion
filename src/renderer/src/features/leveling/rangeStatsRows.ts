@@ -44,9 +44,14 @@ import {
   basisRead,
   pickRate,
   type BasisRead,
-  type RateBasis
+  type RateBasis,
 } from '../../../../shared/rateBasis'
-import { formatAaRate, formatKillRate, formatLevelRate, formatPointRate } from '../../lib/formatRate'
+import {
+  formatAaRate,
+  formatKillRate,
+  formatLevelRate,
+  formatPointRate,
+} from '../../lib/formatRate'
 import { fmtDuration } from './levelChartGeometry'
 import { zoneColor } from './zoneBands'
 
@@ -168,9 +173,12 @@ function shapeZone(z: ZoneRangeRow, basis: RateBasis): ZoneStatRow {
     offline: z.offlineMs > 0 ? fmtDuration(z.offlineMs) : null,
     detail: zoneDetail(z),
     levels: levelsText(z.levelEquiv, z.expSamples, z.expUnstated),
-    levelsPerHour: rate(pickRate(read, z.levelsPerHourActive, z.levelsPerHourWall), formatLevelRate),
+    levelsPerHour: rate(
+      pickRate(read, z.levelsPerHourActive, z.levelsPerHourWall),
+      formatLevelRate,
+    ),
     killsPerHour: rate(pickRate(read, z.killsPerHourActive, z.killsPerHourWall), formatKillRate),
-    unstated: z.expUnstated
+    unstated: z.expUnstated,
   }
 }
 
@@ -185,7 +193,7 @@ function shapeZone(z: ZoneRangeRow, basis: RateBasis): ZoneStatRow {
 export function zoneStatRows(
   zones: readonly ZoneRangeRow[],
   sort: ZoneSort = 'levels',
-  basis: RateBasis = RATE_BASIS_DEFAULT
+  basis: RateBasis = RATE_BASIS_DEFAULT,
 ): ZoneStatRow[] {
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives ZoneRangeRow. Becomes a view descriptor when the source lands.
   return [...zones].sort(sort === 'time' ? byTime : byLevels).map((z) => shapeZone(z, basis))
@@ -230,7 +238,8 @@ function rateSub(stats: RangeStats, read: BasisRead): string {
   // with NO time of this kind at all is the older, more specific fact and keeps its own words; a
   // range that has some but too little is the just-arrived case. Both outrank anything the
   // numerator could say, because with no hour to divide by there is nothing to say about it yet.
-  if (pickRate(read, stats.levelsPerHourActive, stats.levelsPerHourWall) != null) return basisSpanText(read)
+  if (pickRate(read, stats.levelsPerHourActive, stats.levelsPerHourWall) != null)
+    return basisSpanText(read)
   if (read.ms === 0) return `no ${read.word} time in this range`
   if (!read.measurable) return `${basisSpanText(read)} - too short to state as a rate`
   if (stats.expSamples > 0) return 'the log stated no percentage in this range'
@@ -241,7 +250,9 @@ function rateSub(stats: RangeStats, read: BasisRead): string {
  *  DOWN and the drop is never logged, so the two runs are never joined into one span. */
 function levelRangeText(runs: RangeStats['levelRuns']): string {
   if (runs.length === 0) return NONE
-  return runs.map((r) => (r.fromLevel === r.toLevel ? `${r.toLevel}` : `${r.fromLevel} → ${r.toLevel}`)).join(' · ')
+  return runs
+    .map((r) => (r.fromLevel === r.toLevel ? `${r.toLevel}` : `${r.fromLevel} → ${r.toLevel}`))
+    .join(' · ')
 }
 
 function levelRangeSub(stats: RangeStats): string {
@@ -261,26 +272,34 @@ export function rangeHeroes(stats: RangeStats, basis: RateBasis = RATE_BASIS_DEF
   return [
     {
       id: 'rate',
-      value: rate(pickRate(read, stats.levelsPerHourActive, stats.levelsPerHourWall), formatLevelRate),
+      value: rate(
+        pickRate(read, stats.levelsPerHourActive, stats.levelsPerHourWall),
+        formatLevelRate,
+      ),
       label: 'Levels per hour',
       sub: rateSub(stats, read),
       // The caption already says "over 2h 03m elapsed"; this says what that hour is (JOS-249), and
       // says instead why there is no number when the stretch is too short to have one (JOS-288).
-      title: withBasis(`Levels of progress per hour of ${read.word} time.`, read)
+      title: withBasis(`Levels of progress per hour of ${read.word} time.`, read),
     },
-    { id: 'kills', value: stats.kills.toLocaleString(), label: 'Mobs killed', sub: killsSub(stats) },
+    {
+      id: 'kills',
+      value: stats.kills.toLocaleString(),
+      label: 'Mobs killed',
+      sub: killsSub(stats),
+    },
     {
       id: 'levels',
       value: levelsText(stats.levelEquiv, stats.expSamples, stats.expUnstated),
       label: 'Levels of progress',
-      sub: `${stats.expSamples} experience gain${stats.expSamples === 1 ? '' : 's'}`
+      sub: `${stats.expSamples} experience gain${stats.expSamples === 1 ? '' : 's'}`,
     },
     {
       id: 'range',
       value: levelRangeText(stats.levelRuns),
       label: 'Level range covered',
-      sub: levelRangeSub(stats)
-    }
+      sub: levelRangeSub(stats),
+    },
   ]
 }
 
@@ -338,7 +357,10 @@ export const MEMBERSHIP_TITLE =
  * happened to admit the whole span — there is no shortfall to explain then, and the ScopeBar's
  * own caption already names the slice.
  */
-export function membershipText(stats: RangeStats, zoneCaption: string | null | undefined): string | null {
+export function membershipText(
+  stats: RangeStats,
+  zoneCaption: string | null | undefined,
+): string | null {
   if (!zoneCaption) return null
   const span = Math.max(0, stats.t1 - stats.t0)
   // WHOLE SECONDS, because that is the resolution `fmtDuration` prints at: a sub-second remainder
@@ -396,7 +418,7 @@ export const ELAPSED_TIME_TITLE =
  *  definition (JOS-288). */
 export const BASIS_TITLE: Record<RateBasis, string> = {
   active: ACTIVE_TIME_TITLE,
-  elapsed: ELAPSED_TIME_TITLE
+  elapsed: ELAPSED_TIME_TITLE,
 }
 
 /**
@@ -415,7 +437,7 @@ export const BASIS_TITLE: Record<RateBasis, string> = {
  * sentence already written instead of with a missing key.
  */
 export const BASIS_BUTTON_TITLE: Record<RateBasis, string> = Object.fromEntries(
-  RATE_BASES.map((id) => [id, `Divides every rate by ${id} time. ${BASIS_TITLE[id]}`])
+  RATE_BASES.map((id) => [id, `Divides every rate by ${id} time. ${BASIS_TITLE[id]}`]),
 ) as Record<RateBasis, string>
 
 /** `title` with the definition appended — the ONE way a surface that already had a hover sentence
@@ -482,7 +504,9 @@ export function comboInferred(combos: readonly ComboInterval[]): boolean {
 /** Kills you only WITNESSED — other players', other mobs'. Deliberately outside every rate,
  *  so a busy zone cannot inflate your farming numbers; null when there were none. */
 export function witnessedText(stats: RangeStats): string | null {
-  return stats.killsWitnessed > 0 ? `${stats.killsWitnessed.toLocaleString()} kills by others seen` : null
+  return stats.killsWitnessed > 0
+    ? `${stats.killsWitnessed.toLocaleString()} kills by others seen`
+    : null
 }
 
 /** AA gained in range, or null when none. */
@@ -506,11 +530,17 @@ export const AA_RESPEC_CAPTION = 'from the gain lines'
  * did without claiming the potion made AA arrive faster. It does not — it doubles what a
  * completion pays, never what a completion costs.
  */
-export function aaRateText(stats: RangeStats, basis: RateBasis = RATE_BASIS_DEFAULT): string | null {
+export function aaRateText(
+  stats: RangeStats,
+  basis: RateBasis = RATE_BASIS_DEFAULT,
+): string | null {
   if (stats.aaGainEvents === 0) return null
   const read = basisRead(basis, stats)
   const completions = rate(pickRate(read, stats.aaPerHourActive, stats.aaPerHourWall), formatAaRate)
-  const points = rate(pickRate(read, stats.aaPointsPerHourActive, stats.aaPointsPerHourWall), formatPointRate)
+  const points = rate(
+    pickRate(read, stats.aaPointsPerHourActive, stats.aaPointsPerHourWall),
+    formatPointRate,
+  )
   return `${completions} · ${points}`
 }
 
@@ -521,7 +551,9 @@ export function aaRateTitle(stats: RangeStats, basis: RateBasis = RATE_BASIS_DEF
 }
 
 /** The pre-JOS-288 constant, kept for surfaces that state the active reading unconditionally. */
-export const AA_RATE_TITLE = withActiveTime('AA completions and ability points per hour of active time.')
+export const AA_RATE_TITLE = withActiveTime(
+  'AA completions and ability points per hour of active time.',
+)
 
 /**
  * The footnote for rows whose experience lines stated no percentage. Null when every sample

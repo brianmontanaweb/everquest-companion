@@ -20,7 +20,6 @@ import { Tooltip } from '../../lib/Tooltip'
 /** The Healing dimension's accent — the heal overlays' green, so the two read as one subject. */
 const HEAL_COLOR = '#7fd1a0'
 
-
 /**
  * Active-time DPS: only worth printing when the fight actually had idle gaps.
  *
@@ -34,7 +33,7 @@ function ActiveDpsNote({
   seg,
   mode,
   dps,
-  activeDps
+  activeDps,
 }: {
   seg: SegmentView
   mode: MeterMode
@@ -46,9 +45,9 @@ function ActiveDpsNote({
   return (
     <Tooltip
       title={`Active-time DPS: damage ÷ ${fmtDur(
-        seg.activeSec
+        seg.activeSec,
       )} of actual combat time (gaps between hits capped at 3s each). Wall-clock DPS (${formatRate(
-        dps
+        dps,
       )}) divides by the full ${fmtDur(seg.durationSec)} fight length.`}
     >
       <Typography component="span" variant="caption" sx={{ color: 'text.secondary', mr: 0.25 }}>
@@ -59,12 +58,18 @@ function ActiveDpsNote({
 }
 
 /** How much of your damage the enemies healed back — effective DPS is lower by exactly this. */
-function EnemyHealNote({ seg, mode }: { seg: SegmentView; mode: MeterMode }): React.JSX.Element | null {
+function EnemyHealNote({
+  seg,
+  mode,
+}: {
+  seg: SegmentView
+  mode: MeterMode
+}): React.JSX.Element | null {
   if (mode !== 'out' || seg.enemyHealTotal <= 0) return null
   return (
     <Tooltip
       title={`Enemies healed for ${fmt(
-        seg.enemyHealTotal
+        seg.enemyHealTotal,
       )} during this fight - that much of your damage was undone (effective DPS is lower).`}
     >
       <Typography component="span" variant="caption" sx={{ color: '#5fbf7f', ml: 0.5 }}>
@@ -87,13 +92,20 @@ function SlowChip({ seg, mode }: { seg: SegmentView; mode: MeterMode }): React.J
       title={
         seg.procs.slowLandMs !== undefined
           ? `${seg.procs.coatAtEngage?.poison} was coated at engage; its Weakening Strike proc landed ${fmtElapsed(
-              seg.procs.slowLandMs
+              seg.procs.slowLandMs,
             )} in (${seg.procs.slowLands} landing${seg.procs.slowLands === 1 ? '' : 's'} this fight).`
           : `${seg.procs.coatAtEngage?.poison} was coated at engage, but its slow proc has not landed in this fight.`
       }
     >
-      <Typography component="span" variant="caption" sx={{ color: landed ? '#57e0a0' : 'text.disabled', ml: 0.5 }}>
-        · {seg.procs.slowLandMs !== undefined ? `slow @ ${fmtElapsed(seg.procs.slowLandMs)}` : 'slow: not landed'}
+      <Typography
+        component="span"
+        variant="caption"
+        sx={{ color: landed ? '#57e0a0' : 'text.disabled', ml: 0.5 }}
+      >
+        ·{' '}
+        {seg.procs.slowLandMs !== undefined
+          ? `slow @ ${fmtElapsed(seg.procs.slowLandMs)}`
+          : 'slow: not landed'}
       </Typography>
     </Tooltip>
   )
@@ -110,7 +122,7 @@ export function SegmentHeader({
   total,
   dps,
   activeDps,
-  copyView
+  copyView,
 }: {
   seg: SegmentView
   mode: MeterMode
@@ -129,10 +141,19 @@ export function SegmentHeader({
 }): React.JSX.Element {
   const heal = mode === 'heal'
   return (
-    <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 1, flexShrink: 0 }}>
+    <Stack
+      direction="row"
+      justifyContent="space-between"
+      alignItems="baseline"
+      sx={{ mb: 1, flexShrink: 0 }}
+    >
       <Typography variant="subtitle1" noWrap>
         {seg.name}
-        {seg.active && <CircleIcon sx={{ fontSize: 10, color: 'success.main', ml: 1, verticalAlign: 'middle' }} />}
+        {seg.active && (
+          <CircleIcon
+            sx={{ fontSize: 10, color: 'success.main', ml: 1, verticalAlign: 'middle' }}
+          />
+        )}
       </Typography>
       <Stack direction="row" spacing={0.5} alignItems="baseline" sx={{ minWidth: 0 }}>
         {/* The rate carries its own UNIT WORD, so a healing headline can never be read as dps:

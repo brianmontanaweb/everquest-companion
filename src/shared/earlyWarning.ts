@@ -111,14 +111,17 @@ function rowNameKeys(row: BuffTimerRow): string[] {
  */
 export function earlyWarnRowFor(
   rows: readonly BuffTimerRow[],
-  subject: EarlyWarnSubject
+  subject: EarlyWarnSubject,
 ): BuffTimerRow | undefined {
   const onSubject = rows.filter(
-    (r) => hasStatedEnd(r) && (subject.targetKey == null ? r.group === 'self' : r.targetKey === subject.targetKey)
+    (r) =>
+      hasStatedEnd(r) &&
+      (subject.targetKey == null ? r.group === 'self' : r.targetKey === subject.targetKey),
   )
   if (onSubject.length === 0) return undefined
   const wanted = new Set(subject.spellNames.map(timerNameKey))
-  const named = wanted.size === 0 ? [] : onSubject.filter((r) => rowNameKeys(r).some((k) => wanted.has(k)))
+  const named =
+    wanted.size === 0 ? [] : onSubject.filter((r) => rowNameKeys(r).some((k) => wanted.has(k)))
   const pool = named.length > 0 ? named : onSubject
   return pool.reduce((best, r) => (r.startedTs > best.startedTs ? r : best))
 }
@@ -340,7 +343,12 @@ export function breakProbes(kind: BreakTriggerKind, row: BuffTimerRow, ts: numbe
 /** The per-kind shape, split out so `breakProbes` stays one idea (and under the depth ceiling). */
 function probeEvent(
   kind: BreakTriggerKind,
-  p: { self: boolean; target: string; spell: string; base: { ts: number; seq: number; raw: string } }
+  p: {
+    self: boolean
+    target: string
+    spell: string
+    base: { ts: number; seq: number; raw: string }
+  },
 ): LogEvent | null {
   const { self, target, spell, base } = p
   if (kind === 'cc') return self ? null : { kind, ...base, mob: target, spell, refresh: true }

@@ -28,7 +28,7 @@ import { join } from 'node:path'
 import {
   TELEMETRY_BUFFER_CAP,
   type TelemetryBatch,
-  type TelemetryRecord
+  type TelemetryRecord,
 } from '../../shared/telemetry'
 import { validateRecord } from '../../shared/telemetryValidate'
 import { logError, logInfo } from '../errorLog'
@@ -40,7 +40,7 @@ import {
   FINAL_TEMP_TAG,
   tempPathFor,
   writeFileDurableAsync,
-  writeFileDurableFinal
+  writeFileDurableFinal,
 } from './durableWrite'
 
 /** Bumped only if this file's shape changes. Unreadable/older ⇒ start empty, never migrate. */
@@ -75,7 +75,7 @@ export function emptyRing(): TelemetryRing {
 export function pushCapped(
   events: readonly TelemetryRecord[],
   next: TelemetryRecord,
-  cap = TELEMETRY_BUFFER_CAP
+  cap = TELEMETRY_BUFFER_CAP,
 ): TelemetryRecord[] {
   if (cap <= 0) return []
   const out = [...events, next]
@@ -101,7 +101,7 @@ export function parseRingFile(raw: unknown): TelemetryRing | null {
     version: TELEMETRY_RING_VERSION,
     events: events.slice(Math.max(0, events.length - TELEMETRY_BUFFER_CAP)),
     // The last-sent batch is display-only; a malformed one is simply forgotten.
-    lastBatch: null
+    lastBatch: null,
   }
 }
 
@@ -133,7 +133,10 @@ export function readRing(): TelemetryRing {
       }
       logInfo('[everquest-companion] telemetry.json unreadable/foreign - starting from empty')
     } catch (err) {
-      logError('main:telemetryRing', { message: 'telemetry.json parse failed; starting empty', err })
+      logError('main:telemetryRing', {
+        message: 'telemetry.json parse failed; starting empty',
+        err,
+      })
     }
   }
   cached = emptyRing()
@@ -172,7 +175,7 @@ function noteWriteResult(err: unknown, now: number): void {
   logError('main:telemetryRing', { message: 'telemetry.json write failed', err })
   const { delayMs } = writeGate.failed(now)
   logInfo(
-    `[everquest-companion] telemetry.json is unwritable; pausing the buffer's writes for ${Math.round(delayMs / 1000)}s`
+    `[everquest-companion] telemetry.json is unwritable; pausing the buffer's writes for ${Math.round(delayMs / 1000)}s`,
   )
 }
 

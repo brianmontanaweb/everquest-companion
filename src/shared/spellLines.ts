@@ -50,7 +50,7 @@ const RANK_VALUE: Record<string, number> = {
   vii: 7,
   viii: 8,
   ix: 9,
-  x: 10
+  x: 10,
 }
 
 /**
@@ -101,7 +101,7 @@ export function parseSpellRank(name: string): { base: string; rank: number; suff
   return {
     base: trimmed.slice(0, m.index).trim(),
     rank: RANK_VALUE[m[1].toLowerCase()] ?? 1,
-    suffixed: true
+    suffixed: true,
   }
 }
 
@@ -114,7 +114,7 @@ export function parseSpellRank(name: string): { base: string; rank: number; suff
 export function buildSpellLine(
   key: string,
   names: readonly string[],
-  lastCastMs: Readonly<Record<string, number>> = {}
+  lastCastMs: Readonly<Record<string, number>> = {},
 ): SpellLine {
   const seen = new Map<string, SpellRank>()
   let base = key
@@ -127,7 +127,7 @@ export function buildSpellLine(
       name: raw.trim(),
       rank: parsed.rank,
       suffixed: parsed.suffixed,
-      lastCastMs: lookupLastCast(lastCastMs, raw)
+      lastCastMs: lookupLastCast(lastCastMs, raw),
     })
   }
   const ranks = [...seen.values()].sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name))
@@ -202,7 +202,7 @@ const ABBR_BY_NAME: Record<string, ClassAbbr> = {
   shadowknight: 'SHD',
   shaman: 'SHM',
   warrior: 'WAR',
-  wizard: 'WIZ'
+  wizard: 'WIZ',
 }
 
 /** Abbr set, for the direct `class:shm` spelling (the map above is by wiki NAME). */
@@ -269,7 +269,7 @@ export interface LineLevel {
  */
 export function spellLineLevel(
   levels: readonly ClassLevel[],
-  resolved: readonly ClassAbbr[]
+  resolved: readonly ClassAbbr[],
 ): LineLevel | null {
   if (levels.length === 0) return null
   const mine = levels.filter((l) => resolved.includes(l.cls))
@@ -367,10 +367,10 @@ function rankedDefs(defs: readonly AlertDef[]): RankedDef[] {
 function upgradeTarget(
   line: SpellLine,
   coveredKeys: ReadonlySet<string>,
-  minRank: number
+  minRank: number,
 ): SpellRank | null {
   const candidates = line.ranks.filter(
-    (r) => r.lastCastMs != null && r.rank > minRank && !coveredKeys.has(r.name.toLowerCase())
+    (r) => r.lastCastMs != null && r.rank > minRank && !coveredKeys.has(r.name.toLowerCase()),
   )
   return rankRecencyOrder(candidates)[0] ?? null
 }
@@ -386,7 +386,7 @@ function upgradeTarget(
  */
 export function detectRankUpgrades(
   defs: readonly AlertDef[],
-  lines: readonly SpellLine[]
+  lines: readonly SpellLine[],
 ): RankUpgradeOffer[] {
   const byKey = new Map(lines.map((l) => [l.key, l]))
   const grouped = new Map<string, RankedDef[]>()
@@ -412,7 +412,7 @@ export function detectRankUpgrades(
       lineKey: key,
       from: top.spell,
       to: to.name,
-      covered: covered.map((m) => m.spell)
+      covered: covered.map((m) => m.spell),
     })
   }
   return offers.sort((a, b) => a.lineKey.localeCompare(b.lineKey))
@@ -489,7 +489,7 @@ function poisonSlowCovered(defs: readonly AlertDef[]): boolean {
  */
 export function detectPoisonSlowOffers(
   defs: readonly AlertDef[],
-  seen: PoisonSlowRecency | null | undefined
+  seen: PoisonSlowRecency | null | undefined,
 ): PoisonSlowOffer[] {
   if (!seen || seen.count < 1) return []
   if (poisonSlowCovered(defs)) return []
@@ -498,8 +498,8 @@ export function detectPoisonSlowOffers(
       id: POISON_SLOW_OFFER_ID,
       count: seen.count,
       lastAt: seen.lastAt,
-      lastTarget: seen.lastTarget
-    }
+      lastTarget: seen.lastTarget,
+    },
   ]
 }
 
@@ -507,7 +507,7 @@ export function detectPoisonSlowOffers(
 function repointPrimitive(
   t: AlertTriggerPrimitive,
   from: string,
-  to: string
+  to: string,
 ): AlertTriggerPrimitive {
   if (t.type !== 'event') return t
   if (t.where?.spell?.trim().toLowerCase() !== from.trim().toLowerCase()) return t
@@ -531,7 +531,7 @@ export function replaceRankInDef(def: AlertDef, from: string, to: string): Alert
     ...def,
     name: renameForRank(def.name, from, to),
     trigger: repointTrigger(def.trigger, from, to),
-    note: `${def.note ? `${def.note} ` : ''}Upgraded from ${from} to ${to}.`
+    note: `${def.note ? `${def.note} ` : ''}Upgraded from ${from} to ${to}.`,
   }
 }
 
@@ -544,7 +544,7 @@ export function addRankAlongsideDef(def: AlertDef, from: string, to: string): Al
   return {
     ...replaceRankInDef(def, from, to),
     id: `${def.id}::rank:${spellIdFragment(to)}`,
-    note: `Added alongside ${def.name} - same alert for ${to}.`
+    note: `Added alongside ${def.name} - same alert for ${to}.`,
   }
 }
 

@@ -27,7 +27,7 @@ import {
   TextField,
   ToggleButton,
   ToggleButtonGroup,
-  Typography
+  Typography,
 } from '@mui/material'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import type { CountSource } from '@shared/types'
@@ -37,12 +37,7 @@ import { formatDateTime, formatTime } from '../../lib/formatDate'
 import { COUNT_SOURCE_OPTIONS } from '../inventory/countSource'
 import type { GroupRow } from './lootGrouping'
 import { LOOT_RATE_TITLE, lootRateText } from './lootRateText'
-import {
-  DEFAULT_LOOT_SORT,
-  isLootSortKey,
-  LOOT_SORT_OPTIONS,
-  type LootSortKey
-} from './lootSort'
+import { DEFAULT_LOOT_SORT, isLootSortKey, LOOT_SORT_OPTIONS, type LootSortKey } from './lootSort'
 
 // The grouped table's order survives restarts, the way the Quests tab's does (useQuestList's
 // `eq.questSort`). An order retired from LOOT_SORT_OPTIONS falls back to the default rather than
@@ -79,7 +74,7 @@ export function useInventoryReloadedAt(): number | null {
 // picker there would be a control that either does nothing or lies about what it changed.
 function LootSortSelect({
   sort,
-  setSort
+  setSort,
 }: {
   sort: LootSortKey
   setSort: (v: LootSortKey) => void
@@ -124,7 +119,7 @@ export type LootSource = 'app' | 'engine'
  */
 export function LootSourceToggle({
   source,
-  setSource
+  setSource,
 }: {
   source: LootSource
   setSource: (v: LootSource) => void
@@ -187,7 +182,7 @@ export function LootToolbar({
   onToggleInventoryOnly,
   countSource,
   setCountSource,
-  onReload
+  onReload,
 }: LootToolbarProps): JSX.Element {
   return (
     <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
@@ -246,7 +241,9 @@ export function LootToolbar({
         sx={{ minWidth: 190 }}
       >
         {COUNT_SOURCE_OPTIONS.map((o) => (
-          <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+          <MenuItem key={o.value} value={o.value}>
+            {o.label}
+          </MenuItem>
         ))}
       </TextField>
       {/* No tooltip (JOS-127) — the ACCESSIBLE name still says what it does, and an aria-label
@@ -276,7 +273,12 @@ function LootRateLine({ rates }: { rates: WindowLootRates | null }): JSX.Element
   return (
     // Native `title`, no popper — the JOS-127 rule this file's header states: nothing interactive
     // may mount over the toolbar sitting directly above this line.
-    <Typography variant="body2" color="text.secondary" data-testid="loot-rates" title={LOOT_RATE_TITLE}>
+    <Typography
+      variant="body2"
+      color="text.secondary"
+      data-testid="loot-rates"
+      title={LOOT_RATE_TITLE}
+    >
       {text}
     </Typography>
   )
@@ -291,7 +293,7 @@ export function LootSummary({
   inventoryInfo,
   slice,
   totalCount,
-  rates
+  rates,
 }: {
   eventCount: number
   uniqueCount: number
@@ -314,14 +316,18 @@ export function LootSummary({
     <Box>
       <Typography variant="body2" color="text.secondary" data-testid="loot-summary">
         {eventCount.toLocaleString()} loot events
-        {slice.id === 'all' ? '' : ` in ${slice.caption} of ${totalCount.toLocaleString()} all time`} ·{' '}
-        {uniqueCount.toLocaleString()} unique items · click a row for mob/zone/drop-rate breakdown ·{' '}
+        {slice.id === 'all'
+          ? ''
+          : ` in ${slice.caption} of ${totalCount.toLocaleString()} all time`}{' '}
+        · {uniqueCount.toLocaleString()} unique items · click a row for mob/zone/drop-rate breakdown
+        ·{' '}
         {inventoryInfo
           ? `inventory export ${formatDateTime(new Date(inventoryInfo.loadedAt).getTime())}`
           : 'no inventory export loaded'}
         {autoUpdatedAt && (
           <Typography component="span" variant="body2" sx={{ color: 'success.main' }}>
-            {' '}· auto-updated {formatTime(autoUpdatedAt)}
+            {' '}
+            · auto-updated {formatTime(autoUpdatedAt)}
           </Typography>
         )}
       </Typography>
@@ -335,8 +341,8 @@ function NoLootYet(): JSX.Element {
   return (
     <Alert severity="info">
       No loot parsed yet. Loot something in-game (or check your log path) - every{' '}
-      <code>--You have looted …--</code> line shows up here in real time, and the full history is read
-      from your log on launch.
+      <code>--You have looted …--</code> line shows up here in real time, and the full history is
+      read from your log on launch.
     </Alert>
   )
 }
@@ -365,7 +371,7 @@ const NOTICE_NAMES = 8
  */
 function OwnedNotLootedNotice({
   rows,
-  onSelect
+  onSelect,
 }: {
   rows: GroupRow[]
   onSelect: (item: string) => void
@@ -403,7 +409,7 @@ export function LootNotices({
   slicedCount,
   slice,
   owned,
-  onSelect
+  onSelect,
 }: {
   historyCount: number
   slicedCount: number

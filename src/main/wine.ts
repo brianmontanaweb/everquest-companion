@@ -22,7 +22,7 @@ import {
   detectWine,
   graphicsEnvironmentOf,
   type GraphicsEnvironment,
-  type WineDetection
+  type WineDetection,
 } from '../shared/wineDetect'
 import type { GraphicsAuto } from '../shared/graphicsPrefs'
 
@@ -57,7 +57,7 @@ export function wineDetection(): WineDetection {
   if (cached.wine) {
     logInfo(
       `[everquest-companion] wine: running under Wine (${cached.signals.join(', ')}) - graphics ` +
-        'switches left on auto take the compatibility path.'
+        'switches left on auto take the compatibility path.',
     )
   }
   return cached

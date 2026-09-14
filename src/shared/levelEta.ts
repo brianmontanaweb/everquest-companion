@@ -90,7 +90,8 @@ export const ETA_BLOCKED_TITLE: Record<EtaBlocked, string> = {
   overfull: 'The percentages since your last level-up already exceed a full level.',
   offline: 'Most of this stretch is time you were logged out.',
   'no-pace': 'This stretch states no levels of progress.',
-  swapped: 'Your /who reports a different level than your last level-up - the bar restarted where the log cannot see.'
+  swapped:
+    'Your /who reports a different level than your last level-up - the bar restarted where the log cannot see.',
 }
 
 /**
@@ -139,7 +140,10 @@ export function atCap(stats: RangeStats): boolean {
  * Walks backwards from the tail: the span since the last ding is small, and the columns are
  * ascending, so this stops the moment it passes the anchor.
  */
-function statedSinceDing(snap: ProgressionSnap, dingTs: number): { equiv: number; unstated: number } {
+function statedSinceDing(
+  snap: ProgressionSnap,
+  dingTs: number,
+): { equiv: number; unstated: number } {
   let equiv = 0
   let unstated = 0
   for (let i = snap.expTs.length - 1; i >= 0 && snap.expTs[i] > dingTs; i--) {
@@ -171,7 +175,7 @@ function tooOffline(stats: RangeStats): boolean {
 function anchorBlocked(
   snap: ProgressionSnap,
   dingTs: number,
-  level: LevelStatement | null | undefined
+  level: LevelStatement | null | undefined,
 ): EtaBlocked | null {
   const dinged = snap.levelValue[snap.levelValue.length - 1]
   if (level?.source === 'who' && level.ts > dingTs && level.level !== dinged) return 'swapped'
@@ -208,7 +212,7 @@ function paceOf(stats: RangeStats): { blocked: EtaBlocked } | { blocked: null; p
 export function levelEta(
   snap: ProgressionSnap,
   stats: RangeStats,
-  level?: LevelStatement | null
+  level?: LevelStatement | null,
 ): LevelEta {
   const n = snap.levelTs.length
   if (n === 0) return { blocked: 'no-ding' }
@@ -227,6 +231,6 @@ export function levelEta(
     ms: ((1 - equiv) / pace.perHour) * MS_PER_HOUR,
     toLevel: snap.levelValue[n - 1] + 1,
     progress: equiv,
-    offlineMs: stats.offlineMs
+    offlineMs: stats.offlineMs,
   }
 }

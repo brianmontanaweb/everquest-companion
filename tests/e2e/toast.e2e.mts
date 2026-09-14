@@ -44,7 +44,7 @@ import {
   note,
   reportRun,
   settle,
-  settleStable
+  settleStable,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -71,7 +71,11 @@ async function findToastWindow(app: ElectronApplication): Promise<Page | null> {
 
 /** Poll until the toast window exists (window creation + page load is asynchronous). */
 function waitForToastWindow(app: ElectronApplication, timeoutMs = 30_000): Promise<Page | null> {
-  return settle(() => findToastWindow(app), (w) => w !== null, { timeoutMs })
+  return settle(
+    () => findToastWindow(app),
+    (w) => w !== null,
+    { timeoutMs },
+  )
 }
 
 /**
@@ -82,9 +86,18 @@ function waitForToastWindow(app: ElectronApplication, timeoutMs = 30_000): Promi
  * nothing will ever change. That one waits for the count to hold still instead (`expect` equal to
  * what was already there), which is the same discipline the other absence assertions use.
  */
-async function sendAndSettle(main: Page, toast: Page, req: Record<string, unknown>, expect: number): Promise<string[]> {
+async function sendAndSettle(
+  main: Page,
+  toast: Page,
+  req: Record<string, unknown>,
+  expect: number,
+): Promise<string[]> {
   await send(main, req)
-  await settle(() => cardTexts(toast), (cards) => cards.length >= expect, { timeoutMs: 15_000 })
+  await settle(
+    () => cardTexts(toast),
+    (cards) => cards.length >= expect,
+    { timeoutMs: 15_000 },
+  )
   return cardTexts(toast)
 }
 
@@ -92,16 +105,16 @@ async function sendAndSettle(main: Page, toast: Page, req: Record<string, unknow
 function send(page: Page, req: Record<string, unknown>): Promise<void> {
   return page.evaluate(
     (r) => (window as unknown as { eq: { showToast: (x: unknown) => void } }).eq.showToast(r),
-    req
+    req,
   )
 }
 
 /** Every rendered card's text, in stack order. */
 function cardTexts(page: Page): Promise<string[]> {
   return page.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="toast-card"]')].map(
-      (el) => (el as HTMLElement).innerText.replace(/\s+/g, ' ').trim()
-    )
+    [...document.querySelectorAll('[data-testid="toast-card"]')].map((el) =>
+      (el as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
+    ),
   )
 }
 
@@ -115,7 +128,12 @@ async function stepPreferences(page: Page): Promise<void> {
   await page.waitForSelector('[data-testid="prefs-rail-overlays"]', { timeout: 20_000 })
   await page.click('[data-testid="prefs-rail-overlays"]')
   await page.waitForSelector('[data-testid="pref-toast"]', { timeout: 15_000 })
-  if (!check('Preferences → Overlays offers the celebration toast', (await countOf(page, '[data-testid="pref-toast"]')) === 1)) {
+  if (
+    !check(
+      'Preferences → Overlays offers the celebration toast',
+      (await countOf(page, '[data-testid="pref-toast"]')) === 1,
+    )
+  ) {
     return
   }
   // The switch's testid sits on the MUI root, so the checkbox is the input inside it (the
@@ -126,16 +144,20 @@ async function stepPreferences(page: Page): Promise<void> {
     () =>
       page.evaluate(
         (sel) => (document.querySelector(sel) as HTMLInputElement | null)?.checked,
-        '[data-testid="pref-toast-enabled"] input'
+        '[data-testid="pref-toast-enabled"] input',
       ),
     (v) => v === true,
-    { timeoutMs: 10_000 }
+    { timeoutMs: 10_000 },
   )
-  check('…with its switch already ON, matching the window that opened itself', on === true, String(on))
+  check(
+    '…with its switch already ON, matching the window that opened itself',
+    on === true,
+    String(on),
+  )
   check(
     '…and NO sound controls (the boss/quest alerts own that audio)',
     (await countOf(page, '[data-testid="pref-toast-sound"]')) === 0 &&
-      (await countOf(page, '[data-testid="pref-toast-pack"]')) === 0
+      (await countOf(page, '[data-testid="pref-toast-pack"]')) === 0,
   )
 }
 
@@ -152,16 +174,36 @@ async function stepPreferences(page: Page): Promise<void> {
  * the top of the work area, and no stored bounds exist on a fresh install to say otherwise.
  */
 async function stepIntroduction(app: ElectronApplication, toast: Page): Promise<void> {
-  const cards = await settle(() => cardTexts(toast), (c) => c.length >= 1, { timeoutMs: 20_000 })
-  if (!check('a fresh install is INTRODUCED to the celebration overlay (one card, unprompted)', cards.length === 1, `${cards.length} card(s)`)) {
+  const cards = await settle(
+    () => cardTexts(toast),
+    (c) => c.length >= 1,
+    { timeoutMs: 20_000 },
+  )
+  if (
+    !check(
+      'a fresh install is INTRODUCED to the celebration overlay (one card, unprompted)',
+      cards.length === 1,
+      `${cards.length} card(s)`,
+    )
+  ) {
     return
   }
-  check('…and the card names the program that put it there', cards[0].includes('EQ Legends Companion'), cards[0])
+  check(
+    '…and the card names the program that put it there',
+    cards[0].includes('EQ Legends Companion'),
+    cards[0],
+  )
   check('…saying the window is not EverQuest’s', cards[0].includes('not to EverQuest'), cards[0])
   check('…and pointing at the switch that turns it off', cards[0].includes('Preferences'), cards[0])
-  check('…with a source label on the card chrome', (await countOf(toast, '[data-testid="toast-source-label"]')) === 1)
+  check(
+    '…with a source label on the card chrome',
+    (await countOf(toast, '[data-testid="toast-source-label"]')) === 1,
+  )
   check('…a visible close control', (await countOf(toast, '[data-testid="toast-close"]')) === 1)
-  check('…and a one-click way to disable the overlay for good', (await countOf(toast, '[data-testid="toast-intro-disable"]')) === 1)
+  check(
+    '…and a one-click way to disable the overlay for good',
+    (await countOf(toast, '[data-testid="toast-intro-disable"]')) === 1,
+  )
 
   // GEOMETRY, read from MAIN — the answer to "it covered the entire screen".
   const win = await app.browserWindow(toast)
@@ -171,12 +213,12 @@ async function stepIntroduction(app: ElectronApplication, toast: Page): Promise<
   check(
     'the first-open celebration window is a small strip, not a screen-filling window',
     share < 0.25 && bounds.width < area.width && bounds.height < area.height,
-    `${JSON.stringify(bounds)} on ${JSON.stringify(area)} (${(share * 100).toFixed(1)}%)`
+    `${JSON.stringify(bounds)} on ${JSON.stringify(area)} (${(share * 100).toFixed(1)}%)`,
   )
   check(
     '…parked near the TOP of the work area, horizontally centred',
     bounds.y - area.y < 100 && Math.abs(bounds.x - area.x - (area.width - bounds.width) / 2) <= 2,
-    JSON.stringify(bounds)
+    JSON.stringify(bounds),
   )
 
   // DISMISSIBLE: the × is wired to the queue's own dismiss action, so the card goes NOW rather
@@ -185,10 +227,26 @@ async function stepIntroduction(app: ElectronApplication, toast: Page): Promise<
   await toast.evaluate(() => {
     ;(document.querySelector('[data-testid="toast-close"]') as HTMLElement | null)?.click()
   })
-  const after = await settle(() => cardTexts(toast), (c) => c.length === 0, { timeoutMs: 10_000 })
-  check('…and the close control actually dismisses it', after.length === 0, `${after.length} card(s)`)
-  const rest = await settleStable(() => cardTexts(toast), { timeoutMs: 5_000, stable: 5, pollMs: 150 })
-  check('…leaving the overlay back at its resting state: rendering nothing at all', rest.length === 0, rest.join(' | '))
+  const after = await settle(
+    () => cardTexts(toast),
+    (c) => c.length === 0,
+    { timeoutMs: 10_000 },
+  )
+  check(
+    '…and the close control actually dismisses it',
+    after.length === 0,
+    `${after.length} card(s)`,
+  )
+  const rest = await settleStable(() => cardTexts(toast), {
+    timeoutMs: 5_000,
+    stable: 5,
+    pollMs: 150,
+  })
+  check(
+    '…leaving the overlay back at its resting state: rendering nothing at all',
+    rest.length === 0,
+    rest.join(' | '),
+  )
 }
 
 /** A boss kill: a gold title line and nothing else — no reward, no click target. */
@@ -204,11 +262,17 @@ async function stepBossToast(main: Page, toast: Page): Promise<void> {
       // A long hold on purpose: the later steps assert that a second card STACKS under this one,
       // and a 6 s default would make that a race against the machine rather than a claim about
       // the queue. The payload's own duration is honoured (and capped) by the validator.
-      durationMs: 25_000
+      durationMs: 25_000,
     },
-    1
+    1,
   )
-  if (!check('a boss kill sent over `toast:show` renders a card in the toast window', cards.length === 1, `${cards.length} card(s)`)) {
+  if (
+    !check(
+      'a boss kill sent over `toast:show` renders a card in the toast window',
+      cards.length === 1,
+      `${cards.length} card(s)`,
+    )
+  ) {
     return
   }
   check('…carrying the kill’s own title', cards[0].includes('Lord Nagafen defeated'), cards[0])
@@ -217,14 +281,14 @@ async function stepBossToast(main: Page, toast: Page): Promise<void> {
   check(
     '…and the overlay’s own label + close control, on an ordinary celebration',
     (await countOf(toast, '[data-testid="toast-source-label"]')) === 1 &&
-      (await countOf(toast, '[data-testid="toast-close"]')) === 1
+      (await countOf(toast, '[data-testid="toast-close"]')) === 1,
   )
   // …AND NO CALL TO ACTION (JOS-334). A boss kill names no destination, so the card offers
   // nothing: the action is derived from the FOCUS that makes a card clickable, and the negative
   // is what keeps it from degenerating into decoration every card wears.
   check(
     '…and NO action button, because this card goes nowhere',
-    (await countOf(toast, '[data-testid="toast-action"]')) === 0
+    (await countOf(toast, '[data-testid="toast-action"]')) === 0,
   )
 }
 
@@ -235,11 +299,15 @@ async function stepRefusal(main: Page, toast: Page): Promise<void> {
   await send(main, { kind: 'bossKill', title: 'no id either' })
   // Nothing is supposed to happen, so the positive signal is the stack HOLDING STILL — a settled
   // count says "the send round trip has been and gone", which a flat 800ms only assumed.
-  const after = await settleStable(() => cardTexts(toast), { timeoutMs: 8_000, stable: 5, pollMs: 150 })
+  const after = await settleStable(() => cardTexts(toast), {
+    timeoutMs: 8_000,
+    stable: 5,
+    pollMs: 150,
+  })
   check(
     'a payload with an unknown kind (or no id) renders NOTHING — main refuses it',
     after.length === before,
-    `${after.length} card(s): ${after.join(' | ')}`
+    `${after.length} card(s): ${after.join(' | ')}`,
   )
 }
 
@@ -257,20 +325,25 @@ async function stepQuestToast(main: Page, toast: Page): Promise<void> {
       subtitle: 'Paladin',
       itemName: REWARD,
       focus: { view: 'posky' },
-      durationMs: 25_000
+      durationMs: 25_000,
     },
-    2
+    2,
   )
   const quest = cards.find((c) => c.includes('Quest complete'))
-  if (!check('a Sky completion renders its own card', !!quest, cards.join(' | ') || 'no cards')) return
+  if (!check('a Sky completion renders its own card', !!quest, cards.join(' | ') || 'no cards'))
+    return
   check('…titled with the quest', (quest ?? '').includes('Test of Sacrifice'), quest ?? '')
   check(
     '…and embedding the reward item RESOLVED IN MAIN (the overlay fetches nothing)',
     (quest ?? '').includes(REWARD),
-    quest ?? ''
+    quest ?? '',
   )
   const stacked = cards.length
-  check('…stacked under the boss card rather than replacing it', stacked === 2, `${stacked} card(s)`)
+  check(
+    '…stacked under the boss card rather than replacing it',
+    stacked === 2,
+    `${stacked} card(s)`,
+  )
 }
 
 /**
@@ -292,39 +365,56 @@ async function stepLevelUpToast(mainPage: Page, toast: Page): Promise<void> {
       title: `Level ${String(DING_LEVEL)}!`,
       subtitle: '3 new spells · 2 new skills',
       focus: { view: 'leveling', level: DING_LEVEL },
-      durationMs: 25_000
+      durationMs: 25_000,
     },
-    3
+    3,
   )
   const card = cards.find((c) => c.includes(`Level ${String(DING_LEVEL)}!`))
-  if (!check('a level-up sent over `toast:show` renders its own card', !!card, cards.join(' | ') || 'no cards')) {
+  if (
+    !check(
+      'a level-up sent over `toast:show` renders its own card',
+      !!card,
+      cards.join(' | ') || 'no cards',
+    )
+  ) {
     return
   }
   check('…subtitled with what the ding unlocked', (card ?? '').includes('new spells'), card ?? '')
 
   // The action's own text, read from INSIDE the level-up card rather than from the window: the
   // stack holds three cards by now and "some button exists somewhere" is not the claim.
-  const action = await toast.evaluate((needle) => {
-    const el = [...document.querySelectorAll('[data-testid="toast-card"]')].find((e) =>
-      (e as HTMLElement).innerText.includes(needle)
+  const action = await toast.evaluate(
+    (needle) => {
+      const el = [...document.querySelectorAll('[data-testid="toast-card"]')].find((e) =>
+        (e as HTMLElement).innerText.includes(needle),
+      )
+      const cta = el?.querySelector('[data-testid="toast-action"]')
+      return cta ? (cta as HTMLElement).innerText.replace(/\s+/g, ' ').trim() : ''
+    },
+    `Level ${String(DING_LEVEL)}!`,
+  )
+  if (
+    !check(
+      '…and carrying a VISIBLE call to action, not just a pointer cursor (JOS-334)',
+      !!action,
+      action,
     )
-    const cta = el?.querySelector('[data-testid="toast-action"]')
-    return cta ? (cta as HTMLElement).innerText.replace(/\s+/g, ' ').trim() : ''
-  }, `Level ${String(DING_LEVEL)}!`)
-  if (!check('…and carrying a VISIBLE call to action, not just a pointer cursor (JOS-334)', !!action, action)) {
+  ) {
     return
   }
   check('…that NAMES the level it will take you to', action.includes(String(DING_LEVEL)), action)
   check(
     '…in the app’s own voice for "go read the thing that changed" (WhatsNewTeaser’s words)',
     /^See what.s new at/.test(action),
-    action
+    action,
   )
 }
 
 /** Does the app have character logs at all? Without them no feature view mounts (App's gate). */
 async function hasFeatureViews(page: Page): Promise<boolean> {
-  const text = await page.evaluate(() => (document.querySelector('main') as HTMLElement | null)?.innerText ?? '')
+  const text = await page.evaluate(
+    () => (document.querySelector('main') as HTMLElement | null)?.innerText ?? '',
+  )
   return !text.includes('No EverQuest logs found')
 }
 
@@ -342,21 +432,21 @@ async function stepQuestAnchor(mainPage: Page, toast: Page): Promise<void> {
   await toast.evaluate((quest) => {
     ;(window as unknown as { eqOverlay: { focusApp: (f: unknown) => void } }).eqOverlay.focusApp({
       view: 'posky',
-      quest
+      quest,
     })
   }, QUEST_KEY)
   const anchored = await mainPage
     .waitForSelector('[data-anchored="true"]', { timeout: 20_000 })
     .then(
       () => true,
-      () => false
+      () => false,
     )
   if (!check('a toast focus naming a quest anchors the Plane of Sky tab on it', anchored)) return
   const state = await mainPage.evaluate(() => {
     const el = document.querySelector('[data-anchored="true"]')
     return {
       expanded: !!el?.classList.contains('Mui-expanded'),
-      text: (el as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').slice(0, 80) ?? ''
+      text: (el as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').slice(0, 80) ?? '',
     }
   })
   check('…mounting that quest EXPANDED, not merely scrolled to', state.expanded, state.text)
@@ -384,7 +474,9 @@ async function main(): Promise<void> {
     // no stored `overlays.toast`, so the DEFAULT decides — and the window is the feature, so the
     // proof is that it exists before anybody has touched a setting.
     const toast = await waitForToastWindow(app)
-    if (check('the toast overlay is ON for a fresh install (hidden, under EQ_E2E)', toast !== null)) {
+    if (
+      check('the toast overlay is ON for a fresh install (hidden, under EQ_E2E)', toast !== null)
+    ) {
       const t = toast as Page
       await stepIntroduction(app, t)
       await stepPreferences(page)
@@ -406,11 +498,17 @@ async function main(): Promise<void> {
         await stepRepeatDeepLink(app, page, t)
         await stepQuestAnchor(page, t)
       } else {
-        note('no character logs on this machine — the deep-link roundtrips need a mounted feature view, so they are skipped')
+        note(
+          'no character logs on this machine — the deep-link roundtrips need a mounted feature view, so they are skipped',
+        )
       }
     }
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     if (failures.length) await dumpArtifacts(page, 'toast-FAIL')
   } finally {
     await close()

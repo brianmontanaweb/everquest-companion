@@ -51,7 +51,7 @@ import {
   parseHpLine,
   resolveSpellMana,
   spellMetricsAt,
-  type ClientHpFacts
+  type ClientHpFacts,
 } from '../../shared/spellMetrics'
 // The CLIENT'S hitpoint slots (JOS-396), threaded in from the IPC handler rather than imported:
 // `spellTable.ts` is an Electron module and this one is node-tested. See clientSpellHp.ts.
@@ -140,8 +140,8 @@ const CONFIRMED_UNLOCKS: readonly ConfirmedUnlock[] = [
     level: 20,
     verified: '2026-08-14',
     evidence:
-      'Report 01KZZ6S5JB4B9RYNZS4CAT4QPY: a reporter got Disrupting Shot on his Ranger at 20 in EQ Legends and said so; the owner independently confirmed the same day (JOS-351). RNG is the class whose struck-through table holds exactly ONE row, so this clears the whole RNG dispute and nothing else.'
-  }
+      'Report 01KZZ6S5JB4B9RYNZS4CAT4QPY: a reporter got Disrupting Shot on his Ranger at 20 in EQ Legends and said so; the owner independently confirmed the same day (JOS-351). RNG is the class whose struck-through table holds exactly ONE row, so this clears the whole RNG dispute and nothing else.',
+  },
 ]
 
 /** Has somebody confirmed this exact row, at this exact level, in the shipped game? */
@@ -157,7 +157,7 @@ function skillsFor(
   cls: ClassAbbr,
   skillRows: readonly RawUnlock[],
   discRows: readonly RawUnlock[],
-  disputed: readonly string[]
+  disputed: readonly string[],
 ): UnlockSkill[] {
   const out: UnlockSkill[] = []
   for (const r of skillRows) {
@@ -223,7 +223,7 @@ function writeFigures(
   spell: UnlockSpell,
   s: SpellDbFile['spells'][number],
   at: readonly { level: number }[],
-  client: SpellResistTable | null
+  client: SpellResistTable | null,
 ): void {
   const clientHp = clientHpFor(client, s.name)
   const waves = rainWaves(s.name)
@@ -250,7 +250,7 @@ function writeFigures(
 function writeInputs(
   spell: UnlockSpell,
   s: SpellDbFile['spells'][number],
-  clientHp: ClientHpFacts | undefined
+  clientHp: ClientHpFacts | undefined,
 ): void {
   const hpLines = (s.effects ?? []).filter((line) => parseHpLine(line, LEVEL_ANY) !== null)
   if (hpLines.length > 0) spell.hpLines = hpLines
@@ -283,7 +283,9 @@ function writeInputs(
 function unlockSpells(client: SpellResistTable | null): UnlockSpell[] {
   const file = spellsJson as SpellDbFile
   const out: UnlockSpell[] = []
-  for (const s of applySpellCorrections(applySpellEra(applySpellRemovals(file.spells).spells).spells).spells) {
+  for (const s of applySpellCorrections(
+    applySpellEra(applySpellRemovals(file.spells).spells).spells,
+  ).spells) {
     const at = parseSpellClasses(s.classes)
     if (at.length === 0) continue
     const spell: UnlockSpell = { name: s.name, at }

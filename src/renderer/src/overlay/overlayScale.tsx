@@ -25,7 +25,7 @@ import type { CaptureReason } from './useOverlayChrome'
  *  against the WINDOW and is then multiplied by the zoom, i.e. past the pane it lives in. */
 export function ScaledContent({
   textScale,
-  children
+  children,
 }: {
   textScale: number
   children: React.ReactNode
@@ -76,7 +76,7 @@ export const FOOTER_ROW = {
   rowGap: 3,
   padding: '3px 8px 5px',
   borderTop: '1px solid rgba(255,255,255,0.08)',
-  flexShrink: 0
+  flexShrink: 0,
 } as const satisfies React.CSSProperties
 
 /**
@@ -117,7 +117,7 @@ export function OverlayContent({
   testId,
   locked = false,
   capture,
-  children
+  children,
 }: {
   textScale: number
   testId?: string
@@ -168,7 +168,13 @@ export function OverlayContent({
       data-scroll-grip={grip ? (held ? 'held' : 'idle') : undefined}
       onMouseMove={track}
       onMouseLeave={() => hold(false)}
-      style={{ flexGrow: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: '4px 6px' }}
+      style={{
+        flexGrow: 1,
+        minHeight: 0,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        padding: '4px 6px',
+      }}
     >
       <ScaledContent textScale={textScale}>{children}</ScaledContent>
     </div>

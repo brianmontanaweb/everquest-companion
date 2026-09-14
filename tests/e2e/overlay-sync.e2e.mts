@@ -60,7 +60,7 @@ import {
   settleStable,
   sleep,
   snapshot,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, overlayWindow, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture, type FixtureLog } from './logFixture.mjs'
@@ -97,9 +97,7 @@ interface OverlayBridge {
 }
 
 function overlayState(page: Page): Promise<Record<string, boolean>> {
-  return page.evaluate(() =>
-    (window as unknown as { eq: OverlayBridge }).eq.getOverlayState()
-  )
+  return page.evaluate(() => (window as unknown as { eq: OverlayBridge }).eq.getOverlayState())
 }
 
 /** The sentinel every fight-scoped surface starts on (shared/fightSelection.ts). */
@@ -114,7 +112,7 @@ interface FightBridge {
 function readSelection(page: Page, bridge: 'eq' | 'eqOverlay'): Promise<string> {
   return page.evaluate(
     (b) => (window as unknown as Record<string, FightBridge>)[b].getFightSelection(),
-    bridge
+    bridge,
   )
 }
 
@@ -124,7 +122,7 @@ function writeSelection(page: Page, bridge: 'eq' | 'eqOverlay', id: string): Pro
     ([b, v]) => {
       ;(window as unknown as Record<string, FightBridge>)[b].setFightSelection(v)
     },
-    [bridge, id] as const
+    [bridge, id] as const,
   )
 }
 
@@ -143,10 +141,14 @@ const waitForOverlay = overlayWindow
 async function writeAndSync(
   from: readonly [Page, 'eq' | 'eqOverlay'],
   to: readonly [Page, 'eq' | 'eqOverlay'],
-  id: string
+  id: string,
 ): Promise<string> {
   await writeSelection(from[0], from[1], id)
-  return settle(() => readSelection(to[0], to[1]), (v) => v === id, { timeoutMs: 10_000 })
+  return settle(
+    () => readSelection(to[0], to[1]),
+    (v) => v === id,
+    { timeoutMs: 10_000 },
+  )
 }
 
 /** A real finalized fight id from the live log, or null when the log holds none. */
@@ -169,23 +171,35 @@ async function longestFightName(page: Page): Promise<string> {
 // ── P4/P5/P6: the selection crosses windows ─────────────────────────────────────────────
 
 async function stepBothStartLive(app: Page, overlay: Page): Promise<void> {
-  check('the app starts on the LIVE sentinel (ephemeral — a fresh launch pins nothing)',
-    (await readSelection(app, 'eq')) === LIVE)
-  check('…and an overlay opened afterwards HYDRATES to the same value',
-    (await readSelection(overlay, 'eqOverlay')) === LIVE)
+  check(
+    'the app starts on the LIVE sentinel (ephemeral — a fresh launch pins nothing)',
+    (await readSelection(app, 'eq')) === LIVE,
+  )
+  check(
+    '…and an overlay opened afterwards HYDRATES to the same value',
+    (await readSelection(overlay, 'eqOverlay')) === LIVE,
+  )
 }
 
 async function stepPanelMovesOverlay(app: Page, overlay: Page, fightId: string): Promise<void> {
   const landed = await writeAndSync([app, 'eq'], [overlay, 'eqOverlay'], fightId)
-  check('picking a fight in the COMBAT PANEL moves the fight overlay (ruling 4)', landed === fightId, landed)
+  check(
+    'picking a fight in the COMBAT PANEL moves the fight overlay (ruling 4)',
+    landed === fightId,
+    landed,
+  )
   // …and the overlay actually RENDERS that fight, not just knows about it: its header title is
   // the selected segment's own name, so a stuck header would mean the selection never reached
   // the meter. The name itself is fixture-dependent, so the claim is "not the empty state".
   const title = await settleStable(
     () => overlay.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').trim()),
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
-  check('…and the overlay renders a fight rather than its empty state', !title.includes('No fight'), title.slice(0, 120))
+  check(
+    '…and the overlay renders a fight rather than its empty state',
+    !title.includes('No fight'),
+    title.slice(0, 120),
+  )
 }
 
 async function stepOverlayMovesPanel(app: Page, overlay: Page): Promise<void> {
@@ -207,27 +221,31 @@ async function stepZoneIdRefused(app: Page, overlay: Page, fightId: string): Pro
   // which is also proof the four refusals have been round-tripped and dropped.
   const pair = await settleStable(
     async () => `${await readSelection(app, 'eq')} / ${await readSelection(overlay, 'eqOverlay')}`,
-    { timeoutMs: 8_000, stable: 5, pollMs: 150 }
+    { timeoutMs: 8_000, stable: 5, pollMs: 150 },
   )
   check(
     'a ZONE-SESSION id offered to the global selection is refused — the fight stays put',
     pair === `${fightId} / ${fightId}`,
-    pair
+    pair,
   )
 }
 
 /** P6: a well-formed id the engine has never heard of must degrade, not blank the surface. */
 async function stepStaleId(app: Page, overlay: Page): Promise<void> {
   const landed = await writeAndSync([app, 'eq'], [overlay, 'eqOverlay'], 'e999999')
-  check('a STALE fight id is kept (P6 — the global is never cleared by a surface)', landed === 'e999999', landed)
+  check(
+    'a STALE fight id is kept (P6 — the global is never cleared by a surface)',
+    landed === 'e999999',
+    landed,
+  )
   const title = await settleStable(
     () => overlay.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').trim()),
-    { timeoutMs: 8_000 }
+    { timeoutMs: 8_000 },
   )
   check(
     '…and the overlay degrades to the engine’s default rather than going blank',
     title.length > 0 && !title.includes('No fight'),
-    title.slice(0, 120)
+    title.slice(0, 120),
   )
 }
 
@@ -251,11 +269,17 @@ const FOOTER_SLIDER = 'input[type="range"]'
 /** Set the lock and wait for the overlay's own chrome to reflect it — the observable of the flip. */
 async function setLocked(overlay: Page, locked: boolean): Promise<void> {
   await overlay.evaluate((v) => {
-    ;(window as unknown as { eqOverlay: { setLocked: (b: boolean) => void } }).eqOverlay.setLocked(v)
+    ;(window as unknown as { eqOverlay: { setLocked: (b: boolean) => void } }).eqOverlay.setLocked(
+      v,
+    )
   }, locked)
-  await settle(() => countOf(overlay, FOOTER_SLIDER), (n) => (locked ? n === 0 : n === 1), {
-    timeoutMs: 10_000
-  })
+  await settle(
+    () => countOf(overlay, FOOTER_SLIDER),
+    (n) => (locked ? n === 0 : n === 1),
+    {
+      timeoutMs: 10_000,
+    },
+  )
 }
 
 async function stepLockedSelector(overlay: Page): Promise<void> {
@@ -267,19 +291,27 @@ async function stepLockedSelector(overlay: Page): Promise<void> {
   await setLocked(overlay, true)
 
   // THE RULING: locked, and the top selector row is still there. Before P3 this was 0.
-  check('a LOCKED overlay STILL offers its selector (ruling 3)', (await countOf(overlay, TRIGGER)) === 1)
+  check(
+    'a LOCKED overlay STILL offers its selector (ruling 3)',
+    (await countOf(overlay, TRIGGER)) === 1,
+  )
 
   // …and the rest is click-through: with no drill setter the BARS render no pointer at all, which
   // is the DOM-visible half of "everything else stays click-through". Measured on the bars box
   // alone, because the selector row above it is SUPPOSED to be a pointer — that is the ruling.
   // The window-level half (setIgnoreMouseEvents) cannot be observed from a hidden window; the
   // next assertion is the closest proxy this harness can honestly get to it.
-  const pointers = await overlay.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="overlay-bars"] *')].filter(
-      (el) => getComputedStyle(el).cursor === 'pointer'
-    ).length
+  const pointers = await overlay.evaluate(
+    () =>
+      [...document.querySelectorAll('[data-testid="overlay-bars"] *')].filter(
+        (el) => getComputedStyle(el).cursor === 'pointer',
+      ).length,
   )
-  check('…while its BARS offer no click target at all (locked stays click-through)', pointers === 0, `${pointers} pointer element(s)`)
+  check(
+    '…while its BARS offer no click target at all (locked stays click-through)',
+    pointers === 0,
+    `${pointers} pointer element(s)`,
+  )
 
   // The hover sensor: entering the HEADER ROW is what asks main to stop ignoring mouse events,
   // and the lock/close controls reveal only once that capture has been taken. So their appearance
@@ -288,7 +320,8 @@ async function stepLockedSelector(overlay: Page): Promise<void> {
   // It is dispatched as a BUBBLING `mouseover` from outside, not as `mouseenter`: React 17+
   // synthesises enter/leave at the root from mouseover/mouseout, so a directly-dispatched
   // non-bubbling `mouseenter` reaches no handler at all (it silently did nothing here first).
-  const countButtons = (): Promise<number> => overlay.evaluate(() => document.querySelectorAll('button').length)
+  const countButtons = (): Promise<number> =>
+    overlay.evaluate(() => document.querySelectorAll('button').length)
   const before = await countButtons()
   await overlay.evaluate(() => {
     const row = document.querySelector('[aria-haspopup="listbox"]')?.parentElement
@@ -300,7 +333,7 @@ async function stepLockedSelector(overlay: Page): Promise<void> {
   check(
     '…and hovering the selector ROW captures the mouse (its controls reveal)',
     before === 0 && after > 0,
-    `${before} → ${after} control(s)`
+    `${before} → ${after} control(s)`,
   )
 
   // AND IT GIVES THE MOUSE BACK. The release is half the sensor — a reason left behind would keep
@@ -316,8 +349,6 @@ async function stepLockedSelector(overlay: Page): Promise<void> {
 
   await setLocked(overlay, false)
 }
-
-
 
 // ── JOS-35: the overlay meter's levels, driven for real ────────────────────────────────
 //
@@ -348,7 +379,11 @@ async function stepOverlayDrill(overlay: Page): Promise<void> {
   for (let i = 0; i < 2 && (await crumbText(overlay)).includes('‹'); i++) {
     const was = await crumbText(overlay)
     await overlay.click(CRUMB)
-    await settle(() => crumbText(overlay), (t) => t !== was, { timeoutMs: 8_000 })
+    await settle(
+      () => crumbText(overlay),
+      (t) => t !== was,
+      { timeoutMs: 8_000 },
+    )
   }
 
   const bars = await settleCount(overlay, BAR, 1, { timeoutMs: 10_000 })
@@ -356,40 +391,70 @@ async function stepOverlayDrill(overlay: Page): Promise<void> {
     note('the overlay’s selected fight has no bars right now — the drill steps need one')
     return
   }
-  check('the overlay meter opens ZOOMED OUT — one bar per combatant', (await countOf(overlay, CRUMB)) === 1)
+  check(
+    'the overlay meter opens ZOOMED OUT — one bar per combatant',
+    (await countOf(overlay, CRUMB)) === 1,
+  )
   const level1 = await crumbText(overlay)
   // THE HEADER GAVE UP THE CLOCK, and this row took it: the header states the fight and the rate,
   // and the timer sits on the line that has room for it.
-  check('…and the fight timer lives on that row, not in the header', /\d+:\d\d/.test(level1), level1 || 'empty')
-  check('…with no back chevron, because there is nowhere further out', !level1.includes('‹'), level1)
+  check(
+    '…and the fight timer lives on that row, not in the header',
+    /\d+:\d\d/.test(level1),
+    level1 || 'empty',
+  )
+  check(
+    '…with no back chevron, because there is nowhere further out',
+    !level1.includes('‹'),
+    level1,
+  )
 
   // Clicking a bar drills it — including the top one, which on this fixture is yours.
   await overlay.click(BAR)
-  const level2 = await settle(() => crumbText(overlay), (t) => t !== level1, { timeoutMs: 8_000 })
-  check('clicking a bar opens that entity’s breakdown', (await countOf(overlay, BAR)) > 0 && level2 !== level1, level2)
-  check('…and the zoom-out chevron is offered on it (it was not, before JOS-35)', level2.includes('‹'), level2)
+  const level2 = await settle(
+    () => crumbText(overlay),
+    (t) => t !== level1,
+    { timeoutMs: 8_000 },
+  )
+  check(
+    'clicking a bar opens that entity’s breakdown',
+    (await countOf(overlay, BAR)) > 0 && level2 !== level1,
+    level2,
+  )
+  check(
+    '…and the zoom-out chevron is offered on it (it was not, before JOS-35)',
+    level2.includes('‹'),
+    level2,
+  )
   check('…and the fight timer is still on the row', /\d+:\d\d/.test(level2), level2)
 
   // NO CATEGORY CHIP (JOS-113). JOS-105 put a damage-type strip here and a third drill level; the
   // owner rejected the grouping, so the drilled overlay is ONE BAR PER ABILITY with no strip. What
   // is asserted here is that the rejected chip is gone rather than a new level opening.
-  check('the drilled overlay shows NO damage-type chip — one bar per ability, flat', (await countOf(overlay, CATEGORY_CHIP)) === 0)
+  check(
+    'the drilled overlay shows NO damage-type chip — one bar per ability, flat',
+    (await countOf(overlay, CATEGORY_CHIP)) === 0,
+  )
 
   // …AND NO HOVER ON ANY OF THEM (JOS-358, owner ruling from hands-on testing). The per-ability
   // stats used to ride each bar's native `title`; the overlay windows keep tooltips only in the
   // title bar now, and the fully-labeled figures are on the Combat tab. Asserted on the DRILLED
   // level because that is where the longest of those strings lived.
   const barTitles = await overlay.evaluate(() =>
-    [...document.querySelectorAll<HTMLElement>('[data-testid="overlay-bar"]')].map((e) => e.title)
+    [...document.querySelectorAll<HTMLElement>('[data-testid="overlay-bar"]')].map((e) => e.title),
   )
   check(
     '…and no bar hovers a stat run over the game any more',
     barTitles.length > 0 && barTitles.every((t) => t === ''),
-    JSON.stringify(barTitles.slice(0, 3))
+    JSON.stringify(barTitles.slice(0, 3)),
   )
 
   await overlay.click(CRUMB)
-  const back = await settle(() => crumbText(overlay), (t) => t !== level2, { timeoutMs: 8_000 })
+  const back = await settle(
+    () => crumbText(overlay),
+    (t) => t !== level2,
+    { timeoutMs: 8_000 },
+  )
   check('…and the chevron really goes back out to the source list', back === level1, back)
 }
 
@@ -427,7 +492,7 @@ interface GraphicsPrefsBridge {
 function overlayBackground(app: ElectronApplication): Promise<string> {
   return app.evaluate(({ BrowserWindow }) => {
     const w = BrowserWindow.getAllWindows().find((win) =>
-      win.webContents.getURL().includes('kind=fight')
+      win.webContents.getURL().includes('kind=fight'),
     )
     return w ? w.getBackgroundColor() : ''
   })
@@ -442,7 +507,11 @@ async function reopenFightOverlay(app: ElectronApplication, page: Page): Promise
   })
   // The window has to be GONE before it can be built differently, and main is the only side that
   // knows: the open-state it reports back is the close completing (wave E3 — condition, not clock).
-  await settle(() => overlayState(page), (s) => s.fight === false, { timeoutMs: 10_000 })
+  await settle(
+    () => overlayState(page),
+    (s) => s.fight === false,
+    { timeoutMs: 10_000 },
+  )
   await page.evaluate(async () => {
     const eq = (window as unknown as { eq: OverlayBridge }).eq
     if (!(await eq.getOverlayState()).fight) await eq.toggleOverlay('fight')
@@ -452,22 +521,29 @@ async function reopenFightOverlay(app: ElectronApplication, page: Page): Promise
 
 /** The overlay still behaves like one: selector, lock round trip, persisted open-state. */
 async function checkOverlayStillWorks(page: Page, overlay: Page, mode: string): Promise<void> {
-  check(`${mode}: the reopened overlay's bridge is live and its open-state persisted`,
-    (await overlayState(page)).fight === true)
+  check(
+    `${mode}: the reopened overlay's bridge is live and its open-state persisted`,
+    (await overlayState(page)).fight === true,
+  )
   await setLocked(overlay, false)
   check(`${mode}: it renders its selector`, (await countOf(overlay, TRIGGER)) === 1)
   await setLocked(overlay, true)
-  check(`${mode}: it locks, and the locked selector survives (ruling 3 holds in this mode too)`,
-    (await countOf(overlay, TRIGGER)) === 1)
+  check(
+    `${mode}: it locks, and the locked selector survives (ruling 3 holds in this mode too)`,
+    (await countOf(overlay, TRIGGER)) === 1,
+  )
   await setLocked(overlay, false)
 }
 
 async function stepOpaqueOverlays(app: ElectronApplication, page: Page): Promise<void> {
   const prefs = await page.evaluate(() =>
-    (window as unknown as { eq: GraphicsPrefsBridge }).eq.getGraphicsPrefs()
+    (window as unknown as { eq: GraphicsPrefsBridge }).eq.getGraphicsPrefs(),
   )
-  check('a fresh install carries both graphics switches on AUTO', prefs.safeMode === 'auto' && prefs.opaqueOverlays === 'auto',
-    JSON.stringify(prefs))
+  check(
+    'a fresh install carries both graphics switches on AUTO',
+    prefs.safeMode === 'auto' && prefs.opaqueOverlays === 'auto',
+    JSON.stringify(prefs),
+  )
 
   // THE NO-REGRESSION ASSERTION FOR EVERY WINDOWS USER (JOS-31). The detection runs on this real
   // Windows machine, through the real filesystem and the real environment, and it must find
@@ -475,21 +551,30 @@ async function stepOpaqueOverlays(app: ElectronApplication, page: Page): Promise
   // invisible here. A false positive would turn every Windows install's overlays opaque and its
   // renderer to software, and this is the line that would go red first.
   const environment = await page.evaluate(() =>
-    (window as unknown as { eq: GraphicsPrefsBridge }).eq.getGraphicsEnvironment()
+    (window as unknown as { eq: GraphicsPrefsBridge }).eq.getGraphicsEnvironment(),
   )
-  check('this Windows machine is NOT detected as Wine, and recommends no compatibility path',
-    environment.wine === false && environment.signals.length === 0 &&
-      environment.auto.safeMode === false && environment.auto.opaqueOverlays === false,
-    JSON.stringify(environment))
+  check(
+    'this Windows machine is NOT detected as Wine, and recommends no compatibility path',
+    environment.wine === false &&
+      environment.signals.length === 0 &&
+      environment.auto.safeMode === false &&
+      environment.auto.opaqueOverlays === false,
+    JSON.stringify(environment),
+  )
 
   const transparentBg = await overlayBackground(app)
   note(`transparent overlay background: ${transparentBg || '(none)'}`)
 
   const written = await page.evaluate(() =>
-    (window as unknown as { eq: GraphicsPrefsBridge }).eq.setGraphicsPrefs({ opaqueOverlays: 'on' })
+    (window as unknown as { eq: GraphicsPrefsBridge }).eq.setGraphicsPrefs({
+      opaqueOverlays: 'on',
+    }),
   )
-  check('flipping the opaque-overlay switch persists it (main answers with what it stored)',
-    written.opaqueOverlays === 'on' && written.safeMode === 'auto', JSON.stringify(written))
+  check(
+    'flipping the opaque-overlay switch persists it (main answers with what it stored)',
+    written.opaqueOverlays === 'on' && written.safeMode === 'auto',
+    JSON.stringify(written),
+  )
 
   const opaque = await reopenFightOverlay(app, page)
   if (!check('the fight overlay reopens in opaque mode', opaque !== null)) return
@@ -500,8 +585,11 @@ async function stepOpaqueOverlays(app: ElectronApplication, page: Page): Promise
   // e2e file loads no src module): it is `OPAQUE_OVERLAY_BG` in src/shared/graphicsPrefs.ts, the
   // same RGB the overlay page paints, which is what makes the mode a compatibility switch rather
   // than a second palette.
-  check('…and it really was built differently — the window carries the solid overlay colour now',
-    opaqueBg.toLowerCase() === '#0e1115' && opaqueBg !== transparentBg, `${transparentBg} → ${opaqueBg}`)
+  check(
+    '…and it really was built differently — the window carries the solid overlay colour now',
+    opaqueBg.toLowerCase() === '#0e1115' && opaqueBg !== transparentBg,
+    `${transparentBg} → ${opaqueBg}`,
+  )
   await checkOverlayStillWorks(page, opaque as Page, 'opaque')
 
   // …and back. The switch is a switch, not a one-way door — and since JOS-31 the way back is an
@@ -509,12 +597,17 @@ async function stepOpaqueOverlays(app: ElectronApplication, page: Page): Promise
   // when they want their see-through overlays despite the detection. This machine cannot exercise
   // the detected half, but it exercises the override that has to beat it.
   await page.evaluate(() =>
-    (window as unknown as { eq: GraphicsPrefsBridge }).eq.setGraphicsPrefs({ opaqueOverlays: 'off' })
+    (window as unknown as { eq: GraphicsPrefsBridge }).eq.setGraphicsPrefs({
+      opaqueOverlays: 'off',
+    }),
   )
   const clear = await reopenFightOverlay(app, page)
   if (!check('the fight overlay reopens transparent again', clear !== null)) return
-  check('…and the window is back to the transparent background it started with',
-    (await overlayBackground(app)) === transparentBg, await overlayBackground(app))
+  check(
+    '…and the window is back to the transparent background it started with',
+    (await overlayBackground(app)) === transparentBg,
+    await overlayBackground(app),
+  )
   await checkOverlayStillWorks(page, clear as Page, 'transparent')
 }
 
@@ -566,7 +659,7 @@ async function checkSafeModeLaunch(log: FixtureLog): Promise<void> {
     await waitHydrated(page)
     check(
       '…and the launch really is in software rendering (Chromium has --disable-gpu)',
-      await hasCommandLineSwitch(app, 'disable-gpu')
+      await hasCommandLineSwitch(app, 'disable-gpu'),
     )
     // JOS-352, and the only machine that can make this statement is this one: the two Wine flags
     // are gated on the DETECTION, so a real Windows launch must append neither — not even the
@@ -578,7 +671,7 @@ async function checkSafeModeLaunch(log: FixtureLog): Promise<void> {
     for (const flag of ['disable-direct-composition', 'in-process-gpu']) {
       check(
         `…and this Windows machine appends none of the Wine flags (--${flag})`,
-        !(await hasCommandLineSwitch(app, flag))
+        !(await hasCommandLineSwitch(app, flag)),
       )
     }
   } finally {
@@ -594,7 +687,9 @@ async function checkSafeModeLaunch(log: FixtureLog): Promise<void> {
  * the app's own door, quit, and hand launch 2 the same dir.
  */
 async function seedOverlayOpen(log: FixtureLog, userData: string): Promise<void> {
-  console.log('launch 1: opening the fight overlay, so launch 2 starts from an install that has one…')
+  console.log(
+    'launch 1: opening the fight overlay, so launch 2 starts from an install that has one…',
+  )
   const { app, close } = await launchOnFixture(log, { userData })
   try {
     const page = await mainWindow(app)
@@ -606,8 +701,16 @@ async function seedOverlayOpen(log: FixtureLog, userData: string): Promise<void>
     })
     // The open-state is written by MAIN when the window is created, so the condition is main
     // reporting it back — asked of the app rather than waited out.
-    const opened = await settle(() => overlayState(page), (s) => s.fight === true, { timeoutMs: 15_000 })
-    check('launch 1 leaves the fight overlay open in the store', opened.fight === true, JSON.stringify(opened))
+    const opened = await settle(
+      () => overlayState(page),
+      (s) => s.fight === true,
+      { timeoutMs: 15_000 },
+    )
+    check(
+      'launch 1 leaves the fight overlay open in the store',
+      opened.fight === true,
+      JSON.stringify(opened),
+    )
   } finally {
     await close()
   }
@@ -636,7 +739,12 @@ async function main(): Promise<void> {
     page.on('pageerror', (e) => consoleErrors.push(String(e)))
 
     await page.waitForSelector('[data-testid="nav-preferences"]', { timeout: 60_000 })
-    if (!check('hydration completes (replay hands off to the live tail)', !(await waitHydrated(page)).snap.hydrating)) {
+    if (
+      !check(
+        'hydration completes (replay hands off to the live tail)',
+        !(await waitHydrated(page)).snap.hydrating,
+      )
+    ) {
       throw new Error('still hydrating — nothing below can be asserted')
     }
 
@@ -644,7 +752,7 @@ async function main(): Promise<void> {
     // spec that toggled unconditionally would close the very window launch 1 opened for it.
     check(
       'the overlay launch 1 opened is still open in launch 2 — the open-state persists',
-      (await overlayState(page)).fight === true
+      (await overlayState(page)).fight === true,
     )
     await page.evaluate(async () => {
       const eq = (window as unknown as { eq: OverlayBridge }).eq
@@ -691,7 +799,11 @@ async function main(): Promise<void> {
     await stepOverlayDisplay(app, page)
     await stepOpaqueOverlays(app, page)
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     if (failures.length) await dumpArtifacts(page, 'overlay-sync-FAIL')
   } finally {
     await close()

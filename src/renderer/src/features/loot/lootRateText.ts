@@ -60,7 +60,9 @@ export const LOOT_RATE_TITLE =
  * came up empty) and loses its span, because there was no span to state.
  */
 function half(rate: number | null, ms: number, word: string): string {
-  return rate == null ? `${NONE} drops/hr ${word}` : `${formatDropRate(rate)} over ${fmtDuration(ms)} ${word}`
+  return rate == null
+    ? `${NONE} drops/hr ${word}`
+    : `${formatDropRate(rate)} over ${fmtDuration(ms)} ${word}`
 }
 
 /**

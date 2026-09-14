@@ -47,7 +47,7 @@ import {
   parseWornFocus,
   wornFocusLabel,
   type FocusSpell,
-  type WornFocus
+  type WornFocus,
 } from '../src/shared/wornFocus'
 import { focusBearers, FOCUS_SOCKET_INDEX } from '../src/shared/planner/inventorySlots'
 import { parseInventoryDump } from '../src/main/outputs/inventoryParse'
@@ -89,7 +89,10 @@ test('every focus page the catalog carries either parses or is honestly refused'
   for (const entry of Object.values(ITEMS.items)) {
     for (const e of entry.stats?.effects ?? []) if (e.kind === 'focus') names.add(e.name)
   }
-  assert.ok(names.size >= 70, `only ${String(names.size)} distinct focus effect names in the corpus`)
+  assert.ok(
+    names.size >= 70,
+    `only ${String(names.size)} distinct focus effect names in the corpus`,
+  )
   let applied = 0
   let refused = 0
   for (const name of names) {
@@ -111,7 +114,10 @@ test('every focus page the catalog carries either parses or is honestly refused'
   // The two heads this overlay applies are a MINORITY of the corpus on purpose - the seven it does
   // not read are named in `wornFocus.ts FocusKind`, with the reason.
   assert.ok(applied >= 12, `only ${String(applied)} focus names moved a figure`)
-  assert.ok(refused >= 40, `only ${String(refused)} were refused; the sweep is not seeing the corpus`)
+  assert.ok(
+    refused >= 40,
+    `only ${String(refused)} were refused; the sweep is not seeing the corpus`,
+  )
 })
 
 test('the two heads read their band, their cap and their limits off the page', () => {
@@ -133,7 +139,7 @@ test('the two heads read their band, their cap and their limits off the page', (
   assert.deepEqual(
     [...(heal.excludesSpells ?? [])].sort(),
     ['complete heal', 'promised renewal'],
-    'the two spells the healing focus names'
+    'the two spells the healing focus names',
   )
 
   // The SAME head, the OPPOSITE duration limit: a DoT focus.
@@ -145,7 +151,13 @@ test('the two heads read their band, their cap and their limits off the page', (
 
 test('a focus head this overlay does not apply parses to null, and says nothing', () => {
   // Seven heads exist and five are refused here: haste, mana preservation, duration, range, reagent.
-  for (const name of ['Spell Haste II', 'Mana Preservation I', 'Extended Enhancement III', 'Extended Range II', 'Reagent Conservation I']) {
+  for (const name of [
+    'Spell Haste II',
+    'Mana Preservation I',
+    'Extended Enhancement III',
+    'Extended Range II',
+    'Reagent Conservation I',
+  ]) {
     assert.equal(parseWornFocus(name, 'x', linesOf(name)), null, name)
   }
   // And a page with no lines at all is not a focus record either.
@@ -230,7 +242,11 @@ test('the best QUALIFYING focus applies, and nothing ever stacks', () => {
   assert.equal(bestWornFocus([two], 'damage', spell({ level: 18, durationMs: 60_000 })), null)
   // WEARING THE SAME EFFECT TWICE IS STILL ONE FOCUS - the tie breaks on the effect name so the
   // credited item cannot swap between two renders.
-  const twice = bestWornFocus([two, focusOf('Improved Damage II', 'the other copy')], 'damage', spell())
+  const twice = bestWornFocus(
+    [two, focusOf('Improved Damage II', 'the other copy')],
+    'damage',
+    spell(),
+  )
   assert.equal(twice?.pct, 10.5)
 })
 
@@ -258,19 +274,23 @@ test('the marker states the rows in force, and says nothing when nothing was foc
 // ---- 4: the join, over the owner's real dump ---------------------------------------------
 
 const REAL_DUMP = parseInventoryDump(
-  readFileSync(join(import.meta.dirname, 'fixtures', 'Primitive_freeport-Inventory.txt'), 'utf8')
+  readFileSync(join(import.meta.dirname, 'fixtures', 'Primitive_freeport-Inventory.txt'), 'utf8'),
 )
 
 test('the focus sockets of EQUIPPED items count, and a bag`s sockets do not', () => {
   const bearers = focusBearers(REAL_DUMP)
   const names = bearers.map((b) => b.name)
-  assert.equal(FOCUS_SOCKET_INDEX, 7, 'the measured socket index; wornFocusIndex.ts carries the census')
+  assert.equal(
+    FOCUS_SOCKET_INDEX,
+    7,
+    'the measured socket index; wornFocusIndex.ts carries the census',
+  )
   // The item on the body.
   assert.ok(names.includes('Polished Mithril Mask'), 'the worn face item')
   // AND the exaltation socketed into an equipped item - `Face-Slot7`, `Range-Slot7`, `Feet-Slot7`.
   assert.ok(
     bearers.some((b) => b.name === 'Golden Efreeti Boots' && b.exaltation),
-    'a focus exaltation socketed into the boots he is wearing'
+    'a focus exaltation socketed into the boots he is wearing',
   )
   // NOT a bag: `General 6-Slot4` holds a Serpentine Bracer and `-Slot4-Slot7` its exaltation.
   assert.equal(names.includes('Serpentine Bracer'), false, 'an item in a bag is not being worn')
@@ -281,10 +301,13 @@ test('the focus sockets of EQUIPPED items count, and a bag`s sockets do not', ()
   assert.equal(
     bearers.some((b) => b.name === 'Thelvorn, Blade of Light' && b.exaltation),
     false,
-    'a proc socket is not a focus one'
+    'a proc socket is not a focus one',
   )
   // The ` +N` is split off, because the corpus is keyed by the base name.
-  assert.equal(names.some((n) => / \+\d+$/.test(n)), false)
+  assert.equal(
+    names.some((n) => / \+\d+$/.test(n)),
+    false,
+  )
 })
 
 test('the owner`s committed dump resolves to the focus effects his gear really carries', () => {
@@ -310,8 +333,8 @@ test('an exaltation is credited BY NAME as an exaltation', () => {
     [
       'Location\tName\tID\tCount\tSlots',
       'Face\tTriumphant Mask +3\t1\t1\t10',
-      'Face-Slot7\tPolished Mithril Mask (Exaltation)\t4505\t1\t10'
-    ].join('\n')
+      'Face-Slot7\tPolished Mithril Mask (Exaltation)\t4505\t1\t10',
+    ].join('\n'),
   )
   const worn = wornFocusFor(dump, ITEMS, LINES)
   assert.equal(worn.length, 1)
@@ -325,7 +348,9 @@ test('an item the corpus has never heard of contributes nothing, and does not th
   // nothing about it rather than guessing.
   assert.equal(ITEMS.items["djarn's amethyst ring"], undefined, 'the corpus gap this pins')
   const dump = parseInventoryDump(
-    ['Location\tName\tID\tCount\tSlots', "Fingers\tDjarn's Amethyst Ring +4\t10366\t1\t10"].join('\n')
+    ['Location\tName\tID\tCount\tSlots', "Fingers\tDjarn's Amethyst Ring +4\t10366\t1\t10"].join(
+      '\n',
+    ),
   )
   assert.deepEqual(wornFocusFor(dump, ITEMS, LINES), [])
 })
@@ -344,18 +369,30 @@ const MEASURED_JULY = 1.017
 test('acceptance: the owner`s Improved Damage II is the whole step between his July and August logs', () => {
   const mask = focusOf('Improved Damage II', 'Polished Mithril Mask (Exaltation)')
   // Garrison's Mighty Mana Shock: a wizard's L18 single-target instant nuke, inside the cap of 44.
-  const garrisons = spell({ name: "Garrison's Mighty Mana Shock", level: 18, targetType: 'Single', durationMs: null })
+  const garrisons = spell({
+    name: "Garrison's Mighty Mana Shock",
+    level: 18,
+    targetType: 'Single',
+    durationMs: null,
+  })
   assert.equal(focusAdmits(mask, garrisons), true)
   // THE TOP OF THE BAND is what the log's MAXIMUM hits measure, and it is 1.20 exactly.
   const top = applyFocusPct(1, mask.maxPct)
   assert.equal(top, 1.2)
   // Which leaves the residual the July windows already carried, to within the rounding an integer
   // maximum can resolve.
-  assert.ok(Math.abs(MEASURED_AUGUST / top - MEASURED_JULY) < 0.002, `residual ${String(MEASURED_AUGUST / top)}`)
+  assert.ok(
+    Math.abs(MEASURED_AUGUST / top - MEASURED_JULY) < 0.002,
+    `residual ${String(MEASURED_AUGUST / top)}`,
+  )
   // AND THE FIGURE THE READOUT PRINTS IS THE MIDDLE OF THE BAND, not the top - the header carries
   // the twenty-value histogram that says the bonus rolls. His fitted rank-VIII base is 492.
   assert.equal(Math.round(applyFocusPct(492, focusPctFor(mask, garrisons))), 544)
-  assert.equal(Math.round(applyFocusPct(492, mask.maxPct)), 590, 'the best case, which is not what is drawn')
+  assert.equal(
+    Math.round(applyFocusPct(492, mask.maxPct)),
+    590,
+    'the best case, which is not what is drawn',
+  )
 })
 
 test('acceptance: a spell above the focus`s level cap reads lower, and one far above reads base', () => {

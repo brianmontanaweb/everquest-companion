@@ -28,12 +28,12 @@ import {
   classUnlockClaims,
   classUnlockGrants,
   parseAchievementsDump,
-  type ClassUnlockClaim
+  type ClassUnlockClaim,
 } from '../src/shared/outputs/achievements'
 import {
   ACHIEVEMENT_REWARD_ALIASES,
   achievementItemsFor,
-  achievementVouchedQuests
+  achievementVouchedQuests,
 } from '../src/renderer/src/features/posky/achievementInference'
 import { rewardInferredQuests } from '../src/renderer/src/features/posky/rewardInference'
 import { withDerivedCompletion } from '../src/renderer/src/features/posky/questCompletion'
@@ -45,7 +45,7 @@ import {
   DERIVED_EVIDENCE_RANK,
   derivedCompletion,
   derivedEvidence,
-  type DerivedCompletionSource
+  type DerivedCompletionSource,
 } from '../src/shared/questTurnIns'
 import posky from '../src/renderer/src/data/eqlegends/posky.json'
 import type { QuestProgress } from '../src/renderer/src/features/posky/useProgress'
@@ -69,7 +69,7 @@ const DUMP = parseAchievementsDump(readFileSync(FIXTURE, 'utf8'))
 const TOKEN_FIXTURE = join(
   import.meta.dirname,
   'fixtures',
-  'synthetic-token-unlock-Achievements.txt'
+  'synthetic-token-unlock-Achievements.txt',
 )
 const TOKEN_DUMP = parseAchievementsDump(readFileSync(TOKEN_FIXTURE, 'utf8'))
 
@@ -77,7 +77,7 @@ const TOKEN_DUMP = parseAchievementsDump(readFileSync(TOKEN_FIXTURE, 'utf8'))
 const earned = (className: string, item: string): ClassUnlockClaim => ({
   className,
   item,
-  grant: 'quest'
+  grant: 'quest',
 })
 
 /** The quest set as the RENDERER sees it: the scrape with both correction overlays applied. */
@@ -87,13 +87,13 @@ const QUESTS = posky.quests.map((q) => {
     name: q.name,
     reward: q.reward,
     rewardPage: q.rewardPage,
-    rewardStats: q.rewardStats
+    rewardStats: q.rewardStats,
   })
   return {
     className: q.className,
     name: q.name,
     reward: c.reward === undefined ? undefined : renameItemName(c.reward),
-    rewardStats: c.rewardStats
+    rewardStats: c.rewardStats,
   }
 })
 
@@ -101,13 +101,13 @@ const QUESTS = posky.quests.map((q) => {
 const ALL_OBTAIN = DUMP.rows
   .filter(
     (r) =>
-      r.category === 'Untapped Potential: Classes' && r.component?.startsWith('Obtain ') === true
+      r.category === 'Untapped Potential: Classes' && r.component?.startsWith('Obtain ') === true,
   )
   .map((r) =>
     earned(
       r.achievement.replace('Primary Class Unlock - ', ''),
-      (r.component ?? '').replace('Obtain ', '').replace(/\.$/, '')
-    )
+      (r.component ?? '').replace('Obtain ', '').replace(/\.$/, ''),
+    ),
   )
 
 // ---------------------------------------------------------------------------
@@ -126,7 +126,7 @@ test('the two sides are the same size, class for class', () => {
   assert.deepEqual(
     [...perClass(ALL_OBTAIN)].sort(),
     [...perClass(QUESTS)].sort(),
-    'per-class counts agree — the file says Shadowknight, the scrape Shadow Knight'
+    'per-class counts agree — the file says Shadowknight, the scrape Shadow Knight',
   )
 })
 
@@ -137,7 +137,7 @@ test('every Sky quest is covered by exactly one achievement row', () => {
   assert.deepEqual(
     missing.map((q) => `${q.className} / ${q.name} / ${String(q.reward)}`),
     [],
-    'no Sky quest is left without an achievement row'
+    'no Sky quest is left without an achievement row',
   )
   assert.equal(vouched.quest.size, 95)
   assert.equal(vouched.classUnlock.size, 0, 'every row here is stamped as earned')
@@ -153,7 +153,7 @@ test('no achievement row is left without a quest', () => {
     }
   }
   const orphans = ALL_OBTAIN.filter(
-    (r) => !claimed.has(`${r.className.toLowerCase().replace(/\s+/g, '')} ${r.item.toLowerCase()}`)
+    (r) => !claimed.has(`${r.className.toLowerCase().replace(/\s+/g, '')} ${r.item.toLowerCase()}`),
   )
   assert.deepEqual(orphans, [])
 })
@@ -169,11 +169,11 @@ test('the alias table still describes the scrape it was written against', () => 
     assert.equal(
       q?.reward,
       a.reward,
-      `${a.questName}: the scrape still says "${a.reward}" — if a re-scrape fixed it, delete this row`
+      `${a.questName}: the scrape still says "${a.reward}" — if a re-scrape fixed it, delete this row`,
     )
     assert.ok(
       ALL_OBTAIN.some((r) => r.item === a.achievementItem),
-      `${a.questName}: the file still says "${a.achievementItem}"`
+      `${a.questName}: the file still says "${a.achievementItem}"`,
     )
     assert.match(a.verified, /^\d{4}-\d{2}-\d{2}$/, 'a checked date')
     assert.ok(a.evidence.length > 60, 'an entry with no stated evidence is a guess')
@@ -187,14 +187,20 @@ test('the achievements file independently confirms both existing overlays', () =
   // file, which did not exist yet — and the game agrees with both. Needing NO alias row for either
   // is what proves it, so this asserts the absence.
   assert.ok(ALL_OBTAIN.some((r) => r.item === 'Amulet of the Fae'))
-  assert.equal(ALL_OBTAIN.some((r) => r.item === 'Fae Amulet'), false)
+  assert.equal(
+    ALL_OBTAIN.some((r) => r.item === 'Fae Amulet'),
+    false,
+  )
   assert.ok(ALL_OBTAIN.some((r) => r.item === 'Shimmering Bracer of Protection'))
-  assert.equal(ALL_OBTAIN.some((r) => r.item === 'Scintillating Bracer of Protection'), false)
+  assert.equal(
+    ALL_OBTAIN.some((r) => r.item === 'Scintillating Bracer of Protection'),
+    false,
+  )
   for (const name of ['Bard Test of Wind', 'Rogue Test of Stealth']) {
     assert.equal(
       ACHIEVEMENT_REWARD_ALIASES.some((a) => a.questName === name),
       false,
-      `${name} needs no alias — the overlay already agrees with the game`
+      `${name} needs no alias — the overlay already agrees with the game`,
     )
   }
 })
@@ -209,12 +215,15 @@ test('the owner’s own achievements file marks their completed Sky quests', () 
   // that does not count. The remaining 44 are the owner's genuinely-earned completions.
   assert.equal(vouched.quest.size, 44, 'the owner’s 48 marked rewards, less the four cascaded ones')
   assert.equal(vouched.classUnlock.size, 4, 'the confirmed Paladin’s whole block')
-  assert.ok(vouched.quest.has('Bard::Bard Test of Wind'), 'a quest whose reward needed JOS-428’s fix')
+  assert.ok(
+    vouched.quest.has('Bard::Bard Test of Wind'),
+    'a quest whose reward needed JOS-428’s fix',
+  )
   assert.ok(vouched.quest.has('Ranger::Ranger Test of Defense'), 'Dark Cloak of the Sky')
   assert.equal(
     vouched.quest.has('Berserker::Berserker Test of Fools Errand'),
     false,
-    'Cudgel of the Fool is I — not vouched for'
+    'Cudgel of the Fool is I — not vouched for',
   )
   assert.deepEqual(
     [...vouched.classUnlock].sort(),
@@ -222,15 +231,15 @@ test('the owner’s own achievements file marks their completed Sky quests', () 
       'Paladin::Paladin Test of Compassion',
       'Paladin::Paladin Test of Love',
       'Paladin::Paladin Test of Sacrifice',
-      'Paladin::Paladin Test of Spirit'
+      'Paladin::Paladin Test of Spirit',
     ],
-    'the blast radius on the owner’s real file, named quest by quest'
+    'the blast radius on the owner’s real file, named quest by quest',
   )
 })
 
 test('a file with no sky rows changes nothing', () => {
   const other = parseAchievementsDump(
-    ['EverQuest: Raids', 'C\tConqueror of Kedge Keep', 'C\t\tPhinigel Autropos'].join('\r\n')
+    ['EverQuest: Raids', 'C\tConqueror of Kedge Keep', 'C\t\tPhinigel Autropos'].join('\r\n'),
   )
   const none = achievementVouchedQuests(QUESTS, classUnlockClaims(other))
   assert.equal(none.quest.size + none.classUnlock.size, 0)
@@ -262,12 +271,12 @@ test('the item fold is case and whitespace only — apostrophes are load-bearing
   assert.equal(
     achievementVouchedQuests(QUESTS, [earned('Wizard', "al`kabor's cap of binding")]).quest.size,
     1,
-    'case folds'
+    'case folds',
   )
   assert.equal(
     achievementVouchedQuests(QUESTS, [earned('Wizard', 'AlKabors Cap of Binding')]).quest.size,
     0,
-    'punctuation does NOT fold — a looser fold is a guess bought for nothing'
+    'punctuation does NOT fold — a looser fold is a guess bought for nothing',
   )
 })
 
@@ -282,7 +291,7 @@ test('the owner’s real file: exactly one class is bypass-flagged, and it is th
   assert.deepEqual(
     [...grants].filter(([, g]) => g !== 'quest').map(([c]) => c),
     ['Paladin'],
-    'and nothing else in the file carries either flag'
+    'and nothing else in the file carries either flag',
   )
 })
 
@@ -300,7 +309,11 @@ test('the cascade is visible in the file: the flagged class is the only unanimou
     perClass.set(cls, { c: seen.c + (r.status === 'complete' ? 1 : 0), total: seen.total + 1 })
   }
   const unanimous = [...perClass].filter(([, v]) => v.c === v.total).map(([c]) => c)
-  assert.deepEqual(unanimous, ['Paladin'], 'only the confirmed class is complete on every component')
+  assert.deepEqual(
+    unanimous,
+    ['Paladin'],
+    'only the confirmed class is complete on every component',
+  )
   const paladin = perClass.get('Paladin')
   assert.deepEqual(paladin, { c: 4, total: 4 })
 })
@@ -314,7 +327,7 @@ test('a confirmed class’s rows are stamped, stored and joined as class-unlock 
   assert.deepEqual(
     [...new Set(claims.filter((c) => c.className !== 'Paladin').map((c) => c.grant))],
     ['quest'],
-    'and every other class’s rows keep speaking for their quests'
+    'and every other class’s rows keep speaking for their quests',
   )
 })
 
@@ -328,12 +341,12 @@ test('the ASSUMED token half: a tokened class marks no quests, honest classes ke
   assert.equal(
     [...vouched.quest].filter((k) => k.startsWith('Enchanter::')).length,
     0,
-    'NO quest of the tokened class is marked complete'
+    'NO quest of the tokened class is marked complete',
   )
   assert.equal(
     [...vouched.classUnlock].filter((k) => k.startsWith('Enchanter::')).length,
     6,
-    'all six are tracked, under the kind they actually are'
+    'all six are tracked, under the kind they actually are',
   )
   // The three Enchanter rows the owner's real file already had as C are among those six, so the
   // honest-classes claim is about the OTHER fifteen classes — which are byte-identical here.
@@ -341,7 +354,7 @@ test('the ASSUMED token half: a tokened class marks no quests, honest classes ke
   assert.deepEqual(
     [...vouched.quest].sort(),
     [...real.quest].filter((k) => !k.startsWith('Enchanter::')).sort(),
-    'every class the token did not touch keeps exactly the completions it had'
+    'every class the token did not touch keeps exactly the completions it had',
   )
 })
 
@@ -368,13 +381,13 @@ const row = (over: Partial<QuestProgress> = {}): QuestProgress => ({
   turnIns: 0,
   logTurnIns: 0,
   completed: false,
-  ...over
+  ...over,
 })
 
 const sources = (a: string[], r: string[], u: string[] = []): DerivedCompletionSource[] => [
   { evidence: 'achievement', vouched: new Set(a) },
   { evidence: 'reward', vouched: new Set(r) },
-  { evidence: 'class-unlock', vouched: new Set(u) }
+  { evidence: 'class-unlock', vouched: new Set(u) },
 ]
 
 test('the ladder ranks the server’s answer above the inference from possession', () => {
@@ -391,7 +404,7 @@ test('class-unlock is a rung that speaks and never floors', () => {
   assert.deepEqual(DERIVED_EVIDENCE_FLOORS, {
     achievement: true,
     reward: true,
-    'class-unlock': false
+    'class-unlock': false,
   })
   // It SPEAKS…
   assert.equal(derivedEvidence('q', sources([], [], ['q'])), 'class-unlock')
@@ -418,7 +431,7 @@ test('a hand-recorded turn-in still wins over a class-unlock row', () => {
   // row loses the derived label entirely.
   const q = withDerivedCompletion(
     row({ turnIns: 1, completed: true }),
-    sources([], [], ['Bard::Bard Test of Wind'])
+    sources([], [], ['Bard::Bard Test of Wind']),
   )
   assert.equal(q.turnIns, 1)
   assert.equal(q.completionEvidence, undefined)
@@ -433,13 +446,19 @@ test('a derived floor is one turn-in, completed, and says which source', () => {
 })
 
 test('two sources vouching for one quest are two witnesses, not two turn-ins', () => {
-  const q = withDerivedCompletion(row(), sources(['Bard::Bard Test of Wind'], ['Bard::Bard Test of Wind']))
+  const q = withDerivedCompletion(
+    row(),
+    sources(['Bard::Bard Test of Wind'], ['Bard::Bard Test of Wind']),
+  )
   assert.equal(q.turnIns, 1, 'they do not add')
   assert.equal(q.completionEvidence, 'achievement', 'the stronger one is named')
 })
 
 test('any ledger evidence wins outright — count AND label', () => {
-  const q = withDerivedCompletion(row({ turnIns: 3, logTurnIns: 3, completed: true }), sources(['Bard::Bard Test of Wind'], []))
+  const q = withDerivedCompletion(
+    row({ turnIns: 3, logTurnIns: 3, completed: true }),
+    sources(['Bard::Bard Test of Wind'], []),
+  )
   assert.equal(q.turnIns, 3, 'a derived floor can only say "at least once"')
   assert.equal(q.completionEvidence, undefined, 'so it does not label a ledger row')
 })
@@ -461,13 +480,13 @@ test('the two derived sources compose on the real data', () => {
   assert.ok(achievement.quest.has(key), 'and the achievements dump marks that quest too')
   const both: DerivedCompletionSource[] = [
     { evidence: 'achievement', vouched: achievement.quest },
-    { evidence: 'reward', vouched: reward }
+    { evidence: 'reward', vouched: reward },
   ]
   assert.equal(withDerivedCompletion(row({ key }), both).completionEvidence, 'achievement')
   // A quest ONLY the export can speak for still reads 'reward'.
   const rewardOnly: DerivedCompletionSource[] = [
     { evidence: 'achievement', vouched: new Set<string>() },
-    { evidence: 'reward', vouched: reward }
+    { evidence: 'reward', vouched: reward },
   ]
   assert.equal(withDerivedCompletion(row({ key }), rewardOnly).completionEvidence, 'reward')
 })
@@ -485,8 +504,12 @@ test('the reward inference still speaks for a cascaded quest whose reward is in 
   const q = withDerivedCompletion(row({ key }), [
     { evidence: 'achievement', vouched: vouched.quest },
     { evidence: 'reward', vouched: reward },
-    { evidence: 'class-unlock', vouched: vouched.classUnlock }
+    { evidence: 'class-unlock', vouched: vouched.classUnlock },
   ])
   assert.equal(q.turnIns, 1)
-  assert.equal(q.completionEvidence, 'reward', 'and the row is labelled with the witness that spoke')
+  assert.equal(
+    q.completionEvidence,
+    'reward',
+    'and the row is labelled with the witness that spoke',
+  )
 })

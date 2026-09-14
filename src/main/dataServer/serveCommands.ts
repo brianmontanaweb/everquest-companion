@@ -81,12 +81,14 @@ export function serveSessionMark(at: number): void {
     (ack) => {
       note(
         `data-server sessionMark: ${String(at)} — ` +
-          (ack.accepted ? 'the engine split its records' : `the engine said not now (${ack.status})`)
+          (ack.accepted
+            ? 'the engine split its records'
+            : `the engine said not now (${ack.status})`),
       )
     },
     (err: unknown) => {
       note(`data-server sessionMark: ${String(at)} — the engine refused it (${describeErr(err)})`)
-    }
+    },
   )
 }
 
@@ -116,11 +118,11 @@ export function serveConfirmSighting(rowId: string): void {
         `data-server confirmSighting: ${rowId} — ` +
           (ack.confirmed
             ? 'the engine re-based its clock'
-            : 'the engine had nothing to re-base, though this app did')
+            : 'the engine had nothing to re-base, though this app did'),
       )
     },
     (err: unknown) => {
       note(`data-server confirmSighting: ${rowId} — the engine refused it (${describeErr(err)})`)
-    }
+    },
   )
 }

@@ -13,5 +13,5 @@ export const applyLevelingDelta = (s: LevelingSnap, d: LevelingDelta): LevelingS
   levels: [...s.levels, ...d.levels],
   aaGains: [...s.aaGains, ...d.aaGains],
   aaSpends: [...s.aaSpends, ...d.aaSpends],
-  aaPotions: [...s.aaPotions, ...d.aaPotions]
+  aaPotions: [...s.aaPotions, ...d.aaPotions],
 })

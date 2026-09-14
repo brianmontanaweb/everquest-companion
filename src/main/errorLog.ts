@@ -56,9 +56,15 @@ type ConsoleMethod = 'log' | 'warn' | 'error'
  *  and every emitter in this file goes through the guard below to reach them. */
 const CONSOLE: Record<ConsoleMethod, (...args: unknown[]) => void> = {
   /* eslint-disable no-console */
-  log: (...args) => { console.log(...args) },
-  warn: (...args) => { console.warn(...args) },
-  error: (...args) => { console.error(...args) }
+  log: (...args) => {
+    console.log(...args)
+  },
+  warn: (...args) => {
+    console.warn(...args)
+  },
+  error: (...args) => {
+    console.error(...args)
+  },
   /* eslint-enable no-console */
 }
 
@@ -173,7 +179,8 @@ let pending: PendingLine[] = []
 let draining = false
 
 /** The truncation notice, spelled once so the async and the sync writer cannot drift apart. */
-const truncationNotice = (ts: string): string => `${ts} ${PREFIX} [errorLog] log truncated at ~1MB\n`
+const truncationNotice = (ts: string): string =>
+  `${ts} ${PREFIX} [errorLog] log truncated at ~1MB\n`
 
 /** Apply the 1 MB rule before an append, asynchronously. A file that is not there yet is not over
  *  the ceiling — `appendFile` creates it — so a failed `stat` is simply nothing to do. */
@@ -303,7 +310,8 @@ export function logError(source: string, payload: unknown): void {
   // THE NOTICE THAT EXPLAINS A SILENCE IS NEVER ITSELF SILENCED, and it is written before the
   // verdict is obeyed: it lands at most once per fingerprint per session, it carries no part of
   // the payload, and without it a reader of errors.log would watch an error simply stop.
-  if (budget.notice !== null) writeLine(ts, [PREFIX, budget.notice], `${ts} ${PREFIX} ${budget.notice}\n`)
+  if (budget.notice !== null)
+    writeLine(ts, [PREFIX, budget.notice], `${ts} ${PREFIX} ${budget.notice}\n`)
   if (!budget.report) {
     noteSuppressedErrorLine()
     return

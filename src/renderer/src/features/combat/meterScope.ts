@@ -60,7 +60,11 @@ function onRoster(roster: RosterSnap, key: string): boolean {
  * BAR WIDTH: leaving the engine's segment-relative percentages in place after filtering would
  * draw a list whose longest bar stops short for no visible reason.
  */
-export function scopeSources(rows: SourceView[], scope: MeterScope, roster: RosterSnap): SourceView[] {
+export function scopeSources(
+  rows: SourceView[],
+  scope: MeterScope,
+  roster: RosterSnap,
+): SourceView[] {
   const eff = effectiveScope(scope, roster)
   if (eff === 'everyone') return rows
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives SourceView. Becomes a view descriptor when the source lands.
@@ -87,7 +91,7 @@ export function scopeTotals(
   rows: SourceView[],
   scoped: SourceView[],
   total: number,
-  dps: number
+  dps: number,
 ): { total: number; dps: number } {
   if (scoped === rows) return { total, dps }
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives SourceView. Becomes a view descriptor when the source lands.
@@ -104,7 +108,11 @@ export function scopeTotals(
  * A healer who is NOT on the roster is still real and still healed you; Everyone is where they
  * live, exactly like an ex-member's damage row.
  */
-export function scopeHealers(rows: HealSourceView[], scope: MeterScope, roster: RosterSnap): HealSourceView[] {
+export function scopeHealers(
+  rows: HealSourceView[],
+  scope: MeterScope,
+  roster: RosterSnap,
+): HealSourceView[] {
   const eff = effectiveScope(scope, roster)
   if (eff === 'everyone') return rows
   // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives HealSourceView. Becomes a view descriptor when the source lands.
@@ -134,7 +142,7 @@ export function scopeHealers(rows: HealSourceView[], scope: MeterScope, roster: 
 export function scopeHealing<T extends { healers: HealSourceView[] }>(
   healing: T | undefined,
   scope: MeterScope,
-  roster: RosterSnap
+  roster: RosterSnap,
 ): T | undefined {
   if (healing === undefined) return undefined
   const healers = scopeHealers(healing.healers, scope, roster)

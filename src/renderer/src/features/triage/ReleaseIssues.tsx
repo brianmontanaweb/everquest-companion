@@ -33,7 +33,11 @@ import { type JSX, useState } from 'react'
 import { Box, Collapse, IconButton, Typography } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
-import type { TriageErrorExemplar, TriageReleaseHealthVersion, TriageReleaseIssue } from '@shared/triage'
+import type {
+  TriageErrorExemplar,
+  TriageReleaseHealthVersion,
+  TriageReleaseIssue,
+} from '@shared/triage'
 import { formatNum } from '../../lib/formatRate'
 
 const MONO = { fontFamily: 'monospace' } as const
@@ -41,7 +45,7 @@ const MONO = { fontFamily: 'monospace' } as const
 /** One frame list, as the report carries it: `out/main/pipeline.js:120:15 - Object.foldEvent`. */
 function FrameList({
   frames,
-  testId
+  testId,
 }: {
   frames: TriageErrorExemplar['frames']
   testId: string
@@ -122,7 +126,9 @@ function Crumbs({ exemplar }: { exemplar: TriageErrorExemplar }): JSX.Element | 
       </Typography>
       <Typography variant="caption" sx={{ ...MONO, display: 'block' }}>
         {exemplar.breadcrumbs
-          .map((c) => (c.offsetMs === 0 ? c.kind : `${c.kind} −${String(Math.round(c.offsetMs / 100) / 10)}s`))
+          .map((c) =>
+            c.offsetMs === 0 ? c.kind : `${c.kind} −${String(Math.round(c.offsetMs / 100) / 10)}s`,
+          )
           .join(' · ')}
       </Typography>
     </Box>
@@ -176,7 +182,11 @@ function Exemplar({ issue }: { issue: TriageReleaseIssue }): JSX.Element {
         <Box component="span" sx={MONO}>
           triage-feedback errors show {issue.fingerprint} --maps &lt;dir&gt;
         </Box>{' '}
-        against the <Box component="span" sx={MONO}>sourcemaps-&lt;version&gt;</Box> CI artifact.
+        against the{' '}
+        <Box component="span" sx={MONO}>
+          sourcemaps-&lt;version&gt;
+        </Box>{' '}
+        CI artifact.
       </Typography>
     </Box>
   )
@@ -211,14 +221,23 @@ function IssueRow({ issue }: { issue: TriageReleaseIssue }): JSX.Element {
         <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ ...MONO, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexGrow: 1, minWidth: 0 }}
+          sx={{
+            ...MONO,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            flexGrow: 1,
+            minWidth: 0,
+          }}
           title={issue.redactedMessage}
           data-testid="release-issue-message"
         >
           {issue.redactedMessage}
         </Typography>
         <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-          {issue.firstSeen === issue.lastSeen ? issue.firstSeen : `${issue.firstSeen} → ${issue.lastSeen}`}
+          {issue.firstSeen === issue.lastSeen
+            ? issue.firstSeen
+            : `${issue.firstSeen} → ${issue.lastSeen}`}
         </Typography>
       </Box>
       <Collapse in={open} unmountOnExit>
@@ -233,7 +252,7 @@ function IssueRow({ issue }: { issue: TriageReleaseIssue }): JSX.Element {
  * the reporting / not-reporting distinction belongs to the row above and is not restated here.
  */
 export function ReleaseIssues({
-  versions
+  versions,
 }: {
   versions: readonly TriageReleaseHealthVersion[]
 }): JSX.Element | null {

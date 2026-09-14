@@ -32,7 +32,7 @@ import {
   npcCasterSummary,
   songSummary,
   spellDisplayName,
-  splitText
+  splitText,
 } from '../src/renderer/src/features/resists/resistRow'
 import { RESIST_AXIS_COLORS } from '../src/renderer/src/features/resists/resistColors'
 import { hasAnswer, lowSamples } from '../src/shared/resistModel'
@@ -41,7 +41,7 @@ import {
   RESIST_AXES,
   RESIST_AXIS_WORDS,
   type ResistEstimate,
-  type ResistSpellEvidence
+  type ResistSpellEvidence,
 } from '../src/shared/resistTypes'
 
 function est(spec: Partial<ResistEstimate> = {}): ResistEstimate {
@@ -58,7 +58,7 @@ function est(spec: Partial<ResistEstimate> = {}): ResistEstimate {
     byCaster: {
       self: { n: 600, resist: 40, land: 560 },
       pc: { n: 0, resist: 0, land: 0 },
-      npc: { n: 0, resist: 0, land: 0 }
+      npc: { n: 0, resist: 0, land: 0 },
     },
     npcIncluded: true,
     perSpell: [],
@@ -69,7 +69,7 @@ function est(spec: Partial<ResistEstimate> = {}): ResistEstimate {
     userFit: null,
     differsFromShipped: false,
     nearlyImmune: false,
-    ...spec
+    ...spec,
   }
 }
 
@@ -150,7 +150,9 @@ test('the patch-detector note is a plain sentence with no em dash and no acronym
 })
 
 /** One evidence line's fields, with the informative defaults a plain nuke has. */
-function ev(spec: Partial<ResistSpellEvidence> & Pick<ResistSpellEvidence, 'spellKey'>): ResistSpellEvidence {
+function ev(
+  spec: Partial<ResistSpellEvidence> & Pick<ResistSpellEvidence, 'spellKey'>,
+): ResistSpellEvidence {
   return {
     family: 'cast',
     casts: 0,
@@ -165,19 +167,28 @@ function ev(spec: Partial<ResistSpellEvidence> & Pick<ResistSpellEvidence, 'spel
     ranks: [],
     overchannel: null,
     unknownInvocation: 0,
-    ...spec
+    ...spec,
   }
 }
 
 test('an evidence line prints only the clauses that have a number', () => {
   assert.equal(
-    evidenceText(ev({ spellKey: 'chaos flux', casts: 155, resisted: 17, partial: 61, full: 77, fromBaseline: 155 })),
-    'Chaos Flux: 155 casts, 17 resisted, 61 partial'
+    evidenceText(
+      ev({
+        spellKey: 'chaos flux',
+        casts: 155,
+        resisted: 17,
+        partial: 61,
+        full: 77,
+        fromBaseline: 155,
+      }),
+    ),
+    'Chaos Flux: 155 casts, 17 resisted, 61 partial',
   )
   // Zero partials and NO partial information are different things, and only one is worth a word.
   assert.equal(
     evidenceText(ev({ spellKey: 'condemnation of nife', casts: 1, land: 1, fromBaseline: 1 })),
-    'Condemnation of Nife: 1 cast'
+    'Condemnation of Nife: 1 cast',
   )
 })
 
@@ -186,8 +197,10 @@ test('a spell that could never have been resisted says so, on its own line (JOS-
   // resisted, heading the evidence list and reading as eighty-seven pieces of good news about the
   // mob's magic resistance. They are one piece of news, and the line now says which.
   assert.equal(
-    evidenceText(ev({ spellKey: 'smiting strike', casts: 87, land: 87, resistAdj: -250, informative: false })),
-    'Smiting Strike: 87 casts, cannot be resisted at this level: -250 adjust'
+    evidenceText(
+      ev({ spellKey: 'smiting strike', casts: 87, land: 87, resistAdj: -250, informative: false }),
+    ),
+    'Smiting Strike: 87 casts, cannot be resisted at this level: -250 adjust',
   )
   assert.equal(cannotBeResistedNote(-250), 'cannot be resisted at this level: -250 adjust')
   // Copy rules: no em dash, no acronym, and the number is the game's own.
@@ -196,11 +209,11 @@ test('a spell that could never have been resisted says so, on its own line (JOS-
   // An ordinary nuke says nothing of the sort.
   assert.equal(
     evidenceText(ev({ spellKey: 'chaos flux', casts: 10, resisted: 2, full: 8 })),
-    'Chaos Flux: 10 casts, 2 resisted'
+    'Chaos Flux: 10 casts, 2 resisted',
   )
 })
 
-test("a canonical key reads back as a name, apostrophes and small words and all", () => {
+test('a canonical key reads back as a name, apostrophes and small words and all', () => {
   assert.equal(spellDisplayName('chaos flux'), 'Chaos Flux')
   assert.equal(spellDisplayName("denon's disruptive discord"), "Denon's Disruptive Discord")
   assert.equal(spellDisplayName("largo's absonant binding"), "Largo's Absonant Binding")
@@ -220,10 +233,10 @@ test('an evidence line says WHY a spell is not in the number', () => {
         casts: 400,
         resisted: 400,
         fromBaseline: 400,
-        landingsNotObservable: true
-      })
+        landingsNotObservable: true,
+      }),
     ),
-    "Largo's Melodic Binding: 400 casts, 400 resisted, landings not observable"
+    "Largo's Melodic Binding: 400 casts, 400 resisted, landings not observable",
   )
   assert.equal(NOT_OBSERVABLE_NOTE, 'landings not observable')
   assert.ok(!/[–—]/.test(NOT_OBSERVABLE_NOTE))
@@ -232,8 +245,12 @@ test('an evidence line says WHY a spell is not in the number', () => {
 test('songs get their own line, and only when there are any', () => {
   assert.equal(songSummary(est()), null)
   assert.equal(
-    songSummary(est({ byFamily: { cast: { n: 10, resist: 1, land: 9 }, song: { n: 42, resist: 7, land: 35 } } })),
-    'Songs: 42 pulses, 7 resisted'
+    songSummary(
+      est({
+        byFamily: { cast: { n: 10, resist: 1, land: 9 }, song: { n: 42, resist: 7, land: 35 } },
+      }),
+    ),
+    'Songs: 42 pulses, 7 resisted',
   )
 })
 
@@ -241,18 +258,38 @@ test('the evidence list separates the two families', () => {
   const split = evidenceByFamily(
     est({
       perSpell: [
-        { spellKey: 'chaos flux', family: 'cast', casts: 100, resisted: 4, partial: 20, full: 76, land: 0, fromBaseline: 100, fromYou: 0 },
-        { spellKey: 'chords of dissonance', family: 'song', casts: 40, resisted: 6, partial: 0, full: 0, land: 34, fromBaseline: 0, fromYou: 40 }
-      ]
-    })
+        {
+          spellKey: 'chaos flux',
+          family: 'cast',
+          casts: 100,
+          resisted: 4,
+          partial: 20,
+          full: 76,
+          land: 0,
+          fromBaseline: 100,
+          fromYou: 0,
+        },
+        {
+          spellKey: 'chords of dissonance',
+          family: 'song',
+          casts: 40,
+          resisted: 6,
+          partial: 0,
+          full: 0,
+          land: 34,
+          fromBaseline: 0,
+          fromYou: 40,
+        },
+      ],
+    }),
   )
   assert.deepEqual(
     split.casts.map((e) => e.spellKey),
-    ['chaos flux']
+    ['chaos flux'],
   )
   assert.deepEqual(
     split.songs.map((e) => e.spellKey),
-    ['chords of dissonance']
+    ['chords of dissonance'],
   )
 })
 
@@ -267,7 +304,9 @@ test('NO ACRONYMS: every axis label is the word, and every axis has a colour', (
 
 test('the pets-and-creatures line says the same count whether or not it counted (JOS-385)', () => {
   const npc = { n: 98, resist: 41, land: 57 }
-  const on = est({ byCaster: { self: { n: 0, resist: 0, land: 0 }, pc: { n: 0, resist: 0, land: 0 }, npc } })
+  const on = est({
+    byCaster: { self: { n: 0, resist: 0, land: 0 }, pc: { n: 0, resist: 0, land: 0 }, npc },
+  })
   assert.equal(npcCasterSummary(on), 'Pets and other creatures: 98 casts, 41 resisted')
 
   // Switched off, the SAME sentence with the parenthesis carrying the difference. A line that
@@ -275,9 +314,12 @@ test('the pets-and-creatures line says the same count whether or not it counted 
   // weigh it - and the count is exactly what a user wants to see before deciding to flip it back.
   const off = est({
     byCaster: { self: { n: 0, resist: 0, land: 0 }, pc: { n: 0, resist: 0, land: 0 }, npc },
-    npcIncluded: false
+    npcIncluded: false,
   })
-  assert.equal(npcCasterSummary(off), `Pets and other creatures: 98 casts, 41 resisted (${NPC_NOT_INCLUDED_NOTE})`)
+  assert.equal(
+    npcCasterSummary(off),
+    `Pets and other creatures: 98 casts, 41 resisted (${NPC_NOT_INCLUDED_NOTE})`,
+  )
 
   // NO LINE AT ALL when nothing was cast by one, which is most mobs. "No pet ever cast on this" is
   // not a fact anybody came to the page for, and a zero on an evidence line reads as a measurement.
@@ -297,13 +339,17 @@ test('the five axis colours clear WCAG AA against the app paper background', () 
     const s = c / 255
     return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
   }
-  const lum = (rgb: number[]): number => 0.2126 * lin(rgb[0]) + 0.7152 * lin(rgb[1]) + 0.0722 * lin(rgb[2])
+  const lum = (rgb: number[]): number =>
+    0.2126 * lin(rgb[0]) + 0.7152 * lin(rgb[1]) + 0.0722 * lin(rgb[2])
   for (const axis of RESIST_AXES) {
     const hex = RESIST_AXIS_COLORS[axis]
     const rgb = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
     const [hi, lo] = [lum(rgb), lum(paper)].sort((a, b) => b - a)
     const ratio = (hi + 0.05) / (lo + 0.05)
-    assert.ok(ratio >= 4.5, `${axis} ${hex} contrast ${ratio.toFixed(2)} against the paper background`)
+    assert.ok(
+      ratio >= 4.5,
+      `${axis} ${hex} contrast ${ratio.toFixed(2)} against the paper background`,
+    )
   }
 })
 
@@ -316,7 +362,7 @@ const BENCH_END = {
   mobLevel: 55,
   atMobLevel: false,
   tag: 'resistant' as const,
-  guidance: 'needs overchannel' as const
+  guidance: 'needs overchannel' as const,
 }
 
 test('THE TWO PERCENTAGES PRINT BESIDE THE BAND, on every row and every chip', () => {
@@ -325,7 +371,7 @@ test('THE TWO PERCENTAGES PRINT BESIDE THE BAND, on every row and every chip', (
     pPlain: 0.34,
     pOver: 0.96,
     atLo: { ...BENCH_END, pPlain: 0.49, pOver: 1 },
-    atHi: { ...BENCH_END, pPlain: 0.21, pOver: 0.9 }
+    atHi: { ...BENCH_END, pPlain: 0.21, pOver: 0.9 },
   }
   assert.equal(benchmarkText(bench), 'lands 34% · with overchannel 96%')
   // THE INTERVAL IN THE READER'S OWN UNITS. The ends CROSS when they are mapped — a LOW resistance
@@ -334,7 +380,12 @@ test('THE TWO PERCENTAGES PRINT BESIDE THE BAND, on every row and every chip', (
   assert.equal(pct(0), '0%')
   assert.equal(pct(1), '100%')
   // No acronyms, no em dashes, and nothing about our own bookkeeping.
-  for (const text of [benchmarkText(bench), benchmarkRangeText(bench), AT_MOB_LEVEL_NOTE, NPC_ONLY_NOTE]) {
+  for (const text of [
+    benchmarkText(bench),
+    benchmarkRangeText(bench),
+    AT_MOB_LEVEL_NOTE,
+    NPC_ONLY_NOTE,
+  ]) {
     assert.doesNotMatch(text, /[–—]/)
     assert.doesNotMatch(text, /\b(MR|FR|CR|DR|PR)\b/)
   }
@@ -342,7 +393,10 @@ test('THE TWO PERCENTAGES PRINT BESIDE THE BAND, on every row and every chip', (
 
 test('WHAT A ROW SAYS WHEN THE MODEL DOES NOT FIT: the observations, and no number', () => {
   // The Eye of Veeshan's own numbers as the owner read them off the live page.
-  assert.equal(doesNotFitText({ total: 118, resisted: 62 }), 'does not fit the model: 62 of 118 resisted')
+  assert.equal(
+    doesNotFitText({ total: 118, resisted: 62 }),
+    'does not fit the model: 62 of 118 resisted',
+  )
   // The con card has no room for the sentence, so it prints the rate and says where it came from.
   assert.equal(resistRateText({ total: 118, resisted: 62 }), 'resists 53% of casts')
   assert.equal(resistRateText({ total: 0, resisted: 0 }), 'no resist rate yet')
@@ -358,8 +412,8 @@ test('the evidence line carries the rank and the invocation (JOS-387 acceptance)
       casts: 804,
       resisted: 96,
       ranks: [4],
-      overchannel: { casts: 210, adj: -195, casterClasses: 3 }
-    })
+      overchannel: { casts: 210, adj: -195, casterClasses: 3 },
+    }),
   )
   assert.match(line, /rank 4 at -60 adjust/)
   assert.match(line, /210 in overchannel at -195 adjust \(3 caster classes\)/)
@@ -367,13 +421,22 @@ test('the evidence line carries the rank and the invocation (JOS-387 acceptance)
   // AND WHEN THE LOADOUT WAS NEVER STATED IT SAYS SO, because the -150 is certain and the rest is
   // not: a zero there is a thing we do not know rather than a thing that is zero.
   const unknownClasses = evidenceText(
-    ev({ spellKey: 'scorching arrow', casts: 10, overchannel: { casts: 10, adj: -150, casterClasses: 0 } })
+    ev({
+      spellKey: 'scorching arrow',
+      casts: 10,
+      overchannel: { casts: 10, adj: -150, casterClasses: 0 },
+    }),
   )
   assert.match(unknownClasses, /never stated/)
 
   // AND THE CASTS THAT PREDATE THE FIRST INVOCATION LINE ARE SHOWN, and said to be out of the fit.
-  const unknownInvocation = evidenceText(ev({ spellKey: 'scorching arrow', casts: 13, unknownInvocation: 13 }))
-  assert.match(unknownInvocation, /13 before the log said which invocation was up - counted, not in the number/)
+  const unknownInvocation = evidenceText(
+    ev({ spellKey: 'scorching arrow', casts: 13, unknownInvocation: 13 }),
+  )
+  assert.match(
+    unknownInvocation,
+    /13 before the log said which invocation was up - counted, not in the number/,
+  )
 
   // A spell with neither says neither: no line grows a clause it has no number for.
   const plain = evidenceText(ev({ spellKey: 'scorching arrow', casts: 5 }))

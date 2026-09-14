@@ -29,7 +29,7 @@ import {
   questBosses,
   questIslands,
   withPicked,
-  type FacetQuest
+  type FacetQuest,
 } from '../src/renderer/src/features/posky/questFacets'
 import { skyDroppersFor } from '../src/renderer/src/features/posky/poskyDroppers'
 import poskyRaw from '../src/renderer/src/data/eqlegends/posky.json' with { type: 'json' }
@@ -39,7 +39,9 @@ const QUESTS = (poskyRaw as { quests: PoskyQuest[] }).quests
 
 /** One committed quest as the tracker computes it, minus the progress the facets never read. */
 function facetQuest(q: PoskyQuest): FacetQuest {
-  return { items: q.items.map((it) => ({ where: it.where, droppers: skyDroppersFor(it.name, it.who) })) }
+  return {
+    items: q.items.map((it) => ({ where: it.where, droppers: skyDroppersFor(it.name, it.who) })),
+  }
 }
 
 const byName = (className: string, name: string): FacetQuest => {
@@ -50,7 +52,7 @@ const byName = (className: string, name: string): FacetQuest => {
 
 /** A hand-built quest: `[where, ...droppers]` per required item. */
 const quest = (...items: [string, ...string[]][]): FacetQuest => ({
-  items: items.map(([where, ...names]) => ({ where, droppers: names.map((name) => ({ name })) }))
+  items: items.map(([where, ...names]) => ({ where, droppers: names.map((name) => ({ name })) })),
 })
 
 const ALL = QUESTS.map(facetQuest)
@@ -102,12 +104,15 @@ test('JOS-129 — Bard Test of Brass is in the data, and the facets file it unde
     'Noble Dojorn',
     'Overseer of Air',
     'Sister of the Spire',
-    'the Hand of Veeshan'
+    'the Hand of Veeshan',
   ])
   assert.equal(questBosses(facets).includes('Spiroc of the Skies'), false)
 
   // And the filter a player standing on island 7 would actually set keeps it.
-  assert.equal(matchesFacets(facets, { islands: ['Island 7'], bosses: ['Sister of the Spire'] }), true)
+  assert.equal(
+    matchesFacets(facets, { islands: ['Island 7'], bosses: ['Sister of the Spire'] }),
+    true,
+  )
   // Both pickers OFFER what this quest is filed under, so the chips exist to be clicked.
   const opts = facetOptions(ALL)
   assert.ok(opts.islands.includes('Island 7'))
@@ -124,7 +129,7 @@ test('LAW 1 — a quest with no resolvable dropper names NO boss, and keeps the 
   assert.equal(bossless.length, 0, `boss-less quests: ${bossless.length}`)
   // The synthetic no-dropper quest: an island stated in words, an item no catalog page lists.
   const synthetic = {
-    items: [{ where: 'Island 2', droppers: skyDroppersFor('Large Sky Lapis') }]
+    items: [{ where: 'Island 2', droppers: skyDroppersFor('Large Sky Lapis') }],
   }
   assert.deepEqual(questBosses(synthetic), [])
   assert.deepEqual(questIslands(synthetic), ['Island 2'])
@@ -159,11 +164,7 @@ test('every derived island and boss is one the committed data STATES for that qu
 // =============================================================================
 
 test('islands dedupe and sort by NUMBER, bosses dedupe and sort case-folded', () => {
-  const q = quest(
-    ['Island 10', 'Zeta', 'Alpha'],
-    ['Island 2', 'alpha'],
-    ['Island 10', 'Zeta']
-  )
+  const q = quest(['Island 10', 'Zeta', 'Alpha'], ['Island 2', 'alpha'], ['Island 10', 'Zeta'])
   assert.deepEqual(questIslands(q), ['Island 2', 'Island 10'])
   // 'alpha' and 'Alpha' are different catalog spellings and stay distinct rows (law 2: display
   // raw); the ORDER is case-folded so the article-led names do not sort by their capital.
@@ -208,7 +209,7 @@ test('AND across the dimensions: one more chip always narrows', () => {
   assert.equal(matchesFacets(three, { islands: ['Island 3'], bosses: ['Bazzt Zzzt'] }), false)
 })
 
-test('empty is NO FILTER, and hands back the caller\'s own array untouched', () => {
+test("empty is NO FILTER, and hands back the caller's own array untouched", () => {
   const list = [three, five, both]
   assert.equal(filterByFacets(list, { islands: [], bosses: [] }), list)
   assert.deepEqual(filterByFacets(list, { islands: ['Island 5'], bosses: [] }), [five, both])
@@ -242,7 +243,7 @@ test('the real data offers a short closed list on both axes', () => {
     'Island 5',
     'Island 6',
     'Island 7',
-    'Island 8'
+    'Island 8',
   ])
   assert.ok(opts.bosses.length >= 15 && opts.bosses.length <= 40, `bosses: ${opts.bosses.length}`)
   // Ordered by coverage, so the zone's headline bosses lead rather than the one-off drakes.
@@ -260,7 +261,7 @@ test('options are counted, not guessed: coverage leads, name breaks the tie', ()
     quest(['Island 5', 'Zeta']),
     quest(['Island 2', 'Zeta']),
     quest(['Island 10', 'Alpha']),
-    quest(['Island 2', 'omega'])
+    quest(['Island 2', 'omega']),
   ])
   assert.deepEqual(opts.islands, ['Island 2', 'Island 5', 'Island 10'])
   assert.deepEqual(opts.bosses, ['Zeta', 'Alpha', 'omega'])

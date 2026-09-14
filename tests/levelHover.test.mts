@@ -23,7 +23,7 @@ import {
   stepIndexAt,
   tOf,
   xOf,
-  type ChartScale
+  type ChartScale,
 } from '../src/renderer/src/features/leveling/levelChartGeometry'
 import type { LevelSegment } from '../src/renderer/src/features/leveling/levelSeries'
 
@@ -100,17 +100,17 @@ const segments: LevelSegment[] = [
     points: [
       { ts: T0, level: 10 },
       { ts: T0 + 2 * H, level: 11 },
-      { ts: T0 + 5 * H, level: 12 }
+      { ts: T0 + 5 * H, level: 12 },
     ],
-    afterSwap: false
+    afterSwap: false,
   },
   {
     points: [
       { ts: T0 + 20 * H, level: 5 },
-      { ts: T0 + 21 * H, level: 6 }
+      { ts: T0 + 21 * H, level: 6 },
     ],
-    afterSwap: true
-  }
+    afterSwap: true,
+  },
 ]
 
 test('levelAt before the first ding refuses to name a level', () => {
@@ -125,7 +125,7 @@ test('levelAt inside a segment is a STEP: the level holds until the next ding', 
     [T0 + H, 10],
     [T0 + 2 * H - 1, 10],
     [T0 + 2 * H, 11],
-    [T0 + 4 * H, 11]
+    [T0 + 4 * H, 11],
   ] as const) {
     const r = levelAt(segments, ts)
     assert.equal(r.kind, 'level')
@@ -165,7 +165,7 @@ test('levelAt after the last ding is the CURRENT level (nextTs null), not a gap'
 test('levelAt handles a single-point segment before a swap (gap opens immediately)', () => {
   const segs: LevelSegment[] = [
     { points: [{ ts: T0, level: 50 }], afterSwap: false },
-    { points: [{ ts: T0 + 3 * H, level: 11 }], afterSwap: true }
+    { points: [{ ts: T0 + 3 * H, level: 11 }], afterSwap: true },
   ]
   const r = levelAt(segs, T0 + H)
   assert.equal(r.kind, 'swap-gap')
@@ -181,7 +181,7 @@ test('levelAt handles a single-point segment before a swap (gap opens immediatel
 const aaPoints = [
   { ts: T0 + H, y: 4, nowHave: 4 },
   { ts: T0 + 2 * H, y: 9, nowHave: 9 },
-  { ts: T0 + 6 * H, y: 13, nowHave: 2 }
+  { ts: T0 + 6 * H, y: 13, nowHave: 2 },
 ]
 
 test('cumulativeAt is a step lookup, never an interpolation', () => {

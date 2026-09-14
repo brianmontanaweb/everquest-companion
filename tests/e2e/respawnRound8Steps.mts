@@ -46,9 +46,9 @@ function rows(page: Page, testid: string): Promise<RowRead[]> {
         mob: e.getAttribute('data-respawn-mob') ?? '',
         source: e.getAttribute('data-respawn-source') ?? '',
         stale: e.getAttribute('data-respawn-stale') ?? '',
-        text: (e as HTMLElement).innerText.replace(/\s+/g, ' ').trim()
+        text: (e as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
       })),
-    testid
+    testid,
   )
 }
 
@@ -69,29 +69,60 @@ export async function stepAncientKillIsWatchable(page: Page, mob: string): Promi
   // are in. (The scope switch is put back at the end.)
   await clickAway(page, '[data-testid="respawn-scope-all"]')
 
-  const offered = await settle(() => rows(page, 'respawn-candidate'), (r) => find(r, mob) !== undefined, {
-    timeoutMs: 30_000
-  })
-  if (!check('a kill from days ago is still offered by the discovery panel', find(offered, mob) !== undefined, JSON.stringify(offered))) {
+  const offered = await settle(
+    () => rows(page, 'respawn-candidate'),
+    (r) => find(r, mob) !== undefined,
+    {
+      timeoutMs: 30_000,
+    },
+  )
+  if (
+    !check(
+      'a kill from days ago is still offered by the discovery panel',
+      find(offered, mob) !== undefined,
+      JSON.stringify(offered),
+    )
+  ) {
     return
   }
-  check('…and is clocked by nothing until it is asked for', find(await rows(page, 'respawn-row'), mob) === undefined)
+  check(
+    '…and is clocked by nothing until it is asked for',
+    find(await rows(page, 'respawn-row'), mob) === undefined,
+  )
 
-  await clickAway(page, `[data-testid="respawn-candidate"][data-respawn-mob="${mob}"] [data-testid="respawn-watch"]`)
+  await clickAway(
+    page,
+    `[data-testid="respawn-candidate"][data-respawn-mob="${mob}"] [data-testid="respawn-watch"]`,
+  )
 
   // THE DEFECT ITSELF. Before round 8 this settle timed out: the store had the watch, the module had
   // bumped its revision and pushed, and the delta carried no row for the mob whose button had just
   // flipped to Unwatch.
-  const clocked = await settle(() => rows(page, 'respawn-row'), (r) => find(r, mob) !== undefined, {
-    timeoutMs: 30_000
-  })
+  const clocked = await settle(
+    () => rows(page, 'respawn-row'),
+    (r) => find(r, mob) !== undefined,
+    {
+      timeoutMs: 30_000,
+    },
+  )
   const row = find(clocked, mob)
-  if (!check('watching a kill from days ago produces a VISIBLE row', row !== undefined, JSON.stringify(clocked))) return
+  if (
+    !check(
+      'watching a kill from days ago produces a VISIBLE row',
+      row !== undefined,
+      JSON.stringify(clocked),
+    )
+  )
+    return
 
   // …AND IT READS HONESTLY. The fixture camped this mob, so the fold learned real gaps from it and
   // the row IS numbered — by an estimate that elapsed days ago. "due 141h 12m ago" is a number that
   // grows forever about a mob this app knows nothing about, so the row says the fact instead.
-  check('…marked as the state it is in, not as a running clock', row.stale === 'true', JSON.stringify(row))
+  check(
+    '…marked as the state it is in, not as a running clock',
+    row.stale === 'true',
+    JSON.stringify(row),
+  )
   check('…saying its estimate is long gone', row.text.includes('due long ago'), row.text)
   check('…rather than reciting arithmetic about it', !/due \d/.test(row.text), row.text)
   // AND IT IS STILL A WHOLE ROW: the rung, the estimate and the working it measured are all there,
@@ -99,13 +130,24 @@ export async function stepAncientKillIsWatchable(page: Page, mob: string): Promi
   check(
     '…while keeping its rung and the gaps behind it',
     row.source === 'observed' && row.text.includes('your kills') && row.text.includes('gaps:'),
-    JSON.stringify(row)
+    JSON.stringify(row),
   )
 
   // AND IT LEAVES THE APP AS IT FOUND IT — the row's own Unwatch, which a stale row still carries
   // because it is still a mob the user asked for.
-  await clickAway(page, `[data-testid="respawn-row"][data-respawn-mob="${mob}"] [data-testid="respawn-row-unwatch"]`)
-  const gone = await settle(() => rows(page, 'respawn-row'), (r) => find(r, mob) === undefined, { timeoutMs: 30_000 })
-  check('…and a long-gone row can still be unwatched from the row itself', find(gone, mob) === undefined, JSON.stringify(gone))
+  await clickAway(
+    page,
+    `[data-testid="respawn-row"][data-respawn-mob="${mob}"] [data-testid="respawn-row-unwatch"]`,
+  )
+  const gone = await settle(
+    () => rows(page, 'respawn-row'),
+    (r) => find(r, mob) === undefined,
+    { timeoutMs: 30_000 },
+  )
+  check(
+    '…and a long-gone row can still be unwatched from the row itself',
+    find(gone, mob) === undefined,
+    JSON.stringify(gone),
+  )
   await clickAway(page, '[data-testid="respawn-scope-zone"]')
 }

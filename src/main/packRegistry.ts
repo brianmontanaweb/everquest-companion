@@ -25,7 +25,7 @@ import {
   deriveSoundId,
   listPacks,
   userPacksRoot,
-  type CespManifest
+  type CespManifest,
 } from './sounds'
 import { USER_SOUNDS_PACK_ID } from '../shared/userSounds'
 import { packInstallHttpError } from '../shared/packInstall'
@@ -38,7 +38,7 @@ import type {
   RegistryPack,
   RegistryPackView,
   SoundData,
-  SoundPackManifest
+  SoundPackManifest,
 } from '../shared/types'
 
 const REGISTRY_URL = 'https://peonping.github.io/registry/index.json'
@@ -52,7 +52,7 @@ const PREVIEW_CACHE_MAX = 20 // LRU cap for previewed audio bytes
 const AUDIO_MIME: Record<string, string> = {
   '.wav': 'audio/wav',
   '.mp3': 'audio/mpeg',
-  '.ogg': 'audio/ogg'
+  '.ogg': 'audio/ogg',
 }
 
 interface RegistryIndex {
@@ -82,7 +82,11 @@ interface RegistryIndex {
  */
 function assertPackInstallable(pack: RegistryPack): void {
   if (!isSafePackId(pack.name)) throw new Error('pack name is not a valid identifier')
-  if (!isSafeSourceRepo(pack.source_repo) || !isSafeSourceRef(pack.source_ref) || !isSafeSourcePath(pack.source_path)) {
+  if (
+    !isSafeSourceRepo(pack.source_repo) ||
+    !isSafeSourceRef(pack.source_ref) ||
+    !isSafeSourcePath(pack.source_path)
+  ) {
     throw new Error('pack source fields are not valid')
   }
 }
@@ -112,9 +116,11 @@ export function sanitizeRegistryPacks(packs: RegistryPack[]): RegistryPack[] {
   })
   const dropped = packs.length - kept.length
   if (dropped > 0) {
-    const by = Object.entries(counts).map(([field, n]) => `${field}=${String(n)}`).join(' ')
+    const by = Object.entries(counts)
+      .map(([field, n]) => `${field}=${String(n)}`)
+      .join(' ')
     logError('main:packRegistry', {
-      message: `dropped ${String(dropped)} of ${String(packs.length)} registry pack(s) failing validation (${by})`
+      message: `dropped ${String(dropped)} of ${String(packs.length)} registry pack(s) failing validation (${by})`,
     })
   }
   return kept
@@ -134,7 +140,8 @@ function readDiskCache(): { at: number; packs: RegistryPack[] } | null {
     const parsed = JSON.parse(raw) as { at: number; packs: RegistryPack[] }
     // Neutralize a previously-poisoned on-disk cache on the way in: a row that fails validation
     // never re-enters the listing or an install, even if it was written before this guard existed.
-    if (parsed && Array.isArray(parsed.packs)) return { at: parsed.at, packs: sanitizeRegistryPacks(parsed.packs) }
+    if (parsed && Array.isArray(parsed.packs))
+      return { at: parsed.at, packs: sanitizeRegistryPacks(parsed.packs) }
   } catch {
     // no/invalid cache
   }
@@ -155,7 +162,7 @@ function writeDiskCache(packs: RegistryPack[]): void {
 function httpGetBuffer(
   url: string,
   onProgress?: (received: number, total: number | null) => void,
-  redirects = 0
+  redirects = 0,
 ): Promise<Buffer> {
   return new Promise((resolvePromise, reject) => {
     const req = httpsGet(url, { headers: { 'User-Agent': 'everquest-companion' } }, (res) => {
@@ -210,7 +217,7 @@ function registryFallback(err: unknown): RegistryListResult {
   return {
     packs: annotate(cached),
     fromCache: cached.length > 0,
-    error: err instanceof Error ? err.message : String(err)
+    error: err instanceof Error ? err.message : String(err),
   }
 }
 
@@ -248,7 +255,11 @@ export async function fetchRegistry(force = false): Promise<RegistryListResult> 
  * with an Uninstall button that (correctly) refuses.
  */
 function installedIds(): Set<string> {
-  return new Set(listPacks().map((p) => p.id).filter((id) => id !== USER_SOUNDS_PACK_ID))
+  return new Set(
+    listPacks()
+      .map((p) => p.id)
+      .filter((id) => id !== USER_SOUNDS_PACK_ID),
+  )
 }
 
 function annotate(packs: RegistryPack[]): RegistryPackView[] {
@@ -266,7 +277,10 @@ function annotate(packs: RegistryPack[]): RegistryPackView[] {
 
 /** raw.githubusercontent base for a pack's release tree (no trailing slash). */
 function rawBase(pack: RegistryPack): string {
-  const sub = pack.source_path && pack.source_path !== '.' ? pack.source_path.replace(/\\/g, '/').replace(/^\/|\/$/g, '') : ''
+  const sub =
+    pack.source_path && pack.source_path !== '.'
+      ? pack.source_path.replace(/\\/g, '/').replace(/^\/|\/$/g, '')
+      : ''
   const root = `https://raw.githubusercontent.com/${pack.source_repo}/${pack.source_ref}`
   return sub ? `${root}/${sub}` : root
 }
@@ -322,7 +336,7 @@ export async function fetchPackSounds(pack: RegistryPack): Promise<PackPreviewLi
     const sounds: PackPreviewSound[] = Object.entries(manifestSounds).map(([soundId, s]) => ({
       soundId,
       label: s.label,
-      file: idToFile.get(soundId) ?? s.file
+      file: idToFile.get(soundId) ?? s.file,
     }))
     previewListCache.set(pack.name, sounds)
     return { sounds }
@@ -338,7 +352,10 @@ export async function fetchPackSounds(pack: RegistryPack): Promise<PackPreviewLi
  * renderer builds a Blob URL. LRU-cached. `file` is validated against the pack's
  * preview listing to prevent fetching arbitrary repo paths.
  */
-export async function fetchPreviewSound(pack: RegistryPack, file: string): Promise<SoundData | null> {
+export async function fetchPreviewSound(
+  pack: RegistryPack,
+  file: string,
+): Promise<SoundData | null> {
   const listing = await fetchPackSounds(pack)
   if (!listing.sounds.some((s) => s.file === file)) return null
 
@@ -360,7 +377,10 @@ export async function fetchPreviewSound(pack: RegistryPack, file: string): Promi
     lruSet(cacheKey, data)
     return data
   } catch (err) {
-    logError('main:packRegistry', { message: `preview sound '${file}' for '${pack.name}' failed`, err })
+    logError('main:packRegistry', {
+      message: `preview sound '${file}' for '${pack.name}' failed`,
+      err,
+    })
     return null
   }
 }
@@ -387,7 +407,9 @@ function writeConvertedManifest(pack: RegistryPack, stageDir: string, cespRaw: s
   }
 
   const taken = new Set<string>()
-  const sounds = cespToManifestSounds(cesp, (category, file) => deriveSoundId(category, file, taken))
+  const sounds = cespToManifestSounds(cesp, (category, file) =>
+    deriveSoundId(category, file, taken),
+  )
   if (Object.keys(sounds).length === 0) {
     rmSync(stageDir, { recursive: true, force: true })
     throw new Error('no sounds after conversion')
@@ -401,7 +423,7 @@ function writeConvertedManifest(pack: RegistryPack, stageDir: string, cespRaw: s
     name: displayName,
     sounds,
     license: cesp.license ?? pack.license ?? 'see source repo',
-    source: { repo: pack.source_repo, ref: pack.source_ref }
+    source: { repo: pack.source_repo, ref: pack.source_ref },
   }
   writeFileSync(join(stageDir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n', 'utf8')
 }
@@ -418,7 +440,7 @@ export async function installPack(
   pack: RegistryPack,
   onProgress: (p: PackInstallProgress) => void,
   targetRootOverride?: string,
-  tarBufOverride?: Buffer
+  tarBufOverride?: Buffer,
 ): Promise<void> {
   const name = pack.name
   // TRAVERSAL GUARD — BEFORE any path is constructed. See assertPackInstallable: `name` and the
@@ -430,7 +452,8 @@ export async function installPack(
   // claim. Its bytes live in a different root, so an install here could not overwrite them —
   // but it WOULD put a second pack under that id in the listing, and the picker would show
   // whichever won the de-dupe. Refusing the name is one line and removes the question.
-  if (name === USER_SOUNDS_PACK_ID) throw new Error(`'${name}' is reserved for your imported sounds`)
+  if (name === USER_SOUNDS_PACK_ID)
+    throw new Error(`'${name}' is reserved for your imported sounds`)
   const packsRoot = targetRootOverride ?? userPacksRoot()
   const packDir = join(packsRoot, name)
 
@@ -442,7 +465,8 @@ export async function installPack(
   } else {
     const tarUrl = `https://github.com/${pack.source_repo}/archive/refs/tags/${pack.source_ref}.tar.gz`
     gz = await httpGetBuffer(tarUrl, (received, total) => {
-      if (total) onProgress({ name, phase: 'downloading', percent: Math.round((received / total) * 100) })
+      if (total)
+        onProgress({ name, phase: 'downloading', percent: Math.round((received / total) * 100) })
     })
   }
 
@@ -455,7 +479,9 @@ export async function installPack(
   // Detect it, then the pack root = <topDir>/<source_path>.
   const topDir = entries[0].name.split('/')[0]
   const rawSubPath = pack.source_path && pack.source_path !== '.' ? pack.source_path : ''
-  const rootPrefix = rawSubPath ? `${topDir}/${rawSubPath.replace(/\\/g, '/').replace(/\/$/, '')}/` : `${topDir}/`
+  const rootPrefix = rawSubPath
+    ? `${topDir}/${rawSubPath.replace(/\\/g, '/').replace(/\/$/, '')}/`
+    : `${topDir}/`
 
   // Stage into a fresh dir (write to a temp sibling, then swap) so a mid-install
   // failure never leaves a half-written pack shadowing a good one.

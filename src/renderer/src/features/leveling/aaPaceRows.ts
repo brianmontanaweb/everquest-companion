@@ -17,7 +17,7 @@ import {
   basisRead,
   pickRate,
   type BasisRead,
-  type RateBasis
+  type RateBasis,
 } from '../../../../shared/rateBasis'
 import { NONE, aaRateText, basisSpanText } from './rangeStatsRows'
 import { fmtDuration } from './levelChartGeometry'
@@ -63,11 +63,16 @@ const POINTS_TITLE = (word: RateBasis): string => `Ability points per hour of ${
  *  XP overlay refuses the same estimate for the same two reasons and must say the same words. */
 export const AA_ETA_BLOCKED_TITLE: Record<AaEtaBlocked, string> = {
   'no-pace': 'Fewer than two AA completions here, so there is no gap to project forward.',
-  stale: 'The last completion is far older than this window’s rhythm between them.'
+  stale: 'The last completion is far older than this window’s rhythm between them.',
 }
 
 /** The estimate's tooltip: the two numbers it is made of, nothing else. */
-function etaTitle(meanIntervalMs: number, samples: number, sinceLastMs: number, overdue: boolean): string {
+function etaTitle(
+  meanIntervalMs: number,
+  samples: number,
+  sinceLastMs: number,
+  overdue: boolean,
+): string {
   const base = `Mean gap over ${samples} completions (${fmtDuration(meanIntervalMs)}), minus the ${fmtDuration(sinceLastMs)} already waited.`
   return overdue ? `${base} Already past that gap.` : base
 }
@@ -93,7 +98,7 @@ function etaTile(eta: AaPace['eta']): AaPaceTile {
       unit: '',
       label: 'to next AA',
       inferred: true,
-      title: AA_ETA_BLOCKED_TITLE[eta.blocked]
+      title: AA_ETA_BLOCKED_TITLE[eta.blocked],
     }
   }
   return {
@@ -102,13 +107,14 @@ function etaTile(eta: AaPace['eta']): AaPaceTile {
     unit: '',
     label: 'to next AA',
     inferred: true,
-    title: etaTitle(eta.meanIntervalMs, eta.samples, eta.sinceLastMs, eta.overdue)
+    title: etaTitle(eta.meanIntervalMs, eta.samples, eta.sinceLastMs, eta.overdue),
   }
 }
 
 /** The potion tile's tooltip: the rule, and what this bottle has paid so far. */
 export function potionTitle(potion: AaPotionState): string {
-  const paid = potion.burnedPoints.length > 0 ? ` Paid so far: ${potion.burnedPoints.join(', ')}.` : ''
+  const paid =
+    potion.burnedPoints.length > 0 ? ` Paid so far: ${potion.burnedPoints.join(', ')}.` : ''
   return `Each completion since the quaff burns a charge.${paid}`
 }
 
@@ -122,8 +128,8 @@ function potionTile(potion: AaPotionState): AaPaceTile[] {
       unit: `of ${String(AA_POTION_CHARGES)}`,
       label: 'potion charges',
       inferred: true,
-      title: potionTitle(potion)
-    }
+      title: potionTitle(potion),
+    },
   ]
 }
 
@@ -135,7 +141,9 @@ function potionTile(potion: AaPotionState): AaPaceTile[] {
 export function aaPaceTiles(pace: AaPace, basis: RateBasis = RATE_BASIS_DEFAULT): AaPaceTile[] {
   const read = paceRead(pace, basis)
   const r = split(rate(pickRate(read, pace.perHourActive, pace.perHourWall), formatAaRate))
-  const p = split(rate(pickRate(read, pace.pointsPerHourActive, pace.pointsPerHourWall), formatPointRate))
+  const p = split(
+    rate(pickRate(read, pace.pointsPerHourActive, pace.pointsPerHourWall), formatPointRate),
+  )
   return [
     {
       id: 'rate',
@@ -143,7 +151,7 @@ export function aaPaceTiles(pace: AaPace, basis: RateBasis = RATE_BASIS_DEFAULT)
       unit: r.unit || 'AA/hr',
       label: 'this window',
       inferred: false,
-      title: RATE_TITLE(read.word)
+      title: RATE_TITLE(read.word),
     },
     {
       id: 'points',
@@ -151,10 +159,10 @@ export function aaPaceTiles(pace: AaPace, basis: RateBasis = RATE_BASIS_DEFAULT)
       unit: p.unit || 'pts/hr',
       label: 'points earned',
       inferred: false,
-      title: POINTS_TITLE(read.word)
+      title: POINTS_TITLE(read.word),
     },
     etaTile(pace.eta),
-    ...potionTile(pace.potion)
+    ...potionTile(pace.potion),
   ]
 }
 
@@ -219,7 +227,11 @@ export function aaNextText(eta: AaEta): string | null {
  * one is, and that divergence is the entire reading; an estimate wedged between them would
  * break the comparison the pair exists to offer.
  */
-export function aaPaceLine(stats: RangeStats, eta: AaEta, basis: RateBasis = RATE_BASIS_DEFAULT): string | null {
+export function aaPaceLine(
+  stats: RangeStats,
+  eta: AaEta,
+  basis: RateBasis = RATE_BASIS_DEFAULT,
+): string | null {
   const rates = aaRateText(stats, basis)
   if (rates === null) return null
   const next = aaNextText(eta)

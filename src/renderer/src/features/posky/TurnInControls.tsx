@@ -35,7 +35,7 @@ const EVIDENCE_HOVER: Record<DerivedEvidence, string> = {
   reward:
     'Turned in at least once: the reward for this quest is in your inventory export, and it cannot be obtained any other way.',
   'class-unlock':
-    'NOT counted as a turn-in. Your achievements export marks this quest’s reward as obtained, but it marks every reward of this class that way: the class unlock was granted (you confirmed the class, or spent a Primary Class Unlock Token) and the game completed its parts for you. Record a turn-in yourself if you did run it.'
+    'NOT counted as a turn-in. Your achievements export marks this quest’s reward as obtained, but it marks every reward of this class that way: the class unlock was granted (you confirmed the class, or spent a Primary Class Unlock Token) and the game completed its parts for you. Record a turn-in yourself if you did run it.',
 }
 
 /**
@@ -54,7 +54,7 @@ const EVIDENCE_HOVER: Record<DerivedEvidence, string> = {
 const EVIDENCE_BADGE: Record<DerivedEvidence, { label: string; color: 'info' | 'default' }> = {
   achievement: { label: 'Turned in · achievements', color: 'info' },
   reward: { label: 'Turned in · reward held', color: 'info' },
-  'class-unlock': { label: 'Class unlock', color: 'default' }
+  'class-unlock': { label: 'Class unlock', color: 'default' },
 }
 
 /** Why the undo control is dead on a derived row — the same claims, answering a different question. */
@@ -64,7 +64,7 @@ const EVIDENCE_UNDO: Record<DerivedEvidence, string> = {
     'This count comes from the reward in your inventory export, so it cannot be taken back here',
   // Unreachable while a class-unlock row has no count to take back, and written anyway because the
   // table is total and a silently wrong sentence is worse than an unused right one.
-  'class-unlock': 'Nothing to take back - this quest is not counted as turned in'
+  'class-unlock': 'Nothing to take back - this quest is not counted as turned in',
 }
 
 /**
@@ -91,7 +91,7 @@ const EVIDENCE_UNDO: Record<DerivedEvidence, string> = {
  */
 export function TurnInBadge({
   count,
-  evidence
+  evidence,
 }: {
   count: number
   evidence?: DerivedEvidence
@@ -157,7 +157,7 @@ function UndoTurnIn({ q, onUndo }: { q: QuestProgress; onUndo: () => void }): JS
 export function TurnInCounter({
   q,
   onRecordTurnIn,
-  onUndoTurnIn
+  onUndoTurnIn,
 }: {
   q: QuestProgress
   onRecordTurnIn: () => void

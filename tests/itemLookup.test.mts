@@ -25,7 +25,7 @@ import {
   parseQuestLinks,
   templateField,
   cleanSummary,
-  normalizeItemName
+  normalizeItemName,
 } from '../src/main/itemLookupParse'
 import { craftedByLabel } from '../src/shared/itemKnowledge'
 
@@ -141,7 +141,7 @@ test('Coin of Tash: LORE + the Tashania spell-quest association (the 42-tash exa
   assert.equal(k.quest, true) // has a relatedquest even without a QUEST ITEM flag
   assert.deepEqual(
     k.questUses.map((u) => u.quest),
-    ['Coin of Tash (Tashania)']
+    ['Coin of Tash (Tashania)'],
   )
   assert.equal(k.questUses[0].source, 'wiki')
   // statsblock <br> collapse to newlines, flags preserved
@@ -154,7 +154,7 @@ test('Glowing Coin of Tash: explicit QUEST ITEM flag + spell-quest link', () => 
   assert.equal(k.quest, true)
   assert.deepEqual(
     k.questUses.map((u) => u.quest),
-    ['Coin of Tash (Tashania spell)']
+    ['Coin of Tash (Tashania spell)'],
   )
 })
 
@@ -199,13 +199,15 @@ test('parseQuestLinks handles plain and piped links, dedupes', () => {
   const uses = parseQuestLinks('* [[A Quest]]\n* [[Page X|Label X]]\n* [[A Quest]]')
   assert.deepEqual(
     uses.map((u) => u.quest),
-    ['A Quest', 'Label X']
+    ['A Quest', 'Label X'],
   )
   assert.equal(uses[1].page, 'Page X')
 })
 
 test('cleanSummary strips markup + caps to one sentence', () => {
-  const s = cleanSummary("'''Bone Chips''' are used as a [[Necromancer]] reagent. And more prose here.")
+  const s = cleanSummary(
+    "'''Bone Chips''' are used as a [[Necromancer]] reagent. And more prose here.",
+  )
   assert.equal(s, 'Bone Chips are used as a Necromancer reagent.')
 })
 
@@ -271,13 +273,14 @@ test('parseDropSources: zone headings, mob bullets, and the identity of a source
 
   assert.deepEqual(parseDropSources(MULTI_ZONE), [
     { mob: 'a Sarnak flunkie', zone: 'Lake of Ill Omen' },
-    { mob: 'a Sarnak flunkie', zone: 'Overthere' }
+    { mob: 'a Sarnak flunkie', zone: 'Overthere' },
   ])
   // …which is the point of `(mob, zone)` being the identity: the same mob in two zones is two
   // facts. The same pair twice is one.
-  assert.deepEqual(parseDropSources('[[Overthere]]\n* [[a Sarnak flunkie]]\n* [[a Sarnak flunkie]]'), [
-    { mob: 'a Sarnak flunkie', zone: 'Overthere' }
-  ])
+  assert.deepEqual(
+    parseDropSources('[[Overthere]]\n* [[a Sarnak flunkie]]\n* [[a Sarnak flunkie]]'),
+    [{ mob: 'a Sarnak flunkie', zone: 'Overthere' }],
+  )
 
   // No heading ⇒ no zone key at all. Absent means UNKNOWN, and the object must not carry
   // `zone: undefined` (it is serialized into the committed DB).
@@ -290,12 +293,12 @@ test('parseDropSources: markup is decoration — wrappers, strikeouts, piped lin
   assert.deepEqual(parseDropSources(WRAPPED), [
     { mob: 'a gnoll high shaman', zone: 'Lake Rathetear' },
     { mob: 'a cold shade', zone: "Velketor's Labyrinth" },
-    { mob: 'a cold spectre', zone: "Velketor's Labyrinth" }
+    { mob: 'a cold spectre', zone: "Velketor's Labyrinth" },
   ])
   // A piped link states a page and a DISPLAY name; the display name is what the page calls the
   // place, so that is what is kept (law 2 — display raw).
   assert.deepEqual(parseDropSources('[[Freeport|East Freeport]]\n* [[Gregor Nasin]]'), [
-    { mob: 'Gregor Nasin', zone: 'East Freeport' }
+    { mob: 'Gregor Nasin', zone: 'East Freeport' },
   ])
 })
 
@@ -307,7 +310,7 @@ test('parseDropSources: what it REFUSES to read — sub-rows, prose bullets, pro
   // shadowed man; "* Newbie Mobs" names no page at all and is dropped (law 1).
   assert.deepEqual(parseDropSources(PROSE_HEADING), [
     { mob: 'a necro theurgist', zone: 'Befallen' },
-    { mob: 'a shadowed man' }
+    { mob: 'a shadowed man' },
   ])
 
   // Water Flask is that shape end to end (prose heading + prose bullet) and Golden Earring is a
@@ -321,7 +324,10 @@ test('parseDropSources: what it REFUSES to read — sub-rows, prose bullets, pro
 
 test('parseEraTag reads the page-top banner, and refuses everything that only looks like one', () => {
   // The shape, verbatim from Engraved Bone Pauldrons: the template, then the item template.
-  assert.equal(parseEraTag('{{Velious Era}}\n\n\n<onlyinclude>{{Itempage\n|notes = \n}}'), 'Velious')
+  assert.equal(
+    parseEraTag('{{Velious Era}}\n\n\n<onlyinclude>{{Itempage\n|notes = \n}}'),
+    'Velious',
+  )
   // The corpus's three spelling accidents, folded to one token each (case is NOT folded here —
   // that is the mapping table's job, so this function keeps reporting what the page said).
   assert.equal(parseEraTag('{{Velious  Era}}\n{{Itempage}}'), 'Velious')
@@ -440,7 +446,14 @@ test('a non-tradeskill |playercrafted stays PROSE — playerCrafted is never inf
   assert.equal(k.craftedBy, undefined)
   assert.equal(k.craftedNote, 'Non-Tradeskill (Quest)')
   assert.equal(
-    craftedByLabel({ name: 'Coin of Tash', lore: false, quest: false, questUses: [], cached: false, ...k }),
-    'Non-Tradeskill (Quest)'
+    craftedByLabel({
+      name: 'Coin of Tash',
+      lore: false,
+      quest: false,
+      questUses: [],
+      cached: false,
+      ...k,
+    }),
+    'Non-Tradeskill (Quest)',
   )
 })

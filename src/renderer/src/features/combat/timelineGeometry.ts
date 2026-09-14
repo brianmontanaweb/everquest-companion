@@ -145,7 +145,7 @@ export function timelineMetrics(tl: TimelineView, wrap: WrapSize): TimelineMetri
     labelFont: laneH >= 32 ? 13 : laneH >= 26 ? 12 : 10,
     axisFont: laneH >= 32 ? 12 : 10,
     labelMax: labelW >= 168 ? 26 : labelW >= 148 ? 23 : 20,
-    tickW: laneH >= 32 ? 3 : 2
+    tickW: laneH >= 32 ? 3 : 2,
   }
 }
 
@@ -189,8 +189,8 @@ function resistTip(e: TimelineEvent, who: string, p: TipPalette): TipContent {
     // because a bare `0` here would read as "hit for zero".
     rows: [
       { value: `${e.target ?? '?'} resisted ${whose} spell` },
-      { value: 'no damage - a fully-resisted cast', color: p.resist }
-    ]
+      { value: 'no damage - a fully-resisted cast', color: p.resist },
+    ],
   }
 }
 
@@ -201,8 +201,8 @@ function missTip(e: TimelineEvent, who: string, p: TipPalette): TipContent {
     subtitle: `${who} · ${fmtClock(e.t)}`,
     rows: [
       { value: `${who} vs ${e.target ?? '?'}` },
-      { value: 'no damage - an avoided swing', color: p.resist }
-    ]
+      { value: 'no damage - an avoided swing', color: p.resist },
+    ],
   }
 }
 
@@ -214,7 +214,7 @@ function hitTip(e: TimelineEvent, who: string, p: TipPalette): TipContent {
     // An observed amount is never `~`-prefixed: one tick is an observation, not a scaled estimate.
     title: `${e.lane}${e.crit ? ' · CRIT' : ''}`,
     subtitle: `${who} · ${fmtClock(e.t)}`,
-    rows
+    rows,
   }
 }
 
@@ -229,7 +229,7 @@ export function tickTooltip(e: TimelineEvent, p: TipPalette): TipContent {
 /** Hover model for one marker: what changed, and when it changed. */
 export function markerTooltip(m: TimelineMarker): TipContent {
   const rows: TooltipRow[] = [
-    { value: `${MARKER_VERB[m.kind]} ${fmtClock(m.t)}`, color: MARKER_COLOR[m.kind] }
+    { value: `${MARKER_VERB[m.kind]} ${fmtClock(m.t)}`, color: MARKER_COLOR[m.kind] },
   ]
   if (m.detail) rows.push({ value: m.detail })
   return { title: `${m.label} - ${MARKER_WORD[m.kind]}`, rows }
@@ -239,7 +239,10 @@ export function markerTooltip(m: TimelineMarker): TipContent {
 export function spanTooltip(s: StanceSpan): TipContent {
   return {
     title: `${s.group}: ${s.name}`,
-    rows: [{ value: `${fmtDur(s.start)} - ${fmtDur(s.end)}` }, { value: `${fmtDur(s.end - s.start)} active` }]
+    rows: [
+      { value: `${fmtDur(s.start)} - ${fmtDur(s.end)}` },
+      { value: `${fmtDur(s.end - s.start)} active` },
+    ],
   }
 }
 
@@ -252,5 +255,9 @@ export function timeTooltip(t: number, startTs: number, durationMs: number): Tip
   const edge = t <= 0 ? 'fight start' : t >= durationMs ? 'fight end' : ''
   const clock = formatTime(startTs ? startTs + t : 0)
   const subtitle = [edge, clock].filter((s) => s !== '').join(' · ')
-  return { title: fmtClock(Math.max(0, Math.min(durationMs, t))), ...(subtitle ? { subtitle } : {}), rows: [] }
+  return {
+    title: fmtClock(Math.max(0, Math.min(durationMs, t))),
+    ...(subtitle ? { subtitle } : {}),
+    rows: [],
+  }
 }

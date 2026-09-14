@@ -79,7 +79,7 @@ export function knowledgeFromDb(entry: ItemDbEntry): Omit<ItemKnowledge, 'cached
     name: entry.name ?? entry.page,
     lore: entry.lore ?? false,
     quest: entry.quest ?? false,
-    questUses: entry.questUses ?? []
+    questUses: entry.questUses ?? [],
   }
 }
 

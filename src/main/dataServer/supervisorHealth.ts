@@ -27,7 +27,7 @@ import {
   engineHealthCheck,
   healthFailureReason,
   isTransientHealthFailure,
-  type EngineHealth
+  type EngineHealth,
 } from './engineHealth'
 import {
   ENGINE_HEALTH_INTERVAL_MS,
@@ -36,7 +36,7 @@ import {
   ENGINE_LOCAL_SOCKET_STREAK,
   ENGINE_RESUME_GRACE_MS,
   type EngineTimer,
-  type HealthFailure
+  type HealthFailure,
 } from './engineProtocol'
 
 /**
@@ -98,7 +98,7 @@ export interface LaunchHealthWatch {
 export function createLaunchHealthWatch(
   deps: HealthWatchDeps,
   target: HealthWatchTarget,
-  on: HealthWatchListener
+  on: HealthWatchListener,
 ): LaunchHealthWatch {
   const watch = new HealthWatch(deps, target, on)
   watch.begin()
@@ -131,7 +131,7 @@ class HealthWatch implements LaunchHealthWatch {
   constructor(
     private readonly deps: HealthWatchDeps,
     private readonly target: HealthWatchTarget,
-    private readonly on: HealthWatchListener
+    private readonly on: HealthWatchListener,
   ) {
     this.intervalMs = deps.healthIntervalMs ?? ENGINE_HEALTH_INTERVAL_MS
     this.timeoutMs = deps.healthTimeoutMs ?? ENGINE_HEALTH_TIMEOUT_MS
@@ -157,7 +157,9 @@ class HealthWatch implements LaunchHealthWatch {
     this.round += 1
     this.cancel?.()
     this.cancel = null
-    this.deps.debug('data-server engine: the machine is suspending; the health watchdog stands down')
+    this.deps.debug(
+      'data-server engine: the machine is suspending; the health watchdog stands down',
+    )
   }
 
   resume(): void {
@@ -165,7 +167,7 @@ class HealthWatch implements LaunchHealthWatch {
     this.paused = false
     this.schedule(this.graceMs)
     this.deps.debug(
-      `data-server engine: the machine woke; the health watchdog asks again in ${String(this.graceMs)} ms`
+      `data-server engine: the machine woke; the health watchdog asks again in ${String(this.graceMs)} ms`,
     )
   }
 
@@ -207,7 +209,7 @@ class HealthWatch implements LaunchHealthWatch {
     }
     if (strike === null && isTransientHealthFailure(reason)) {
       this.deps.debug(
-        `data-server engine: health probe failed (${reason}); confirming on a fresh connection`
+        `data-server engine: health probe failed (${reason}); confirming on a fresh connection`,
       )
       this.ask(reason)
       return
@@ -226,7 +228,7 @@ class HealthWatch implements LaunchHealthWatch {
     this.localTries += 1
     this.deps.debug(
       `data-server engine: this app could not open a socket to port ${String(this.target.port)} ` +
-        `(${String(this.localTries)} in a row); the engine is serving and is not respawned`
+        `(${String(this.localTries)} in a row); the engine is serving and is not respawned`,
     )
     if (this.localTries >= this.localStreak && !this.localSaid) {
       this.localSaid = true
@@ -244,7 +246,7 @@ class HealthWatch implements LaunchHealthWatch {
       token: this.target.token,
       protocolVersion: this.target.protocolVersion,
       timeoutMs: this.timeoutMs,
-      timer: this.deps.timer
+      timer: this.deps.timer,
     })
   }
 

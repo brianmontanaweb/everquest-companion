@@ -112,25 +112,25 @@ export function QuestList({
   undoTurnIn,
   setItemCount,
   onOpenMob,
-  onOpenLoot
+  onOpenLoot,
 }: QuestListProps): JSX.Element {
   const onRecordTurnIn = useCallback(
     (questKey: string) => {
       void recordTurnIn(questKey)
     },
-    [recordTurnIn]
+    [recordTurnIn],
   )
   const onUndoTurnIn = useCallback(
     (questKey: string) => {
       void undoTurnIn(questKey)
     },
-    [undoTurnIn]
+    [undoTurnIn],
   )
   const onSetItemCount = useCallback<SetItemCount>(
     (name, count) => {
       void setItemCount(name, count)
     },
-    [setItemCount]
+    [setItemCount],
   )
   return (
     <Box sx={{ flexGrow: 1, overflow: 'auto' }}>

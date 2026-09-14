@@ -126,10 +126,10 @@ export function stampOf(nowMs: number): string {
 async function* pagesOf(c: Clients, t: ExportTable, page: number): AsyncGenerator<Row[]> {
   const order = t.key.join(', ')
   for (let offset = 0; offset < MAX_ROWS; offset += page) {
-    const rows = await c.query(
-      `SELECT * FROM ${t.table} ORDER BY ${order} LIMIT $1 OFFSET $2`,
-      [page, offset],
-    )
+    const rows = await c.query(`SELECT * FROM ${t.table} ORDER BY ${order} LIMIT $1 OFFSET $2`, [
+      page,
+      offset,
+    ])
     if (rows.length === 0) return
     yield rows
     if (rows.length < page) return
@@ -370,7 +370,9 @@ export async function cmdAnalyticsExport(ctx: AnalyticsCtx): Promise<void> {
   let bytes = 0
   let rows = 0
   for (const t of manifest.tables) {
-    console.log(`${t.table.padEnd(20)} ${String(t.rows).padStart(8)} row(s)  ${mb(t.bytes).padStart(10)}  ${t.sha256.slice(0, 16)}`)
+    console.log(
+      `${t.table.padEnd(20)} ${String(t.rows).padStart(8)} row(s)  ${mb(t.bytes).padStart(10)}  ${t.sha256.slice(0, 16)}`,
+    )
     bytes += t.bytes
     rows += t.rows
   }

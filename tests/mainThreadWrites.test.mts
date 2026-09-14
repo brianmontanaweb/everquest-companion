@@ -47,7 +47,8 @@ const read = (p: string): string => readFileSync(join(ROOT, p), 'utf8')
 
 /** Every `*Sync(` call that WRITES — the set the acceptance criterion names, plus the rename a
  *  temp+rename write ends with. Reads and `mkdirSync` are not what stalls a live path. */
-const WRITING_SYNC = /\b(appendFileSync|writeFileSync|fsyncSync|renameSync|copyFileSync|truncateSync)\s*\(/g
+const WRITING_SYNC =
+  /\b(appendFileSync|writeFileSync|fsyncSync|renameSync|copyFileSync|truncateSync)\s*\(/g
 
 /** How many synchronous WRITE calls a file makes. */
 function syncWrites(src: string): string[] {
@@ -61,7 +62,7 @@ test('THE FOUR LIVE-PATH WRITERS all reach disk asynchronously', () => {
   for (const file of [
     'src/main/telemetry/ring.ts',
     'src/main/data/overlayPersistence.ts',
-    'src/main/resist/ledgerFile.ts'
+    'src/main/resist/ledgerFile.ts',
   ]) {
     assert.match(read(file), /writeFileDurableAsync\(/, `${file} writes through the async door`)
   }
@@ -70,7 +71,14 @@ test('THE FOUR LIVE-PATH WRITERS all reach disk asynchronously', () => {
   // wearing a performance ticket's name.
   const durable = read('src/main/telemetry/durableWrite.ts')
   const body = durable.slice(durable.indexOf('export async function writeFileDurableAsync'))
-  const order = ['io.mkdir(dir)', 'io.open(tmp)', 'fh.write(data)', 'fh.sync()', 'fh.close()', 'io.rename(tmp, path)']
+  const order = [
+    'io.mkdir(dir)',
+    'io.open(tmp)',
+    'fh.write(data)',
+    'fh.sync()',
+    'fh.close()',
+    'io.rename(tmp, path)',
+  ]
   let at = -1
   for (const step of order) {
     const next = body.indexOf(step)
@@ -86,9 +94,15 @@ test('THE ITEM-KNOWLEDGE CACHE writes atomically and off the thread, on its exis
   // there is what serialises it.
   const src = read('src/main/itemLookup.ts')
   assert.equal(/\bwriteFileSync\s*\(/.test(src), false, 'no bare truncating write on a live path')
-  assert.match(src, /void writeFileDurableAsync\(dirname\(path\), path,/)
+  // Prettier may wrap this call's args onto their own lines; collapse whitespace runs to a
+  // single space before pinning the shape, so the wrap is invisible to the assertion.
+  assert.match(src.replace(/\s+/g, ' '), /void writeFileDurableAsync\(\s*dirname\(path\), path,/)
   assert.match(src, /let saving = false/)
-  assert.match(src, /if \(saving\) \{/, 'a save asked for mid-write re-arms rather than racing the temp')
+  assert.match(
+    src,
+    /if \(saving\) \{/,
+    'a save asked for mid-write re-arms rather than racing the temp',
+  )
 
   // …and the three DERIVED indexes this module used to build during main's module evaluation are
   // built on first use now, which is only ever a live lookup — see the file's own header for the
@@ -105,9 +119,15 @@ test('THE MOB-KNOWLEDGE CACHE writes atomically and off the thread, on its exist
   // resolved, silently gone. Same fix, same shape, asserted the same way.
   const src = read('src/main/mobLookup.ts')
   assert.equal(/\bwriteFileSync\s*\(/.test(src), false, 'no bare truncating write on a live path')
-  assert.match(src, /void writeFileDurableAsync\(dirname\(path\), path,/)
+  // Prettier may wrap this call's args onto their own lines; collapse whitespace runs to a
+  // single space before pinning the shape, so the wrap is invisible to the assertion.
+  assert.match(src.replace(/\s+/g, ' '), /void writeFileDurableAsync\(\s*dirname\(path\), path,/)
   assert.match(src, /let saving = false/)
-  assert.match(src, /if \(saving\) \{/, 'a save asked for mid-write re-arms rather than racing the temp')
+  assert.match(
+    src,
+    /if \(saving\) \{/,
+    'a save asked for mid-write re-arms rather than racing the temp',
+  )
 })
 
 test('EVERY SYNC SURVIVOR ON THESE PATHS IS A NAMED FINAL, and there are no others', () => {
@@ -115,7 +135,11 @@ test('EVERY SYNC SURVIVOR ON THESE PATHS IS A NAMED FINAL, and there are no othe
   const errorLog = read('src/main/errorLog.ts')
   assert.deepEqual(syncWrites(errorLog).sort(), ['appendFileSync', 'writeFileSync'])
   const flush = errorLog.slice(errorLog.indexOf('export function flushErrorLogSync('))
-  assert.deepEqual(syncWrites(flush).sort(), ['appendFileSync', 'writeFileSync'], 'both live in the final')
+  assert.deepEqual(
+    syncWrites(flush).sort(),
+    ['appendFileSync', 'writeFileSync'],
+    'both live in the final',
+  )
 
   // ring: no raw sync write at all, and the ONE synchronous durable write is the quit final's.
   const ring = read('src/main/telemetry/ring.ts')
@@ -144,7 +168,10 @@ test('A QUIT FINAL WRITES THROUGH ITS OWN SCRATCH FILE — never a torn file for
   // And whoever deletes the plain temp deletes the tagged one — "off" that leaves events in a
   // sibling file is the switch lying in a different filename.
   const ring = read('src/main/telemetry/ring.ts')
-  const remove = ring.slice(ring.indexOf('function removeRingFiles('), ring.indexOf('export function dropRing('))
+  const remove = ring.slice(
+    ring.indexOf('function removeRingFiles('),
+    ring.indexOf('export function dropRing('),
+  )
   assert.match(remove, /rmSync\(tempPathFor\(path\), \{ force: true \}\)/)
   assert.match(remove, /rmSync\(tempPathFor\(path, FINAL_TEMP_TAG\), \{ force: true \}\)/)
   // The two writers that CAN be dropped are dropped instead of racing: the overlay's periodic saver
@@ -158,7 +185,7 @@ test('A QUIT FINAL WRITES THROUGH ITS OWN SCRATCH FILE — never a torn file for
   // ownership guard in front rather than loosened to stop checking.
   assert.match(
     read('src/main/data/overlayPersistence.ts'),
-    /export function saveUserOverlay\(register: OverlayRegister\): void \{\r?\n {2}if \(!appOwnsArtifacts\(\)\) return\r?\n {2}if \(writing\) return/
+    /export function saveUserOverlay\(register: OverlayRegister\): void \{\r?\n {2}if \(!appOwnsArtifacts\(\)\) return\r?\n {2}if \(writing\) return/,
   )
   assert.match(read('src/main/resist/ledgerFile.ts'), /if \(writing\) return \{ status: 'busy' \}/)
 })
@@ -170,12 +197,20 @@ test('WHAT IS OWED STAYS OWED UNTIL THE BYTES ARE DOWN — the quit final must h
   // outstanding, and the process exited before the threadpool write landed. The telemetry e2e's
   // restart assertions went red on exactly that — the heartbeat's records never reached disk.
   const ring = read('src/main/telemetry/ring.ts')
-  const drain = ring.slice(ring.indexOf('async function drainWrites('), ring.indexOf('export function writeRing('))
+  const drain = ring.slice(
+    ring.indexOf('async function drainWrites('),
+    ring.indexOf('export function writeRing('),
+  )
   assert.match(drain, /const pending = owed/)
-  assert.equal(drain.match(/if \(owed === pending\) owed = null/g)?.length, 2, 'discharged on both settle arms')
+  assert.equal(
+    drain.match(/if \(owed === pending\) owed = null/g)?.length,
+    2,
+    'discharged on both settle arms',
+  )
   assert.ok(
-    drain.indexOf('await writeFileDurableAsync') < drain.indexOf('if (owed === pending) owed = null'),
-    'owed is discharged AFTER the bytes are down, never before'
+    drain.indexOf('await writeFileDurableAsync') <
+      drain.indexOf('if (owed === pending) owed = null'),
+    'owed is discharged AFTER the bytes are down, never before',
   )
 })
 
@@ -212,14 +247,26 @@ test('THE OVERTURN: storeFile.ts is not on a live path, and a settings write nev
   const constructAt = storeSrc.indexOf('new Store<StoreShape>(')
   assert.ok(migrateAt > 0 && constructAt > 0)
   assert.ok(migrateAt < constructAt, 'the migration runs before the store is constructed')
-  assert.equal(storeSrc.match(/migrateStoreFile\(/g)?.length, 1, 'once per launch, from module scope')
+  assert.equal(
+    storeSrc.match(/migrateStoreFile\(/g)?.length,
+    1,
+    'once per launch, from module scope',
+  )
 
   // (b) A routine `store.set(...)` is electron-store's write, and conf has gone through the
   //     `atomically` package since v10. That writer is `atomically.writeFileSync` inside
   //     node_modules — not something this repo moves off the thread by editing its own source.
   const conf = readFileSync(require.resolve('conf/dist/source/index.js'), 'utf8')
-  assert.match(conf, /atomically\.writeFileSync\(/, 'conf still writes the settings file synchronously')
-  assert.equal(/\bwriteFileSync\s*\(/.test(read('src/main/storeFile.ts')), false, 'and storeFile is not that writer')
+  assert.match(
+    conf,
+    /atomically\.writeFileSync\(/,
+    'conf still writes the settings file synchronously',
+  )
+  assert.equal(
+    /\bwriteFileSync\s*\(/.test(read('src/main/storeFile.ts')),
+    false,
+    'and storeFile is not that writer',
+  )
 
   // (c) …so the sync calls in storeFile.ts stay, and the file says why in its own header. This
   //     assertion exists so a later reader finds the argument instead of re-opening the ticket.

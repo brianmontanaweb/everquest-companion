@@ -60,7 +60,7 @@ function verifyRequiredSounds(packsRoot: string, packId: string): void {
     if (missing.length > 0) {
       logError('main:provisionPacks', {
         message: `'${packId}' installed but is missing sounds the shipped alerts reference`,
-        missing
+        missing,
       })
     }
   } catch (err) {
@@ -105,7 +105,7 @@ async function provisionPack(pack: RegistryPack, packsRoot: string): Promise<boo
  */
 export function packsToProvision(
   installed: ReadonlySet<string>,
-  removed?: ReadonlySet<string>
+  removed?: ReadonlySet<string>,
 ): RegistryPack[] {
   return DEFAULT_PACKS.filter((p) => !installed.has(p.name) && !removed?.has(p.name))
 }

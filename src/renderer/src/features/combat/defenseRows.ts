@@ -54,20 +54,20 @@ const ROWS: { key: keyof MissBreakdown; label: string; active: boolean; hint: st
     key: 'riposte',
     label: 'Riposte',
     active: true,
-    hint: 'Swings your riposte turned aside ("but YOU riposte!"). Each one also gives you a free counter-swing, which the game annotates (Riposte) on an ordinary damage line - counted separately below.'
+    hint: 'Swings your riposte turned aside ("but YOU riposte!"). Each one also gives you a free counter-swing, which the game annotates (Riposte) on an ordinary damage line - counted separately below.',
   },
   {
     key: 'miss',
     label: 'Missed you',
     active: false,
-    hint: 'The attacker simply failed to connect. Not a defensive skill of yours, so it is kept out of the "defended" rate.'
+    hint: 'The attacker simply failed to connect. Not a defensive skill of yours, so it is kept out of the "defended" rate.',
   },
   {
     key: 'absorb',
     label: 'Rune absorbed',
     active: false,
-    hint: 'A rune ate the blow. Not a defensive skill either - it is your buff, not your reflexes.'
-  }
+    hint: 'A rune ate the blow. Not a defensive skill either - it is your buff, not your reflexes.',
+  },
 ]
 
 /**
@@ -80,7 +80,7 @@ const ROWS: { key: keyof MissBreakdown; label: string; active: boolean; hint: st
  */
 export function defenseRows(d: DefenseView): DefenseRow[] {
   const shown = ROWS.filter((r) => r.active || d.avoided[r.key] > 0).sort(
-    (a, b) => d.avoided[b.key] - d.avoided[a.key]
+    (a, b) => d.avoided[b.key] - d.avoided[a.key],
   )
   const max = Math.max(1, ...shown.map((r) => d.avoided[r.key]))
   return shown.map((r) => ({
@@ -90,7 +90,7 @@ export function defenseRows(d: DefenseView): DefenseRow[] {
     pct: d.rates[r.key],
     fill: (d.avoided[r.key] / max) * 100,
     active: r.active,
-    hint: r.hint
+    hint: r.hint,
   }))
 }
 
@@ -113,7 +113,7 @@ export function defenseHeadlineParts(d: DefenseView): string[] {
   if (d.swings === 0) return ['nothing has swung at you yet']
   return [
     `${Math.round(d.avoidedPct)}% of ${d.swings} swings at you avoided`,
-    `${Math.round(d.defendedPct)}% by block/parry/dodge/riposte`
+    `${Math.round(d.defendedPct)}% by block/parry/dodge/riposte`,
   ]
 }
 

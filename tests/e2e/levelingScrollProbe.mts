@@ -139,7 +139,9 @@ function analyse(p: Profile, topN: number): { busyMs: number; top: { fn: string;
     busy += us
     // `(program)`/`(garbage collector)` are kept: they are real occupancy and dropping them would
     // flatter whichever arm provoked the most allocation.
-    const where = node.callFrame.url ? `${fn || '(anonymous)'} @ ${node.callFrame.url.split('/').pop() ?? ''}:${String(node.callFrame.lineNumber + 1)}` : fn || '(anonymous)'
+    const where = node.callFrame.url
+      ? `${fn || '(anonymous)'} @ ${node.callFrame.url.split('/').pop() ?? ''}:${String(node.callFrame.lineNumber + 1)}`
+      : fn || '(anonymous)'
     self.set(where, (self.get(where) ?? 0) + us)
   }
   const top = [...self.entries()]
@@ -193,7 +195,7 @@ function installReactHook(): void {
     },
     emit(): void {
       /* see on() */
-    }
+    },
   }
 }
 
@@ -210,7 +212,8 @@ function startCounters(contentSel: string): void {
     mutations += records.length
   })
   const root = document.querySelector(contentSel)
-  if (root) mo.observe(root, { childList: true, subtree: true, attributes: true, characterData: true })
+  if (root)
+    mo.observe(root, { childList: true, subtree: true, attributes: true, characterData: true })
 
   let po: PerformanceObserver | null = null
   try {
@@ -226,7 +229,9 @@ function startCounters(contentSel: string): void {
     po = null
   }
 
-  const eq = (w.eq ?? {}) as { onModuleChanged?: (cb: (c: { moduleId: string }) => void) => () => void }
+  const eq = (w.eq ?? {}) as {
+    onModuleChanged?: (cb: (c: { moduleId: string }) => void) => () => void
+  }
   const offPush = eq.onModuleChanged
     ? eq.onModuleChanged((c) => {
         pushes[c.moduleId] = (pushes[c.moduleId] ?? 0) + 1
@@ -242,7 +247,7 @@ function startCounters(contentSel: string): void {
       mutations,
       longtasks,
       longtaskMs,
-      pushes
+      pushes,
     }
   }
 }
@@ -269,7 +274,9 @@ async function settleQuiet(page: Page): Promise<boolean> {
   })
   const deadline = Date.now() + QUIET_TIMEOUT_MS
   while (Date.now() < deadline) {
-    const since = await page.evaluate(() => Date.now() - ((window as unknown as Record<string, number>).__probeLastPush ?? 0))
+    const since = await page.evaluate(
+      () => Date.now() - ((window as unknown as Record<string, number>).__probeLastPush ?? 0),
+    )
     if (since >= QUIET_MS) return true
     await page.evaluate((ms) => new Promise((r) => setTimeout(r, ms)), 400)
   }
@@ -317,7 +324,7 @@ function census(): Record<string, number> {
     zoneRows: document.querySelectorAll('[data-testid="leveling-range-zone-row"]').length,
     muiRoots: document.querySelectorAll('[class*="Mui"]').length,
     domNodes: document.querySelectorAll('*').length,
-    scrollHeight: document.querySelector('[data-testid="app-content"]')?.scrollHeight ?? 0
+    scrollHeight: document.querySelector('[data-testid="app-content"]')?.scrollHeight ?? 0,
   }
 }
 
@@ -352,7 +359,7 @@ async function setHoverSuppressed(page: Page, off: boolean): Promise<void> {
       st.textContent = `${sel} *, ${sel} { pointer-events: none !important; }`
       document.head.appendChild(st)
     },
-    { on: off, sel: CONTENT }
+    { on: off, sel: CONTENT },
   )
 }
 
@@ -370,7 +377,7 @@ async function runArm(
   page: Page,
   cdp: CDPSession,
   arm: string,
-  opts: { hover: boolean; ticks?: number; idleMs?: number }
+  opts: { hover: boolean; ticks?: number; idleMs?: number },
 ): Promise<ArmResult> {
   await scrollTop(page)
   await setHoverSuppressed(page, !opts.hover)
@@ -396,7 +403,15 @@ async function runArm(
   await setHoverSuppressed(page, false)
 
   const { busyMs, top } = analyse(profile, 12)
-  return { arm, busyMs, perTick: busyMs / Math.max(1, ticks), wallMs, counters, top, links: field.n }
+  return {
+    arm,
+    busyMs,
+    perTick: busyMs / Math.max(1, ticks),
+    wallMs,
+    counters,
+    top,
+    links: field.n,
+  }
 }
 
 /** The live arm's other half: keep the log growing while the scroll runs, so the engine is
@@ -436,13 +451,17 @@ function line(r: ArmResult): string {
 /** The launch, either way. The real-install arm has no `FixtureLog`, so it has no live arm — the
  *  probe must never write to the owner's real game log (AGENTS.md). Its live arm is whatever the
  *  running game is already appending, which is honest but not controllable, so it is skipped. */
-async function launch(): Promise<{ app: ElectronApplication; close: () => Promise<void>; log: FixtureLog | null }> {
+async function launch(): Promise<{
+  app: ElectronApplication
+  close: () => Promise<void>
+  log: FixtureLog | null
+}> {
   if (REAL) {
     const { app, close } = await launchOnRealInstall({}, 'leveling-scroll-probe')
     return { app, close, log: null }
   }
   const { app, close, log } = await launchOnFixture('e2e-leveling.log', {
-    inventory: 'Primitive_freeport-Inventory.txt'
+    inventory: 'Primitive_freeport-Inventory.txt',
   })
   return { app, close, log }
 }
@@ -470,8 +489,12 @@ async function main(): Promise<void> {
     await dismissFirstRunNotice(page)
     await page.evaluate((ms) => new Promise((r) => setTimeout(r, ms)), 2_000)
 
-    const hooked = await page.evaluate(() => (window as unknown as Record<string, number>).__probeCommits ?? -1)
-    console.log(`probe: react commit hook ${hooked >= 0 ? `INSTALLED (${String(hooked)} commits so far)` : 'NOT INSTALLED — commit counts are void'}`)
+    const hooked = await page.evaluate(
+      () => (window as unknown as Record<string, number>).__probeCommits ?? -1,
+    )
+    console.log(
+      `probe: react commit hook ${hooked >= 0 ? `INSTALLED (${String(hooked)} commits so far)` : 'NOT INSTALLED — commit counts are void'}`,
+    )
 
     // ONE CDP SESSION FOR THE WHOLE RUN. A session per arm, attached and detached five times, raced
     // playwright's own dispatcher into an `Assertion error` on the run that added the fifth
@@ -482,10 +505,14 @@ async function main(): Promise<void> {
     await cdp.send('Profiler.setSamplingInterval', { interval: 100 })
 
     const found = await settleLinks(page)
-    console.log(`probe: ${String(found)} linked spell names on the page${found === 0 ? ' — THE HOVER ARMS ARE VOID, nothing is under the cursor' : ''}`)
+    console.log(
+      `probe: ${String(found)} linked spell names on the page${found === 0 ? ' — THE HOVER ARMS ARE VOID, nothing is under the cursor' : ''}`,
+    )
     console.log(`probe: census ${JSON.stringify(await page.evaluate(census))}`)
 
-    console.log(`probe: waiting for engine silence… ${(await settleQuiet(page)) ? 'quiet' : 'STILL PUSHING (quiet arms are not quiet)'}`)
+    console.log(
+      `probe: waiting for engine silence… ${(await settleQuiet(page)) ? 'quiet' : 'STILL PUSHING (quiet arms are not quiet)'}`,
+    )
     results.push(await runArm(page, cdp, 'WARMUP', { hover: true }))
 
     await settleQuiet(page)
@@ -500,9 +527,11 @@ async function main(): Promise<void> {
     await settleQuiet(page)
     const scrollWall = Math.round(
       results.filter((r) => r.arm !== 'WARMUP').reduce((a, r) => a + r.wallMs, 0) /
-        Math.max(1, results.filter((r) => r.arm !== 'WARMUP').length)
+        Math.max(1, results.filter((r) => r.arm !== 'WARMUP').length),
     )
-    results.push(await runArm(page, cdp, 'IDLE_NOSCROLL', { hover: false, ticks: 0, idleMs: scrollWall }))
+    results.push(
+      await runArm(page, cdp, 'IDLE_NOSCROLL', { hover: false, ticks: 0, idleMs: scrollWall }),
+    )
 
     // LAST, because it moves the world the arms above measured — and only where the harness owns
     // the log file. Never on the owner's real install.
@@ -514,7 +543,9 @@ async function main(): Promise<void> {
       const stopAppending = startAppending(log)
       results.push(await runArm(page, cdp, 'LIVE_HOVER', { hover: true }))
       results.push(await runArm(page, cdp, 'LIVE_NOHOVER', { hover: false }))
-      results.push(await runArm(page, cdp, 'LIVE_IDLE', { hover: false, ticks: 0, idleMs: scrollWall }))
+      results.push(
+        await runArm(page, cdp, 'LIVE_IDLE', { hover: false, ticks: 0, idleMs: scrollWall }),
+      )
       console.log(`probe: appended ${String(stopAppending())} lines across the three live arms`)
     } else {
       console.log('probe: real install — no live arm (the probe never writes to the real game log)')

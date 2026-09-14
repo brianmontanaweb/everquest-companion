@@ -27,7 +27,7 @@ import {
   MAX_RING_THICKNESS_PX,
   MIN_RING_SIZE_PX,
   MIN_RING_THICKNESS_PX,
-  ringStrokeColor
+  ringStrokeColor,
 } from '@shared/presencePrefs'
 
 /**
@@ -83,7 +83,7 @@ function RingPreview({ prefs }: { prefs: CursorRingPrefs }): JSX.Element {
         borderColor: ringStrokeColor(prefs.colorHex),
         boxShadow:
           '0 0 0 1px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(0,0,0,0.6), 0 0 14px 4px rgba(0,0,0,0.28)',
-        flexShrink: 0
+        flexShrink: 0,
       }}
     />
   )
@@ -93,7 +93,7 @@ function RingPreview({ prefs }: { prefs: CursorRingPrefs }): JSX.Element {
  *  the cap is legible rather than felt. */
 function RingSliders({
   prefs,
-  onChange
+  onChange,
 }: {
   prefs: CursorRingPrefs
   onChange: (patch: Partial<CursorRingPrefs>) => void
@@ -149,14 +149,19 @@ const COLOR_INPUT_ID = 'pref-cursor-ring-color-input'
  */
 function RingColor({
   prefs,
-  onChange
+  onChange,
 }: {
   prefs: CursorRingPrefs
   onChange: (patch: Partial<CursorRingPrefs>) => void
 }): JSX.Element {
   return (
     <Stack sx={{ minWidth: 120 }}>
-      <Typography variant="caption" color="text.secondary" component="label" htmlFor={COLOR_INPUT_ID}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        component="label"
+        htmlFor={COLOR_INPUT_ID}
+      >
         Color
       </Typography>
       <input
@@ -171,7 +176,7 @@ function RingColor({
           padding: 0,
           border: 'none',
           background: 'none',
-          cursor: 'pointer'
+          cursor: 'pointer',
         }}
       />
     </Stack>
@@ -234,8 +239,8 @@ export function cursorRingSection(): PrefSection {
         label: 'Cursor ring',
         keywords:
           'cursor mouse pointer ring circle halo highlight find lost locate ultimate size thickness white color colour picker',
-        content: <CursorRingSetting />
-      }
-    ]
+        content: <CursorRingSetting />,
+      },
+    ],
   }
 }

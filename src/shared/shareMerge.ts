@@ -13,7 +13,7 @@ import {
   DEFAULT_OVERLAY_BG_ALPHA,
   deriveBgAlphaPrefs,
   normalizeOverlayBgAlpha,
-  type OverlayBgAlphaPrefs
+  type OverlayBgAlphaPrefs,
 } from './overlayBgAlpha'
 import {
   canonicalJson,
@@ -24,7 +24,7 @@ import {
   UI_PREF_SPECS,
   type SettingsBundleBody,
   type UiPrefMerge,
-  type UiPrefSpec
+  type UiPrefSpec,
 } from './shareSchema'
 
 /**
@@ -41,8 +41,8 @@ export function alertBehaviorKey(def: AlertDef): string {
       trigger: def.trigger,
       sound: def.sound,
       volume: def.volume ?? 1,
-      cooldownMs: def.cooldownMs ?? 2000
-    })
+      cooldownMs: def.cooldownMs ?? 2000,
+    }),
   )
 }
 
@@ -90,7 +90,7 @@ export interface AlertMergeItem {
 export function planAlertMerge(
   existing: readonly AlertDef[],
   incoming: readonly AlertDef[],
-  installedPackIds: Iterable<string>
+  installedPackIds: Iterable<string>,
 ): AlertMergeItem[] {
   const installed = new Set(installedPackIds)
   const byBehavior = new Map<string, AlertDef>()
@@ -107,7 +107,8 @@ export function planAlertMerge(
     const def = sanitizeAlertDef(raw)
     if (!def) continue
     const behaviorKey = alertBehaviorKey(def)
-    const missingPackId = installed.size && !installed.has(def.sound.packId) ? def.sound.packId : undefined
+    const missingPackId =
+      installed.size && !installed.has(def.sound.packId) ? def.sound.packId : undefined
 
     const twin = byBehavior.get(behaviorKey)
     if (twin) {
@@ -118,7 +119,7 @@ export function planAlertMerge(
         finalName: twin.name,
         reason: `Already have this - “${twin.name}”`,
         missingPackId,
-        behaviorKey
+        behaviorKey,
       })
       continue
     }
@@ -153,7 +154,7 @@ export function planAlertMerge(
 export function applyAlertMerge(
   existing: readonly AlertDef[],
   plan: readonly AlertMergeItem[],
-  selected?: ReadonlySet<string>
+  selected?: ReadonlySet<string>,
 ): { alerts: AlertDef[]; added: number; skipped: number; rekeyed: number } {
   const next = [...existing]
   let added = 0
@@ -222,7 +223,7 @@ export function bodyBgAlphaPrefs(body: SettingsBundleBody): OverlayBgAlphaPrefs 
   const incoming = body.overlays
   if (!incoming) return null
   const alphas = EXPORTABLE_OVERLAY_KINDS.map((k) => incoming[k]?.bgAlpha).filter(
-    (v): v is number => typeof v === 'number' && Number.isFinite(v)
+    (v): v is number => typeof v === 'number' && Number.isFinite(v),
   )
   return alphas.length ? deriveBgAlphaPrefs(alphas) : null
 }
@@ -264,21 +265,25 @@ function pushScalar(out: ScalarChange[], row: ScalarRowInput): void {
   }
 }
 
-function pushAlertPrefRows(out: ScalarChange[], body: SettingsBundleBody, ctx: ScalarContext): void {
+function pushAlertPrefRows(
+  out: ScalarChange[],
+  body: SettingsBundleBody,
+  ctx: ScalarContext,
+): void {
   if (!body.alertPrefs) return
   pushScalar(out, {
     id: 'alertPrefs.globalVolume',
     label: 'Global alert volume',
     current: ctx.alertPrefs.globalVolume,
     incoming: body.alertPrefs.globalVolume,
-    merge: 'replace'
+    merge: 'replace',
   })
   pushScalar(out, {
     id: 'alertPrefs.muted',
     label: 'Mute all alerts',
     current: ctx.alertPrefs.muted,
     incoming: body.alertPrefs.muted,
-    merge: 'replace'
+    merge: 'replace',
   })
   // JOS-222. Absent on both sides means OFF on both sides, and pushScalar's String(x ?? '')
   // makes absent and false the same reading — so a bundle written before this preference existed
@@ -288,7 +293,7 @@ function pushAlertPrefRows(out: ScalarChange[], body: SettingsBundleBody, ctx: S
     label: 'Always play all alerts',
     current: ctx.alertPrefs.alwaysPlayAll ?? false,
     incoming: body.alertPrefs.alwaysPlayAll ?? false,
-    merge: 'replace'
+    merge: 'replace',
   })
 }
 
@@ -302,7 +307,7 @@ function pushOverlayRows(out: ScalarChange[], body: SettingsBundleBody, ctx: Sca
       label: `${OVERLAY_KIND_LABEL[kind]} - background opacity`,
       current: cur?.bgAlpha,
       incoming: inc.bgAlpha,
-      merge: 'replace'
+      merge: 'replace',
     })
     // The other overlay row used to be `topN`, the 5-or-10 bar budget. It was retired (every row
     // renders, the pane scrolls), so a bundle that still carries it offers nothing to opt into.
@@ -320,7 +325,7 @@ function pushUiPrefRows(out: ScalarChange[], body: SettingsBundleBody, ctx: Scal
       label: spec.label,
       current: ctx.ui?.[spec.key] ?? '',
       incoming,
-      merge: spec.merge
+      merge: spec.merge,
     })
   }
 }
@@ -345,14 +350,14 @@ function pushBgAlphaRows(out: ScalarChange[], body: SettingsBundleBody, ctx: Sca
     label: 'Overlay transparency',
     current: `${String(Math.round(current.shared * 100))}%`,
     incoming: `${String(Math.round(incoming.shared * 100))}%`,
-    merge: 'replace'
+    merge: 'replace',
   })
   pushScalar(out, {
     id: 'overlayBgAlpha.independent',
     label: 'Independent transparency per overlay',
     current: alphaMode(current.independent),
     incoming: alphaMode(incoming.independent),
-    merge: 'replace'
+    merge: 'replace',
   })
 }
 
@@ -378,7 +383,11 @@ export function planScalarChanges(body: SettingsBundleBody, ctx: ScalarContext):
  * them (order-stable: yours first, then theirs) — nothing you had is dropped. Anything that
  * doesn't parse as an array falls back to 'replace' semantics rather than guessing.
  */
-export function mergeUiPref(spec: UiPrefSpec, current: string | undefined, incoming: string): string {
+export function mergeUiPref(
+  spec: UiPrefSpec,
+  current: string | undefined,
+  incoming: string,
+): string {
   if (spec.merge !== 'union') return incoming
   const parse = (s: string | undefined): string[] | null => {
     if (!s) return []

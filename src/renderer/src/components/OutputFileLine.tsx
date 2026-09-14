@@ -58,13 +58,22 @@
 // owns what the line SAYS; the caller owns where it sits.
 
 import { type JSX, useEffect, useState } from 'react'
-import { Box, Button, Collapse, Paper, Stack, Typography, type SxProps, type Theme } from '@mui/material'
+import {
+  Box,
+  Button,
+  Collapse,
+  Paper,
+  Stack,
+  Typography,
+  type SxProps,
+  type Theme,
+} from '@mui/material'
 import { formatDateTime } from '../lib/formatDate'
 import {
   outputAgeLabel,
   outputIsStale,
   outputLoadedLabel,
-  outputUpdatedMillis
+  outputUpdatedMillis,
 } from '../lib/outputFreshness'
 
 /** How often the age re-renders. Coarse, matching `formatAge`'s own resolution (UpdateChip). */
@@ -91,7 +100,7 @@ function Stamp({
   label,
   at,
   warn = false,
-  testId
+  testId,
 }: {
   label: string
   at: number | undefined
@@ -124,7 +133,7 @@ function Control({
   label,
   onClick,
   sx,
-  testId
+  testId,
 }: {
   label: string
   onClick: () => void
@@ -165,7 +174,7 @@ const FULL: LineChrome = {
   command: { fontFamily: 'monospace', fontWeight: 700, flexShrink: 0 },
   toggle: { flexShrink: 0, minWidth: 0, px: 0.75, py: 0 },
   panel: { m: 0, mt: 0.75, pl: 2.5 },
-  whyOnRow: true
+  whyOnRow: true,
 }
 
 /**
@@ -185,7 +194,7 @@ const QUIET: LineChrome = {
     border: 0,
     borderRadius: 0,
     bgcolor: 'transparent',
-    '& .MuiTypography-root': { lineHeight: 1.2 }
+    '& .MuiTypography-root': { lineHeight: 1.2 },
   },
   commandVariant: 'caption',
   command: { fontFamily: 'monospace', fontWeight: 500, color: 'text.disabled', flexShrink: 0 },
@@ -200,7 +209,7 @@ const QUIET: LineChrome = {
     // Sentence case, in the same grey as its neighbours: the affordance stays available and stops
     // shouting. A capitalised HOW beside two coarse timestamps reads as the row's headline.
     textTransform: 'none',
-    color: 'text.disabled'
+    color: 'text.disabled',
   },
   panel: {
     m: 0,
@@ -217,9 +226,9 @@ const QUIET: LineChrome = {
     border: 1,
     borderColor: 'divider',
     borderRadius: 1,
-    boxShadow: 2
+    boxShadow: 2,
   },
-  whyOnRow: false
+  whyOnRow: false,
 }
 
 export interface OutputFileLineProps {
@@ -280,7 +289,7 @@ export default function OutputFileLine({
   loadedAt,
   quiet = false,
   onRefresh,
-  testId
+  testId,
 }: OutputFileLineProps): JSX.Element {
   const [now, setNow] = useState(() => Date.now())
   const [showSteps, setShowSteps] = useState(false)
@@ -303,7 +312,12 @@ export default function OutputFileLine({
   const chrome = quiet ? QUIET : FULL
   return (
     <Paper variant="outlined" data-testid={testId} sx={chrome.root}>
-      <Stack direction="row" spacing={1} alignItems="baseline" sx={{ flexWrap: 'nowrap', minWidth: 0 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="baseline"
+        sx={{ flexWrap: 'nowrap', minWidth: 0 }}
+      >
         <Typography
           variant={chrome.commandVariant}
           sx={chrome.command}
@@ -316,7 +330,12 @@ export default function OutputFileLine({
           {command}
         </Typography>
         {chrome.whyOnRow && (
-          <Typography variant="caption" color="text.secondary" noWrap sx={{ minWidth: 0, flexShrink: 1 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            noWrap
+            sx={{ minWidth: 0, flexShrink: 1 }}
+          >
             {why}
           </Typography>
         )}
@@ -327,7 +346,12 @@ export default function OutputFileLine({
             for, and the two stamps to its right are the receipt: press it and "loaded 4d ago"
             becomes "loaded just now", in place, with no toast to read and dismiss. */}
         {onRefresh !== undefined && (
-          <Control label="Refresh" onClick={onRefresh} sx={chrome.toggle} testId={sub(testId, 'refresh')} />
+          <Control
+            label="Refresh"
+            onClick={onRefresh}
+            sx={chrome.toggle}
+            testId={sub(testId, 'refresh')}
+          />
         )}
         {/* The steps toggle sits BEFORE the age and never shrinks: it is a control, and the
             why-clause remains the one group allowed to give up room (the compact-bar contract). */}
@@ -369,11 +393,7 @@ export default function OutputFileLine({
       {/* Numbered because the ORDER is the content: opening the hoard after typing the command
           captures nothing, which is the whole failure this is here to prevent. */}
       <Collapse in={showSteps} unmountOnExit>
-        <Box
-          component="ol"
-          data-testid={sub(testId, 'steps')}
-          sx={chrome.panel}
-        >
+        <Box component="ol" data-testid={sub(testId, 'steps')} sx={chrome.panel}>
           {steps.map((s) => (
             <Typography key={s} component="li" variant="caption" color="text.secondary">
               {s}

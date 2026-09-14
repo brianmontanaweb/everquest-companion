@@ -45,7 +45,7 @@ function sourcesUnder(rel: string): string[] {
 
 const METERS = {
   'the damage meter': '../src/renderer/src/overlay/OverlayMeter.tsx',
-  'the healing meter': '../src/renderer/src/overlay/HealMeter.tsx'
+  'the healing meter': '../src/renderer/src/overlay/HealMeter.tsx',
 }
 
 test('NO HOOK AT ALL: `forward` appears in no setIgnoreMouseEvents call in the application', () => {
@@ -83,7 +83,11 @@ test('THE HOOK NOTE SURVIVES WHERE THE DECISION LIVES', () => {
   //
   // THE ONE THING STILL WORTH PINNING is that nothing anywhere reinstalls the hook, so the
   // check widens from one file to the whole main process rather than being deleted.
-  for (const rel of ['../src/main/windows.ts', '../src/main/overlayHover.ts', '../src/main/presenceEffects.ts']) {
+  for (const rel of [
+    '../src/main/windows.ts',
+    '../src/main/overlayHover.ts',
+    '../src/main/presenceEffects.ts',
+  ]) {
     assert.doesNotMatch(src(rel), /overlayForwardsMouse|overlayMouseForward/)
   }
 })
@@ -93,7 +97,10 @@ test('THE PIN IS REVEALED BY A HIT TEST, and it is scoped to the chrome — not 
   // The three answers, each mirroring the sensor that kind's renderer already runs. A meter that
   // published its whole window would take back exactly the click-through P3 exists to protect.
   assert.match(zones, /export type HotZoneStyle = 'chrome' \| 'window' \| 'none'/)
-  assert.match(zones, /const WHOLE_WINDOW_KINDS: OverlayKind\[\] = \['events', 'buffs', 'debuffs'\]/)
+  assert.match(
+    zones,
+    /const WHOLE_WINDOW_KINDS: OverlayKind\[\] = \['events', 'buffs', 'debuffs'\]/,
+  )
   // The strips never had a hover sensor and must never grow one here: their capture is their queue's.
   assert.match(zones, /if \(isStripKind\(kind\)\) return 'none'/)
   // MAIN ONLY EVER OPENS THE DOOR. A main-side release on the way out of the strip would close the
@@ -117,7 +124,7 @@ test('CAPTURE IS A SET OF NAMED REASONS, released independently', () => {
   // window can hold — nothing else in the renderer can fire while the window is ignoring the mouse.
   assert.match(
     chrome,
-    /export type CaptureReason = 'sensor' \| 'window' \| 'selector' \| 'popup' \| 'scroll'/
+    /export type CaptureReason = 'sensor' \| 'window' \| 'selector' \| 'popup' \| 'scroll'/,
   )
   // The union, not a boolean: the popup is `position: fixed` and therefore not inside the header
   // row, so moving into the open list fires the row's mouseleave. A single boolean would drop
@@ -188,7 +195,7 @@ test('the drill stays READ-ONLY while locked — only the selector was opened up
     assert.match(
       src(rel),
       /setDrill=\{locked \? null : setDrill\}/,
-      `${who} made its bars clickable while locked`
+      `${who} made its bars clickable while locked`,
     )
   }
 })
@@ -218,7 +225,11 @@ test('JOS-121: the scope word is out of the title bar and onto the panel floor',
     const text = src(rel)
     // Both meters say it from the floor, through the SAME helper the Combat tab uses — one
     // phrasing, three renderers (the healRows.ts rule).
-    assert.match(text, /<MeterPane[\s\S]*?scope=\{\{/, `${who} does not put its bars in the floor-bearing pane`)
+    assert.match(
+      text,
+      /<MeterPane[\s\S]*?scope=\{\{/,
+      `${who} does not put its bars in the floor-bearing pane`,
+    )
     assert.match(text, /label: chipLabel\(meterScope, roster\)/, `${who} spells the scope itself`)
     // …and neither hands the HEADER a scope prop any more. Read off the element itself rather
     // than the file: both meters still say `scope=` — one line lower, to the pane.
@@ -271,14 +282,18 @@ test('JOS-158: the meters state their aggregate in the panel, not in the title b
   // BOTH BAR BODIES, THROUGH THE ONE CRUMB. Neither may state the aggregate its own way.
   const BARS = {
     'the damage bars': '../src/renderer/src/overlay/meterBars.tsx',
-    'the healing bars': '../src/renderer/src/overlay/healBars.tsx'
+    'the healing bars': '../src/renderer/src/overlay/healBars.tsx',
   }
   for (const [who, rel] of Object.entries(BARS)) {
     const text = src(rel)
     assert.match(text, /total=\{total\}/, `${who} does not state the aggregate on the crumb row`)
     // The SAME figure the header used to print — moved, never recomputed, so the number a pinned
     // meter shows did not change on the day its label appeared.
-    assert.match(text, /formatRate\(seg\.outDps\)|formatHealRate\(seg\?\.healing\.hps \?\? 0\)/, `${who} recomputed it`)
+    assert.match(
+      text,
+      /formatRate\(seg\.outDps\)|formatHealRate\(seg\?\.healing\.hps \?\? 0\)/,
+      `${who} recomputed it`,
+    )
   }
   // …and the healing meter's restored/absorbed sentence is NOT here any more (JOS-358). It rode the
   // crumb's hover from JOS-158 until the owner ruled the overlay windows carry tooltips only in the
@@ -289,7 +304,7 @@ test('JOS-158: the meters state their aggregate in the panel, not in the title b
   assert.match(
     src('../src/renderer/src/features/combat/SegmentHeader.tsx'),
     /healTotalTitle\(seg\.healing\)/,
-    'the sentence has to still be printed SOMEWHERE — the tab is where it went'
+    'the sentence has to still be printed SOMEWHERE — the tab is where it went',
   )
 })
 

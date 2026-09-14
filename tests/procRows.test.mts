@@ -28,7 +28,7 @@ import {
   MIN_ACTIVE_SEC,
   ppmCell,
   procListRows,
-  procSummary
+  procSummary,
 } from '../src/renderer/src/features/combat/procRows'
 import { formatProcsText } from '../src/renderer/src/features/combat/procsCopy'
 import { MAX_WIDTH } from '../src/renderer/src/features/combat/copyText'
@@ -54,7 +54,7 @@ const LANES: ProcLaneView[] = [
     directHeal: 0,
     pctOfOut: 1.758,
     dpsContribution: 11.357,
-    linked: []
+    linked: [],
   },
   {
     name: 'Smiting Strike',
@@ -65,7 +65,7 @@ const LANES: ProcLaneView[] = [
     directHeal: 0,
     pctOfOut: 70.5,
     dpsContribution: 455.7,
-    linked: []
+    linked: [],
   },
   {
     name: 'Lifetap Strike',
@@ -76,7 +76,7 @@ const LANES: ProcLaneView[] = [
     directHeal: 474,
     pctOfOut: 1.01,
     dpsContribution: 6.54,
-    linked: []
+    linked: [],
   },
   {
     name: 'Slay Undead',
@@ -88,8 +88,8 @@ const LANES: ProcLaneView[] = [
     pctOfOut: 13.26,
     dpsContribution: 85.7,
     marginalDamage: 1455,
-    linked: []
-  }
+    linked: [],
+  },
 ]
 
 const SEG: SegmentView = {
@@ -127,8 +127,8 @@ const SEG: SegmentView = {
     stanceSwitches: 1,
     invocationSwitches: 2,
     lanes: LANES,
-    overall: rate(278, 420, { ppmActive: 238.29, ppmWall: 200.96, per100Swings: 66.19 })
-  }
+    overall: rate(278, 420, { ppmActive: 238.29, ppmWall: 200.96, per100Swings: 66.19 }),
+  },
 }
 
 // ── the ppm cell: absence is a FIRST-CLASS value (it still backs the drill's proc tag) ──
@@ -146,7 +146,10 @@ test('a rate below its sample floor is a DASH that states the floor — never 0'
 })
 
 test('a rate above its floor renders with the app’s ONE spelling and carries the caveat', () => {
-  const cell = ppmCell(rate(214, 420, { ppmActive: 183.4, ppmWall: 154.7, per100Swings: 50.95 }), 70)
+  const cell = ppmCell(
+    rate(214, 420, { ppmActive: 183.4, ppmWall: 154.7, per100Swings: 50.95 }),
+    70,
+  )
   assert.equal(cell.text, '183 ppm')
   assert.equal(cell.absent, false)
   // The active-time definition is STATED, not silently redefined: incoming damage extends it,
@@ -162,11 +165,11 @@ test('the list is ranked by COUNT, marks the ambiguous NAME, and states each lan
   assert.deepEqual(
     rows.map((r) => r.name),
     ['Smiting Strike', 'Slay Undead', 'Asp Venom Strike / Cobra Venom Strike', 'Lifetap Strike'],
-    'count desc — the engine’s poison/spell/slay grouping is NOT the reading order here'
+    'count desc — the engine’s poison/spell/slay grouping is NOT the reading order here',
   )
   assert.deepEqual(
     rows.map((r) => r.ppm),
-    ['183 ppm', '38.6 ppm', '12.9 ppm', '3.43 ppm']
+    ['183 ppm', '38.6 ppm', '12.9 ppm', '3.43 ppm'],
   )
   // `ambiguous` is about the LABEL. The count beside it is exact either way.
   const venom = rows.find((r) => r.origin === 'poison')
@@ -177,7 +180,17 @@ test('the list is ranked by COUNT, marks the ambiguous NAME, and states each lan
 
 test('a lane whose rate the engine withheld shows an em dash, never a zero', () => {
   const tiny: ProcLaneView[] = [
-    { name: 'Smiting Strike', count: 1, origin: 'spell', rate: rate(1, 4), directDamage: 0, directHeal: 0, pctOfOut: 0, dpsContribution: 0, linked: [] }
+    {
+      name: 'Smiting Strike',
+      count: 1,
+      origin: 'spell',
+      rate: rate(1, 4),
+      directDamage: 0,
+      directHeal: 0,
+      pctOfOut: 0,
+      dpsContribution: 0,
+      linked: [],
+    },
   ]
   const rows = procListRows({ ...SEG.procs, lanes: tiny, overall: rate(1, 4) })
   assert.equal(rows[0].ppm, ABSENT)
@@ -191,13 +204,16 @@ test('an older payload with no unified lanes still lists its poison Strikes', ()
     ...SEG.procs,
     lanes: undefined,
     overall: undefined,
-    strikes: [{ name: 'Weakening Strike', count: 2 }, { name: 'Smiting Strike', count: 9 }],
-    strikeCount: 11
+    strikes: [
+      { name: 'Weakening Strike', count: 2 },
+      { name: 'Smiting Strike', count: 9 },
+    ],
+    strikeCount: 11,
   }
   const rows = procListRows(legacy)
   assert.deepEqual(
     rows.map((r) => `${r.name} ${r.ppm} ×${r.count}`),
-    ['Smiting Strike - ×9', 'Weakening Strike - ×2']
+    ['Smiting Strike - ×9', 'Weakening Strike - ×2'],
   )
 })
 
@@ -206,7 +222,10 @@ test('the header readout is READ from the same view the rows are, never recomput
   // A selection with procs but too short to divide states the count alone — the honest shape,
   // and not a rate of zero.
   assert.equal(procSummary({ ...SEG.procs, overall: rate(3, 12) }).header, '3 procs')
-  assert.equal(procSummary({ ...SEG.procs, lanes: undefined, overall: undefined }).header, '0 procs')
+  assert.equal(
+    procSummary({ ...SEG.procs, lanes: undefined, overall: undefined }).header,
+    '0 procs',
+  )
 })
 
 // ── the same rows, as pasted text ───────────────────────────────────────────────────
@@ -224,10 +243,13 @@ test('formatProcsText is the panel’s three columns, and it fits the paste widt
       'Slay Undead                              38.6 ppm     45',
       // The `~` marks the NAME the game left ambiguous; the count beside it is exact.
       '~ Asp Venom Strike / Cobra Venom Strike  12.9 ppm     15',
-      'Lifetap Strike                           3.43 ppm      4'
-    ].join('\n')
+      'Lifetap Strike                           3.43 ppm      4',
+    ].join('\n'),
   )
-  assert.ok(text.split('\n').every((l) => l.length <= MAX_WIDTH), text)
+  assert.ok(
+    text.split('\n').every((l) => l.length <= MAX_WIDTH),
+    text,
+  )
   // Same law as every other copy block: no markdown for a destination to re-render.
   assert.ok(!/[*_`|#]/.test(text), text)
 })
@@ -236,15 +258,29 @@ test('a selection with no procs pastes one honest line, never an empty table', (
   const bare = { ...SEG, procs: { ...SEG.procs, lanes: [], overall: undefined } }
   assert.equal(
     formatProcsText(bare),
-    ['Procs - The Plane of Sky - overall · 1:23', 'No procs in this selection.'].join('\n')
+    ['Procs - The Plane of Sky - overall · 1:23', 'No procs in this selection.'].join('\n'),
   )
 })
 
 test('a rate-less selection pastes dashes, never zeroes', () => {
   const tiny: ProcLaneView[] = [
-    { name: 'Smiting Strike', count: 1, origin: 'spell', rate: rate(1, 4), directDamage: 0, directHeal: 0, pctOfOut: 0, dpsContribution: 0, linked: [] }
+    {
+      name: 'Smiting Strike',
+      count: 1,
+      origin: 'spell',
+      rate: rate(1, 4),
+      directDamage: 0,
+      directHeal: 0,
+      pctOfOut: 0,
+      dpsContribution: 0,
+      linked: [],
+    },
   ]
-  const text = formatProcsText({ ...SEG, activeSec: 3, procs: { ...SEG.procs, lanes: tiny, overall: rate(1, 4) } })
+  const text = formatProcsText({
+    ...SEG,
+    activeSec: 3,
+    procs: { ...SEG.procs, lanes: tiny, overall: rate(1, 4) },
+  })
   assert.equal(
     text,
     [
@@ -252,8 +288,8 @@ test('a rate-less selection pastes dashes, never zeroes', () => {
       '1 proc',
       '',
       'Proc            PPM  Count',
-      `Smiting Strike    ${ABSENT}      1`
-    ].join('\n')
+      `Smiting Strike    ${ABSENT}      1`,
+    ].join('\n'),
   )
   // Not one zero rate anywhere: `1 proc in a 3-second pull` is not `20 ppm`, and it is not
   // `0 ppm` either.

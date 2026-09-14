@@ -36,7 +36,7 @@ import {
   applyOverlayBounds,
   installOverlayBounds,
   markAppliedBounds,
-  overlayAppliedBounds
+  overlayAppliedBounds,
 } from './overlayBounds'
 // THE CURSOR WATCHDOG, and it is two modules for the reason this one is (JOS-381): the DECISION is
 // electron-free and node-tested (pointerWatch.ts, which also states the whole performance
@@ -240,7 +240,7 @@ export function WEB_PREFERENCES(preload: string): Electron.WebPreferences {
     // Chromium would otherwise NAVIGATE the window to a file dropped on it.
     navigateOnDragDrop: false,
     // Spellcheck downloads a dictionary from Google on first use; nothing here is prose input.
-    spellcheck: false
+    spellcheck: false,
   }
 }
 
@@ -267,7 +267,7 @@ export function WEB_PREFERENCES(preload: string): Electron.WebPreferences {
 export function hardenWebContents(wc: Electron.WebContents): void {
   const origins = {
     devServerUrl: process.env.ELECTRON_RENDERER_URL,
-    rendererDir: join(__dirname, '../renderer')
+    rendererDir: join(__dirname, '../renderer'),
   }
 
   wc.on('will-navigate', (event, url) => {
@@ -384,8 +384,8 @@ export function createMainWindow(): void {
       // page once it has loaded) is a window that visibly resizes its own contents on every
       // launch. Only this window carries it: the overlays and the cursor ring take
       // WEB_PREFERENCES() unchanged.
-      zoomFactor: getUiScale()
-    }
+      zoomFactor: getUiScale(),
+    },
   })
 
   // E2E: never show (and therefore never focus) the window — the harness drives it
@@ -836,7 +836,7 @@ export function createOverlayWindow(kind: OverlayKind): void {
     // Same hardened posture as the main window — one definition, every window (see
     // WEB_PREFERENCES). The overlay's preload is the LEANER bridge (preload/overlay.ts), but
     // its window-level privileges must not be a second, weaker opinion.
-    webPreferences: WEB_PREFERENCES(join(__dirname, '../preload/overlay.js'))
+    webPreferences: WEB_PREFERENCES(join(__dirname, '../preload/overlay.js')),
   })
   overlayWindows[kind] = w
 
@@ -849,7 +849,7 @@ export function createOverlayWindow(kind: OverlayKind): void {
 
   const wc = w.webContents
   wc.on('preload-error', (_e, preloadPath, error) =>
-    logError('overlay:preload-error', { preloadPath, error })
+    logError('overlay:preload-error', { preloadPath, error }),
   )
   forwardConsoleMessages(wc, 'overlay:console')
 
@@ -1067,7 +1067,8 @@ export function setOverlaysHidden(hidden: boolean): void {
     if (E2E || w.isVisible()) continue
     // An OPAQUE strip with nothing queued must not come back as a solid rectangle: its
     // visibility belongs to its queue, and the next card brings it up (JOS-40).
-    if (isStripKind(kind) && opaqueStripWindow[kind] === true && opaqueStripIdle[kind] !== false) continue
+    if (isStripKind(kind) && opaqueStripWindow[kind] === true && opaqueStripIdle[kind] !== false)
+      continue
     w.showInactive()
     // A gate restore can land while presence has the overlays PARKED (JOS-427) — the user may be
     // alt-tabbed away while a character-switch fold ends. The show must come up at the park's
@@ -1159,7 +1160,7 @@ export function createCursorRingWindow(bounds: ScreenRect): void {
     hasShadow: false,
     title: 'Cursor Ring',
     // Same hardened posture as every other window in this app — ONE definition (WEB_PREFERENCES).
-    webPreferences: WEB_PREFERENCES(join(__dirname, '../preload/cursor.js'))
+    webPreferences: WEB_PREFERENCES(join(__dirname, '../preload/cursor.js')),
   })
   cursorRingWindow = w
 
@@ -1183,7 +1184,7 @@ export function createCursorRingWindow(bounds: ScreenRect): void {
 
   const wc = w.webContents
   wc.on('preload-error', (_e, preloadPath, error) =>
-    logError('cursorRing:preload-error', { preloadPath, error })
+    logError('cursorRing:preload-error', { preloadPath, error }),
   )
   forwardConsoleMessages(wc, 'cursorRing:console')
 

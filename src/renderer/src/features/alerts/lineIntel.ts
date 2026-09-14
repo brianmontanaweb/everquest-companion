@@ -24,7 +24,7 @@ import {
   type ClassLevel,
   type PoisonSlowOffer,
   type RankUpgradeOffer,
-  type SpellLine
+  type SpellLine,
 } from '@shared/spellLines'
 import { useComboSnap } from '../profiles/ClassComboData'
 
@@ -42,7 +42,9 @@ function readDismissed(): Set<string> {
     const raw = localStorage.getItem(DISMISSED_KEY)
     if (!raw) return new Set()
     const parsed: unknown = JSON.parse(raw)
-    return Array.isArray(parsed) ? new Set(parsed.filter((v): v is string => typeof v === 'string')) : new Set()
+    return Array.isArray(parsed)
+      ? new Set(parsed.filter((v): v is string => typeof v === 'string'))
+      : new Set()
   } catch {
     // A corrupt/absent value must never take the alerts view down — start clean.
     return new Set()
@@ -82,7 +84,7 @@ export function useOfferDismissals(): OfferDismissals {
  */
 export function buildLines(
   catalog: SpellCatalog | null,
-  spellLastCast: Readonly<Record<string, number>>
+  spellLastCast: Readonly<Record<string, number>>,
 ): Map<string, SpellLine> {
   const names = new Map<string, string[]>()
   const push = (key: string, name: string): void => {
@@ -103,7 +105,7 @@ export function buildLines(
 /** The lines, memoized on the two inputs that can change them. */
 export function useSpellLines(
   catalog: SpellCatalog | null,
-  spellLastCast: Readonly<Record<string, number>>
+  spellLastCast: Readonly<Record<string, number>>,
 ): Map<string, SpellLine> {
   return useMemo(() => buildLines(catalog, spellLastCast), [catalog, spellLastCast])
 }
@@ -135,11 +137,14 @@ export interface ClassLevelChip extends ClassLevel {
  */
 export function classLevelChips(
   entry: SpellCatalogEntry,
-  resolved: readonly ClassAbbr[]
+  resolved: readonly ClassAbbr[],
 ): ClassLevelChip[] {
   return (entry.classLevels ?? [])
     .map((c) => ({ ...c, yours: resolved.includes(c.cls) }))
-    .sort((a, b) => Number(b.yours) - Number(a.yours) || a.level - b.level || a.cls.localeCompare(b.cls))
+    .sort(
+      (a, b) =>
+        Number(b.yours) - Number(a.yours) || a.level - b.level || a.cls.localeCompare(b.cls),
+    )
 }
 
 /** The upgrade-offer strip's state: the live offers plus the per-offer dismiss action. */
@@ -159,7 +164,7 @@ export interface UpgradeOffers {
  */
 export function useUpgradeOffers(
   alerts: readonly AlertDef[],
-  spellLastCast: Readonly<Record<string, number>>
+  spellLastCast: Readonly<Record<string, number>>,
 ): UpgradeOffers {
   const lines = useSpellLines(null, spellLastCast)
   const { dismissed, dismiss } = useOfferDismissals()
@@ -167,7 +172,7 @@ export function useUpgradeOffers(
   const offers = useMemo(
     // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives RankUpgradeOffer. Becomes a view descriptor when the source lands.
     () => detectRankUpgrades(alerts, [...lines.values()]).filter((o) => !dismissed.has(o.id)),
-    [alerts, lines, dismissed]
+    [alerts, lines, dismissed],
   )
 
   return { offers, dismiss }
@@ -189,13 +194,13 @@ export interface PoisonSlowOffers {
  */
 export function usePoisonSlowOffers(
   alerts: readonly AlertDef[],
-  poisonSlowSeen: PoisonSlowRecency | null | undefined
+  poisonSlowSeen: PoisonSlowRecency | null | undefined,
 ): PoisonSlowOffers {
   const { dismissed, dismiss } = useOfferDismissals()
   const offers = useMemo(
     // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives PoisonSlowOffer. Becomes a view descriptor when the source lands.
     () => detectPoisonSlowOffers(alerts, poisonSlowSeen).filter((o) => !dismissed.has(o.id)),
-    [alerts, poisonSlowSeen, dismissed]
+    [alerts, poisonSlowSeen, dismissed],
   )
   return { offers, dismiss }
 }

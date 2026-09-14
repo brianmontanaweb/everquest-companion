@@ -55,12 +55,17 @@ function bursts(): { back: number; lines: string[] }[] {
         // A swing that lands NOTHING: misses are first-class and damage-free (world-model law 8),
         // so this must move the hit-rate and leave every damage total byte-identical.
         `You try to slash ${PULL_TARGET}, but ${PULL_TARGET} parries!`,
-        swing('crush', hits[2])
-      ]
+        swing('crush', hits[2]),
+      ],
     },
     {
       back: 2,
-      lines: [swing('slash', hits[3]), swing('crush', hits[4]), swing('slash', hits[5]), swing('crush', hits[6])]
+      lines: [
+        swing('slash', hits[3]),
+        swing('crush', hits[4]),
+        swing('slash', hits[5]),
+        swing('crush', hits[6]),
+      ],
     },
     {
       back: 0,
@@ -69,9 +74,9 @@ function bursts(): { back: number; lines: string[] }[] {
         swing('crush', hits[8]),
         swing('slash', hits[9]),
         'You gain experience! (1.23%)',
-        `You have slain ${PULL_TARGET}!`
-      ]
-    }
+        `You have slain ${PULL_TARGET}!`,
+      ],
+    },
   ]
 }
 
@@ -86,7 +91,7 @@ export const PULL_LINES = bursts().reduce((n, b) => n + b.lines.length, 0)
  */
 export async function playPull(
   log: FixtureLog,
-  settleBetween: () => Promise<unknown> = async () => undefined
+  settleBetween: () => Promise<unknown> = async () => undefined,
 ): Promise<number> {
   const now = Date.now()
   let written = 0
@@ -132,11 +137,18 @@ export function playPetPull(log: FixtureLog): number {
   const petHit = (verb: string, target: string, amount: number): string =>
     `${PET_NAME} ${verb} ${target} for ${String(amount)} points of damage.`
   let written = 0
-  written += log.appendAt(new Date(now - 3000), `You crush ${PET_SECOND_TARGET} for 37 points of damage.`)
+  written += log.appendAt(
+    new Date(now - 3000),
+    `You crush ${PET_SECOND_TARGET} for 37 points of damage.`,
+  )
   written += log.appendAt(new Date(now - 2000), petHit('slashes', PET_SECOND_TARGET, 21))
   written += log.appendAt(new Date(now - 1000), petHit('cleaves', PET_SECOND_TARGET, 52))
   written += log.appendAt(new Date(now - 1000), `You crush ${PULL_TARGET} for 41 points of damage.`)
-  written += log.appendAt(new Date(now), petHit('slashes', PULL_TARGET, 46), `${PET_NAME} says, 'Following you, Master.'`)
+  written += log.appendAt(
+    new Date(now),
+    petHit('slashes', PULL_TARGET, 46),
+    `${PET_NAME} says, 'Following you, Master.'`,
+  )
   return written
 }
 
@@ -157,7 +169,7 @@ export function playPetOrder(log: FixtureLog): number {
   written += log.appendAt(new Date(now), `${PET_NAME} told you, 'Attacking ${PULL_TARGET} Master.'`)
   written += log.appendAt(
     new Date(now + 1000),
-    `${PET_NAME} slashes ${PULL_TARGET} for ${String(PET_BOUND_DAMAGE)} points of damage.`
+    `${PET_NAME} slashes ${PULL_TARGET} for ${String(PET_BOUND_DAMAGE)} points of damage.`,
   )
   return written
 }

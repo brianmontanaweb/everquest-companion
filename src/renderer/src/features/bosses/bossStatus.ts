@@ -38,7 +38,10 @@ export interface TargetStatus {
  * slain-by line) reads as undefeated.
  */
 function matchKey(name: string): string {
-  return name.toLowerCase().replace(/^(?:an?|the) /, '').trim()
+  return name
+    .toLowerCase()
+    .replace(/^(?:an?|the) /, '')
+    .trim()
 }
 
 /**
@@ -157,10 +160,7 @@ function killedTier(before: TargetStatus | undefined, after: TargetStatus): numb
  * this only ever sees LIVE transitions — history loaded on character switch celebrates
  * nothing (AGENTS.md: celebrations fire on live transitions; hydration seeds a baseline).
  */
-export function bossKills(
-  prev: Map<string, TargetStatus>,
-  next: TargetStatus[]
-): BossKill[] {
+export function bossKills(prev: Map<string, TargetStatus>, next: TargetStatus[]): BossKill[] {
   const out: BossKill[] = []
   for (const s of next) {
     if (!s.killed) continue

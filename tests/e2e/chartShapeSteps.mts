@@ -36,17 +36,24 @@ function shapeOf(page: Page): Promise<{
     const plots = ['[data-testid="leveling-aa-chart"]', '[data-testid="leveling-level-chart"]']
     const svgText = plots.reduce((n, s) => n + document.querySelectorAll(`${s} svg text`).length, 0)
     const labels = Array.from(document.querySelectorAll('[data-testid="leveling-axis-label"]')).map(
-      (e) => e.textContent ?? ''
+      (e) => e.textContent ?? '',
     )
-    const line = document.querySelector<SVGPolylineElement>('[data-testid="leveling-aa-chart"] svg polyline')
+    const line = document.querySelector<SVGPolylineElement>(
+      '[data-testid="leveling-aa-chart"] svg polyline',
+    )
     let aaTopY = Number.POSITIVE_INFINITY
     if (line) {
-      for (let i = 0; i < line.points.numberOfItems; i++) aaTopY = Math.min(aaTopY, line.points.getItem(i).y)
+      for (let i = 0; i < line.points.numberOfItems; i++)
+        aaTopY = Math.min(aaTopY, line.points.getItem(i).y)
     }
     const rects = Array.from(
-      document.querySelectorAll<SVGRectElement>('[data-testid="leveling-aa-chart"] [data-testid="leveling-zone-band"]')
+      document.querySelectorAll<SVGRectElement>(
+        '[data-testid="leveling-aa-chart"] [data-testid="leveling-zone-band"]',
+      ),
     )
-    const group = document.querySelector('[data-testid="leveling-aa-chart"] [data-testid="leveling-zone-bands"]')
+    const group = document.querySelector(
+      '[data-testid="leveling-aa-chart"] [data-testid="leveling-zone-bands"]',
+    )
     const svg = document.querySelector<SVGSVGElement>('[data-testid="leveling-aa-chart"] svg')
     return {
       svgText,
@@ -56,7 +63,7 @@ function shapeOf(page: Page): Promise<{
       strip: group?.getAttribute('data-strip') ?? '',
       stripH: rects[0]?.height.baseVal.value ?? 0,
       coverW: rects.reduce((m, r) => Math.max(m, r.width.baseVal.value), 0),
-      plotW: (svg?.viewBox.baseVal.width ?? 0) - 16
+      plotW: (svg?.viewBox.baseVal.width ?? 0) - 16,
     }
   })
 }
@@ -79,20 +86,30 @@ function shapeOf(page: Page): Promise<{
  */
 export async function checkChartShape(page: Page, window: string): Promise<void> {
   const s = await shapeOf(page)
-  check(`${window}: no text is drawn INSIDE the stretched plots (the labels are HTML)`, s.svgText === 0, `${String(s.svgText)} <text> node(s)`)
+  check(
+    `${window}: no text is drawn INSIDE the stretched plots (the labels are HTML)`,
+    s.svgText === 0,
+    `${String(s.svgText)} <text> node(s)`,
+  )
   check(
     `${window}: …and the axis labels still state plain numbers`,
     s.labels.length > 0 && s.labels.every((t) => /^[\d,]+$/.test(t)),
-    s.labels.join(' / ') || 'no labels'
+    s.labels.join(' / ') || 'no labels',
   )
   check(
     `${window}: the AA curve has headroom above it — it is not pinned to the top edge`,
     s.aaTopY > AA_PLOT_TOP + 1,
-    `topmost vertex at y=${s.aaTopY.toFixed(1)}, band opens at ${String(AA_PLOT_TOP)}`
+    `topmost vertex at y=${s.aaTopY.toFixed(1)}, band opens at ${String(AA_PLOT_TOP)}`,
   )
   if (s.bands === 1 && s.plotW > 0 && s.coverW >= s.plotW * 0.98) {
-    check(`${window}: one zone covering the window reads as quiet context`, s.strip === 'quiet', `${s.strip} strip, ${String(s.stripH)}u tall`)
+    check(
+      `${window}: one zone covering the window reads as quiet context`,
+      s.strip === 'quiet',
+      `${s.strip} strip, ${String(s.stripH)}u tall`,
+    )
   } else {
-    note(`${window}: ${String(s.bands)} zone band(s) — the strip is distinguishing, so full weight is correct`)
+    note(
+      `${window}: ${String(s.bands)} zone band(s) — the strip is distinguishing, so full weight is correct`,
+    )
   }
 }

@@ -36,13 +36,16 @@ import {
   parseAnnounce,
   stagedEngineNames,
   type EngineExitCause,
-  type EngineExitTrail
+  type EngineExitTrail,
 } from '../src/main/dataServer/engineProtocol'
 
 // ---- 1. the announce line --------------------------------------------------------------
 
 test('the announce line is read exactly as the contract spells it', () => {
-  assert.deepEqual(parseAnnounce('EQC-ENGINE PORT=51413 PROTOCOL=1'), { port: 51413, protocolVersion: 1 })
+  assert.deepEqual(parseAnnounce('EQC-ENGINE PORT=51413 PROTOCOL=1'), {
+    port: 51413,
+    protocolVersion: 1,
+  })
   // A pipe on Windows may carry the line ending a text-mode writer produced. A line ending is not
   // a protocol violation - `ndjson.ts` strips the same byte for the same reason.
   assert.deepEqual(parseAnnounce('EQC-ENGINE PORT=1 PROTOCOL=0\r'), { port: 1, protocolVersion: 0 })
@@ -61,7 +64,7 @@ test('NOTHING ELSE IS AN ANNOUNCE LINE — a loose regex would read a port out o
     'eqc-engine PORT=8080 PROTOCOL=1',
     'EQC-ENGINE PORT=8080',
     'EQC-ENGINE PORT=-1 PROTOCOL=1',
-    'EQC-ENGINE PORT=8080 PROTOCOL=x'
+    'EQC-ENGINE PORT=8080 PROTOCOL=x',
   ]) {
     assert.equal(parseAnnounce(line), null, `accepted \`${line}\``)
   }
@@ -72,7 +75,10 @@ test('a port outside the range a socket can hold is refused, PORT=0 included', (
   // gave it, and that is never 0. A literal `PORT=0` means it printed the argument, not the answer.
   assert.equal(parseAnnounce('EQC-ENGINE PORT=0 PROTOCOL=1'), null)
   assert.equal(parseAnnounce('EQC-ENGINE PORT=65536 PROTOCOL=1'), null)
-  assert.deepEqual(parseAnnounce('EQC-ENGINE PORT=65535 PROTOCOL=1'), { port: 65535, protocolVersion: 1 })
+  assert.deepEqual(parseAnnounce('EQC-ENGINE PORT=65535 PROTOCOL=1'), {
+    port: 65535,
+    protocolVersion: 1,
+  })
 })
 
 test('the host is a NUMERIC loopback literal, never the name localhost', () => {
@@ -87,7 +93,7 @@ test('the host is a NUMERIC loopback literal, never the name localhost', () => {
 test('the restart backoff climbs and then CAPS — an uncapped retry is a restart storm', () => {
   assert.deepEqual(
     [1, 2, 3, 4, 5].map((n) => engineRestartDelayMs(n)),
-    [...ENGINE_RESTART_BACKOFF_MS]
+    [...ENGINE_RESTART_BACKOFF_MS],
   )
   const ceiling = ENGINE_RESTART_BACKOFF_MS[ENGINE_RESTART_BACKOFF_MS.length - 1]
   assert.equal(engineRestartDelayMs(6), ceiling)
@@ -108,7 +114,7 @@ function cause(over: Partial<EngineExitCause> = {}): EngineExitCause {
     lifetimeMs: 40,
     attempt: 1,
     detail: null,
-    ...over
+    ...over,
   }
 }
 
@@ -127,10 +133,14 @@ test('EVERY REPORT IS A NAME/MESSAGE/CODE TRIPLE the error store can fingerprint
 })
 
 test('each failure mode is its OWN fingerprint — one bug must not bury another', () => {
-  const names = (['spawn-failed', 'announce-timeout', 'bad-announce', 'unhealthy', 'exited'] as const).map(
-    (failure) => engineExitStep(NEW_ENGINE_EXIT_TRAIL, cause({ failure }))?.log?.name
+  const names = (
+    ['spawn-failed', 'announce-timeout', 'bad-announce', 'unhealthy', 'exited'] as const
+  ).map((failure) => engineExitStep(NEW_ENGINE_EXIT_TRAIL, cause({ failure }))?.log?.name)
+  assert.equal(
+    new Set(names).size,
+    names.length,
+    `two failure modes share a name: ${names.join(', ')}`,
   )
-  assert.equal(new Set(names).size, names.length, `two failure modes share a name: ${names.join(', ')}`)
   assert.ok(!names.includes(ENGINE_EXIT_LOOP_ERROR_NAME), 'the collapsed name must be distinct too')
 })
 
@@ -177,8 +187,15 @@ test('the collapsed entry says WHY it stopped talking, and carries the last fail
 })
 
 test('a spawn that never produced a child reports no exit code rather than a fake one', () => {
-  const step = engineExitStep(NEW_ENGINE_EXIT_TRAIL, cause({ failure: 'spawn-failed', exitCode: null }))
-  assert.equal(step.log?.code, undefined, '`errorCodeOf` takes a number; absent is the honest answer')
+  const step = engineExitStep(
+    NEW_ENGINE_EXIT_TRAIL,
+    cause({ failure: 'spawn-failed', exitCode: null }),
+  )
+  assert.equal(
+    step.log?.code,
+    undefined,
+    '`errorCodeOf` takes a number; absent is the honest answer',
+  )
   assert.equal(step.log?.exitCode, null)
 })
 
@@ -197,7 +214,11 @@ test('THREE DEATHS AFTER SERVING ARE ONE ENTRY, and the count keeps climbing und
     trail = step.trail
     if (step.log) logs.push(step.log.name)
   }
-  assert.deepEqual(logs, [ENGINE_SERVED_CYCLE_ERROR_NAME], 'one entry per session, not one per death')
+  assert.deepEqual(
+    logs,
+    [ENGINE_SERVED_CYCLE_ERROR_NAME],
+    'one entry per session, not one per death',
+  )
   assert.equal(trail.cycles, 10, 'the count is still honest after the entry is written')
   assert.equal(trail.reported, true)
 })
@@ -206,7 +227,10 @@ test('the entry names the count and the last exit, and is its OWN fingerprint', 
   let trail = NEW_ENGINE_SERVED_TRAIL
   let log = null
   for (let i = 0; i < ENGINE_SERVED_CYCLE_STREAK; i += 1) {
-    const step = engineServedCycleStep(trail, cause({ detail: 'the engine went away', exitCode: 3221225477 }))
+    const step = engineServedCycleStep(
+      trail,
+      cause({ detail: 'the engine went away', exitCode: 3221225477 }),
+    )
     trail = step.trail
     log = step.log
   }
@@ -215,7 +239,11 @@ test('the entry names the count and the last exit, and is its OWN fingerprint', 
   assert.equal(log.code, 3221225477, 'the ten-digit code rides the machine-readable field')
   assert.match(log.message, /restarted 3 times this session after serving/)
   assert.match(log.message, /the engine went away/, 'the fold’s own detail, not a second one')
-  assert.notEqual(log.name, ENGINE_EXIT_LOOP_ERROR_NAME, 'a working engine dying is a different ticket')
+  assert.notEqual(
+    log.name,
+    ENGINE_EXIT_LOOP_ERROR_NAME,
+    'a working engine dying is a different ticket',
+  )
 })
 
 test('a death is a death however long the engine lived — this trail has no quick-exit window', () => {
@@ -262,7 +290,7 @@ test('the binary is PROBED, and the dev tree contributes RELEASE unless somebody
     appPath: 'C:/repo',
     resourcesPath: 'C:/app/resources',
     cwd: 'C:/repo',
-    binName: 'engined.exe'
+    binName: 'engined.exe',
   })
   assert.deepEqual(found, [
     // NO `target/debug` ANYWHERE IN THIS LIST. That is the whole ticket: a debug binary `cargo test`
@@ -271,26 +299,39 @@ test('the binary is PROBED, and the dev tree contributes RELEASE unless somebody
     // Packaged: beside the asar, which is where electron-builder's extraResources copies the
     // release binary (JOS-473). `tests/enginePackaging.test.mts` pins the config against THIS list.
     'C:/app/resources/engine/engined.exe',
-    'C:/app/resources/engined.exe'
+    'C:/app/resources/engined.exe',
   ])
 })
 
 test('THE DEBUG OPT-IN IS EXPLICIT, PER LAUNCH, AND WINS WHEN IT IS GIVEN (JOS-520)', () => {
-  const base = { appPath: 'C:/repo', resourcesPath: 'C:/app/resources', cwd: 'C:/repo', binName: 'e' } as const
+  const base = {
+    appPath: 'C:/repo',
+    resourcesPath: 'C:/app/resources',
+    cwd: 'C:/repo',
+    binName: 'e',
+  } as const
   // Opted in: debug FIRST, because a launch that asked for the debug engine must not be answered
   // with the release build sitting beside it.
   assert.deepEqual(engineBinaryCandidates({ ...base, profile: 'debug' }), [
     'C:/repo/engine/target/debug/e',
     'C:/repo/engine/target/release/e',
     'C:/app/resources/engine/e',
-    'C:/app/resources/e'
+    'C:/app/resources/e',
   ])
   // `release` is the default said out loud, and says exactly the same thing the default does.
-  assert.deepEqual(engineBinaryCandidates({ ...base, profile: 'release' }), engineBinaryCandidates(base))
+  assert.deepEqual(
+    engineBinaryCandidates({ ...base, profile: 'release' }),
+    engineBinaryCandidates(base),
+  )
   // AND THE PACKAGED CANDIDATES ARE UNTOUCHED BY EITHER — invariant 2. A packaged app has no
   // `engine/target/` at all, so the opt-in can only ever add a path that does not exist there.
   for (const profile of ['debug', 'release', undefined] as const) {
-    const packaged = engineBinaryCandidates({ appPath: 'C:/app/resources/app.asar', resourcesPath: 'RES', binName: 'e', profile })
+    const packaged = engineBinaryCandidates({
+      appPath: 'C:/app/resources/app.asar',
+      resourcesPath: 'RES',
+      binName: 'e',
+      profile,
+    })
     assert.deepEqual(packaged.slice(-2), ['RES/engine/e', 'RES/e'])
   }
 })
@@ -303,7 +344,7 @@ test('SELF-REVERTING BY CONSTRUCTION: the opt-in is a value, so absence is the r
   assert.deepEqual(engineBinaryCandidates(base), ['C:/r/engine/target/release/e'])
   assert.deepEqual(engineBinaryCandidates({ ...base, profile: 'debug' }), [
     'C:/r/engine/target/debug/e',
-    'C:/r/engine/target/release/e'
+    'C:/r/engine/target/release/e',
   ])
   assert.deepEqual(engineBinaryCandidates(base), ['C:/r/engine/target/release/e'])
 })
@@ -328,8 +369,13 @@ test('`cwd` covers the launch where getAppPath() is NOT the checkout', () => {
   // answers `…/out-e2e/main` and the engine tree is two levels above it. `cwd` is the checkout on
   // every launch a developer starts, so the two roots together answer where either alone does not.
   assert.deepEqual(
-    engineBinaryCandidates({ appPath: 'C:/repo/out-e2e/main', resourcesPath: '', cwd: 'C:/repo', binName: 'e' }),
-    ['C:/repo/out-e2e/main/engine/target/release/e', 'C:/repo/engine/target/release/e']
+    engineBinaryCandidates({
+      appPath: 'C:/repo/out-e2e/main',
+      resourcesPath: '',
+      cwd: 'C:/repo',
+      binName: 'e',
+    }),
+    ['C:/repo/out-e2e/main/engine/target/release/e', 'C:/repo/engine/target/release/e'],
   )
   // …and both roots honour the opt-in, in the same order.
   assert.deepEqual(
@@ -338,19 +384,20 @@ test('`cwd` covers the launch where getAppPath() is NOT the checkout', () => {
       resourcesPath: '',
       cwd: 'C:/repo',
       binName: 'e',
-      profile: 'debug'
+      profile: 'debug',
     }),
     [
       'C:/repo/out-e2e/main/engine/target/debug/e',
       'C:/repo/out-e2e/main/engine/target/release/e',
       'C:/repo/engine/target/debug/e',
-      'C:/repo/engine/target/release/e'
-    ]
+      'C:/repo/engine/target/release/e',
+    ],
   )
   // …and the common case, where they are the same string, probes each path ONCE.
-  assert.deepEqual(engineBinaryCandidates({ appPath: 'C:/r', resourcesPath: '', cwd: 'C:/r', binName: 'e' }), [
-    'C:/r/engine/target/release/e'
-  ])
+  assert.deepEqual(
+    engineBinaryCandidates({ appPath: 'C:/r', resourcesPath: '', cwd: 'C:/r', binName: 'e' }),
+    ['C:/r/engine/target/release/e'],
+  )
 })
 
 test('AN OUTRIGHT NAME WINS, and is still only a candidate (JOS-501)', () => {
@@ -364,13 +411,13 @@ test('AN OUTRIGHT NAME WINS, and is still only a candidate (JOS-501)', () => {
       resourcesPath: '',
       cwd: 'C:/r',
       binName: 'e',
-      override: 'C:/r/engine/target/release/e'
+      override: 'C:/r/engine/target/release/e',
     }),
     [
-      'C:/r/engine/target/release/e'
+      'C:/r/engine/target/release/e',
       // …and the release path is NOT repeated: the dedupe that keeps a doubled root from being
       // probed twice covers the override for free.
-    ]
+    ],
   )
 
   // IT OUTRANKS THE OPT-IN TOO, which is the standing `engine-boots.e2e.mts` rests on: the harness
@@ -381,9 +428,9 @@ test('AN OUTRIGHT NAME WINS, and is still only a candidate (JOS-501)', () => {
       resourcesPath: '',
       binName: 'e',
       profile: 'debug',
-      override: 'C:/r/engine/target/release/e'
+      override: 'C:/r/engine/target/release/e',
     }),
-    ['C:/r/engine/target/release/e', 'C:/r/engine/target/debug/e']
+    ['C:/r/engine/target/release/e', 'C:/r/engine/target/debug/e'],
   )
 
   // A BACKSLASH PATH IS THE ORDINARY CASE on Windows — `join()` produces one and every other
@@ -393,28 +440,36 @@ test('AN OUTRIGHT NAME WINS, and is still only a candidate (JOS-501)', () => {
       appPath: 'C:/r',
       resourcesPath: '',
       binName: 'e',
-      override: 'C:\\r\\engine\\target\\release\\e'
+      override: 'C:\\r\\engine\\target\\release\\e',
     }),
-    ['C:/r/engine/target/release/e']
+    ['C:/r/engine/target/release/e'],
   )
 
   // IT SELECTS, IT NEVER DISABLES. An absent or empty override leaves the list exactly as it was —
   // which is what lets `engine-absent.e2e.mts` keep arranging absence with `cwd` alone.
   const plain = engineBinaryCandidates({ appPath: 'C:/r', resourcesPath: '', binName: 'e' })
-  assert.deepEqual(engineBinaryCandidates({ appPath: 'C:/r', resourcesPath: '', binName: 'e', override: '' }), plain)
+  assert.deepEqual(
+    engineBinaryCandidates({ appPath: 'C:/r', resourcesPath: '', binName: 'e', override: '' }),
+    plain,
+  )
 
   // AND IT IS NOT TRUSTED TO EXIST. The caller `existsSync`es every candidate in order, so a stale
   // value degrades to the ordinary search rather than resolving to a file that is not there.
   assert.deepEqual(
-    engineBinaryCandidates({ appPath: 'C:/r', resourcesPath: '', binName: 'e', override: 'C:/gone/e' }),
-    ['C:/gone/e', 'C:/r/engine/target/release/e']
+    engineBinaryCandidates({
+      appPath: 'C:/r',
+      resourcesPath: '',
+      binName: 'e',
+      override: 'C:/gone/e',
+    }),
+    ['C:/gone/e', 'C:/r/engine/target/release/e'],
   )
 })
 
 test('an unknown root contributes no candidates rather than a path rooted at nothing', () => {
   assert.deepEqual(engineBinaryCandidates({ appPath: '', resourcesPath: '', binName: 'e' }), [])
   assert.deepEqual(engineBinaryCandidates({ appPath: 'C:/r', resourcesPath: '', binName: 'e' }), [
-    'C:/r/engine/target/release/e'
+    'C:/r/engine/target/release/e',
   ])
 })
 
@@ -429,12 +484,16 @@ test('a debug engine ANNOUNCES ITSELF, names the opt-in, and says how to undo it
   const notice = engineProfileNotice('C:/r/engine/target/debug/engined.exe', {
     appPath: 'C:/r',
     resourcesPath: '',
-    profile: 'debug'
+    profile: 'debug',
   })
   assert.ok(notice)
   assert.ok(notice.startsWith(ENGINE_PROFILE_BANNER), 'the loud marker leads the line')
   assert.match(notice, /DEBUG engine at C:\/r\/engine\/target\/debug\/engined\.exe/)
-  assert.match(notice, new RegExp(`${ENGINE_PROFILE_ENV}=debug opt-in`), 'it names what selected it')
+  assert.match(
+    notice,
+    new RegExp(`${ENGINE_PROFILE_ENV}=debug opt-in`),
+    'it names what selected it',
+  )
   // The measurement, so a reader does not have to own a stopwatch to know what this costs…
   assert.match(notice, /4050 ms instead of 469 ms/)
   // …and the way out, which for a per-launch variable is simply launching without it.
@@ -451,14 +510,17 @@ test('SILENCE IS FOR THE ORDINARY LAUNCH, and for the packaged one especially', 
   // The staged copy of a RELEASE binary (JOS-496 runs the engine from `userData/engine-run`) is
   // never itself the input — `engineHost.ts` computes the notice on the path it FOUND — but a
   // reader asking about the copy gets silence rather than a warning about an unclassifiable file.
-  assert.equal(engineProfileNotice('C:/Users/x/AppData/Roaming/eqc/engine-run/engined.exe', env), null)
+  assert.equal(
+    engineProfileNotice('C:/Users/x/AppData/Roaming/eqc/engine-run/engined.exe', env),
+    null,
+  )
 })
 
 test('THE HARNESS IS NOT EXEMPT: an override that lands on debug is just as loud', () => {
   const notice = engineProfileNotice('C:/r/engine/target/debug/e', {
     appPath: 'C:/r',
     resourcesPath: '',
-    override: 'C:/r/engine/target/debug/e'
+    override: 'C:/r/engine/target/debug/e',
   })
   assert.ok(notice)
   assert.ok(notice.startsWith(ENGINE_PROFILE_BANNER))
@@ -469,14 +531,26 @@ test('THE HARNESS IS NOT EXEMPT: an override that lands on debug is just as loud
     engineProfileNotice('C:/r/engine/target/release/e', {
       appPath: 'C:/r',
       resourcesPath: '',
-      override: 'C:/r/engine/target/release/e'
+      override: 'C:/r/engine/target/release/e',
     }),
-    null
+    null,
   )
   // A NAMED BINARY OF UNKNOWN PROVENANCE is still worth a line: whoever pointed at it should be able
   // to see that the pointer took effect. Separator-blind, because `join()` hands back backslashes.
-  assert.ok(engineProfileNotice('D:/scratch/e', { appPath: 'C:/r', resourcesPath: '', override: 'D:/scratch/e' }))
-  assert.ok(engineProfileNotice('D:\\scratch\\e', { appPath: 'C:/r', resourcesPath: '', override: 'D:/scratch/e' }))
+  assert.ok(
+    engineProfileNotice('D:/scratch/e', {
+      appPath: 'C:/r',
+      resourcesPath: '',
+      override: 'D:/scratch/e',
+    }),
+  )
+  assert.ok(
+    engineProfileNotice('D:\\scratch\\e', {
+      appPath: 'C:/r',
+      resourcesPath: '',
+      override: 'D:/scratch/e',
+    }),
+  )
 })
 
 test('the profile is read off the path cargo writes to, both spellings', () => {
@@ -490,7 +564,7 @@ test('the profile is read off the path cargo writes to, both spellings', () => {
     'C:/r/engine/target/debug/engined.exe',
     'C:/r/engine/target/release/engined.exe',
     'RES/engine/engined.exe',
-    'C:/app/target/debug/engined.exe'
+    'C:/app/target/debug/engined.exe',
   ]) {
     assert.equal(isCargoTargetBinary(path), engineBinaryProfile(path) !== null)
   }
@@ -500,7 +574,10 @@ test('THE HOST READS THE VARIABLE AND EMITS THE LINE — the seam, pinned at the
   // `engineHost.ts` imports Electron, so it cannot be imported here at all; this is the technique
   // `engineAlertsAudio.test.mts` and `serveDeltaArm.test.mts` use on the same file, with the same
   // comment strip (this repo explains itself in prose that would otherwise satisfy its own greps).
-  const host = readFileSync(new URL('../src/main/dataServer/engineHost.ts', import.meta.url), 'utf8')
+  const host = readFileSync(
+    new URL('../src/main/dataServer/engineHost.ts', import.meta.url),
+    'utf8',
+  )
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/(^|[^:])\/\/.*$/gm, '$1')
   // The opt-in is READ HERE, from the environment, and handed to the pure half as data.
@@ -520,7 +597,7 @@ test('THE HOST READS THE VARIABLE AND EMITS THE LINE — the seam, pinned at the
   assert.ok(resolve, 'resolveEngineBinary is gone or has changed shape')
   assert.ok(
     resolve[1].indexOf('engineProfileNotice') < resolve[1].indexOf('stageDevBinary'),
-    'the notice must be computed on the found path, before the copy'
+    'the notice must be computed on the found path, before the copy',
   )
 })
 

@@ -27,7 +27,7 @@ import {
   attachStateDir,
   engineOwnsArtifacts,
   resetArtifactOwnerForTests,
-  takeArtifactsBack
+  takeArtifactsBack,
 } from '../src/main/dataServer/artifactOwner'
 
 const USER_DATA = 'C:/Users/nobody/AppData/Roaming/everquest-companion'
@@ -39,8 +39,8 @@ function servedLaunch(notes: string[] = []) {
     deps: {
       serving: true,
       userData: () => USER_DATA,
-      note: (line: string) => notes.push(line)
-    }
+      note: (line: string) => notes.push(line),
+    },
   }
 }
 
@@ -59,7 +59,7 @@ test('a flag-off launch is byte-identical to the app this ticket found: no state
     userData: () => {
       throw new Error('a launch that is not serving must not even resolve the directory')
     },
-    note: (line) => notes.push(line)
+    note: (line) => notes.push(line),
   })
   // ABSENT, not empty: the schema defines an absent `stateDir` as no engine-side persistence at
   // all, which is the file-free attach the equivalence oracle's world is built on.
@@ -87,7 +87,7 @@ test('the app has already stopped persisting by the time the path exists to be s
       ownerWhenPathWasResolved = artifactOwner()
       return USER_DATA
     },
-    note: () => undefined
+    note: () => undefined,
   })
   assert.equal(sent, USER_DATA)
   // The latch has moved by the time anybody holds the string.
@@ -127,7 +127,10 @@ test('the engine dying gives both files back, so a long session keeps accreting'
   resetArtifactOwnerForTests()
   const notes: string[] = []
   attachStateDir(servedLaunch(notes).deps)
-  assert.equal(takeArtifactsBack((l) => notes.push(l)), true)
+  assert.equal(
+    takeArtifactsBack((l) => notes.push(l)),
+    true,
+  )
   assert.equal(appOwnsArtifacts(), true)
   assert.equal(notes.length, 2)
   assert.match(notes[1] ?? '', /owns .* again/)
@@ -136,7 +139,10 @@ test('the engine dying gives both files back, so a long session keeps accreting'
 test('handing back what was never taken is a no-op and narrates nothing', () => {
   resetArtifactOwnerForTests()
   const notes: string[] = []
-  assert.equal(takeArtifactsBack((l) => notes.push(l)), false)
+  assert.equal(
+    takeArtifactsBack((l) => notes.push(l)),
+    false,
+  )
   assert.equal(appOwnsArtifacts(), true)
   assert.deepEqual(notes, [])
 })
@@ -176,7 +182,7 @@ test('across every ordering of the three edges, exactly one process owns the fil
     attachStateDir({
       serving: edge === 'attach-serving',
       userData: () => USER_DATA,
-      note: () => undefined
+      note: () => undefined,
     })
   }
   let sequences = 0
@@ -190,7 +196,7 @@ test('across every ordering of the three edges, exactly one process owns the fil
         appOwnsArtifacts(),
         engineOwnsArtifacts(),
         `after ${edge} (from ${before}) the two predicates agreed, which would mean nobody or ` +
-          'everybody owns the artifacts'
+          'everybody owns the artifacts',
       )
       // A FLAG-OFF ATTACH NEVER MOVES ANYTHING, in either direction. It is the branch that keeps
       // `EQC_ENGINE_SERVE=0` the app this ticket found, and it must not quietly hand files back

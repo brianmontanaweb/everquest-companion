@@ -38,7 +38,7 @@ function tl(durationMs: number): TimelineView {
     downsampled: false,
     rawCount: events.length,
     totalCount: events.length,
-    truncated: false
+    truncated: false,
   }
 }
 
@@ -49,7 +49,7 @@ test('a FINALIZED fight keeps exactly the grid it always had (the regression tri
     [360_000, 1000],
     [361_000, 2000],
     [720_000, 2000],
-    [1_080_000, 3000]
+    [1_080_000, 3000],
   ] as const) {
     assert.equal(buildDpsSeries(tl(durationMs)).bucketMs, bucketMs, `finalized ${durationMs}ms`)
     // And the default is the finalized behaviour — an omitted flag can never change a curve.

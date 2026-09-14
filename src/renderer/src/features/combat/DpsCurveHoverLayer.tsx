@@ -11,7 +11,15 @@
 //
 // The layer is `pointerEvents: 'none'`; the wrapper Box owns the listeners.
 
-import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type Ref,
+} from 'react'
 import type { TimelineMarker } from '@shared/combat'
 import { ChartTooltip, type TooltipRow } from '../../lib/ChartTooltip'
 import { formatRate } from '../../lib/formatRate'
@@ -32,7 +40,7 @@ import {
   userToPx,
   xAtT,
   type DpsChart,
-  type PlacedMarker
+  type PlacedMarker,
 } from './dpsChart'
 import { MARKER_COLOR } from './markerStyle'
 import { markerTooltip, timeTooltip, type TipContent } from './timelineGeometry'
@@ -91,8 +99,10 @@ function dpsRows(series: DpsSeries, t: number, hidden: readonly ChartLineKey[]):
   const outLabel = series.hasGroup ? 'you + pet + group' : 'you + pet'
   const shown = (k: ChartLineKey, has: boolean): boolean => has && !hidden.includes(k)
   const rows: TooltipRow[] = []
-  if (shown('out', true)) rows.push({ label: outLabel, value: `${a}${formatRate(p.out)}`, color: KIND_COLOR.you })
-  if (shown('pet', series.hasPet)) rows.push({ label: 'pet', value: `${a}${formatRate(p.pet)}`, color: KIND_COLOR.pet })
+  if (shown('out', true))
+    rows.push({ label: outLabel, value: `${a}${formatRate(p.out)}`, color: KIND_COLOR.you })
+  if (shown('pet', series.hasPet))
+    rows.push({ label: 'pet', value: `${a}${formatRate(p.pet)}`, color: KIND_COLOR.pet })
   if (shown('group', series.hasGroup))
     rows.push({ label: 'group', value: `${a}${formatRate(p.group)}`, color: KIND_COLOR.member })
   if (shown('inc', series.hasInc))
@@ -102,17 +112,38 @@ function dpsRows(series: DpsSeries, t: number, hidden: readonly ChartLineKey[]):
 
 /** A marker under the cursor becomes the tooltip's SUBJECT and the rates drop to secondary rows;
  *  otherwise the cursor's own instant is the subject and the rates are the whole point. */
-function buildTip(hit: Hit, series: DpsSeries, startTs: number, hidden: readonly ChartLineKey[]): TipContent {
+function buildTip(
+  hit: Hit,
+  series: DpsSeries,
+  startTs: number,
+  hidden: readonly ChartLineKey[],
+): TipContent {
   const base = hit.mk ? markerTooltip(hit.mk) : timeTooltip(hit.t, startTs, series.durationMs)
-  return { ...base, rows: [...base.rows, ...dpsRows(series, hit.t, hidden)], note: rollingNote(series) }
+  return {
+    ...base,
+    rows: [...base.rows, ...dpsRows(series, hit.t, hidden)],
+    note: rollingNote(series),
+  }
 }
 
 /** Drawn in a 1:1 CSS-px overlay rather than in the chart's stretched user space — a circle in
  *  that space would paint as an ellipse, and a 1px rule as a fat one. */
-function Cursor({ hit, chart, series }: { hit: Hit; chart: DpsChart; series: DpsSeries }): React.JSX.Element {
+function Cursor({
+  hit,
+  chart,
+  series,
+}: {
+  hit: Hit
+  chart: DpsChart
+  series: DpsSeries
+}): React.JSX.Element {
   const ux = Math.min(CHART_W - PAD_X, Math.max(PAD_X, pxToUser(hit.x, hit.w)))
   return (
-    <svg width={hit.w} height={CHART_H} style={{ position: 'absolute', left: 0, top: 0, display: 'block' }}>
+    <svg
+      width={hit.w}
+      height={CHART_H}
+      style={{ position: 'absolute', left: 0, top: 0, display: 'block' }}
+    >
       {/* the confirmation of WHICH tick the title names — nearest-in-time picking has no other */}
       {hit.mk && (
         <line
@@ -157,7 +188,7 @@ export function DpsCurveHoverLayer({
   series,
   markers,
   startTs,
-  hidden
+  hidden,
 }: DpsCurveHoverProps): React.JSX.Element {
   const [hit, setHit] = useState<Hit | null>(null)
   // Mirrors the state so the change gate reads the CURRENT pick without re-creating the throttled
@@ -174,7 +205,7 @@ export function DpsCurveHoverLayer({
       const tol = pxToUser(MARKER_TOL_PX, w) * msPerUser
       return { x, y, w, t, mk: pickMarker(mks, t, tol)?.item ?? null }
     },
-    [chart, mks]
+    [chart, mks],
   )
 
   const apply = useCallback(
@@ -185,7 +216,7 @@ export function DpsCurveHoverLayer({
       last.current = next
       setHit(next)
     },
-    [hitAt]
+    [hitAt],
   )
 
   const move = useMemo(() => rafThrottle(apply), [apply])
@@ -199,11 +230,21 @@ export function DpsCurveHoverLayer({
 
   const tip = useMemo(
     () => (hit ? buildTip(hit, series, startTs, hidden) : null),
-    [hit, series, startTs, hidden]
+    [hit, series, startTs, hidden],
   )
 
   return (
-    <div style={{ position: 'absolute', left: 0, top: 0, right: 0, height: CHART_H, pointerEvents: 'none', zIndex: 4 }}>
+    <div
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        right: 0,
+        height: CHART_H,
+        pointerEvents: 'none',
+        zIndex: 4,
+      }}
+    >
       {hit && tip && (
         <>
           <Cursor hit={hit} chart={chart} series={series} />

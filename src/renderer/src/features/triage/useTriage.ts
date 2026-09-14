@@ -50,12 +50,12 @@ export function useTriageCall<T>(run: () => Promise<TriageResult<T>>): Async<T> 
         setState(
           res.ok
             ? { data: res.value, error: null, loading: false }
-            : { data: null, error: res.error, loading: false }
+            : { data: null, error: res.error, loading: false },
         )
       },
       (err: unknown) => {
         if (alive) setState({ data: null, error: messageOf(err), loading: false })
-      }
+      },
     )
     return () => {
       alive = false
@@ -97,7 +97,7 @@ export function useTriageMutation(onDone: () => void): Mutation {
         setBusy(false)
       }
     },
-    [onDone]
+    [onDone],
   )
 
   return { run, busy, error, clearError: useCallback(() => setError(null), []) }

@@ -19,13 +19,24 @@ import { equippedHosts, type PlannerInventory } from '../../shared/planner/inven
 import { buildPlannerIndex, searchPlannerItems, type PlannerIndex } from '../planner/effectIndex'
 import { buildGearIndex } from '../planner/gearIndex'
 import type { GearIndexPayload } from '../../shared/planner/gear'
-import { NO_OWNERSHIP, ownershipPayload, type OwnershipPayload } from '../../shared/planner/ownership'
+import {
+  NO_OWNERSHIP,
+  ownershipPayload,
+  type OwnershipPayload,
+} from '../../shared/planner/ownership'
 import { sanitizeExaltPlans, sanitizeGearSets, sanitizeWishlist } from '../planner/validate'
 import { loadInventoryDump, outputStatus } from '../outputs'
 import { activeCharId, getActiveCharacter } from '../session'
 // The two planner documents' store accessors live in their own module since JOS-286 — store.ts
 // was at its 400-code-line ceiling, and this repo splits rather than ratchets.
-import { getExaltPlans, getGearSets, getWishlist, setExaltPlans, setGearSets, setWishlist } from '../storePlans'
+import {
+  getExaltPlans,
+  getGearSets,
+  getWishlist,
+  setExaltPlans,
+  setGearSets,
+  setWishlist,
+} from '../storePlans'
 import { itemKey, type ItemDbFile } from '../itemsDb'
 // The COMMITTED wiki item database — the same module itemLookup.ts imports, so the JSON is
 // inlined into the main bundle exactly once.
@@ -85,7 +96,8 @@ function gearOwnership(): OwnershipPayload {
   // `loadInventoryDump` re-resolves the same status, so the two can never disagree about WHICH
   // file was folded — and a dump that vanished between the stat and the read is simply no dump.
   const payload = ownershipPayload(loadInventoryDump(character?.name, character?.server))
-  owned = payload.path === null ? null : { path: payload.path, loadedAt: payload.loadedAt ?? '', payload }
+  owned =
+    payload.path === null ? null : { path: payload.path, loadedAt: payload.loadedAt ?? '', payload }
   return payload
 }
 
@@ -106,7 +118,7 @@ export function registerPlannerIpc(): void {
   // Host picking: substring over item names, capped. A non-string query is not an error the UI
   // should have to render — it is simply no hits.
   ipcMain.handle(IPC.plannerSearchItems, (_e, query: unknown) =>
-    typeof query === 'string' ? searchPlannerItems(plannerIndex().items, query) : []
+    typeof query === 'string' ? searchPlannerItems(plannerIndex().items, query) : [],
   )
 
   // V7 — what the character is WEARING, from their newest `/outputfile inventory` dump. Read on
@@ -128,7 +140,7 @@ export function registerPlannerIpc(): void {
       // `itemKey` is applied HERE and not in the shared join: the key is main's definition
       // (itemsDb.ts, law 2) and shared/planner/inventorySlots.ts must stay dependency-free.
       hosts: equippedHosts(loaded.dump).map((h) => ({ ...h, key: itemKey(h.name) })),
-      ...(focus.length > 0 ? { focus } : {})
+      ...(focus.length > 0 ? { focus } : {}),
     }
   })
 

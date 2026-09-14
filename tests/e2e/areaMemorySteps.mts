@@ -37,7 +37,8 @@ export const LOOT_LIST = '[data-testid="loot-list"]'
 export const LOOT_DETAIL = '[data-testid="loot-detail"]'
 export const LOOT_BACK = '[data-testid="loot-back"]'
 
-const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> => settle(fn, (ok) => ok, { timeoutMs: ms })
+const until = (fn: () => Promise<boolean>, ms: number): Promise<boolean> =>
+  settle(fn, (ok) => ok, { timeoutMs: ms })
 
 /** What one surface looks like right now: field name → what the screen says. */
 export type Fingerprint = Record<string, string>
@@ -54,7 +55,10 @@ export async function valueOf(page: Page, sel: string): Promise<string> {
 
 /** Rendered text of the first match, whitespace-collapsed; '' when the node is not mounted. */
 export async function textOf(page: Page, sel: string): Promise<string> {
-  const raw = await page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '', sel)
+  const raw = await page.evaluate(
+    (s) => (document.querySelector(s) as HTMLElement | null)?.innerText ?? '',
+    sel,
+  )
   return raw.replace(/\s+/g, ' ').trim()
 }
 
@@ -159,7 +163,11 @@ function diff(before: Fingerprint, after: Fingerprint): string[] {
  * read "0 of 6,814" a few frames after Back and called the restore broken when it was merely
  * mid-flight. A restore that never arrives still fails, and fails with the same diff it always did.
  */
-async function settleTo(page: Page, before: Fingerprint, read: ReadFingerprint): Promise<Fingerprint> {
+async function settleTo(
+  page: Page,
+  before: Fingerprint,
+  read: ReadFingerprint,
+): Promise<Fingerprint> {
   let last = await read(page)
   await settle(
     async () => {
@@ -167,7 +175,7 @@ async function settleTo(page: Page, before: Fingerprint, read: ReadFingerprint):
       return diff(before, last).length === 0
     },
     (ok) => ok,
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   )
   return last
 }
@@ -193,13 +201,23 @@ export async function awayAndBack(page: Page, opts: TripOptions): Promise<void> 
   const { label, tab, view, read } = opts
   const before = await read(page)
   if (!(await leaveArea(page, view))) return
-  if (!check(`…and ${label} comes back when the area is re-entered`, await returnToTab(page, tab, view))) return
+  if (
+    !check(
+      `…and ${label} comes back when the area is re-entered`,
+      await returnToTab(page, tab, view),
+    )
+  )
+    return
   const after = await settleTo(page, before, read)
   const moved = diff(before, after)
   check(
     `${label} restores every form field after a trip to another module`,
     moved.length === 0,
-    moved.length === 0 ? Object.entries(before).map(([k, v]) => `${k}=${v}`).join(' · ') : moved.join(' | ')
+    moved.length === 0
+      ? Object.entries(before)
+          .map(([k, v]) => `${k}=${v}`)
+          .join(' · ')
+      : moved.join(' | '),
   )
 }
 
@@ -247,7 +265,7 @@ export async function drillAndBack(page: Page, opts: DrillOptions): Promise<void
   check(
     `${label} restores every form field after a Loot drill-down and Back`,
     moved.length === 0,
-    moved.length === 0 ? `${String(Object.keys(before).length)} fields intact` : moved.join(' | ')
+    moved.length === 0 ? `${String(Object.keys(before).length)} fields intact` : moved.join(' | '),
   )
 }
 
@@ -279,7 +297,7 @@ async function settleRows(page: Page, sel: string): Promise<number> {
       return stable
     },
     (ok) => ok,
-    { timeoutMs: 20_000 }
+    { timeoutMs: 20_000 },
   )
   return last
 }
@@ -295,7 +313,7 @@ async function settleText(page: Page, sel: string): Promise<void> {
       return stable
     },
     (ok) => ok,
-    { timeoutMs: 15_000 }
+    { timeoutMs: 15_000 },
   )
 }
 
@@ -334,7 +352,7 @@ async function readGear(page: Page): Promise<Fingerprint> {
     owned: await chipLit(page, GEAR_OWNED),
     sort: await sortedBy(page),
     upgrade: await textOf(page, GEAR_UPGRADE_LABEL),
-    count: await textOf(page, GEAR_COUNT)
+    count: await textOf(page, GEAR_COUNT),
   }
 }
 
@@ -375,7 +393,7 @@ export async function stepGearMemory(page: Page): Promise<void> {
       parked.upgrade.includes('Tier 1'),
     Object.entries(parked)
       .map(([k, v]) => `${k}=${v}`)
-      .join(' · ')
+      .join(' · '),
   )
 
   const trip = { label: 'the Gear tab', tab: GEAR_TAB, view: GEAR_VIEW, read: readGear }
@@ -402,17 +420,17 @@ export async function stepGearMemoryRelaunched(page: Page): Promise<void> {
   check(
     'a structural pick survives the process — the slot the last launch chose is still chosen',
     back.slots.includes(GEAR_PARKED_SLOT),
-    `slots read "${back.slots}"`
+    `slots read "${back.slots}"`,
   )
   check(
     '…and so does a toggle that was switched off, rather than reverting to its shipped default',
     back.era === 'off',
-    `the era chip reads ${back.era}`
+    `the era chip reads ${back.era}`,
   )
   check(
     'a TYPED search does NOT survive the process — the box is empty on a fresh launch',
     back.search === '',
-    `the box reads "${back.search}"`
+    `the box reads "${back.search}"`,
   )
   // Leave the tab clean for anything that runs after this: the parked slot is the last of it.
   await clearPicks(page, GEAR_SLOT)
@@ -436,14 +454,15 @@ async function readBrowse(page: Page): Promise<Fingerprint> {
   return {
     search: await valueOf(page, PLANNER_SEARCH),
     socket: await page.evaluate(
-      (s) => (document.querySelector(s)?.classList.contains('Mui-selected') === true ? 'worn' : 'other'),
-      PLANNER_SOCKET_WORN
+      (s) =>
+        document.querySelector(s)?.classList.contains('Mui-selected') === true ? 'worn' : 'other',
+      PLANNER_SOCKET_WORN,
     ),
     groupBy: await textOf(page, PLANNER_GROUPBY),
     era: await chipLit(page, PLANNER_ERA),
     nonEquip: await chipLit(page, PLANNER_NONEQUIP),
     groups: String(await countOf(page, PLANNER_EFFECT_ROW)),
-    donors: String(await countOf(page, PLANNER_DONOR_ROW))
+    donors: String(await countOf(page, PLANNER_DONOR_ROW)),
   }
 }
 
@@ -480,17 +499,26 @@ export async function stepBrowseMemory(page: Page): Promise<void> {
     const term = await termFromScreen(page)
     await page.fill(PLANNER_SEARCH, term, { timeout: 15_000 })
     const listed = (await settleRows(page, PLANNER_EFFECT_ROW)) > 0
-    if (check('the browser has groups to expand before the memory step takes it away', listed, `searched "${term}"`)) {
+    if (
+      check(
+        'the browser has groups to expand before the memory step takes it away',
+        listed,
+        `searched "${term}"`,
+      )
+    ) {
       await page.click(PLANNER_EFFECT_ROW, { timeout: 15_000 })
       const expanded = await until(async () => (await countOf(page, PLANNER_DONOR_ROW)) > 0, 15_000)
       check('…and one of them is expanded, so the round trip has an expansion to restore', expanded)
-      check('…with a search in the box that nothing defaults to', (await valueOf(page, PLANNER_SEARCH)) === term)
+      check(
+        '…with a search in the box that nothing defaults to',
+        (await valueOf(page, PLANNER_SEARCH)) === term,
+      )
 
       await awayAndBack(page, {
         label: 'the Exaltations browser',
         tab: PLANNER_TAB,
         view: PLANNER_VIEW,
-        read: readBrowse
+        read: readBrowse,
       })
     }
   }
@@ -518,7 +546,7 @@ async function readCarry(page: Page): Promise<Fingerprint> {
   return {
     search: await valueOf(page, CARRY_SEARCH),
     lane: await chipLit(page, CARRY_CHIP_ALL),
-    count: await textOf(page, CARRY_COUNT)
+    count: await textOf(page, CARRY_COUNT),
   }
 }
 
@@ -537,10 +565,15 @@ export async function stepCarryMemory(page: Page, term: string): Promise<void> {
   check(
     'the carry-all box is holding a query before the tab is taken away',
     (await valueOf(page, CARRY_SEARCH)) === term,
-    `reads "${await valueOf(page, CARRY_SEARCH)}"`
+    `reads "${await valueOf(page, CARRY_SEARCH)}"`,
   )
 
-  await awayAndBack(page, { label: 'the Character tab', tab: CHAR_TAB, view: CHAR_VIEW, read: readCarry })
+  await awayAndBack(page, {
+    label: 'the Character tab',
+    tab: CHAR_TAB,
+    view: CHAR_VIEW,
+    read: readCarry,
+  })
 
   await page.fill(CARRY_SEARCH, '', { timeout: 15_000 })
   await settleText(page, CARRY_COUNT)

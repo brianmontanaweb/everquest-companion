@@ -214,7 +214,7 @@ import {
   zoneEra,
   type Era,
   type EraDerivation,
-  type EraDerivationBasis
+  type EraDerivationBasis,
 } from '../../shared/planner/era'
 import questsJson from '../../renderer/src/data/eqlegends/quests.json'
 import mobsJson from '../../renderer/src/data/eqlegends/mobs.json'
@@ -238,7 +238,7 @@ const BASIS_ORDER: readonly EraDerivationBasis[] = [
   'yield',
   'page',
   'quest',
-  'component-zone'
+  'component-zone',
 ]
 
 /** What one derivation pass needs beside the corpus. Injectable so a test can drive small ones. */
@@ -332,7 +332,7 @@ export function committedCatalogs(): EraDeriveCatalogs {
     questByName: buildQuestIndex(questsJson),
     catalogZones: buildCatalogZones(mobsJson),
     catalogDroppers: buildCatalogDroppers(mobsJson),
-    pageEra: pageEraJson as PageEraFile
+    pageEra: pageEraJson as PageEraFile,
   }
   return COMMITTED
 }
@@ -371,7 +371,11 @@ function unopened(era: Era | null): boolean {
  * owner's own example is a bought mold that the wiki nevertheless pills as out of era.
  */
 function droppedOnly(sources: readonly string[] | undefined): boolean {
-  return sources !== undefined && sources.length > 0 && sources.every((s) => s.trim().toLowerCase() === 'dropped')
+  return (
+    sources !== undefined &&
+    sources.length > 0 &&
+    sources.every((s) => s.trim().toLowerCase() === 'dropped')
+  )
 }
 
 // ---- the walk ---------------------------------------------------------------------------------
@@ -380,25 +384,37 @@ function droppedOnly(sources: readonly string[] | undefined): boolean {
 function componentEdge(
   ingredient: ItemCraftIngredient,
   corpus: ReadonlyMap<string, ItemDbEntry>,
-  catalogs: EraDeriveCatalogs
+  catalogs: EraDeriveCatalogs,
 ): EraDerivation | null {
   const target = corpus.get(itemKey(ingredient.name))
   if (badgedOut(target)) {
-    return { basis: 'component', verdict: 'out-of-era', target: ingredient.name, detail: target.eraTag }
+    return {
+      basis: 'component',
+      verdict: 'out-of-era',
+      target: ingredient.name,
+      detail: target.eraTag,
+    }
   }
   if (target === undefined || !droppedOnly(ingredient.sources)) return null
   // The same three witnesses the app uses for the item itself: the catalog's zones for this
   // ingredient UNION the ones its own page names.
-  const zones = [...new Set([...pageZones(target), ...(catalogs.catalogZones.get(itemKey(target.page)) ?? [])])]
+  const zones = [
+    ...new Set([...pageZones(target), ...(catalogs.catalogZones.get(itemKey(target.page)) ?? [])]),
+  ]
   if (layeredVerdict(zones, target.eraTag) !== 'out-of-era') return null
-  return { basis: 'component-zone', verdict: 'out-of-era', target: ingredient.name, detail: zones.join(', ') }
+  return {
+    basis: 'component-zone',
+    verdict: 'out-of-era',
+    target: ingredient.name,
+    detail: zones.join(', '),
+  }
 }
 
 /** Every edge the `|playercrafted` block states — its ingredients, and a yield that is elsewhere. */
 function recipeEdges(
   entry: ItemDbEntry,
   corpus: ReadonlyMap<string, ItemDbEntry>,
-  catalogs: EraDeriveCatalogs
+  catalogs: EraDeriveCatalogs,
 ): EraDerivation[] {
   const edges: EraDerivation[] = []
   const selfKey = itemKey(entry.page)
@@ -410,7 +426,12 @@ function recipeEdges(
     if (recipe.yieldItem === undefined || itemKey(recipe.yieldItem) === selfKey) continue
     const yielded = corpus.get(itemKey(recipe.yieldItem))
     if (badgedOut(yielded)) {
-      edges.push({ basis: 'yield', verdict: 'out-of-era', target: recipe.yieldItem, detail: yielded.eraTag })
+      edges.push({
+        basis: 'yield',
+        verdict: 'out-of-era',
+        target: recipe.yieldItem,
+        detail: yielded.eraTag,
+      })
     }
   }
   return edges
@@ -423,7 +444,12 @@ function questEdges(entry: ItemDbEntry, catalogs: EraDeriveCatalogs): EraDerivat
     const quest = catalogs.questByName.get((use.page ?? use.quest).trim().toLowerCase())
     if (quest?.startZone === undefined) continue
     if (unopened(zoneEra(quest.startZone))) {
-      edges.push({ basis: 'quest', verdict: 'out-of-era', target: quest.name, detail: quest.startZone })
+      edges.push({
+        basis: 'quest',
+        verdict: 'out-of-era',
+        target: quest.name,
+        detail: quest.startZone,
+      })
     }
   }
   return edges
@@ -454,7 +480,12 @@ function pageEdges(entry: ItemDbEntry, catalogs: EraDeriveCatalogs): EraDerivati
     const target = catalogs.pageEra.pages[pageEraKey(title)]
     if (target === undefined) continue
     if (target.outOfEra) {
-      edges.push({ basis: 'page', verdict: 'out-of-era', target: title, detail: target.eraTag ?? 'out of era' })
+      edges.push({
+        basis: 'page',
+        verdict: 'out-of-era',
+        target: title,
+        detail: target.eraTag ?? 'out of era',
+      })
     } else if (target.eraTag !== undefined && eraBadge(target.eraTag) === 'in') {
       edges.push({ basis: 'page', verdict: 'in-era', target: title, detail: target.eraTag })
     }
@@ -464,7 +495,9 @@ function pageEdges(entry: ItemDbEntry, catalogs: EraDeriveCatalogs): EraDerivati
 
 /** At most three names and then a count — a tooltip sentence, not a manifest. */
 function nameList(names: readonly string[]): string {
-  return names.length <= 3 ? names.join(', ') : `${names.slice(0, 3).join(', ')} +${String(names.length - 3)} more`
+  return names.length <= 3
+    ? names.join(', ')
+    : `${names.slice(0, 3).join(', ')} +${String(names.length - 3)} more`
 }
 
 /**
@@ -499,14 +532,20 @@ function dropMobEdge(entry: ItemDbEntry, catalogs: EraDeriveCatalogs): EraDeriva
   const names = [
     ...new Set([
       ...(entry.dropsFrom ?? []).map((s) => s.mob),
-      ...(catalogs.catalogDroppers.get(itemKey(entry.page)) ?? [])
-    ])
+      ...(catalogs.catalogDroppers.get(itemKey(entry.page)) ?? []),
+    ]),
   ]
   if (names.length === 0) return null
   // `?? false` and not `=== true`: a mob ABSENT from the table was never asked about, and law 1
   // makes that silence rather than a `false` the edge could read past.
   if (!names.every((n) => catalogs.pageEra.mobs[pageEraKey(n)] ?? false)) return null
-  return { basis: 'drop-mob', verdict: 'out-of-era', definitive: true, target: names[0], detail: nameList(names) }
+  return {
+    basis: 'drop-mob',
+    verdict: 'out-of-era',
+    definitive: true,
+    target: names[0],
+    detail: nameList(names),
+  }
 }
 
 /**
@@ -516,19 +555,22 @@ function dropMobEdge(entry: ItemDbEntry, catalogs: EraDeriveCatalogs): EraDeriva
 export function eraEdges(
   entry: ItemDbEntry,
   corpus: ReadonlyMap<string, ItemDbEntry>,
-  catalogs: EraDeriveCatalogs
+  catalogs: EraDeriveCatalogs,
 ): EraDerivation[] {
   const dropper = dropMobEdge(entry, catalogs)
   return [
     ...(dropper === null ? [] : [dropper]),
     ...recipeEdges(entry, corpus, catalogs),
     ...questEdges(entry, catalogs),
-    ...pageEdges(entry, catalogs)
+    ...pageEdges(entry, catalogs),
   ]
 }
 
 /** The strongest edge of one direction, or null when that direction has none. */
-function strongest(edges: readonly EraDerivation[], verdict: EraDerivation['verdict']): EraDerivation | null {
+function strongest(
+  edges: readonly EraDerivation[],
+  verdict: EraDerivation['verdict'],
+): EraDerivation | null {
   const of = edges.filter((e) => e.verdict === verdict)
   if (of.length === 0) return null
   for (const basis of BASIS_ORDER) {
@@ -550,7 +592,7 @@ function strongest(edges: readonly EraDerivation[], verdict: EraDerivation['verd
 export function deriveEra(
   entry: ItemDbEntry,
   corpus: ReadonlyMap<string, ItemDbEntry>,
-  catalogs: EraDeriveCatalogs = committedCatalogs()
+  catalogs: EraDeriveCatalogs = committedCatalogs(),
 ): EraDerivation | null {
   const edges = eraEdges(entry, corpus, catalogs)
   return strongest(edges, 'out-of-era') ?? strongest(edges, 'in-era')
@@ -566,7 +608,7 @@ export function deriveEra(
  */
 export function buildEraDerivations(
   file: ItemDbFile,
-  catalogs: EraDeriveCatalogs = committedCatalogs()
+  catalogs: EraDeriveCatalogs = committedCatalogs(),
 ): Map<string, EraDerivation> {
   const corpus = new Map(Object.entries(file.items ?? {}))
   const out = new Map<string, EraDerivation>()

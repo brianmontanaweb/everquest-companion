@@ -42,7 +42,7 @@ import {
   sanitizeInventory,
   type InventoryDownload,
   type Row,
-  type SliceRescrub
+  type SliceRescrub,
 } from './rows'
 import type { Clients } from './store'
 import { TRIAGE_DIR } from './paths'
@@ -83,7 +83,7 @@ export function achievementsKeyOf(row: Row): string | null {
  *  the second time that hope would have been misplaced, and it cost one line here instead.) */
 export function attachmentKeysOf(row: Row): string[] {
   return [logKeyOf(row), inventoryKeyOf(row), achievementsKeyOf(row)].filter(
-    (k): k is string => k !== null
+    (k): k is string => k !== null,
   )
 }
 
@@ -119,7 +119,7 @@ interface Cleaned {
 async function downloadAttachment(
   c: Clients,
   spec: { dir: string; dest: string; meta: string; key: string },
-  clean: (raw: string) => Cleaned
+  clean: (raw: string) => Cleaned,
 ): Promise<SliceRescrub> {
   mkdirSync(spec.dir, { recursive: true })
   const unknown = { path: spec.dest, dropped: 0, cleaned: 0, fromLegacyCache: true }
@@ -127,7 +127,12 @@ async function downloadAttachment(
     if (!existsSync(spec.meta)) return unknown
     try {
       const m = JSON.parse(readFileSync(spec.meta, 'utf8')) as Partial<SliceRescrub>
-      return { path: spec.dest, dropped: num(m.dropped), cleaned: num(m.cleaned), fromLegacyCache: false }
+      return {
+        path: spec.dest,
+        dropped: num(m.dropped),
+        cleaned: num(m.cleaned),
+        fromLegacyCache: false,
+      }
     } catch {
       return unknown
     }
@@ -162,7 +167,7 @@ export function downloadSlice(c: Clients, reportId: string, key: string): Promis
 export async function downloadInventory(
   c: Clients,
   reportId: string,
-  key: string
+  key: string,
 ): Promise<InventoryDownload> {
   const dest = join(INVENTORY_DIR, `${reportId}.txt`)
   const meta = join(INVENTORY_DIR, `${reportId}.sanitize.json`)
@@ -180,14 +185,14 @@ export async function downloadInventory(
 export async function downloadAchievements(
   c: Clients,
   reportId: string,
-  key: string
+  key: string,
 ): Promise<InventoryDownload> {
   const dest = join(ACHIEVEMENTS_DIR, `${reportId}.txt`)
   const meta = join(ACHIEVEMENTS_DIR, `${reportId}.sanitize.json`)
   const dl = await downloadAttachment(
     c,
     { dir: ACHIEVEMENTS_DIR, dest, meta, key },
-    sanitizeAchievements
+    sanitizeAchievements,
   )
   return { path: dl.path, cleaned: dl.cleaned, fromLegacyCache: dl.fromLegacyCache }
 }
@@ -212,10 +217,13 @@ async function reportOne(
   c: Clients,
   label: string,
   key: string,
-  read: () => Promise<{ path: string; notes: string[] }>
+  read: () => Promise<{ path: string; notes: string[] }>,
 ): Promise<AttachmentReport> {
   if (!(await logObjectExists(c, key))) {
-    return { line: `[${label}: declared but never landed — the upload failed or expired]`, warnings: [] }
+    return {
+      line: `[${label}: declared but never landed — the upload failed or expired]`,
+      warnings: [],
+    }
   }
   const got = await read()
   return { line: `[${label}: ${got.path}]`, warnings: got.notes }
@@ -232,7 +240,7 @@ async function reportOne(
 export async function attachmentReports(
   c: Clients,
   reportId: string,
-  row: Row
+  row: Row,
 ): Promise<AttachmentReport[]> {
   const out: AttachmentReport[] = []
   const logKey = logKeyOf(row)
@@ -241,7 +249,7 @@ export async function attachmentReports(
       await reportOne(c, 'log slice', logKey, async () => {
         const slice = await downloadSlice(c, reportId, logKey)
         return { path: slice.path, notes: rescrubNotes(slice) }
-      })
+      }),
     )
   }
   const invKey = inventoryKeyOf(row)
@@ -250,7 +258,7 @@ export async function attachmentReports(
       await reportOne(c, 'inventory export', invKey, async () => {
         const dump = await downloadInventory(c, reportId, invKey)
         return { path: dump.path, notes: inventoryNotes(dump) }
-      })
+      }),
     )
   }
   const achKey = achievementsKeyOf(row)
@@ -259,7 +267,7 @@ export async function attachmentReports(
       await reportOne(c, 'achievements export', achKey, async () => {
         const dump = await downloadAchievements(c, reportId, achKey)
         return { path: dump.path, notes: achievementsNotes(dump) }
-      })
+      }),
     )
   }
   return out

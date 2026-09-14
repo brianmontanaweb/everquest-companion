@@ -35,14 +35,14 @@ import { fileURLToPath } from 'node:url'
 import {
   CONSOLE_LEVEL_ERROR,
   CONSOLE_LEVEL_WARNING,
-  consoleForward
+  consoleForward,
 } from '../src/main/consoleForward'
 import {
   STARTUP_PHASES,
   addMark,
   describeMarkError,
   phaseMarked,
-  type StartupMark
+  type StartupMark,
 } from '../src/shared/perf'
 import { noteErrorLogLine, peekHealth, resetHealth, takeHealth } from '../src/main/telemetry/health'
 
@@ -108,7 +108,10 @@ test('…and the refusal it is stepping around is still there, still loud — th
   const marks = bootedMarks()
   const unguarded = addMark(marks, 'rendererHydrated', 5_000)
   assert.ok(!unguarded.ok && unguarded.error.code === 'duplicate')
-  assert.match(describeMarkError(unguarded.error), /startup phase 'rendererHydrated' was marked twice/)
+  assert.match(
+    describeMarkError(unguarded.error),
+    /startup phase 'rendererHydrated' was marked twice/,
+  )
   noteErrorLogLine()
   assert.equal(takeHealth().mainErrorLogLines, 1, 'the line the fleet was counting')
   resetHealth()
@@ -181,18 +184,21 @@ test('THE WIRING: both fixes are where the argument says, in code that needs Ele
   assert.ok(
     handler.indexOf("startupPhaseMarked('rendererHydrated')") <
       handler.indexOf("markStartupPhase('rendererHydrated')"),
-    'the repeat must be ignored BEFORE the mark that would log a refusal'
+    'the repeat must be ignored BEFORE the mark that would log a refusal',
   )
   assert.match(handler, /if \(startupPhaseMarked\('rendererHydrated'\)\) return/)
   // …and it asks the accounting itself rather than keeping a second boolean beside it.
-  assert.match(read('src/main/perf.ts'), /export function startupPhaseMarked[\s\S]*?phaseMarked\(marks, phase\)/)
+  assert.match(
+    read('src/main/perf.ts'),
+    /export function startupPhaseMarked[\s\S]*?phaseMarked\(marks, phase\)/,
+  )
 
   // B. the console forwarder routes through the rule, and `logError` is reachable ONLY from the
   //    error branch. The old `level < 2` gate — which is what let warnings in — is gone.
   const windowErrors = read('src/main/windowErrors.ts')
   const forward = windowErrors.slice(
     windowErrors.indexOf('export function forwardConsoleMessages'),
-    windowErrors.indexOf('export function captureMainWindowErrors')
+    windowErrors.indexOf('export function captureMainWindowErrors'),
   )
   assert.match(forward, /consoleForward\(level, app\.isPackaged\)/)
   assert.doesNotMatch(forward, /if \(level < 2\) return/)

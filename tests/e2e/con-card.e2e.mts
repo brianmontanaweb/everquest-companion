@@ -67,7 +67,7 @@ import {
   reportRun,
   settle,
   settleStable,
-  waitHydrated
+  waitHydrated,
 } from './appHarness.mjs'
 import { mainWindow, makeUserData, removeUserData } from './appWindow.mjs'
 import { launchOnFixture, stageFixture, type FixtureLog } from './logFixture.mjs'
@@ -83,14 +83,14 @@ import { stepNotableChips, stepResistantChip } from './conCardChipSteps.mjs'
 import {
   stepChipGridWraps,
   stepResizeRecordsLayoutBox,
-  stepWindowScalesWithText
+  stepWindowScalesWithText,
 } from './conCardScaleSteps.mjs'
 import { stepStripBgSlider } from './stripScaleSteps.mjs'
 import {
   stepClickOpensTheMobPage,
   stepCloseDoesNotNavigate,
   stepNoDropsOnTheCard,
-  stepUnlockedClickDoesNotNavigate
+  stepUnlockedClickDoesNotNavigate,
 } from './conCardLinkSteps.mjs'
 
 const CARD = '[data-testid="con-card"]'
@@ -98,7 +98,6 @@ const NAME = '[data-testid="con-card-name"]'
 const FACTS = '[data-testid="con-card-facts"]'
 /** The box the renderer measures for the window fit (JOS-386): the drag frame + the scaled card. */
 const FIT = '[data-testid="con-card-fit"]'
-
 
 /**
  * ConCardOverlay's root inset, on each side, spelled out rather than imported: an e2e file loads no
@@ -154,8 +153,9 @@ interface ConCardBridge {
 /** Set the con card window's text size through the overlay's own config door — A+'s door. */
 function setTextScale(card: Page, textScale: number): Promise<unknown> {
   return card.evaluate(
-    (s) => (window as unknown as { eqOverlay: OverlayBridge }).eqOverlay.setConfig({ textScale: s }),
-    textScale
+    (s) =>
+      (window as unknown as { eqOverlay: OverlayBridge }).eqOverlay.setConfig({ textScale: s }),
+    textScale,
   )
 }
 
@@ -244,29 +244,57 @@ async function findCardWindow(app: ElectronApplication): Promise<Page | null> {
 function cardTexts(page: Page): Promise<string[]> {
   return page.evaluate(
     (sel) =>
-      [...document.querySelectorAll(sel)].map((el) => (el as HTMLElement).innerText.replace(/\s+/g, ' ').trim()),
-    CARD
+      [...document.querySelectorAll(sel)].map((el) =>
+        (el as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
+      ),
+    CARD,
   )
 }
 
 function textOf(page: Page, sel: string): Promise<string> {
-  return page.evaluate((s) => (document.querySelector(s) as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').trim() ?? '', sel)
+  return page.evaluate(
+    (s) =>
+      (document.querySelector(s) as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').trim() ??
+      '',
+    sel,
+  )
 }
 
 /** Play one line into the log the app is tailing, then wait for the card to say what it should. */
-async function conAndWait(log: FixtureLog, card: Page, line: string, expect: string): Promise<string> {
+async function conAndWait(
+  log: FixtureLog,
+  card: Page,
+  line: string,
+  expect: string,
+): Promise<string> {
   log.append(line)
-  return settle(() => textOf(card, NAME), (n) => n === expect, { timeoutMs: 30_000 })
+  return settle(
+    () => textOf(card, NAME),
+    (n) => n === expect,
+    { timeoutMs: 30_000 },
+  )
 }
 
 /** A FRESH INSTALL HAS THE WINDOW — this kind is the first strip to ship ON (owner, 2026-08-16). */
 async function stepShipsOn(app: ElectronApplication): Promise<Page | null> {
-  const card = await settle(() => findCardWindow(app), (w) => w !== null, { timeoutMs: 30_000 })
+  const card = await settle(
+    () => findCardWindow(app),
+    (w) => w !== null,
+    { timeoutMs: 30_000 },
+  )
   check('a fresh install spawns the con card window — the kind ships ON', card !== null)
   if (card) {
     // …and it is EMPTY until something is conned. The window existing is not the card existing.
-    const idle = await settleStable(() => cardTexts(card), { timeoutMs: 6_000, stable: 4, pollMs: 200 })
-    check('…and it draws nothing until a con happens', idle.length === 0, `${String(idle.length)} card(s)`)
+    const idle = await settleStable(() => cardTexts(card), {
+      timeoutMs: 6_000,
+      stable: 4,
+      pollMs: 200,
+    })
+    check(
+      '…and it draws nothing until a con happens',
+      idle.length === 0,
+      `${String(idle.length)} card(s)`,
+    )
   }
   return card
 }
@@ -288,8 +316,11 @@ async function stepShipsOn(app: ElectronApplication): Promise<Page | null> {
  */
 async function stepPinTheHold(page: Page): Promise<void> {
   const stored = await setAutoHide(page, NEVER_HIDES)
-  check('the spec pins the card to "until I close it" through Preferences’ own door',
-    stored === NEVER_HIDES, String(stored))
+  check(
+    'the spec pins the card to "until I close it" through Preferences’ own door',
+    stored === NEVER_HIDES,
+    String(stored),
+  )
 }
 
 /** A REPLAY DRAWS NOTHING. The fixture's own history is folded before any of this runs. */
@@ -297,7 +328,11 @@ async function stepReplayIsSilent(page: Page, card: Page): Promise<void> {
   const { snap } = await waitHydrated(page)
   if (!check('hydration completes (the historical replay has finished)', !snap.hydrating)) return
   const after = await cardTexts(card)
-  check('the replay of a month of log draws no card at all', after.length === 0, `${String(after.length)} card(s)`)
+  check(
+    'the replay of a month of log draws no card at all',
+    after.length === 0,
+    `${String(after.length)} card(s)`,
+  )
 }
 
 /** THE LIVE `/con`: one line in the log, one card on the screen, carrying what the line said. */
@@ -306,12 +341,27 @@ async function stepConDrawsTheCard(log: FixtureLog, card: Page): Promise<void> {
   // fact the con line never states and only the running world model can answer.
   log.append(`You have entered ${ZONE}.`)
   const name = await conAndWait(log, card, MOB_CON, MOB)
-  if (!check('a `/con` written into the live log draws a card naming the creature', name === MOB, name)) return
+  if (
+    !check(
+      'a `/con` written into the live log draws a card naming the creature',
+      name === MOB,
+      name,
+    )
+  )
+    return
   const facts = await textOf(card, FACTS)
   check('…carrying the LEVEL the con line stated', facts.includes('Level 51'), facts)
-  check('…and the zone the character walked into on the line before it', facts.includes(ZONE), facts)
+  check(
+    '…and the zone the character walked into on the line before it',
+    facts.includes(ZONE),
+    facts,
+  )
   const cards = await cardTexts(card)
-  check('…and exactly one card, never a stack', cards.length === 1, `${String(cards.length)} card(s)`)
+  check(
+    '…and exactly one card, never a stack',
+    cards.length === 1,
+    `${String(cards.length)} card(s)`,
+  )
 }
 
 /** Put the lich back on screen: every step after this one is asserted against ITS card. */
@@ -323,7 +373,9 @@ async function stepBackToTheLich(log: FixtureLog, card: Page): Promise<void> {
 /** Where the con card's window IS, asked of main. Identified by the `?kind=` it was opened with. */
 function cardWindowBounds(app: ElectronApplication): Promise<Bounds | null> {
   return app.evaluate(({ BrowserWindow }) => {
-    const w = BrowserWindow.getAllWindows().find((x) => x.webContents.getURL().includes('kind=conCard'))
+    const w = BrowserWindow.getAllWindows().find((x) =>
+      x.webContents.getURL().includes('kind=conCard'),
+    )
     return w ? w.getBounds() : null
   })
 }
@@ -331,8 +383,9 @@ function cardWindowBounds(app: ElectronApplication): Promise<Bounds | null> {
 /** How tall the thing the renderer measures actually is, in the card's own window. */
 function fitBoxHeight(card: Page): Promise<number> {
   return card.evaluate(
-    (sel) => (document.querySelector(sel) as HTMLElement | null)?.getBoundingClientRect().height ?? 0,
-    FIT
+    (sel) =>
+      (document.querySelector(sel) as HTMLElement | null)?.getBoundingClientRect().height ?? 0,
+    FIT,
   )
 }
 
@@ -341,15 +394,21 @@ function fitBoxHeight(card: Page): Promise<number> {
  * crosses an IPC boundary, so "the window is the card" is a state to settle on, never one to read
  * once.
  */
-function settleFit(app: ElectronApplication, card: Page): Promise<{ bounds: Bounds | null; want: number }> {
+function settleFit(
+  app: ElectronApplication,
+  card: Page,
+): Promise<{ bounds: Bounds | null; want: number }> {
   return settle(
     async () => {
       const bounds = await cardWindowBounds(app)
       const want = Math.ceil(await fitBoxHeight(card)) + 2 * PAD
       return { bounds, want }
     },
-    (r) => r.bounds !== null && r.want > 2 * PAD && Math.abs(r.bounds.height - fittedTo(r.want)) <= FIT_SLACK,
-    { timeoutMs: 20_000 }
+    (r) =>
+      r.bounds !== null &&
+      r.want > 2 * PAD &&
+      Math.abs(r.bounds.height - fittedTo(r.want)) <= FIT_SLACK,
+    { timeoutMs: 20_000 },
   )
 }
 
@@ -364,15 +423,19 @@ async function stepWindowFitsCard(app: ElectronApplication, card: Page): Promise
   const before = await settleFit(app, card)
   const b = before.bounds
   if (!check('the con card window has bounds to read', b !== null)) return
-  check('the window’s height IS the card plus the overlay’s own padding — no empty apron',
+  check(
+    'the window’s height IS the card plus the overlay’s own padding — no empty apron',
     Math.abs((b as Bounds).height - fittedTo(before.want)) <= FIT_SLACK,
-    `window ${String((b as Bounds).height)} vs card+padding ${String(before.want)} (floor ${String(MIN_WINDOW_H)})`)
+    `window ${String((b as Bounds).height)} vs card+padding ${String(before.want)} (floor ${String(MIN_WINDOW_H)})`,
+  )
   // It is genuinely FITTED, not just "some number": the old fixed strip was 300 tall and the card
   // is a handful of rows. A window that had not moved would sail through the check above only if
   // the card happened to be exactly that tall.
   note(`fitted con card window: ${String((b as Bounds).width)}x${String((b as Bounds).height)}`)
   if (before.want < MIN_WINDOW_H) {
-    note(`the card measured ${String(before.want)}px and the smallest window any overlay may be is ${String(MIN_WINDOW_H)} — since JOS-390 a quiet card is SHORTER than the floor, so the floor is what the window wears`)
+    note(
+      `the card measured ${String(before.want)}px and the smallest window any overlay may be is ${String(MIN_WINDOW_H)} — since JOS-390 a quiet card is SHORTER than the floor, so the floor is what the window wears`,
+    )
   }
 
   // A TEXT-SCALE BUMP RE-FITS IT. The scale is applied as a CSS `zoom` on the card (overlayScale),
@@ -389,10 +452,12 @@ async function stepWindowFitsCard(app: ElectronApplication, card: Page): Promise
   const bigger = await settleFit(app, card)
   const big = bigger.bounds
   if (check('the biggest text size re-fits the window', big !== null)) {
-    check('…and the window GREW with the card rather than clipping it',
+    check(
+      '…and the window GREW with the card rather than clipping it',
       (big as Bounds).height > (b as Bounds).height &&
         Math.abs((big as Bounds).height - fittedTo(bigger.want)) <= FIT_SLACK,
-      `${String((b as Bounds).height)} -> ${String((big as Bounds).height)} (card+padding ${String(bigger.want)})`)
+      `${String((b as Bounds).height)} -> ${String((big as Bounds).height)} (card+padding ${String(bigger.want)})`,
+    )
     // THE TOP EDGE NEVER GIVES — and since JOS-406 that is the ONLY half of this that still holds.
     // This check used to read "x, y and width stayed exactly where they were", because a text scale
     // moved nothing but the height: the window kept the width chosen at 100% while the card zoomed
@@ -400,9 +465,11 @@ async function stepWindowFitsCard(app: ElectronApplication, card: Page): Promise
     // 200% card). The window is the card now, so the WIDTH is the layout box times the scale and
     // `x` re-centres around the middle it had. The full arithmetic is asserted next door
     // (conCardScaleSteps.mts); what is kept here is the one thing that is still nobody's to move.
-    check('…while the TOP EDGE stayed exactly where it was',
+    check(
+      '…while the TOP EDGE stayed exactly where it was',
       (big as Bounds).y === (b as Bounds).y,
-      `${JSON.stringify(b)} -> ${JSON.stringify(big)}`)
+      `${JSON.stringify(b)} -> ${JSON.stringify(big)}`,
+    )
     // NOTHING IS CUT OFF SIDEWAYS EITHER. The height is what main re-fits; the WIDTH is fixed, and
     // `zoom` reflows rather than magnifying, so the honest question at 200% is whether the card
     // still lives inside the window it is not allowed to widen. Measured on the card's own box.
@@ -410,9 +477,11 @@ async function stepWindowFitsCard(app: ElectronApplication, card: Page): Promise
       const el = document.querySelector('[data-testid="con-card"]') ?? document.body
       return { scroll: el.scrollWidth, client: document.documentElement.clientWidth }
     })
-    check('…and at 200% the card still fits ACROSS the window, with nothing clipped off the edge',
+    check(
+      '…and at 200% the card still fits ACROSS the window, with nothing clipped off the edge',
       overflow.scroll <= overflow.client + 1,
-      `card ${String(overflow.scroll)}px wide in a ${String(overflow.client)}px window`)
+      `card ${String(overflow.scroll)}px wide in a ${String(overflow.client)}px window`,
+    )
     // The picture of the case the reporters were describing, saved beside the shipped-size one.
     await shootCard(app, card, 'con-card-200.png')
   }
@@ -473,8 +542,16 @@ async function stepPlayerGetsNothing(log: FixtureLog, card: Page): Promise<void>
   const before = await textOf(card, NAME)
   log.append(PLAYER_CON)
   // Nothing is supposed to happen, so the positive signal is the card HOLDING STILL.
-  const after = await settleStable(() => textOf(card, NAME), { timeoutMs: 8_000, stable: 5, pollMs: 200 })
-  check('conning a PLAYER draws no card (the name on screen never changed)', after === before, `${before} -> ${after}`)
+  const after = await settleStable(() => textOf(card, NAME), {
+    timeoutMs: 8_000,
+    stable: 5,
+    pollMs: 200,
+  })
+  check(
+    'conning a PLAYER draws no card (the name on screen never changed)',
+    after === before,
+    `${before} -> ${after}`,
+  )
   check('…and never names the player', !after.includes('Lasershark'), after)
 }
 
@@ -489,11 +566,23 @@ async function stepPlayerGetsNothing(log: FixtureLog, card: Page): Promise<void>
 async function stepSuppressAfterClose(log: FixtureLog, card: Page): Promise<void> {
   // The mob whose card was just closed is the one that must not come back.
   log.append(OTHER_CON)
-  const still = await settleStable(() => cardTexts(card), { timeoutMs: 8_000, stable: 5, pollMs: 200 })
-  check('…and re-conning that same creature does NOT put it back up', still.length === 0, `${String(still.length)} card(s)`)
+  const still = await settleStable(() => cardTexts(card), {
+    timeoutMs: 8_000,
+    stable: 5,
+    pollMs: 200,
+  })
+  check(
+    '…and re-conning that same creature does NOT put it back up',
+    still.length === 0,
+    `${String(still.length)} card(s)`,
+  )
   // A DIFFERENT creature still gets its card: the suppression is per mob, not a mute switch.
   const name = await conAndWait(log, card, MOB_CON, MOB).catch(() => '')
-  check('…while a different creature still draws one — the suppression is per mob', name === MOB, name)
+  check(
+    '…while a different creature still draws one — the suppression is per mob',
+    name === MOB,
+    name,
+  )
 }
 
 /**
@@ -511,9 +600,16 @@ async function stepSuppressAfterClose(log: FixtureLog, card: Page): Promise<void
  * It puts the switch back to 'off' and the window back up before returning — the step after this
  * one is about the preference closing the window, and it needs one to close.
  */
-async function stepOpaqueModeFitsToo(app: ElectronApplication, page: Page, log: FixtureLog): Promise<void> {
+async function stepOpaqueModeFitsToo(
+  app: ElectronApplication,
+  page: Page,
+  log: FixtureLog,
+): Promise<void> {
   const openState = (): Promise<boolean> =>
-    page.evaluate(async () => (await (window as unknown as { eq: GraphicsBridge }).eq.getOverlayState()).conCard)
+    page.evaluate(
+      async () =>
+        (await (window as unknown as { eq: GraphicsBridge }).eq.getOverlayState()).conCard,
+    )
   const reopen = async (): Promise<Page | null> => {
     await page.evaluate(async () => {
       const eq = (window as unknown as { eq: GraphicsBridge }).eq
@@ -527,24 +623,35 @@ async function stepOpaqueModeFitsToo(app: ElectronApplication, page: Page, log: 
       const eq = (window as unknown as { eq: GraphicsBridge }).eq
       if (!(await eq.getOverlayState()).conCard) await eq.toggleOverlay('conCard')
     })
-    return settle(() => findCardWindow(app), (w) => w !== null, { timeoutMs: 30_000 })
+    return settle(
+      () => findCardWindow(app),
+      (w) => w !== null,
+      { timeoutMs: 30_000 },
+    )
   }
   const background = (): Promise<string> =>
     app.evaluate(({ BrowserWindow }) => {
-      const w = BrowserWindow.getAllWindows().find((x) => x.webContents.getURL().includes('kind=conCard'))
+      const w = BrowserWindow.getAllWindows().find((x) =>
+        x.webContents.getURL().includes('kind=conCard'),
+      )
       return w ? w.getBackgroundColor() : ''
     })
 
   const clearBg = await background()
-  await page.evaluate(() => (window as unknown as { eq: GraphicsBridge }).eq.setGraphicsPrefs({ opaqueOverlays: 'on' }))
+  await page.evaluate(() =>
+    (window as unknown as { eq: GraphicsBridge }).eq.setGraphicsPrefs({ opaqueOverlays: 'on' }),
+  )
   const opaque = await reopen()
   if (!check('the con card window reopens in opaque mode', opaque !== null)) return
   // MEASURED, and spelled out rather than imported (an e2e file loads no src module): a transparent
   // window reports `#000000` here and an opaque one the solid overlay colour, `OPAQUE_OVERLAY_BG`
   // in src/shared/graphicsPrefs.ts — the same RGB the page already paints.
   const opaqueBg = await background()
-  check('…and it really was built differently — the window carries the solid overlay colour',
-    opaqueBg.toLowerCase() === '#0e1115' && opaqueBg !== clearBg, `${clearBg} -> ${opaqueBg}`)
+  check(
+    '…and it really was built differently — the window carries the solid overlay colour',
+    opaqueBg.toLowerCase() === '#0e1115' && opaqueBg !== clearBg,
+    `${clearBg} -> ${opaqueBg}`,
+  )
 
   const card = opaque as Page
   const name = await conAndWait(log, card, MOB_CON, MOB).catch(() => '')
@@ -554,16 +661,23 @@ async function stepOpaqueModeFitsToo(app: ElectronApplication, page: Page, log: 
     const fit = await settleFit(app, card)
     const b = fit.bounds
     if (check('the opaque con card window has bounds to read', b !== null)) {
-      check('IN OPAQUE MODE THE BOX ON SCREEN IS EXACTLY THE CARD — no dark apron under it',
+      check(
+        'IN OPAQUE MODE THE BOX ON SCREEN IS EXACTLY THE CARD — no dark apron under it',
         Math.abs((b as Bounds).height - fittedTo(fit.want)) <= FIT_SLACK,
-        `window ${String((b as Bounds).height)} vs card+padding ${String(fit.want)} (floor ${String(MIN_WINDOW_H)})`)
+        `window ${String((b as Bounds).height)} vs card+padding ${String(fit.want)} (floor ${String(MIN_WINDOW_H)})`,
+      )
     }
   }
 
   // …and back, so the switch is a switch and the next step has a transparent window to close.
-  await page.evaluate(() => (window as unknown as { eq: GraphicsBridge }).eq.setGraphicsPrefs({ opaqueOverlays: 'off' }))
+  await page.evaluate(() =>
+    (window as unknown as { eq: GraphicsBridge }).eq.setGraphicsPrefs({ opaqueOverlays: 'off' }),
+  )
   const clear = await reopen()
-  check('the con card reopens transparent again', clear !== null && (await background()) === clearBg)
+  check(
+    'the con card reopens transparent again',
+    clear !== null && (await background()) === clearBg,
+  )
 }
 
 /**
@@ -587,31 +701,58 @@ async function stepOpaqueModeFitsToo(app: ElectronApplication, page: Page, log: 
  * by this point in the spec (the table was read cons ago) there is no second send at all and the
  * card on screen is the whole card. Measuring from the name arriving is measuring the hold.
  */
-async function stepDefaultHideLeaves(app: ElectronApplication, page: Page, log: FixtureLog): Promise<void> {
+async function stepDefaultHideLeaves(
+  app: ElectronApplication,
+  page: Page,
+  log: FixtureLog,
+): Promise<void> {
   const stored = await setAutoHide(page, DEFAULT_HIDE_MS)
-  if (!check('the auto-hide goes back to the SHIPPED default', stored === DEFAULT_HIDE_MS, String(stored))) return
-  const card = await settle(() => findCardWindow(app), (w) => w !== null, { timeoutMs: 30_000 })
+  if (
+    !check(
+      'the auto-hide goes back to the SHIPPED default',
+      stored === DEFAULT_HIDE_MS,
+      String(stored),
+    )
+  )
+    return
+  const card = await settle(
+    () => findCardWindow(app),
+    (w) => w !== null,
+    { timeoutMs: 30_000 },
+  )
   if (!check('the con card window is up to receive an untouched card', card !== null)) return
 
   const t0 = Date.now()
   const name = await conAndWait(log, card as Page, MOB_CON, MOB).catch(() => '')
   if (!check('a `/con` draws a card with the default hold in force', name === MOB, name)) return
 
-  const gone = await settle(() => cardTexts(card as Page), (c) => c.length === 0, {
-    timeoutMs: DEFAULT_HIDE_CEILING_MS + 6_000,
-    pollMs: 100
-  })
+  const gone = await settle(
+    () => cardTexts(card as Page),
+    (c) => c.length === 0,
+    {
+      timeoutMs: DEFAULT_HIDE_CEILING_MS + 6_000,
+      pollMs: 100,
+    },
+  )
   const elapsed = Date.now() - t0
   note(`the default card stood ${String(elapsed)} ms after it was drawn`)
-  check('AN UNTOUCHED CARD LEAVES ON ITS OWN — nobody closed it and nothing replaced it',
-    gone.length === 0, `${String(gone.length)} card(s) still up after ${String(elapsed)} ms`)
-  check('…inside the deadline a three-second hold has to beat (the ceiling, not a schedule)',
+  check(
+    'AN UNTOUCHED CARD LEAVES ON ITS OWN — nobody closed it and nothing replaced it',
+    gone.length === 0,
+    `${String(gone.length)} card(s) still up after ${String(elapsed)} ms`,
+  )
+  check(
+    '…inside the deadline a three-second hold has to beat (the ceiling, not a schedule)',
     gone.length === 0 && elapsed <= DEFAULT_HIDE_CEILING_MS,
-    `${String(elapsed)} ms (ceiling ${String(DEFAULT_HIDE_CEILING_MS)})`)
+    `${String(elapsed)} ms (ceiling ${String(DEFAULT_HIDE_CEILING_MS)})`,
+  )
   // …and it was a HOLD, not a card that never really arrived: the tick counts down 3 s of it, and
   // the floor is deliberately under that — this separates a hold from a flicker, nothing finer.
-  check('…and it stood long enough to be read rather than flickering',
-    elapsed >= 2_000, `${String(elapsed)} ms`)
+  check(
+    '…and it stood long enough to be read rather than flickering',
+    elapsed >= 2_000,
+    `${String(elapsed)} ms`,
+  )
 }
 
 /** THE PREFERENCE: off means off, and the window goes with it. */
@@ -621,19 +762,34 @@ async function stepPreferenceTurnsItOff(app: ElectronApplication, page: Page): P
   await page.click('[data-testid="prefs-rail-overlays"]')
   await page.waitForSelector('[data-testid="pref-con-card"]', { timeout: 15_000 })
   const on = await settleStable(
-    () => page.evaluate((sel) => (document.querySelector(sel) as HTMLInputElement | null)?.checked, '[data-testid="pref-con-card-enabled"] input'),
-    { timeoutMs: 8_000, stable: 4, pollMs: 150 }
+    () =>
+      page.evaluate(
+        (sel) => (document.querySelector(sel) as HTMLInputElement | null)?.checked,
+        '[data-testid="pref-con-card-enabled"] input',
+      ),
+    { timeoutMs: 8_000, stable: 4, pollMs: 150 },
   )
-  check('Preferences agrees the card is ON, matching the window that already exists', on === true, String(on))
+  check(
+    'Preferences agrees the card is ON, matching the window that already exists',
+    on === true,
+    String(on),
+  )
   // …AND THE HOLD CONTROL PAINTS THE SHIPPED DEFAULT (JOS-388's lesson, JOS-390's number). A closed
   // list has a failure mode a slider does not: a stored value with no member to match renders as an
   // EMPTY control, and the shipped default is what every untouched install carries. The step above
   // put the knob back to the default, so what this reads is exactly what a fresh install would show.
   const hide = await textOf(page, '[data-testid="pref-con-card-hide"]')
-  check('…and the "a card stays for" control shows the shipped default rather than nothing',
-    /3 seconds/.test(hide), hide || '(empty)')
+  check(
+    '…and the "a card stays for" control shows the shipped default rather than nothing',
+    /3 seconds/.test(hide),
+    hide || '(empty)',
+  )
   await page.click('[data-testid="pref-con-card-enabled"] input')
-  const closed = await settle(() => findCardWindow(app), (w) => w === null, { timeoutMs: 20_000 })
+  const closed = await settle(
+    () => findCardWindow(app),
+    (w) => w === null,
+    { timeoutMs: 20_000 },
+  )
   check('turning it off closes the window — off means off', closed === null)
 }
 
@@ -704,7 +860,11 @@ async function main(): Promise<void> {
       note('no con card window — every claim below it was skipped')
     }
 
-    check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+    check(
+      'no renderer console errors',
+      consoleErrors.length === 0,
+      consoleErrors.slice(0, 3).join(' | '),
+    )
     if (failures.length) await dumpArtifacts(page, 'con-card-FAIL')
   } finally {
     await close()

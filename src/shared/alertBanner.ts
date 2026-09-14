@@ -69,7 +69,7 @@ export const BANNER_MAX_LINES = 8
 export const DEFAULT_ALERT_BANNER_CONFIG: AlertBannerOverlayConfig = {
   holdMs: DEFAULT_BANNER_HOLD_MS,
   maxLines: DEFAULT_BANNER_MAX_LINES,
-  introduced: false
+  introduced: false,
 }
 
 const asRecord = (v: unknown): Record<string, unknown> =>
@@ -78,7 +78,8 @@ const asRecord = (v: unknown): Record<string, unknown> =>
 const asNumber = (v: unknown, fallback: number): number =>
   typeof v === 'number' && Number.isFinite(v) ? v : fallback
 
-const clampInt = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, Math.floor(v)))
+const clampInt = (v: number, lo: number, hi: number): number =>
+  Math.min(hi, Math.max(lo, Math.floor(v)))
 
 /**
  * Coerce a stored/patched banner config into the valid shape (the store's clamp lives here).
@@ -88,11 +89,19 @@ const clampInt = (v: number, lo: number, hi: number): number => Math.min(hi, Mat
 export function normalizeAlertBannerConfig(v: unknown): AlertBannerOverlayConfig {
   const o = asRecord(v)
   return {
-    holdMs: clampInt(asNumber(o.holdMs, DEFAULT_BANNER_HOLD_MS), BANNER_MIN_HOLD_MS, BANNER_MAX_HOLD_MS),
-    maxLines: clampInt(asNumber(o.maxLines, DEFAULT_BANNER_MAX_LINES), BANNER_MIN_LINES, BANNER_MAX_LINES),
+    holdMs: clampInt(
+      asNumber(o.holdMs, DEFAULT_BANNER_HOLD_MS),
+      BANNER_MIN_HOLD_MS,
+      BANNER_MAX_HOLD_MS,
+    ),
+    maxLines: clampInt(
+      asNumber(o.maxLines, DEFAULT_BANNER_MAX_LINES),
+      BANNER_MIN_LINES,
+      BANNER_MAX_LINES,
+    ),
     // Only a literal `true` counts, for `normalizeToastConfig`'s reason: showing one extra
     // introduction is a smaller failure than never explaining the window at all.
-    introduced: o.introduced === true
+    introduced: o.introduced === true,
   }
 }
 
@@ -115,7 +124,7 @@ export const ALERT_BANNER_COLORS: AlertBannerColor[] = [
   'orange',
   'yellow',
   'green',
-  'blue'
+  'blue',
 ]
 
 /**
@@ -131,7 +140,7 @@ export const ALERT_BANNER_COLOR_HEX: Record<AlertBannerColor, string> = {
   orange: '#ffa94d',
   yellow: '#ffd43b',
   green: '#69db7c',
-  blue: '#74c0fc'
+  blue: '#74c0fc',
 }
 
 /** A stored/imported colour this build will act on, or undefined for "the overlay's default". */
@@ -172,7 +181,9 @@ export type BannerDef = Pick<AlertDef, 'name' | 'bannerText'>
  * override), in which case no banner is sent at all.
  */
 export function alertBannerText(def: BannerDef): string | null {
-  return cappedText(def.bannerText, MAX_BANNER_CHARS) ?? cappedText(def.name, MAX_BANNER_CHARS) ?? null
+  return (
+    cappedText(def.bannerText, MAX_BANNER_CHARS) ?? cappedText(def.name, MAX_BANNER_CHARS) ?? null
+  )
 }
 
 /**
@@ -185,10 +196,11 @@ export function alertBannerText(def: BannerDef): string | null {
  */
 const CELEBRATED_SIGNAL: Record<AppSignal, boolean> = {
   bossDefeat: true,
-  questComplete: true
+  questComplete: true,
 }
 
-const isCelebrated = (t: AlertTriggerPrimitive): boolean => t.type === 'app' && CELEBRATED_SIGNAL[t.signal]
+const isCelebrated = (t: AlertTriggerPrimitive): boolean =>
+  t.type === 'app' && CELEBRATED_SIGNAL[t.signal]
 
 /**
  * What an alert that has never said means by saying nothing (owner ruling, 2026-08-15, JOS-380).
@@ -325,5 +337,11 @@ export const BANNER_INTRO_TEXT =
   'This is the alert banner - alerts marked Show on screen appear here. Move it from Preferences -> Overlays.'
 
 export function introBannerPayload(now: number): AlertBannerPayload {
-  return { id: BANNER_INTRO_ID, alertId: BANNER_INTRO_ID, ts: now, text: BANNER_INTRO_TEXT, holdMs: BANNER_INTRO_MS }
+  return {
+    id: BANNER_INTRO_ID,
+    alertId: BANNER_INTRO_ID,
+    ts: now,
+    text: BANNER_INTRO_TEXT,
+    holdMs: BANNER_INTRO_MS,
+  }
 }

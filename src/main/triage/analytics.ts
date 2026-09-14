@@ -28,13 +28,13 @@ import {
   replayMsBucketLabel,
   sessionBucketLabel,
   stutterMsBucketLabel,
-  USAGE_METRICS
+  USAGE_METRICS,
 } from '../../shared/telemetryRollup'
 import {
   bucketRange,
   LOG_SIZE_BYTES_EDGES,
   NEW_BYTES_EDGES,
-  TELEMETRY_FUNNEL_STEPS
+  TELEMETRY_FUNNEL_STEPS,
 } from '../../shared/telemetry'
 import type {
   TriageAnalyticsAdoption,
@@ -48,7 +48,7 @@ import type {
   TriageMixRow,
   TriageStartupRow,
   TriageUpdateRow,
-  TriageVersionRow
+  TriageVersionRow,
 } from '../../shared/triage'
 import { buildCoverage } from './coverage'
 // JOS-364's machine class, in its own file for the reason that file's header states — this
@@ -74,7 +74,7 @@ import {
   type FunnelRow,
   type InstallRow,
   type PerfRow,
-  type UsageRow
+  type UsageRow,
 } from './usageRows'
 
 export interface AnalyticsInput {
@@ -122,7 +122,11 @@ const UPDATE_STEPS = ['check', 'download', 'apply'] as const
  * weeks old. "Active in the 7 days up to the last day anything happened" is the question a
  * human is actually asking of a backlog they are looking at after the fact.
  */
-function referenceDay(usage: readonly UsageRow[], installs: readonly InstallRow[], nowMs: number): string {
+function referenceDay(
+  usage: readonly UsageRow[],
+  installs: readonly InstallRow[],
+  nowMs: number,
+): string {
   const lastUsage = usage.reduce((max, r) => (r.n > 0 && r.day > max ? r.day : max), '')
   const lastInstall = installs.reduce((max, r) => (r.lastSeenDay > max ? r.lastSeenDay : max), '')
   const best = lastUsage > lastInstall ? lastUsage : lastInstall
@@ -172,7 +176,7 @@ function buildPulse(input: AnalyticsInput, days: string[], ref: string): TriageA
     meanSessionMs: ratio(totalMs, ends),
     medianSessionLabel: median < 0 ? null : sessionBucketLabel(median),
     activeSeries,
-    sessionSeries
+    sessionSeries,
   }
 }
 
@@ -186,13 +190,13 @@ function buildAdoption(usage: readonly UsageRow[], sessions: number): TriageAnal
     features: mixRows(dimsOf(usage, USAGE_METRICS.featureUse)).map((f) => ({
       id: f.id,
       uses: f.n,
-      perSession: ratio(f.n, sessions) ?? 0
+      perSession: ratio(f.n, sessions) ?? 0,
     })),
     views: mixRows(dwell).map((v) => ({
       id: v.id,
       dwellMs: v.n,
       visits: visits.get(v.id) ?? 0,
-      share: ratio(v.n, totalDwell) ?? 0
+      share: ratio(v.n, totalDwell) ?? 0,
     })),
     overlays: mixRows(dimsOf(usage, USAGE_METRICS.overlayOpen)),
     voice: mixRows(dimsOf(usage, USAGE_METRICS.setupVoice)),
@@ -200,7 +204,7 @@ function buildAdoption(usage: readonly UsageRow[], sessions: number): TriageAnal
     autoHide: mixRows(dimsOf(usage, USAGE_METRICS.setupAutoHide)),
     machine: buildMachineClass(usage),
     alertsFired: sumOf(usage, USAGE_METRICS.alertsFired),
-    alertsSpoken: sumOf(usage, USAGE_METRICS.alertsSpoken)
+    alertsSpoken: sumOf(usage, USAGE_METRICS.alertsSpoken),
   }
 }
 
@@ -226,7 +230,7 @@ function stepRows(funnel: string, counts: Map<string, number>): TriageFunnelStep
       step,
       n,
       conversion: ratio(n, first) ?? 0,
-      dropOff: previous > 0 ? Math.max(0, 1 - n / previous) : 0
+      dropOff: previous > 0 ? Math.max(0, 1 - n / previous) : 0,
     }
     previous = n
     return row
@@ -242,7 +246,11 @@ function countSteps(rows: readonly FunnelRow[]): Map<string, number> {
 /** Versions are capped: a funnel with twenty historical versions is a table nobody reads. */
 const MAX_FUNNEL_VERSIONS = 5
 
-function buildFunnel(funnel: string, rows: readonly FunnelRow[], usage: readonly UsageRow[]): TriageFunnelView {
+function buildFunnel(
+  funnel: string,
+  rows: readonly FunnelRow[],
+  usage: readonly UsageRow[],
+): TriageFunnelView {
   const versions = [...new Set(rows.map((r) => r.appVersion))]
     .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
     .slice(0, MAX_FUNNEL_VERSIONS)
@@ -254,9 +262,9 @@ function buildFunnel(funnel: string, rows: readonly FunnelRow[], usage: readonly
     steps: stepRows(funnel, countSteps(rows)),
     byVersion: versions.map((version) => ({
       version,
-      steps: stepRows(funnel, countSteps(rows.filter((r) => r.appVersion === version)))
+      steps: stepRows(funnel, countSteps(rows.filter((r) => r.appVersion === version))),
     })),
-    failures
+    failures,
   }
 }
 
@@ -265,9 +273,16 @@ function buildFunnel(funnel: string, rows: readonly FunnelRow[], usage: readonly
  * missing from the panel reads as "we do not measure that"; a funnel of zeros reads as "we
  * measure it and nobody got there", which is the true statement and the more alarming one.
  */
-function buildFunnels(funnels: readonly FunnelRow[], usage: readonly UsageRow[]): TriageFunnelView[] {
+function buildFunnels(
+  funnels: readonly FunnelRow[],
+  usage: readonly UsageRow[],
+): TriageFunnelView[] {
   return Object.keys(TELEMETRY_FUNNEL_STEPS).map((funnel) =>
-    buildFunnel(funnel, funnels.filter((r) => r.funnel === funnel), usage)
+    buildFunnel(
+      funnel,
+      funnels.filter((r) => r.funnel === funnel),
+      usage,
+    ),
   )
 }
 
@@ -309,7 +324,7 @@ function buildHealth(usage: readonly UsageRow[]): TriageAnalyticsHealth {
     errors: errorClasses(usage),
     reports: sumOf(usage, USAGE_METRICS.healthReports),
     update: updateRows(dimsOf(usage, USAGE_METRICS.update)),
-    updateFailures: mixRows(dimsOf(usage, USAGE_METRICS.updateFailure))
+    updateFailures: mixRows(dimsOf(usage, USAGE_METRICS.updateFailure)),
   }
 }
 
@@ -347,7 +362,7 @@ function startupHistogram(counts: Map<string, number>, version: string): number[
 function bucketLabelAt(
   counts: readonly number[],
   p: number,
-  label: (i: number) => string
+  label: (i: number) => string,
 ): string | null {
   const i = percentileBucket(counts, p)
   return i < 0 ? null : label(i)
@@ -356,7 +371,7 @@ function bucketLabelAt(
 function startupRow(
   version: string,
   launches: number,
-  usage: readonly UsageRow[]
+  usage: readonly UsageRow[],
 ): TriageStartupRow {
   const replay = startupHistogram(dimsOf(usage, USAGE_METRICS.startupReplayMs), version)
   const block = startupHistogram(dimsOf(usage, USAGE_METRICS.startupBlockMs), version)
@@ -375,7 +390,7 @@ function startupRow(
     dutyAchieved: dutyMean === null ? null : dutyMean / 100,
     meanEventsReplayed: ratio(events, launches),
     blocksOver50: dimsOf(usage, USAGE_METRICS.startupBlocksOver50).get(version) ?? 0,
-    ...startupDiscriminators(version, usage)
+    ...startupDiscriminators(version, usage),
   }
 }
 
@@ -391,7 +406,7 @@ function startupRow(
  */
 function startupDiscriminators(
   version: string,
-  usage: readonly UsageRow[]
+  usage: readonly UsageRow[],
 ): Pick<
   TriageStartupRow,
   | 'p50StutterLabel'
@@ -415,7 +430,7 @@ function startupDiscriminators(
     // The first-MB histogram borrows the block ladder (see USAGE_METRICS.startupFirstMbMs), so it
     // borrows its label function too rather than growing a second copy of the same ranges.
     p50FirstMbLabel: bucketLabelAt(firstMb, 50, blockMsBucketLabel),
-    p95FirstMbLabel: bucketLabelAt(firstMb, 95, blockMsBucketLabel)
+    p95FirstMbLabel: bucketLabelAt(firstMb, 95, blockMsBucketLabel),
   }
 }
 
@@ -428,12 +443,12 @@ function buildStartup(usage: readonly UsageRow[]): TriageAnalyticsStartup {
     byVersion: versions.map((v) => startupRow(v, launches.get(v) ?? 0, usage)),
     logSizes: mixRows(dimsOf(usage, USAGE_METRICS.startupLogSize)).map((r) => ({
       id: logSizeBucketLabel(Number(r.id)),
-      n: r.n
+      n: r.n,
     })),
     newBytes: mixRows(dimsOf(usage, USAGE_METRICS.startupNewBytes)).map((r) => ({
       id: byteBucketLabel(NEW_BYTES_EDGES, Number(r.id)),
-      n: r.n
-    }))
+      n: r.n,
+    })),
   }
 }
 
@@ -469,7 +484,7 @@ function byteBucketLabel(edges: readonly number[], i: number): string {
 function adoptionDays(
   version: string,
   usage: readonly UsageRow[],
-  activeByDay: Map<string, number>
+  activeByDay: Map<string, number>,
 ): Pick<TriageVersionRow, 'peakShare' | 'firstSeenDay' | 'majorityDay' | 'daysToAdopt'> {
   const rows = usage
     .filter((r) => r.metric === USAGE_METRICS.version && r.dim === version && r.n > 0)
@@ -487,11 +502,14 @@ function adoptionDays(
     firstSeenDay,
     majorityDay,
     daysToAdopt:
-      firstSeenDay !== null && majorityDay !== null ? daysBetween(firstSeenDay, majorityDay) : null
+      firstSeenDay !== null && majorityDay !== null ? daysBetween(firstSeenDay, majorityDay) : null,
   }
 }
 
-function buildVersions(usage: readonly UsageRow[], installs: readonly InstallRow[]): TriageVersionRow[] {
+function buildVersions(
+  usage: readonly UsageRow[],
+  installs: readonly InstallRow[],
+): TriageVersionRow[] {
   const activeByDay = new Map<string, number>()
   for (const r of usage) {
     if (r.metric !== USAGE_METRICS.activeInstalls) continue
@@ -506,9 +524,12 @@ function buildVersions(usage: readonly UsageRow[], installs: readonly InstallRow
     .map((version) => ({
       version,
       installs: current.get(version) ?? 0,
-      ...adoptionDays(version, usage, activeByDay)
+      ...adoptionDays(version, usage, activeByDay),
     }))
-    .sort((a, b) => b.installs - a.installs || b.version.localeCompare(a.version, undefined, { numeric: true }))
+    .sort(
+      (a, b) =>
+        b.installs - a.installs || b.version.localeCompare(a.version, undefined, { numeric: true }),
+    )
 }
 
 // ---- retention -----------------------------------------------------------------------
@@ -548,7 +569,7 @@ function buildRetention(installs: readonly InstallRow[], ref: string): TriageCoh
       installs: rows.length,
       d1: survivors(rows, cohortDay, 1),
       d7: survivors(rows, cohortDay, 7),
-      d30: survivors(rows, cohortDay, 30)
+      d30: survivors(rows, cohortDay, 30),
     }))
 }
 
@@ -583,12 +604,17 @@ export function buildAnalytics(input: AnalyticsInput): TriageAnalyticsData {
     // Beside Health and Startup, and reading the same rows from the other end: those two ask what
     // goes wrong and how launches went; this one asks WHICH BUILD, over time, against how many
     // people were on it. Its own file (./releaseHealth.ts) — this one is at the line ceiling.
-    releaseHealth: buildReleaseHealth(input.usage, input.bugReports ?? [], days, input.issues ?? []),
+    releaseHealth: buildReleaseHealth(
+      input.usage,
+      input.bugReports ?? [],
+      days,
+      input.issues ?? [],
+    ),
     // …and the section that describes the LIMITS of all of the above: who turned it off, and how
     // much of the fleet these counters can see at all (JOS-109). Its own file for the same reason
     // release health has one, and because the argument it has to carry is longer than its code.
     coverage: buildCoverage(input.usage, input.installs),
     versions: buildVersions(input.usage, input.installs),
-    retention: buildRetention(input.installs, ref)
+    retention: buildRetention(input.installs, ref),
   }
 }

@@ -13,7 +13,7 @@ const ROLE_COLOR: Record<string, string> = {
   pet: '#6fb3d2',
   enemy: '#cf6679',
   info: '#9aa0aa',
-  dropped: '#e0554f'
+  dropped: '#e0554f',
 }
 
 // One classification-ring line. Memoized by value so that on each tick only the
@@ -21,20 +21,30 @@ const ROLE_COLOR: Record<string, string> = {
 const LogLine = memo(
   function LogLine({ l }: { l: ClassifiedLine }): React.JSX.Element {
     return (
-      <Box sx={{ display: 'flex', gap: 1, color: ROLE_COLOR[l.role] ?? 'text.primary', lineHeight: 1.5 }}>
-        <span style={{ color: 'var(--mui-palette-text-disabled)', opacity: 0.7 }}>{formatTime(l.ts)}</span>
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 1,
+          color: ROLE_COLOR[l.role] ?? 'text.primary',
+          lineHeight: 1.5,
+        }}
+      >
+        <span style={{ color: 'var(--mui-palette-text-disabled)', opacity: 0.7 }}>
+          {formatTime(l.ts)}
+        </span>
         <span style={{ minWidth: 62, opacity: 0.8 }}>{l.cat}</span>
         <span style={{ whiteSpace: 'pre-wrap' }}>{l.text}</span>
       </Box>
     )
   },
-  (p, n) => p.l.ts === n.l.ts && p.l.cat === n.l.cat && p.l.role === n.l.role && p.l.text === n.l.text
+  (p, n) =>
+    p.l.ts === n.l.ts && p.l.cat === n.l.cat && p.l.role === n.l.role && p.l.text === n.l.text,
 )
 
 export function ProcessingLog({
   lines,
   showUnparsed,
-  setShowUnparsed
+  setShowUnparsed,
 }: {
   lines: ClassifiedLine[]
   showUnparsed: boolean
@@ -59,7 +69,13 @@ export function ProcessingLog({
       title="Combat log"
       right={
         <FormControlLabel
-          control={<Switch size="small" checked={showUnparsed} onChange={(e) => setShowUnparsed(e.target.checked)} />}
+          control={
+            <Switch
+              size="small"
+              checked={showUnparsed}
+              onChange={(e) => setShowUnparsed(e.target.checked)}
+            />
+          }
           label={<Typography variant="caption">show unparsed</Typography>}
           sx={{ m: 0 }}
         />
@@ -73,7 +89,13 @@ export function ProcessingLog({
           const el = e.currentTarget
           following.current = isAtBottom(el.scrollTop, el.scrollHeight, el.clientHeight)
         }}
-        sx={{ overflow: 'auto', flexGrow: 1, minHeight: 0, fontFamily: '"Consolas","Courier New",monospace', fontSize: 11 }}
+        sx={{
+          overflow: 'auto',
+          flexGrow: 1,
+          minHeight: 0,
+          fontFamily: '"Consolas","Courier New",monospace',
+          fontSize: 11,
+        }}
       >
         {lines.length === 0 && <QuietNote>Waiting for combat…</QuietNote>}
         {lines.map((l, i) => (

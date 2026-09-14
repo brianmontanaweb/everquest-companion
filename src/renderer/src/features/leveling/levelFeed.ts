@@ -34,7 +34,11 @@ export function buildFeed(levels: readonly LevelPoint[], aas: readonly AAEvent[]
       ts: e.ts,
       kind: e.afterSwap ? 'swap' : 'level',
       label: e.afterSwap ? `Level ${e.level} (class swap)` : `Level ${e.level}`,
-      detail: e.afterSwap ? 'new loadout - level re-reported' : e.sinceMs != null ? `+${fmtDelta(e.sinceMs)}` : ''
+      detail: e.afterSwap
+        ? 'new loadout - level re-reported'
+        : e.sinceMs != null
+          ? `+${fmtDelta(e.sinceMs)}`
+          : '',
     })
   }
   for (const a of aas) {

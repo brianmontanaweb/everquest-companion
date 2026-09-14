@@ -153,7 +153,9 @@ interface CohortRows {
 export async function cmdAnalyticsDigest(ctx: AnalyticsCtx): Promise<void> {
   const days = Number(ctx.args.days ?? 30)
   if (!Number.isInteger(days) || days < 1 || days > MAX_WINDOW_DAYS) {
-    throw new Error(`analytics digest: --days must be a whole number of days (1..${String(MAX_WINDOW_DAYS)})`)
+    throw new Error(
+      `analytics digest: --days must be a whole number of days (1..${String(MAX_WINDOW_DAYS)})`,
+    )
   }
   const choice = cohortChoice(ctx.args.cohort)
   const c = ctx.clients()
@@ -199,9 +201,7 @@ export async function cmdAnalyticsDigest(ctx: AnalyticsCtx): Promise<void> {
     // One cohort keeps the historical shape (the bare data object); `all` has to name which is
     // which, and a keyed object is the only shape that cannot be mistaken for a sum.
     const out =
-      choice === 'all'
-        ? Object.fromEntries(wanted.map((k) => [k, build(k)]))
-        : build(wanted[0])
+      choice === 'all' ? Object.fromEntries(wanted.map((k) => [k, build(k)])) : build(wanted[0])
     console.log(JSON.stringify(out, null, 2))
     return
   }
@@ -211,7 +211,12 @@ export async function cmdAnalyticsDigest(ctx: AnalyticsCtx): Promise<void> {
   console.log(
     wanted
       .map((k, i) =>
-        renderAnalyticsDigest(build(k), k, i === 0 ? downloads : undefined, i === 0 ? live : undefined),
+        renderAnalyticsDigest(
+          build(k),
+          k,
+          i === 0 ? downloads : undefined,
+          i === 0 ? live : undefined,
+        ),
       )
       .join('\n'),
   )
@@ -273,7 +278,8 @@ async function setSwitch(ctx: AnalyticsCtx, accepting: boolean): Promise<void> {
 function requireId(ctx: AnalyticsCtx, command: string): string {
   const positional = ctx.rest[1] ?? ''
   const id = positional.length > 0 ? positional : typeof ctx.args.id === 'string' ? ctx.args.id : ''
-  if (!id) throw new Error(`analytics ${command}: <analyticsId> (or --id <analyticsId>) is required`)
+  if (!id)
+    throw new Error(`analytics ${command}: <analyticsId> (or --id <analyticsId>) is required`)
   return id
 }
 
@@ -284,7 +290,7 @@ async function markCohort(ctx: AnalyticsCtx, cohort: UsageCohort): Promise<void>
   if (rows === 0) {
     console.log(
       `no analytics_install row for ${id} — nothing marked.\n` +
-        'The row is created by that install\'s FIRST accepted batch, so mark it after the app ' +
+        "The row is created by that install's FIRST accepted batch, so mark it after the app " +
         'has reported at least once (and check the id in Preferences → usage analytics).',
     )
     return
@@ -366,10 +372,14 @@ async function cmdBackfill(ctx: AnalyticsCtx): Promise<void> {
   guard(ctx, 'analytics backfill-cohort')
   const { installs, tables } = await runBackfill(ctx.clients(), readFileSync(SCHEMA_FILE, 'utf8'))
   for (const t of tables) {
-    console.log(`${t.table.padEnd(20)} ${t.created ? 'staging created' : 'staging existed'} · ${String(t.copied)} row(s) copied`)
+    console.log(
+      `${t.table.padEnd(20)} ${t.created ? 'staging created' : 'staging existed'} · ${String(t.copied)} row(s) copied`,
+    )
   }
   console.log(`analytics_install: ${String(installs)} row(s) given an explicit cohort.`)
-  console.log('\nNOTHING HAS BEEN DROPPED. Next: `analytics backfill-verify`, then `analytics backfill-swap`.')
+  console.log(
+    '\nNOTHING HAS BEEN DROPPED. Next: `analytics backfill-verify`, then `analytics backfill-swap`.',
+  )
 }
 
 async function cmdBackfillVerify(ctx: AnalyticsCtx): Promise<void> {
@@ -378,7 +388,9 @@ async function cmdBackfillVerify(ctx: AnalyticsCtx): Promise<void> {
   const cell = (t: { rows: number; total: number } | null): string =>
     t === null ? '(absent)' : `${String(t.rows)} row(s) / n=${String(t.total)}`
   for (const r of rows) {
-    console.log(`${r.table.padEnd(20)} from ${cell(r.from).padEnd(26)} to ${cell(r.to).padEnd(26)} ${r.ok ? 'OK  ' : 'FAIL'} ${r.note}`)
+    console.log(
+      `${r.table.padEnd(20)} from ${cell(r.from).padEnd(26)} to ${cell(r.to).padEnd(26)} ${r.ok ? 'OK  ' : 'FAIL'} ${r.note}`,
+    )
   }
   console.log(
     rows.every((r) => r.ok)
@@ -389,7 +401,8 @@ async function cmdBackfillVerify(ctx: AnalyticsCtx): Promise<void> {
 
 async function cmdBackfillSwap(ctx: AnalyticsCtx): Promise<void> {
   guard(ctx, 'analytics backfill-swap')
-  for (const step of await runSwap(ctx.clients())) console.log(`${step.done ? 'ran     ' : 'skipped '} ${step.sql}`)
+  for (const step of await runSwap(ctx.clients()))
+    console.log(`${step.done ? 'ran     ' : 'skipped '} ${step.sql}`)
   console.log(
     '\nThe cohort-keyed tables now carry the real names, with every legacy row in them.\n' +
       'Next: `terraform apply` (the cohort-aware Lambda), then `analytics open`.',
@@ -437,7 +450,9 @@ export const ANALYTICS_SUBCOMMANDS: Record<string, (ctx: AnalyticsCtx) => Promis
   'backfill-swap': cmdBackfillSwap,
 }
 
-function analyticsSubcommand(name: string | undefined): ((ctx: AnalyticsCtx) => Promise<void>) | null {
+function analyticsSubcommand(
+  name: string | undefined,
+): ((ctx: AnalyticsCtx) => Promise<void>) | null {
   return name === undefined ? null : (ANALYTICS_SUBCOMMANDS[name] ?? null)
 }
 

@@ -69,14 +69,14 @@ function useNavSeam(view: View, setView: (v: View) => void): NavSeam {
       setOrigins((s) => afterLink(s, { view: from, label: VIEW_LABELS[from] }, to, anchored))
       setView(to)
     },
-    [setView]
+    [setView],
   )
   const selectView = useCallback(
     (v: View) => {
       setOrigins([])
       setView(v)
     },
-    [setView]
+    [setView],
   )
   const clear = useCallback(() => setOrigins([]), [])
   const origin = originTop(origins)
@@ -222,7 +222,7 @@ function useFocusSlot<T>(to: View, linkTo: NavSeam['linkTo']): FocusSlot<T> {
       setNonce((n) => n + 1)
       linkTo(to, v != null)
     },
-    [linkTo, to]
+    [linkTo, to],
   )
   const clear = useCallback(() => setValue(null), [])
   return useMemo(() => ({ value, nonce, open, clear }), [value, nonce, open, clear])
@@ -269,9 +269,9 @@ export function useAppRouting(view: View, setView: (v: View) => void): AppRoutin
       lootItem: loot.value,
       lootNonce: loot.nonce,
       openLoot: loot.open,
-      clearLootFocus: loot.clear
+      clearLootFocus: loot.clear,
     }),
-    [selectView, nav, spell, mob, quest, level, combat, loot]
+    [selectView, nav, spell, mob, quest, level, combat, loot],
   )
 }
 
@@ -303,7 +303,7 @@ export function usePrefsRouting(view: View, setView: (v: View) => void): PrefsRo
       setSection(id)
       setView('preferences')
     },
-    [setView]
+    [setView],
   )
   // Memoized for the same reason `useAppRouting`'s return is (JOS-510 item 3): this object travels
   // to `ViewContent` and to `BottomStrips` as a prop, and `ViewContent` is a `React.memo` boundary.

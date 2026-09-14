@@ -13,7 +13,15 @@
 // The layer itself is `pointerEvents: 'none'` — the wheel-zoom (a native non-passive listener)
 // and the drag-pan stay on the <svg> beneath it, untouched.
 
-import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type Ref,
+} from 'react'
 import type { StanceSpan, TimelineEvent, TimelineMarker, TimelineView } from '@shared/combat'
 import { ChartTooltip, type TooltipRow } from '../../lib/ChartTooltip'
 import { rafThrottle } from '../../lib/rafThrottle'
@@ -31,7 +39,7 @@ import {
   timeTooltip,
   type TimelineMetrics,
   type TipContent,
-  type ViewWin
+  type ViewWin,
 } from './timelineGeometry'
 
 /** Grab radii, in CSS px, converted to a time tolerance by the caller (D7). A tick is 2–3px
@@ -98,7 +106,13 @@ function laneHit(c: HitCtx, y: number, t: number, msPerPx: number): TimelineEven
 
 /** The change gate (§8.3): same pick, and the cursor barely moved ⇒ no setState at all. */
 function sameHit(a: Hit, b: Hit): boolean {
-  return a.ev === b.ev && a.mk === b.mk && a.span === b.span && Math.abs(a.x - b.x) < 2 && Math.abs(a.y - b.y) < 2
+  return (
+    a.ev === b.ev &&
+    a.mk === b.mk &&
+    a.span === b.span &&
+    Math.abs(a.x - b.x) < 2 &&
+    Math.abs(a.y - b.y) < 2
+  )
 }
 
 /** The rolling-DPS block every timeline tooltip carries — sampled from the chart's own series
@@ -106,9 +120,13 @@ function sameHit(a: Hit, b: Hit): boolean {
 function dpsRows(series: DpsSeries, t: number): TooltipRow[] {
   const p = dpsAt(series, t)
   const a = series.estimated ? '~' : ''
-  const rows: TooltipRow[] = [{ label: 'you + pet', value: `${a}${formatRate(p.out)}`, color: KIND_COLOR.you }]
-  if (series.hasPet) rows.push({ label: 'pet', value: `${a}${formatRate(p.pet)}`, color: KIND_COLOR.pet })
-  if (series.hasInc) rows.push({ label: 'incoming', value: `${a}${formatRate(p.inc)}`, color: KIND_COLOR.enemy })
+  const rows: TooltipRow[] = [
+    { label: 'you + pet', value: `${a}${formatRate(p.out)}`, color: KIND_COLOR.you },
+  ]
+  if (series.hasPet)
+    rows.push({ label: 'pet', value: `${a}${formatRate(p.pet)}`, color: KIND_COLOR.pet })
+  if (series.hasInc)
+    rows.push({ label: 'incoming', value: `${a}${formatRate(p.inc)}`, color: KIND_COLOR.enemy })
   return rows
 }
 
@@ -135,7 +153,11 @@ function buildTip(hit: Hit, tl: TimelineView, series: DpsSeries): TipContent {
   const rows = [...base.rows]
   // A tick sitting on a marker guide answers both questions at once: what landed, and what was
   // in force when it did.
-  if (hit.ev && hit.mk) rows.push({ value: `${hit.mk.label} ${MARKER_WORD[hit.mk.kind]}`, color: MARKER_COLOR[hit.mk.kind] })
+  if (hit.ev && hit.mk)
+    rows.push({
+      value: `${hit.mk.label} ${MARKER_WORD[hit.mk.kind]}`,
+      color: MARKER_COLOR[hit.mk.kind],
+    })
   return { ...base, rows: [...rows, ...dpsRows(series, hit.t)], note: noteFor(tl, series, hit.t) }
 }
 
@@ -149,7 +171,10 @@ function Crosshair({ hit, p }: { hit: Hit; p: HoverLayerProps }): React.JSX.Elem
       ? {
           cx: m.labelW + ((hit.ev.t - view.start) / span) * m.plotW,
           cy: m.laneTop + lane * m.laneH + m.laneH / 2,
-          stroke: hit.ev.outcome === 'miss' || hit.ev.outcome === 'resist' ? RESIST_COLOR : CAT_COLOR[hit.ev.category]
+          stroke:
+            hit.ev.outcome === 'miss' || hit.ev.outcome === 'resist'
+              ? RESIST_COLOR
+              : CAT_COLOR[hit.ev.category],
         }
       : null
   return (
@@ -158,7 +183,14 @@ function Crosshair({ hit, p }: { hit: Hit; p: HoverLayerProps }): React.JSX.Elem
       height={m.laneTop + m.plotH}
       style={{ position: 'absolute', left: 0, top: 0, display: 'block' }}
     >
-      <line x1={hit.x} x2={hit.x} y1={m.markerTop} y2={m.laneTop + m.plotH} stroke="rgba(255,255,255,0.18)" strokeWidth={1} />
+      <line
+        x1={hit.x}
+        x2={hit.x}
+        y1={m.markerTop}
+        y2={m.laneTop + m.plotH}
+        stroke="rgba(255,255,255,0.18)"
+        strokeWidth={1}
+      />
       {ring && (
         <circle
           cx={ring.cx}
@@ -197,10 +229,10 @@ export function TimelineHoverLayer(p: HoverLayerProps): React.JSX.Element {
         t,
         ev: inRail ? null : laneHit(ctx, y, t, msPerPx),
         mk: mk?.item ?? null,
-        span: inRail ? null : pinSpanAt(ctx, y, t)
+        span: inRail ? null : pinSpanAt(ctx, y, t),
       }
     },
-    [ctx, tl.markers, m, view.start, span]
+    [ctx, tl.markers, m, view.start, span],
   )
 
   const apply = useCallback(
@@ -218,7 +250,7 @@ export function TimelineHoverLayer(p: HoverLayerProps): React.JSX.Element {
       last.current = next
       setHit(next)
     },
-    [hitAt]
+    [hitAt],
   )
 
   const move = useMemo(() => rafThrottle(apply), [apply])
@@ -241,13 +273,18 @@ export function TimelineHoverLayer(p: HoverLayerProps): React.JSX.Element {
         width: m.labelW + m.plotW + 1,
         height: m.totalH,
         pointerEvents: 'none',
-        zIndex: 4
+        zIndex: 4,
       }}
     >
       {hit && tip && (
         <>
           <Crosshair hit={hit} p={p} />
-          <ChartTooltip {...tip} x={hit.x} y={hit.y} bounds={{ w: m.labelW + m.plotW, h: m.totalH }} />
+          <ChartTooltip
+            {...tip}
+            x={hit.x}
+            y={hit.y}
+            bounds={{ w: m.labelW + m.plotW, h: m.totalH }}
+          />
         </>
       )}
     </div>

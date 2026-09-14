@@ -29,8 +29,8 @@ exports.default = async function sign(configuration) {
       '-File',
       join(__dirname, 'azure-sign.ps1'),
       '-Path',
-      configuration.path
+      configuration.path,
     ],
-    { stdio: 'inherit' }
+    { stdio: 'inherit' },
   )
 }

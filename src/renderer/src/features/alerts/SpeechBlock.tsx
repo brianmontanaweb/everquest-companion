@@ -28,7 +28,7 @@ import {
   Stack,
   Switch,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material'
 import VolumeUpIcon from '@mui/icons-material/VolumeUp'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
@@ -38,7 +38,7 @@ import {
   MAX_SPEECH_CHARS,
   SPEECH_MODES,
   resolveAlertAudio,
-  speechTextFor
+  speechTextFor,
 } from '@shared/speechText'
 import { tokensIn } from '@shared/alertCaptures'
 import { currentVoicePrefs, speak } from '../../lib/speech'
@@ -51,7 +51,7 @@ import VoiceSetupLink, { type VoiceSetupNotice } from './VoiceSetupLink'
  */
 const AUDIO_LABELS: Record<AlertAudioChoice, string> = {
   sound: 'Play a sound',
-  speech: 'Speak it'
+  speech: 'Speak it',
 }
 
 /** Human labels for the mode picker, in the order SPEECH_MODES declares. */
@@ -59,7 +59,7 @@ const MODE_LABELS: Record<SpeechMode, string> = {
   alertName: 'the alert’s name',
   spellName: 'the spell’s name',
   spellFirstWord: 'the spell’s first word',
-  custom: 'a phrase I write'
+  custom: 'a phrase I write',
 }
 
 /** The sub-form AlertDialog holds and this block renders. */
@@ -90,7 +90,7 @@ function speechDefaults(initial: AlertDef | null): {
     phrase: speech?.phrase ?? '',
     // `speech.voiceId` is deliberately NOT read (JOS-362): a def may still carry one, and it is
     // ignored rather than migrated — the next save of this alert simply omits it.
-    alwaysPlay: initial?.alwaysPlay === true
+    alwaysPlay: initial?.alwaysPlay === true,
   }
 }
 
@@ -118,7 +118,7 @@ export function useSpeechForm(open: boolean, initial: AlertDef | null): SpeechFo
     phrase,
     setPhrase,
     alwaysPlay,
-    setAlwaysPlay
+    setAlwaysPlay,
   }
 }
 
@@ -140,7 +140,7 @@ export function speechFieldsFor(f: SpeechForm): Pick<AlertDef, 'audio' | 'speech
   return {
     ...(f.audio === 'sound' ? {} : { audio: f.audio }),
     ...(configured ? { speech } : {}),
-    ...(f.alwaysPlay ? { alwaysPlay: true } : {})
+    ...(f.alwaysPlay ? { alwaysPlay: true } : {}),
   }
 }
 
@@ -168,7 +168,13 @@ const ALL_ALWAYS_PLAY_TITLE =
  * per-alert choice exactly where they left it — which is also what saving from this dialog does,
  * because a disabled switch changes no state and `speechFieldsFor` still emits the stored key.
  */
-function AudioActionRow({ form, allAlwaysPlay }: { form: SpeechForm; allAlwaysPlay: boolean }): JSX.Element {
+function AudioActionRow({
+  form,
+  allAlwaysPlay,
+}: {
+  form: SpeechForm
+  allAlwaysPlay: boolean
+}): JSX.Element {
   return (
     <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
       <Box sx={{ minWidth: 200 }}>
@@ -255,7 +261,7 @@ export function autoTokenLine(names: readonly string[]): string | null {
 function CaptureHint({
   phrase,
   captureNames,
-  autoNames
+  autoNames,
 }: {
   phrase: string
   captureNames: string[]
@@ -268,7 +274,12 @@ function CaptureHint({
   return (
     <Box data-testid="alert-speech-captures">
       {autoLine !== null && (
-        <Typography variant="caption" color="text.secondary" display="block" data-testid="alert-speech-auto-tokens">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          data-testid="alert-speech-auto-tokens"
+        >
           {autoLine}
         </Typography>
       )}
@@ -291,7 +302,7 @@ function SaysRow({
   name,
   form,
   captureNames,
-  autoNames
+  autoNames,
 }: {
   name: string
   form: SpeechForm
@@ -391,7 +402,7 @@ export default function SpeechBlock({
   voiceSetup,
   captureNames = [],
   autoNames = [],
-  allAlwaysPlay = false
+  allAlwaysPlay = false,
 }: {
   name: string
   form: SpeechForm
@@ -433,7 +444,9 @@ export default function SpeechBlock({
             off in Preferences"): choosing 'Speak it' above IS the switch. The only thing left to
             say is that the chosen tier has nothing to speak with — and it says it with a LINK. */}
         {speaks && <VoiceSetupLink notice={voiceSetup} testId="alert-speech-setup" />}
-        {speaks && <SaysRow name={name} form={form} captureNames={captureNames} autoNames={autoNames} />}
+        {speaks && (
+          <SaysRow name={name} form={form} captureNames={captureNames} autoNames={autoNames} />
+        )}
         {speaks && <VoiceRow name={name} form={form} />}
       </Stack>
     </Box>

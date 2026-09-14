@@ -70,7 +70,12 @@ import { type JSX, memo, useState } from 'react'
 import { Box, Chip, Collapse, Stack, Typography } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import type { ClassAbbr } from '@shared/classCombo'
-import { ownershipPhrase, replacesEntries, replacesPhrase, type UnlockRow } from '@shared/levelUnlocks'
+import {
+  ownershipPhrase,
+  replacesEntries,
+  replacesPhrase,
+  type UnlockRow,
+} from '@shared/levelUnlocks'
 import { spellMetricsParts } from '@shared/spellMetrics'
 import { memorizedClause, type SpellSetsSnap } from '@shared/spellSets'
 import { observedRankLabel, type ObservedSpellRanksSnap } from '@shared/spellRanks'
@@ -88,14 +93,14 @@ const KIND_LABEL: Record<UnlockRow['kind'], string> = {
   spell: 'spell',
   skill: 'skill',
   disc: 'disc',
-  innate: 'innate'
+  innate: 'innate',
 }
 
 const KIND_COLOR: Record<UnlockRow['kind'], string> = {
   spell: '#6fb3d2',
   skill: '#5fbf72',
   disc: '#b07fd0',
-  innate: '#d9b25f'
+  innate: '#d9b25f',
 }
 
 /**
@@ -107,7 +112,7 @@ const KIND_COLOR: Record<UnlockRow['kind'], string> = {
  */
 const ClassChips = memo(function ClassChips({
   row,
-  resolved
+  resolved,
 }: {
   row: UnlockRow
   resolved: ReadonlySet<string>
@@ -155,7 +160,7 @@ const ClassChips = memo(function ClassChips({
  */
 export const RankChip = memo(function RankChip({
   name,
-  ranks
+  ranks,
 }: {
   name: string
   ranks: ObservedSpellRanksSnap | null
@@ -217,7 +222,7 @@ function Note({ text, testid, dim }: { text: string; testid: string; dim?: boole
 function NoteLine({
   children,
   testid,
-  dim
+  dim,
 }: {
   children: React.ReactNode
   testid: string
@@ -247,7 +252,11 @@ function NoteLine({
 function NoteSpell({ name }: { name: string }): JSX.Element {
   return (
     <SpellTooltip name={name} placement="top">
-      <Box component="span" data-testid="unlock-note-spell" sx={{ textDecoration: 'underline dotted', cursor: 'help' }}>
+      <Box
+        component="span"
+        data-testid="unlock-note-spell"
+        sx={{ textDecoration: 'underline dotted', cursor: 'help' }}
+      >
         {name}
       </Box>
     </SpellTooltip>
@@ -310,7 +319,7 @@ function MemorizedNote({ row, sets }: { row: UnlockRow; sets: SpellSetsSnap }): 
 const RowDetail = memo(function RowDetail({
   row,
   resolved,
-  sets
+  sets,
 }: {
   row: UnlockRow
   resolved: ReadonlySet<string>
@@ -361,7 +370,7 @@ const Row = memo(function Row({
   row,
   resolved,
   sets,
-  ranks
+  ranks,
 }: {
   row: UnlockRow
   resolved: ReadonlySet<string>
@@ -371,7 +380,12 @@ const Row = memo(function Row({
   const name =
     row.kind === 'spell' ? (
       <SpellTooltip name={row.name}>
-        <Typography variant="caption" data-testid="unlock-spell-name" sx={{ fontWeight: 600 }} noWrap>
+        <Typography
+          variant="caption"
+          data-testid="unlock-spell-name"
+          sx={{ fontWeight: 600 }}
+          noWrap
+        >
           {row.name}
         </Typography>
       </SpellTooltip>
@@ -382,44 +396,39 @@ const Row = memo(function Row({
     )
   return (
     <Box data-testid="unlock-row" data-kind={row.kind} sx={{ minWidth: 0 }}>
-    <Stack
-      direction="row"
-      spacing={0.75}
-      alignItems="center"
-      sx={{ height: ROW_H, minWidth: 0 }}
-    >
-      {row.kind !== 'spell' && (
-        <Chip
-          size="small"
-          label={KIND_LABEL[row.kind]}
-          sx={{
-            height: 17,
-            fontSize: 10,
-            bgcolor: `${KIND_COLOR[row.kind]}22`,
-            color: KIND_COLOR[row.kind],
-            '& .MuiChip-label': { px: 0.6 }
-          }}
-        />
-      )}
-      <Box sx={{ minWidth: 0, flexShrink: 1 }}>{name}</Box>
-      {row.kind === 'spell' && <RankChip name={row.name} ranks={ranks} />}
-      <Box sx={{ flexGrow: 1 }} />
-      {row.dispute && (
-        <Tooltip title={row.dispute}>
+      <Stack direction="row" spacing={0.75} alignItems="center" sx={{ height: ROW_H, minWidth: 0 }}>
+        {row.kind !== 'spell' && (
           <Chip
             size="small"
-            label="disputed"
-            data-testid="unlock-disputed"
-            color="warning"
-            variant="outlined"
-            sx={{ height: 17, fontSize: 10, '& .MuiChip-label': { px: 0.6 } }}
+            label={KIND_LABEL[row.kind]}
+            sx={{
+              height: 17,
+              fontSize: 10,
+              bgcolor: `${KIND_COLOR[row.kind]}22`,
+              color: KIND_COLOR[row.kind],
+              '& .MuiChip-label': { px: 0.6 },
+            }}
           />
-        </Tooltip>
-      )}
-      {/* THE ERA CHIP, its own component since JOS-450 so the readout next door draws the same one. */}
-      <OutOfEraChip outOfEra={row.spell?.outOfEra} />
-      <ClassChips row={row} resolved={resolved} />
-    </Stack>
+        )}
+        <Box sx={{ minWidth: 0, flexShrink: 1 }}>{name}</Box>
+        {row.kind === 'spell' && <RankChip name={row.name} ranks={ranks} />}
+        <Box sx={{ flexGrow: 1 }} />
+        {row.dispute && (
+          <Tooltip title={row.dispute}>
+            <Chip
+              size="small"
+              label="disputed"
+              data-testid="unlock-disputed"
+              color="warning"
+              variant="outlined"
+              sx={{ height: 17, fontSize: 10, '& .MuiChip-label': { px: 0.6 } }}
+            />
+          </Tooltip>
+        )}
+        {/* THE ERA CHIP, its own component since JOS-450 so the readout next door draws the same one. */}
+        <OutOfEraChip outOfEra={row.spell?.outOfEra} />
+        <ClassChips row={row} resolved={resolved} />
+      </Stack>
       <RowDetail row={row} resolved={resolved} sets={sets} />
     </Box>
   )
@@ -439,7 +448,7 @@ function OutOfEraRows({
   rows,
   resolved,
   sets,
-  ranks
+  ranks,
 }: {
   rows: UnlockRow[]
   resolved: ReadonlySet<string>
@@ -465,7 +474,7 @@ function OutOfEraRows({
           display: 'inline-flex',
           cursor: 'pointer',
           color: 'text.secondary',
-          '&:hover': { color: 'primary.main' }
+          '&:hover': { color: 'primary.main' },
         }}
       >
         <Typography variant="caption" sx={{ fontSize: 10.5 }}>
@@ -498,7 +507,7 @@ export function UnlockList({
   sets,
   ranks,
   count,
-  outOfEra = []
+  outOfEra = [],
 }: {
   title: string
   rows: UnlockRow[]
@@ -543,7 +552,13 @@ export function UnlockList({
           </Typography>
         ) : (
           rows.map((r) => (
-            <Row key={`${r.kind}:${r.name}`} row={r} resolved={resolved} sets={sets} ranks={ranks} />
+            <Row
+              key={`${r.kind}:${r.name}`}
+              row={r}
+              resolved={resolved}
+              sets={sets}
+              ranks={ranks}
+            />
           ))
         )}
         <OutOfEraRows rows={outOfEra} resolved={resolved} sets={sets} ranks={ranks} />

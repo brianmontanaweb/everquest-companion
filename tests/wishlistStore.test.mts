@@ -51,10 +51,10 @@ const preWishStore = {
     primitive_freeport: {
       inventory: { 'rusty short sword': 2 },
       completedQuests: ['ROG::Test of Stealth'],
-      combo: { corrections: [] }
-    }
+      combo: { corrections: [] },
+    },
   },
-  activeLogPath: 'C:/eq/Logs/eqlog_Primitive_freeport.txt'
+  activeLogPath: 'C:/eq/Logs/eqlog_Primitive_freeport.txt',
 }
 
 /**
@@ -69,7 +69,7 @@ const goodList: WishList = {
       name: 'Thelvorn, Blade of Light',
       kind: 'gear',
       addedAt: 1_754_200_000_000,
-      source: 'user'
+      source: 'user',
     },
     {
       itemKey: 'batfang headband',
@@ -78,11 +78,11 @@ const goodList: WishList = {
       effect: 'Bat Fang',
       socket: 'proc',
       addedAt: 1_754_300_000_000,
-      source: 'planImport'
-    }
+      source: 'planImport',
+    },
   ],
   clearedDone: ['thelvorn, blade of light'],
-  seededFromPlans: true
+  seededFromPlans: true,
 }
 
 // ------------------------------------------------------------------ additive key
@@ -102,8 +102,8 @@ test('a store WITH a wish list survives a build that has never heard of one', ()
   const withList = {
     ...preWishStore,
     byCharacter: {
-      primitive_freeport: { ...preWishStore.byCharacter.primitive_freeport, wishlist: goodList }
-    }
+      primitive_freeport: { ...preWishStore.byCharacter.primitive_freeport, wishlist: goodList },
+    },
   }
   withStore(withList, (path, before) => {
     const result = migrateStoreFile(path)
@@ -113,7 +113,7 @@ test('a store WITH a wish list survives a build that has never heard of one', ()
     assert.deepEqual(
       sanitizeWishlist(reread.byCharacter.primitive_freeport.wishlist),
       goodList,
-      'the stored list must read back exactly as written'
+      'the stored list must read back exactly as written',
     )
   })
 })
@@ -132,7 +132,7 @@ test('an unseeded list keeps its flag ABSENT — writing `false` in would change
   assert.equal('seededFromPlans' in list, false)
   assert.deepEqual(sanitizeWishlist({ entries: [], clearedDone: [], seededFromPlans: false }), {
     entries: [],
-    clearedDone: []
+    clearedDone: [],
   })
 })
 
@@ -150,34 +150,58 @@ test('malformed input is STRIPPED entry by entry, never thrown and never wholesa
         // a NaN instant (which would sort a row out of existence).
         { itemKey: 'batfang headband', addedAt: Number.NaN, kind: 'nonsense', source: 'somewhere' },
         // …and a duplicate, which keeps the FIRST occurrence.
-        { itemKey: 'batfang headband', name: 'Second Try', kind: 'donor' }
+        { itemKey: 'batfang headband', name: 'Second Try', kind: 'donor' },
       ],
-      clearedDone: [42, '', 'batfang headband', 'batfang headband']
+      clearedDone: [42, '', 'batfang headband', 'batfang headband'],
     },
-    now
+    now,
   )
   assert.deepEqual(cleaned, {
-    entries: [{ itemKey: 'batfang headband', name: 'batfang headband', kind: 'gear', addedAt: now, source: 'user' }],
-    clearedDone: ['batfang headband']
+    entries: [
+      {
+        itemKey: 'batfang headband',
+        name: 'batfang headband',
+        kind: 'gear',
+        addedAt: now,
+        source: 'user',
+      },
+    ],
+    clearedDone: ['batfang headband'],
   })
 })
 
 test('the effect context is DONOR-ONLY — a gear wish carrying one comes back without it', () => {
   const cleaned = sanitizeWishlist({
     entries: [
-      { itemKey: 'a helm', name: 'A Helm', kind: 'gear', effect: 'Bat Fang', socket: 'proc', addedAt: 1, source: 'user' },
+      {
+        itemKey: 'a helm',
+        name: 'A Helm',
+        kind: 'gear',
+        effect: 'Bat Fang',
+        socket: 'proc',
+        addedAt: 1,
+        source: 'user',
+      },
       // …and a donor wish with an UNKNOWN socket keeps the effect and drops only the bad half:
       // the closed four are the allowlist, and a fifth would state a merge tier nobody defined.
-      { itemKey: 'a ring', name: 'A Ring', kind: 'donor', effect: 'Bone', socket: 'ornament', addedAt: 2, source: 'user' }
+      {
+        itemKey: 'a ring',
+        name: 'A Ring',
+        kind: 'donor',
+        effect: 'Bone',
+        socket: 'ornament',
+        addedAt: 2,
+        source: 'user',
+      },
     ],
-    clearedDone: []
+    clearedDone: [],
   })
   assert.deepEqual(cleaned.entries[0], {
     itemKey: 'a helm',
     name: 'A Helm',
     kind: 'gear',
     addedAt: 1,
-    source: 'user'
+    source: 'user',
   })
   assert.deepEqual(cleaned.entries[1], {
     itemKey: 'a ring',
@@ -185,14 +209,14 @@ test('the effect context is DONOR-ONLY — a gear wish carrying one comes back w
     kind: 'donor',
     effect: 'Bone',
     addedAt: 2,
-    source: 'user'
+    source: 'user',
   })
 })
 
 test('a dismissal cannot outlive its row — a tombstone would swallow the wish on re-add', () => {
   const cleaned = sanitizeWishlist({
     entries: [{ itemKey: 'a helm', name: 'A Helm', kind: 'gear', addedAt: 1, source: 'user' }],
-    clearedDone: ['a helm', 'an item nobody wished for']
+    clearedDone: ['a helm', 'an item nobody wished for'],
   })
   assert.deepEqual(cleaned.clearedDone, ['a helm'])
 })
@@ -203,7 +227,7 @@ test('the batch is bounded — a runaway write cannot store an unbounded list', 
     name: `Item ${String(i)}`,
     kind: 'gear',
     addedAt: 1,
-    source: 'user'
+    source: 'user',
   }))
   assert.equal(sanitizeWishlist({ entries, clearedDone: [] }).entries.length, MAX_WISHES)
 })

@@ -35,7 +35,7 @@ const SpellLinkContext = createContext<OpenSpell | null>(null)
  */
 export function SpellLinkProvider({
   open,
-  children
+  children,
 }: {
   open: OpenSpell
   children: ReactNode

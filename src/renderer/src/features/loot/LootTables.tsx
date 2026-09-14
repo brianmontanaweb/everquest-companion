@@ -53,7 +53,7 @@ export function LootTable({
   groupByItem,
   rows,
   events,
-  ctx
+  ctx,
 }: {
   groupByItem: boolean
   rows: GroupRow[]
@@ -86,7 +86,7 @@ export function GroupedLootTable({
   win,
   knowledgeByKey,
   invByKey,
-  onSelect
+  onSelect,
 }: {
   rows: GroupRow[]
   win: WindowedRows
@@ -100,12 +100,18 @@ export function GroupedLootTable({
         <TableRow>
           {/* No width: the item NAME takes whatever the stated columns leave. */}
           <TableCell>Item</TableCell>
-          <TableCell align="right" sx={{ width: '11%' }}>Times looted</TableCell>
+          <TableCell align="right" sx={{ width: '11%' }}>
+            Times looted
+          </TableCell>
           {/* The header carries the caveat as ONE WORD (JOS-127 + the house tooltip diet): a
               popper on a sticky header hangs over the first rows, and every row is a control. */}
-          <TableCell align="right" sx={{ width: '13%' }}>In inventory (est.)</TableCell>
+          <TableCell align="right" sx={{ width: '13%' }}>
+            In inventory (est.)
+          </TableCell>
           <TableCell sx={{ width: '20%' }}>Top source</TableCell>
-          <TableCell align="right" sx={{ width: '8%' }}>Zones</TableCell>
+          <TableCell align="right" sx={{ width: '8%' }}>
+            Zones
+          </TableCell>
           <TableCell sx={{ width: '15%' }}>Last looted</TableCell>
         </TableRow>
       </TableHead>
@@ -149,7 +155,7 @@ export function EngineLootTable({
   win,
   knowledgeByKey,
   keyOf,
-  onSelect
+  onSelect,
 }: {
   rows: readonly Row[]
   win: WindowedRows
@@ -193,7 +199,7 @@ export function FlatLootTable({
   events,
   win,
   knowledgeByKey,
-  onSelect
+  onSelect,
 }: {
   events: KeyedLoot[]
   win: WindowedRows

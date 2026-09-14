@@ -36,7 +36,7 @@ function pack(overrides: Partial<RegistryPack>): RegistryPack {
     categories: ['task.complete'],
     sound_count: 1,
     total_size_bytes: 1,
-    ...overrides
+    ...overrides,
   }
 }
 
@@ -57,7 +57,7 @@ const EVIL_NAMES = [
   '..',
   '.hidden', // leading dot: could be `..` or a hidden dir
   'x:y', // alternate data stream
-  'x'.repeat(129) // over the length cap
+  'x'.repeat(129), // over the length cap
 ]
 
 test('installPack REFUSES a traversal/invalid name before touching the filesystem', async () => {
@@ -76,17 +76,21 @@ test('installPack REFUSES a traversal/invalid name before touching the filesyste
       await assert.rejects(
         installPack(pack({ name }), noProgress, root),
         /not a valid identifier/,
-        `name ${JSON.stringify(name)} must be refused as an identifier`
+        `name ${JSON.stringify(name)} must be refused as an identifier`,
       )
       // POST-CHECK: nothing created inside the root, and the canary outside it is untouched.
       assert.deepEqual(readdirSync(root), [], `root must stay empty for ${JSON.stringify(name)}`)
       assert.equal(existsSync(canaryFile), true, `canary must survive ${JSON.stringify(name)}`)
-      assert.equal(readdirSync(canaryDir).length, 1, `canary dir untouched for ${JSON.stringify(name)}`)
+      assert.equal(
+        readdirSync(canaryDir).length,
+        1,
+        `canary dir untouched for ${JSON.stringify(name)}`,
+      )
       // And no staged sibling (`<packDir>.installing`) was created anywhere under base.
       assert.equal(
         readdirSync(base).sort().join(','),
         ['evil', 'soundpacks'].join(','),
-        `no stray dirs created for ${JSON.stringify(name)}`
+        `no stray dirs created for ${JSON.stringify(name)}`,
       )
     } finally {
       rmSync(base, { recursive: true, force: true })
@@ -102,7 +106,7 @@ test('installPack REFUSES a poisoned source_* field before touching the filesyst
     { source_ref: '..' },
     { source_path: '../../../etc' },
     { source_path: '/abs' },
-    { source_path: 'C:\\Windows' }
+    { source_path: 'C:\\Windows' },
   ]
   for (const bad of badSources) {
     const root = mkdtempSync(join(tmpdir(), 'jos110-src-'))
@@ -111,7 +115,7 @@ test('installPack REFUSES a poisoned source_* field before touching the filesyst
         // Valid name so the name guard passes and the source guard is what fires.
         installPack(pack({ name: 'ok-name', ...bad }), noProgress, root),
         /source fields are not valid/,
-        `source ${JSON.stringify(bad)} must be refused`
+        `source ${JSON.stringify(bad)} must be refused`,
       )
       assert.deepEqual(readdirSync(root), [], `root must stay empty for ${JSON.stringify(bad)}`)
     } finally {
@@ -124,14 +128,18 @@ test('installPack REFUSES a poisoned source_* field before touching the filesyst
 
 test('sanitizeRegistryPacks drops poisoned rows and keeps the honest ones', () => {
   const good1 = pack({ name: 'alan-rickman' })
-  const good2 = pack({ name: 'sc_marine', source_repo: 'PeonPing/og-packs', source_path: 'sc_marine' })
+  const good2 = pack({
+    name: 'sc_marine',
+    source_repo: 'PeonPing/og-packs',
+    source_path: 'sc_marine',
+  })
   const poisoned = [
     pack({ name: '../../../../Users/x/Documents' }),
     pack({ name: '..\\..\\Windows' }),
     pack({ name: 'x:y' }),
     pack({ name: 'ok', source_repo: '../../evil' }),
     pack({ name: 'ok', source_ref: 'v1/../../x' }),
-    pack({ name: 'ok', source_path: '../escape' })
+    pack({ name: 'ok', source_path: '../escape' }),
   ]
 
   // One good row survives a crowd of bad ones (the golden "one poisoned entry can't block a
@@ -144,7 +152,7 @@ test('sanitizeRegistryPacks drops poisoned rows and keeps the honest ones', () =
   const mixed = sanitizeRegistryPacks([good1, ...poisoned, good2])
   assert.deepEqual(
     mixed.map((p) => p.name),
-    ['alan-rickman', 'sc_marine']
+    ['alan-rickman', 'sc_marine'],
   )
 
   // A fully-honest registry is passed through unchanged (nothing dropped).
@@ -176,12 +184,12 @@ test('sanitizeRegistryPacks keeps the legacy `heron--` owner and the empty sourc
   const out = sanitizeRegistryPacks([heron, ownerTraversal, emptyPath, ownerSlash, pathTraversal])
   assert.deepEqual(
     out.map((p) => p.name),
-    ['mercy', 'sc-marine']
+    ['mercy', 'sc-marine'],
   )
 
   // And the shape scaled up the way the live registry is: many `heron--` rows, all kept.
   const many = Array.from({ length: 45 }, (_, i) =>
-    pack({ name: `heron-pack-${String(i)}`, source_repo: 'heron--/openpeon-hero-soundpack' })
+    pack({ name: `heron-pack-${String(i)}`, source_repo: 'heron--/openpeon-hero-soundpack' }),
   )
   assert.equal(sanitizeRegistryPacks(many).length, 45)
 })
@@ -226,7 +234,7 @@ test('installPack REFUSES a gzip bomb — a small download must not inflate past
   try {
     await assert.rejects(
       installPack(pack({ name: 'bomb-pack' }), noProgress, root, bomb),
-      /exceeded decompressed size cap/
+      /exceeded decompressed size cap/,
     )
     assert.deepEqual(readdirSync(root), [], 'nothing staged or installed from a bomb')
   } finally {
@@ -245,7 +253,7 @@ test('installPack REFUSES an archive that fits in memory but is too large to sta
   try {
     await assert.rejects(
       installPack(pack({ name: 'stage-bomb-pack' }), noProgress, root, gz),
-      /exceeded staged size cap/
+      /exceeded staged size cap/,
     )
     assert.deepEqual(readdirSync(root), [], 'the staged dir is removed, not left half-written')
   } finally {
@@ -258,11 +266,11 @@ test('installPack accepts a real pack comfortably under both caps', async () => 
   // either cap — this is the "the fix costs a legitimate install nothing" proof.
   const cesp = JSON.stringify({
     display_name: 'Tiny Pack',
-    categories: { greeting: [{ file: 'sounds/hi.wav', label: 'Hi' }] }
+    categories: { greeting: [{ file: 'sounds/hi.wav', label: 'Hi' }] },
   })
   const tar = buildTar([
     { name: 'pack-v1/openpeon.json', data: Buffer.from(cesp, 'utf8') },
-    { name: 'pack-v1/sounds/hi.wav', data: Buffer.alloc(1024, 1) }
+    { name: 'pack-v1/sounds/hi.wav', data: Buffer.alloc(1024, 1) },
   ])
   const gz = zlib.gzipSync(tar)
   const root = mkdtempSync(join(tmpdir(), 'jos-real-pack-'))

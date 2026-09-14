@@ -13,7 +13,7 @@ import {
   type CombatScope,
   type Drill,
   type MeterMode,
-  type ScopeOptions
+  type ScopeOptions,
 } from './dashboardData'
 import { useMeterScope } from './useCombatPrefs'
 import { useDrillMemory, type DrillMemoryApi } from './useDrillMemory'
@@ -35,7 +35,9 @@ import type { CombatSnapshot, SegmentView, TimelineView } from '@shared/combat'
 const NO_SIG = '<none>'
 
 function useStableTimeline(tl: TimelineView | null | undefined): TimelineView | null {
-  const sig = tl ? `${tl.id}|${tl.rawCount}|${tl.events.length}|${tl.durationMs}|${tl.lanes.length}` : ''
+  const sig = tl
+    ? `${tl.id}|${tl.rawCount}|${tl.events.length}|${tl.durationMs}|${tl.lanes.length}`
+    : ''
   const sigRef = useRef<string>(NO_SIG)
   const valRef = useRef<TimelineView | null>(null)
   if (sig !== sigRef.current) {
@@ -102,7 +104,7 @@ function DashboardGrid({
   drill,
   setDrill,
   live,
-  ringless
+  ringless,
 }: {
   seg: SegmentView
   tl: TimelineView | null
@@ -130,7 +132,7 @@ function DashboardGrid({
         // size the track (an append-only panel sizing its own box is the Task #56 bug), so
         // each stacked panel gets a comfortable fixed box and scrolls inside it.
         gridAutoRows: { xs: '320px', md: 'minmax(0, 1fr)' },
-        '& > *': { minWidth: 0, minHeight: 0 }
+        '& > *': { minWidth: 0, minHeight: 0 },
       }}
     >
       <SegmentBody
@@ -263,7 +265,7 @@ function undrilling(nav: Navigation, setDrill: (d: Drill | null) => void): Navig
     setMode: (m: MeterMode): void => {
       setDrill(null)
       nav.setMode(m)
-    }
+    },
   }
 }
 
@@ -271,7 +273,9 @@ function undrilling(nav: Navigation, setDrill: (d: Drill | null) => void): Navig
 function NoTimelinePane(): React.JSX.Element {
   return (
     <Paper variant="outlined" sx={{ p: 2, flexGrow: 1 }}>
-      <Typography color="text.secondary">No timeline for this selection - pick a recent fight.</Typography>
+      <Typography color="text.secondary">
+        No timeline for this selection - pick a recent fight.
+      </Typography>
     </Paper>
   )
 }
@@ -304,14 +308,22 @@ function ScopeEmptyPane({ scope }: { scope: 'fight' | 'overall' }): React.JSX.El
 export default function CombatView({
   focus,
   focusNonce,
-  onFocusConsumed
+  onFocusConsumed,
 }: {
   focus?: CombatFocus | null
   focusNonce?: number
   onFocusConsumed?: () => void
 }): React.JSX.Element {
-  const { snap, showUnparsed, setShowUnparsed, selection, scope, maxSegments, loadMore, ...combat } =
-    useCombat()
+  const {
+    snap,
+    showUnparsed,
+    setShowUnparsed,
+    selection,
+    scope,
+    maxSegments,
+    loadMore,
+    ...combat
+  } = useCombat()
   const [mode, setModeState] = useState<MeterMode>('out')
   const [view, setView] = useState<'dash' | 'timeline'>('dash')
   // WHERE YOU HAD DRILLED TO — persisted, so a tab switch (which unmounts this whole view) no
@@ -325,8 +337,13 @@ export default function CombatView({
   // …and the ONE navigation that makes a drill meaningless — the direction — goes to level 1
   // first. Picking another fight no longer does (JOS-240): see `undrilling`.
   const { setSelection, setScope, setMode, focusFight } = undrilling(
-    { setSelection: combat.setSelection, setScope: combat.setScope, setMode: setModeState, focusFight: combat.focusFight },
-    setDrill
+    {
+      setSelection: combat.setSelection,
+      setScope: combat.setScope,
+      setMode: setModeState,
+      focusFight: combat.focusFight,
+    },
+    setDrill,
   )
   // WHOSE damage (docs/plans/group-model.md §2) — ONE persisted preference for every combat
   // surface since JOS-115, read here and written only in Preferences > Combat. `EMPTY_ROSTER`
@@ -418,7 +435,11 @@ export default function CombatView({
         />
       </AbilityExpandProvider>
 
-      <ProcessingLog lines={snap?.recent ?? []} showUnparsed={showUnparsed} setShowUnparsed={setShowUnparsed} />
+      <ProcessingLog
+        lines={snap?.recent ?? []}
+        showUnparsed={showUnparsed}
+        setShowUnparsed={setShowUnparsed}
+      />
     </Stack>
   )
 }
@@ -434,14 +455,14 @@ export default function CombatView({
 function segmentOptions(
   snap: CombatSnapshot | null,
   scope: CombatScope,
-  maxSegments: number
+  maxSegments: number,
 ): { opts: ScopeOptions; capped: boolean } {
   const segs = snap?.segments ?? []
   const zones = snap?.zoneSessions ?? []
   return {
     opts: scopeOptions(scope, segs, zones),
     // eslint-disable-next-line eqc/no-domain-munging -- JOS-459 cutover ledger item 3: no served view source answers this yet, so the renderer still derives SegmentSummary. Becomes a view descriptor when the source lands.
-    capped: scope === 'fight' && segs.filter((s) => s.kind === 'fight').length >= maxSegments
+    capped: scope === 'fight' && segs.filter((s) => s.kind === 'fight').length >= maxSegments,
   }
 }
 

@@ -63,7 +63,7 @@ function FightsSection({
   existingIds,
   ctx,
   handlers,
-  state
+  state,
 }: {
   section: ResultSection
   offers: Offer[]
@@ -110,7 +110,7 @@ function SpellSections({
   handlers,
   state,
   illusion,
-  illusionCreated
+  illusionCreated,
 }: {
   sections: ResultSection[]
   existingIds: Set<string>
@@ -165,7 +165,7 @@ export default function SuggestResults({
   state,
   query,
   loaded,
-  stale
+  stale,
 }: {
   results: Results
   /** the ready-made sets that survive the query (empty ⇒ the section is hidden). */
@@ -189,7 +189,7 @@ export default function SuggestResults({
         minHeight: 0,
         overflow: 'auto',
         opacity: stale ? 0.6 : 1,
-        transition: 'opacity 120ms ease-out'
+        transition: 'opacity 120ms ease-out',
       }}
     >
       <Stack spacing={0.5}>

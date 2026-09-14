@@ -115,7 +115,8 @@ export class SongPulses {
     const last = this.beats[this.beats.length - 1]
     if (last !== undefined && ts - last < SONG_WITNESS_JOIN_MS) return
     this.beats.push(ts)
-    if (this.beats.length > HEARTBEAT_MEMORY) this.beats.splice(0, this.beats.length - HEARTBEAT_MEMORY)
+    if (this.beats.length > HEARTBEAT_MEMORY)
+      this.beats.splice(0, this.beats.length - HEARTBEAT_MEMORY)
   }
 
   /** `You begin singing S` — a restart, which drops interpolation across the gap it sits in. */
@@ -204,10 +205,13 @@ export class SongPulses {
    * the server's tick. Six-second stepping is the fallback for a run with no heartbeat in it.
    */
   private interiorPulses(prev: number, ts: number): number[] {
-    const beats = this.beats.filter((b) => b > prev + SONG_WITNESS_JOIN_MS && b < ts - SONG_WITNESS_JOIN_MS)
+    const beats = this.beats.filter(
+      (b) => b > prev + SONG_WITNESS_JOIN_MS && b < ts - SONG_WITNESS_JOIN_MS,
+    )
     if (beats.length > 0) return beats
     const out: number[] = []
-    for (let at = prev + SONG_PULSE_MS; at < ts - SONG_WITNESS_JOIN_MS; at += SONG_PULSE_MS) out.push(at)
+    for (let at = prev + SONG_PULSE_MS; at < ts - SONG_WITNESS_JOIN_MS; at += SONG_PULSE_MS)
+      out.push(at)
     return out
   }
 }

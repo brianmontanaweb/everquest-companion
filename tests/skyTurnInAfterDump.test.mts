@@ -59,8 +59,8 @@ const RANGER: PoskyQuest = {
   items: [
     { name: 'Shimmering Pearl', count: 1, who: [], where: 'Island 3' },
     { name: 'Efreeti War Bow', count: 1, who: [], where: 'Island 4' },
-    { name: 'Wind Rune Heda', count: 1, who: [], where: 'Island 2' }
-  ]
+    { name: 'Wind Rune Heda', count: 1, who: [], where: 'Island 2' },
+  ],
 }
 const RANGER_KEY = questKey(RANGER)
 const bow = itemCountKey('Efreeti War Bow')
@@ -81,13 +81,13 @@ function run(over: Partial<ReconcileInput> = {}): ReturnType<typeof reconcile> {
     countSource: 'both',
     turnIns: {},
     quests: [RANGER],
-    ...over
+    ...over,
   })
 }
 
 /** A statement of `count`, made at `setAt` — the one witness that outranks every source. */
 const stated = (key: string, count: number, setAt: number): Record<string, ItemCountOverride> => ({
-  [key]: { key, name: key, count, setAt }
+  [key]: { key, name: key, count, setAt },
 })
 
 /**
@@ -102,7 +102,7 @@ const REPORT: Partial<ReconcileInput> = {
   destroyedSinceDump: { [bow]: 2 },
   rebaselineAt: DUMP_AT,
   turnIns: { [RANGER_KEY]: 1 },
-  turnInInstants: { [RANGER_KEY]: [DUMP_AT + 2 * MINUTE] }
+  turnInInstants: { [RANGER_KEY]: [DUMP_AT + 2 * MINUTE] },
 }
 
 test('THE REPORT: dump 3, one turned in after it, two destroyed after it — the bow reads 0', () => {
@@ -126,7 +126,7 @@ test('…and the row stays arithmetically honest: net === base - consumed, and t
   // The pearl is a DUMP-ONLY row — the log has never seen one drop — and it is exactly the row the
   // reporter was looking at, so the blame has to work there too.
   const p = run({ ...REPORT, countSource: 'inventory', inv: { 'shimmering pearl': 1 } }).rows.find(
-    (r) => r.key === pearl
+    (r) => r.key === pearl,
   )
   assert.ok(p)
   assert.deepEqual([p.log, p.base, p.consumed, p.net], [0, 1, 1, 0])
@@ -139,14 +139,14 @@ test('a turn-in BEFORE the dump is still never subtracted (JOS-141 is untouched)
   const before = run({
     ...REPORT,
     countSource: 'both',
-    turnInInstants: { [RANGER_KEY]: [DUMP_AT - HOUR] }
+    turnInInstants: { [RANGER_KEY]: [DUMP_AT - HOUR] },
   })
   assert.equal(before.net[bow], 1, 'the dump, less the two destroys, and nothing else')
   assert.equal(before.net[heda], 7, 'seven in the file and no post-dump turn-in to owe')
   assert.deepEqual(
     before.rows.find((r) => r.key === heda)?.consumedBy,
     [],
-    'nothing was taken off the row, so nothing is blamed for it'
+    'nothing was taken off the row, so nothing is blamed for it',
   )
 })
 
@@ -158,7 +158,7 @@ test('an UNDATABLE dump discounts nothing — never a guessed instant', () => {
   assert.equal(
     run({ ...REPORT, countSource: 'both', turnInInstants: {} }).net[heda],
     7,
-    'and an UNDATED turn-in contributes to no window either — it predates any statement made now'
+    'and an UNDATED turn-in contributes to no window either — it predates any statement made now',
   )
 })
 
@@ -167,13 +167,13 @@ test('ONE quest run twice, once before the dump and once after, owes the dump ex
     ...REPORT,
     countSource: 'inventory',
     turnIns: { [RANGER_KEY]: 2 },
-    turnInInstants: { [RANGER_KEY]: [DUMP_AT - HOUR, DUMP_AT + 2 * MINUTE] }
+    turnInInstants: { [RANGER_KEY]: [DUMP_AT - HOUR, DUMP_AT + 2 * MINUTE] },
   })
   assert.equal(twice.net[heda], 6, 'seven dumped, and only the post-dump run is the file`s problem')
   assert.deepEqual(
     twice.rows.find((r) => r.key === heda)?.consumedBy,
     ['Test of Ranged Attack'],
-    'the caption counts the runs THIS row paid for — the all-time pass would have said x2'
+    'the caption counts the runs THIS row paid for — the all-time pass would have said x2',
   )
 })
 
@@ -196,7 +196,7 @@ test('the new window keeps every witness MONOTONE in your own loot', () => {
           ...REPORT,
           countSource,
           log: { [bow]: 1, [heda]: 7 + looted },
-          lootSinceRebaseline: { [heda]: looted }
+          lootSinceRebaseline: { [heda]: looted },
         }).net[heda] ?? 0
       assert.ok(n >= previous, `${countSource}: looting one more dropped the count to ${String(n)}`)
       previous = n
@@ -213,6 +213,6 @@ test('the discount reaches ONLY the dump-reading sources', () => {
   assert.equal(
     run({ ...REPORT, countSource: 'both', overrides: stated(bow, 4, DUMP_AT + HOUR) }).net[bow],
     4,
-    'the user is the only witness that is a person'
+    'the user is the only witness that is a person',
   )
 })

@@ -56,7 +56,7 @@ import {
   note,
   reportRun,
   settle,
-  settleGone
+  settleGone,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture } from './logFixture.mjs'
@@ -129,8 +129,8 @@ function createProbes(app: ElectronApplication): Promise<Record<'pinned' | 'bare
             // spec that loads a real built preload (the cursor-ring bridge), so it is what
             // proves the sandboxed preload actually works end to end, not just that it builds.
             sandbox: true,
-            ...(preload === '' ? {} : { preload })
-          }
+            ...(preload === '' ? {} : { preload }),
+          },
         })
         await w.loadFile(o.page)
         built.push(w)
@@ -140,7 +140,7 @@ function createProbes(app: ElectronApplication): Promise<Record<'pinned' | 'bare
       for (const w of built) {
         for (let i = 0; i < 100; i++) {
           const ok = (await w.webContents.executeJavaScript(
-            `document.getElementById('ring').style.width !== ''`
+            `document.getElementById('ring').style.width !== ''`,
           )) as boolean
           if (ok) break
           await new Promise((r) => setTimeout(r, 150))
@@ -151,7 +151,7 @@ function createProbes(app: ElectronApplication): Promise<Record<'pinned' | 'bare
       ;(globalThis as unknown as { __jos154?: { pinned: W; bare: W } }).__jos154 = { pinned, bare }
       return { pinned: pinned.webContents.getZoomFactor(), bare: bare.webContents.getZoomFactor() }
     },
-    { page: RING_PAGE, preload: RING_PRELOAD, width: PROBE_W, height: PROBE_H }
+    { page: RING_PAGE, preload: RING_PRELOAD, width: PROBE_W, height: PROBE_H },
   )
 }
 
@@ -168,7 +168,7 @@ function createProbes(app: ElectronApplication): Promise<Record<'pinned' | 'bare
 function readRing(
   app: ElectronApplication,
   cfg: { sizePx: number; thicknessPx: number },
-  point: { x: number; y: number }
+  point: { x: number; y: number },
 ): Promise<RingReading> {
   return app.evaluate(
     async (_electron, o) => {
@@ -188,7 +188,7 @@ function readRing(
           enabled: true,
           sizePx: o.sizePx,
           thicknessPx: o.thicknessPx,
-          colorHex: '#ffffff'
+          colorHex: '#ffffff',
         })
         w.webContents.send(o.pointChannel, { x: o.x, y: o.y })
         // THE PAINT is what this waits for, and its signal is the page's OWN units: whatever the
@@ -225,8 +225,8 @@ function readRing(
       sizePx: cfg.sizePx,
       thicknessPx: cfg.thicknessPx,
       x: point.x,
-      y: point.y
-    }
+      y: point.y,
+    },
   )
 }
 
@@ -241,7 +241,7 @@ function readRing(
 function forceZoom(
   app: ElectronApplication,
   which: 'pinned' | 'bare',
-  factor: number
+  factor: number,
 ): Promise<Record<'pinned' | 'bare', number>> {
   return app.evaluate(
     async (_electron, o) => {
@@ -255,10 +255,10 @@ function forceZoom(
       }
       return {
         pinned: held.pinned.webContents.getZoomFactor(),
-        bare: held.bare.webContents.getZoomFactor()
+        bare: held.bare.webContents.getZoomFactor(),
       }
     },
-    { which, factor }
+    { which, factor },
   )
 }
 
@@ -275,11 +275,11 @@ function zoomsAfterTextSize(app: ElectronApplication): Promise<ZoomPair> {
     // The app window is the one showing index.html; the probes are on cursor.html and every
     // overlay carries a `?kind=` query on overlay.html.
     const app0 = BrowserWindow.getAllWindows().find((w) =>
-      w.webContents.getURL().includes('index.html')
+      w.webContents.getURL().includes('index.html'),
     )
     return {
       main: app0 ? app0.webContents.getZoomFactor() : -1,
-      pinned: held.pinned.webContents.getZoomFactor()
+      pinned: held.pinned.webContents.getZoomFactor(),
     }
   })
 }
@@ -311,14 +311,14 @@ function checkCentred(
   label: string,
   r: RingReading,
   point: { x: number; y: number },
-  sizePx: number
+  sizePx: number,
 ): void {
   const dx = toDip(r.cx, r.zoom) - point.x
   const dy = toDip(r.cy, r.zoom) - point.y
   check(
     `${label}: the halo's centre IS the point main sent (${String(point.x)}, ${String(point.y)}) at ${String(sizePx)}px`,
     Math.abs(dx) < 0.75 && Math.abs(dy) < 0.75,
-    `off by (${dx.toFixed(2)}, ${dy.toFixed(2)}) DIP at zoom ${r.zoom.toFixed(3)}`
+    `off by (${dx.toFixed(2)}, ${dy.toFixed(2)}) DIP at zoom ${r.zoom.toFixed(3)}`,
   )
 }
 
@@ -330,7 +330,7 @@ async function stepCentredAtEverySize(app: ElectronApplication, when: string): P
       check(
         `…and it is drawn at the ${String(sizePx)}px it was asked for`,
         Math.abs(r.w - sizePx) < 0.75,
-        `${r.w.toFixed(2)} CSS px`
+        `${r.w.toFixed(2)} CSS px`,
       )
     }
   }
@@ -357,7 +357,7 @@ async function main(): Promise<void> {
     check(
       'both probe windows start at 100% — the pin is not a zoom of its own',
       Math.abs(born.pinned - 1) < 0.001 && Math.abs(born.bare - 1) < 0.001,
-      `pinned ${String(born.pinned)} / bare ${String(born.bare)}`
+      `pinned ${String(born.pinned)} / bare ${String(born.bare)}`,
     )
 
     await stepCentredAtEverySize(launch.app, 'at 100%')
@@ -367,12 +367,12 @@ async function main(): Promise<void> {
     check(
       'a bare twin on the same URL takes the zoom — the entry really is shared, so the next check is not vacuous',
       Math.abs(after.bare - POISON) < 0.001,
-      `bare ${String(after.bare)}`
+      `bare ${String(after.bare)}`,
     )
     check(
       "THE PIN HOLDS: the window built on the app's cursor preload stays at 100%",
       Math.abs(after.pinned - 1) < 0.001,
-      `pinned ${String(after.pinned)}`
+      `pinned ${String(after.pinned)}`,
     )
 
     await stepCentredAtEverySize(launch.app, 'with the shared entry at 125%')
@@ -381,24 +381,24 @@ async function main(): Promise<void> {
     await page.evaluate(
       (scale) =>
         (window as unknown as { eq: { setUiScale: (s: number) => Promise<number> } }).eq.setUiScale(
-          scale
+          scale,
         ),
-      CHOSEN
+      CHOSEN,
     )
     const zooms = await settle(
       () => zoomsAfterTextSize(launch.app),
       (z) => Math.abs(z.main - CHOSEN) < 0.001,
-      { timeoutMs: 15_000 }
+      { timeoutMs: 15_000 },
     )
     check(
       'setting the app text size zooms the MAIN window',
       Math.abs(zooms.main - CHOSEN) < 0.001,
-      `main ${String(zooms.main)}`
+      `main ${String(zooms.main)}`,
     )
     check(
       '…and leaves the ring window exactly where it was',
       Math.abs(zooms.pinned - 1) < 0.001,
-      `ring ${String(zooms.pinned)}`
+      `ring ${String(zooms.pinned)}`,
     )
 
     // ---- LAST, AND ONLY LAST: reproduce the defect in the very window that was just proved ----
@@ -410,13 +410,13 @@ async function main(): Promise<void> {
     const wrong = await readRing(
       launch.app,
       { sizePx: SIZES[0] ?? 40, thicknessPx: DEFAULT_RING_THICKNESS_PX },
-      FAR
+      FAR,
     )
     const drift = toDip(wrong.cx, wrong.zoom) - FAR.x
     check(
       'forced to the zoom it used to inherit, the SAME ring lands well off the pointer — the defect, reproduced',
       Math.abs(wrong.zoom - POISON) < 0.001 && Math.abs(drift - FAR.x * (POISON - 1)) < 2,
-      `${drift.toFixed(1)} DIP right of the pointer at zoom ${wrong.zoom.toFixed(3)}`
+      `${drift.toFixed(1)} DIP right of the pointer at zoom ${wrong.zoom.toFixed(3)}`,
     )
 
     if (failures.length) await dumpArtifacts(page, 'cursor-ring-zoom-FAIL')
@@ -425,7 +425,11 @@ async function main(): Promise<void> {
     await launch.close()
   }
 
-  check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
+  check(
+    'no renderer console errors',
+    consoleErrors.length === 0,
+    consoleErrors.slice(0, 3).join(' | '),
+  )
   if (consoleErrors.length === 0) {
     note('one page, one URL, one bridge — the only variables were the preload and the zoom')
   }

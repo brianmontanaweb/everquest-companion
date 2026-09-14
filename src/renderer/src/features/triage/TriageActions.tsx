@@ -30,7 +30,7 @@ import {
   DialogTitle,
   MenuItem,
   Stack,
-  TextField
+  TextField,
 } from '@mui/material'
 import BlockIcon from '@mui/icons-material/Block'
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
@@ -61,14 +61,14 @@ function dispositionPatch(detail: TriageDetail, d: DispositionDraft): TriagePatc
       ? { severity: d.severity as TriagePatch['severity'] }
       : {}),
     ...(cluster && cluster !== detail.row.cluster ? { cluster } : {}),
-    ...(note && note !== detail.note ? { note } : {})
+    ...(note && note !== detail.note ? { note } : {}),
   }
 }
 
 /** The disposition row: status, severity, cluster, note — one Save, one keyed UPDATE. */
 function DispositionForm({
   detail,
-  onSaved
+  onSaved,
 }: {
   detail: TriageDetail
   onSaved: () => void
@@ -155,7 +155,7 @@ function ConfirmDialog({
   busy,
   onCancel,
   onConfirm,
-  children
+  children,
 }: {
   open: boolean
   title: string
@@ -185,7 +185,7 @@ function ConfirmDialog({
 
 function DestructiveActions({
   detail,
-  onChanged
+  onChanged,
 }: {
   detail: TriageDetail
   onChanged: () => void
@@ -231,7 +231,9 @@ function DestructiveActions({
         busy={mutate.busy}
         onCancel={() => setForgetOpen(false)}
         onConfirm={() => {
-          void mutate.run(() => window.eq.triageForget(detail.row.reportId)).then(() => setForgetOpen(false))
+          void mutate
+            .run(() => window.eq.triageForget(detail.row.reportId))
+            .then(() => setForgetOpen(false))
         }}
       />
 
@@ -263,7 +265,7 @@ function DestructiveActions({
 
 export default function TriageActions({
   detail,
-  onChanged
+  onChanged,
 }: {
   detail: TriageDetail
   onChanged: () => void

@@ -18,11 +18,14 @@ import {
   BUCKET_MS,
   denseBuckets,
   deriveLiveSessions,
-  lastCompleteBucketEnd
+  lastCompleteBucketEnd,
 } from '../src/main/triage/liveSessions'
 
 /** Narrow the union in one place — every case below is on the `available: true` arm. */
-function live(buckets: number[], asOfMs = 0): {
+function live(
+  buckets: number[],
+  asOfMs = 0,
+): {
   activeNow: number
   avgAgeMs: number | null
   ageIsFloor: boolean
@@ -100,10 +103,10 @@ test('a GAP in the metric is a quiet period, never a splice', () => {
     [
       { at: end - 4 * BUCKET_MS, sum: 3 },
       // (nothing at -3 or -2: the fleet was away)
-      { at: end - 1 * BUCKET_MS, sum: 3 }
+      { at: end - 1 * BUCKET_MS, sum: 3 },
     ],
     end,
-    4 * BUCKET_MS
+    4 * BUCKET_MS,
   )
   assert.deepEqual(dense, [3, 0, 0, 3])
   // Three alive now — and they are NEW, not four buckets old. A session is continuous, so
@@ -119,10 +122,10 @@ test('a GAP in the metric is a quiet period, never a splice', () => {
     [
       { at: end - 3 * BUCKET_MS, sum: 3 },
       { at: end - 2 * BUCKET_MS, sum: 3 },
-      { at: end - 1 * BUCKET_MS, sum: 3 }
+      { at: end - 1 * BUCKET_MS, sum: 3 },
     ],
     end,
-    4 * BUCKET_MS
+    4 * BUCKET_MS,
   )
   assert.deepEqual(run, [0, 3, 3, 3])
   assert.equal(live(run).avgAgeMs, 2 * BUCKET_MS)
@@ -136,10 +139,10 @@ test('densifying is TOTAL: junk, negatives and out-of-window points contribute n
       { at: end + BUCKET_MS, sum: 99 }, // after it
       { at: end - BUCKET_MS, sum: Number.NaN },
       { at: end - BUCKET_MS, sum: -5 },
-      { at: end - BUCKET_MS, sum: 2 }
+      { at: end - BUCKET_MS, sum: 2 },
     ],
     end,
-    3 * BUCKET_MS
+    3 * BUCKET_MS,
   )
   assert.deepEqual(dense, [0, 0, 2])
 })

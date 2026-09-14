@@ -41,7 +41,7 @@ function fullHeartbeat(): Record<string, unknown> {
       over100: 2,
       over500: 0,
       deltaBytesBucket: 3,
-      logSizeBucket: 3
+      logSizeBucket: 3,
     },
     state: {
       overlaysOpen: 2,
@@ -49,8 +49,8 @@ function fullHeartbeat(): Record<string, unknown> {
       presenceOn: true,
       ringOn: false,
       freeMemBucket: 3,
-      workingSetBucket: 2
-    }
+      workingSetBucket: 2,
+    },
   }
 }
 
@@ -65,9 +65,9 @@ function counters(events: TelemetryEvent[]): Map<string, number> {
       appVersion: '0.28.0',
       channel: 'prod' as const,
       platform: 'win32' as const,
-      tzOffsetBucket: -7
+      tzOffsetBucket: -7,
     },
-    events: events.map((ev, i) => ({ ts: 1_000 + i, ev }))
+    events: events.map((ev, i) => ({ ts: 1_000 + i, ev })),
   }
   const roll = rollupBatch(batch, { firstOfDay: false, newInstall: false, upgraded: false })
   return new Map(roll.counters.map((c) => [`${c.metric} ${c.dim}`, c.n]))
@@ -112,16 +112,24 @@ test('A VERDICT OF ZERO IS STILL A VERDICT — liveVerdicts is why the rate is h
   // coincidence writes no `liveCoincident` row at all. Without a separate denominator that report
   // would be indistinguishable from one that had no second clock — and those are opposite facts:
   // the first says the stalls are OURS, the second says nothing.
-  const withWorker = { ...fullHeartbeat(), live: { samples: 10, p95Bucket: 0, maxBucket: 5, over100: 1, over500: 0, coincident: 0 } }
+  const withWorker = {
+    ...fullHeartbeat(),
+    live: { samples: 10, p95Bucket: 0, maxBucket: 5, over100: 1, over500: 0, coincident: 0 },
+  }
   const zero = counters([validated(withWorker)])
   assert.equal(zero.get(`${USAGE_METRICS.liveVerdicts} -`), 1)
   assert.equal(zero.has(`${USAGE_METRICS.liveCoincident} -`), false)
 
-  const noWorker = { ...fullHeartbeat(), live: { samples: 10, p95Bucket: 0, maxBucket: 5, over100: 1, over500: 0 } }
+  const noWorker = {
+    ...fullHeartbeat(),
+    live: { samples: 10, p95Bucket: 0, maxBucket: 5, over100: 1, over500: 0 },
+  }
   const absent = counters([validated(noWorker)])
   assert.equal(absent.has(`${USAGE_METRICS.liveVerdicts} -`), false)
   // …and the machine-stalled reading still counts, over its own denominator.
-  const machine = counters([validated({ ...withWorker, live: { ...withWorker.live, coincident: 3 } })])
+  const machine = counters([
+    validated({ ...withWorker, live: { ...withWorker.live, coincident: 3 } }),
+  ])
   assert.equal(machine.get(`${USAGE_METRICS.liveCoincident} -`), 3)
   assert.equal(machine.get(`${USAGE_METRICS.liveVerdicts} -`), 1)
 })
@@ -157,7 +165,7 @@ const row = (metric: string, dim: string, n: number): UsageRow => ({
   cohort: 'user',
   metric,
   dim,
-  n
+  n,
 })
 
 /** A fleet in which most late moments were the MACHINE's — the reading the whole ticket is for. */
@@ -185,7 +193,7 @@ function machineStalledFleet(): UsageRow[] {
     row(USAGE_METRICS.stateRing, 'off', 50),
     row(USAGE_METRICS.stateFreeMem, '0', 12),
     row(USAGE_METRICS.stateFreeMem, '4', 38),
-    row(USAGE_METRICS.stateWorkingSet, '2', 50)
+    row(USAGE_METRICS.stateWorkingSet, '2', 50),
   ]
 }
 
@@ -195,7 +203,7 @@ const analytics = (usage: UsageRow[]) =>
     funnels: [],
     installs: [],
     windowDays: 30,
-    nowMs: Date.UTC(2026, 7, 15, 12, 0, 0)
+    nowMs: Date.UTC(2026, 7, 15, 12, 0, 0),
   })
 
 test('THE LIVE SECTION PUTS THE TWO RATES SIDE BY SIDE — that comparison IS the verdict', () => {
@@ -216,7 +224,7 @@ test('THE LIVE SECTION PUTS THE TWO RATES SIDE BY SIDE — that comparison IS th
   // The ladders read in LADDER ORDER, not biggest-first: these are distributions.
   assert.deepEqual(
     l.state.filter((r) => r.id.startsWith('free RAM')).map((r) => r.n),
-    [12, 38]
+    [12, 38],
   )
   assert.ok(l.state.some((r) => r.id.startsWith('overlays LOCKED 1')))
 })
@@ -225,15 +233,12 @@ test('A DASH IS NEVER A CLEAN BILL — no verdict reads differently from a verdi
   // No report carried a second clock: there is no rate to state, and stating 0 would be an
   // accusation the data cannot support.
   const noWorker = machineStalledFleet().filter(
-    (r) => r.metric !== USAGE_METRICS.liveVerdicts && r.metric !== USAGE_METRICS.liveCoincident
+    (r) => r.metric !== USAGE_METRICS.liveVerdicts && r.metric !== USAGE_METRICS.liveCoincident,
   )
   assert.equal(analytics(noWorker).live.machinePerReport, null)
   // Reports DID compare two clocks and never found a coincidence: the stalls are ours, and that
   // is a measured 0 rather than a missing number.
-  const ourFault = [
-    ...noWorker,
-    row(USAGE_METRICS.liveVerdicts, '-', 50)
-  ]
+  const ourFault = [...noWorker, row(USAGE_METRICS.liveVerdicts, '-', 50)]
   assert.equal(analytics(ourFault).live.machinePerReport, 0)
   // An empty fleet is zeros and nulls, never a throw — the tab renders on day one.
   const empty = analytics([]).live
@@ -252,4 +257,3 @@ test('the digest renders the Live section between Startup and Versions', () => {
   // …and an empty fleet says so in words rather than printing a table of zeros.
   assert.match(renderAnalyticsDigest(analytics([])), /no session has reported a stall reading yet/)
 })
-

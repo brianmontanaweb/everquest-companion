@@ -71,7 +71,10 @@ const MAX_COVERAGE_VERSIONS = 8
  * it — an ingest Lambda older than this feature cannot write these metrics at all, but a future
  * one that wrote them undimensioned must not render as a version called `-`.
  */
-function flipVersions(outs: ReadonlyMap<string, number>, ins: ReadonlyMap<string, number>): string[] {
+function flipVersions(
+  outs: ReadonlyMap<string, number>,
+  ins: ReadonlyMap<string, number>,
+): string[] {
   const seen = new Set<string>([...outs.keys(), ...ins.keys()])
   return [...seen]
     .filter((v) => /^\d+\.\d+\.\d+/.test(v))
@@ -89,14 +92,14 @@ function flipVersions(outs: ReadonlyMap<string, number>, ins: ReadonlyMap<string
  */
 export function buildCoverage(
   usage: readonly UsageRow[],
-  installs: readonly InstallRow[]
+  installs: readonly InstallRow[],
 ): TriageAnalyticsCoverage {
   const outs = dimsOf(usage, USAGE_METRICS.optOuts)
   const ins = dimsOf(usage, USAGE_METRICS.optIns)
   const byVersion: TriageCoverageVersion[] = flipVersions(outs, ins).map((version) => ({
     version,
     optOuts: outs.get(version) ?? 0,
-    optIns: ins.get(version) ?? 0
+    optIns: ins.get(version) ?? 0,
   }))
   const total = (counts: ReadonlyMap<string, number>): number =>
     [...counts.values()].reduce((sum, n) => sum + n, 0)
@@ -105,6 +108,6 @@ export function buildCoverage(
     optOuts: total(outs),
     optIns: total(ins),
     byVersion,
-    anyFlips: outs.size > 0 || ins.size > 0
+    anyFlips: outs.size > 0 || ins.size > 0,
   }
 }

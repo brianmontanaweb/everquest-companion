@@ -124,7 +124,7 @@ function Label({ p, at, onHover, index, raised }: GlyphProps & { raised?: boolea
         pointerEvents: 'auto',
         userSelect: 'none',
         cursor: 'default',
-        zIndex: raised === true ? 2 : 1
+        zIndex: raised === true ? 2 : 1,
       }}
     >
       {p.display}
@@ -161,7 +161,7 @@ function Dot({ p, at, onHover, index }: GlyphProps): JSX.Element {
         alignItems: 'center',
         justifyContent: 'center',
         pointerEvents: 'auto',
-        cursor: 'default'
+        cursor: 'default',
       }}
     >
       <span
@@ -170,7 +170,7 @@ function Dot({ p, at, onHover, index }: GlyphProps): JSX.Element {
           height: DOT_PX,
           borderRadius: '50%',
           background: rgb(p),
-          boxShadow: `0 0 0 1px ${contrast(p)}`
+          boxShadow: `0 0 0 1px ${contrast(p)}`,
         }}
       />
     </span>
@@ -188,8 +188,8 @@ function useLabelSlots(props: MapPointsLayerProps): LabelSlot[] {
         index,
         point,
         ...toScreen(point.x, point.y),
-        inBand: inActiveBand(bands ?? [], floor ?? null, point.z)
-      }))
+        inBand: inActiveBand(bands ?? [], floor ?? null, point.z),
+      })),
     )
   }, [points, rect, view.scale, toScreen, layers, bands, floor])
 }
@@ -207,14 +207,21 @@ export function MapPointsLayer(props: MapPointsLayerProps): JSX.Element {
           <Label key={s.index} p={s.point} at={s} index={s.index} onHover={setHover} />
         ) : (
           <Dot key={s.index} p={s.point} at={s} index={s.index} onHover={setHover} />
-        )
+        ),
       )}
       {/* The hovered dot's text, raised above every placed label. Drawn outside the layout so
           moving the pointer can never reshuffle what the declutter already decided. */}
       {slots
         .filter((s) => s.index === hover && !s.shown)
         .map((s) => (
-          <Label key={`raised-${String(s.index)}`} p={s.point} at={s} index={s.index} onHover={setHover} raised />
+          <Label
+            key={`raised-${String(s.index)}`}
+            p={s.point}
+            at={s}
+            index={s.index}
+            onHover={setHover}
+            raised
+          />
         ))}
     </div>
   )

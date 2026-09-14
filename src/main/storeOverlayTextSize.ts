@@ -20,7 +20,7 @@ import {
   mergeOverlayTextSize,
   normalizeOverlayTextSize,
   storedSharedTextScale,
-  type OverlayTextSizePrefs
+  type OverlayTextSizePrefs,
 } from '../shared/overlayTextScale'
 
 /**

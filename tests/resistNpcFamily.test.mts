@@ -22,7 +22,7 @@ import type { ResistRow, SpellResistTable } from '../src/shared/resistTypes'
 /** One all-or-nothing spell on magic, unadjusted, and one proc that nothing can resist. */
 const SPELLS: SpellResistTable = {
   'test hold': { axis: 'magic', resistAdj: 0, castMs: 3000, targetType: 5 },
-  'test proc': { axis: 'magic', resistAdj: -250, castMs: 0, targetType: 5 }
+  'test proc': { axis: 'magic', resistAdj: -250, castMs: 0, targetType: 5 },
 }
 
 /**
@@ -44,23 +44,27 @@ function blank(spec: Partial<ResistRow> & Pick<ResistRow, 'spellKey' | 'family'>
     dmg: {},
     firstTs: 0,
     lastTs: 0,
-    ...spec
+    ...spec,
   }
 }
 
 /** A cell where the two populations disagree outright: players resisted, the pet not at all. */
 const SPLIT_CELL: ResistRow[] = [
   blank({ spellKey: 'test hold', family: 'cast', resist: 90, land: 30 }),
-  blank({ spellKey: 'test hold', family: 'cast', casterKind: 'npc', resist: 5, land: 115 })
+  blank({ spellKey: 'test hold', family: 'cast', casterKind: 'npc', resist: 5, land: 115 }),
 ]
 
 test('the npc family is WEIGHED or not, and that is the whole switch', () => {
-  const on = estimate(SPLIT_CELL, SPELLS, { axis: 'magic', mobLevel: 50, unobservable: LANDS_ELSEWHERE })
+  const on = estimate(SPLIT_CELL, SPELLS, {
+    axis: 'magic',
+    mobLevel: 50,
+    unobservable: LANDS_ELSEWHERE,
+  })
   const off = estimate(SPLIT_CELL, SPELLS, {
     axis: 'magic',
     mobLevel: 50,
     unobservable: LANDS_ELSEWHERE,
-    includeNpcCasters: false
+    includeNpcCasters: false,
   })
 
   // Off, the number is the players' own 90-of-120: three quarters resisted, so R lands high.
@@ -82,7 +86,7 @@ test('a switched-off family is still COUNTED - it is declined, not deleted', () 
     axis: 'magic',
     mobLevel: 50,
     unobservable: LANDS_ELSEWHERE,
-    includeNpcCasters: false
+    includeNpcCasters: false,
   })
   // The mob page prints this as `Pets and other creatures: 120 casts, 5 resisted (not included)`.
   // A count that vanished with the switch would make the preference look like it deleted evidence.
@@ -101,7 +105,14 @@ test('an npc row with no caster level drops out of the fit exactly as another pl
   // level-less npc row is evidence with no rc, which is the same nothing a `pc` row always is.
   const rows: ResistRow[] = [
     blank({ spellKey: 'test hold', family: 'cast', resist: 20, land: 20 }),
-    blank({ spellKey: 'test hold', family: 'cast', casterKind: 'npc', casterLevel: null, resist: 60, land: 0 })
+    blank({
+      spellKey: 'test hold',
+      family: 'cast',
+      casterKind: 'npc',
+      casterLevel: null,
+      resist: 60,
+      land: 0,
+    }),
   ]
   const est = estimate(rows, SPELLS, { axis: 'magic', mobLevel: 50, unobservable: LANDS_ELSEWHERE })
   assert.equal(est.n, 40, 'only the rows that could reach an rc are in the number')
@@ -121,7 +132,7 @@ test('THE COUNT SEPARATES WHAT COULD HAVE GONE EITHER WAY from what could not', 
     // The princess's shape: a proc cast eighty-seven times and never resisted, beside eight casts
     // of a spell that actually tested the mob.
     blank({ spellKey: 'test proc', family: 'cast', land: 87 }),
-    blank({ spellKey: 'test hold', family: 'cast', resist: 3, land: 5 })
+    blank({ spellKey: 'test hold', family: 'cast', resist: 3, land: 5 }),
   ]
   const est = estimate(cell, SPELLS, { axis: 'magic', mobLevel: 50, unobservable: LANDS_ELSEWHERE })
 
@@ -133,19 +144,26 @@ test('THE COUNT SEPARATES WHAT COULD HAVE GONE EITHER WAY from what could not', 
 
   // The proc is still IN the fit, because "R is not enormous" is true and worth having. What it is
   // out of is the number a person reads as this cell's evidence.
-  const withoutProc = estimate([cell[1]], SPELLS, { axis: 'magic', mobLevel: 50, unobservable: LANDS_ELSEWHERE })
+  const withoutProc = estimate([cell[1]], SPELLS, {
+    axis: 'magic',
+    mobLevel: 50,
+    unobservable: LANDS_ELSEWHERE,
+  })
   assert.equal(withoutProc.nInformative, est.nInformative)
 })
 
 test('the evidence list puts the spells that tested the mob FIRST', () => {
   const cell: ResistRow[] = [
     blank({ spellKey: 'test proc', family: 'cast', land: 87 }),
-    blank({ spellKey: 'test hold', family: 'cast', resist: 3, land: 5 })
+    blank({ spellKey: 'test hold', family: 'cast', resist: 3, land: 5 }),
   ]
   const est = estimate(cell, SPELLS, { axis: 'magic', mobLevel: 50, unobservable: LANDS_ELSEWHERE })
   // By volume alone the proc would head the list at 87 casts against 8, which is how a reader was
   // being told the mob barely resists magic by the one spell that could not have told them.
-  assert.deepEqual(est.perSpell.map((e) => e.spellKey), ['test hold', 'test proc'])
+  assert.deepEqual(
+    est.perSpell.map((e) => e.spellKey),
+    ['test hold', 'test proc'],
+  )
   assert.equal(est.perSpell[0].informative, true)
   assert.equal(est.perSpell[1].informative, false)
   assert.equal(est.perSpell[1].resistAdj, -250, 'and the line carries the reason')
@@ -158,7 +176,11 @@ test('THE DEFAULT IS THE SHIPPED ONE, and the store says so in one place', async
   // card drawn before the store is read would disagree with itself. One import each, one claim.
   const { DEFAULT_RESIST_PREFS, normalizeResistPrefs } = await import('../src/shared/resistPrefs')
   assert.equal(DEFAULT_RESIST_PREFS.includeNpcCasters, true)
-  const silent = estimate(SPLIT_CELL, SPELLS, { axis: 'magic', mobLevel: 50, unobservable: LANDS_ELSEWHERE })
+  const silent = estimate(SPLIT_CELL, SPELLS, {
+    axis: 'magic',
+    mobLevel: 50,
+    unobservable: LANDS_ELSEWHERE,
+  })
   assert.equal(silent.npcIncluded, DEFAULT_RESIST_PREFS.includeNpcCasters)
   // A malformed stored value is replaced by the documented default, never coerced into an intent.
   assert.deepEqual(normalizeResistPrefs({ includeNpcCasters: 'yes' }), DEFAULT_RESIST_PREFS)

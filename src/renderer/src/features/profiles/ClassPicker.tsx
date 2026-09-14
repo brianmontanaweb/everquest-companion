@@ -36,7 +36,13 @@ export function togglePicked(picked: readonly ClassAbbr[], c: ClassAbbr): ClassA
 export default function ClassPicker({ picked, onToggle }: ClassPickerProps): JSX.Element {
   const full = picked.length >= MAX_COMBO_SLOTS
   return (
-    <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap data-testid="combo-class-picker">
+    <Stack
+      direction="row"
+      spacing={0.5}
+      flexWrap="wrap"
+      useFlexGap
+      data-testid="combo-class-picker"
+    >
       {CLASS_ABBRS.map((abbr) => {
         const on = picked.includes(abbr)
         return (

@@ -221,7 +221,7 @@ const CALC_STEPS: Record<number, number> = {
   109: 0.25,
   110: 0.2,
   119: 0.125,
-  121: 1 / 3
+  121: 1 / 3,
 }
 
 /** Codes at or above this are the named table above; below it the code IS the step. */
@@ -239,7 +239,7 @@ const MIN_CLIENT_HP_MAGNITUDE = 2
 /** A client slot's magnitude at a level: always positive, and honest about a formula it cannot read. */
 export function clientHpMagnitudeAt(
   slot: ClientHpSlot,
-  level: number
+  level: number,
 ): { amount: number; formulaUnknown: boolean } {
   const base = Math.abs(slot.base)
   const step = calcStep(slot.calc)
@@ -318,7 +318,7 @@ function slotStates(slot: ClientHpSlot, line: HpLine): boolean {
 /** The one slot `slotStates` accepts, or null — including when TWO of them do (see the block above). */
 function onlySlotStating(
   slots: readonly ClientHpSlot[] | undefined,
-  line: HpLine
+  line: HpLine,
 ): ClientHpSlot | null {
   if (!slots) return null
   const hits = slots.filter((slot) => slotStates(slot, line))
@@ -352,13 +352,13 @@ const DURATION_FORMULAS: Record<number, (level: number, value: number) => number
   10: (l) => l * 3 + 10,
   11: (l) => l * 30 + 90,
   12: (l) => Math.max(1, Math.floor(l / 4)),
-  15: (_l, v) => v
+  15: (_l, v) => v,
 }
 
 /** The client's duration in whole ticks at a level, or null for a formula this reader will not read. */
 export function clientDurationTicks(
   spec: { formula: number; value: number },
-  level: number
+  level: number,
 ): number | null {
   const fn = DURATION_FORMULAS[spec.formula]
   if (!fn) return null
@@ -587,7 +587,8 @@ function magnitudeAt(tailRaw: string, level: number): { value: number; flat: boo
 
 /** `for two additional ticks` / `after 4 ticks` - the count, when the line counts for itself. */
 function statedTicksOf(tail: string): number | undefined {
-  const m = /\b(?:for|after)\s+(\d+|one|two|three|four|five|six)\s+(?:additional\s+)?ticks?\b/i.exec(tail)
+  const m =
+    /\b(?:for|after)\s+(\d+|one|two|three|four|five|six)\s+(?:additional\s+)?ticks?\b/i.exec(tail)
   if (!m) return undefined
   const word = m[1].toLowerCase()
   const n = TICK_WORDS[word] ?? Number(word)
@@ -613,7 +614,7 @@ export function parseHpLine(line: string, level: number): HpLine | null {
   const out: HpLine = {
     amount: Math.abs(read.value),
     direction: head[1].toLowerCase() === 'increase' ? 'up' : 'down',
-    perTick
+    perTick,
   }
   if (read.flat) out.flat = true
   if (statedTicks !== undefined) out.statedTicks = statedTicks
@@ -722,7 +723,10 @@ function withRecast(spell: SpellMetricsInput, client?: ClientHpFacts): SpellMetr
  * rows in the owner's file are `Denon's Desperate Dirge` (800, which the catalog already states) and
  * the level-75-and-up `Denon's Dirge of ...` line.
  */
-export function resolveSpellMana(page: number | undefined, client: number | undefined): number | undefined {
+export function resolveSpellMana(
+  page: number | undefined,
+  client: number | undefined,
+): number | undefined {
   if (typeof page === 'number' && page > 0) return page
   return typeof client === 'number' && client > 0 ? client : page
 }
@@ -754,7 +758,7 @@ function withMana(spell: SpellMetricsInput, client?: ClientHpFacts): SpellMetric
 export function spellMetricsAt(
   input: SpellMetricsInput,
   level: number,
-  client?: ClientHpFacts
+  client?: ClientHpFacts,
 ): SpellMetrics | undefined {
   const spell = withMana(withRecast(input, client), client)
   // Resolved ONCE, here, for `withRecast`'s reason: one number reaches both folds.
@@ -762,7 +766,7 @@ export function spellMetricsAt(
     rank: normalizeSpellRank(spell.rank),
     hits: hitsOf(spell.hits),
     focusDamagePct: pctOf(spell.focusDamagePct),
-    focusHealPct: pctOf(spell.focusHealPct)
+    focusHealPct: pctOf(spell.focusHealPct),
   }
   const lifetap = spell.targetType === 'Lifetap'
   const durationTicks = ticksOf(spell.durationMs)
@@ -795,7 +799,7 @@ export function spellMetricsAt(
  */
 export function anyClientCurve(
   lines: readonly string[],
-  client: ClientHpFacts | undefined
+  client: ClientHpFacts | undefined,
 ): boolean {
   return lines.some((raw) => {
     const line = parseHpLine(raw, 1)
@@ -848,7 +852,7 @@ function clientMetricsAt(
   spell: SpellMetricsInput,
   level: number,
   client: ClientHpFacts,
-  fold: Fold
+  fold: Fold,
 ): SpellMetrics | undefined {
   const slots = client.hp ?? []
   if (slots.length === 0) return undefined
@@ -881,7 +885,7 @@ function clientMetricsAt(
 function clientLine(
   slot: ClientHpSlot,
   level: number,
-  lifetap: boolean
+  lifetap: boolean,
 ): (HpLine & { formulaUnknown: boolean }) | null {
   const read = clientHpMagnitudeAt(slot, level)
   // A ONE-POINT RIDER IS NOT A DAMAGE OR HEALING SPELL - the same floor `MIN_DEBUFF_MAGNITUDE`
@@ -896,7 +900,7 @@ function clientLine(
     amount: read.amount,
     direction,
     perTick: slot.perTick,
-    formulaUnknown: read.formulaUnknown
+    formulaUnknown: read.formulaUnknown,
   }
 }
 
@@ -955,7 +959,7 @@ function assemble(
   dmg: Side,
   heal: Side,
   spell: SpellMetricsInput,
-  durationTicks: number
+  durationTicks: number,
 ): SpellMetrics | undefined {
   const mana = typeof spell.mana === 'number' && spell.mana > 0 ? spell.mana : null
   const castSec = (spell.castTimeMs ?? 0) / 1000

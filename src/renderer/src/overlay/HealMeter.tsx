@@ -91,7 +91,7 @@ function selectedSeg(snap: CombatSnapshot | null): {
   seg: SegmentView | undefined
 } {
   const hydrating = snap?.hydrating ?? true
-  return { hydrating, seg: hydrating ? undefined : snap?.selected ?? undefined }
+  return { hydrating, seg: hydrating ? undefined : (snap?.selected ?? undefined) }
 }
 
 function healView(snap: CombatSnapshot | null, isFight: boolean): HealView {
@@ -115,21 +115,29 @@ function headerNameFor(hydrating: boolean, seg: SegmentView | undefined, isFight
  * only zone sessions. Rate is omitted: a fight's dps is not this meter's subject, and the name +
  * timing already disambiguate same-named pulls.
  */
-function healSelectRows(snap: CombatSnapshot | null, isFight: boolean, now: number): OverlaySelectRow[] {
+function healSelectRows(
+  snap: CombatSnapshot | null,
+  isFight: boolean,
+  now: number,
+): OverlaySelectRow[] {
   if (snap?.hydrating !== false) return []
   const { head, rest } = scopeOptions(
     isFight ? 'fight' : 'overall',
     snap.segments ?? [],
-    snap.zoneSessions ?? []
+    snap.zoneSessions ?? [],
   )
   return [...(head ? [head] : []), ...rest].map((o) => ({
     value: o.value,
     label: o.label,
     rate: '',
-    timing: [o.startTs ? formatTime(o.startTs) : '', relativeAge(o.startTs, now), o.durationSec > 0 ? fmtDur(o.durationSec) : o.live ? 'live' : '-']
+    timing: [
+      o.startTs ? formatTime(o.startTs) : '',
+      relativeAge(o.startTs, now),
+      o.durationSec > 0 ? fmtDur(o.durationSec) : o.live ? 'live' : '-',
+    ]
       .filter(Boolean)
       .join(' · '),
-    live: o.live
+    live: o.live,
   }))
 }
 
@@ -146,8 +154,19 @@ export default function HealMeter(): JSX.Element {
   const selection = isFight ? fightId : zoneSelection
 
   const snap = useOverlayCombat(selection === LIVE ? undefined : selection)
-  const { locked, bgAlpha, textScale, drill, hovering, patch, setDrill, toggleLock, capture, dragRegion, noDrag } =
-    useOverlayChrome()
+  const {
+    locked,
+    bgAlpha,
+    textScale,
+    drill,
+    hovering,
+    patch,
+    setDrill,
+    toggleLock,
+    capture,
+    dragRegion,
+    noDrag,
+  } = useOverlayChrome()
   const now = Date.now()
   // WHOSE healing (docs/plans/group-model.md §2) — the app-wide preference, same key as every
   // other meter since JOS-115 (Preferences > Combat writes it; this window only reads). The
@@ -160,7 +179,7 @@ export default function HealMeter(): JSX.Element {
     () => healSelectRows(snap, isFight, now),
     // Same deps as before the extraction: the two lists the rows are built from, plus the
     // clock that ages them.
-    [snap, isFight, now]
+    [snap, isFight, now],
   )
 
   /** A drill is per-segment: picking a different fight / zone session undrills. On the change
@@ -190,7 +209,7 @@ export default function HealMeter(): JSX.Element {
         border: locked ? '1px solid rgba(255,255,255,0.04)' : `1px solid rgba(127,209,160,0.4)`,
         borderRadius: 8,
         boxSizing: 'border-box',
-        overflow: 'hidden'
+        overflow: 'hidden',
       }}
     >
       {/* Header AND selector, one row — same treatment as the damage pair: the title is the
@@ -224,10 +243,19 @@ export default function HealMeter(): JSX.Element {
         capture={capture}
         scope={{ label: chipLabel(meterScope, roster) }}
       >
-        <HealBars seg={seg} scope={meterScope} roster={roster} drill={drill} setDrill={locked ? null : setDrill} live={live} />
+        <HealBars
+          seg={seg}
+          scope={meterScope}
+          roster={roster}
+          drill={drill}
+          setDrill={locked ? null : setDrill}
+          live={live}
+        />
       </MeterPane>
 
-      {!locked && <HealFooter bgAlpha={bgAlpha} textScale={textScale} patch={patch} noDrag={noDrag} />}
+      {!locked && (
+        <HealFooter bgAlpha={bgAlpha} textScale={textScale} patch={patch} noDrag={noDrag} />
+      )}
     </div>
   )
 }
@@ -239,7 +267,7 @@ function HealFooter({
   bgAlpha,
   textScale,
   patch,
-  noDrag
+  noDrag,
 }: {
   bgAlpha: number
   textScale: number
@@ -253,7 +281,7 @@ function HealFooter({
         ...noDrag,
         gap: 8,
         fontSize: 10,
-        color: 'rgba(255,255,255,0.6)'
+        color: 'rgba(255,255,255,0.6)',
       }}
     >
       {/* The word IS the label (JOS-358) — the footer names its own controls, it does not hover. */}
@@ -265,7 +293,14 @@ function HealFooter({
         step={0.02}
         value={bgAlpha}
         onChange={(e) => patch({ bgAlpha: Number(e.target.value) })}
-        style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 24, accentColor: HEAL_GOLD, height: 4 }}
+        style={{
+          flexGrow: 1,
+          flexShrink: 1,
+          flexBasis: 0,
+          minWidth: 24,
+          accentColor: HEAL_GOLD,
+          height: 4,
+        }}
       />
       <TextScaleStepper textScale={textScale} patch={patch} noDrag={noDrag} />
     </div>

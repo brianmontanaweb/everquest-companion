@@ -55,7 +55,7 @@ import { sortQuests } from './questSort'
 import {
   derivedEvidence,
   DERIVED_EVIDENCE_FLOORS,
-  type DerivedCompletionSource
+  type DerivedCompletionSource,
 } from '../../../../shared/questTurnIns'
 
 /** The part of a quest's progress this rule reads. Structural, so a test needs no whole quest. */
@@ -184,7 +184,7 @@ export function firstTimeReady(quests: readonly QuestProgress[]): QuestProgress[
  */
 export function withDerivedCompletion(
   q: QuestProgress,
-  sources: readonly DerivedCompletionSource[]
+  sources: readonly DerivedCompletionSource[],
 ): QuestProgress {
   if (q.turnIns > 0) return q
   const evidence = derivedEvidence(q.key, sources)

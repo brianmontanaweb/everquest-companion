@@ -34,7 +34,7 @@ export const DEFINE_OPS = [
   'buffTrust.define',
   'respawn.define',
   'combo.define',
-  'roster.define'
+  'roster.define',
 ] as const
 
 export type DefineOp = (typeof DEFINE_OPS)[number]

@@ -40,7 +40,8 @@ export const knowledgeBridge = {
    * concurrent wave the day this landed. Two questions of one door, both about the spell DB; the
    * flag is re-validated in main. A dedicated channel is the right shape and is three lines away.
    */
-  getLevelUnlocks: (): Promise<LevelUnlockData> => ipcRenderer.invoke(IPC.spellsCatalog, { unlocks: true }),
+  getLevelUnlocks: (): Promise<LevelUnlockData> =>
+    ipcRenderer.invoke(IPC.spellsCatalog, { unlocks: true }),
   /**
    * Item knowledge (Task #53): "what's this lore/quest item for" — local posky-first, then a
    * cached, politely-throttled wiki lookup. Never rejects (degrades to a cached-negative/offline
@@ -74,5 +75,5 @@ export const knowledgeBridge = {
   getResistPrefs: (): Promise<ResistPrefs> => ipcRenderer.invoke(IPC.resistPrefsGet),
   /** Merge-patch it. Returns what was actually stored, after the shared normalizer had its say. */
   setResistPrefs: (patch: Partial<ResistPrefs>): Promise<ResistPrefs> =>
-    ipcRenderer.invoke(IPC.resistPrefsSet, patch)
+    ipcRenderer.invoke(IPC.resistPrefsSet, patch),
 }

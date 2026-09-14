@@ -91,7 +91,7 @@ export function comboAt(intervals: readonly ComboInterval[], ts: number): ComboI
  */
 export function groupByCombo<T extends { ts: number }>(
   intervals: readonly ComboInterval[],
-  rows: readonly T[]
+  rows: readonly T[],
 ): { interval: ComboInterval | null; rows: T[] }[] {
   const groups = new Map<string, { interval: ComboInterval | null; rows: T[] }>()
   const ordered: { interval: ComboInterval | null; rows: T[] }[] = []

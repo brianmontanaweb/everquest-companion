@@ -22,14 +22,14 @@ import {
   type ConnectionState,
   type EngineClient,
   type ViewHandle,
-  type ViewState
+  type ViewState,
 } from '../src/shared/dataServer/client'
 import type {
   ClientMessage,
   EngineMessage,
   FoldProgress,
   ViewDescriptor,
-  ViewSubscribeRequest
+  ViewSubscribeRequest,
 } from '../src/shared/dataServer/protocol.generated'
 
 export interface FixtureDoc {
@@ -101,7 +101,7 @@ export function rig(token = TEST_TOKEN): Rig {
     transport: pair.b,
     deliver: (message) => {
       pair.b.send(message)
-    }
+    },
   }
 }
 

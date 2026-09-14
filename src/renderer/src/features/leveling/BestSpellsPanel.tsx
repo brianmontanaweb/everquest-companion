@@ -80,7 +80,7 @@ import {
   TableHead,
   TableRow,
   Tabs,
-  Typography
+  Typography,
 } from '@mui/material'
 import {
   TAB_LABEL,
@@ -90,7 +90,7 @@ import {
   type BestSpellSort,
   type BestSpells,
   type BestSpellTab,
-  type BestSpellsTable
+  type BestSpellsTable,
 } from '@shared/bestSpells'
 import { AOE_ASSUMPTION_TITLE } from '@shared/aoeSpells'
 import { WORN_FOCUS_TITLE } from '@shared/wornFocus'
@@ -143,7 +143,7 @@ function RowDisclosure({
   testid,
   rows,
   columns,
-  ranks
+  ranks,
 }: {
   label: string
   testid: string
@@ -166,7 +166,11 @@ function RowDisclosure({
               if (e.key === 'Enter' || e.key === ' ') setOpen(!open)
             }}
             data-testid={testid}
-            sx={{ cursor: 'pointer', color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+            sx={{
+              cursor: 'pointer',
+              color: 'text.secondary',
+              '&:hover': { color: 'primary.main' },
+            }}
           >
             <Typography variant="caption" sx={{ fontSize: 10 }}>
               {label}
@@ -192,7 +196,7 @@ function TabTable({
   data,
   sort,
   onSort,
-  ranks
+  ranks,
 }: {
   tab: BestSpellTab
   /** The tab's columns, MEMOIZED BY THE PANEL (JOS-511 item 2) — see its call site for why the
@@ -214,7 +218,12 @@ function TabTable({
       data-desc={String(sort.desc)}
     >
       {data.shown.length === 0 && data.outOfEra.length === 0 ? (
-        <Typography variant="caption" color="text.disabled" display="block" data-testid="best-spells-empty">
+        <Typography
+          variant="caption"
+          color="text.disabled"
+          display="block"
+          data-testid="best-spells-empty"
+        >
           nothing this loadout owns yet
         </Typography>
       ) : (
@@ -261,7 +270,7 @@ function TabTable({
 function QuietMarker({
   testid,
   title,
-  text
+  text,
 }: {
   testid: string
   title: string
@@ -292,7 +301,7 @@ function ReadoutHeader({
   best,
   tab,
   level,
-  onLevel
+  onLevel,
 }: {
   best: BestSpells
   tab: BestSpellTab
@@ -300,7 +309,14 @@ function ReadoutHeader({
   onLevel: (next: number | null) => void
 }): JSX.Element {
   return (
-    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mb: 0.5 }}>
+    <Stack
+      direction="row"
+      spacing={1}
+      alignItems="center"
+      flexWrap="wrap"
+      useFlexGap
+      sx={{ mb: 0.5 }}
+    >
       <Typography variant="subtitle2">Best at</Typography>
       {/* THE SAME ARROWS THE UNLOCK PANEL HAS (owner ask 2026-08-23) — a second handle on the ONE
           lifted level, so stepping here re-ranks this table and moves the panel next door in the
@@ -319,7 +335,11 @@ function ReadoutHeader({
           the model's (`aoeAssumptionLabel`) so a mixed table cannot be captioned with a number it
           did not use. */}
       {tab === 'aoe' && (
-        <QuietMarker testid="best-spells-aoe-assumption" title={AOE_ASSUMPTION_TITLE} text={best.aoeTargets} />
+        <QuietMarker
+          testid="best-spells-aoe-assumption"
+          title={AOE_ASSUMPTION_TITLE}
+          text={best.aoeTargets}
+        />
       )}
       {/* THE WORN FOCUS, MADE VISIBLE (JOS-452, owner ask: the multiply must be visible). Drawn
           only when the tab in front of you really used one, and in the MODEL's own words
@@ -362,7 +382,7 @@ function ReadoutHeader({
 function TabBar({
   best,
   tab,
-  onPick
+  onPick,
 }: {
   best: BestSpells
   tab: BestSpellTab
@@ -384,7 +404,14 @@ function TabBar({
           data-tab={t}
           data-count={String(best.tabs[t].shown.length)}
           label={`${TAB_LABEL[t]} (${String(best.tabs[t].shown.length)})`}
-          sx={{ minHeight: 28, minWidth: 0, px: 0.25, py: 0.25, fontSize: 10, textTransform: 'none' }}
+          sx={{
+            minHeight: 28,
+            minWidth: 0,
+            px: 0.25,
+            py: 0.25,
+            fontSize: 10,
+            textTransform: 'none',
+          }}
         />
       ))}
     </Tabs>

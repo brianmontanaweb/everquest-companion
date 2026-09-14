@@ -17,7 +17,7 @@ import type { PetRow } from './petRows'
 export function PetBar({
   pet,
   pct,
-  onDrill
+  onDrill,
 }: {
   pet: PetRow
   pct: number
@@ -33,7 +33,11 @@ export function PetBar({
       name={
         <>
           {pet.name}
-          <Typography component="span" variant="caption" sx={{ ml: 0.75, color: 'text.secondary', fontWeight: 400 }}>
+          <Typography
+            component="span"
+            variant="caption"
+            sx={{ ml: 0.75, color: 'text.secondary', fontWeight: 400 }}
+          >
             pet{pet.hits > 0 ? ` · ${pet.hits} hits` : ''}
           </Typography>
           {onDrill && (

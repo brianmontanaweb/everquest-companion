@@ -202,7 +202,9 @@ async function onConnect(event: IpcMainInvokeEvent, nonce: unknown): Promise<Eng
   })
   // THE TOKEN RIDES THE PORT. One delivery, and it lands in the preload's closure — see the header.
   sender.postMessage(IPC.onEnginePort, { nonce, token: info.token }, [port2])
-  debug(`data-server broker: window ${String(id)} is connected to the engine on port ${String(info.port)}`)
+  debug(
+    `data-server broker: window ${String(id)} is connected to the engine on port ${String(info.port)}`,
+  )
   return { ok: true }
 }
 

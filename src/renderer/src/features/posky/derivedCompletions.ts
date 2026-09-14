@@ -47,7 +47,7 @@ import type { QuestProgress } from './useProgress'
  */
 export function useDerivedCompletions(
   quests: readonly PoskyQuest[],
-  progress: ProgressState | null
+  progress: ProgressState | null,
 ): (q: QuestProgress) => QuestProgress {
   const inventory = progress?.inventory
   const unlocks = progress?.achievementUnlocks
@@ -62,8 +62,8 @@ export function useDerivedCompletions(
       withDerivedCompletion(q, [
         { evidence: 'achievement', vouched: achievement.quest },
         { evidence: 'reward', vouched: reward },
-        { evidence: 'class-unlock', vouched: achievement.classUnlock }
+        { evidence: 'class-unlock', vouched: achievement.classUnlock },
       ]),
-    [achievement, reward]
+    [achievement, reward],
   )
 }

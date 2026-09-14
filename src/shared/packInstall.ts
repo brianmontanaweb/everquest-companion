@@ -113,12 +113,7 @@ export const RATE_LIMITED_MESSAGE =
  *  split out of `http` on purpose (JOS-420): it is the only status that is a statement about the
  *  CLOCK rather than about the pack or this machine. */
 export type PackInstallFailureKind =
-  | 'http'
-  | 'rate-limited'
-  | 'unreachable'
-  | 'truncated'
-  | 'rejected'
-  | 'other'
+  'http' | 'rate-limited' | 'unreachable' | 'truncated' | 'rejected' | 'other'
 
 /**
  * OUR OWN REFUSALS, matched on the sentences `packRegistry.ts` itself throws. A list rather than a
@@ -138,7 +133,7 @@ const REJECTION_MESSAGES = [
   'openpeon.json is not valid JSON',
   'no sounds after conversion',
   'download exceeded size cap',
-  'too many redirects'
+  'too many redirects',
 ] as const
 
 /**
@@ -209,11 +204,11 @@ export function packInstallHttpError(
   url: string,
   status: number,
   retryAfterHeader?: unknown,
-  nowMs: number = Date.now()
+  nowMs: number = Date.now(),
 ): Error {
   return Object.assign(new Error(`GET ${url} → ${String(status)}`), {
     statusCode: status,
-    retryAfterMs: parseRetryAfterMs(retryAfterHeader, nowMs)
+    retryAfterMs: parseRetryAfterMs(retryAfterHeader, nowMs),
   })
 }
 
@@ -290,7 +285,7 @@ export function packInstallRetryDelayMs(attempt: number): number {
  */
 export function rateLimitDelayMs(
   attempt: number,
-  opts?: { readonly retryAfterMs?: number | null; readonly random?: Rand }
+  opts?: { readonly retryAfterMs?: number | null; readonly random?: Rand },
 ): number {
   const explicit = opts?.retryAfterMs
   if (typeof explicit === 'number' && Number.isFinite(explicit)) {
@@ -336,7 +331,7 @@ export function planPackInstallRetry(opts: {
     delayMs: 0,
     attempts,
     rateLimited,
-    stop
+    stop,
   })
   if (!isTransientPackInstallFailure(opts.err)) return stopped('not-transient')
   if (opts.attempt >= attempts) return stopped('attempts')
@@ -345,7 +340,7 @@ export function planPackInstallRetry(opts: {
   }
   const delayMs = rateLimitDelayMs(opts.attempt, {
     retryAfterMs: packInstallRetryAfterMs(opts.err),
-    random: opts.random
+    random: opts.random,
   })
   // THE HORIZON IS THE REAL BOUND. A `Retry-After: 3600` is honest and unaffordable: parking a
   // click for an hour is not "installing", so the run ends here and says the true thing instead.
@@ -375,7 +370,7 @@ export function packInstallFailureLine(
   name: string,
   attempt: number,
   attempts: number,
-  err: unknown
+  err: unknown,
 ): string {
   const kind = classifyPackInstallFailure(err)
   const status = packInstallHttpStatus(err)
@@ -446,7 +441,7 @@ export interface PackInstallAttemptDeps {
  * state a fifteen-minute schedule in a millisecond.
  */
 export async function runPackInstallAttempts(
-  deps: PackInstallAttemptDeps
+  deps: PackInstallAttemptDeps,
 ): Promise<PackInstallRunResult> {
   let attempts = Math.max(1, deps.attempts ?? MAX_INSTALL_ATTEMPTS)
   let waitedMs = 0
@@ -463,14 +458,14 @@ export async function runPackInstallAttempts(
         final: !plan.retry,
         delayMs: plan.delayMs,
         rateLimited: plan.rateLimited,
-        err
+        err,
       })
       if (!plan.retry) {
         return {
           ok: false,
           error: packInstallUserMessage(err),
           attempts: attempt,
-          rateLimited: plan.rateLimited
+          rateLimited: plan.rateLimited,
         }
       }
       waitedMs += plan.delayMs

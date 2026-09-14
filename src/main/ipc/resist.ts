@@ -215,6 +215,6 @@ export function registerResistIpc(): void {
   ipcMain.handle(IPC.resistPrefsSet, (_e, patch: unknown) =>
     typeof patch === 'object' && patch !== null && !Array.isArray(patch)
       ? setResistPrefs(patch)
-      : getResistPrefs()
+      : getResistPrefs(),
   )
 }

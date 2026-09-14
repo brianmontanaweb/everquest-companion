@@ -32,7 +32,9 @@ async function main(): Promise<void> {
   // empty one and exited 0. Zero quests is never a scrape result — it is a parser that stopped
   // matching the page, and the only honest outcome is a loud failure that leaves the file alone.
   if (data.quests.length === 0) {
-    console.error('\nRefusing to write: the scrape produced 0 quests (parser no longer matches the page?)')
+    console.error(
+      '\nRefusing to write: the scrape produced 0 quests (parser no longer matches the page?)',
+    )
     process.exit(1)
   }
 
