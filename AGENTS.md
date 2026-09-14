@@ -6,12 +6,14 @@ stories were MOVED verbatim to `docs/agents-archive.md` (JOS-252) — a cut
 that proves load-bearing is reversible in one paste — and
 `tests/agentsDoc.test.mts` enforces a 20k-word ceiling here. Distillation
 protocol: done carefully by the integrator, never delegated to a worker,
-never mechanical truncation, archive before cutting. **Since 2026-09-13
-(JOS-XXXX), live rule content can also move to a colocated `AGENTS.md`
-under the directory it governs, not only to the archive** — `engine/AGENTS.md`
-is the first (the fold's world-model laws); a header stub with a pointer
-stays behind so the table of contents doesn't go silent. See
-`docs/plans/2026-09-13-agents-md-colocation.md` for the map and rationale.
+never mechanical truncation, archive before cutting. **Since 2026-09-13,
+live rule content can also move to a colocated `AGENTS.md` under the
+directory it governs, not only to the archive** — `engine/AGENTS.md` is the
+first (the fold's world-model laws, then the log-format rules); a header
+stub with a pointer stays behind so the table of contents doesn't go
+silent. See `docs/plans/2026-09-13-agents-md-colocation.md` for the map and
+rationale. This fork does not use the upstream Linear workspace, so work
+here is cited BY DATE, never by a minted `JOS-` id.
 
 ## What this is
 
@@ -513,11 +515,11 @@ Two boundary laws hold this up, and both FAIL THE BUILD rather than relying on m
   `src/renderer/**`, exemptions inline and reasoned, count only ever shrinks
   (`tests/domainMunging.test.mts`).
 
-**THE FOLD'S SEMANTICS NOW LIVE IN `engine/AGENTS.md`** (moved 2026-09-13,
-JOS-XXXX — the log-clock law, the engine-comment law, and every world-model
-law below it, JOS-172/JOS-87/character-epoch/JOS-134 included). Read it
-before touching `engine/crates/fold` or `engine/crates/eqlog`; a `behindMs`
-of exactly N hours in a perf block is the log-clock bug named there.
+**THE FOLD'S SEMANTICS NOW LIVE IN `engine/AGENTS.md`** (moved 2026-09-13 —
+the log-clock law, the engine-comment law, and every world-model law below
+it, JOS-172/JOS-87/character-epoch/JOS-134 included). Read it before
+touching `engine/crates/fold` or `engine/crates/eqlog`; a `behindMs` of
+exactly N hours in a perf block is the log-clock bug named there.
 
 Maps: src/main/maps (pack discovery/per-layer cross-pack merge/LRU/search,
 Electron-free w/ injected roots) over shared/maps types + shared/zones
@@ -765,14 +767,14 @@ alwaysOnTop, click-through pin).
 
 The 13 numbered laws (what a buff instance is, pet retirement, aggregate
 derivation, encounter closure, miss/resist accounting, respawn-gap bounds,
-etc.) moved 2026-09-13 (JOS-XXXX) to `engine/AGENTS.md`, beside the Rust
+etc.) moved 2026-09-13 to `engine/AGENTS.md`, beside the Rust
 code that now implements every one of them. Read it before touching
 `engine/crates/fold`.
 
 ## The fold checkpoint, and why there isn't one — moved to `engine/AGENTS.md`
 
 The JOS-208/JOS-230 checkpoint post-mortem and the JOS-231 re-seeding law
-moved 2026-09-13 (JOS-XXXX) to `engine/AGENTS.md` with the rest of the
+moved 2026-09-13 to `engine/AGENTS.md` with the rest of the
 fold semantics.
 
 ## Log-format quick reference — moved to `engine/AGENTS.md`
@@ -780,7 +782,7 @@ fold semantics.
 Every rule for how a raw log line becomes a typed event (melee/skill verb
 lanes, zone-tier parsing, AA gain/spend shapes, resist shapes, pet-binding
 signals, the charm/mez/slow/calm spell rosters, the tell-tense discriminator)
-moved 2026-09-13 (JOS-XXXX) to `engine/AGENTS.md`. Verified against the
+moved 2026-09-13 to `engine/AGENTS.md`. Verified against the
 source tree first: every TS file/test the old section cited
 (`log/parseCombat.ts`, `combat/specialAttacks.ts`, `rulesets.ts`,
 `charmModel.ts`, `tests/charmCcRoster.test.mts`, `tests/calmLineTimers.test.mts`,

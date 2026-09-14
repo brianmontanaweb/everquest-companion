@@ -67,6 +67,24 @@ that needed no judgment call, only a source-tree check.
   though the alert-matching that consumes it (`alerts.rs`, `alerts_rules.rs`)
   is now Rust. Needs the same bullet-by-bullet source-tree verification Phase
   1 got before it can move safely. **This is Phase 2.**
+  > **PHASE 2 OUTCOME (same day): the caution above was wrong, and the whole
+  > section moved.** The verification found `tests/charmCcRoster.test.mts`
+  > does not exist any more — nor do `tests/calmLineTimers.test.mts`,
+  > `tests/combatSmiteLane.test.mts`, `tests/combatRangedLane.test.mts`,
+  > `tests/petSummonNudge.test.mts`, `tests/comboSwapBoundary.test.mts`,
+  > `log/parseCombat.ts`, `combat/specialAttacks.ts`, `rulesets.ts` or
+  > `charmModel.ts`. Every one has a live Rust equivalent, several carrying
+  > the same historical facts: `fold::combat::spellfacts::{is_charm_spell,
+  > is_cc_spell}` (with a test asserting the exact JOS-200 Solon's-Bravura
+  > fact the doc cites), `buffs_stats::calms_target`, `jsfn::zone_tier`
+  > (matching the JOS-166 d1–d4 tiers), `eqlog::parse::world` +
+  > `fold::modules::leveling` for AA. The two surviving TS files that looked
+  > like counter-evidence — `src/shared/kills.ts`, `src/shared/aaLedger.ts` —
+  > are imported only by renderer UI components, so they are display-layer
+  > reshaping rather than the parsing logic the section described. **Lesson
+  > for later phases: a citation's mere presence in the prose proves nothing,
+  > and neither does a cited file still existing on disk — check who imports
+  > it.**
 - **Spell DB / Alerts / corrections / removals / audio content** (lines
   567–753, ~1,500+ words, still under `## Architecture`). Confirmed to span
   three different owners: `src/main/data` (spells.json, spellCorrections*,
@@ -87,7 +105,7 @@ that needed no judgment call, only a source-tree check.
 ```markdown
 # engine/AGENTS.md — the Rust engine's fold and transport law
 
-Moved from the root AGENTS.md (JOS-XXXX, 2026-09-13, phase-1 colocation
+Moved from the root AGENTS.md (2026-09-13, phase-1 colocation
 split). This file holds the domain semantics for `engine/crates/fold` and
 `engine/crates/eqlog`: what the fold's transport contract guarantees, module
 revision/epoch rules, character-epoch and logout-pause handling, the
@@ -109,7 +127,7 @@ Followed by the moved content verbatim, in its original order.
 
    ```markdown
    **THE FOLD'S SEMANTICS NOW LIVE IN `engine/AGENTS.md`** (moved
-   2026-09-13, JOS-XXXX — the log-clock law, the engine-comment law, and
+   2026-09-13 — the log-clock law, the engine-comment law, and
    every world-model law below it, JOS-172/JOS-87/character-epoch/JOS-134
    included). Read it before touching `engine/crates/fold` or
    `engine/crates/eqlog`; a `behindMs` of exactly N hours in a perf block is
@@ -135,10 +153,13 @@ generous headroom over the ~3,000 landing there, room for Phase 2's
 (root ceiling, archive-exists) unchanged in behavior, just joined by a third
 in the same file, same style.
 
-**Ticket:** `JOS-XXXX` is a placeholder throughout this doc and the moved
-files — swap in the real Linear ticket id before or during implementation
-(per this repo's own convention, filing that ticket is the owner's call via
-the `linear-board` workflow, not something to fabricate).
+**Ticket:** none. The `JOS-nnn` ids throughout root `AGENTS.md` belong to the
+upstream project's Linear workspace, which this fork does not use — so this
+work and every later phase is cited **by date** (`2026-09-13`) instead,
+matching how the doc already dates owner rulings and prior distillation
+passes. Do not mint new `JOS-` ids for work done here; a fabricated id is
+worse than no id, because every other one in the file resolves to something
+real.
 
 ## Verification
 

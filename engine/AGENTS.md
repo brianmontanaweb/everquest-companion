@@ -1,6 +1,6 @@
 # engine/AGENTS.md — the Rust engine's fold and transport law
 
-Moved from the root AGENTS.md (JOS-XXXX, 2026-09-13, phase-1 colocation
+Moved from the root AGENTS.md (2026-09-13, phase-1 colocation
 split; phase 2 same day added the log-format section below). This file
 holds the domain semantics for `engine/crates/fold` and `engine/crates/eqlog`:
 what the fold's transport contract guarantees, module revision/epoch rules,

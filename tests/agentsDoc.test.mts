@@ -39,7 +39,7 @@ const ENGINE_AGENTS_MD = join(ROOT, 'engine', 'AGENTS.md')
  * fires — when it does, distill; do not nibble words to sneak under. */
 const CEILING_WORDS = 20_000
 
-/** engine/AGENTS.md's own ceiling (JOS-XXXX, 2026-09-13 colocation split,
+/** engine/AGENTS.md's own ceiling (2026-09-13 colocation split,
  * phase 1: the fold's world-model laws). It landed at ~3,000 words; this
  * leaves headroom for phase 2 (the log-format rules) plus organic growth
  * before it needs its own distillation pass. */
@@ -75,13 +75,13 @@ test('the archive that distillation moves history into exists beside it', () => 
 
 test('engine/AGENTS.md (the colocated fold/world-model doc) exists and stays under its own ceiling', () => {
   // Root AGENTS.md's "World-model laws" and "The fold checkpoint" sections
-  // are now pointer stubs into this file (JOS-XXXX, 2026-09-13 phase-1
+  // are now pointer stubs into this file (2026-09-13 phase-1
   // colocation split) — a missing or bloated engine/AGENTS.md breaks those
   // pointers the same way a missing archive would break the older ones.
   assert.ok(
     existsSync(ENGINE_AGENTS_MD),
     "engine/AGENTS.md is missing. Root AGENTS.md points to it for the fold's " +
-      'world-model laws (JOS-XXXX) — restore it or update the pointer stubs.',
+      'world-model laws — restore it or update the pointer stubs.',
   )
   const words = wordCount(readFileSync(ENGINE_AGENTS_MD, 'utf8'))
   assert.ok(
