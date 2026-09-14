@@ -32,18 +32,22 @@ import { fileURLToPath } from 'node:url'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const AGENTS_MD = join(ROOT, 'AGENTS.md')
 const ARCHIVE_MD = join(ROOT, 'docs', 'agents-archive.md')
-const ENGINE_AGENTS_MD = join(ROOT, 'engine', 'AGENTS.md')
-
 /** The hard ceiling (words). The JOS-252 distillation landed ~18k against a
  * ~16-17k target, so there is real headroom for new learnings before this
  * fires — when it does, distill; do not nibble words to sneak under. */
 const CEILING_WORDS = 20_000
 
-/** engine/AGENTS.md's own ceiling (2026-09-13 colocation split,
- * phase 1: the fold's world-model laws). It landed at ~3,000 words; this
- * leaves headroom for phase 2 (the log-format rules) plus organic growth
- * before it needs its own distillation pass. */
-const ENGINE_CEILING_WORDS = 8_000
+/** The colocated docs the 2026-09-13 split moved live rule content into, each
+ * with its own ceiling. Root AGENTS.md carries a pointer stub for every one of
+ * them, so a missing file is a broken pointer, and a bloated one is the same
+ * problem this suite exists to catch — just one directory down. Ceilings are
+ * set well above what each file landed at, leaving room for the later phases
+ * that will add to them; a phase that blows one distills rather than raises it.
+ * ADD A ROW when a phase creates the next colocated doc. */
+const COLOCATED_DOCS: ReadonlyArray<{ path: string; ceiling: number }> = [
+  { path: join('engine', 'AGENTS.md'), ceiling: 8_000 },
+  { path: join('src', 'main', 'AGENTS.md'), ceiling: 8_000 },
+]
 
 const wordCount = (text: string): number => text.split(/\s+/).filter(Boolean).length
 
@@ -73,20 +77,23 @@ test('the archive that distillation moves history into exists beside it', () => 
   )
 })
 
-test('engine/AGENTS.md (the colocated fold/world-model doc) exists and stays under its own ceiling', () => {
-  // Root AGENTS.md's "World-model laws" and "The fold checkpoint" sections
-  // are now pointer stubs into this file (2026-09-13 phase-1
-  // colocation split) — a missing or bloated engine/AGENTS.md breaks those
-  // pointers the same way a missing archive would break the older ones.
-  assert.ok(
-    existsSync(ENGINE_AGENTS_MD),
-    "engine/AGENTS.md is missing. Root AGENTS.md points to it for the fold's " +
-      'world-model laws — restore it or update the pointer stubs.',
-  )
-  const words = wordCount(readFileSync(ENGINE_AGENTS_MD, 'utf8'))
-  assert.ok(
-    words <= ENGINE_CEILING_WORDS,
-    `engine/AGENTS.md is ${words} words — over its ${ENGINE_CEILING_WORDS}-word ceiling. ` +
-      `Same protocol as the root file: distill carefully, archive before cutting.`,
-  )
-})
+for (const { path, ceiling } of COLOCATED_DOCS) {
+  const posix = path.split(/[\\/]/).join('/')
+
+  test(`${posix} exists and stays under its own ceiling`, () => {
+    const full = join(ROOT, path)
+    assert.ok(
+      existsSync(full),
+      `${posix} is missing. Root AGENTS.md carries pointer stubs into it ` +
+        `(2026-09-13 colocation split) — restore the file, or update those stubs ` +
+        `to stop pointing at it. Colocation moves content; it never deletes it.`,
+    )
+    const words = wordCount(readFileSync(full, 'utf8'))
+    assert.ok(
+      words <= ceiling,
+      `${posix} is ${words} words — over its ${ceiling}-word ceiling. ` +
+        `Same protocol as the root file: distill carefully, archive before cutting. ` +
+        `Raising this number is not the fix.`,
+    )
+  })
+}
