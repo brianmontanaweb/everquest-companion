@@ -177,9 +177,15 @@ function eqCommitHookShim(): void {
 }
 
 /**
- * Install the commit counter for `page`'s context and reload so it takes effect before react-dom
- * evaluates. Call this before anything the spec cares about mounts — a reload restarts the
- * renderer only; the main process (and any replay/hydration it already finished) keeps its state.
+ * Install the commit counter for `page` and reload so it takes effect before react-dom evaluates.
+ * Call this before anything the spec cares about mounts — a reload restarts the renderer only; the
+ * main process (and any replay/hydration it already finished) keeps its state.
+ *
+ * PAGE-LEVEL `addInitScript`, DELIBERATELY, NOT `page.context().addInitScript`: this Electron main
+ * window is the only page this harness ever drives the hook against, so there is no second page in
+ * the context that would need the same script, and `levelingScrollProbe.mts`'s `installReactHook`
+ * already proved this exact call shape works against this exact app — matching a working precedent
+ * beat introducing a second, untested one.
  */
 export async function installCommitCounter(page: Page): Promise<void> {
   await page.addInitScript(eqCommitHookShim)

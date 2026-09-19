@@ -413,6 +413,7 @@ async function settleCommits(page: Page, quietMs = 400, timeoutMs = 8_000): Prom
   let last = await readCommits(page)
   let lastChange = Date.now()
   const deadline = Date.now() + timeoutMs
+  let quiet = false
   while (Date.now() < deadline) {
     await page.evaluate((ms) => new Promise((r) => setTimeout(r, ms)), 100)
     const now = await readCommits(page)
@@ -420,8 +421,18 @@ async function settleCommits(page: Page, quietMs = 400, timeoutMs = 8_000): Prom
       last = now
       lastChange = Date.now()
     } else if (Date.now() - lastChange >= quietMs) {
+      quiet = true
       break
     }
+  }
+  // A silent timeout would hide a commit storm that never settles — the caller's sweep would just
+  // start early, on top of whatever kept the counter moving, and nothing would say why the numbers
+  // that come out of it look off. This is a NOTE, not a check: still not gated, but diagnosable.
+  if (!quiet) {
+    note(
+      `settleCommits gave up after ${String(timeoutMs)}ms without ${String(quietMs)}ms of quiet ` +
+        `(commit count still moving; last seen ${String(last)})`,
+    )
   }
   return last
 }
@@ -538,17 +549,21 @@ async function main(): Promise<void> {
   let page: Page | null = null
   try {
     page = await mainWindow(app)
+    // THE LISTENERS GO ON BEFORE THE RELOAD BELOW, not after: `installCommitCounter` reloads the
+    // page, and a listener attached afterward would miss any renderer error the reload itself (or
+    // the hook shim it installs) throws — exactly the class of error this check exists to catch.
+    const consoleErrors: string[] = []
+    page.on('console', (m) => {
+      if (m.type() === 'error') consoleErrors.push(m.text())
+    })
+    page.on('pageerror', (e) => consoleErrors.push(String(e)))
+
     // THE COMMIT-COUNTER HOOK HAS TO BEAT REACT-DOM (stepScrollCost's header has the why), so it
     // goes in — and the reload it requires happens — before stepReady, not inside stepScrollCost
     // itself: the main process keeps its own state (including any replay already folded) across a
     // renderer reload, so this only costs one extra re-hydrate rather than disturbing anything the
     // later steps assert about.
     await installCommitCounter(page)
-    const consoleErrors: string[] = []
-    page.on('console', (m) => {
-      if (m.type() === 'error') consoleErrors.push(m.text())
-    })
-    page.on('pageerror', (e) => consoleErrors.push(String(e)))
 
     await stepReady(page)
     check(
