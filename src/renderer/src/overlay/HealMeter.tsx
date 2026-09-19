@@ -169,7 +169,7 @@ export default function HealMeter(): JSX.Element {
   } = useOverlayChrome()
   const now = Date.now()
   // WHOSE healing (docs/plans/group-model.md §2) — the app-wide preference, same key as every
-  // other meter since JOS-115 (Preferences > Combat writes it; this window only reads). The
+  // other meter since JOS-115 (the Combat tab's header writes it; this window only reads). The
   // healing model already had the ally lane, so this is purely a filter over healers.
   const [meterScope] = useMeterScope()
   const roster = snap?.roster ?? EMPTY_ROSTER

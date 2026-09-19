@@ -19,7 +19,7 @@ import { Tooltip } from '../../lib/Tooltip'
  * State, never process (AGENTS.md): the word names what the row IS, and it carries no tooltip,
  * because a chip reading 'group' beside a player's name has nothing left to explain. "Why is
  * this name here?" is answered where it can be answered properly — the roster popover, with
- * provenance (ScopeStatus.tsx).
+ * provenance (ScopeControl.tsx).
  *
  * HERE rather than in combatShared.tsx because this is that file's only consumer and it sits at
  * the measured line ceiling: the rule is to split rather than ratchet.

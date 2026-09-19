@@ -346,9 +346,12 @@ export default function CombatView({
     setDrill,
   )
   // WHOSE damage (docs/plans/group-model.md §2) — ONE persisted preference for every combat
-  // surface since JOS-115, read here and written only in Preferences > Combat. `EMPTY_ROSTER`
-  // while the first snapshot is in flight means Group renders as Everyone for that instant, never
-  // as an empty meter.
+  // surface since JOS-115, read here and written by exactly one control: the dropdown in this
+  // tab's own header (ScopeControl.tsx, owner 2026-09-17; it lived in Preferences from JOS-115
+  // until then). Read ONCE here and handed to the header and the body alike, so the word the
+  // control shows and the rows the meters draw can never come from two different reads.
+  // `EMPTY_ROSTER` while the first snapshot is in flight means Group renders as Everyone for that
+  // instant, never as an empty meter.
   const [meterScope] = useMeterScope()
   const roster = snap?.roster ?? EMPTY_ROSTER
 
