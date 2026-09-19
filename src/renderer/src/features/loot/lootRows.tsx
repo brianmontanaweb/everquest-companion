@@ -14,6 +14,15 @@ import type { GroupRow } from './lootGrouping'
 export const ROW_HEIGHT = 37
 
 /**
+ * Rows mounted beyond EACH edge of the ledger's viewport. The hook's default (8 rows, 296 px) is
+ * less than one fast wheel flick or scrollbar drag moves in a frame, so the viewport outran the
+ * slice and showed blank spacer ("rows don't render in time", 2026-09-19). 20 rows is 740 px of
+ * runway; it is affordable because a scroll only re-renders when it crosses a row
+ * (useWindowedRows) and the memo'd rows skip that render (useLootDetail's stable `open`).
+ */
+export const LEDGER_OVERSCAN = 20
+
+/**
  * THE FIXED-HEIGHT CONTRACT, as CSS (JOS-260). `useWindowedRows` is a FIXED-row-height hook: every
  * spacer, every index and every scroll offset it computes assumes each row is exactly
  * `ROW_HEIGHT`. A row that wraps to two lines is therefore not a cosmetic problem — it desyncs the

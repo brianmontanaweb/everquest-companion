@@ -41,7 +41,7 @@ import type { InventoryRow } from '../inventory/reconcile'
 import { useProgress } from '../posky/useProgress'
 import { ItemDetailPane } from './ItemDetailPane'
 import { itemStats, questItemNames } from './lootItemData'
-import { ROW_HEIGHT } from './lootRows'
+import { LEDGER_OVERSCAN, ROW_HEIGHT } from './lootRows'
 import type { GroupRow, KeyedLoot } from './lootGrouping'
 import { LootTable, type LootTableContext } from './LootTables'
 // The chrome around the table — the toolbar, the caption and the notices — plus the two pieces of
@@ -208,7 +208,12 @@ function LootLedgerBody({
   // Window whichever list is active — only the rows intersecting the viewport are
   // mounted, so a filter keystroke never mounts hundreds of MUI rows synchronously.
   const count = groupByItem ? groupRows.length : events.length
-  const win = useWindowedRows({ count, rowHeight: ROW_HEIGHT, scrollRef })
+  const win = useWindowedRows({
+    count,
+    rowHeight: ROW_HEIGHT,
+    scrollRef,
+    overscan: LEDGER_OVERSCAN,
+  })
   return (
     // The scroll container owns the ref the windowing hook reads. Spacer rows (top/bottom) reserve
     // the full scroll height so only the visible slice of MUI rows is mounted — see

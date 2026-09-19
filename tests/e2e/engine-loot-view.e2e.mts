@@ -79,6 +79,11 @@ const SOURCE_ENGINE = '[data-testid="loot-source-engine"]'
 /** Fewer than this either way and the comparison is not worth making — see the header. */
 const MIN_ROWS = 8
 
+/** The engine ledger's served window — mirrors `WINDOW_LIMIT` in EngineLootLedger.tsx (JOS-484: the
+ *  ledger does not page; it serves the newest 50). The app-fed ledger's overscan can mount more rows
+ *  than that, and rows the engine never serves cannot be compared. */
+const SERVED_WINDOW = 50
+
 /** How long the engine gets to spawn, fold and answer a renderer's hello. Generous: the runner puts
  *  four Electron apps and a Rust child on one machine, and the renderer's own retry is on a 4 s
  *  cadence, so this is several attempts rather than one. */
@@ -188,13 +193,16 @@ async function switchTo(page: Page, button: string): Promise<Ledger> {
 /**
  * The comparison itself, and the anti-vacuity guards around it.
  *
- * THE CLAIM IS OVER EVERY ROW THE APP LEDGER DREW, not over a shared prefix somebody picked. The
- * two modes do not mount the same NUMBER of rows and should not be expected to: both virtualize
- * over the same fixed row height, but the app-fed ledger carries the slice bar, the toolbar, the
- * caption, the notable strip and the notices above its scroll box while the served one carries a
- * toggle and a caption, so the served box is TALLER and shows more of the same list (measured 29 vs
- * 35). That is a chrome difference, not a data one — so what is asserted is that the engine's
- * window covers the app's and agrees with it row for row over the whole of it.
+ * THE CLAIM IS OVER EVERY ROW THE APP LEDGER DREW, UP TO WHAT THE ENGINE CAN EVER SERVE — not over
+ * a shared prefix somebody picked. The two modes do not mount the same NUMBER of rows and should
+ * not be expected to: both virtualize over the same fixed row height, but the app-fed ledger
+ * carries the slice bar, the toolbar, the caption, the notable strip and the notices above its
+ * scroll box while the served one carries a toggle and a caption, so the served box is TALLER and
+ * shows more of the same list (measured 29 vs 35 at the old overscan). That is a chrome
+ * difference, not a data one. The bound is capped at `SERVED_WINDOW`, though: `loot.ledger` does
+ * not page (JOS-484 header) — it serves a fixed newest-50 window — so a deep overscan can mount
+ * more app-fed rows than the engine will ever hand over, and a row the engine never serves cannot
+ * be compared. What is asserted is that the engine's window covers the app's, up to that cap.
  */
 function stepRowsAgree(app: Ledger, engine: Ledger): void {
   const deep = check(
@@ -203,9 +211,9 @@ function stepRowsAgree(app: Ledger, engine: Ledger): void {
     `app ${String(app.length)} rows · engine ${String(engine.length)} rows`,
   )
   check(
-    'the served window covers every row the app-fed ledger drew — nothing is compared by halves',
-    engine.length >= app.length,
-    `app ${String(app.length)} · engine ${String(engine.length)} (the served box is taller — less chrome above it)`,
+    'the served window covers every row the app-fed ledger drew, up to the served window — nothing is compared by halves',
+    engine.length >= Math.min(app.length, SERVED_WINDOW),
+    `app ${String(app.length)} · engine ${String(engine.length)} · served window ${String(SERVED_WINDOW)}`,
   )
   if (!deep) return
   const n = Math.min(app.length, engine.length)
