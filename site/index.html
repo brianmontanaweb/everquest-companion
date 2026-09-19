@@ -32,7 +32,7 @@
           <a href="#features">Features</a>
           <a href="#author">Author</a>
           <a href="launch.html">Launch</a>
-          <a href="https://github.com/jmoyers/everquest-companion">GitHub</a>
+          <a href="https://github.com/jmoyers/everquest-companion" data-repo-path="">GitHub</a>
         </nav>
       </div>
     </header>
@@ -53,6 +53,7 @@
                 class="btn"
                 id="download"
                 href="https://github.com/jmoyers/everquest-companion/releases/latest/download/everquest-companion-Setup.exe"
+                data-repo-path="/releases/latest/download/everquest-companion-Setup.exe"
               >
                 <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
                   <path
@@ -753,6 +754,7 @@
               class="btn btn--ghost"
               href="https://github.com/jmoyers/everquest-companion/releases/latest/download/everquest-companion-Setup.exe"
               id="download-2"
+              data-repo-path="/releases/latest/download/everquest-companion-Setup.exe"
               >Download for Windows</a
             >
           </p>
@@ -825,13 +827,13 @@
     <footer class="footer">
       <div class="wrap footer-inner">
         <p class="footer-links">
-          <a href="https://github.com/jmoyers/everquest-companion">Source on GitHub</a>
+          <a href="https://github.com/jmoyers/everquest-companion" data-repo-path="">Source on GitHub</a>
           <span class="dot">·</span>
-          <a href="https://github.com/jmoyers/everquest-companion/releases">Releases</a>
+          <a href="https://github.com/jmoyers/everquest-companion/releases" data-repo-path="/releases">Releases</a>
           <span class="dot">·</span>
           <a href="launch.html">The launch, in numbers</a>
           <span class="dot">·</span>
-          <a href="https://github.com/jmoyers/everquest-companion/blob/main/LICENSE">FSL-1.1-MIT license</a>
+          <a href="https://github.com/jmoyers/everquest-companion/blob/main/LICENSE" data-repo-path="/blob/main/LICENSE">FSL-1.1-MIT license</a>
         </p>
         <p class="footer-fine">
           The screens on this page are illustrations, drawn to match what the app looks like.
@@ -843,6 +845,7 @@
       </div>
     </footer>
 
+    <script src="repo.js"></script>
     <script>
       // Fill in version · date · size from the GitHub Releases API, and swap the
       // download href to the exact versioned asset when we can see one.
@@ -853,7 +856,7 @@
       // this. Everything below is a nicety. Any failure leaves the static link
       // and the neutral placeholder text in place.
       ;(function () {
-        var API = 'https://api.github.com/repos/jmoyers/everquest-companion/releases/latest'
+        var API = 'https://api.github.com/repos/' + window.EQC_REPO + '/releases/latest'
         var out = document.getElementById('relmeta-text')
         if (!out || !window.fetch) return
 
