@@ -59,7 +59,7 @@ process; read both when your work touches main.
   (security.ts) deliberately or not at all, **and an entry is a HOST PLUS AN
   OPTIONAL PATH SCOPE — write the narrowest one that serves the link** (owner
   ruling, JOS-263). Widened ONCE (JOS-254), with a REPO-SCOPED github.com
-  entry — only `https://github.com/jmoyers/everquest-companion/…` opens; the
+  entry — only `https://github.com/brianmontanaweb/everquest-companion/…` opens; the
   three wiki entries stay host-wide because a wiki link's PATH is a page title
   this app cannot predict. The path prefix is matched SEGMENT-AWARE
   (`…-companion-evil` is not inside `…-companion`) against the
