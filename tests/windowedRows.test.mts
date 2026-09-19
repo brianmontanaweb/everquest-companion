@@ -324,26 +324,26 @@ test('a resize of the container re-measures the viewport, and a taller box rende
 test('scrolling WITHIN a row does not re-render; crossing a row boundary does', () => {
   const box = new FakeScroller()
   const ref: { current: HTMLElement | null } = { current: null }
-  let renders = 0
-  const host = mountHook(() => {
-    renders += 1
-    return useWindowedRows({ count: 11_000, rowHeight: 37, scrollRef: ref })
-  })
+  const host = mountHook(() => useWindowedRows({ count: 11_000, rowHeight: 37, scrollRef: ref }))
   host.act(() => {
     ref.current = box.el
   })
   host.act(() => box.scrollTo(37 * 500))
-  const settled = renders
+  const settled = host.writes
   const at = host.value
 
-  // Ten sub-row scroll events, all inside row 500: the slice cannot change, so nothing renders.
+  // Ten sub-row scroll events, all inside row 500: the slice cannot change, so no state writes.
   for (let px = 1; px <= 30; px += 3) host.act(() => box.scrollTo(37 * 500 + px))
-  assert.equal(renders, settled, `${String(renders - settled)} renders for scrolls inside one row`)
+  assert.equal(
+    host.writes,
+    settled,
+    `${String(host.writes - settled)} state writes for scrolls inside one row`,
+  )
   assert.deepEqual(host.value, at, 'the slice moved without crossing a row')
 
   // Crossing into row 501 must advance the window by one.
   host.act(() => box.scrollTo(37 * 501))
-  assert.ok(renders > settled, 'crossing a row boundary did not re-render')
+  assert.ok(host.writes > settled, 'crossing a row boundary did not write state')
   assert.equal(host.value.start, at.start + 1)
   host.unmount()
 })
@@ -351,17 +351,13 @@ test('scrolling WITHIN a row does not re-render; crossing a row boundary does', 
 test('a negative scrollTop (elastic overscroll) clamps to row 0 without re-rendering', () => {
   const box = new FakeScroller()
   const ref: { current: HTMLElement | null } = { current: null }
-  let renders = 0
-  const host = mountHook(() => {
-    renders += 1
-    return useWindowedRows({ count: 100, rowHeight: 37, scrollRef: ref })
-  })
+  const host = mountHook(() => useWindowedRows({ count: 100, rowHeight: 37, scrollRef: ref }))
   host.act(() => {
     ref.current = box.el
   })
-  const settled = renders
+  const settled = host.writes
   host.act(() => box.scrollTo(-120))
-  assert.equal(renders, settled)
+  assert.equal(host.writes, settled)
   assert.equal(host.value.start, 0)
   host.unmount()
 })
