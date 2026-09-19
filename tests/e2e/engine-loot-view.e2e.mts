@@ -102,12 +102,13 @@ const ROW_PX = 37
 const OVERSCAN = 20
 
 /** One settled read: the rendered rows, and the loot-scroll container's own geometry alongside
- *  them — see `settledLedger` for why the two travel together. */
+ *  them — see `settledLedger` for why the two travel together. `bodyHeight` is the `<tbody>`'s
+ *  own height, not the scroll box's — see `readLedger`'s header for why that distinction matters. */
 interface LedgerRead {
   rows: Ledger
   clientHeight: number
   scrollTop: number
-  scrollHeight: number
+  bodyHeight: number
 }
 
 /**
@@ -118,26 +119,33 @@ interface LedgerRead {
  * between them are layout rather than content. Both modes are read through this same function, so
  * whatever it normalizes it normalizes identically — the comparison is between two readings, never
  * between a reading and a literal.
+ *
+ * `bodyHeight` is measured off the `<tbody>`, NOT the scroll box's `scrollHeight` (fix round 2):
+ * the box also contains the sticky `<thead>`, which sits in normal flow above the body and is not
+ * a 37px row, so `scrollHeight` over-counts by however tall the header is. The `<tbody>` holds
+ * only the spacer rows and the mounted rows (`LootTables.tsx`'s `PadRow`s), so its own height is
+ * EXACTLY `total * ROW_PX` under the fixed-row-height contract — no header to subtract out.
  */
 function readLedger(page: Page): Promise<LedgerRead> {
   return page.evaluate(
     ({ rowSel, boxSel }) => {
-      const rows: string[][] = []
-      for (const row of Array.from(document.querySelectorAll(rowSel))) {
-        const cells: string[] = []
-        for (const cell of Array.from(row.querySelectorAll('td'))) {
-          cells.push(
-            ((cell as HTMLElement).innerText || cell.textContent || '').replace(/\s+/g, ' ').trim(),
-          )
-        }
-        rows.push(cells)
-      }
+      // No named helper here on purpose: this closure is stringified and re-run inside the
+      // page, a separate JS realm that does not carry this module's build-time helpers along
+      // with it — a named function const got compiled with a `__name(...)` wrapper (the
+      // transform's own name-preservation) that only exists in THIS realm, and crashed the
+      // page with `ReferenceError: __name is not defined` the one time this tried it.
+      const rows = Array.from(document.querySelectorAll(rowSel)).map((row) =>
+        Array.from(row.querySelectorAll('td')).map((cell) =>
+          ((cell as HTMLElement).innerText || cell.textContent || '').replace(/\s+/g, ' ').trim(),
+        ),
+      )
       const box = document.querySelector(boxSel) as HTMLElement | null
+      const tbody = box?.querySelector('tbody') ?? null
       return {
         rows,
         clientHeight: box?.clientHeight ?? -1,
         scrollTop: box?.scrollTop ?? -1,
-        scrollHeight: box?.scrollHeight ?? -1,
+        bodyHeight: tbody?.getBoundingClientRect().height ?? -1,
       }
     },
     { rowSel: LOOT_ROW, boxSel: LOOT_SCROLL },
@@ -175,13 +183,17 @@ function settledLedger(page: Page): Promise<LedgerRead> {
 /**
  * The mount a box of this height would produce at the very top of the list (`scrollTop 0`), under
  * the ledger's fixed row height and overscan (`ROW_PX` / `OVERSCAN` above): `visibleCount +
- * 2*overscan`, capped at the list's own total. `total` is read off `scrollHeight` rather than
- * asked for separately — the fixed-row-height contract (lootRows.tsx) ties the two exactly,
- * because the spacer reserves the FULL list height regardless of what is mounted.
+ * 2*overscan`, capped at the list's own total — mirroring `windowSlice` in useWindowedRows.ts
+ * exactly, down to its `Math.max(1, …)` floor (a box too short to fit even one row still mounts
+ * one). `total` is read off `bodyHeight` (the `<tbody>`'s own height, not the scroll box's —
+ * see `readLedger`'s header) rather than asked for separately: the fixed-row-height contract
+ * (lootRows.tsx) ties the two exactly, because the spacer reserves the FULL list height inside the
+ * body regardless of what is mounted.
  */
-function expectedMount(clientHeight: number, scrollHeight: number): number {
-  const total = Math.round(scrollHeight / ROW_PX)
-  return Math.min(total, Math.ceil(clientHeight / ROW_PX) + OVERSCAN * 2)
+function expectedMount(clientHeight: number, bodyHeight: number): number {
+  const total = Math.round(bodyHeight / ROW_PX)
+  const visibleCount = Math.max(1, Math.ceil(clientHeight / ROW_PX))
+  return Math.min(total, visibleCount + OVERSCAN * 2)
 }
 
 function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
@@ -304,14 +316,16 @@ function stepFlipBackAgrees(app: LedgerRead, back: LedgerRead): void {
   for (let i = 0; i < n && firstDiff < 0; i += 1) {
     if (JSON.stringify(app.rows[i]) !== JSON.stringify(back.rows[i])) firstDiff = i
   }
+  const appTotal = Math.round(app.bodyHeight / ROW_PX)
+  const backTotal = Math.round(back.bodyHeight / ROW_PX)
   const expectedDelta =
-    expectedMount(back.clientHeight, back.scrollHeight) -
-    expectedMount(app.clientHeight, app.scrollHeight)
+    expectedMount(back.clientHeight, back.bodyHeight) -
+    expectedMount(app.clientHeight, app.bodyHeight)
   check(
     'flipping back restores the app-fed ledger exactly as it was, up to a container-height-driven mount difference',
     firstDiff < 0 && back.rows.length - app.rows.length === expectedDelta,
-    `app ${String(app.rows.length)} rows (h=${String(app.clientHeight)}px, scrollTop=${String(app.scrollTop)}) · ` +
-      `back ${String(back.rows.length)} rows (h=${String(back.clientHeight)}px, scrollTop=${String(back.scrollTop)}) · ` +
+    `app ${String(app.rows.length)} rows of ${String(appTotal)} (h=${String(app.clientHeight)}px, scrollTop=${String(app.scrollTop)}) · ` +
+      `back ${String(back.rows.length)} rows of ${String(backTotal)} (h=${String(back.clientHeight)}px, scrollTop=${String(back.scrollTop)}) · ` +
       `expected Δ ${String(expectedDelta)}` +
       (firstDiff >= 0 ? ` · row ${String(firstDiff)} differs` : ''),
   )
