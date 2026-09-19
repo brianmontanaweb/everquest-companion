@@ -341,24 +341,29 @@ const ROW_PX = 37
  * out — the JOS-283 discipline. This replaced an earlier CPU-busy-time RATIO gate that could not
  * separate the two trees on this machine (see stepScrollCost's header for why): counting commits
  * instead makes the signal an EXACT INTEGER rather than a noisy timing proxy. The FULL observed
- * range, positioning-jump excluded (see `positionAt`):
+ * range, positioning-jump excluded (see `positionAt`), across every run this constant was tuned
+ * from (the first 3-and-2 JOS-283 runs, plus four more taken afterward to see how far the fixed
+ * tree's background noise actually wanders):
  *
- *   fixed (Tasks 1-3 in place), 3 runs:      0 · 0 · 2
+ *   fixed (Tasks 1-3 in place), 7 runs:      0 · 0 · 2 · 5 · 5 · 2 · 0
  *   reverted (Task 2's hook undone), 2 runs: 42 · 41
  *
- * Two of three fixed runs committed ZERO times for a sweep that never crosses a row boundary —
- * Task 2's `Object.is` bail-out on `firstRow` means React never even schedules the re-render, let
- * alone commits it; the third run's 2 commits are exactly the "background timer or live-tail push"
- * this constant leaves room for (nothing about the ledger's own mounted rows changed in that run).
- * Every reverted run committed roughly TWICE PER EVENT (41-42 over 20 events, not exactly 20) — the
+ * Every fixed run committed a SMALL, VARIABLE number for a sweep that never crosses a row
+ * boundary — Task 2's `Object.is` bail-out on `firstRow` means the scroll itself schedules no
+ * re-render, so what lands here is background noise: a timer, a presence heartbeat, an IPC push,
+ * landing inside the sweep's ~1s window by chance (`settleCommits`/`positionAt` already drain the
+ * predictable post-reload catch-up burst before either sweep starts — this is what is left over).
+ * It is not proportional to anything scroll-related: reruns on an IDENTICAL fixed tree ranged 0-5
+ * with no trend. Every reverted run committed roughly TWICE PER EVENT (41-42 over 20 events) — the
  * old hook writes raw `scrollTop` state on every scroll, so every event is a fresh, different value
  * and a fresh commit; the ~2x is React 18 committing the state update and its passive effects as
  * two separate commits, the same doubling the CROSS positive control shows on BOTH trees (40
  * commits over 20 row-crossing events, fixed or reverted alike — crossing a row boundary is
- * supposed to re-render). WITHIN_COMMITS_MAX sits at 5: 2.5x the observed fixed ceiling (room for
- * more than one stray background commit) and better than 8x below the reverted floor.
+ * supposed to re-render). WITHIN_COMMITS_MAX sits at 12: over 2x the observed fixed ceiling (5),
+ * real room for a noisier run than any seen so far, and still better than 3x below the reverted
+ * floor.
  */
-const WITHIN_COMMITS_MAX = 5
+const WITHIN_COMMITS_MAX = 12
 
 /**
  * 5. A SCROLL THAT STAYS INSIDE ONE ROW COMMITS NOTHING (2026-09-19 report, JOS-283 ruling).
