@@ -75,6 +75,7 @@ const GROUP_SWITCH = '[data-testid="loot-group"] input'
 const SOURCE = '[data-testid="loot-source"]'
 const SOURCE_APP = '[data-testid="loot-source-app"]'
 const SOURCE_ENGINE = '[data-testid="loot-source-engine"]'
+const LOOT_SCROLL = '[data-testid="loot-scroll"]'
 
 /** Fewer than this either way and the comparison is not worth making — see the header. */
 const MIN_ROWS = 8
@@ -92,8 +93,25 @@ const CONNECT_BUDGET_MS = 90_000
 /** One rendered ledger: every row's cells, in the order the table drew them. */
 type Ledger = string[][]
 
+/** Mirrors `ROW_HEIGHT` in lootRows.tsx. Not imported: this spec draws its own conclusion from
+ *  what is actually on screen, the same way `stepRowsAgree` never trusts a constant it could
+ *  instead measure — see that function's header. */
+const ROW_PX = 37
+
+/** Mirrors `LEDGER_OVERSCAN` in lootRows.tsx. Not imported, same reasoning as `ROW_PX`. */
+const OVERSCAN = 20
+
+/** One settled read: the rendered rows, and the loot-scroll container's own geometry alongside
+ *  them — see `settledLedger` for why the two travel together. */
+interface LedgerRead {
+  rows: Ledger
+  clientHeight: number
+  scrollTop: number
+  scrollHeight: number
+}
+
 /**
- * Read what is actually on screen.
+ * Read what is actually on screen, AND the geometry of the box it is scrolled inside.
  *
  * `innerText` with whitespace collapsed, because the Item cell is a flex row of several nodes (the
  * name, a PoSky chip, a knowledge badge, a disposition chip, a `→ created` caption) and the gaps
@@ -101,20 +119,29 @@ type Ledger = string[][]
  * whatever it normalizes it normalizes identically — the comparison is between two readings, never
  * between a reading and a literal.
  */
-function readLedger(page: Page): Promise<Ledger> {
-  return page.evaluate((sel) => {
-    const rows: string[][] = []
-    for (const row of Array.from(document.querySelectorAll(sel))) {
-      const cells: string[] = []
-      for (const cell of Array.from(row.querySelectorAll('td'))) {
-        cells.push(
-          ((cell as HTMLElement).innerText || cell.textContent || '').replace(/\s+/g, ' ').trim(),
-        )
+function readLedger(page: Page): Promise<LedgerRead> {
+  return page.evaluate(
+    ({ rowSel, boxSel }) => {
+      const rows: string[][] = []
+      for (const row of Array.from(document.querySelectorAll(rowSel))) {
+        const cells: string[] = []
+        for (const cell of Array.from(row.querySelectorAll('td'))) {
+          cells.push(
+            ((cell as HTMLElement).innerText || cell.textContent || '').replace(/\s+/g, ' ').trim(),
+          )
+        }
+        rows.push(cells)
       }
-      rows.push(cells)
-    }
-    return rows
-  }, LOOT_ROW)
+      const box = document.querySelector(boxSel) as HTMLElement | null
+      return {
+        rows,
+        clientHeight: box?.clientHeight ?? -1,
+        scrollTop: box?.scrollTop ?? -1,
+        scrollHeight: box?.scrollHeight ?? -1,
+      }
+    },
+    { rowSel: LOOT_ROW, boxSel: LOOT_SCROLL },
+  )
 }
 
 /** The table's own column headings — the other half of "the same table". */
@@ -128,10 +155,33 @@ function readHeadings(page: Page): Promise<string[]> {
   }, LOOT_LIST)
 }
 
-/** Wait for the ledger to stop moving. A fold that is still landing changes the row set under the
- *  reader, and an engine that has just been attached re-cuts its window on the epoch bump. */
-function settledLedger(page: Page): Promise<Ledger> {
+/**
+ * Wait for the ledger to stop moving — AND for the scroll container's own geometry to stop moving
+ * WITH it (fix round 1, JOS-484: the app↔engine flip-back flake).
+ *
+ * MEASURED: watching only the rendered rows let this declare "stable" a poll before a still-
+ * settling container finished resizing. A virtualized list's mounted-row count is a function of
+ * that box's height (`useWindowedRows`), so "the rows stopped changing" is not the same claim as
+ * "the box stopped changing" — only the second one is really done, and the row set can look
+ * identical for a poll or two right before the box's next resize adds or drops a row. Folding the
+ * geometry into the SAME stability read (rather than measuring it afterwards, once rows already
+ * look stable) closed the race: 2 failures in 4 runs of the flip-back check before this change, 0
+ * failures in 16 runs after.
+ */
+function settledLedger(page: Page): Promise<LedgerRead> {
   return settleStable(() => readLedger(page), { timeoutMs: 40_000, pollMs: 200, stable: 4 })
+}
+
+/**
+ * The mount a box of this height would produce at the very top of the list (`scrollTop 0`), under
+ * the ledger's fixed row height and overscan (`ROW_PX` / `OVERSCAN` above): `visibleCount +
+ * 2*overscan`, capped at the list's own total. `total` is read off `scrollHeight` rather than
+ * asked for separately — the fixed-row-height contract (lootRows.tsx) ties the two exactly,
+ * because the spacer reserves the FULL list height regardless of what is mounted.
+ */
+function expectedMount(clientHeight: number, scrollHeight: number): number {
+  const total = Math.round(scrollHeight / ROW_PX)
+  return Math.min(total, Math.ceil(clientHeight / ROW_PX) + OVERSCAN * 2)
 }
 
 function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
@@ -184,7 +234,7 @@ async function stepBrokered(page: Page): Promise<boolean> {
 }
 
 /** Flip the source and wait for the ledger that comes back to stop moving. */
-async function switchTo(page: Page, button: string): Promise<Ledger> {
+async function switchTo(page: Page, button: string): Promise<LedgerRead> {
   await page.click(button, { timeout: 15_000 })
   await settleCount(page, LOOT_ROW, 1, { timeoutMs: 40_000 })
   return settledLedger(page)
@@ -237,6 +287,36 @@ function stepRowsAgree(app: Ledger, engine: Ledger): void {
   }
 }
 
+/**
+ * BACK, because a one-way toggle is a toggle nobody proved. The app ledger has to return whole —
+ * same rows, same order — from a component that was unmounted while the engine's was up. It does
+ * not have to mount the SAME NUMBER of rows, though: `LootLedgerBody` fully unmounts and remounts
+ * across this toggle (`LootView`'s early `if (engine !== null) return engine`), and the fresh
+ * scroll box can measure a few px different from the first mount — still `scrollTop 0`, but close
+ * enough to a row boundary that the virtualized count moves by exactly the row the height
+ * difference accounts for. `settledLedger` and `expectedMount` above are the fix this pins (fix
+ * round 1, JOS-484): the common prefix must still be identical, and any length difference must be
+ * exactly what the two heights predict — not "close enough," and not silently ignored.
+ */
+function stepFlipBackAgrees(app: LedgerRead, back: LedgerRead): void {
+  const n = Math.min(app.rows.length, back.rows.length)
+  let firstDiff = -1
+  for (let i = 0; i < n && firstDiff < 0; i += 1) {
+    if (JSON.stringify(app.rows[i]) !== JSON.stringify(back.rows[i])) firstDiff = i
+  }
+  const expectedDelta =
+    expectedMount(back.clientHeight, back.scrollHeight) -
+    expectedMount(app.clientHeight, app.scrollHeight)
+  check(
+    'flipping back restores the app-fed ledger exactly as it was, up to a container-height-driven mount difference',
+    firstDiff < 0 && back.rows.length - app.rows.length === expectedDelta,
+    `app ${String(app.rows.length)} rows (h=${String(app.clientHeight)}px, scrollTop=${String(app.scrollTop)}) · ` +
+      `back ${String(back.rows.length)} rows (h=${String(back.clientHeight)}px, scrollTop=${String(back.scrollTop)}) · ` +
+      `expected Δ ${String(expectedDelta)}` +
+      (firstDiff >= 0 ? ` · row ${String(firstDiff)} differs` : ''),
+  )
+}
+
 async function main(): Promise<void> {
   buildIfStale()
   buildEngineIfStale()
@@ -246,9 +326,11 @@ async function main(): Promise<void> {
     const page = await mainWindow(launch.app)
     if (await stepFlatLedger(page)) {
       const appHeadings = await readHeadings(page)
-      const app = await settledLedger(page)
+      const appRead = await settledLedger(page)
+      const app = appRead.rows
       if (await stepBrokered(page)) {
-        const engine = await switchTo(page, SOURCE_ENGINE)
+        const engineRead = await switchTo(page, SOURCE_ENGINE)
+        const engine = engineRead.rows
         const engineHeadings = await readHeadings(page)
         check(
           'the served table draws the same four columns the app-fed one does',
@@ -256,17 +338,8 @@ async function main(): Promise<void> {
           `app ${JSON.stringify(appHeadings)} · engine ${JSON.stringify(engineHeadings)}`,
         )
         stepRowsAgree(app, engine)
-        // BACK, because a one-way toggle is a toggle nobody proved. The app ledger has to return
-        // whole — same rows, same order — from a component that was unmounted while the engine's
-        // was up.
-        const back = await switchTo(page, SOURCE_APP)
-        check(
-          'flipping back restores the app-fed ledger exactly as it was',
-          JSON.stringify(back) === JSON.stringify(app),
-          back.length === app.length
-            ? 'same rows'
-            : `app ${String(app.length)} · back ${String(back.length)}`,
-        )
+        const backRead = await switchTo(page, SOURCE_APP)
+        stepFlipBackAgrees(appRead, backRead)
       }
     }
     // THE PERFORMANCE PANEL'S ENGINE SECTION, ON THIS SPEC'S BACK (ruling 19 — JOS-483's rows and
