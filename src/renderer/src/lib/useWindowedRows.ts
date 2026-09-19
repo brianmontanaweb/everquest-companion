@@ -171,5 +171,10 @@ export function useWindowedRows({
     return () => el.removeEventListener('scroll', onScroll)
   }, [el, row])
 
+  // The round trip is `floor(scrollTop / row)` (the effects above) out and `firstRow * row` back —
+  // exact for every rowHeight this hook is actually called with today (37, 16, 26, 44, 34, 17, all
+  // integers), so nothing here can drift. A FRACTIONAL rowHeight is not what any caller passes, but
+  // nothing enforces that either, and one would not round-trip cleanly: `floor` could land a
+  // genuine mid-row scroll a row low once multiplied back out.
   return windowSlice({ count, rowHeight, scrollTop: firstRow * row, viewport, overscan })
 }

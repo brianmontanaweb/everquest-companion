@@ -35,9 +35,15 @@ export interface LootDetailProps {
  * lines-per-function ceiling and this rule is readable in one screen.
  *
  * `open` AND `close` ARE STABLE FOR THE LIFE OF THE VIEW. `open` is every ledger row's `onSelect`,
- * and every row is `memo`'d: a fresh function per render defeats the memo, so each scroll event
- * re-rendered the whole mounted slice. `nav` is read through a ref so a new `nav` object from the
- * router neither changes `open`'s identity nor leaves it calling a stale one.
+ * and every row is `memo`'d — but a SCROLL alone was never the threat: `useWindowedRows` lives in
+ * `LootLedgerBody`, so a scroll event re-renders only that component, and its `ctx` prop (carrying
+ * `onSelect`) is already the same object `LootView` handed it last render, so the rows already
+ * skipped it. The threat is `LootView` ITSELF re-rendering for a reason that has nothing to do with
+ * scrolling — `useProgress`'s IPC pushes, `useLootRows`' `useDeferredValue` second pass over a
+ * filter query — which used to hand every row a FRESH `open`, defeating every row's memo at once
+ * regardless of whether the list had moved. Stable `open`/`close` is what keeps those re-renders
+ * from re-rendering the mounted rows too. `nav` is read through a ref so a new `nav` object from
+ * the router neither changes `open`'s identity nor leaves it calling a stale one.
  */
 export function useLootDetail(
   props: LootDetailProps,
@@ -47,7 +53,13 @@ export function useLootDetail(
   const [selected, setSelected] = useState<string | null>(null)
   const savedScroll = useRef(0)
   const navRef = useRef(nav)
-  navRef.current = nav
+  // A LAYOUT effect, not a render-time write: React (notably under StrictMode's double-invoked
+  // render) can call this function body more than once for one committed render, and a write during
+  // render should describe that render, not leak from a discarded one. No deps array — every commit
+  // re-syncs the ref to whatever `nav` this render actually closed over.
+  useLayoutEffect(() => {
+    navRef.current = nav
+  })
 
   // An inbound focus opens the detail pane, then is consumed. Keyed on the NONCE, not the item's
   // identity — the same item asked for twice must open twice.

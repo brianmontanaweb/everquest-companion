@@ -1,9 +1,14 @@
 /**
  * useLootDetail — THE ROW CLICK HANDLER IS ONE FUNCTION FOR THE LIFE OF THE VIEW.
  *
- * Every ledger row is `memo`'d, and `open` is every row's `onSelect`. If `open` is a new function
- * each render, no row ever skips a render — and the ledger re-renders its whole mounted slice on
- * every scroll event, which is the "scrolling is slow" report (2026-09-19).
+ * Every ledger row is `memo`'d, and `open` is every row's `onSelect`. A SCROLL event alone never
+ * needed this: `useWindowedRows` lives in `LootLedgerBody`, so a scroll re-renders only that
+ * component, whose `ctx` prop (carrying `onSelect`) is already the same object from `LootView`'s
+ * last render — the rows already skipped it. What a fresh `open` every render actually breaks is
+ * `LootView` re-rendering for its OWN reasons — an IPC push (`useProgress`), a second render from
+ * `useLootRows`' `useDeferredValue` — which would otherwise hand every mounted row a NEW `onSelect`
+ * and defeat every row's memo at once. That is the "scrolling is slow" report's real mechanism
+ * (2026-09-19).
  */
 import { test } from 'node:test'
 import assert from 'node:assert/strict'

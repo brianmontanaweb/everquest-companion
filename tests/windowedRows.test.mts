@@ -321,7 +321,7 @@ test('a resize of the container re-measures the viewport, and a taller box rende
   host.unmount()
 })
 
-test('scrolling WITHIN a row does not re-render; crossing a row boundary does', () => {
+test('scrolling WITHIN a row writes no state; crossing a row boundary does', () => {
   const box = new FakeScroller()
   const ref: { current: HTMLElement | null } = { current: null }
   const host = mountHook(() => useWindowedRows({ count: 11_000, rowHeight: 37, scrollRef: ref }))
@@ -348,7 +348,7 @@ test('scrolling WITHIN a row does not re-render; crossing a row boundary does', 
   host.unmount()
 })
 
-test('a negative scrollTop (elastic overscroll) clamps to row 0 without re-rendering', () => {
+test('a negative scrollTop (elastic overscroll) clamps to row 0 without a state write', () => {
   const box = new FakeScroller()
   const ref: { current: HTMLElement | null } = { current: null }
   const host = mountHook(() => useWindowedRows({ count: 100, rowHeight: 37, scrollRef: ref }))

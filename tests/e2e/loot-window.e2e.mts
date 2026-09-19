@@ -334,6 +334,19 @@ const SCROLL_EVENTS = 20
  */
 const ROW_PX = 37
 /**
+ * How far one FAR JUMP moves — a scrollbar-thumb drag, PageDown, Home/End or a big flick, none of
+ * which stay inside `LEDGER_OVERSCAN`'s 740 px runway (lootRows.tsx). 120 rows clears that runway
+ * by a wide margin on purpose: the readout is about what a jump the buffer cannot absorb costs, not
+ * about finding the exact edge of the buffer.
+ */
+const JUMP_ROWS = 120
+/**
+ * How many far jumps the JUMP readout drives. Small on purpose: unlike WITHIN/CROSS this is not
+ * sampling a steady state — every jump mounts a fresh screen of rows, so there is nothing for more
+ * events to average toward.
+ */
+const JUMP_EVENTS = 10
+/**
  * How many React commits a WITHIN sweep (SCROLL_EVENTS events, 1 px each, never leaving one row)
  * may cause.
  *
@@ -356,12 +369,17 @@ const ROW_PX = 37
  * It is not proportional to anything scroll-related: reruns on an IDENTICAL fixed tree ranged 0-5
  * with no trend. Every reverted run committed roughly TWICE PER EVENT (41-42 over 20 events) — the
  * old hook writes raw `scrollTop` state on every scroll, so every event is a fresh, different value
- * and a fresh commit; the ~2x is React 18 committing the state update and its passive effects as
- * two separate commits, the same doubling the CROSS positive control shows on BOTH trees (40
- * commits over 20 row-crossing events, fixed or reverted alike — crossing a row boundary is
- * supposed to re-render). WITHIN_COMMITS_MAX sits at 12: over 2x the observed fixed ceiling (5),
- * real room for a noisier run than any seen so far, and still better than 3x below the reverted
- * floor.
+ * and a fresh commit. THE ~2X ITSELF IS UNVERIFIED: the working guess was React 18 committing a
+ * state update and its passive effects as two separate commits, but nobody has inspected the actual
+ * fiber commit reasons, and the LIKELIER cause is the harness's own mechanics — `el.scrollTop = x`
+ * fires a native `scroll` event on top of the one this spec dispatches by hand right after (both
+ * sweeps' loop), so most positions get hit twice; a same-value `setState` called again immediately
+ * after a commit can also miss React's eager bail-out and still schedule (and commit) a no-op
+ * render. The SAME doubling shows up in the CROSS positive control on BOTH trees (40 commits over
+ * 20 row-crossing events, fixed or reverted alike), which is at least consistent with a mechanical
+ * cause rather than anything about which hook is running. WITHIN_COMMITS_MAX sits at 12: over 2x
+ * the observed fixed ceiling (5), real room for a noisier run than any seen so far, and still
+ * better than 3x below the reverted floor.
  */
 const WITHIN_COMMITS_MAX = 12
 
@@ -371,15 +389,17 @@ const WITHIN_COMMITS_MAX = 12
  * THE GATE IS COMMIT COUNTS, NOT CPU TIME. The first attempt at this instrument compared CPU-busy
  * ms/event between a row-crossing sweep and a within-row sweep, on the theory that the ratio would
  * cancel the machine's own speed out (dragPerfSteps.mts's HOVER/DRAG comparison does exactly this
- * successfully). It does not work here: Task 1 already made a reverted within-row render CHEAP
- * (rows are memo'd and skip re-rendering on identical props, so a "full re-render" only re-renders
- * the table SHELL), so the true CPU gap between "commits nothing" and "commits something cheap" is
- * thin — and on this box it was swamped by an intermittent, code-independent profiler artifact (a
- * GC pass from the CROSS sweep's own churn landing in the WITHIN profiling window at ~200ms/event,
- * roughly EQUALLY on fixed and reverted trees) and by ordinary sampling noise at these small
- * magnitudes. Repeated measurement (documented in task-4-report.md) found configurations where the
- * ranges overlapped and one where the signal reversed sign entirely. React's own commit hook has
- * neither problem: it is not a proxy for "did work happen", it IS the fact.
+ * successfully). It does not work here: even on the REVERTED (pre-Task-2) hook, a within-row scroll
+ * re-rendered only `LootLedgerBody` and the table shell — the mounted ROWS stayed memo'd and
+ * skipped it, because Task 1's stable `open`/`close` was never about a scroll re-render at all (see
+ * useLootDetail.ts's header). So the CPU gap this gate needs is between "commits nothing" (fixed)
+ * and "re-renders a shell with no rows underneath it" (reverted), which is thin — and on this box it
+ * was swamped by an intermittent, code-independent profiler artifact (a GC pass from the CROSS
+ * sweep's own churn landing in the WITHIN profiling window at ~200ms/event, roughly EQUALLY on fixed
+ * and reverted trees) and by ordinary sampling noise at these small magnitudes. Repeated measurement
+ * (documented in task-4-report.md) found configurations where the ranges overlapped and one where
+ * the signal reversed sign entirely. React's own commit hook has neither problem: it is not a proxy
+ * for "did work happen", it IS the fact.
  *
  * THE HOOK HAS TO BEAT REACT-DOM, so `installCommitCounter` is called once, right after the page is
  * grabbed and BEFORE `stepReady` runs (main() below) — an `addInitScript` only takes effect on the
@@ -394,7 +414,14 @@ const WITHIN_COMMITS_MAX = 12
  * and that failure ("the counter isn't wired") is a different, more useful diagnosis than a WITHIN
  * gate silently passing for the wrong reason.
  *
- * THE CPU PROFILE IS STILL TAKEN AND STILL PRINTED — ms/event for both sweeps — but it is a
+ * A THIRD SWEEP, JUMP, RUNS LAST AND IS PRINTED-ONLY — NO CHECK. `LEDGER_OVERSCAN`'s 740 px runway
+ * (lootRows.tsx) covers a wheel-sized step, not a scrollbar-thumb drag, PageDown, Home/End or a big
+ * flick — those land far outside the mounted slice and mount a fresh screen of rows plus 2×overscan
+ * in one event, a different cost regime than either WITHIN or CROSS. This is a READOUT for deciding
+ * whether that far-jump cost is worth doing the deferred row-style work over (lighter-weight row
+ * mounting), not a claim this spec gates on.
+ *
+ * THE CPU PROFILE IS STILL TAKEN AND STILL PRINTED — ms/event for every sweep — but it is a
  * READOUT, NOT AN ASSERTION, the same convention dragPerfSteps.mts uses for its own COMMIT metric
  * ("reported, not gated" — see that file's header for the general rule this follows).
  */
@@ -465,6 +492,7 @@ async function stepScrollCost(page: Page): Promise<void> {
   const sweep = async (
     startPx: number,
     stepPx: number,
+    events = SCROLL_EVENTS,
   ): Promise<{ ms: number; commits: number }> => {
     const before = await readCommits(page)
     await cdp.send('Profiler.start')
@@ -478,9 +506,9 @@ async function stepScrollCost(page: Page): Promise<void> {
           await new Promise((r) => setTimeout(r, 50))
         }
       },
-      { sel: LOOT_SCROLL, n: SCROLL_EVENTS, start: startPx, step: stepPx },
+      { sel: LOOT_SCROLL, n: events, start: startPx, step: stepPx },
     )
-    const ms = busyMs((await cdp.send('Profiler.stop')).profile as Profile) / SCROLL_EVENTS
+    const ms = busyMs((await cdp.send('Profiler.stop')).profile as Profile) / events
     const commits = (await readCommits(page)) - before
     return { ms, commits }
   }
@@ -491,21 +519,32 @@ async function stepScrollCost(page: Page): Promise<void> {
   const within = await sweep(base + ROW_PX * 200, 1)
   await positionAt(page, base)
   const cross = await sweep(base, ROW_PX * 3)
+  // JUMP: a different starting row than WITHIN/CROSS, purely to keep the three readouts' scroll
+  // trails from overlapping — the ledger is long enough (3,000+ seeded rows) that this stays well
+  // clear of either end.
+  await positionAt(page, base + ROW_PX * 500)
+  const jump = await sweep(base + ROW_PX * 500, ROW_PX * JUMP_ROWS, JUMP_EVENTS)
   await cdp.detach().catch(() => undefined)
   note(
     `scroll cost over ${String(SCROLL_EVENTS)} events: ${cross.ms.toFixed(2)} ms/event crossing rows ` +
       `(${String(cross.commits)} commits), ${within.ms.toFixed(2)} ms/event within a row ` +
       `(${String(within.commits)} commits) — the ms/event figures are a printed readout, not gated`,
   )
+  note(
+    `jump cost over ${String(JUMP_EVENTS)} far jumps (${String(JUMP_ROWS)} rows/event, past ` +
+      `LEDGER_OVERSCAN's runway): ${jump.ms.toFixed(2)} ms/event, ${String(jump.commits)} commits ` +
+      `— a printed readout only, see the header`,
+  )
   check(
     'the row-crossing sweep is a working positive control for the commit counter',
     cross.commits >= SCROLL_EVENTS / 2,
-    `only ${String(cross.commits)} commits over ${String(SCROLL_EVENTS)} row-crossing events — the counter may not be wired`,
+    `${String(cross.commits)} commits over ${String(SCROLL_EVENTS)} row-crossing events ` +
+      `(min ${String(SCROLL_EVENTS / 2)}; a low count may mean the counter isn't wired)`,
   )
   check(
     'a scroll that stays inside one row causes (almost) no React commits',
     within.commits <= WITHIN_COMMITS_MAX,
-    `${String(within.commits)} commits > ${String(WITHIN_COMMITS_MAX)}`,
+    `${String(within.commits)} commits (max ${String(WITHIN_COMMITS_MAX)})`,
   )
 }
 
