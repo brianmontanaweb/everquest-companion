@@ -40,14 +40,18 @@
 import type { Page } from 'playwright-core'
 import {
   buildIfStale,
+  busyMs,
   check,
   countOf,
   dumpArtifacts,
   failures,
+  installCommitCounter,
   note,
+  readCommits,
   reportRun,
   settleStable,
   waitHydrated,
+  type Profile,
 } from './appHarness.mjs'
 import { mainWindow } from './appWindow.mjs'
 import { launchOnFixture, stageFixture } from './logFixture.mjs'
@@ -322,6 +326,173 @@ async function stepNoDoubleScroll(page: Page): Promise<void> {
   )
 }
 
+/** How many scroll events each gesture is made of — the drag spec's sample size, same reasons. */
+const SCROLL_EVENTS = 20
+/**
+ * Mirrors `ROW_HEIGHT` in src/renderer/src/features/loot/lootRows.tsx. Not imported from there:
+ * that module pulls in MUI, which this spec's node process (not a browser) cannot load.
+ */
+const ROW_PX = 37
+/**
+ * How many React commits a WITHIN sweep (SCROLL_EVENTS events, 1 px each, never leaving one row)
+ * may cause.
+ *
+ * MEASURED on the e2e fixture (3,000-row seeded ledger), with the fix in and then reverted back
+ * out — the JOS-283 discipline. This replaced an earlier CPU-busy-time RATIO gate that could not
+ * separate the two trees on this machine (see stepScrollCost's header for why): counting commits
+ * instead makes the signal an EXACT INTEGER rather than a noisy timing proxy. The FULL observed
+ * range, positioning-jump excluded (see `positionAt`):
+ *
+ *   fixed (Tasks 1-3 in place), 3 runs:      0 · 0 · 2
+ *   reverted (Task 2's hook undone), 2 runs: 42 · 41
+ *
+ * Two of three fixed runs committed ZERO times for a sweep that never crosses a row boundary —
+ * Task 2's `Object.is` bail-out on `firstRow` means React never even schedules the re-render, let
+ * alone commits it; the third run's 2 commits are exactly the "background timer or live-tail push"
+ * this constant leaves room for (nothing about the ledger's own mounted rows changed in that run).
+ * Every reverted run committed roughly TWICE PER EVENT (41-42 over 20 events, not exactly 20) — the
+ * old hook writes raw `scrollTop` state on every scroll, so every event is a fresh, different value
+ * and a fresh commit; the ~2x is React 18 committing the state update and its passive effects as
+ * two separate commits, the same doubling the CROSS positive control shows on BOTH trees (40
+ * commits over 20 row-crossing events, fixed or reverted alike — crossing a row boundary is
+ * supposed to re-render). WITHIN_COMMITS_MAX sits at 5: 2.5x the observed fixed ceiling (room for
+ * more than one stray background commit) and better than 8x below the reverted floor.
+ */
+const WITHIN_COMMITS_MAX = 5
+
+/**
+ * 5. A SCROLL THAT STAYS INSIDE ONE ROW COMMITS NOTHING (2026-09-19 report, JOS-283 ruling).
+ *
+ * THE GATE IS COMMIT COUNTS, NOT CPU TIME. The first attempt at this instrument compared CPU-busy
+ * ms/event between a row-crossing sweep and a within-row sweep, on the theory that the ratio would
+ * cancel the machine's own speed out (dragPerfSteps.mts's HOVER/DRAG comparison does exactly this
+ * successfully). It does not work here: Task 1 already made a reverted within-row render CHEAP
+ * (rows are memo'd and skip re-rendering on identical props, so a "full re-render" only re-renders
+ * the table SHELL), so the true CPU gap between "commits nothing" and "commits something cheap" is
+ * thin — and on this box it was swamped by an intermittent, code-independent profiler artifact (a
+ * GC pass from the CROSS sweep's own churn landing in the WITHIN profiling window at ~200ms/event,
+ * roughly EQUALLY on fixed and reverted trees) and by ordinary sampling noise at these small
+ * magnitudes. Repeated measurement (documented in task-4-report.md) found configurations where the
+ * ranges overlapped and one where the signal reversed sign entirely. React's own commit hook has
+ * neither problem: it is not a proxy for "did work happen", it IS the fact.
+ *
+ * THE HOOK HAS TO BEAT REACT-DOM, so `installCommitCounter` is called once, right after the page is
+ * grabbed and BEFORE `stepReady` runs (main() below) — an `addInitScript` only takes effect on the
+ * NEXT navigation, and by the time any step here could call it the ledger's react-dom has already
+ * looked the hook up once. The reload that requires costs a re-hydrate and nothing else: the main
+ * process (and the log replay it already finished) keeps its own state across a renderer reload,
+ * exactly as `levelingScrollProbe.mts` found first.
+ *
+ * ORDER IS WITHIN THEN CROSS, per the ruling: WITHIN is the behavior under test, and CROSS runs
+ * second as the POSITIVE CONTROL — if the counter were not wired at all (a build without the
+ * shim's hook actually reaching react-dom, or a stale reload), CROSS would ALSO read zero commits,
+ * and that failure ("the counter isn't wired") is a different, more useful diagnosis than a WITHIN
+ * gate silently passing for the wrong reason.
+ *
+ * THE CPU PROFILE IS STILL TAKEN AND STILL PRINTED — ms/event for both sweeps — but it is a
+ * READOUT, NOT AN ASSERTION, the same convention dragPerfSteps.mts uses for its own COMMIT metric
+ * ("reported, not gated" — see that file's header for the general rule this follows).
+ */
+
+/**
+ * Wait until the commit counter stops moving on its own, up to `timeoutMs`.
+ *
+ * MEASURED: the reload `installCommitCounter` requires re-subscribes every IPC channel the app
+ * opens on mount (combat, loot, presence, …), and that catch-up is not instantaneous — a WITHIN
+ * sweep run right after `stepReady` read double-digit commits that had nothing to do with scrolling
+ * at all (`tests/e2e/artifacts` from that run show the ledger's own mounted rows unchanged while
+ * the counter kept climbing). `levelingScrollProbe.mts`'s `settleQuiet` waits out the same class of
+ * post-navigation churn for `onModuleChanged` pushes; this is that idea applied to commits.
+ */
+async function settleCommits(page: Page, quietMs = 400, timeoutMs = 8_000): Promise<number> {
+  let last = await readCommits(page)
+  let lastChange = Date.now()
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    await page.evaluate((ms) => new Promise((r) => setTimeout(r, ms)), 100)
+    const now = await readCommits(page)
+    if (now !== last) {
+      last = now
+      lastChange = Date.now()
+    } else if (Date.now() - lastChange >= quietMs) {
+      break
+    }
+  }
+  return last
+}
+
+/**
+ * Jump straight to `px` and wait for whatever that ONE jump commits to go quiet — the positioning
+ * move itself is not part of either measured sweep. Without this, the first of a sweep's N events
+ * would carry the jump from wherever the ledger already sits to the sweep's own start point (up to
+ * ~1200 rows the first time this runs, since the ledger is still at the top after `stepReady`),
+ * which is itself a real row-boundary crossing and would inflate WITHIN's count by exactly the
+ * commit a real user's scroll would never cause while staying inside one row.
+ */
+async function positionAt(page: Page, px: number): Promise<void> {
+  await page.evaluate(
+    (a) => {
+      const el = document.querySelector(a.sel)
+      if (!el) return
+      el.scrollTop = a.px
+      el.dispatchEvent(new Event('scroll'))
+    },
+    { sel: LOOT_SCROLL, px },
+  )
+  await settleCommits(page)
+}
+
+async function stepScrollCost(page: Page): Promise<void> {
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('Profiler.enable')
+  await cdp.send('Profiler.setSamplingInterval', { interval: 100 })
+  const sweep = async (
+    startPx: number,
+    stepPx: number,
+  ): Promise<{ ms: number; commits: number }> => {
+    const before = await readCommits(page)
+    await cdp.send('Profiler.start')
+    await page.evaluate(
+      async (a) => {
+        const el = document.querySelector(a.sel)
+        if (!el) return
+        for (let i = 1; i <= a.n; i++) {
+          el.scrollTop = a.start + i * a.step
+          el.dispatchEvent(new Event('scroll'))
+          await new Promise((r) => setTimeout(r, 50))
+        }
+      },
+      { sel: LOOT_SCROLL, n: SCROLL_EVENTS, start: startPx, step: stepPx },
+    )
+    const ms = busyMs((await cdp.send('Profiler.stop')).profile as Profile) / SCROLL_EVENTS
+    const commits = (await readCommits(page)) - before
+    return { ms, commits }
+  }
+  // Both sweeps start mid-list, on a row boundary, far from either end.
+  const base = ROW_PX * 1000
+  // Within one row: SCROLL_EVENTS events of 1px from a row start, so every offset stays < base + ROW_PX.
+  await positionAt(page, base + ROW_PX * 200)
+  const within = await sweep(base + ROW_PX * 200, 1)
+  await positionAt(page, base)
+  const cross = await sweep(base, ROW_PX * 3)
+  await cdp.detach().catch(() => undefined)
+  note(
+    `scroll cost over ${String(SCROLL_EVENTS)} events: ${cross.ms.toFixed(2)} ms/event crossing rows ` +
+      `(${String(cross.commits)} commits), ${within.ms.toFixed(2)} ms/event within a row ` +
+      `(${String(within.commits)} commits) — the ms/event figures are a printed readout, not gated`,
+  )
+  check(
+    'the row-crossing sweep is a working positive control for the commit counter',
+    cross.commits >= SCROLL_EVENTS / 2,
+    `only ${String(cross.commits)} commits over ${String(SCROLL_EVENTS)} row-crossing events — the counter may not be wired`,
+  )
+  check(
+    'a scroll that stays inside one row causes (almost) no React commits',
+    within.commits <= WITHIN_COMMITS_MAX,
+    `${String(within.commits)} commits > ${String(WITHIN_COMMITS_MAX)}`,
+  )
+}
+
 /**
  * The seed, written into the staged copy BEFORE launch so the startup replay folds it: one loot
  * line per distinct item, in chunks that share a timestamp (EQ stamps to the second, so a corpse's
@@ -362,6 +533,12 @@ async function main(): Promise<void> {
   let page: Page | null = null
   try {
     page = await mainWindow(app)
+    // THE COMMIT-COUNTER HOOK HAS TO BEAT REACT-DOM (stepScrollCost's header has the why), so it
+    // goes in — and the reload it requires happens — before stepReady, not inside stepScrollCost
+    // itself: the main process keeps its own state (including any replay already folded) across a
+    // renderer reload, so this only costs one extra re-hydrate rather than disturbing anything the
+    // later steps assert about.
+    await installCommitCounter(page)
     const consoleErrors: string[] = []
     page.on('console', (m) => {
       if (m.type() === 'error') consoleErrors.push(m.text())
@@ -375,6 +552,7 @@ async function main(): Promise<void> {
       `${String(seeded)} written`,
     )
     await stepWindowed(page)
+    await stepScrollCost(page)
     await stepNoDoubleScroll(page)
     await stepBottomHasRows(page, 'first visit')
     if (await stepDrillAndBack(page)) await stepBottomHasRows(page, 'after a drill and Back')

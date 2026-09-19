@@ -78,6 +78,121 @@ export function note(msg: string): void {
   console.log(`  note ${msg}`)
 }
 
+// ── CPU-profile busy-time measurement (shared by dragPerfSteps.mts and loot-window.e2e.mts) ──
+
+/** The shape of a `Profiler.stop` result's `.profile`, narrowed to what `busyMs` reads. */
+export interface Profile {
+  nodes: { id: number; callFrame: { functionName: string } }[]
+  samples?: number[]
+  startTime: number
+  endTime: number
+}
+
+/** Non-idle main-thread milliseconds inside a profile. */
+export function busyMs(p: Profile): number {
+  const byId = new Map(p.nodes.map((n) => [n.id, n]))
+  const interval = (p.endTime - p.startTime) / Math.max(1, (p.samples ?? []).length)
+  let n = 0
+  for (const s of p.samples ?? []) if (byId.get(s)?.callFrame.functionName !== '(idle)') n++
+  return (n * interval) / 1000
+}
+
+// ── React commit counter (JOS-283 Task 4 ruling) ──────────────────────────────────────
+
+/**
+ * The DevTools hook shim, installed BEFORE react-dom ever evaluates.
+ *
+ * react-dom probes `window.__REACT_DEVTOOLS_GLOBAL_HOOK__` once at import time and, if one is
+ * present, calls its `onCommitFiberRoot` exactly once per COMMIT for the life of the page — an
+ * exact integer, immune to the CPU-profiler noise a busy-time ratio drowned in (loot-window.e2e.mts
+ * carries the full story of why that measurement was abandoned). `installCommitCounter` below
+ * installs this with `page.addInitScript`, which only takes effect on the NEXT navigation — an
+ * already-loaded page's react-dom has already looked the hook up once and will never look again,
+ * so the caller must `page.reload()` afterwards (see `levelingScrollProbe.mts` for the same
+ * pattern, first proven there). If a REAL DevTools hook is already present (a dev build), this
+ * WRAPS its `onCommitFiberRoot` instead of replacing the hook outright, so nothing about real
+ * DevTools support changes.
+ *
+ * TOP-LEVEL FUNCTION DECLARATION, PASSED BY REFERENCE, ON PURPOSE: tsx/esbuild's `keepNames` wraps
+ * a NESTED `const f = () => {}` declared INSIDE a `page.evaluate`/`addInitScript` callback's own
+ * body in a `__name(...)` helper that does not exist once the callback's source is shipped alone
+ * to the page (AGENTS.md's "search pattern" note; a dozen specs in this suite record the same
+ * crash). A function hoisted at module scope and referenced by name carries none of that: only
+ * ITS OWN body is serialized, and the body below declares no further named consts bound to new
+ * functions — only object-literal methods and references to values that already exist.
+ */
+function eqCommitHookShim(): void {
+  const w = window as unknown as {
+    __REACT_DEVTOOLS_GLOBAL_HOOK__?: { onCommitFiberRoot?: (...args: unknown[]) => void }
+    __eqcCommits?: number
+    __eqcShimError?: string
+  }
+  try {
+    w.__eqcCommits = 0
+    if (w.__REACT_DEVTOOLS_GLOBAL_HOOK__) {
+      const hook = w.__REACT_DEVTOOLS_GLOBAL_HOOK__
+      const inner = hook.onCommitFiberRoot
+      // A `function` EXPRESSION assigned to a member expression, not a `const`/object-literal-key
+      // binding — the one shape ECMAScript's name inference (and therefore esbuild's `keepNames`
+      // wrapper) does not apply to, so this stays free of the `__name` trap the header explains.
+      hook.onCommitFiberRoot = function (...args: unknown[]): void {
+        w.__eqcCommits = (w.__eqcCommits ?? 0) + 1
+        inner?.(...args)
+      }
+      return
+    }
+    // OBJECT-LITERAL METHOD SHORTHAND ONLY BELOW, never `key: () => {}`. MEASURED (this shim's
+    // first version, which used arrow properties): esbuild's `keepNames` DOES infer and preserve a
+    // name for an arrow assigned to an object-literal property key, exactly as it does for a
+    // `const`, and wraps it in a `__name(...)` call baked into this function's own serialized body
+    // — which crashed with `ReferenceError: __name is not defined` the moment react-dom called
+    // `inject`. Method shorthand (`inject() {}`) is not a named function EXPRESSION in that sense
+    // and is not wrapped; `levelingScrollProbe.mts`'s `installReactHook` proved this shape first.
+    w.__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
+      supportsFiber: true,
+      isDisabled: false,
+      renderers: new Map(),
+      inject(): number {
+        return 1
+      },
+      checkDCE(): void {
+        /* react calls this to detect a dev build shipped to production; nothing to check here */
+      },
+      onScheduleFiberRoot(): void {
+        /* not counted: a scheduled render may still bail out before it commits */
+      },
+      onCommitFiberRoot(): void {
+        w.__eqcCommits = (w.__eqcCommits ?? 0) + 1
+      },
+      onCommitFiberUnmount(): void {
+        /* unmounts are not a commit */
+      },
+      onPostCommitFiberRoot(): void {
+        /* not counted: a commit is already counted above */
+      },
+    }
+  } catch (err) {
+    w.__eqcShimError = String(err)
+  }
+}
+
+/**
+ * Install the commit counter for `page`'s context and reload so it takes effect before react-dom
+ * evaluates. Call this before anything the spec cares about mounts — a reload restarts the
+ * renderer only; the main process (and any replay/hydration it already finished) keeps its state.
+ */
+export async function installCommitCounter(page: Page): Promise<void> {
+  await page.addInitScript(eqCommitHookShim)
+  // `domcontentloaded`, not the default `load`: this is a never-composited window (EQ_E2E=1) and
+  // `levelingScrollProbe.mts` proved the same wait works here first.
+  await page.reload({ waitUntil: 'domcontentloaded' })
+}
+
+/** Read the running commit count. 0 before `installCommitCounter` has ever committed a fiber. */
+export function readCommits(page: Page): Promise<number> {
+  return page.evaluate(() => (window as unknown as { __eqcCommits?: number }).__eqcCommits ?? 0)
+}
+
 /** The run's verdict: the notes, then every failure, then the exit code. */
 export function reportRun(): void {
   console.log('')
