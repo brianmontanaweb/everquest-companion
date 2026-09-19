@@ -13,9 +13,10 @@
  * WHAT IT IS. React exposes its hook DISPATCHER — the indirection every `useState`/`useEffect`
  * call goes through, and the same seam react-dom and react-test-renderer install themselves into.
  * This host installs a minimal one: slot-indexed state, dependency-compared memos and effects, and
- * a commit phase that runs layout effects before passive ones. The hook under test is imported and
- * called UNMODIFIED, from the real `react` package, with the real `useState` and `useLayoutEffect`
- * identifiers — the only thing that is not React's is the ~90 lines below.
+ * a commit phase that runs layout effects before passive ones. A writes counter tracks state updates
+ * that survive Object.is comparison—the actual render scheduling observable. The hook under test is
+ * imported and called UNMODIFIED, from the real `react` package, with the real `useState` and
+ * `useLayoutEffect` identifiers — the only thing that is not React's is the ~100 lines below.
  *
  * WHAT IT IS NOT. Not a renderer: no elements, no children, no concurrent features, no batching
  * beyond "a state write marks the host dirty and `flush()` re-renders until it settles". Effects
@@ -72,6 +73,8 @@ type Slot = StateSlot | MemoSlot | RefSlot | EffectSlot
 export interface HookHost<T> {
   /** What the hook returned on the most recent render. */
   readonly value: T
+  /** State writes that survived React's Object.is bail-out — each one is a render React would schedule. */
+  readonly writes: number
   /** Re-render (what a parent re-render does), then flush effects until the host settles. */
   render(): T
   /** Run `body` — an event handler, a resize, anything that writes state — then settle. */
@@ -92,6 +95,7 @@ export function mountHook<T>(hook: () => T): HookHost<T> {
   let index = 0
   let dirty = false
   let mounted = true
+  let writes = 0
   // Assigned by the first `settle()` below, before anything can read it.
   let value = undefined as unknown as T
 
@@ -114,6 +118,7 @@ export function mountHook<T>(hook: () => T): HookHost<T> {
       if (Object.is(resolved, slot.value)) return
       slot.value = resolved
       dirty = true
+      writes += 1
     }
     return [slot.value as S, set]
   }
@@ -200,6 +205,9 @@ export function mountHook<T>(hook: () => T): HookHost<T> {
   return {
     get value(): T {
       return value
+    },
+    get writes(): number {
+      return writes
     },
     render: settle,
     act: (body: () => void): T => {

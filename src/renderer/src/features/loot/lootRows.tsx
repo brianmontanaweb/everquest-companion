@@ -14,6 +14,22 @@ import type { GroupRow } from './lootGrouping'
 export const ROW_HEIGHT = 37
 
 /**
+ * Rows mounted beyond EACH edge of the ledger's viewport. The hook's default (8 rows, 296 px) is
+ * less than one fast wheel flick moves in a frame, so the viewport outran the slice and showed
+ * blank spacer ("rows don't render in time", 2026-09-19). 20 rows is 740 px of runway, which covers
+ * a WHEEL-sized step; it is affordable because a scroll only re-renders when it crosses a row
+ * (useWindowedRows), and that re-render is cheap regardless — `LootLedgerBody`'s own re-render
+ * hands every row the SAME `onSelect` reference either way (see useLootDetail.ts).
+ *
+ * A FAR JUMP IS A DIFFERENT CASE, AND THIS BUFFER DOES NOT COVER IT. A scrollbar-THUMB drag,
+ * PageDown, Home/End or a big flick moves far past 740 px in one event — the viewport lands outside
+ * the mounted slice entirely, so that one scroll mounts a FRESH screen of rows plus 2×overscan
+ * (~62 rows at this overscan, vs ~38 at the hook's default 8), not a seamless extension of what was
+ * already there. `stepScrollCost`'s JUMP readout in loot-window.e2e.mts measures that cost.
+ */
+export const LEDGER_OVERSCAN = 20
+
+/**
  * THE FIXED-HEIGHT CONTRACT, as CSS (JOS-260). `useWindowedRows` is a FIXED-row-height hook: every
  * spacer, every index and every scroll offset it computes assumes each row is exactly
  * `ROW_HEIGHT`. A row that wraps to two lines is therefore not a cosmetic problem — it desyncs the

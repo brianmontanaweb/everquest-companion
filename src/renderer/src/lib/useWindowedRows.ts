@@ -23,6 +23,7 @@
 //   )
 // For a <table>, render the spacers as rows with a single full-colspan <td> whose
 // height is set (see LootView) so the browser's table layout keeps the geometry.
+// The hook re-renders once per row crossed, not per scroll event.
 //
 // THE LISTENERS BIND TO THE ELEMENT, NEVER TO THE REF (JOS-260). A ref object is stable for the
 // life of the component, so an effect keyed on it runs ONCE — and a caller whose container node
@@ -124,7 +125,12 @@ export function useWindowedRows({
   scrollRef,
   overscan = 8,
 }: UseWindowedRowsOptions): WindowedRows {
-  const [scrollTop, setScrollTop] = useState(0)
+  // THE FIRST ROW UNDER THE VIEWPORT, not the raw offset. `windowSlice` only ever reads
+  // `floor(scrollTop / rowHeight)`, so holding that index lets React's Object.is bail-out drop every
+  // scroll event that stays inside one row — a pixel-by-pixel wheel used to re-render the whole
+  // mounted slice per event. One render per row crossed, and `windowSlice` is untouched.
+  const [firstRow, setFirstRow] = useState(0)
+  const row = rowHeight > 0 ? rowHeight : 1
   const [viewport, setViewport] = useState(0)
   // THE CONTAINER ITSELF, held in state — see the header. `scrollRef.current` is read after every
   // commit and adopted only when the NODE changes, so the effects below re-bind to a replaced
@@ -144,9 +150,9 @@ export function useWindowedRows({
 
   const measure = useCallback(() => {
     if (!el) return
-    setScrollTop(el.scrollTop)
+    setFirstRow(Math.floor(Math.max(0, el.scrollTop) / row))
     setViewport(el.clientHeight)
-  }, [el])
+  }, [el, row])
 
   // Measure once mounted and whenever the container resizes.
   useLayoutEffect(() => {
@@ -160,10 +166,15 @@ export function useWindowedRows({
   // Track scroll position on the container.
   useEffect(() => {
     if (!el) return
-    const onScroll = (): void => setScrollTop(el.scrollTop)
+    const onScroll = (): void => setFirstRow(Math.floor(Math.max(0, el.scrollTop) / row))
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
-  }, [el])
+  }, [el, row])
 
-  return windowSlice({ count, rowHeight, scrollTop, viewport, overscan })
+  // The round trip is `floor(scrollTop / row)` (the effects above) out and `firstRow * row` back —
+  // exact for every rowHeight this hook is actually called with today (37, 16, 26, 44, 34, 17, all
+  // integers), so nothing here can drift. A FRACTIONAL rowHeight is not what any caller passes, but
+  // nothing enforces that either, and one would not round-trip cleanly: `floor` could land a
+  // genuine mid-row scroll a row low once multiplied back out.
+  return windowSlice({ count, rowHeight, scrollTop: firstRow * row, viewport, overscan })
 }

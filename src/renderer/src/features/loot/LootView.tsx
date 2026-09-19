@@ -29,7 +29,7 @@
 // means. What the hover used to say is not lost — clicking a row (or a pickup chip) opens the
 // drill-down, which is where the item window and its quest/recipe knowledge live anyway.
 
-import { type JSX, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { type JSX, useContext, useMemo, useRef, useState } from 'react'
 import { Box, Snackbar, Stack } from '@mui/material'
 import type { ItemKnowledge, LootEvent } from '@shared/types'
 import type { EngineClient } from '@shared/dataServer/client'
@@ -41,7 +41,7 @@ import type { InventoryRow } from '../inventory/reconcile'
 import { useProgress } from '../posky/useProgress'
 import { ItemDetailPane } from './ItemDetailPane'
 import { itemStats, questItemNames } from './lootItemData'
-import { ROW_HEIGHT } from './lootRows'
+import { LEDGER_OVERSCAN, ROW_HEIGHT } from './lootRows'
 import type { GroupRow, KeyedLoot } from './lootGrouping'
 import { LootTable, type LootTableContext } from './LootTables'
 // The chrome around the table — the toolbar, the caption and the notices — plus the two pieces of
@@ -64,6 +64,7 @@ import { EngineClientContext } from '../../lib/useView'
 import { EngineLootLedger } from './EngineLootLedger'
 import { NotablePickupsStrip, useNotableStrip } from './NotablePickupsStrip'
 import { useLootRows } from './useLootRows'
+import { useLootDetail, type LootDetail } from './useLootDetail'
 // HOW FAST THE SLICE IS PAYING (JOS-261) — the aggregate loot-per-hour the caption states, joined
 // against the same `progression` snapshot the slice was resolved from.
 import { useSliceLootRates } from './useSliceLootRates'
@@ -121,61 +122,6 @@ export interface LootViewProps {
    *  returns to whatever tab deep-linked here (the Planner, the Overview, a Sky quest); absent or
    *  empty ⇒ it means the ledger, exactly as it always did. */
   nav?: NavBack
-}
-
-/** Which item the pane has taken over for, and the two ways in and out of it. */
-interface LootDetail {
-  selected: string | null
-  open: (item: string) => void
-  close: () => void
-}
-
-/**
- * THE PANE-TAKEOVER STATE, and the scroll contract it owes the ledger it replaces.
- *
- * The list unmounts on the swap, so the offset is captured on the way in and re-applied in a
- * LAYOUT effect on the way back — before paint, so returning never flashes the top of an
- * eleven-thousand-row table. A DEEP-LINKED entry saves 0 instead: the reader was on the Overview,
- * so there is no position of theirs to return to — and since JOS-43 "back" does not mean the
- * ledger for them at all, it means the tab they came from.
- *
- * Its own hook rather than inline, so `LootView` itself stays inside the measured
- * lines-per-function ceiling and this rule is readable in one screen.
- */
-function useLootDetail(
-  props: LootViewProps,
-  scrollRef: React.RefObject<HTMLDivElement | null>,
-): LootDetail {
-  const { focusItem, focusNonce, onFocusConsumed } = props
-  const [selected, setSelected] = useState<string | null>(null)
-  const savedScroll = useRef(0)
-
-  // An inbound focus opens the detail pane, then is consumed. Keyed on the NONCE, not the item's
-  // identity — the same item asked for twice must open twice.
-  useEffect(() => {
-    if (focusItem == null) return
-    savedScroll.current = 0
-    setSelected(focusItem)
-    onFocusConsumed?.()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusNonce])
-
-  useLayoutEffect(() => {
-    if (selected === null && scrollRef.current) scrollRef.current.scrollTop = savedScroll.current
-  }, [selected, scrollRef])
-
-  return {
-    selected,
-    open: (item) => {
-      savedScroll.current = scrollRef.current?.scrollTop ?? 0
-      // A NATIVE drill: the reader clicked a row in the ledger they are standing in, so the list
-      // IS where back goes — and whatever a link parked before belongs to a journey that ended
-      // when they started browsing here (navOrigin.ts).
-      props.nav?.clear()
-      setSelected(item)
-    },
-    close: () => setSelected(null),
-  }
 }
 
 /**
@@ -262,7 +208,12 @@ function LootLedgerBody({
   // Window whichever list is active — only the rows intersecting the viewport are
   // mounted, so a filter keystroke never mounts hundreds of MUI rows synchronously.
   const count = groupByItem ? groupRows.length : events.length
-  const win = useWindowedRows({ count, rowHeight: ROW_HEIGHT, scrollRef })
+  const win = useWindowedRows({
+    count,
+    rowHeight: ROW_HEIGHT,
+    scrollRef,
+    overscan: LEDGER_OVERSCAN,
+  })
   return (
     // The scroll container owns the ref the windowing hook reads. Spacer rows (top/bottom) reserve
     // the full scroll height so only the visible slice of MUI rows is mounted — see

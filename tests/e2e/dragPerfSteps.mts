@@ -45,7 +45,7 @@
  * cares about neither.
  */
 import type { Page } from 'playwright-core'
-import { check, hoverAt, note } from './appHarness.mjs'
+import { busyMs, check, hoverAt, note, type Profile } from './appHarness.mjs'
 
 /**
  * How many moves each sweep is made of. Each `mouse.move` costs about a second of round trip in a
@@ -72,26 +72,6 @@ const MOVES = 20
  * median: 3x leaves 2.4x of air under the fixed tree and sits 1.75x under the defect.
  */
 const DRAG_OVER_HOVER = 3
-
-interface ProfileNode {
-  id: number
-  callFrame: { functionName: string }
-}
-interface Profile {
-  nodes: ProfileNode[]
-  samples?: number[]
-  startTime: number
-  endTime: number
-}
-
-/** Non-idle main-thread milliseconds inside a profile. */
-function busyMs(p: Profile): number {
-  const byId = new Map(p.nodes.map((n) => [n.id, n]))
-  const interval = (p.endTime - p.startTime) / Math.max(1, (p.samples ?? []).length)
-  let n = 0
-  for (const s of p.samples ?? []) if (byId.get(s)?.callFrame.functionName !== '(idle)') n++
-  return (n * interval) / 1000
-}
 
 /**
  * Sweep `sel` three ways — hovering, dragging, committing — and report what each cost.

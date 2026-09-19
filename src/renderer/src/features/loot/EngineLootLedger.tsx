@@ -50,7 +50,7 @@ import { useWindowedRows } from '../../lib/useWindowedRows'
 import { itemCountKey } from '../../lib/itemName'
 import { EngineLootTable } from './LootTables'
 import { LootSourceToggle, type LootSource } from './LootChrome'
-import { ROW_HEIGHT } from './lootRows'
+import { LEDGER_OVERSCAN, ROW_HEIGHT } from './lootRows'
 
 /** How many rows the served window holds. See the header for why it is a constant and not state. */
 const WINDOW_LIMIT = 50
@@ -128,7 +128,12 @@ export function EngineLootLedger({
   // one). It is NOT an empty result — that is `rows: []` — so the two are kept apart here exactly as
   // the hook keeps them apart.
   const rows = useMemo<readonly Row[]>(() => view.rows ?? [], [view.rows])
-  const win = useWindowedRows({ count: rows.length, rowHeight: ROW_HEIGHT, scrollRef })
+  const win = useWindowedRows({
+    count: rows.length,
+    rowHeight: ROW_HEIGHT,
+    scrollRef,
+    overscan: LEDGER_OVERSCAN,
+  })
 
   return (
     // The same testid the app-fed ledger carries: this is one list with two sources, and the
