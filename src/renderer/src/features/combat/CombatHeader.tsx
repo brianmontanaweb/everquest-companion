@@ -24,7 +24,7 @@ import { FightPicker } from './FightPicker'
 // The pill-track chrome for all three switches below. It moved to its own module when the meter
 // card grew tabs of its own (JOS-361) and had to wear the same control — see segmented.ts.
 import { segmented } from './segmented'
-import { ScopeStatus } from './ScopeStatus'
+import { ScopeControl } from './ScopeControl'
 import type { CombatScope, MeterMode, ScopeOptions } from './dashboardData'
 import type { MeterScope, RosterSnap } from '@shared/roster'
 import { fmtDur } from './combatShared'
@@ -456,8 +456,9 @@ export interface CombatHeaderProps {
   setMode: (m: MeterMode) => void
   /** WHOSE damage — the group model's scope, a different axis from Fight|Overall (which is
    *  WHICH segment). Sits beside the direction filter because the two together are the sentence
-   *  the meter is answering: "outgoing damage, for my group". READ-ONLY here since JOS-115: the
-   *  choice lives in Preferences > Combat, this line only states which one is in force. */
+   *  the meter is answering: "outgoing damage, for my group". The VALUE comes down from
+   *  CombatView (which hands the same one to the meters, so the control and the rows agree); the
+   *  WRITE is taken off the store inside `ScopeControl` — it needs no prop, see that file. */
   meterScope: MeterScope
   roster: RosterSnap
 }
@@ -517,13 +518,15 @@ export function CombatHeader(p: CombatHeaderProps): React.JSX.Element {
 
         {/* WHOSE damage (docs/plans/group-model.md §2). Only the two SOURCE dimensions are
             scoped: the Incoming list is always "what is hitting You", and no roster changes
-            that. It STATES the scope and no longer offers it (JOS-115 — Preferences > Combat
-            owns the choice); the roster popover beside it is still a control, because a
-            mis-inferred group is corrected where its rows are missing. The readout stays
-            compact because this line never wraps — its two-rank height is a contract the
+            that — which is why this is CONDITIONAL rather than always present: a selector that
+            changed nothing on the surface you were looking at would teach that it changes
+            nothing anywhere. It OFFERS the scope again (owner, 2026-09-17 — the choice came back
+            out of Preferences, one selector on the surface it filters), and the roster popover
+            beside it corrects the group the scope filters by. It stays a DROPDOWN rather than the
+            old three chips because this line never wraps — its two-rank height is a contract the
             headless harness measures. */}
         {p.view === 'dash' && p.mode !== 'in' && (
-          <ScopeStatus scope={p.meterScope} roster={p.roster} />
+          <ScopeControl scope={p.meterScope} roster={p.roster} />
         )}
 
         <Box sx={{ flexGrow: 1, minWidth: 8 }} />

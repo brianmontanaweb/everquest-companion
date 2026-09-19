@@ -161,7 +161,10 @@ export function useHiddenChartLines(): [readonly ChartLineKey[], (k: ChartLineKe
  * questions. In practice that was three controls to find and three answers to keep straight for one
  * question ("whose damage am I looking at"), and the surfaces disagreeing was the common case
  * rather than the useful one. Now every damage and healing meter in the app reads THIS key, and
- * only Preferences > Combat writes it.
+ * only ONE control writes it — the dropdown in the Combat tab's header (ScopeControl.tsx). It
+ * was Preferences > Combat from JOS-115 until 2026-09-17, when the owner moved the choice back
+ * onto the surface it filters; what JOS-115 actually retired was the REPETITION, and that stands:
+ * the Overview card and the floating overlays still only read this key.
  *
  * The old per-surface keys are INERT, not migrated: they are view state a user can restate in one
  * click, and reading three of them to guess which one the "real" answer was would be a coin flip

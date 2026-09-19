@@ -25,6 +25,7 @@ import {
   listedValues,
   note,
   openPicker,
+  rectOf,
   settle,
   settleCount,
   settleGone,
@@ -37,7 +38,8 @@ import { drilled, leaveCombat, meterRows, returnToCombat } from './drill.mjs'
 import {
   RETIRED_SCOPE_CHIP,
   SCOPE_LABEL_SEL,
-  scopeFromPrefs,
+  SCOPE_SELECT_SEL,
+  scopeFromControl,
   setMeterScope,
   type Scope,
 } from './combatPrefsSteps.mjs'
@@ -485,12 +487,14 @@ export async function stepScriptedPull(page: Page, log: FixtureLog): Promise<Sna
  * 6b. THE METER SCOPE — You / Group / Everyone (docs/plans/group-model.md §2), a different axis
  * from the Fight|Overall toggle: that one says WHICH segment, this one says WHOSE damage in it.
  *
- * IT IS NO LONGER A CONTROL ON THIS SURFACE (JOS-115, owner: the selector "is shown INLINE on
- * every combat surface and is too crowded"). It is ONE preference in Preferences > Combat, and
- * the Combat tab keeps only the READOUT — because a meter that is filtering rows out has to be
- * able to say so where the rows are missing. So this step walks the new shape: the chip is gone,
- * the word is there, changing the preference two tabs away changes what this meter shows, and the
- * roster popover (which was never a scope control) still opens.
+ * IT IS A CONTROL ON THIS SURFACE AGAIN, AND ON NO OTHER (owner, 2026-09-17). JOS-115 retired the
+ * selector from every combat surface ("shown INLINE on every combat surface and is too crowded")
+ * and parked it in Preferences; the owner's later reading is that the REPETITION was the clutter,
+ * so the choice came back as ONE dropdown here — on the surface whose rows it filters — and the
+ * Preferences card is gone. Both halves are asserted: the old three-chip control is still absent,
+ * the dropdown is present, its own word still explains a Group scope that is narrowing nothing,
+ * choosing a scope in it changes what this meter shows, and the roster popover (which was never a
+ * scope control) still opens beside it.
  *
  * THE ROSTER STATE IS NOT ASSERTED, because it belongs to whatever the log happens to contain: a
  * log with group lines in it leaves `seen: true`, one without leaves `seen: false`, and both are
@@ -501,10 +505,14 @@ export async function stepScriptedPull(page: Page, log: FixtureLog): Promise<Sna
  */
 export async function stepMeterScope(page: Page): Promise<void> {
   check(
-    'the inline You/Group/Everyone control is GONE from the combat toolbar (JOS-115)',
+    'the three-chip inline You/Group/Everyone control is still GONE (JOS-115)',
     (await countOf(page, RETIRED_SCOPE_CHIP)) === 0,
   )
-  check('…replaced by a readout of the preference', (await countOf(page, SCOPE_LABEL_SEL)) === 1)
+  check(
+    '…and a single dropdown stands where it was (owner, 2026-09-17)',
+    (await countOf(page, SCOPE_SELECT_SEL)) === 1,
+  )
+  check('…showing the scope in force', (await countOf(page, SCOPE_LABEL_SEL)) === 1)
 
   const label = async (): Promise<string> => (await page.textContent(SCOPE_LABEL_SEL))?.trim() ?? ''
 
@@ -514,10 +522,11 @@ export async function stepMeterScope(page: Page): Promise<void> {
   // sentence now: no fallback wording, because nothing is being filtered.
   const first = await label()
   check('it defaults to Everyone', first === 'Everyone', first)
-  // …and the PREFERENCE agrees, on a profile that has never written the key: an absent value is
-  // Everyone, and the control has to say so too — the readout alone could not tell "chosen
-  // Everyone" from "defaulted to Everyone", and only one of those is the claim.
-  const chosen = await scopeFromPrefs(page, 'nav-combat')
+  // …and the CONTROL'S OWN VALUE agrees with the word it is showing, on a profile that has never
+  // written the key. The word is `chipLabel` — a sentence about the world — and the menu's checked
+  // item is the stored scope; a build where those drift is one where the meter filters by one
+  // scope and says another.
+  const chosen = await scopeFromControl(page)
   await settleCount(page, '[data-testid="combat-dashboard"]', 1, { timeoutMs: 20_000 })
   check(
     'an absent preference resolves to Everyone in the control too',
@@ -530,26 +539,41 @@ export async function stepMeterScope(page: Page): Promise<void> {
     { timeoutMs: 15_000 },
   )
 
-  // THE PREFERENCE APPLIES. Setting it two tabs away is the whole control now, and the CONDITION
-  // each write produces is this surface's own next word.
+  // ONE WIDTH, WHATEVER IT SAYS (owner, 2026-09-17). A select sizes to its displayed value, so
+  // this control would otherwise grow and shrink under its own words — `You` to `Everyone` on a
+  // click, and `Group` to `Group (no roster yet)` on nothing the user did at all, since the roster
+  // is inferred from lines the game prints once and that swap lands mid-session. Everything to its
+  // right steps sideways each time, on a bar the user is reading numbers off. The widths are
+  // COLLECTED as each scope below is chosen and compared at the end, so the assertion covers the
+  // real renders rather than a fourth trip made to measure.
+  const widths: Record<string, number> = {}
+  const widthNow = async (): Promise<number> => (await rectOf(page, SCOPE_SELECT_SEL))?.w ?? -1
+  widths.everyone = await widthNow()
+
+  // THE CHOICE APPLIES. The dropdown is the whole control now, and the CONDITION each write
+  // produces is this surface's own next word.
   //
-  // WAIT FOR THE BODY, not just for the header. Coming back from Preferences REMOUNTS this view,
-  // and its first frames render the hydrating skeleton while the first snapshot is in flight — the
-  // header (and this readout with it) is already there, so settling on the WORD alone would count
-  // the meter's rows before the meter had any. `combat-dashboard` is the body, and it exists only
-  // once there is a segment to rank.
+  // WAIT FOR THE BODY, not just for the header. `setMeterScope` ends on a nav click, and a nav
+  // click that lands on the tab you are already on still re-renders it; more to the point, every
+  // caller of this door may have come from another view, which REMOUNTS this one and renders the
+  // hydrating skeleton while the first snapshot is in flight. The header (and this readout with
+  // it) is already there, so settling on the WORD alone would count the meter's rows before the
+  // meter had any. `combat-dashboard` is the body, and it exists only once there is a segment to
+  // rank.
   //
   // The wanted word is a PREDICATE rather than a string, because Group has two legal spellings and
   // which one this log produces is not this spec's business (see the popover pairing below).
   const setTo = async (scope: Scope, want: (t: string) => boolean): Promise<string> => {
     await setMeterScope(page, scope, 'nav-combat')
     await settleCount(page, '[data-testid="combat-dashboard"]', 1, { timeoutMs: 20_000 })
-    return settle(label, want, { timeoutMs: 8_000 })
+    const word = await settle(label, want, { timeoutMs: 8_000 })
+    widths[scope] = await widthNow()
+    return word
   }
 
   const groupWord = await setTo('group', (t) => t.startsWith('Group'))
   check(
-    'choosing Group in Preferences reaches the Combat tab',
+    'choosing Group in the dropdown narrows this meter',
     groupWord.startsWith('Group'),
     groupWord,
   )
@@ -587,7 +611,8 @@ export async function stepMeterScope(page: Page): Promise<void> {
   )
 
   // PERSISTED: the choice survives leaving the tab and coming back, because it is a stored
-  // preference and not component state.
+  // preference and not component state — which is the whole reason the control may live on a view
+  // that unmounts on every tab switch (AGENTS.md, the JOS-90/97/116 bug).
   await page.click('[data-testid="nav-overview"]')
   await settleCount(page, '[data-testid="overview-grid"]')
   await page.click('[data-testid="nav-combat"]')
@@ -596,6 +621,15 @@ export async function stepMeterScope(page: Page): Promise<void> {
     'the scope is remembered across a tab round trip',
     (await settle(label, (t) => t === 'You')) === 'You',
     await label(),
+  )
+
+  // …and the three renders above were all the same width. Stated in pixels so a failure says how
+  // far it moved, not merely that it did.
+  const seen = Object.entries(widths)
+  check(
+    'the scope control never changes width - no layout shift under its own words',
+    seen.every(([, w]) => w > 0 && Math.abs(w - widths.everyone) < 0.5),
+    seen.map(([k, w]) => `${k}=${w.toFixed(1)}px`).join(' · '),
   )
 
   // The roster popover (G3) — the answer to "who does the app think is with me, and why". Still a

@@ -1,10 +1,12 @@
-// THE COMBAT SECTION of Preferences — the meters' two shaping choices, and the section descriptor
+// THE COMBAT SECTION of Preferences — the meters' shaping choices, and the section descriptor
 // that names them.
 //
 // Its DESCRIPTOR lives here rather than in PreferencesView.tsx for the reason PerfSetting's and
 // GraphicsSetting's do: that file sits at the 400-code-line factoring ceiling and `buildSections`
 // at the 100-line one, and the honest home for a section's label, icon and search keywords is
-// beside the cards it names. JOS-115 gave the section a second card and that was the line.
+// beside the cards it names. JOS-115 gave the section a second card and that was the line; that
+// card (the meter scope) has since gone back to the Combat tab — see `combatSection` below — and
+// the descriptor stays here, because the argument for the split was the file sizes, not the count.
 //
 // THE TWO METER CARDS are RENDERER-LOCAL preferences (localStorage,
 // features/combat/useCombatPrefs.ts) — no store migration, and they apply LIVE across windows:
@@ -22,7 +24,6 @@ import { FormControlLabel, Stack, Switch, Typography } from '@mui/material'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import { useCombinePetRow } from '../combat/useCombatPrefs'
 import { useSelfMeterNameToggle } from '../combat/useSelfMeterName'
-import { MeterScopeSetting } from './MeterScopeSetting'
 import { ResistEvidenceSetting } from './ResistEvidenceSetting'
 import type { PrefSection } from './PreferencesView'
 
@@ -99,20 +100,23 @@ function SelfNameSetting(): JSX.Element {
   )
 }
 
-/** Scope first, then layout: whose damage the meters show, and where the pet's sits inside it. */
+/**
+ * Layout, then evidence: where the pet's damage sits inside yours, what your own row is called,
+ * and what the resist numbers are allowed to learn from.
+ *
+ * WHOSE DAMAGE THE METERS SHOW IS NOT HERE ANY MORE (owner, 2026-09-17). It lived here from
+ * JOS-115, on the finding that the You/Group/Everyone selector repeated on every combat surface
+ * was clutter. The repetition was the clutter; the control was not. It is now ONE selector, in the
+ * Combat tab's own header beside the direction filter it completes a sentence with
+ * (features/combat/ScopeControl.tsx), and there is deliberately no copy of it here — two places to
+ * answer one question is the thing JOS-115 was actually complaining about.
+ */
 export function combatSection(): PrefSection {
   return {
     id: 'combat',
     label: 'Combat',
     icon: <BarChartIcon fontSize="small" />,
     items: [
-      {
-        id: 'meter-scope',
-        label: 'Whose damage the meters show',
-        keywords:
-          'scope whose damage you group everyone party raid roster member members source cohort filter meter meters overlay combat dps show hide',
-        content: <MeterScopeSetting />,
-      },
       {
         id: 'combine-pet',
         label: 'Show your pet inside your damage',

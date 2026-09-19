@@ -210,7 +210,7 @@ export default function OverlayMeter(): JSX.Element {
   } = useOverlayChrome()
   // WHOSE damage (docs/plans/group-model.md §2). ONE app-wide preference since JOS-115: the
   // Combat tab, the Overview card and every floating meter read this key, and only
-  // Preferences > Combat writes it. The roster itself is the snapshot's, so this window and the
+  // the Combat tab's header writes it. The roster itself is the snapshot's, so this window and the
   // tab always filter the same names by the same rule.
   const [meterScope] = useMeterScope()
   const roster = snap?.roster ?? EMPTY_ROSTER
