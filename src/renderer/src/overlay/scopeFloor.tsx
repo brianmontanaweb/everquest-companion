@@ -48,8 +48,10 @@ const FLOOR_H = 12
  * the hover it used to carry (what this scope means, and where the choice lives) went with JOS-358,
  * the owner's ruling that the overlay windows keep tooltips only in the title bar. It cost nothing
  * here: the watermark is `pointerEvents: none`, so that sentence was already unreachable by a
- * pointer, and the place the choice actually lives is Preferences > Combat, which is where the
- * setting explains itself (features/preferences/MeterScopeSetting.tsx).
+ * pointer, and the place the choice actually lives is the Combat tab's own header, which is where
+ * the control explains itself (features/combat/ScopeControl.tsx). This window still only READS the
+ * key — a two-inch pinned meter has no room for the selector, which is the whole reason the word
+ * is a watermark here and a dropdown there.
  */
 export interface ScopeFloorText {
   label: string

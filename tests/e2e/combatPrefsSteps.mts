@@ -1,9 +1,12 @@
-// DRIVING THE COMBAT PREFERENCES FROM THE REAL UI (JOS-115).
+// DRIVING THE COMBAT PREFERENCES FROM THE REAL UI (JOS-115, then owner 2026-09-17).
 //
-// The You / Group / Everyone scope used to be a chip on every combat surface; it is now ONE
+// The You / Group / Everyone scope used to be a chip on every combat surface; JOS-115 made it ONE
 // preference in Preferences > Combat, read by the Combat tab, the Overview card and every floating
-// overlay. That makes "set it" a two-window act rather than a click on the surface under test, so
-// the door is here and every spec that needs it walks through the same one.
+// overlay. On 2026-09-17 the owner moved the CONTROL back onto the Combat tab as a dropdown and
+// deleted the Preferences card: what JOS-115 actually retired was the repetition, and that half
+// stands — the Overview card and the overlays still only read the key. So "set it" is a click on
+// the Combat tab now, and the door is still here because most callers are asserting on some OTHER
+// surface (an overlay window, the Overview card) and have to walk to that one control first.
 //
 // IT CLICKS THE ACTUAL CONTROL, never `localStorage.setItem`. The write path is half the claim —
 // a preference that persists but does not APPLY is the defect this ticket exists to avoid — and
@@ -14,14 +17,20 @@
 // or near the repo's max-lines budget: split, never ratchet (drill.mts set the precedent).
 
 import type { Page } from 'playwright-core'
-import { settle } from './appHarness.mjs'
+import { settle, settleGone } from './appHarness.mjs'
 
 /** The three scopes, exactly as `shared/roster.METER_SCOPES` spells them. */
 export type Scope = 'you' | 'group' | 'everyone'
 
-/** The Combat tab's read-only scope readout — a WORD, not a control, since JOS-115. */
+/**
+ * The WORD the Combat tab's scope control is currently showing. It kept this testid across both
+ * moves — the read-only chip JOS-115 left behind, and the dropdown that replaced it in 2026-09-17 —
+ * because every caller here is asking the same question of it either way: what does this surface
+ * say it is showing? The label is `chipLabel`, so Group spells its no-roster fallback out.
+ */
 export const SCOPE_LABEL_SEL = '[data-testid="meter-scope-label"]'
-/** The control JOS-115 deleted from every combat surface. Asserted ABSENT, never used. */
+/** The three-chip inline control JOS-115 deleted. Its replacement is a dropdown, not this — so it
+ *  is still asserted ABSENT, and never used. */
 export const RETIRED_SCOPE_CHIP = '[data-testid="meter-scope-chip"]'
 /** …and its overlay twin. */
 export const RETIRED_OVERLAY_CHIP = '[data-testid="overlay-scope-chip"]'
@@ -37,26 +46,38 @@ export const RETIRED_OVERLAY_HEADER_LABEL = '[data-testid="overlay-scope-label"]
  */
 export const OVERLAY_SCOPE_FLOOR = '[data-testid="overlay-scope-floor"]'
 
+/** The dropdown itself — the one writer of `eq.combat.meterScope` since 2026-09-17. */
+export const SCOPE_SELECT_SEL = '[data-testid="meter-scope-select"]'
+
 /**
- * Set the meter scope through Preferences > Combat and return the app to `back`.
+ * Set the meter scope through the Combat tab's own dropdown and return the app to `back`.
  *
  * `back` is a nav testid rather than "wherever we were": a caller always knows which surface it
  * is about to assert on, and guessing would leave the app somewhere the next step did not expect.
+ * Callers that are ALREADY on the Combat tab pass `nav-combat` and pay one idempotent click.
+ *
+ * THE SELECTOR ONLY EXISTS ON THE DASHBOARD, OUTGOING — the Incoming list is always "what is
+ * hitting You" and is not scoped, so the control is not rendered there. This helper waits for it
+ * rather than assuming it: a caller that left the tab on Timeline or on Incoming gets a timeout
+ * naming the missing control, which is a truer failure than a click into empty space.
  */
 export async function setMeterScope(page: Page, scope: Scope, back: string): Promise<void> {
-  await page.click('[data-testid="nav-preferences"]', { timeout: 30_000 })
-  await page.waitForSelector('[data-testid="prefs-rail-combat"]', { timeout: 20_000 })
-  await page.click('[data-testid="prefs-rail-combat"]')
-  const button = `[data-testid="pref-meter-scope-${scope}"]`
-  await page.waitForSelector(button, { timeout: 20_000 })
-  await page.click(button)
-  // The CONDITION the click produces: MUI marks the chosen ToggleButton selected, and that is the
-  // control agreeing it took the value — never a sleep.
+  await page.click('[data-testid="nav-combat"]', { timeout: 30_000 })
+  await page.waitForSelector(SCOPE_SELECT_SEL, { timeout: 20_000 })
+  await page.click(SCOPE_SELECT_SEL)
+  const option = `[data-testid="meter-scope-${scope}"]`
+  await page.waitForSelector(option, { timeout: 20_000 })
+  await page.click(option)
+  // The CONDITION the click produces: the closed control now says the scope it was given. The word
+  // is `chipLabel`, so Group has two legal spellings and this matches on the PREFIX — which of the
+  // two a log produces is the caller's business, never this door's. Never a sleep.
   await settle(
-    async () => (await page.$$(`${button}.Mui-selected`)).length,
-    (n) => n === 1,
+    async () => (await page.textContent(SCOPE_LABEL_SEL))?.trim() ?? '',
+    (t) => t.toLowerCase().startsWith(scope === 'everyone' ? 'everyone' : scope),
     { timeoutMs: 8_000 },
   )
+  // The menu is a portal that outlives its click; leave nothing over the surface under test.
+  await settleGone(page, '[role="listbox"]', { timeoutMs: 8_000 })
   await page.click(`[data-testid="${back}"]`, { timeout: 30_000 })
 }
 
@@ -90,26 +111,30 @@ export async function setCombinePet(page: Page, on: boolean, back: string): Prom
 }
 
 /**
- * Which scope Preferences shows as CHOSEN, read from the control itself and not from the store,
- * then back to `back`. On a fresh profile this is the answer to "does an absent key resolve to
- * Everyone" (JOS-229) — the half of the default the meters' own wording cannot carry, because a
- * meter reading `Everyone` looks identical whether the user picked it or never opened this tab,
- * and only one of those is what a fresh-state default claims.
+ * Which scope the CONTROL holds, read by opening its menu and asking which item is marked chosen —
+ * not from the store, and not from the word on the closed control.
+ *
+ * It is the second witness the readout alone cannot be. The closed control renders `chipLabel`,
+ * which is a sentence about the WORLD (Group spells out its no-roster fallback); the menu's
+ * checked item is the VALUE. A build where those two drift is a build where the meter is filtering
+ * by one scope and telling you another, which is the exact lie this surface exists to prevent.
+ *
+ * The app is left on the Combat tab with the menu closed, ready for the next assertion.
  */
-export async function scopeFromPrefs(page: Page, back: string): Promise<string> {
-  await page.click('[data-testid="nav-preferences"]', { timeout: 30_000 })
-  await page.waitForSelector('[data-testid="prefs-rail-combat"]', { timeout: 20_000 })
-  await page.click('[data-testid="prefs-rail-combat"]')
-  await page.waitForSelector('[data-testid="pref-meter-scope"]', { timeout: 20_000 })
+export async function scopeFromControl(page: Page): Promise<string> {
+  await page.click('[data-testid="nav-combat"]', { timeout: 30_000 })
+  await page.waitForSelector(SCOPE_SELECT_SEL, { timeout: 20_000 })
+  await page.click(SCOPE_SELECT_SEL)
   const chosen = await settle(
     () =>
       page.evaluate(() => {
-        const on = document.querySelector('[data-testid="pref-meter-scope"] .Mui-selected')
-        return on?.getAttribute('data-testid')?.replace('pref-meter-scope-', '') ?? ''
+        const on = document.querySelector('[role="listbox"] .Mui-selected')
+        return on?.getAttribute('data-testid')?.replace('meter-scope-', '') ?? ''
       }),
     (v) => v !== '',
     { timeoutMs: 8_000 },
   )
-  await page.click(`[data-testid="${back}"]`, { timeout: 30_000 })
+  await page.keyboard.press('Escape')
+  await settleGone(page, '[role="listbox"]', { timeoutMs: 8_000 })
   return chosen
 }

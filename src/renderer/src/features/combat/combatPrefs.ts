@@ -27,6 +27,9 @@ import type { Drill } from './dashboardData'
  * retired the chips and the suffix with them. The old keys are left INERT rather than migrated —
  * three stale answers give no honest way to pick the "real" one, and this is a preference a user
  * restates in one click.
+ *
+ * The CONTROL came back to the Combat tab on 2026-09-17 (ScopeControl.tsx); the KEY did not
+ * change, and neither did the rule that made it one key. One writer, many readers, still.
  */
 export const METER_SCOPE_KEY = 'eq.combat.meterScope'
 
@@ -41,7 +44,8 @@ export const METER_SCOPE_KEY = 'eq.combat.meterScope'
  * seen-but-incomplete roster is a meter with a real group-mate's bars silently missing, and the
  * report that arrives is "the damage meter is broken". Everyone hides nobody, needs no inference
  * to be right, and is what the meter showed before the group model existed. The narrowing is
- * still one click away in Preferences > Combat, where a wrong answer is visible as a choice.
+ * still one click away in the Combat tab's own header, where a wrong answer is visible as a
+ * choice beside the meter it narrows (features/combat/ScopeControl.tsx).
  *
  * A DEFAULT SPEAKS FOR AN ABSENT KEY AND FOR NOTHING ELSE. A user who went to Preferences and
  * chose Group has 'group' in storage, `readMeterScope` hands it straight back, and no migration
