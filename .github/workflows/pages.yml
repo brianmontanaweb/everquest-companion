@@ -15,7 +15,9 @@
 # site does NOT need to be redeployed when a release ships; it only redeploys when
 # site/** itself changes.
 #
-# Site URL: https://jmoyers.github.io/everquest-companion/
+# Site URL: https://<repo owner>.github.io/everquest-companion/ (upstream: jmoyers,
+# fork: brianmontanaweb). Which repo the page's links point at is a separate switch:
+# the EQC_REPO constant in site/repo.js.
 #
 # ACTION PINNING: `uses:` refs are full commit SHAs with the floating tag in the
 # trailing comment — a `@v4` tag is a mutable pointer the action's owner can
