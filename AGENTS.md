@@ -130,6 +130,19 @@ docs/agents-archive.md.
     runner · 1 sighting 2026-09-04 · **HARDENED same day** (`until` reads one
     refusal as "not yet", still panics on any other). Full detail:
     docs/agents-archive.md.
+  - `engined tests/ingest.rs`
+    `a_line_appended_after_the_fold_lands_arrives_live` · the appended line is
+    folded by the SCAN, so its frame carries no flag (`left: None` /
+    `right: Some(true)`) · 1 sighting (2026-09-20, run 35542228138, on PR #14,
+    a branch touching neither that file nor its crate's sources) · **DIAGNOSED
+    AND RESOLVED same day**: the test waited for the event COUNT, which the
+    scan's final frame reaches at `pct` 100 BEFORE the tail takes the file —
+    `FoldProgress.live` is present only when true and true only once the tail
+    owns it, so a line appended in that gap comes back unflagged. `settle_live`
+    now holds the handover itself, which is the precondition this file's own
+    header already claims ("a line appended after the tail takes over"). The
+    gap measures 177 µs on an idle machine, which is the whole reason it is
+    load-sensitive and green standalone.
   - `engined tests/combat.rs` live-meter tests · the fight closes before the
     test's hit lands, plus one harness connect timeout · 3 sightings
     (2026-09-04, 2026-09-10, 2026-09-20) · MECHANISM MEASURED, not merely

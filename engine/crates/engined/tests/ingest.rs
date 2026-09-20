@@ -19,7 +19,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
-use harness::{attach, health, progress, subscribe, Engine};
+use harness::{attach, health, progress, subscribe, Client, Engine};
 use protocol::generated::{EngineMessage, EpochReason, HealthResultStatus, ReplyResult};
 
 /// The fixture staged for these tests, and how many times it is written into the scratch log. Two
@@ -246,6 +246,42 @@ fn an_attach_folds_the_log_and_the_wire_says_so() {
     assert_eq!(*result.epoch, 2);
 }
 
+/// Poll `session.health` until the tail owns the file, or the suite's patience runs out.
+///
+/// THE PRECONDITION THIS FILE'S LAST CLAIM NEEDS, and the one the 2026-09-20 sighting proved was
+/// missing. A scan that has counted every event has NOT yet handed the file over: its final frame
+/// already names the whole count at `pct` 100, and the go-live transition follows it. A line
+/// appended in that gap is folded BY THE SCAN, and the frame that comes back carries no flag —
+/// `FoldProgress.live` is present only when true, and true only once the tail owns the file. So
+/// waiting on the COUNT is waiting on the wrong thing; this waits on the handover itself.
+fn settle_live(client: &mut Client, id: &mut i64) {
+    let deadline = Instant::now() + PATIENCE;
+    loop {
+        *id += 1;
+        client.send(&health(*id));
+        let status = loop {
+            match client.recv() {
+                EngineMessage::Reply(reply) if *reply.id == *id => {
+                    let ReplyResult::HealthResult(health) = reply.result else {
+                        panic!("session.health answers with a HealthResult");
+                    };
+                    break health.status;
+                }
+                EngineMessage::EpochMessage(_) | EngineMessage::ModuleChangedMessage(_) => {}
+                other => panic!("nothing else belongs on this stream: {other:?}"),
+            }
+        };
+        if matches!(status, HealthResultStatus::Live) {
+            return;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "waited {PATIENCE:?} for the tail to take the file; health last said {status:?}"
+        );
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
+
 #[test]
 fn a_line_appended_after_the_fold_lands_arrives_live() {
     let scratch = Scratch::new("live");
@@ -267,6 +303,12 @@ fn a_line_appended_after_the_fold_lands_arrives_live() {
             }
         }
     }
+
+    // …and then for the tail to actually take the file. Counting every event is not the handover:
+    // see `settle_live`. Without this the append can land while the scan still owns the file, and
+    // the frame comes back unflagged — the flake ledger's 2026-09-20 ingest row.
+    let mut health_id = 100;
+    settle_live(&mut client, &mut health_id);
 
     // The game writes a line. It travels the whole path — the file, the tail's poll, the parser,
     // the sink — and the engine says so on the connection-wide channel.
