@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import vm from 'node:vm'
 
 const SITE = join(import.meta.dirname, '..', 'site')
-const UPSTREAM = 'https://github.com/jmoyers/everquest-companion'
+const FORK = 'https://github.com/brianmontanaweb/everquest-companion'
 const PAGES = ['index.html', 'launch.html']
 
 const read = (name: string): string => readFileSync(join(SITE, name), 'utf8')
@@ -36,36 +36,39 @@ function runRepoJs(source: string, paths: string[]): { links: FakeLink[]; repo: 
   return { links, repo: win.EQC_REPO }
 }
 
-test('site/repo.js exists and defaults EQC_REPO to upstream', () => {
+test('site/repo.js exists and pins EQC_REPO to the fork', () => {
   assert.ok(existsSync(join(SITE, 'repo.js')))
   const { repo } = runRepoJs(read('repo.js'), [])
-  assert.equal(repo, 'jmoyers/everquest-companion')
+  assert.equal(repo, 'brianmontanaweb/everquest-companion')
 })
 
 test('repo.js rewrites every data-repo-path link from the one constant', () => {
-  const forked = read('repo.js').replace(
-    "'jmoyers/everquest-companion'",
+  // Repoint the constant at a THIRD repo: the links must follow the constant, not
+  // any name baked into the markup. Substituting the fork's own name would pass even
+  // if every href were hard-coded.
+  const repointed = read('repo.js').replace(
     "'brianmontanaweb/everquest-companion'",
+    "'elsewhere/some-fork'",
   )
-  const { links } = runRepoJs(forked, ['', '/releases', '/blob/main/LICENSE'])
+  const { links } = runRepoJs(repointed, ['', '/releases', '/blob/main/LICENSE'])
   assert.deepEqual(
     links.map((l) => l.href),
     [
-      'https://github.com/brianmontanaweb/everquest-companion',
-      'https://github.com/brianmontanaweb/everquest-companion/releases',
-      'https://github.com/brianmontanaweb/everquest-companion/blob/main/LICENSE',
+      'https://github.com/elsewhere/some-fork',
+      'https://github.com/elsewhere/some-fork/releases',
+      'https://github.com/elsewhere/some-fork/blob/main/LICENSE',
     ],
   )
 })
 
 for (const page of PAGES) {
-  test(`${page}: every upstream repo link is switchable and its fallback matches`, () => {
-    const repoLinks = anchors(read(page)).filter((a) => attr(a, 'href')?.startsWith(UPSTREAM))
+  test(`${page}: every repo link is switchable and its fallback matches`, () => {
+    const repoLinks = anchors(read(page)).filter((a) => attr(a, 'href')?.startsWith(FORK))
     assert.ok(repoLinks.length > 0, 'expected at least one repo link')
     for (const a of repoLinks) {
       const path = attr(a, 'data-repo-path')
       assert.notEqual(path, null, `missing data-repo-path: ${a}`)
-      assert.equal(attr(a, 'href'), UPSTREAM + path, `fallback href drifted: ${a}`)
+      assert.equal(attr(a, 'href'), FORK + path, `fallback href drifted: ${a}`)
     }
   })
 
