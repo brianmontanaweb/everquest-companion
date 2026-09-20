@@ -136,6 +136,40 @@ export interface ReleaseNote {
  */
 export const RELEASE_NOTES: readonly ReleaseNote[] = [
   {
+    version: '1.17.0',
+    date: '2026-09-19',
+    entries: [
+      {
+        kind: 'new',
+        text: "In the This week view you can click a boss's first rung to mark it cleared. Use it for a kill the app saw out in the open world but could not credit to a lockout.",
+      },
+      {
+        kind: 'new',
+        text: 'The damage meter can show your character\'s name instead of "You". Turn it on in Preferences > Combat; it follows you to the overlay, the Overview card and Copy this view.',
+      },
+      {
+        kind: 'fixed',
+        text: 'Raid boss kills earn their lockout rung and celebration again. EQ Legends adds "(with a bonus)" to most experience lines, and those went unrecognized.',
+      },
+      {
+        kind: 'fixed',
+        text: 'Handing a Sky quest more copies of an item than it needs now counts every copy. The tracker thought only one left your bags, which could wrongly mark other quests that want the same item as ready.',
+      },
+      {
+        kind: 'fixed',
+        text: "Feedback reports now leave out log lines the app does not recognize, so other players' /emote text cannot end up in one.",
+      },
+      {
+        kind: 'changed',
+        text: 'The You / Group / Everyone meter choice is back in the Combat tab header, next to the direction filter.',
+      },
+      {
+        kind: 'changed',
+        text: 'The loot ledger scrolls smoothly on long histories.',
+      },
+    ],
+  },
+  {
     version: '1.16.0',
     date: '2026-09-03',
     entries: [

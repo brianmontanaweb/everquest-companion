@@ -952,8 +952,10 @@ above stay here until the `scripts/` phase.
   'main' channel feed, and a stable release natively writes only latest.yml,
   so the tag job uploads a copy as main.yml on the same release — old
   main-channel installs step up to stables instead of stalling forever.
-  Azure Trusted Signing wiring is inert until 6 `AZURE_*` repo secrets
-  exist (account `jmoyers-eqtools`, deliberately not renamed).
+  Azure Artifact Signing is LIVE on this fork under its own account and
+  identity (CN `Brian Montana`); the 6 `AZURE_*` repo secrets were set
+  2026-09-20. The hook still self-skips without them, so local builds and the
+  non-tag `build` job stay unsigned.
 - **`npm ci` DOES NOT INSTALL ELECTRON'S BINARY ANY MORE.** `.npmrc` sets
   `ignore-scripts=true` (no dependency's install hook executes — the npm
   compromise vector), so after any `npm ci` / `npm install` you MUST run
@@ -968,13 +970,14 @@ above stay here until the `scripts/` phase.
   `@v4` tag is mutable) — re-resolve with
   `gh api repos/<o>/<a>/git/ref/tags/<t> --jq .object.sha` when bumping.
   Tagged releases also publish `SHA256SUMS.txt` alongside the installer.
-- **Unsigned build ⇒ the GitHub account IS the trust root.** electron-updater
-  verifies the sha512 from the feed (so a tampered *download* fails), but with
-  no Authenticode publisher it cannot verify *who* built the release. Anyone
-  who can publish a release here can ship a silent, per-user, no-UAC update to
-  every install. Azure signing closes this (`verifyUpdateCodeSignature` turns
-  on for signed Windows builds); until then, tag/release access is the control.
-  See `SECURITY.md`, which states this plainly to users.
+- **SIGNED ⇒ the certificate, not the GitHub account, is the trust root.**
+  electron-updater verifies the sha512 from the feed (so a tampered *download*
+  fails) AND, because `publisherName` is set, the Authenticode publisher of
+  every downloaded update. Publishing a release is therefore no longer enough
+  to ship a silent, per-user, no-UAC update — the Azure signing identity is
+  needed too. `publisherName` must equal the certificate subject CN EXACTLY or
+  every update is rejected; `tests/forkRepo.test.mts` pins it. See
+  `SECURITY.md`, which states this plainly to users.
 ### Installer architecture
 
 - Build chain: `npm run dist` = `electron-vite build` → electron-builder
@@ -1030,10 +1033,10 @@ above stay here until the `scripts/` phase.
   `/S` from `${GetParameters}`/`${GetOptions}` instead.
 - Exe branding: `signAndEditExecutable:true` needs the winCodeSign cache —
   run `scripts/seed-wincodesign.ps1` once per machine. Icon via `gen:icon`.
-- Publish: `publish: github jmoyers/everquest-companion`; installer +
-  `.blockmap` + `latest*.yml` feeds under `release/<version>/`. Unsigned for
-  now (SmartScreen "More info → Run anyway" in README); Azure signing turns
-  on via repo secrets only — CI args are already conditional.
+- Publish: `publish: github brianmontanaweb/everquest-companion`; installer +
+  `.blockmap` + `latest*.yml` feeds under `release/<version>/`. Signed from
+  v1.17.0 on, the fork's first release — no unsigned fork build was ever
+  published. Signing is CI-only: the AZURE_* env is the switch.
 - Auto-update (`src/main/updater.ts`) and EQ-install discovery
   (`src/main/log/discovery.ts`, JOS-184): moved 2026-09-13 to
   `src/main/AGENTS.md`.
@@ -1354,8 +1357,10 @@ plumbing proven). Reuses the tier-2 lifecycle via
 
 - **Feedback loop**: planned in `docs/plans/feedback-triage.md`; F1/F2 have
   since SHIPPED (see Cloud above) — the plan is historical intent now.
-- Azure signing: waiting on Microsoft identity validation → cert profile +
-  app registration + repo secrets.
+- Azure signing: DONE 2026-09-20 — identity validation, cert profile
+  (CN `Brian Montana`), app registration with the signer role, 6 repo secrets.
+  Client secret expires in 24 months; a lapse fails the release job's signing
+  step with an auth error.
 - Windows Sandbox: WORKING (last run 2026-08-03, PASS, gating v0.2.0) —
   `run-installer-test.ps1` is the standard pre-ship clean-machine gate.
 - Design docs for shipped 2026-08-03 features live in `docs/plans/` —
