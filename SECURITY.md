@@ -267,7 +267,7 @@ at boundaries we control:
 
 ## Code signing and the update trust chain
 
-**Release builds are code-signed** ("Joshua Moyers", via Azure Artifact Signing;
+**Release builds are code-signed** ("Brian Montana", via Azure Artifact Signing;
 CI injects the signing arguments on tagged releases — see `.github/workflows/`).
 Two consequences:
 
@@ -279,13 +279,12 @@ Two consequences:
 2. The update path: `electron-updater` verifies more than transport integrity.
    Every download is checked byte-for-byte against the sha512 in the release
    feed, AND (because `publisherName` is set in electron-builder.yml) the
-   downloaded installer's Authenticode publisher must match "Joshua Moyers" or
+   downloaded installer's Authenticode publisher must match "Brian Montana" or
    the update fails with `ERR_UPDATER_INVALID_SIGNATURE` before anything runs.
    A compromised GitHub account alone is therefore no longer sufficient to ship
    a malicious update to existing installs: the attacker would also need the
-   Azure signing identity. (Historical note: builds before v0.1.8 were unsigned
-   and did not verify publisher identity; they will update to signed builds,
-   and from then on the verification applies.)
+   Azure signing identity. (This fork signs under its own identity from its first
+   release, v1.17.0, so every fork build has been signed and publisher-verified.)
 
 - **Release-pipeline hardening.** CI publishes only from a pushed `v*` tag;
   only that one job holds a repository-write token (every other path runs read-only);

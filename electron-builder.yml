@@ -197,14 +197,15 @@ win:
     # arguments instead. It self-skips when the AZURE_* env is absent, so local
     # dist builds stay unsigned; CI injects the env and signs.
     sign: scripts/azure-sign.cjs
-    # UPDATE SIGNATURE VERIFICATION IS OFF UNTIL THIS FORK SIGNS (owner decision, v1.17.0).
-    # electron-updater's NsisUpdater.verifySignature SKIPS Authenticode checking when
-    # publisherName is null, and REJECTS every unsigned update when it is set. This fork has
-    # no signing identity yet, so upstream's `publisherName: Joshua Moyers` would make every
-    # fork update fail. Until then an update is checked only against the sha512 in
-    # latest.yml, which comes from the same GitHub release. Once this fork signs, put
-    # publisherName back, set to the certificate subject CN EXACTLY, and turn the
-    # tests/forkRepo.test.mts guard into a pin on that name.
+    # UPDATE SIGNATURE VERIFICATION (do not remove): electron-updater's
+    # NsisUpdater.verifySignature SKIPS all checking when publisherName is null — a signed
+    # build alone protects nothing on the update path. With it set, every downloaded update
+    # must carry a valid Authenticode signature from this publisher or it is rejected before
+    # install. This name must match the certificate subject CN EXACTLY: it is the fork's own
+    # Azure Artifact Signing identity, not upstream's, and a mismatch rejects every update.
+    # Pinned by tests/forkRepo.test.mts. The fork signed before its first release, so v1.17.0
+    # ships signed and no unsigned fork build was ever published.
+    publisherName: Brian Montana
 
 # One-click installer (Discord model): double-click installs per-user under
 # %LOCALAPPDATA%\Programs (no UAC prompt), then launches. Friendly for friends

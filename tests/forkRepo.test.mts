@@ -16,6 +16,10 @@ const read = (...parts: string[]): string =>
 
 const FORK = 'brianmontanaweb/everquest-companion'
 
+// The subject CN of the fork's Azure Artifact Signing certificate profile. electron-updater
+// compares the installer's Authenticode publisher against this string verbatim.
+const CERT_CN = 'Brian Montana'
+
 test('the update feed publishes to and reads from the fork', () => {
   const yml = read('electron-builder.yml')
   const block = /^publish:\n((?: {2}.*\n)+)/m.exec(yml)
@@ -25,11 +29,12 @@ test('the update feed publishes to and reads from the fork', () => {
   assert.equal(`${owner}/${repo}`, FORK)
 })
 
-test('an unsigned build does not pin a publisherName it cannot satisfy', () => {
-  // With publisherName set, electron-updater rejects every update not Authenticode-signed by that
-  // name. Fork builds are unsigned until they sign, so a stray upstream name would brick updates.
-  // When this fork signs, this test becomes a pin on the owner's own certificate CN.
-  assert.equal(/^\s*publisherName:.*$/m.exec(read('electron-builder.yml'))?.[0], undefined)
+test('publisherName pins the fork owner of the certificate CN, not upstream', () => {
+  // electron-updater rejects every update not Authenticode-signed by this exact name, and skips
+  // checking entirely when it is absent. Either drift — upstream's name, or no name at all —
+  // is silent: updates keep "working" with no publisher check, or stop working altogether.
+  const yml = read('electron-builder.yml')
+  assert.equal(/^\s*publisherName: (.*)$/m.exec(yml)?.[1], CERT_CN)
 })
 
 test('the external-link allowlist opens the fork, and only the fork, on github.com', () => {

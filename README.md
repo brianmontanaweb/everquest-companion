@@ -47,7 +47,7 @@ fullscreen can't be overlaid by anything, so use borderless if you want them.
 
 ### Code signing
 
-The installer is code-signed as **Joshua Moyers** through Microsoft's Artifact
+The installer is code-signed as **Brian Montana** through Microsoft's Artifact
 Signing service, and auto-updates are verified against that signature before they
 install. If SmartScreen still shows a "Windows protected your PC" warning while
 the certificate is new, click **More info**, then **Run anyway** — you only ever
