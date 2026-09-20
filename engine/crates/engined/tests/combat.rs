@@ -41,6 +41,10 @@ struct Staged {
     /// The wall clock the first line was stamped with. Every later line is an offset from it, so
     /// the log's own span is known to the second without re-reading the file.
     started_ms: i64,
+    /// How far back of its anchoring instant the session starts. Kept rather than consumed at
+    /// construction so a fight can be re-anchored on GO-LIVE instead of on test start — the flake
+    /// ledger's `engined tests/combat.rs` live-meter row, whose chip this is.
+    back_ms: i64,
     clock: eqlog::Clock,
 }
 
@@ -76,6 +80,7 @@ impl Staged {
         Self {
             dir,
             started_ms: wall_clock_ms() - back_ms,
+            back_ms,
             clock: eqlog::Clock::new(zone),
         }
     }
@@ -122,12 +127,43 @@ impl Staged {
     /// The zone line comes first so the character-rebirth boundary fires before there is a fight to
     /// lose, which is also what a real log opened today does by itself.
     fn stage_a_fight(&self) {
-        let mut text = self.line(0, "You have entered Nagafen's Lair.");
-        text.push_str(&self.line(2, &format!("You slash {MOB} for 155 points of damage.")));
+        let mut text = self.zone_line();
+        text.push_str(&self.fight_lines());
+        self.append(&text);
+    }
+
+    /// The zone line on its own, at the construction anchor.
+    ///
+    /// Pair it with [`Staged::stage_a_live_fight`] when the test asserts on a LIVE fight: the
+    /// attach needs a log it can open and fold — one it cannot leaves the world idle and the
+    /// go-live wait never returns — but a zone line has no freshness for that wait to spend.
+    fn stage_the_zone(&self) {
+        self.append(&self.zone_line());
+    }
+
+    /// The fight on its own, RE-ANCHORED on the instant it is called.
+    ///
+    /// THE POINT OF THIS METHOD. Going live costs ~4.8 s on a quiet machine and several times that
+    /// on a runner folding the whole workspace at once. Staged before the attach, that cost came
+    /// out of `PRESENCE_GONE_MS` (20 s) — the window in which the fight is still open — so a slow
+    /// enough start finalized the fight before the snapshot ever asked. Staged after it, the window
+    /// begins where the measurement does.
+    fn stage_a_live_fight(&mut self) {
+        self.started_ms = wall_clock_ms() - self.back_ms;
+        self.append(&self.fight_lines());
+    }
+
+    fn zone_line(&self) -> String {
+        self.line(0, "You have entered Nagafen's Lair.")
+    }
+
+    /// One fight against [`MOB`] that you and one other combatant the log names are both hitting.
+    fn fight_lines(&self) -> String {
+        let mut text = self.line(2, &format!("You slash {MOB} for 155 points of damage."));
         text.push_str(&self.line(4, &format!("You slash {MOB} for 240 points of damage.")));
         text.push_str(&self.line(5, &format!("Rowel slashes {MOB} for 60 points of damage.")));
         text.push_str(&self.line(6, &format!("You slash {MOB} for 105 points of damage.")));
-        self.append(&text);
+        text
     }
 
     /// Write the committed fixture into the scratch log, `repeats` times over — the only way to make
@@ -283,6 +319,32 @@ fn live_client_with(engine: &Engine, staged: &Staged, clock: Option<ClockHint>) 
     }
 }
 
+/// Poll `combat.snapshot` until a fight staged after go-live has reached the fold, or the suite's
+/// patience runs out.
+///
+/// The tail naps `TAIL_NAP` (25 ms) between reads, so a snapshot taken the instant after an append
+/// is asking before the fold has read the lines — it answers with the zone segment alone. This
+/// HOLDS that precondition rather than betting on a sleep, the way the sky-filters row was resolved.
+///
+/// It is not a retry: a fight that reached the fold and CLOSED returns here on the first pass, with
+/// its `kind` for the caller to assert on. Only "the fold has not read it yet" spins.
+fn until_the_fight_lands(client: &mut Client, id: &mut i64) -> CombatSnapshotResult {
+    let deadline = Instant::now() + PATIENCE;
+    loop {
+        *id += 1;
+        let answer = snapshot(client, *id, Some(full()));
+        if answer.snapshot["segments"][0]["id"] == serde_json::json!("e1") {
+            return answer;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "waited {PATIENCE:?} for the appended fight to reach the fold; last answer {:?}",
+            answer.snapshot["segments"]
+        );
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
+
 fn snapshot(
     client: &mut Client,
     id: i64,
@@ -348,7 +410,11 @@ fn a_live_meter_is_stamped_with_the_engines_own_clock_and_agrees_with_a_second_f
     // instant the engine said it used, and the two are the same object. Socket, op table, channel,
     // ingest thread and combat engine hand back what the fold in that thread actually holds.
     // Process startup is outside the fight's live window: under parallel CI it can take long enough
-    // to age a correctly-stamped fight closed before the first snapshot.
+    // to age a correctly-stamped fight closed before the first snapshot. Anchoring the fight on
+    // go-live (`Staged::stage_a_live_fight`) is NOT available to this test: its claim is that the
+    // engine's object equals an oracle fold of the same bytes, and `recent` is a LIVE-only feed —
+    // folded beside as a scan the oracle carries none, so a tail-staged fight makes the two objects
+    // differ by construction. Measured: engine 4 events, oracle 0, everything else identical.
     let engine = Engine::start();
     let staged = Staged::new("live");
     staged.stage_a_fight();
@@ -428,8 +494,11 @@ fn a_host_that_can_only_name_an_offset_still_keeps_a_live_fight_open() {
     // put the log hours in the past, and finalized the open fight on the very next serve beat.
     let offset_min = a_foreign_offset_min();
     let zone = eqlog::Zone::fixed(offset_min).expect("a representable offset");
-    let staged = Staged::zoned("offset-clock", 8_000, zone);
-    staged.stage_a_fight();
+    let mut staged = Staged::zoned("offset-clock", 8_000, zone);
+    // The zone line alone before the attach, the fight only once the engine is live: the go-live
+    // wait then falls OUTSIDE the freshness window instead of eating it. See
+    // `Staged::stage_a_live_fight`.
+    staged.stage_the_zone();
     let engine = Engine::start();
     // `Europe/Berlin` is east of UTC in every season, so it can never carry a half-hour offset: the
     // name is discarded, the offset stands, and the resolved zone has no name of its own.
@@ -442,7 +511,10 @@ fn a_host_that_can_only_name_an_offset_still_keeps_a_live_fight_open() {
         }),
     );
 
-    let answer = snapshot(&mut client, 2, Some(full()));
+    staged.stage_a_live_fight();
+
+    let mut id = 2;
+    let answer = until_the_fight_lands(&mut client, &mut id);
     assert_eq!(answer.snapshot["hydrating"], serde_json::json!(false));
     assert_eq!(
         answer.snapshot["segments"][0]["kind"],
