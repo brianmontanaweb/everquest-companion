@@ -2621,6 +2621,84 @@ a round number.
     simply cannot block a merge while it carries a flake that reproduces on
     `windows-latest`. Promote it when the chip lands.
 
+## Flake ledger — the engined combat live-meter row, sighting 3 and the chip
+
+  - `engined tests/combat.rs` live-meter tests · **SIGHTING 3 — 2026-09-20, run
+    35538182400, `push` on `main` after PR #13 merged.** One failure:
+    `a_host_that_can_only_name_an_offset_still_keeps_a_live_fight_open`,
+    `left: "fight"` / `right: "current"` — the 2026-09-04 signature exactly.
+    PR #13 touched `site/` and `tests/siteRepo.test.mts` and NO Rust, and the
+    same commit's `pull_request` run was green three hours earlier, so the
+    change under test is excluded from both sides.
+
+  - **THE BUDGET, MEASURED RATHER THAN INFERRED.** The staged session starts
+    `wall_clock_ms() - 8_000` and its last combat line sits at `+6 s`, so the
+    fight's last presence is ~2 s old the moment it is written; `PRESENCE_GONE_MS`
+    is 20 s. That leaves ~18 s of REAL time between `Staged::zoned` and the
+    snapshot. Instrumented locally, phase by phase: `stage_a_fight` 0.2 ms,
+    `Engine::start()` 10.5 ms, **`live_client_with` 4.809 s**, `snapshot`
+    21 ms. The go-live wait is the whole of it. On CI the combat binary started
+    at 21:19:28.05 and the assertion blew at 21:19:46.37 — 18.3 s, across the
+    line; the green PR run did the same suite in 44.33 s against the red run's
+    47.74 s, so an 8% slowdown is the entire difference between the two.
+
+  - **THE JOS-531 FIX WAS A NEAR NO-OP, and this is why the row recurred.** That
+    follow-up resolved the 2026-08-30 row by starting the engine BEFORE the live
+    fixture is stamped. The measurement above prices that at the ~10 ms the
+    spawn costs: the 4.8 s that matters is the go-live wait, which follows the
+    stamping in either ordering. Two sightings landed after it was marked
+    resolved. The old row is reopened and pointed here.
+
+  - **THE CHIP, PARTLY LANDED (2026-09-20).** `Staged` now keeps `back_ms` and
+    can re-anchor: `stage_the_zone()` writes the zone line alone before the
+    attach — the log must EXIST and fold, since an attach that cannot open its
+    file leaves the world idle and the go-live wait never returns — and
+    `stage_a_live_fight()` re-reads the wall clock and appends the fight once
+    the engine is live. The window then begins where the measurement does:
+    budget consumed falls from 4.809 s to 435 ms. `until_the_fight_lands`
+    HOLDS the precondition the way the sky-filters row was resolved rather than
+    sleeping on it — `TAIL_NAP` is 25 ms, so a snapshot taken straight after an
+    append answers with the zone segment alone. It spins ONLY on "the fold has
+    not read it yet": a fight that landed and closed returns on the first pass
+    with its `kind` for the caller to assert on. Every assertion in the
+    converted test is unchanged, per the respawn-timers precedent.
+
+  - **PROVEN FROM BOTH SIDES.** 25 s of injected slowness BEFORE the window —
+    well past the 20 s the old arrangement died on — passes. The same 25 s
+    INSIDE the window still fails with `left: "fight"` / `right: "current"`, so
+    the assertion did not go vacuous. Gates green at the cut: `cargo fmt --all
+    --check`, `cargo clippy --all-targets --all-features -- -D warnings`,
+    `cargo test --workspace` 844 passed / 0 failed.
+
+  - **WHY IT DOES NOT GENERALISE — three tests still carry the mechanism.**
+    `a_live_meter_is_stamped_with_the_engines_own_clock_and_agrees_with_a_second_fold`
+    was converted, FAILED, and was reverted: its claim is that the engine's
+    object equals an oracle fold of the same bytes, and `recent` is a live-only
+    feed — staged on the tail the engine reported 4 recent events against the
+    oracle's 0, every other field in two ~4 KB objects identical. Excluding
+    `recent` would widen the assertion and gut the claim, so the reason is
+    recorded in-file instead.
+    `a_live_meter_window_updates_the_cells_that_moved_and_no_others` and
+    `a_new_row_enters_the_meter_as_an_insert_anchored_on_one_the_client_holds`
+    observe go-live through the subscription's reset sequence (epoch 1 empty,
+    epoch 2 carrying the meter); staging after go-live empties the epoch-2
+    reset and delivers the fight as a diff, inverting
+    `assert_eq!(landed.rows.len(), 2)`. That is a restructure of what those
+    tests assert, not a staging move, so it is left for the follow-up chip.
+    `a_snapshot_taken_mid_fold_is_stamped_with_the_logs_own_clock` must NOT be
+    converted at all — it stages the committed fixture and asserts DURING the
+    scan, which is the state going live destroys.
+    `a_live_meter_closes_a_fight_the_log_stopped_talking_about` uses
+    `Staged::stale` and wants the fight closed; slow startup only helps it.
+
+  - **CONSEQUENCE FOR CI, UNRESOLVED.** Sighting 2 recorded the owner revising
+    `engine` out of the required checks (2026-09-12) with "promote it when the
+    chip lands". Branch protection on `main` read
+    `["build", "verify", "engine", "release"]` on 2026-09-20, so it was
+    promoted while the chip was still open. With `enforce_admins: false` that
+    is the shape where a false red invites an unrecorded bypass. Decide it
+    deliberately rather than by drift.
+
 ## Flake ledger — the respawn-timers row, resolved, full history
 
 <!-- Moved verbatim from AGENTS.md (lines 127-136 at the 2026-08-13 collapse). -->
