@@ -1,78 +1,205 @@
-// THE grouped-loot sort orders, pure — the same shape questSort.ts has for the Quests tab.
-// `groupLootRows` tallies and then calls exactly one comparator from here, so a new order is a
-// case in this file and a line in LOOT_SORT_OPTIONS, and nothing else moves.
+// THE Loot tables' sort orders, pure — both tables, driven by their column headers.
 //
-// THERE IS NO SECOND PASS ANY MORE (JOS-345). The grouped table used to re-sort the comparator's
-// output by a favorited flag, pinning starred items into a block on top; the star column left the
-// loot window with the owner's ruling, and its ordering rule went with the control that set it —
-// a pin nobody can see or toggle from this window is just an order the reader cannot explain.
-// What the table shows now is EXACTLY what the chosen comparator says, which is what the Sort
-// control has always claimed it was.
+// Each table's order is a `ColumnSort` ({ key, dir }) that a header click produces through
+// `nextSort`. This module owns every comparator, so the renderer's only `.sort()` over loot rows
+// lives here, over the structural `Sortable*` shapes below — owner ruling 4's boundary law, ahead
+// of JOS-459 cutover ledger item 3 (no served view source answers this yet).
 //
-// WHY THIS IS ITS OWN MODULE and not a few lines inside lootGrouping.ts: lootGrouping imports
-// lootItemData → data/index → `@shared/profiles`, a VALUE import that does not resolve outside
-// the bundler, so a node test can never load it (measured — the import throws MODULE_NOT_FOUND).
-// The orders are the part worth pinning, so they live where `npm test` can reach them. Same
-// reasoning questSort.test.mts records for the quest orders.
+// WHY THIS IS ITS OWN MODULE: lootGrouping imports lootItemData → data/index → `@shared/profiles`, a
+// VALUE import that does not resolve outside the bundler, so node can never load it. The orders are
+// the part worth pinning, so they live where `npm test` can reach them.
 //
-// EVERY COMPARATOR IS TOTAL. Each one bottoms out in the item name, so the table has one
-// deterministic order per key and never shuffles on re-render. That matters more here than it
-// looks: EQ log timestamps are SECOND-resolution, so a corpse that yields three items writes
-// three lines with the SAME `ts` — ties under "last looted" are the common case, not the corner.
-// Before this the count order fell through to Map insertion order on a full tie; now it does not.
+// EVERY COMPARATOR IS TOTAL. EQ log timestamps are SECOND-resolution, so a corpse that yields three
+// items writes three lines with the same `ts` — ties are the common case. Each comparator runs its
+// column, then fixed tiebreaks, and the grouped one bottoms out in the unique row key.
+//
+// BLANK TEXT SORTS LAST in both directions: an item with no known source is not "before A", and
+// flipping to Z→A must not drag every blank row to the top.
 
-/**
- * The part of a grouped row every comparator reads — structural, like questSort's ItemWhere, so
- * the sort takes `GroupRow` without this module importing (and dragging in) lootGrouping.
- */
+export type SortDir = 'asc' | 'desc'
+
+export interface ColumnSort<K extends string> {
+  key: K
+  dir: SortDir
+}
+
+/** The grouped table's columns, in header order. */
+export type GroupedSortKey = 'item' | 'count' | 'inv' | 'source' | 'zones' | 'last'
+/** The flat ledger's columns, in header order. */
+export type FlatSortKey = 'time' | 'item' | 'from' | 'zone'
+
+/** The direction a column takes on its FIRST click: numbers and times biggest/newest first, words
+ *  A→Z. A second click on the active column flips it. */
+export const GROUPED_FIRST_DIR: Readonly<Record<GroupedSortKey, SortDir>> = {
+  item: 'asc',
+  count: 'desc',
+  inv: 'desc',
+  source: 'asc',
+  zones: 'desc',
+  last: 'desc',
+}
+export const FLAT_FIRST_DIR: Readonly<Record<FlatSortKey, SortDir>> = {
+  time: 'desc',
+  item: 'asc',
+  from: 'asc',
+  zone: 'asc',
+}
+
+/** Times looted stays the grouped default — "what do I keep picking up" (JOS-91). */
+export const DEFAULT_GROUPED_SORT: ColumnSort<GroupedSortKey> = { key: 'count', dir: 'desc' }
+/** The flat ledger is chronological by default: newest first, exactly as it always was. */
+export const DEFAULT_FLAT_SORT: ColumnSort<FlatSortKey> = { key: 'time', dir: 'desc' }
+
+/** What a header click does: the active column flips; any other column takes its first-click
+ *  direction. */
+export function nextSort<K extends string>(
+  current: ColumnSort<K>,
+  clicked: K,
+  firstDir: Readonly<Record<K, SortDir>>,
+): ColumnSort<K> {
+  if (current.key === clicked) return { key: clicked, dir: current.dir === 'asc' ? 'desc' : 'asc' }
+  return { key: clicked, dir: firstDir[clicked] }
+}
+
+/** The part of a grouped row the comparators read — structural, so this module never imports
+ *  lootGrouping. `key` is unique per row and is the final tiebreak. */
 export interface SortableLootRow {
+  key: string
   item: string
   /** Times looted — stacked loots count their stack size. */
   count: number
   /** Epoch ms of the newest loot in the group. */
   last: number
+  topSource?: string
+  zoneCount: number
 }
 
-export type LootSortKey = 'count' | 'recent'
-
-/**
- * Times looted stays the default: the grouped table's headline question is "what do I keep
- * picking up", and JOS-91 added recency beside it rather than in front of it.
- */
-export const DEFAULT_LOOT_SORT: LootSortKey = 'count'
-
-export const LOOT_SORT_OPTIONS: readonly { value: LootSortKey; label: string }[] = [
-  { value: 'count', label: 'Times looted' },
-  { value: 'recent', label: 'Last looted' },
-]
-
-export function isLootSortKey(v: unknown): v is LootSortKey {
-  return LOOT_SORT_OPTIONS.some((o) => o.value === v)
+/** The part of a loot event the flat ledger's comparators read. */
+export interface SortableLootEvent {
+  ts: number
+  item: string
+  source?: string
+  zone?: string
 }
 
-/** The universal last resort. Item names are the group identity, so this is total. */
-function byItem(a: SortableLootRow, b: SortableLootRow): number {
-  return a.item.localeCompare(b.item)
+type Cmp<T> = (a: T, b: T) => number
+
+function byNum(a: number, b: number, dir: SortDir): number {
+  return dir === 'asc' ? a - b : b - a
 }
 
-export function compareLootRows(
-  sort: LootSortKey,
-): (a: SortableLootRow, b: SortableLootRow) => number {
-  switch (sort) {
-    // The order this table always had, now with a name tiebreak underneath it.
+function isBlank(s: string | undefined): s is undefined {
+  return s === undefined || s === ''
+}
+
+/** Text in the chosen direction, blanks last whichever direction that is. */
+function byText(a: string | undefined, b: string | undefined, dir: SortDir): number {
+  if (isBlank(a) || isBlank(b)) return isBlank(a) === isBlank(b) ? 0 : isBlank(a) ? 1 : -1
+  return dir === 'asc' ? a.localeCompare(b) : b.localeCompare(a)
+}
+
+/** Code-unit order: never 0 for two different strings, which localeCompare can be. */
+function byCodeUnits(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0
+}
+
+function groupedPrimary<T extends SortableLootRow>(
+  sort: ColumnSort<GroupedSortKey>,
+  invOf: (r: T) => number,
+): Cmp<T> {
+  const d = sort.dir
+  switch (sort.key) {
+    case 'item':
+      return (a, b) => byText(a.item, b.item, d)
     case 'count':
-      return (a, b) => b.count - a.count || b.last - a.last || byItem(a, b)
-    // "What did I just pick up" — newest group first. Count breaks the second-resolution ties
-    // before the name does, so a corpse's three simultaneous drops read most-looted first.
-    case 'recent':
-      return (a, b) => b.last - a.last || b.count - a.count || byItem(a, b)
+      return (a, b) => byNum(a.count, b.count, d)
+    case 'inv':
+      return (a, b) => byNum(invOf(a), invOf(b), d)
+    case 'source':
+      return (a, b) => byText(a.topSource, b.topSource, d)
+    case 'zones':
+      return (a, b) => byNum(a.zoneCount, b.zoneCount, d)
+    case 'last':
+      return (a, b) => byNum(a.last, b.last, d)
   }
 }
 
-/** Non-mutating sort — the caller's array is tally output it may still be holding. */
-export function sortLootRows<T extends SortableLootRow>(
+/** Non-mutating. `invOf` is the "In inventory (est.)" figure, the same one the row displays. */
+export function sortGroupedRows<T extends SortableLootRow>(
   rows: readonly T[],
-  sort: LootSortKey,
+  sort: ColumnSort<GroupedSortKey>,
+  invOf: (r: T) => number,
 ): T[] {
-  return [...rows].sort(compareLootRows(sort))
+  const primary = groupedPrimary(sort, invOf)
+  return [...rows].sort(
+    (a, b) =>
+      primary(a, b) ||
+      b.count - a.count ||
+      b.last - a.last ||
+      a.item.localeCompare(b.item) ||
+      byCodeUnits(a.key, b.key),
+  )
+}
+
+function flatPrimary<T extends SortableLootEvent>(sort: ColumnSort<FlatSortKey>): Cmp<T> {
+  const d = sort.dir
+  switch (sort.key) {
+    case 'time':
+      return (a, b) => byNum(a.ts, b.ts, d)
+    case 'item':
+      return (a, b) => byText(a.item, b.item, d)
+    case 'from':
+      return (a, b) => byText(a.source, b.source, d)
+    case 'zone':
+      return (a, b) => byText(a.zone, b.zone, d)
+  }
+}
+
+/** Non-mutating. Newest first, then item name, under whatever column was chosen. Rows equal on all
+ *  of that are indistinguishable on screen, and Array#sort is stable, so they keep input order. */
+export function sortFlatEvents<T extends SortableLootEvent>(
+  rows: readonly T[],
+  sort: ColumnSort<FlatSortKey>,
+): T[] {
+  const primary = flatPrimary<T>(sort)
+  return [...rows].sort((a, b) => primary(a, b) || b.ts - a.ts || a.item.localeCompare(b.item))
+}
+
+// ---- persistence ------------------------------------------------------------------------------
+
+const GROUPED_KEYS = Object.keys(GROUPED_FIRST_DIR) as GroupedSortKey[]
+const FLAT_KEYS = Object.keys(FLAT_FIRST_DIR) as FlatSortKey[]
+
+/** Stored values are JSON; the dropdown era stored a bare word, which JSON.parse rejects. */
+function parseStored(raw: string | null): unknown {
+  if (raw === null) return null
+  try {
+    return JSON.parse(raw) as unknown
+  } catch {
+    return raw
+  }
+}
+
+function sanitizeColumnSort<K extends string>(
+  v: unknown,
+  keys: readonly K[],
+  fallback: ColumnSort<K>,
+): ColumnSort<K> {
+  if (typeof v !== 'object' || v === null) return fallback
+  const { key, dir } = v as { key?: unknown; dir?: unknown }
+  if (!keys.includes(key as K) || (dir !== 'asc' && dir !== 'desc')) return fallback
+  return { key: key as K, dir }
+}
+
+/** `eq.lootSort`. The Sort dropdown (JOS-91) stored `count` or `recent`; both migrate. */
+export function sanitizeGroupedSort(raw: string | null): ColumnSort<GroupedSortKey> {
+  const v = parseStored(raw)
+  if (v === 'count') return DEFAULT_GROUPED_SORT
+  if (v === 'recent') return { key: 'last', dir: 'desc' }
+  return sanitizeColumnSort(v, GROUPED_KEYS, DEFAULT_GROUPED_SORT)
+}
+
+/** `eq.lootFlatSort`. */
+export function sanitizeFlatSort(raw: string | null): ColumnSort<FlatSortKey> {
+  return sanitizeColumnSort(parseStored(raw), FLAT_KEYS, DEFAULT_FLAT_SORT)
 }

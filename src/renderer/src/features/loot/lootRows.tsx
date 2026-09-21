@@ -8,7 +8,7 @@ import { formatDateTime } from '../../lib/formatDate'
 import type { InventoryRow } from '../inventory/reconcile'
 import { isQuestItem } from './lootItemData'
 import { KnowledgeBadge } from './KnowledgeBadge'
-import type { GroupRow } from './lootGrouping'
+import { inventoryEstimate, type GroupRow } from './lootGrouping'
 
 // Fixed dense-row height (px) for the windowed tables (MUI Table size="small").
 export const ROW_HEIGHT = 37
@@ -179,7 +179,7 @@ export const GroupedRow = memo(function GroupedRow({
         {g.invOnly ? '-' : g.count}
       </TableCell>
       <TableCell align="right">
-        <InventoryEstimate n={g.invOnly ? (g.owned ?? 0) : (inv?.net ?? 0)} />
+        <InventoryEstimate n={inventoryEstimate(g, inv)} />
       </TableCell>
       <TableCell sx={{ color: 'text.secondary' }}>{g.topSource ?? '-'}</TableCell>
       <TableCell align="right" sx={{ color: 'text.secondary' }}>

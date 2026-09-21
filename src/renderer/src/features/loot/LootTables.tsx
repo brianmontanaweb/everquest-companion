@@ -6,6 +6,8 @@ import type { Row } from '@shared/dataServer/protocol.generated'
 import type { WindowedRows } from '../../lib/useWindowedRows'
 import type { InventoryRow } from '../inventory/reconcile'
 import type { GroupRow, KeyedLoot } from './lootGrouping'
+import { SortHeadCell } from './LootSortHeader'
+import type { ColumnSort, GroupedSortKey } from './lootSort'
 import { EngineFlatRow, FlatRow, GroupedRow } from './lootRows'
 
 /**
@@ -37,12 +39,19 @@ function PadRow({ height, colSpan }: { height: number; colSpan: number }): JSX.E
   )
 }
 
+/** Each table's header sort and what a header click does. The view owns both (persisted). */
+export interface LootTableSorting {
+  grouped: ColumnSort<GroupedSortKey>
+  onGrouped: (k: GroupedSortKey) => void
+}
+
 /** What both tables need from the view to draw a row. */
 export interface LootTableContext {
   win: WindowedRows
   knowledgeByKey: Map<string, ItemKnowledge>
   invByKey: Map<string, InventoryRow>
   onSelect: (item: string) => void
+  sorting: LootTableSorting
 }
 
 /**
@@ -68,6 +77,8 @@ export function LootTable({
         knowledgeByKey={ctx.knowledgeByKey}
         invByKey={ctx.invByKey}
         onSelect={ctx.onSelect}
+        sort={ctx.sorting.grouped}
+        onSort={ctx.sorting.onGrouped}
       />
     )
   }
@@ -87,32 +98,68 @@ export function GroupedLootTable({
   knowledgeByKey,
   invByKey,
   onSelect,
+  sort,
+  onSort,
 }: {
   rows: GroupRow[]
   win: WindowedRows
   knowledgeByKey: Map<string, ItemKnowledge>
   invByKey: Map<string, InventoryRow>
   onSelect: (item: string) => void
+  sort: ColumnSort<GroupedSortKey>
+  onSort: (k: GroupedSortKey) => void
 }): JSX.Element {
   return (
     <Table size="small" stickyHeader sx={FIXED_TABLE}>
       <TableHead>
         <TableRow>
           {/* No width: the item NAME takes whatever the stated columns leave. */}
-          <TableCell>Item</TableCell>
-          <TableCell align="right" sx={{ width: '11%' }}>
-            Times looted
-          </TableCell>
+          <SortHeadCell column="item" label="Item" sort={sort} onSort={onSort} testId="loot-sort" />
+          <SortHeadCell
+            column="count"
+            label="Times looted"
+            align="right"
+            width="11%"
+            sort={sort}
+            onSort={onSort}
+            testId="loot-sort"
+          />
           {/* The header carries the caveat as ONE WORD (JOS-127 + the house tooltip diet): a
               popper on a sticky header hangs over the first rows, and every row is a control. */}
-          <TableCell align="right" sx={{ width: '13%' }}>
-            In inventory (est.)
-          </TableCell>
-          <TableCell sx={{ width: '20%' }}>Top source</TableCell>
-          <TableCell align="right" sx={{ width: '8%' }}>
-            Zones
-          </TableCell>
-          <TableCell sx={{ width: '15%' }}>Last looted</TableCell>
+          <SortHeadCell
+            column="inv"
+            label="In inventory (est.)"
+            align="right"
+            width="13%"
+            sort={sort}
+            onSort={onSort}
+            testId="loot-sort"
+          />
+          <SortHeadCell
+            column="source"
+            label="Top source"
+            width="20%"
+            sort={sort}
+            onSort={onSort}
+            testId="loot-sort"
+          />
+          <SortHeadCell
+            column="zones"
+            label="Zones"
+            align="right"
+            width="8%"
+            sort={sort}
+            onSort={onSort}
+            testId="loot-sort"
+          />
+          <SortHeadCell
+            column="last"
+            label="Last looted"
+            width="15%"
+            sort={sort}
+            onSort={onSort}
+            testId="loot-sort"
+          />
         </TableRow>
       </TableHead>
       <TableBody>

@@ -1,20 +1,26 @@
 /**
- * Headless Electron integration test for THE LOOT SORT CONTROL BEING REACHABLE (JOS-127).
+ * Headless Electron integration test for THE LOOT SORT HEADERS BEING REACHABLE (JOS-127).
  *
- * THE BUG, as a 0.14.0 user hit it: you cannot change the Loot page's order off "Last looted".
- * The Sort select is in the toolbar; the surfaces stacked immediately BELOW it — the
+ * THE BUG, as a 0.14.0 user hit it: you could not change the Loot page's order off "Last looted".
+ * The Sort select sat in the toolbar; the surfaces stacked immediately BELOW it — the
  * notable-pickups strip and the first rows of the ledger — anchored `placement="top"`,
  * INTERACTIVE item cards (`lib/KnownItemTooltip`, up to 380px wide). A card opened upward
  * across the toolbar, and because an interactive MUI tooltip keeps `pointer-events: auto` while
  * it is up, the click aimed at the select landed on the card instead. The owner's direction was
  * removal: fewer tooltips, and never text that can sit over an interactive control.
  *
+ * THE TOOLBAR SELECT ITSELF IS GONE NOW (2026-09-21): sorting moved into the grouped table's own
+ * column headers (`SortHeadCell`, lootSort.ts), so the control this spec must prove reachable is
+ * the sort header row, not a dropdown. The JOS-127 history above still applies — the surfaces that
+ * used to eat the click did not go away when the select did — so the spec still hovers the same
+ * anchors and checks the same geometry, now against the header.
+ *
  * WHY THIS NEEDS A BROWSER AT ALL. `tests/tooltipCursor.test.mts` already pins the code shape —
  * no file that draws the ledger may mount a popper — and that guard is the one that cannot rot.
  * But "the code mounts no Tooltip" and "the control is clickable" are different claims, and only
  * the second is what the user reported. This spec asserts the second directly: hover the exact
- * anchors that used to open the card, then ask the DOM what is actually on top of the Sort
- * control (`elementFromPoint`), then change the order with a real click.
+ * anchors that used to open the card, then ask the DOM what is actually on top of the default
+ * sort header (`elementFromPoint`), then change the order with real clicks.
  *
  * WHAT IT READS (JOS-29): `tests/fixtures/e2e-deep-link.log` — the committed fixture whose loot
  * lines already fill this ledger for `deep-link-back.e2e.mts`. Reusing it costs no new cut and no
@@ -27,7 +33,7 @@
  * POPPER COUNT is the one that reproduced. The `elementFromPoint` check beside it passed even
  * while the card was up, because where a popper lands is a function of the window's size and this
  * window is a fixed 1280 that the owner's is not. So the geometry check is the statement of what
- * the user is owed (their click reaches the select) and the count is the tripwire that catches
+ * the user is owed (their click reaches the header) and the count is the tripwire that catches
  * the regression at any width. Neither is redundant, and neither is the whole guard —
  * `tests/tooltipCursor.test.mts` pins the code shape that makes both true.
  *
@@ -46,7 +52,6 @@ import {
   hoverAt,
   note,
   reportRun,
-  settleCount,
   settleStable,
   waitHydrated,
 } from './appHarness.mjs'
@@ -65,10 +70,8 @@ const LOOT_LIST = '[data-testid="loot-list"]'
 const LOOT_ROW = '[data-testid="loot-row"]'
 /** The item NAME inside a row — the anchor the item card used to hang from. */
 const LOOT_NAME = '[data-testid="loot-item-name"]'
-const SORT = '[data-testid="loot-sort"]'
-/** The clickable half of a MUI `TextField select` — the div that opens the menu. */
-const SORT_BUTTON = `${SORT} [role="combobox"]`
-const SORT_OPTION = 'li[role="option"]'
+/** The default-sorted header — the control a hover card must never cover (JOS-127). */
+const SORT = '[data-testid="loot-sort-count"]'
 /** Any MUI tooltip popper, whoever mounted it. The ledger must mount none. */
 const POPPER = '.MuiTooltip-popper'
 /** A notable-pickups chip: the other anchor that used to open a card over the toolbar. */
@@ -82,12 +85,12 @@ function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
 }
 
 /**
- * What is REALLY on top of the Sort control right now — the tag of whatever
- * `elementFromPoint` finds at its centre, and whether that node is inside the control.
+ * What is REALLY on top of the default sort header right now — the tag of whatever
+ * `elementFromPoint` finds at its centre, and whether that node is inside the header.
  *
  * This is the assertion the ticket is about. A `countOf(POPPER) === 0` alone would pass on a
  * popper that mounted somewhere harmless; asking the geometry says the thing the user cares
- * about, which is that their click reaches the select.
+ * about, which is that their click reaches the header.
  */
 function whatCoversSort(page: Page): Promise<{ tag: string; inside: boolean }> {
   return page.evaluate((sel) => {
@@ -103,12 +106,142 @@ function whatCoversSort(page: Page): Promise<{ tag: string; inside: boolean }> {
   }, SORT)
 }
 
-/** The order the select is showing, as the user reads it. */
-function sortValue(page: Page): Promise<string> {
+/** What the header row says about sorting, read from the DOM the user sees. */
+function headerState(
+  page: Page,
+  sel: string,
+): Promise<{ total: number; visibleIcons: number; active: string[] }> {
+  return page.evaluate((s) => {
+    const labels = [...document.querySelectorAll<HTMLElement>(s)]
+    const visibleIcons = labels.filter((l) => {
+      const icon = l.querySelector('.MuiTableSortLabel-icon')
+      return icon !== null && parseFloat(getComputedStyle(icon).opacity) > 0.2
+    }).length
+    const active = labels
+      .filter((l) => l.dataset.active === 'true')
+      .map((l) => l.dataset.testid ?? '')
+    return { total: labels.length, visibleIcons, active }
+  }, sel)
+}
+
+/**
+ * Whether a sortable header's label fits inside its `<th>` — the fixed-layout columns each state a
+ * percentage width, and a long label plus its always-visible icon must still fit without clipping.
+ */
+function headerFit(
+  page: Page,
+  sel: string,
+): Promise<{ testId: string; scrollWidth: number; clientWidth: number }[]> {
+  return page.evaluate((s) => {
+    const labels = [...document.querySelectorAll<HTMLElement>(s)]
+    return labels.map((l) => ({
+      testId: l.dataset.testid ?? '',
+      scrollWidth: l.scrollWidth,
+      clientWidth: l.closest('th')?.clientWidth ?? 0,
+    }))
+  }, sel)
+}
+
+/** `aria-sort` on the <th> that holds a label — what assistive tech is told. */
+function ariaSortOf(page: Page, label: string): Promise<string | null> {
   return page.evaluate(
-    (sel) => (document.querySelector(sel) as HTMLElement | null)?.innerText.trim() ?? '',
-    SORT_BUTTON,
+    (s) => document.querySelector(s)?.closest('th')?.getAttribute('aria-sort') ?? null,
+    label,
   )
+}
+
+/** The item names currently painted, top to bottom. */
+function visibleNames(page: Page): Promise<string[]> {
+  return page.evaluate(
+    (s) => [...document.querySelectorAll<HTMLElement>(s)].map((n) => n.innerText.trim()),
+    LOOT_NAME,
+  )
+}
+
+function isAtoZ(names: string[]): boolean {
+  return names.every((n, i) => i === 0 || (names[i - 1] ?? '').localeCompare(n) <= 0)
+}
+
+/**
+ * THE FEATURE, END TO END: every header says it sorts (an icon visible WITHOUT hovering), a click
+ * sorts by that column, a second click flips it, and the choice is remembered.
+ */
+async function stepHeaderSort(
+  page: Page,
+  prefix: string,
+  expected: number,
+  defaultKey: string,
+): Promise<void> {
+  const sel = `[data-testid^="${prefix}-"]`
+  const s = await headerState(page, sel)
+  check(
+    `${prefix}: ${String(expected)} sortable headers`,
+    s.total === expected,
+    `found ${String(s.total)}`,
+  )
+  check(
+    `${prefix}: every sortable header shows its icon without hovering`,
+    s.visibleIcons === s.total,
+    `${String(s.visibleIcons)}/${String(s.total)} visible`,
+  )
+  check(
+    `${prefix}: the default sort is ${defaultKey}`,
+    s.active.join() === `${prefix}-${defaultKey}`,
+    s.active.join(),
+  )
+
+  // HEADER FIT: a long label plus its always-visible ⇅ must not be clipped by its column's stated
+  // width — a clipped header reads as a bug even though nothing here is functionally broken.
+  const fit = await headerFit(page, sel)
+  const clipped = fit.filter((f) => f.scrollWidth > f.clientWidth)
+  check(
+    `${prefix}: no sortable header label is clipped by its column`,
+    clipped.length === 0,
+    clipped
+      .map(
+        (f) =>
+          `${f.testId} scrollWidth=${String(f.scrollWidth)}>clientWidth=${String(f.clientWidth)}`,
+      )
+      .join(', '),
+  )
+  const invFit = fit.find((f) => f.testId === `${prefix}-inv`)
+  if (invFit) {
+    console.log(
+      `${prefix}: "In inventory (est.)" label scrollWidth=${String(invFit.scrollWidth)} th.clientWidth=${String(invFit.clientWidth)}`,
+    )
+  }
+
+  const item = `[data-testid="${prefix}-item"]`
+  await page.click(item, { timeout: 15_000 })
+  const active = await settleStable(async () => (await headerState(page, sel)).active.join(), {
+    timeoutMs: 6000,
+  })
+  check(`${prefix}: clicking Item makes it the sort`, active === `${prefix}-item`, active)
+  check(
+    `${prefix}: …ascending, and the <th> says so`,
+    (await ariaSortOf(page, item)) === 'ascending',
+  )
+  const names = await settleStable(() => visibleNames(page), { timeoutMs: 6000 })
+  check(
+    `${prefix}: …and the painted rows are A→Z`,
+    names.length > 0 && isAtoZ(names),
+    names.slice(0, 5).join(' | '),
+  )
+
+  await page.click(item, { timeout: 15_000 })
+  const flipped = await settleStable(() => ariaSortOf(page, item), { timeoutMs: 6000 })
+  check(
+    `${prefix}: a second click flips it to descending`,
+    flipped === 'descending',
+    String(flipped),
+  )
+
+  // Leave the table in its default order — the slice/session steps after this read the ledger.
+  await page.click(`[data-testid="${prefix}-${defaultKey}"]`, { timeout: 15_000 })
+  const restored = await settleStable(async () => (await headerState(page, sel)).active.join(), {
+    timeoutMs: 6000,
+  })
+  check(`${prefix}: back on the default sort`, restored === `${prefix}-${defaultKey}`, restored)
 }
 
 /** Land, let the startup replay finish, and open the Loot tab on its ledger. */
@@ -124,11 +257,11 @@ async function stepReady(page: Page): Promise<void> {
   if (!check('the Loot tab opens on its ledger', await appears(page, LOOT_LIST))) {
     throw new Error('no loot ledger — nothing below can be asserted')
   }
-  check('…with the grouped table’s Sort control mounted', await appears(page, SORT))
+  check('…with the grouped table’s sortable headers mounted', await appears(page, SORT))
 }
 
 /**
- * HOVER THE ANCHORS THAT USED TO EAT THE CLICK, then look at what is over the control.
+ * HOVER THE ANCHORS THAT USED TO EAT THE CLICK, then look at what is over the header.
  *
  * `settleStable` on the popper count is how the absence is asserted (wave E3's law): wait for the
  * reading to stop moving — which covers the shared Tooltip's `enterDelay` several times over —
@@ -151,45 +284,10 @@ async function stepNothingCoversSort(page: Page, sel: string, what: string): Pro
   )
   const cover = await whatCoversSort(page)
   check(
-    `…and the Sort control is still the topmost thing at its own centre (${what})`,
+    `…and the sort header is still the topmost thing at its own centre (${what})`,
     cover.inside,
     `elementFromPoint hit <${cover.tag}>`,
   )
-}
-
-/**
- * THE USER'S SENTENCE, END TO END: change the order and have it change.
- *
- * Both orders are asserted by NAME rather than by index, because "cannot get off last-looted" is
- * the report — the value has to actually become the other one.
- */
-async function stepSortChanges(page: Page): Promise<void> {
-  const before = await sortValue(page)
-  if (!check('the Sort control states an order to begin with', before.length > 0, before)) return
-  await page.click(SORT_BUTTON, { timeout: 15_000 })
-  const options = await settleCount(page, SORT_OPTION, 2, { timeoutMs: 10_000 })
-  if (!check('clicking it opens the order menu', options >= 2, `options=${String(options)}`)) return
-
-  const labels = await page.evaluate(
-    (sel) => [...document.querySelectorAll(sel)].map((o) => (o as HTMLElement).innerText.trim()),
-    SORT_OPTION,
-  )
-  const other = labels.find((l) => l !== before)
-  if (
-    !check(
-      '…offering an order other than the one already chosen',
-      other != null,
-      labels.join(' | '),
-    )
-  )
-    return
-
-  await page.click(`${SORT_OPTION} >> text="${other ?? ''}"`, { timeout: 15_000 })
-  const after = await settleStable(() => sortValue(page), { timeoutMs: 6000 })
-  check('…and picking it actually changes the order', after === other, `${before} -> ${after}`)
-
-  const stored = await page.evaluate(() => localStorage.getItem('eq.lootSort'))
-  check('…and the choice is remembered for the next launch', stored != null, String(stored))
 }
 
 /** The rows are still the drill-down's way in — removing the hover must not have cost the click. */
@@ -226,7 +324,13 @@ async function main(): Promise<void> {
     await stepReady(page)
     await stepNothingCoversSort(page, LOOT_NAME, 'first row’s item name')
     await stepNothingCoversSort(page, PICKUP, 'notable-pickups chip')
-    await stepSortChanges(page)
+    await stepHeaderSort(page, 'loot-sort', 6, 'count')
+    const stored = await page.evaluate(() => localStorage.getItem('eq.lootSort'))
+    check(
+      'the grouped sort is remembered for the next launch',
+      stored === '{"key":"count","dir":"desc"}',
+      String(stored),
+    )
     // BEFORE the drill: that step takes the pane over and the ledger unmounts with it. The slice
     // control is a ledger surface, and it must be read in the state a user first sees.
     await stepLootSlice(page)

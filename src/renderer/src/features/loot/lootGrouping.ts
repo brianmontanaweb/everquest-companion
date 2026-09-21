@@ -2,7 +2,6 @@ import type { LootDisposition, LootEvent } from '@shared/types'
 import { isAcquisition } from '@shared/lootDisposition'
 import type { InventoryRow } from '../inventory/reconcile'
 import { questItemNames } from './lootItemData'
-import { DEFAULT_LOOT_SORT, sortLootRows, type LootSortKey } from './lootSort'
 import { buildOwnedRows } from './ownedItems'
 
 // A loot event with two precomputed keys — computed ONCE per history change so the
@@ -99,20 +98,10 @@ function tallyGroups(events: KeyedLoot[]): Map<string, Group> {
   return map
 }
 
-/**
- * One row per item, in the reader's chosen order (lootSort.ts) — and in nothing else.
- *
- * IT USED TO CARRY A SECOND PASS (JOS-345). Favorited items were re-sorted into a block on top,
- * stably, so the chosen order survived inside each block. The star that set the flag has left this
- * window on the owner's ruling, and the pin left with it: an order the reader has no control over
- * is an order the reader cannot account for. One comparator, one order, and every comparator in
- * lootSort.ts is total — so the list is deterministic without the pass that used to follow it.
- */
-export function groupLootRows(
-  events: KeyedLoot[],
-  sort: LootSortKey = DEFAULT_LOOT_SORT,
-): GroupRow[] {
-  const list: GroupRow[] = [...tallyGroups(events).entries()].map(([key, g]) => {
+/** The grouped rows in TALLY order — the table's order is applied afterwards by `useLootRows`,
+ *  together with the inventory-only tail, so one comparator orders everything the table shows. */
+export function groupLootRows(events: KeyedLoot[]): GroupRow[] {
+  return [...tallyGroups(events).entries()].map(([key, g]) => {
     const topSource = [...g.sources.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
     // The group's dominant disposition — shown only when ALL of its rows share one, so a
     // mixed item (some kept, some sold) stays unlabeled rather than mislabeled.
@@ -128,7 +117,15 @@ export function groupLootRows(
       disposition,
     }
   })
-  return sortLootRows(list, sort)
+}
+
+/**
+ * THE "In inventory (est.)" figure for one grouped row — the ONE rule, read by the cell that shows
+ * it and by the sort that orders by it, so the two cannot disagree. A loot row reads its reconciled
+ * `net`; an inventory-only row reads what the export vouches for (JOS-160).
+ */
+export function inventoryEstimate(g: GroupRow, inv: InventoryRow | undefined): number {
+  return g.invOnly ? (g.owned ?? 0) : (inv?.net ?? 0)
 }
 
 /**
