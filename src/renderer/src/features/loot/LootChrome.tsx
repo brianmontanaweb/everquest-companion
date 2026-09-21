@@ -40,10 +40,13 @@ import { COUNT_SOURCE_OPTIONS } from '../inventory/countSource'
 import type { GroupRow } from './lootGrouping'
 import { LOOT_RATE_TITLE, lootRateText } from './lootRateText'
 import {
+  FLAT_FIRST_DIR,
   GROUPED_FIRST_DIR,
   nextSort,
+  sanitizeFlatSort,
   sanitizeGroupedSort,
   type ColumnSort,
+  type FlatSortKey,
   type GroupedSortKey,
   type SortDir,
 } from './lootSort'
@@ -67,6 +70,11 @@ function useStoredSort<K extends string>(
 /** The grouped table's header sort and its persistence, in one line of the view. */
 export function useGroupedLootSort(): [ColumnSort<GroupedSortKey>, (k: GroupedSortKey) => void] {
   return useStoredSort('eq.lootSort', sanitizeGroupedSort, GROUPED_FIRST_DIR)
+}
+
+/** The flat ledger's header sort. Its own key: the two tables have different columns. */
+export function useFlatLootSort(): [ColumnSort<FlatSortKey>, (k: FlatSortKey) => void] {
+  return useStoredSort('eq.lootFlatSort', sanitizeFlatSort, FLAT_FIRST_DIR)
 }
 
 /** When main's chokidar watch last re-read the `*-Inventory.txt` underneath us — surfaced quietly

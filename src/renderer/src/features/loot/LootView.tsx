@@ -52,6 +52,7 @@ import {
   LootSourceToggle,
   LootSummary,
   LootToolbar,
+  useFlatLootSort,
   useGroupedLootSort,
   type LootSource,
 } from './LootChrome'
@@ -282,6 +283,7 @@ export default function LootView(props: LootViewProps = {}): JSX.Element {
   const [groupByItem, setGroupByItem] = useState(true)
   const [questOnly, setQuestOnly] = useState(false)
   const [sort, onSort] = useGroupedLootSort()
+  const [flatSort, onFlatSort] = useFlatLootSort()
   const [showInventoryOnly, setShowInventoryOnly] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   // WHICH WORLD THIS LEDGER READS (JOS-484) — component state, because it is a comparison somebody
@@ -315,8 +317,9 @@ export default function LootView(props: LootViewProps = {}): JSX.Element {
     questOnly,
     showInventoryOnly,
     sort,
+    flatSort,
   })
-  const { events, grouped, groupRows, invOnlySource, invOnlyRows, invByKey } = rows
+  const { flatEvents, grouped, groupRows, invOnlySource, invOnlyRows, invByKey } = rows
 
   const onReload = async (): Promise<void> => setToast(await reloadInventory())
 
@@ -387,12 +390,12 @@ export default function LootView(props: LootViewProps = {}): JSX.Element {
         scrollRef={scrollRef}
         groupByItem={groupByItem}
         groupRows={groupRows}
-        events={events}
+        events={flatEvents}
         ctx={{
           knowledgeByKey,
           invByKey,
           onSelect: detail.open,
-          sorting: { grouped: sort, onGrouped: onSort },
+          sorting: { grouped: sort, onGrouped: onSort, flat: flatSort, onFlat: onFlatSort },
         }}
       />
 

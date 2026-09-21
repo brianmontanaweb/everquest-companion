@@ -76,6 +76,7 @@ const SORT = '[data-testid="loot-sort-count"]'
 const POPPER = '.MuiTooltip-popper'
 /** A notable-pickups chip: the other anchor that used to open a card over the toolbar. */
 const PICKUP = '[data-testid="loot-list"] .MuiChip-clickable'
+const GROUP_SWITCH = '[data-testid="loot-group"] input'
 
 function appears(page: Page, sel: string, ms = 20_000): Promise<boolean> {
   return page.waitForSelector(sel, { timeout: ms }).then(
@@ -248,6 +249,27 @@ async function stepHeaderSort(
   check(`${prefix}: back on the default sort`, restored === `${prefix}-${defaultKey}`, restored)
 }
 
+/** The same feature on the UNGROUPED ledger: turn grouping off, sort, restore, turn it back on. */
+async function stepFlatHeaderSort(page: Page): Promise<void> {
+  await page.click(GROUP_SWITCH, { timeout: 15_000 })
+  if (
+    !check(
+      'grouping off shows the flat ledger’s headers',
+      await appears(page, '[data-testid="loot-flat-sort-time"]'),
+    )
+  )
+    return
+  await stepHeaderSort(page, 'loot-flat-sort', 4, 'time')
+  const stored = await page.evaluate(() => localStorage.getItem('eq.lootFlatSort'))
+  check(
+    'the flat sort is remembered separately',
+    stored === '{"key":"time","dir":"desc"}',
+    String(stored),
+  )
+  await page.click(GROUP_SWITCH, { timeout: 15_000 })
+  check('grouping back on restores the grouped headers', await appears(page, SORT))
+}
+
 /** Land, let the startup replay finish, and open the Loot tab on its ledger. */
 async function stepReady(page: Page): Promise<void> {
   if (!check('the app lands on the Overview', await appears(page, GRID, 60_000))) {
@@ -335,6 +357,7 @@ async function main(): Promise<void> {
       stored === '{"key":"count","dir":"desc"}',
       String(stored),
     )
+    await stepFlatHeaderSort(page)
     // BEFORE the drill: that step takes the pane over and the ledger unmounts with it. The slice
     // control is a ledger surface, and it must be read in the state a user first sees.
     await stepLootSlice(page)

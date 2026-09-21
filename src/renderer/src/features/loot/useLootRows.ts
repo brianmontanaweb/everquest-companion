@@ -12,7 +12,13 @@ import {
   type KeyedLoot,
 } from './lootGrouping'
 import { selectInvOnly, showsInvOnly } from './ownedItems'
-import { sortGroupedRows, type ColumnSort, type GroupedSortKey } from './lootSort'
+import {
+  sortFlatEvents,
+  sortGroupedRows,
+  type ColumnSort,
+  type FlatSortKey,
+  type GroupedSortKey,
+} from './lootSort'
 
 export interface LootRowsInput {
   history: LootEvent[]
@@ -24,11 +30,15 @@ export interface LootRowsInput {
   /** The grouped table's header sort (lootSort.ts). It orders the looted rows AND the inventory-only
    *  tail together, so an "In inventory" sort ranks bank stock beside loot. */
   sort: ColumnSort<GroupedSortKey>
+  /** The flat ledger's header sort. Default newest-first — the ledger as it always was. */
+  flatSort: ColumnSort<FlatSortKey>
 }
 
 export interface LootRows {
   /** The filtered flat history, most recent first. */
   events: KeyedLoot[]
+  /** `events` in the flat ledger's header order — what the ungrouped table renders. */
+  flatEvents: KeyedLoot[]
   /** The grouped-by-item rows (loot only) — the "unique items" count comes from here. */
   grouped: GroupRow[]
   /** What the grouped table renders: `grouped` plus the opt-in inventory-only tail, in the
@@ -56,6 +66,7 @@ export function useLootRows({
   questOnly,
   showInventoryOnly,
   sort,
+  flatSort,
 }: LootRowsInput): LootRows {
   // Typing echoes IMMEDIATELY (the caller's local `query` state); the filter consumes a
   // DEFERRED copy so a keystroke never blocks on the filter + re-render (Task #41).
@@ -87,6 +98,9 @@ export function useLootRows({
   )
 
   const events = useMemo(() => filterLootEvents({ keyed, questOnly, q }), [keyed, q, questOnly])
+  // `events` itself stays in filter order — grouping and counts read it. The flat ledger renders
+  // its own header-ordered copy instead of re-sorting the shared one out from under them.
+  const flatEvents = useMemo(() => sortFlatEvents(events, flatSort), [events, flatSort])
   // Sorting no longer happens here — `groupLootRows` hands back tally order, and the ONE sort
   // below applies the header's chosen order to it (and to the inventory-only tail beside it).
   const grouped = useMemo(() => groupLootRows(events), [events])
@@ -112,5 +126,5 @@ export function useLootRows({
     [grouped, invOnlyRows, sort, invByKey],
   )
 
-  return { events, grouped, groupRows, invOnlySource, invOnlyRows, invByKey }
+  return { events, flatEvents, grouped, groupRows, invOnlySource, invOnlyRows, invByKey }
 }

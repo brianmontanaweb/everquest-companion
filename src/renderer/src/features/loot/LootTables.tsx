@@ -7,7 +7,7 @@ import type { WindowedRows } from '../../lib/useWindowedRows'
 import type { InventoryRow } from '../inventory/reconcile'
 import type { GroupRow, KeyedLoot } from './lootGrouping'
 import { SortHeadCell } from './LootSortHeader'
-import type { ColumnSort, GroupedSortKey } from './lootSort'
+import type { ColumnSort, FlatSortKey, GroupedSortKey } from './lootSort'
 import { EngineFlatRow, FlatRow, GroupedRow } from './lootRows'
 
 /**
@@ -43,6 +43,8 @@ function PadRow({ height, colSpan }: { height: number; colSpan: number }): JSX.E
 export interface LootTableSorting {
   grouped: ColumnSort<GroupedSortKey>
   onGrouped: (k: GroupedSortKey) => void
+  flat: ColumnSort<FlatSortKey>
+  onFlat: (k: FlatSortKey) => void
 }
 
 /** What both tables need from the view to draw a row. */
@@ -88,6 +90,8 @@ export function LootTable({
       win={ctx.win}
       knowledgeByKey={ctx.knowledgeByKey}
       onSelect={ctx.onSelect}
+      sort={ctx.sorting.flat}
+      onSort={ctx.sorting.onFlat}
     />
   )
 }
@@ -193,6 +197,11 @@ export function GroupedLootTable({
  * and a shared constant would make "the two tables draw the same columns" a fact about this file
  * instead of a fact the spec measured.
  *
+ * THIS HEADER IS DELIBERATELY NOT SORTABLE. It draws the engine's served order (owner ruling 4:
+ * the renderer never reorders a served row), so its `<th>` text still matches the app table's, but
+ * it carries no sort labels — there is no header click that could ask the engine for a different
+ * order yet. The row parity the e2e measures is unaffected: headers sit outside `<tbody>`.
+ *
  * The windowing is `FlatLootTable`'s exactly — same `ROW_HEIGHT`, same `PadRow` spacers, same fixed
  * layout — so the two modes mount the same rows for the same viewport and a comparison of what is
  * on screen is a comparison of the ledgers rather than of two scroll positions.
@@ -247,21 +256,52 @@ export function FlatLootTable({
   win,
   knowledgeByKey,
   onSelect,
+  sort,
+  onSort,
 }: {
   events: KeyedLoot[]
   win: WindowedRows
   knowledgeByKey: Map<string, ItemKnowledge>
   onSelect: (item: string) => void
+  sort: ColumnSort<FlatSortKey>
+  onSort: (k: FlatSortKey) => void
 }): JSX.Element {
   return (
     <Table size="small" stickyHeader sx={FIXED_TABLE}>
       <TableHead>
         <TableRow>
-          <TableCell sx={{ width: '15%' }}>Time</TableCell>
+          <SortHeadCell
+            column="time"
+            label="Time"
+            width="15%"
+            sort={sort}
+            onSort={onSort}
+            testId="loot-flat-sort"
+          />
           {/* No width: the item NAME takes whatever the stated columns leave. */}
-          <TableCell>Item</TableCell>
-          <TableCell sx={{ width: '24%' }}>From</TableCell>
-          <TableCell sx={{ width: '20%' }}>Zone</TableCell>
+          <SortHeadCell
+            column="item"
+            label="Item"
+            sort={sort}
+            onSort={onSort}
+            testId="loot-flat-sort"
+          />
+          <SortHeadCell
+            column="from"
+            label="From"
+            width="24%"
+            sort={sort}
+            onSort={onSort}
+            testId="loot-flat-sort"
+          />
+          <SortHeadCell
+            column="zone"
+            label="Zone"
+            width="20%"
+            sort={sort}
+            onSort={onSort}
+            testId="loot-flat-sort"
+          />
         </TableRow>
       </TableHead>
       <TableBody>
