@@ -18,16 +18,19 @@
 // effect runs on arrival, and asking for the same item twice must open it twice.
 //
 // THIS LEDGER MOUNTS NO TOOLTIP POPPER (JOS-127, owner direction 2026-08-09). A 0.14.0 user could
-// not change the sort off "Last looted": the Sort select sits in the toolbar, and the surfaces
-// stacked directly under it — the notable-pickups chips and the first table rows — wore
+// not change the sort off "Last looted": the Sort select used to sit in the toolbar, and the
+// surfaces stacked directly under it — the notable-pickups chips and the first table rows — wore
 // `placement="top"`, INTERACTIVE hover cards (`lib/KnownItemTooltip`, up to 380px wide) that open
 // upward across the toolbar and, being interactive, hold `pointer-events: auto` while they are up.
 // The card was over the control and ate the click aimed at it. The fix is REMOVAL, not a timeout
 // or a placement flip: the app wants fewer tooltips, and none that can sit over an interactive
-// control. Same precedent, same reasoning as the nav's UpdateChip; `tests/tooltipCursor.test.mts`
-// pins both structurally, because "the popper cannot mount" is what "it cannot eat the click"
-// means. What the hover used to say is not lost — clicking a row (or a pickup chip) opens the
-// drill-down, which is where the item window and its quest/recipe knowledge live anyway.
+// control. Same precedent, same reasoning as the nav's UpdateChip. THE TOOLBAR SELECT ITSELF IS
+// GONE NOW (2026-09-21): sorting moved into the grouped table's own column headers (`SortHeadCell`,
+// lootSort.ts), so the control this history is about is the sort header row, not a dropdown — the
+// rule travelled with the code regardless: labels and accessible names say what a popper used to,
+// and the ledger simply mounts none. What the hover used to say is not lost — clicking a row (or a
+// pickup chip) opens the drill-down, which is where the item window and its quest/recipe knowledge
+// live anyway.
 
 import { type JSX, useContext, useMemo, useRef, useState } from 'react'
 import { Box, Snackbar, Stack } from '@mui/material'

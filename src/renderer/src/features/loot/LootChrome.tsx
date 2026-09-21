@@ -12,8 +12,9 @@
 // change the sort because interactive hover cards on the surfaces below the toolbar opened upward
 // across it and ate the click. The control that history protects is now the grouped table's sort
 // header row (LootSortHeader.tsx), not the toolbar select this file used to draw — the rule
-// travelled with the code regardless: labels and accessible names say what a popper used to, and
-// `tests/tooltipCursor.test.mts` pins the absence structurally.
+// travelled with the code regardless: labels and accessible names say what a popper used to. (The
+// structural guard that once pinned this, `tests/tooltipCursor.test.mts`, retired with its subject
+// in JOS-499's test prune; `tests/e2e/loot-sort.e2e.mts` is what still proves it at runtime.)
 
 import { type JSX, useCallback, useEffect, useState } from 'react'
 import {

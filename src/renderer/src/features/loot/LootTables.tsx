@@ -58,7 +58,7 @@ export interface LootTableContext {
 
 /**
  * The two shapes the same loot can take: one row per ITEM (with the reconciled inventory
- * estimate and the top source), or one row per EVENT — the raw ledger, newest first.
+ * estimate and the top source), or one row per EVENT — the raw ledger, newest first by default.
  */
 export function LootTable({
   groupByItem,

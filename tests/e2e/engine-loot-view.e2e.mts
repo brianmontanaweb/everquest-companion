@@ -70,7 +70,9 @@ const FIXTURE = 'wl40-farm-run.log'
 const GRID = '[data-testid="overview-grid"]'
 const LOOT_LIST = '[data-testid="loot-list"]'
 const LOOT_ROW = '[data-testid="loot-row"]'
-const LOOT_SORT = '[data-testid="loot-sort"]'
+const LOOT_SORT = '[data-testid^="loot-sort-"]'
+/** The flat ledger's own default header — present only once the flat table is actually mounted. */
+const LOOT_FLAT_SORT_TIME = '[data-testid="loot-flat-sort-time"]'
 const GROUP_SWITCH = '[data-testid="loot-group"] input'
 const SOURCE = '[data-testid="loot-source"]'
 const SOURCE_APP = '[data-testid="loot-source-app"]'
@@ -212,8 +214,11 @@ async function stepFlatLedger(page: Page): Promise<boolean> {
   await page.click('[data-testid="nav-loot"]', { timeout: 15_000 })
   if (!check('the Loot tab opens on its ledger', await appears(page, LOOT_LIST))) return false
   await page.click(GROUP_SWITCH, { timeout: 15_000 })
-  // The order picker belongs to the GROUPED table only ("ungrouped, the ledger is already a
-  // chronological one" — LootChrome), so its disappearance is the flat ledger's own signal.
+  // The GROUPED table's headers (`loot-sort-*`) and the FLAT ledger's own header
+  // (`loot-flat-sort-time`) are mutually exclusive — only one table is ever mounted — so waiting for
+  // BOTH halves of that swap is what proves the flip actually happened, rather than merely that the
+  // grouped headers have not yet appeared (which is also true before the click).
+  const flatHeader = await appears(page, LOOT_FLAT_SORT_TIME, 10_000)
   const flat = await settle(
     () => countOf(page, LOOT_SORT),
     (n) => n === 0,
@@ -221,8 +226,8 @@ async function stepFlatLedger(page: Page): Promise<boolean> {
   )
   return check(
     '"Group by item" off puts the tab on the FLAT chronological ledger — the shape loot.ledger serves',
-    flat === 0,
-    `sort controls still mounted: ${String(flat)}`,
+    flatHeader && flat === 0,
+    `flat header present: ${String(flatHeader)} · grouped sort headers still mounted: ${String(flat)}`,
   )
 }
 

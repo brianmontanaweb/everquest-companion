@@ -14,7 +14,24 @@
 // column, then fixed tiebreaks, and the grouped one bottoms out in the unique row key.
 //
 // BLANK TEXT SORTS LAST in both directions: an item with no known source is not "before A", and
-// flipping to Z→A must not drag every blank row to the top.
+// flipping to Z→A must not drag every blank row to the top. An inventory-only row (no loot history
+// at all) is the numeric equivalent of a blank under the `count`/`last`/`zones` columns — see
+// `sortGroupedRows` — and sinks the same way.
+//
+// THE FLAT LEDGER'S FINAL TIEBREAK IS LEDGER POSITION, NEVER TEXT. `filterLootEvents` hands this
+// module its rows already reversed into newest-first, so a lower input index is a NEWER event —
+// exactly like the engine's `loot.ledger`, whose default sort is `(at desc, seq desc)` and which
+// bottoms out on `seq` for the same reason (`engine/crates/engined/src/views/loot.rs`): a corpse
+// that drops three items in the same second still has a real order, the order the log wrote them
+// in, and text is not it. `sortFlatEvents` decorates each row with its input index, sorts, and
+// undecorates — see `byPosition` below for exactly what "same direction" means for the `time` column.
+//
+// JOS-459 CUTOVER NOTE: once the flat ledger takes a served sort descriptor instead of sorting here,
+// its comparator will not be this one. The engine's own sort forbids locale collation (determinism
+// is cacheability — `loot.rs`'s own header states the rule for its formatted cells) and ties texts
+// on `seq` rather than on a collated string, so an item/from/zone order this module returns can
+// differ from the engine's for two rows a locale collates as equal but `seq` does not. That
+// difference is known and expected, not a bug to chase when the cutover lands.
 
 export type SortDir = 'asc' | 'desc'
 
@@ -72,19 +89,26 @@ export interface SortableLootRow {
   last: number
   topSource?: string
   zoneCount: number
+  /** Held per the inventory export but never looted this epoch (`count`/`last`/`zoneCount` are all
+   *  0 and the row renders "-" in those columns). Blank under those three sorts — see
+   *  `invOnlyLast` — but a real row everywhere else, because `inv`, `item` and `source` all have
+   *  values on it. */
+  invOnly?: boolean
 }
 
-/** The part of a loot event the flat ledger's comparators read. `count` only ever breaks a tie
- *  (below) — no column sorts on it directly. */
+/** The part of a loot event the flat ledger's comparators read. */
 export interface SortableLootEvent {
   ts: number
   item: string
   source?: string
   zone?: string
-  count?: number
 }
 
 type Cmp<T> = (a: T, b: T) => number
+
+/** One collator for every text comparison in this module — a single Intl instance instead of a
+ *  `localeCompare` call per site, and the one place JOS-459's cutover note above points at. */
+const collator = new Intl.Collator()
 
 function byNum(a: number, b: number, dir: SortDir): number {
   return dir === 'asc' ? a - b : b - a
@@ -97,12 +121,23 @@ function isBlank(s: string | undefined): s is undefined {
 /** Text in the chosen direction, blanks last whichever direction that is. */
 function byText(a: string | undefined, b: string | undefined, dir: SortDir): number {
   if (isBlank(a) || isBlank(b)) return isBlank(a) === isBlank(b) ? 0 : isBlank(a) ? 1 : -1
-  return dir === 'asc' ? a.localeCompare(b) : b.localeCompare(a)
+  return dir === 'asc' ? collator.compare(a, b) : collator.compare(b, a)
 }
 
 /** Code-unit order: never 0 for two different strings, which localeCompare can be. */
 function byCodeUnits(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0
+}
+
+/** An inventory-only row is the numeric blank for `count`/`last`/`zones` (module header): it sinks
+ *  to the bottom in BOTH directions. `null` means "neither row is inventory-only, keep comparing" —
+ *  the caller's `??` falls through to the real numeric compare, exactly like `isBlank` inside
+ *  `byText` above. Both `invOnly` ⇒ 0, so the column's own tiebreaks (below `groupedPrimary`) decide
+ *  between two inventory-only rows rather than this rule pretending to. */
+function invOnlyLast<T extends SortableLootRow>(a: T, b: T): number | null {
+  if (a.invOnly !== true && b.invOnly !== true) return null
+  if (a.invOnly === b.invOnly) return 0
+  return a.invOnly === true ? 1 : -1
 }
 
 function groupedPrimary<T extends SortableLootRow>(
@@ -114,15 +149,15 @@ function groupedPrimary<T extends SortableLootRow>(
     case 'item':
       return (a, b) => byText(a.item, b.item, d)
     case 'count':
-      return (a, b) => byNum(a.count, b.count, d)
+      return (a, b) => invOnlyLast(a, b) ?? byNum(a.count, b.count, d)
     case 'inv':
       return (a, b) => byNum(invOf(a), invOf(b), d)
     case 'source':
       return (a, b) => byText(a.topSource, b.topSource, d)
     case 'zones':
-      return (a, b) => byNum(a.zoneCount, b.zoneCount, d)
+      return (a, b) => invOnlyLast(a, b) ?? byNum(a.zoneCount, b.zoneCount, d)
     case 'last':
-      return (a, b) => byNum(a.last, b.last, d)
+      return (a, b) => invOnlyLast(a, b) ?? byNum(a.last, b.last, d)
   }
 }
 
@@ -138,7 +173,7 @@ export function sortGroupedRows<T extends SortableLootRow>(
       primary(a, b) ||
       b.count - a.count ||
       b.last - a.last ||
-      a.item.localeCompare(b.item) ||
+      collator.compare(a.item, b.item) ||
       byCodeUnits(a.key, b.key),
   )
 }
@@ -157,23 +192,38 @@ function flatPrimary<T extends SortableLootEvent>(sort: ColumnSort<FlatSortKey>)
   }
 }
 
-/** Non-mutating. Under whatever column was chosen: newest first, then item name, then From, then
- *  Zone, then count. Events equal on all of that are identical on screen, and a stable sort keeps
- *  them in input order. */
+/** The ledger-position tiebreak (module header). `desc` keeps the input order — the lower index
+ *  comes first, exactly as `filterLootEvents` handed the rows over; `asc` reverses it — the higher
+ *  index comes first, because flipping newest-first to oldest-first must flip its ties too. */
+function byPosition(aIndex: number, bIndex: number, dir: SortDir): number {
+  return dir === 'desc' ? aIndex - bIndex : bIndex - aIndex
+}
+
+/**
+ * Non-mutating. Under whatever column was chosen, then this fixed chain of tiebreaks:
+ *
+ *   - `time`: ties break on ledger position, in the SAME direction as the column (`byPosition`).
+ *   - `item`/`from`/`zone`: ties on that column's text break on `ts` descending (newest first,
+ *     regardless of the column's own direction), then on ledger position — always the lower index
+ *     first, i.e. always in input order, because that is what the engine's own `seq desc` tiebreak
+ *     means once `filterLootEvents`'s reversal is undone.
+ *
+ * Never text. Two events tied on every visible column are identical on screen, and only their
+ * position in the ledger says which the log actually wrote first.
+ */
 export function sortFlatEvents<T extends SortableLootEvent>(
   rows: readonly T[],
   sort: ColumnSort<FlatSortKey>,
 ): T[] {
   const primary = flatPrimary<T>(sort)
-  return [...rows].sort(
-    (a, b) =>
-      primary(a, b) ||
-      b.ts - a.ts ||
-      a.item.localeCompare(b.item) ||
-      byText(a.source, b.source, 'asc') ||
-      byText(a.zone, b.zone, 'asc') ||
-      (a.count ?? 1) - (b.count ?? 1),
-  )
+  const decorated = rows.map((row, index) => ({ row, index }))
+  decorated.sort((a, b) => {
+    const byColumn = primary(a.row, b.row)
+    if (byColumn !== 0) return byColumn
+    if (sort.key === 'time') return byPosition(a.index, b.index, sort.dir)
+    return b.row.ts - a.row.ts || byPosition(a.index, b.index, 'desc')
+  })
+  return decorated.map((d) => d.row)
 }
 
 // ---- persistence ------------------------------------------------------------------------------

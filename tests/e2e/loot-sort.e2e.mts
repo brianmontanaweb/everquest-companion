@@ -15,10 +15,11 @@
  * used to eat the click did not go away when the select did — so the spec still hovers the same
  * anchors and checks the same geometry, now against the header.
  *
- * WHY THIS NEEDS A BROWSER AT ALL. `tests/tooltipCursor.test.mts` already pins the code shape —
- * no file that draws the ledger may mount a popper — and that guard is the one that cannot rot.
- * But "the code mounts no Tooltip" and "the control is clickable" are different claims, and only
- * the second is what the user reported. This spec asserts the second directly: hover the exact
+ * WHY THIS NEEDS A BROWSER AT ALL. A structural guard once pinned the code shape here — no file
+ * that draws the ledger may mount a popper — but `tests/tooltipCursor.test.mts` retired with its
+ * subject in JOS-499's test prune (2026-08-25) and nothing replaced it for this surface. "The code
+ * mounts no Tooltip" and "the control is clickable" were always different claims anyway, and only
+ * the second is what the user reported, so this spec is what is left to assert it: hover the exact
  * anchors that used to open the card, then ask the DOM what is actually on top of the default
  * sort header (`elementFromPoint`), then change the order with real clicks.
  *
@@ -34,8 +35,8 @@
  * while the card was up, because where a popper lands is a function of the window's size and this
  * window is a fixed 1280 that the owner's is not. So the geometry check is the statement of what
  * the user is owed (their click reaches the header) and the count is the tripwire that catches
- * the regression at any width. Neither is redundant, and neither is the whole guard —
- * `tests/tooltipCursor.test.mts` pins the code shape that makes both true.
+ * the regression at any width. Neither is redundant, and neither is the whole guard on its own —
+ * with the code-shape pin retired (see the header above), this pair is what is left to catch it.
  *
  * WHY IT NEVER TAKES THE SCREEN: `EQ_E2E=1` (src/main/e2e.ts) shows no window, skips the
  * single-instance lock, and points `userData` at a throwaway temp dir minted per launch.

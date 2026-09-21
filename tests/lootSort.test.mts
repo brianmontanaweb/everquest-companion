@@ -29,7 +29,6 @@ import {
   sortFlatEvents,
   sortGroupedRows,
   type ColumnSort,
-  type FlatSortKey,
   type GroupedSortKey,
   type SortableLootEvent,
   type SortableLootRow,
@@ -135,6 +134,35 @@ test('grouped: a blank Top source sorts last in BOTH directions', () => {
   assert.deepEqual(names(sortGroupedRows(list, g('source', 'desc'), noInv)).at(-1), 'No source')
 })
 
+test('grouped: an inventory-only row sinks below every looted row, in BOTH directions, under count/last/zones', () => {
+  const looted = row('Looted', 3, 500, { zoneCount: 2 })
+  const invOnly = row('Held Only', 0, 0, { zoneCount: 0, invOnly: true })
+  const cases: [GroupedSortKey, 'asc' | 'desc'][] = [
+    ['count', 'asc'],
+    ['count', 'desc'],
+    ['last', 'asc'],
+    ['zones', 'asc'],
+  ]
+  for (const [key, dir] of cases) {
+    assert.deepEqual(
+      names(sortGroupedRows([invOnly, looted], g(key, dir), noInv)),
+      ['Looted', 'Held Only'],
+      `${key} ${dir}`,
+    )
+  }
+})
+
+test('grouped: two inventory-only rows under count/last/zones fall back to the ordinary tiebreaks', () => {
+  const a = row('Alpha Held', 0, 0, { zoneCount: 0, invOnly: true })
+  const b = row('Bravo Held', 0, 0, { zoneCount: 0, invOnly: true })
+  // Both invOnly ⇒ the primary returns a tie, and the fixed tiebreak chain (count, last, item name)
+  // decides — here every one of those is equal too, so it falls through to item name.
+  assert.deepEqual(names(sortGroupedRows([b, a], g('count', 'asc'), noInv)), [
+    'Alpha Held',
+    'Bravo Held',
+  ])
+})
+
 test('grouped: every order is TOTAL — input order never decides', () => {
   const build = (): SortableLootRow[] => [
     row('Alpha', 5, 500),
@@ -174,25 +202,37 @@ test('flat: item / from / zone sort A→Z with newest-first underneath; blanks l
   assert.equal(sortFlatEvents(list, { key: 'zone', dir: 'desc' })[0]?.zone, 'Kithicor')
 })
 
-test('flat: every order is TOTAL — input order never decides, even on a full tie', () => {
-  // Same ts AND item on every row, so the primary column and the first two tiebreaks (ts, item)
-  // never separate them — only From, Zone and count are left to disagree on, and this exercises
-  // every rung of that chain.
-  const build = (): SortableLootEvent[] => [
-    { item: 'Bone Chips', ts: 500, source: 'a skeleton', zone: 'Befallen', count: 2 },
-    { item: 'Bone Chips', ts: 500, source: 'a skeleton', zone: 'Befallen', count: 1 },
-    { item: 'Bone Chips', ts: 500, source: 'a bat', zone: 'Kithicor', count: 1 },
-    { item: 'Bone Chips', ts: 500, source: undefined, zone: undefined, count: undefined },
+test('flat time ties break on LEDGER POSITION: input order under desc, reversed under asc', () => {
+  // Three same-second loots, in the newest-first input order `filterLootEvents` always hands this
+  // module (reversed history). No text tiebreak survives on a full `ts` tie any more — position is
+  // the whole story.
+  const ts = 1_700_000_000_000
+  const list = [ev('Zebra Hide', ts), ev('Alpha Rune', ts), ev('Bone Chips', ts)]
+  assert.deepEqual(
+    names(sortFlatEvents(list, DEFAULT_FLAT_SORT)),
+    ['Zebra Hide', 'Alpha Rune', 'Bone Chips'],
+    'desc keeps the input order',
+  )
+  assert.deepEqual(
+    names(sortFlatEvents(list, { key: 'time', dir: 'asc' })),
+    ['Bone Chips', 'Alpha Rune', 'Zebra Hide'],
+    'asc is exactly reversed',
+  )
+})
+
+test('flat item/from/zone ties (same text, same ts) also keep ledger position, never text', () => {
+  const ts = 1_700_000_000_000
+  const list = [
+    ev('Bone Chips', ts, 'a skeleton', 'Befallen'),
+    ev('Bone Chips', ts, 'a bat', 'Kithicor'),
+    ev('Bone Chips', ts, 'a rat', 'Blackburrow'),
   ]
-  const sig = (list: SortableLootEvent[]): string[] =>
-    list.map((e) => `${e.source ?? ''}/${e.zone ?? ''}/${String(e.count)}`)
-  for (const key of Object.keys(FLAT_FIRST_DIR) as FlatSortKey[]) {
-    for (const dir of ['asc', 'desc'] as const) {
-      const fwd = sig(sortFlatEvents(build(), { key, dir }))
-      const rev = sig(sortFlatEvents([...build()].reverse(), { key, dir }))
-      assert.deepEqual(rev, fwd, `${key} ${dir} is order-dependent`)
-    }
-  }
+  // Alphabetically "a bat" < "a rat" < "a skeleton" — if From/Zone still broke the tie, this would
+  // come back reordered. It must not: every row shares item AND ts, so only input position is left.
+  assert.deepEqual(
+    sortFlatEvents(list, { key: 'item', dir: 'asc' }).map((e) => e.source),
+    ['a skeleton', 'a bat', 'a rat'],
+  )
 })
 
 test('sorting never mutates its input', () => {
