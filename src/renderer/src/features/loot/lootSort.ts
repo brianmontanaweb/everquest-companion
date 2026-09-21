@@ -74,12 +74,14 @@ export interface SortableLootRow {
   zoneCount: number
 }
 
-/** The part of a loot event the flat ledger's comparators read. */
+/** The part of a loot event the flat ledger's comparators read. `count` only ever breaks a tie
+ *  (below) — no column sorts on it directly. */
 export interface SortableLootEvent {
   ts: number
   item: string
   source?: string
   zone?: string
+  count?: number
 }
 
 type Cmp<T> = (a: T, b: T) => number
@@ -155,14 +157,23 @@ function flatPrimary<T extends SortableLootEvent>(sort: ColumnSort<FlatSortKey>)
   }
 }
 
-/** Non-mutating. Newest first, then item name, under whatever column was chosen. Rows equal on all
- *  of that are indistinguishable on screen, and Array#sort is stable, so they keep input order. */
+/** Non-mutating. Under whatever column was chosen: newest first, then item name, then From, then
+ *  Zone, then count. Events equal on all of that are identical on screen, and a stable sort keeps
+ *  them in input order. */
 export function sortFlatEvents<T extends SortableLootEvent>(
   rows: readonly T[],
   sort: ColumnSort<FlatSortKey>,
 ): T[] {
   const primary = flatPrimary<T>(sort)
-  return [...rows].sort((a, b) => primary(a, b) || b.ts - a.ts || a.item.localeCompare(b.item))
+  return [...rows].sort(
+    (a, b) =>
+      primary(a, b) ||
+      b.ts - a.ts ||
+      a.item.localeCompare(b.item) ||
+      byText(a.source, b.source, 'asc') ||
+      byText(a.zone, b.zone, 'asc') ||
+      (a.count ?? 1) - (b.count ?? 1),
+  )
 }
 
 // ---- persistence ------------------------------------------------------------------------------

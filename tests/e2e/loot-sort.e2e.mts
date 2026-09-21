@@ -150,16 +150,17 @@ function ariaSortOf(page: Page, label: string): Promise<string | null> {
   )
 }
 
-/** The item names currently painted, top to bottom. */
-function visibleNames(page: Page): Promise<string[]> {
-  return page.evaluate(
-    (s) => [...document.querySelectorAll<HTMLElement>(s)].map((n) => n.innerText.trim()),
-    LOOT_NAME,
-  )
-}
-
-function isAtoZ(names: string[]): boolean {
-  return names.every((n, i) => i === 0 || (names[i - 1] ?? '').localeCompare(n) <= 0)
+/**
+ * The item names currently painted, top to bottom, and whether they read A→Z — decided with the
+ * PAGE's own `localeCompare` rather than Node's, since the renderer sorts (`byText`, lootSort.ts)
+ * with the browser's ICU and a Node-side check could disagree with it on some locale's collation.
+ */
+function paintedOrder(page: Page): Promise<{ names: string[]; atoZ: boolean }> {
+  return page.evaluate((s) => {
+    const names = [...document.querySelectorAll<HTMLElement>(s)].map((n) => n.innerText.trim())
+    const atoZ = names.every((n, i) => i === 0 || names[i - 1].localeCompare(n) <= 0)
+    return { names, atoZ }
+  }, LOOT_NAME)
 }
 
 /**
@@ -204,12 +205,15 @@ async function stepHeaderSort(
       )
       .join(', '),
   )
-  const invFit = fit.find((f) => f.testId === `${prefix}-inv`)
-  if (invFit) {
-    console.log(
-      `${prefix}: "In inventory (est.)" label scrollWidth=${String(invFit.scrollWidth)} th.clientWidth=${String(invFit.clientWidth)}`,
-    )
-  }
+  console.log(
+    `${prefix}: header fit — ` +
+      fit
+        .map(
+          (f) =>
+            `${f.testId}: scrollWidth=${String(f.scrollWidth)} clientWidth=${String(f.clientWidth)}`,
+        )
+        .join(', '),
+  )
 
   const item = `[data-testid="${prefix}-item"]`
   await page.click(item, { timeout: 15_000 })
@@ -221,10 +225,10 @@ async function stepHeaderSort(
     `${prefix}: …ascending, and the <th> says so`,
     (await ariaSortOf(page, item)) === 'ascending',
   )
-  const names = await settleStable(() => visibleNames(page), { timeoutMs: 6000 })
+  const { names, atoZ } = await settleStable(() => paintedOrder(page), { timeoutMs: 6000 })
   check(
     `${prefix}: …and the painted rows are A→Z`,
-    names.length > 0 && isAtoZ(names),
+    names.length > 0 && atoZ,
     names.slice(0, 5).join(' | '),
   )
 

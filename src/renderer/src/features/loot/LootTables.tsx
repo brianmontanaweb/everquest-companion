@@ -130,7 +130,7 @@ export function GroupedLootTable({
             column="inv"
             label="In inventory (est.)"
             align="right"
-            width="13%"
+            width="15%"
             sort={sort}
             onSort={onSort}
             testId="loot-sort"
@@ -138,7 +138,7 @@ export function GroupedLootTable({
           <SortHeadCell
             column="source"
             label="Top source"
-            width="20%"
+            width="18%"
             sort={sort}
             onSort={onSort}
             testId="loot-sort"

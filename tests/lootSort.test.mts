@@ -29,6 +29,7 @@ import {
   sortFlatEvents,
   sortGroupedRows,
   type ColumnSort,
+  type FlatSortKey,
   type GroupedSortKey,
   type SortableLootEvent,
   type SortableLootRow,
@@ -171,6 +172,27 @@ test('flat: item / from / zone sort A→Z with newest-first underneath; blanks l
   assert.equal(sortFlatEvents(list, { key: 'from', dir: 'asc' }).at(-1)?.item, 'Alpha Rune')
   assert.equal(sortFlatEvents(list, { key: 'zone', dir: 'desc' }).at(-1)?.item, 'Alpha Rune')
   assert.equal(sortFlatEvents(list, { key: 'zone', dir: 'desc' })[0]?.zone, 'Kithicor')
+})
+
+test('flat: every order is TOTAL — input order never decides, even on a full tie', () => {
+  // Same ts AND item on every row, so the primary column and the first two tiebreaks (ts, item)
+  // never separate them — only From, Zone and count are left to disagree on, and this exercises
+  // every rung of that chain.
+  const build = (): SortableLootEvent[] => [
+    { item: 'Bone Chips', ts: 500, source: 'a skeleton', zone: 'Befallen', count: 2 },
+    { item: 'Bone Chips', ts: 500, source: 'a skeleton', zone: 'Befallen', count: 1 },
+    { item: 'Bone Chips', ts: 500, source: 'a bat', zone: 'Kithicor', count: 1 },
+    { item: 'Bone Chips', ts: 500, source: undefined, zone: undefined, count: undefined },
+  ]
+  const sig = (list: SortableLootEvent[]): string[] =>
+    list.map((e) => `${e.source ?? ''}/${e.zone ?? ''}/${String(e.count)}`)
+  for (const key of Object.keys(FLAT_FIRST_DIR) as FlatSortKey[]) {
+    for (const dir of ['asc', 'desc'] as const) {
+      const fwd = sig(sortFlatEvents(build(), { key, dir }))
+      const rev = sig(sortFlatEvents([...build()].reverse(), { key, dir }))
+      assert.deepEqual(rev, fwd, `${key} ${dir} is order-dependent`)
+    }
+  }
 })
 
 test('sorting never mutates its input', () => {
