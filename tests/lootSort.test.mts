@@ -1,173 +1,266 @@
-// LOOT-TABLE SORT TEST: the grouped Loot table's two orders (JOS-91), and the tie behaviour the
-// EQ log makes the common case rather than the corner.
+// LOOT-TABLE SORT TEST: the header-driven orders of both Loot tables (grouped + flat ledger).
 //
 // Pins:
-//   - "Times looted" is still the DEFAULT and still means count-descending, so adding recency
-//     beside it did not quietly re-order the table everyone already has;
-//   - "Last looted" is newest-group-first — the "what did I just pick up" question the Loot
-//     window could not answer before;
-//   - THE TIE CASE IS THE POINT. EQ log timestamps are SECOND-resolution, so one corpse yielding
-//     three items writes three lines with the SAME ts. Both orders must therefore be TOTAL: each
-//     bottoms out in the item name, and neither depends on input order. (Before this change the
-//     count order fell through to Map insertion order on a full tie.)
-//   - the two keys genuinely disagree — a single recent pickup outranks a long-ago grind under
-//     recency and loses to it under count, which is the whole reason to offer both.
+//   - the DEFAULTS are the orders the tables always had: grouped = Times looted desc, flat = newest
+//     first — so moving the control into the headers re-ordered nobody's table;
+//   - FIRST CLICK direction per column (numbers/times biggest-newest first, words A→Z), and a second
+//     click on the active column flips it;
+//   - every comparator is TOTAL (EQ timestamps are second-resolution — ties are the common case);
+//   - blank text (no Top source / From / Zone) sorts LAST in both directions;
+//   - the saved `eq.lootSort` from the dropdown era ('count' / 'recent') migrates, and garbage falls
+//     back to the default rather than sorting by nothing.
 //
-// A CLAIM THIS FILE USED TO MAKE, AND DOES NOT ANY MORE (JOS-345). There was a test here for the
-// FAVORITES PIN — the stable second pass `groupLootRows` ran after the comparator, lifting starred
-// items into a block on top. The favorite star left the loot window on the owner's ruling and the
-// pin left with it, so the claim is deleted rather than weakened: `groupLootRows` runs exactly one
-// pass now, and the totality test below is the whole statement of what the grouped table's order
-// is. A removal removes its claims.
-//
-// Why the sort lives in its own module and is tested here rather than through `groupLootRows`:
-// lootGrouping imports lootItemData → data/index → `@shared/profiles`, a value import that does
-// not resolve outside the bundler, so node cannot load it (measured: MODULE_NOT_FOUND). Same
-// pure-seam reasoning questSort.test.mts records for the quest orders.
+// Why this is tested here and not through groupLootRows: lootGrouping imports lootItemData →
+// data/index → `@shared/profiles`, which node cannot load (MODULE_NOT_FOUND). The orders live in
+// the pure module so `npm test` can reach them.
 //
 // Run: `npm test`.
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  compareLootRows,
-  sortLootRows,
-  isLootSortKey,
-  DEFAULT_LOOT_SORT,
-  LOOT_SORT_OPTIONS,
-  type LootSortKey,
+  DEFAULT_FLAT_SORT,
+  DEFAULT_GROUPED_SORT,
+  FLAT_FIRST_DIR,
+  GROUPED_FIRST_DIR,
+  nextSort,
+  sanitizeFlatSort,
+  sanitizeGroupedSort,
+  sortFlatEvents,
+  sortGroupedRows,
+  type ColumnSort,
+  type GroupedSortKey,
+  type SortableLootEvent,
   type SortableLootRow,
 } from '../src/renderer/src/features/loot/lootSort'
 
-/** A grouped row, as `groupLootRows` builds them — only the three fields the sort reads. */
-function row(item: string, count: number, last: number): SortableLootRow {
-  return { item, count, last }
+function row(
+  item: string,
+  count: number,
+  last: number,
+  extra: Partial<SortableLootRow> = {},
+): SortableLootRow {
+  return { key: item.toLowerCase(), item, count, last, zoneCount: 1, ...extra }
 }
+function ev(item: string, ts: number, source?: string, zone?: string): SortableLootEvent {
+  return { item, ts, source, zone }
+}
+const names = (list: { item: string }[]): string[] => list.map((r) => r.item)
+const noInv = (): number => 0
+const g = (key: GroupedSortKey, dir: 'asc' | 'desc'): ColumnSort<GroupedSortKey> => ({ key, dir })
 
-const names = (list: SortableLootRow[]): string[] => list.map((r) => r.item)
-
-test('times looted is still the default order', () => {
-  assert.equal(DEFAULT_LOOT_SORT, 'count')
-  assert.equal(LOOT_SORT_OPTIONS[0]?.value, 'count')
-  assert.equal(LOOT_SORT_OPTIONS[1]?.value, 'recent')
-  assert.equal(isLootSortKey('count'), true)
-  assert.equal(isLootSortKey('recent'), true)
-  // A retired (or hand-edited) stored key must not sort by nothing — the loader falls back.
-  assert.equal(isLootSortKey('by-vibes'), false)
-  assert.equal(isLootSortKey(undefined), false)
-  assert.equal(isLootSortKey(null), false)
+test('defaults are the orders the tables always had', () => {
+  assert.deepEqual(DEFAULT_GROUPED_SORT, { key: 'count', dir: 'desc' })
+  assert.deepEqual(DEFAULT_FLAT_SORT, { key: 'time', dir: 'desc' })
 })
 
-test('count: most-looted first, exactly as the table always was', () => {
-  const list = [row('Bone Chips', 3, 100), row('Rune Word', 12, 50), row('Sphinx Claw', 7, 900)]
-  assert.deepEqual(names(sortLootRows(list, 'count')), ['Rune Word', 'Sphinx Claw', 'Bone Chips'])
+test('nextSort: a new column takes its first-click direction; the active one flips', () => {
+  const start = DEFAULT_GROUPED_SORT
+  assert.deepEqual(nextSort(start, 'item', GROUPED_FIRST_DIR), { key: 'item', dir: 'asc' })
+  assert.deepEqual(nextSort(start, 'last', GROUPED_FIRST_DIR), { key: 'last', dir: 'desc' })
+  assert.deepEqual(nextSort(start, 'count', GROUPED_FIRST_DIR), { key: 'count', dir: 'asc' })
+  const flipped = nextSort(start, 'count', GROUPED_FIRST_DIR)
+  assert.deepEqual(nextSort(flipped, 'count', GROUPED_FIRST_DIR), start)
+  assert.deepEqual(nextSort(DEFAULT_FLAT_SORT, 'zone', FLAT_FIRST_DIR), { key: 'zone', dir: 'asc' })
 })
 
-test('count: equal counts break on the newer group, then on name', () => {
+test('grouped count desc: most-looted first, ties newer then name (unchanged behaviour)', () => {
   const list = [
     row('Older five', 5, 100),
     row('Newer five', 5, 900),
-    row('Another five', 5, 900), // same count AND same ts as 'Newer five' — name decides
+    row('Another five', 5, 900),
+    row('Rune Word', 12, 50),
   ]
-  assert.deepEqual(names(sortLootRows(list, 'count')), ['Another five', 'Newer five', 'Older five'])
-})
-
-test('recent: newest group first — the question the window could not answer', () => {
-  const list = [
-    row('Looted an hour ago', 4, 1_000),
-    row('Looted just now', 1, 9_000),
-    row('Looted yesterday', 40, 10),
-  ]
-  assert.deepEqual(names(sortLootRows(list, 'recent')), [
-    'Looted just now',
-    'Looted an hour ago',
-    'Looted yesterday',
+  assert.deepEqual(names(sortGroupedRows(list, g('count', 'desc'), noInv)), [
+    'Rune Word',
+    'Another five',
+    'Newer five',
+    'Older five',
   ])
 })
 
-test('the two orders genuinely disagree — that is why both are offered', () => {
-  // One pickup, thirty seconds ago, against a grind of fifty from last week.
-  const fresh = row('Mote of Major Potential', 1, 9_000)
-  const grind = row('Bone Chips', 50, 10)
-  assert.deepEqual(names(sortLootRows([grind, fresh], 'recent')), [fresh.item, grind.item])
-  assert.deepEqual(names(sortLootRows([fresh, grind], 'count')), [grind.item, fresh.item])
-})
-
-test('SECOND-RESOLUTION TIES: one corpse, three items, one timestamp', () => {
-  // The real shape — three dashed loot lines stamped the same second off a single corpse. Under
-  // recency they tie outright, so the order must still be decided (count, then name) rather than
-  // left to whatever order the tally Map happened to be built in.
+test('grouped last desc: newest group first, second-resolution ties break on count then name', () => {
   const ts = 1_700_000_000_000
-  const list = [row('Zebra Hide', 2, ts), row('Alpha Rune', 2, ts), row('Mid Stone', 9, ts)]
-  assert.deepEqual(names(sortLootRows(list, 'recent')), ['Mid Stone', 'Alpha Rune', 'Zebra Hide'])
+  const list = [
+    row('Zebra Hide', 2, ts),
+    row('Alpha Rune', 2, ts),
+    row('Mid Stone', 9, ts),
+    row('Old', 40, 10),
+  ]
+  assert.deepEqual(names(sortGroupedRows(list, g('last', 'desc'), noInv)), [
+    'Mid Stone',
+    'Alpha Rune',
+    'Zebra Hide',
+    'Old',
+  ])
 })
 
-test('every order is TOTAL — no order depends on the input order', () => {
+test('grouped: every column sorts in both directions', () => {
+  const a = row('Alpha', 1, 300, { topSource: 'a gnoll', zoneCount: 3 })
+  const b = row('Bravo', 2, 200, { topSource: 'a bat', zoneCount: 1 })
+  const c = row('Charlie', 3, 100, { topSource: 'a cat', zoneCount: 2 })
+  const inv = new Map([
+    ['alpha', 10],
+    ['bravo', 30],
+    ['charlie', 20],
+  ])
+  const invOf = (r: SortableLootRow): number => inv.get(r.key) ?? 0
+  const cases: [GroupedSortKey, string[]][] = [
+    ['item', ['Alpha', 'Bravo', 'Charlie']],
+    ['count', ['Alpha', 'Bravo', 'Charlie']],
+    ['inv', ['Alpha', 'Charlie', 'Bravo']],
+    ['source', ['Bravo', 'Charlie', 'Alpha']],
+    ['zones', ['Bravo', 'Charlie', 'Alpha']],
+    ['last', ['Charlie', 'Bravo', 'Alpha']],
+  ]
+  for (const [key, asc] of cases) {
+    assert.deepEqual(names(sortGroupedRows([c, a, b], g(key, 'asc'), invOf)), asc, `${key} asc`)
+    assert.deepEqual(
+      names(sortGroupedRows([a, b, c], g(key, 'desc'), invOf)),
+      [...asc].reverse(),
+      `${key} desc`,
+    )
+  }
+})
+
+test('grouped: a blank Top source sorts last in BOTH directions', () => {
+  const none = row('No source', 1, 1)
+  const list = [
+    none,
+    row('Has A', 1, 1, { topSource: 'a' }),
+    row('Has B', 1, 1, { topSource: 'b' }),
+  ]
+  assert.deepEqual(names(sortGroupedRows(list, g('source', 'asc'), noInv)).at(-1), 'No source')
+  assert.deepEqual(names(sortGroupedRows(list, g('source', 'desc'), noInv)).at(-1), 'No source')
+})
+
+test('grouped: an inventory-only row sinks below every looted row, in BOTH directions, under count/last/zones', () => {
+  const looted = row('Looted', 3, 500, { zoneCount: 2 })
+  const invOnly = row('Held Only', 0, 0, { zoneCount: 0, invOnly: true })
+  const cases: [GroupedSortKey, 'asc' | 'desc'][] = [
+    ['count', 'asc'],
+    ['count', 'desc'],
+    ['last', 'asc'],
+    ['zones', 'asc'],
+  ]
+  for (const [key, dir] of cases) {
+    assert.deepEqual(
+      names(sortGroupedRows([invOnly, looted], g(key, dir), noInv)),
+      ['Looted', 'Held Only'],
+      `${key} ${dir}`,
+    )
+  }
+})
+
+test('grouped: two inventory-only rows under count/last/zones fall back to the ordinary tiebreaks', () => {
+  const a = row('Alpha Held', 0, 0, { zoneCount: 0, invOnly: true })
+  const b = row('Bravo Held', 0, 0, { zoneCount: 0, invOnly: true })
+  // Both invOnly ⇒ the primary returns a tie, and the fixed tiebreak chain (count, last, item name)
+  // decides — here every one of those is equal too, so it falls through to item name.
+  assert.deepEqual(names(sortGroupedRows([b, a], g('count', 'asc'), noInv)), [
+    'Alpha Held',
+    'Bravo Held',
+  ])
+})
+
+test('grouped: every order is TOTAL — input order never decides', () => {
   const build = (): SortableLootRow[] => [
     row('Alpha', 5, 500),
     row('Beta', 5, 500),
     row('Gamma', 5, 500),
+    row('gamma', 5, 500, { key: 'gamma#2' }), // same name modulo case, distinct key — the key is the last resort
   ]
-  for (const opt of LOOT_SORT_OPTIONS) {
-    const forward = names(sortLootRows(build(), opt.value))
-    const reversed = names(sortLootRows([...build()].reverse(), opt.value))
-    assert.deepEqual(reversed, forward, `${opt.value} is order-dependent`)
-    // …and a fully tied set lands in name order rather than in arrival order.
-    assert.deepEqual(forward, ['Alpha', 'Beta', 'Gamma'])
+  for (const key of Object.keys(GROUPED_FIRST_DIR) as GroupedSortKey[]) {
+    for (const dir of ['asc', 'desc'] as const) {
+      const fwd = names(sortGroupedRows(build(), g(key, dir), noInv))
+      const rev = names(sortGroupedRows([...build()].reverse(), g(key, dir), noInv))
+      assert.deepEqual(rev, fwd, `${key} ${dir} is order-dependent`)
+    }
   }
 })
 
-test('sortLootRows does not mutate its input', () => {
-  const list = [row('Second', 1, 1), row('First', 9, 9)]
-  const before = names(list)
-  const sorted = sortLootRows(list, 'count')
-  assert.deepEqual(names(list), before)
-  assert.notEqual(sorted, list)
-  assert.deepEqual(names(sorted), ['First', 'Second'])
+test('flat time desc is the ledger as it always was: newest first', () => {
+  const list = [ev('Mid', 200), ev('New', 300), ev('Old', 100)]
+  assert.deepEqual(names(sortFlatEvents(list, DEFAULT_FLAT_SORT)), ['New', 'Mid', 'Old'])
+  assert.deepEqual(names(sortFlatEvents(list, { key: 'time', dir: 'asc' })), ['Old', 'Mid', 'New'])
 })
 
-test('compareLootRows agrees with sortLootRows on the pairwise calls', () => {
-  const older = row('Older', 1, 1)
-  const newer = row('Newer', 1, 2)
-  assert.ok(compareLootRows('recent')(newer, older) < 0)
-  assert.ok(compareLootRows('recent')(older, newer) > 0)
-  // A row compared with itself is a tie under every key, or the sort is not a valid ordering.
-  for (const opt of LOOT_SORT_OPTIONS) assert.equal(compareLootRows(opt.value)(older, older), 0)
-})
-
-test('the chosen order is the WHOLE order — nothing re-blocks the list behind it (JOS-345)', () => {
-  // The same four rows the deleted favorites-pin test used, asserted against what `groupLootRows`
-  // does today: sort once, by the chosen key, and hand that back. Two of these names were the
-  // starred ones, and they no longer travel together or lead the list — they sit exactly where
-  // count and recency put them, which is the point of the removal.
+test('flat: item / from / zone sort A→Z with newest-first underneath; blanks last', () => {
   const list = [
-    row('Bone Chips', 3, 100), // the oldest
-    row('Rune Word', 12, 50), // the most looted
-    row('Sphinx Claw', 7, 900), // the newest
-    row('Silk Swatch', 1, 800),
+    ev('Bone Chips', 100, 'a skeleton', 'Befallen'),
+    ev('Bone Chips', 300, 'a skeleton', 'Befallen'),
+    ev('Alpha Rune', 200, undefined, undefined),
+    ev('Zebra Hide', 50, 'a zebra', 'Kithicor'),
   ]
-
-  assert.deepEqual(names(sortLootRows(list, 'recent')), [
-    'Sphinx Claw',
-    'Silk Swatch',
-    'Bone Chips',
-    'Rune Word',
-  ])
-  assert.deepEqual(names(sortLootRows(list, 'count')), [
-    'Rune Word',
-    'Sphinx Claw',
-    'Bone Chips',
-    'Silk Swatch',
-  ])
+  const itemAsc = sortFlatEvents(list, { key: 'item', dir: 'asc' })
+  assert.deepEqual(
+    itemAsc.map((e) => `${e.item}@${String(e.ts)}`),
+    ['Alpha Rune@200', 'Bone Chips@300', 'Bone Chips@100', 'Zebra Hide@50'],
+  )
+  assert.equal(sortFlatEvents(list, { key: 'from', dir: 'asc' }).at(-1)?.item, 'Alpha Rune')
+  assert.equal(sortFlatEvents(list, { key: 'zone', dir: 'desc' }).at(-1)?.item, 'Alpha Rune')
+  assert.equal(sortFlatEvents(list, { key: 'zone', dir: 'desc' })[0]?.zone, 'Kithicor')
 })
 
-test('the key union is closed — a new option cannot ship without a comparator', () => {
-  // The switch in compareLootRows is exhaustive over LootSortKey; this proves every ADVERTISED
-  // option actually has one, which is the half the type cannot check.
-  for (const opt of LOOT_SORT_OPTIONS) {
-    const cmp = compareLootRows(opt.value satisfies LootSortKey)
-    assert.equal(typeof cmp, 'function', `${opt.value} has no comparator`)
-    assert.equal(typeof cmp(row('a', 1, 1), row('b', 2, 2)), 'number')
-    assert.ok(opt.label.length > 0, `${opt.value} has no label`)
-  }
+test('flat time ties break on LEDGER POSITION: input order under desc, reversed under asc', () => {
+  // Three same-second loots, in the newest-first input order `filterLootEvents` always hands this
+  // module (reversed history). No text tiebreak survives on a full `ts` tie any more — position is
+  // the whole story.
+  const ts = 1_700_000_000_000
+  const list = [ev('Zebra Hide', ts), ev('Alpha Rune', ts), ev('Bone Chips', ts)]
+  assert.deepEqual(
+    names(sortFlatEvents(list, DEFAULT_FLAT_SORT)),
+    ['Zebra Hide', 'Alpha Rune', 'Bone Chips'],
+    'desc keeps the input order',
+  )
+  assert.deepEqual(
+    names(sortFlatEvents(list, { key: 'time', dir: 'asc' })),
+    ['Bone Chips', 'Alpha Rune', 'Zebra Hide'],
+    'asc is exactly reversed',
+  )
+})
+
+test('flat item/from/zone ties (same text, same ts) also keep ledger position, never text', () => {
+  const ts = 1_700_000_000_000
+  const list = [
+    ev('Bone Chips', ts, 'a skeleton', 'Befallen'),
+    ev('Bone Chips', ts, 'a bat', 'Kithicor'),
+    ev('Bone Chips', ts, 'a rat', 'Blackburrow'),
+  ]
+  // Alphabetically "a bat" < "a rat" < "a skeleton" — if From/Zone still broke the tie, this would
+  // come back reordered. It must not: every row shares item AND ts, so only input position is left.
+  assert.deepEqual(
+    sortFlatEvents(list, { key: 'item', dir: 'asc' }).map((e) => e.source),
+    ['a skeleton', 'a bat', 'a rat'],
+  )
+})
+
+test('sorting never mutates its input', () => {
+  const rows = [row('Second', 1, 1), row('First', 9, 9)]
+  const before = names(rows)
+  const out = sortGroupedRows(rows, DEFAULT_GROUPED_SORT, noInv)
+  assert.deepEqual(names(rows), before)
+  assert.notEqual(out, rows)
+  const evs = [ev('a', 1), ev('b', 2)]
+  assert.notEqual(sortFlatEvents(evs, DEFAULT_FLAT_SORT), evs)
+  assert.deepEqual(names(evs), ['a', 'b'])
+})
+
+test('stored grouped sort: new JSON round-trips, dropdown-era values migrate, junk falls back', () => {
+  assert.deepEqual(sanitizeGroupedSort(JSON.stringify({ key: 'zones', dir: 'asc' })), {
+    key: 'zones',
+    dir: 'asc',
+  })
+  assert.deepEqual(sanitizeGroupedSort('count'), { key: 'count', dir: 'desc' })
+  assert.deepEqual(sanitizeGroupedSort('recent'), { key: 'last', dir: 'desc' })
+  assert.deepEqual(sanitizeGroupedSort(null), DEFAULT_GROUPED_SORT)
+  assert.deepEqual(sanitizeGroupedSort('by-vibes'), DEFAULT_GROUPED_SORT)
+  assert.deepEqual(sanitizeGroupedSort('{"key":"time","dir":"asc"}'), DEFAULT_GROUPED_SORT)
+  assert.deepEqual(sanitizeGroupedSort('{"key":"count","dir":"up"}'), DEFAULT_GROUPED_SORT)
+})
+
+test('stored flat sort: round-trips, junk falls back', () => {
+  assert.deepEqual(sanitizeFlatSort('{"key":"from","dir":"desc"}'), { key: 'from', dir: 'desc' })
+  assert.deepEqual(sanitizeFlatSort(null), DEFAULT_FLAT_SORT)
+  assert.deepEqual(sanitizeFlatSort('{"key":"count","dir":"desc"}'), DEFAULT_FLAT_SORT)
 })

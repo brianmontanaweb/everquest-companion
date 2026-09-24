@@ -7,11 +7,18 @@ import {
   buildInvOnlyRows,
   filterLootEvents,
   groupLootRows,
+  inventoryEstimate,
   type GroupRow,
   type KeyedLoot,
 } from './lootGrouping'
 import { selectInvOnly, showsInvOnly } from './ownedItems'
-import type { LootSortKey } from './lootSort'
+import {
+  sortFlatEvents,
+  sortGroupedRows,
+  type ColumnSort,
+  type FlatSortKey,
+  type GroupedSortKey,
+} from './lootSort'
 
 export interface LootRowsInput {
   history: LootEvent[]
@@ -20,17 +27,22 @@ export interface LootRowsInput {
   query: string
   questOnly: boolean
   showInventoryOnly: boolean
-  /** Which order the GROUPED table is in (lootSort.ts). The flat ledger is a chronological
-   *  ledger and stays newest-first whatever this says — see the toolbar's gate. */
-  sort: LootSortKey
+  /** The grouped table's header sort (lootSort.ts). It orders the looted rows AND the inventory-only
+   *  tail together, so an "In inventory" sort ranks bank stock beside loot. */
+  sort: ColumnSort<GroupedSortKey>
+  /** The flat ledger's header sort. Default newest-first — the ledger as it always was. */
+  flatSort: ColumnSort<FlatSortKey>
 }
 
 export interface LootRows {
   /** The filtered flat history, most recent first. */
   events: KeyedLoot[]
+  /** `events` in the flat ledger's header order — what the ungrouped table renders. */
+  flatEvents: KeyedLoot[]
   /** The grouped-by-item rows (loot only) — the "unique items" count comes from here. */
   grouped: GroupRow[]
-  /** What the grouped table renders: `grouped`, plus the opt-in inventory-only tail. */
+  /** What the grouped table renders: `grouped` plus the opt-in inventory-only tail, in the
+   *  header's order. */
   groupRows: GroupRow[]
   /** Held per the export but never looted this epoch — the toolbar chip counts these. */
   invOnlySource: InventoryRow[]
@@ -54,6 +66,7 @@ export function useLootRows({
   questOnly,
   showInventoryOnly,
   sort,
+  flatSort,
 }: LootRowsInput): LootRows {
   // Typing echoes IMMEDIATELY (the caller's local `query` state); the filter consumes a
   // DEFERRED copy so a keystroke never blocks on the filter + re-render (Task #41).
@@ -85,9 +98,12 @@ export function useLootRows({
   )
 
   const events = useMemo(() => filterLootEvents({ keyed, questOnly, q }), [keyed, q, questOnly])
-  // Re-sorting is the ONLY thing a sort change costs: the filter above it is memoized on the
-  // query, so switching to "last looted" never re-runs the per-keystroke work.
-  const grouped = useMemo(() => groupLootRows(events, sort), [events, sort])
+  // `events` itself stays in filter order — grouping and counts read it. The flat ledger renders
+  // its own header-ordered copy instead of re-sorting the shared one out from under them.
+  const flatEvents = useMemo(() => sortFlatEvents(events, flatSort), [events, flatSort])
+  // Sorting no longer happens here — `groupLootRows` hands back tally order, and the ONE sort
+  // below applies the header's chosen order to it (and to the inventory-only tail beside it).
+  const grouped = useMemo(() => groupLootRows(events), [events])
 
   // The inventory-only tail is kept OUT of the default BROWSE so the Loot table stays a loot
   // table (the toolbar chip says how many are hiding) — but a SEARCH always reaches it, because a
@@ -100,10 +116,15 @@ export function useLootRows({
     [showInventoryOnly, invOnlySource, questOnly, q],
   )
 
+  // ONE sort over everything the grouped table shows. Under the default (Times looted, desc) the
+  // inventory-only rows (count 0) still land below every looted row, as they always did.
   const groupRows = useMemo(
-    () => (invOnlyRows.length === 0 ? grouped : [...grouped, ...invOnlyRows]),
-    [grouped, invOnlyRows],
+    () =>
+      sortGroupedRows([...grouped, ...invOnlyRows], sort, (r) =>
+        inventoryEstimate(r, invByKey.get(r.countKey)),
+      ),
+    [grouped, invOnlyRows, sort, invByKey],
   )
 
-  return { events, grouped, groupRows, invOnlySource, invOnlyRows, invByKey }
+  return { events, flatEvents, grouped, groupRows, invOnlySource, invOnlyRows, invByKey }
 }

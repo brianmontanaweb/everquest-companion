@@ -10,10 +10,13 @@
 //
 // NO TOOLTIP MOUNTS ANYWHERE IN HERE (JOS-127, owner direction 2026-08-09). A 0.14.0 user could not
 // change the sort because interactive hover cards on the surfaces below the toolbar opened upward
-// across it and ate the click. The rule travelled with the code: labels and accessible names say
-// what a popper used to, and `tests/tooltipCursor.test.mts` pins the absence structurally.
+// across it and ate the click. The control that history protects is now the grouped table's sort
+// header row (LootSortHeader.tsx), not the toolbar select this file used to draw — the rule
+// travelled with the code regardless: labels and accessible names say what a popper used to. (The
+// structural guard that once pinned this, `tests/tooltipCursor.test.mts`, retired with its subject
+// in JOS-499's test prune; `tests/e2e/loot-sort.e2e.mts` is what still proves it at runtime.)
 
-import { type JSX, useEffect, useState } from 'react'
+import { type JSX, useCallback, useEffect, useState } from 'react'
 import {
   Alert,
   Box,
@@ -37,25 +40,42 @@ import { formatDateTime, formatTime } from '../../lib/formatDate'
 import { COUNT_SOURCE_OPTIONS } from '../inventory/countSource'
 import type { GroupRow } from './lootGrouping'
 import { LOOT_RATE_TITLE, lootRateText } from './lootRateText'
-import { DEFAULT_LOOT_SORT, isLootSortKey, LOOT_SORT_OPTIONS, type LootSortKey } from './lootSort'
+import {
+  FLAT_FIRST_DIR,
+  GROUPED_FIRST_DIR,
+  nextSort,
+  sanitizeFlatSort,
+  sanitizeGroupedSort,
+  type ColumnSort,
+  type FlatSortKey,
+  type GroupedSortKey,
+  type SortDir,
+} from './lootSort'
 
-// The grouped table's order survives restarts, the way the Quests tab's does (useQuestList's
-// `eq.questSort`). An order retired from LOOT_SORT_OPTIONS falls back to the default rather than
-// sorting by nothing.
-const SORT_KEY = 'eq.lootSort'
-
-function loadLootSort(): LootSortKey {
-  const v = localStorage.getItem(SORT_KEY)
-  return isLootSortKey(v) ? v : DEFAULT_LOOT_SORT
+// Each table's header sort survives restarts, the way the Quests tab's order does. The grouped one
+// keeps the dropdown era's key, `eq.lootSort`, so a saved 'count'/'recent' migrates
+// (sanitizeGroupedSort) rather than resetting.
+function useStoredSort<K extends string>(
+  store: string,
+  sanitize: (raw: string | null) => ColumnSort<K>,
+  firstDir: Readonly<Record<K, SortDir>>,
+): [ColumnSort<K>, (k: K) => void] {
+  const [sort, setSort] = useState<ColumnSort<K>>(() => sanitize(localStorage.getItem(store)))
+  useEffect(() => {
+    localStorage.setItem(store, JSON.stringify(sort))
+  }, [store, sort])
+  const onSort = useCallback((k: K) => setSort((s) => nextSort(s, k, firstDir)), [firstDir])
+  return [sort, onSort]
 }
 
-/** The grouped order and its persistence, in one line of the view. */
-export function useLootSort(): [LootSortKey, (v: LootSortKey) => void] {
-  const [sort, setSort] = useState<LootSortKey>(loadLootSort)
-  useEffect(() => {
-    localStorage.setItem(SORT_KEY, sort)
-  }, [sort])
-  return [sort, setSort]
+/** The grouped table's header sort and its persistence, in one line of the view. */
+export function useGroupedLootSort(): [ColumnSort<GroupedSortKey>, (k: GroupedSortKey) => void] {
+  return useStoredSort('eq.lootSort', sanitizeGroupedSort, GROUPED_FIRST_DIR)
+}
+
+/** The flat ledger's header sort. Its own key: the two tables have different columns. */
+export function useFlatLootSort(): [ColumnSort<FlatSortKey>, (k: FlatSortKey) => void] {
+  return useStoredSort('eq.lootFlatSort', sanitizeFlatSort, FLAT_FIRST_DIR)
 }
 
 /** When main's chokidar watch last re-read the `*-Inventory.txt` underneath us — surfaced quietly
@@ -64,38 +84,6 @@ export function useInventoryReloadedAt(): number | null {
   const [at, setAt] = useState<number | null>(null)
   useEffect(() => window.eq.onInventoryReload(() => setAt(Date.now())), [])
   return at
-}
-
-// The grouped table's order picker (JOS-91). Its own component so LootToolbar stays inside the
-// measured lines-per-function ceiling.
-//
-// It is rendered ONLY when grouping is on, and that is a claim about honesty rather than about
-// clutter: ungrouped, the ledger is already a chronological one — newest first — so an order
-// picker there would be a control that either does nothing or lies about what it changed.
-function LootSortSelect({
-  sort,
-  setSort,
-}: {
-  sort: LootSortKey
-  setSort: (v: LootSortKey) => void
-}): JSX.Element {
-  return (
-    <TextField
-      select
-      size="small"
-      label="Sort"
-      value={sort}
-      onChange={(e) => setSort(e.target.value as LootSortKey)}
-      sx={{ minWidth: 160 }}
-      data-testid="loot-sort"
-    >
-      {LOOT_SORT_OPTIONS.map((o) => (
-        <MenuItem key={o.value} value={o.value}>
-          {o.label}
-        </MenuItem>
-      ))}
-    </TextField>
-  )
 }
 
 /** Which world this ledger is reading (JOS-484). `app` is the TypeScript fold every user sees. */
@@ -156,8 +144,6 @@ export interface LootToolbarProps {
   setGroupByItem: (v: boolean) => void
   questOnly: boolean
   setQuestOnly: (v: boolean) => void
-  sort: LootSortKey
-  setSort: (v: LootSortKey) => void
   invOnlyCount: number
   showInventoryOnly: boolean
   onToggleInventoryOnly: () => void
@@ -166,8 +152,9 @@ export interface LootToolbarProps {
   onReload: () => void
 }
 
-// The filter bar: search, the two view switches, the grouped table's sort, the opt-in
-// inventory-only chip, and the count-source select that decides what "In inventory" is counting.
+// The filter bar: search, the two view switches, the opt-in inventory-only chip, and the
+// count-source select that decides what "In inventory" is counting. Sorting is in the column
+// headers (LootSortHeader).
 export function LootToolbar({
   query,
   setQuery,
@@ -175,8 +162,6 @@ export function LootToolbar({
   setGroupByItem,
   questOnly,
   setQuestOnly,
-  sort,
-  setSort,
   invOnlyCount,
   showInventoryOnly,
   onToggleInventoryOnly,
@@ -213,7 +198,6 @@ export function LootToolbar({
         control={<Switch checked={questOnly} onChange={(e) => setQuestOnly(e.target.checked)} />}
         label="Only Plane of Sky items"
       />
-      {groupByItem && <LootSortSelect sort={sort} setSort={setSort} />}
       {groupByItem && invOnlyCount > 0 && (
         <Chip
           size="small"
