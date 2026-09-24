@@ -130,12 +130,37 @@ docs/agents-archive.md.
     runner · 1 sighting 2026-09-04 · **HARDENED same day** (`until` reads one
     refusal as "not yet", still panics on any other). Full detail:
     docs/agents-archive.md.
+  - `engined tests/ingest.rs`
+    `a_line_appended_after_the_fold_lands_arrives_live` · the appended line is
+    folded by the SCAN, so its frame carries no flag (`left: None` /
+    `right: Some(true)`) · 1 sighting (2026-09-20, run 35542228138, on PR #14,
+    a branch touching neither that file nor its crate's sources) · **DIAGNOSED
+    AND RESOLVED same day**: the test waited for the event COUNT, which the
+    scan's final frame reaches at `pct` 100 BEFORE the tail takes the file —
+    `FoldProgress.live` is present only when true and true only once the tail
+    owns it, so a line appended in that gap comes back unflagged. `settle_live`
+    now holds the handover itself, which is the precondition this file's own
+    header already claims ("a line appended after the tail takes over"). The
+    gap measures 177 µs on an idle machine, which is the whole reason it is
+    load-sensitive and green standalone.
   - `engined tests/combat.rs` live-meter tests · the fight closes before the
-    test's hit lands, plus one harness connect timeout · 2 sightings
-    (2026-09-04, 2026-09-10) · MECHANISM KNOWN: `Staged::line` stamps
-    relative to TEST START while closure runs on the wall clock, so a
-    slow-starting runner has already idled the fight · chip filed: anchor
-    live stamps to go-live. Full detail: docs/agents-archive.md.
+    test's hit lands, plus one harness connect timeout · 3 sightings
+    (2026-09-04, 2026-09-10, 2026-09-20) · MECHANISM MEASURED, not merely
+    known: `Staged::line` stamps relative to TEST START while closure runs on
+    the wall clock, and it is the GO-LIVE WAIT that spends the window, not the
+    spawn — 4.809 s of an ~18 s budget on a quiet machine, and the 2026-09-20
+    sighting crossed it at ~18.3 s · **CHIP PARTLY LANDED**: the harness
+    anchors on go-live (`Staged::stage_a_live_fight`) and
+    `a_host_that_can_only_name_an_offset…` is proven immune — 25 s of injected
+    slowness before the window passes, the same 25 s inside it still fails. It
+    does NOT generalise, and three tests carry the mechanism still:
+    `a_live_meter_is_stamped_with_the_engines_own_clock…` compares against an
+    oracle fold and `recent` is a live-only feed, so a tail-staged fight makes
+    the two objects differ by construction (measured: engine 4 events, oracle
+    0); `a_live_meter_window_updates…` and `a_new_row_enters_the_meter…`
+    observe go-live through their reset sequence, so staging after it inverts
+    what the epoch-2 reset carries. Follow-up chip for those three. Full
+    detail: docs/agents-archive.md.
   - `combat-dashboard.e2e` · narrow-window resize never lands, settleStable
     settles on stale geometry · 6 sightings 2026-08-10→26, including
     STANDALONE (the full-sweep-only pattern is broken) · fix shape diagnosed
@@ -162,8 +187,13 @@ docs/agents-archive.md.
     if it recurs, the suspect is the wait, not the contract.
   - `engined/tests/combat.rs` live-meter current-kind · startup consumed the
     freshness margin before the fixture went live · 1 sighting 2026-08-30 ·
-    **RESOLVED** in the JOS-531 CI follow-up (engine now starts before the
-    live fixture is stamped). Full detail: docs/agents-archive.md.
+    ~~**RESOLVED** in the JOS-531 CI follow-up (engine now starts before the
+    live fixture is stamped)~~ · **REOPENED 2026-09-20 AND SUPERSEDED by the
+    row above**: that ordering is worth the ~10 ms the spawn costs, measured,
+    against an ~18 s budget — the 4.8 s that matters is the go-live wait, which
+    follows the stamping in BOTH orderings. It is why the row above recurred
+    twice after this one was marked resolved. Full detail:
+    docs/agents-archive.md.
   - `presenceWorker.test` first-tick dedup · watches the REAL machine; fails
     while EverQuest runs with a player at the keyboard · 3 sightings
     (2026-08-10 ×2, 2026-08-12 JOS-239 worker mid-session, green on final
